@@ -860,6 +860,8 @@ document.getElementById('bookingInfoForm').addEventListener('submit', function(e
         return;
     }
 
+    // 테스트다
+    
     // 결제 처리
     showToast('결제를 진행합니다...', 'info');
 

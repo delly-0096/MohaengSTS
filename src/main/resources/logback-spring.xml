@@ -11,6 +11,14 @@
 	</appender>
 	
 	
+	<appender name="dataBase" class="ch.qos.logback.classic.db.DBAppender">
+		
+		
+		
+	</appender>
+	
+	
+	
 	<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<file>./errorLog/${ToDay}/error.log</file>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
@@ -32,6 +40,6 @@
 	
 	<root level="info">
         <appender-ref ref="console" />
-        <appender-ref ref="file" />
+        <!-- <appender-ref ref="file" /> -->
 	</root>
 </configuration>

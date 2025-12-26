@@ -38,10 +38,4 @@ public class AdminVO {
 	
 	private List<AdminAuthVO> authList;
 	
-	// 직책
-//	private String posiCd;
-//	private String posiName;
-//	private String posiDesc;
-//	private String auth;
-//	private String useYn;
 }

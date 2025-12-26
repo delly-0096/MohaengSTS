@@ -6,7 +6,11 @@ import lombok.Data;
 public class AdminAuthVO {
 	
 	private int memNo;
-	private String posiCd;
+	
+	private int posiNo;
+	private String deptName;
+	
+	// position - 관리자 권한
 	private String posiName;
 	private String posiDesc;
 	private String auth;

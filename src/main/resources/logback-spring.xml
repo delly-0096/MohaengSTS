@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+	<timestamp key="ToDay" datePattern="yyyy-MM-dd"/>
+	
+	<!-- 조건문 사용 가능 -->
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<encoder>
+			<!--					날짜 / 	로그 찍은 스레드		 / 로그레벨(글자수) 	/	자바파일명:줄/		메시지 바꿀 줄 수  -->
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} %green([%thread]) %highlight(%-5level) [%logger{32}] - %msg %n%ex{5}</pattern>
+		</encoder>
+	</appender>
+	
+	
+	<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>./errorLog/${ToDay}/error.log</file>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>error</level>	<!-- 정리할 타입 -->
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>	<!-- 타입이 맞지 않을 경우 deny를 실행 -->
+        </filter>
+		<encoder>
+			<pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger{32}] - %msg %n%ex{5}</pattern>
+		</encoder>
+		<!-- 시간이 지나면 저장할 파일 양식 -->
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>error.log.%d{yyyy-MM-dd}.gz</fileNamePattern>
+			<maxHistory>30</maxHistory>
+			<totalSizeCap>5GB</totalSizeCap>
+		</rollingPolicy>
+	</appender>
+	
+	
+	<root level="info">
+        <appender-ref ref="console" />
+        <appender-ref ref="file" />
+	</root>
+</configuration>

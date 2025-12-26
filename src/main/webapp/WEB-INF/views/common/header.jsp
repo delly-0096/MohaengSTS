@@ -35,7 +35,7 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/${pageCss}.css">
     </c:if>
 </head>
-<body data-logged-in="<c:choose><c:when test="${not empty sessionScope.loginUser}">true</c:when><c:otherwise>false</c:otherwise></c:choose>">
+<body data-logged-in="<c:choose><c:when test="${not empty sessionScope.loginMember}">true</c:when><c:otherwise>false</c:otherwise></c:choose>">
     <!-- 헤더 -->
     <header class="header" id="header">
         <div class="header-container">
@@ -47,7 +47,7 @@
             <!-- 헤더 우측 영역 -->
             <div class="header-right">
                 <c:choose>
-                    <c:when test="${not empty sessionScope.loginUser}">
+                    <c:when test="${not empty sessionScope.loginMember}">
                         <!-- 로그인 상태 - 알림 버튼 -->
                         <button class="header-notification-btn" onclick="toggleNotificationPanel()" title="알림">
                             <i class="bi bi-bell"></i>
@@ -57,7 +57,7 @@
                         <a href="${pageContext.request.contextPath}/mypage/profile" class="header-user-link">
                             <span class="user-avatar">
                                 <c:choose>
-                                    <c:when test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
+                                    <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
                                         <i class="bi bi-building"></i>
                                     </c:when>
                                     <c:otherwise>
@@ -65,7 +65,7 @@
                                     </c:otherwise>
                                 </c:choose>
                             </span>
-                            <span class="user-name">${sessionScope.loginUser.userName}님</span>
+                            <span class="user-name">${sessionScope.loginMember.memName}님</span>
                         </a>
                     </c:when>
                     <c:otherwise>
@@ -102,12 +102,12 @@
 
         <!-- 사이드 메뉴 사용자 정보 -->
         <c:choose>
-            <c:when test="${not empty sessionScope.loginUser}">
+            <c:when test="${not empty sessionScope.loginMember}">
                 <div class="side-menu-user">
                     <div class="side-menu-user-info">
                         <span class="side-menu-avatar">
                             <c:choose>
-                                <c:when test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
+                                <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
                                     <i class="bi bi-building"></i>
                                 </c:when>
                                 <c:otherwise>
@@ -116,10 +116,10 @@
                             </c:choose>
                         </span>
                         <div class="side-menu-user-detail">
-                            <span class="side-menu-user-name">${sessionScope.loginUser.userName}님</span>
+                            <span class="side-menu-user-name">${sessionScope.loginMember.memName}님</span>
                             <span class="side-menu-user-type">
                                 <c:choose>
-                                    <c:when test="${sessionScope.loginUser.userType eq 'BUSINESS'}">기업회원</c:when>
+                                    <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS'}">기업회원</c:when>
                                     <c:otherwise>일반회원</c:otherwise>
                                 </c:choose>
                             </span>
@@ -136,7 +136,7 @@
                     <a href="${pageContext.request.contextPath}/member/register" class="btn btn-primary btn-sm">회원가입</a>
                 </div>
                 <!-- 테스트 로그인 버튼 -->
-                <div class="side-menu-test-login">
+<%--                 <div class="side-menu-test-login">
                     <p class="test-login-label"><i class="bi bi-bug me-1"></i>테스트 로그인</p>
                     <div class="test-login-buttons">
                         <a href="${pageContext.request.contextPath}/member/test-login/general" class="btn btn-test general">
@@ -145,14 +145,14 @@
                         <a href="${pageContext.request.contextPath}/member/test-login/business" class="btn btn-test business">
                             <i class="bi bi-building me-1"></i>기업회원
                         </a>
-                    </div>
-                </div>
+                    </div> 
+                </div> --%>
             </c:otherwise>
         </c:choose>
 
         <div class="side-menu-body">
             <!-- 일정 계획 (기업회원은 표시하지 않음) -->
-            <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
+            <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
                 <div class="side-menu-section">
                     <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
                         <span><i class="bi bi-calendar3 me-2"></i>일정 계획</span>
@@ -162,7 +162,7 @@
                         <a href="${pageContext.request.contextPath}/schedule/search" class="side-menu-item">
                             <i class="bi bi-calendar-plus me-2"></i>일정 계획
                         </a>
-                        <c:if test="${not empty sessionScope.loginUser}">
+                        <c:if test="${not empty sessionScope.loginMember}">
                             <a href="${pageContext.request.contextPath}/schedule/my" class="side-menu-item">
                                 <i class="bi bi-calendar-check me-2"></i>내 일정
                             </a>
@@ -181,7 +181,7 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="side-menu-section-content">
-                    <c:if test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
+                    <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
                         <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item">
                             <i class="bi bi-gear me-2"></i>상품 관리
                         </a>
@@ -205,7 +205,7 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="side-menu-section-content">
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
+                    <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
                         <a href="${pageContext.request.contextPath}/community/talk" class="side-menu-item">
                             <i class="bi bi-chat-dots me-2"></i>여행톡
                         </a>
@@ -217,7 +217,7 @@
             </div>
 
             <!-- 마이페이지 (로그인 회원만) -->
-            <c:if test="${not empty sessionScope.loginUser}">
+            <c:if test="${not empty sessionScope.loginMember}">
                 <div class="side-menu-section">
                     <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
                         <span><i class="bi bi-person-circle me-2"></i>마이페이지</span>
@@ -225,7 +225,7 @@
                     </div>
                     <div class="side-menu-section-content">
                         <c:choose>
-                            <c:when test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
+                            <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
                                 <a href="${pageContext.request.contextPath}/mypage/business/dashboard" class="side-menu-item">
                                     <i class="bi bi-speedometer2 me-2"></i>대시보드
                                 </a>
@@ -305,7 +305,7 @@
     </div>
 
     <!-- 알림 패널 (로그인 시에만 표시) -->
-    <c:if test="${not empty sessionScope.loginUser}">
+    <c:if test="${not empty sessionScope.loginMember}">
         <div class="notification-overlay" id="notificationOverlay" onclick="closeNotificationPanel()"></div>
         <div class="notification-panel" id="notificationPanel">
             <div class="notification-panel-header">
@@ -375,7 +375,7 @@
 
     <!-- 로그인 상태 전역 변수 및 사이드 메뉴 함수 -->
     <script>
-        var isLoggedIn = <c:choose><c:when test="${not empty sessionScope.loginUser}">true</c:when><c:otherwise>false</c:otherwise></c:choose>;
+        var isLoggedIn = <c:choose><c:when test="${not empty sessionScope.loginMember}">true</c:when><c:otherwise>false</c:otherwise></c:choose>;
 
         // 사이드 메뉴 토글 (햄버거 메뉴용 - 즉시 사용 가능하도록 header에 정의)
         function toggleSideMenu() {

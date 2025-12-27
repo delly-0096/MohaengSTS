@@ -36,6 +36,5 @@ public class AdminVO {
 	private String deptName;
 	
 	
-	private List<AdminAuthVO> authList;
 	
 }

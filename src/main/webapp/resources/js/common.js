@@ -30,6 +30,26 @@ function initHeader() {
     });
 }
 
+// ====== 투명 헤더 상태 부여 ======
+const header = document.getElementById("header");
+
+function updateHeaderState() {
+  if (window.scrollY === 0) {
+    header.classList.add("header--transparent");
+    header.classList.remove("header--solid");
+  } else {
+    header.classList.remove("header--transparent");
+    header.classList.add("header--solid");
+  }
+}
+
+// 🔥 최초 로드 시 한 번 실행
+document.addEventListener("DOMContentLoaded", updateHeaderState);
+
+// 스크롤 시 계속 갱신
+window.addEventListener("scroll", updateHeaderState);
+
+
 // ===== 사이드 메뉴 토글 =====
 function toggleSideMenu() {
     const sideMenu = document.getElementById('sideMenu');

@@ -5,62 +5,144 @@
 /* ===== 히어로 섹션 ===== */
 .hero-section {
     position: relative;
-    min-height: calc(100vh - var(--header-height));
+/*     height: 100vh; 고침 
+    min-height: calc(100vh - var(--header-height)); */
+    min-height: 100vh;
+    margin-top: calc(var(--header-height) * -1);
+    padding-top: var(--header-height);
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(135deg, #1a7f7f 0%, #156969 100%);
-    overflow: hidden;
+    /* overflow: hidden; */
 }
 
-.hero-bg {
-    position: absolute;
+.hero-video {
+	position: absolute;
     top: 0;
     left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: url('../images/hero-bg.jpg');
-    background-size: cover;
-    background-position: center;
-    opacity: 0.3;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    z-index: 1;
+    filter:
+      brightness(1.08)
+      contrast(1.05)
+      saturate(1.05);
+
 }
 
 .hero-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 100%);
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        rgba(21,105,105,0.25) 0%,
+        rgba(0,0,0,0.4) 100%
+    );
+    z-index: 2;
 }
 
 .hero-content {
     position: relative;
-    z-index: 10;
+	transform: translateY(10px);
+	animation-delay: 0.4s;
+	z-index: 10;
+
+}
+
+/* 텍스트만 페이드 */
+.hero-text {
+    position: relative;
+    z-index: 15;
     text-align: center;
-    color: white;
-    max-width: 900px;
-    padding: 0 24px;
+
+    color: #fff;
+    opacity: 0;
+    transform: translateY(10px);
+    animation: contentFade 0.9s ease forwards;
+    animation-delay: 0.5s;
+}
+
+.hero-text-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hero-logo-img {
+	  display: block;
+  margin: 0 auto;
+    height: 80px;
+    width: auto;
     margin-bottom: 32px;
+    text-shadow:
+        0 4px 12px rgba(0,0,0,0.45),
+        0 1px 2px rgba(0,0,0,0.6);
 }
 
 .hero-brand-img {
-    height: 150px;
-    width: auto;
-    filter: brightness(0) invert(1);
+	height: 150px;
+	width: auto;
+	filter:
+	  drop-shadow(0 4px 12px rgba(0,0,0,0.35));
     /* 흰색으로 표시 */
 }
 
-.hero-logo {
-    font-size: 72px;
-    font-weight: 900;
-    margin-bottom: 16px;
-    letter-spacing: -2px;
-    text-shadow: 2px 4px 20px rgba(0,0,0,0.3);
+/* 로고 모션 */
+.motion-logo {
+  position: absolute;
+  bottom: 100%;        /* 🔥 hero-text 바로 위 */
+  margin-bottom: 24px;/* 간격 */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+
+  opacity: 0;
+  animation: logoIntro 1.8s cubic-bezier(0.22,1,0.36,1) forwards;
+  pointer-events: none;
 }
+
+@keyframes logoIntro {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) scale(1.12) translateY(14px);
+  }
+  30% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1) translateY(0);
+  }
+  70% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.92) translateY(-10px);
+  }
+}
+
+@keyframes contentFade {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-logo {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  
+  display: flex;           
+  justify-content: center;
+  align-items: center;
+  
+  width: 100%;
+  pointer-events: none;
+ } 
 
 .hero-logo span {
     background: linear-gradient(135deg, #ffffff 0%, #7ed9d9 100%);
@@ -85,7 +167,12 @@
     max-width: 800px;
     margin: 0 auto;
     position: relative;
-    z-index: 20;
+    z-index: 10;
+    overflow: visible;
+    opacity: 0;
+	transform: translateY(10px);
+	animation: contentFade 0.9s ease forwards;
+	animation-delay: 0.8s;
 }
 
 .search-form-title {
@@ -101,10 +188,13 @@
     grid-template-columns: 1fr 1fr 1fr auto;
     gap: 16px;
     align-items: end;
+    overflow: visible;
+  
 }
 
 .search-input-group {
     position: relative;
+    overflow: visible;
 }
 
 .search-input-group label {
@@ -148,7 +238,7 @@
     box-shadow: var(--shadow-lg);
     max-height: 280px;
     overflow-y: auto;
-    z-index: 200;
+    z-index: 9999;
     display: none;
 }
 
@@ -280,7 +370,7 @@
     text-align: center;
     animation: bounce 2s infinite;
     cursor: pointer;
-    z-index: 5;
+    z-index: 2;
     pointer-events: auto;
 }
 

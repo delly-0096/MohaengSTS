@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:set var="pageTitle" value="로그인" />
 <c:set var="pageCss" value="member" />
@@ -39,7 +39,7 @@
                 <!-- 아이디 -->
                 <div class="form-group">
                     <label class="form-label">아이디</label>
-                    <input type="text" class="form-control" name="userId" id="userId"
+                    <input type="text" class="form-control" name="memId" id="memId"
                            placeholder="아이디를 입력하세요" required>
                     <div class="form-error">
                         <i class="bi bi-exclamation-circle"></i>
@@ -51,9 +51,9 @@
                 <div class="form-group">
                     <label class="form-label">비밀번호</label>
                     <div class="password-toggle">
-                        <input type="password" class="form-control" name="password" id="password"
+                        <input type="password" class="form-control" name="memPassword" id="memPassword"
                                placeholder="비밀번호를 입력하세요" required>
-                        <span class="toggle-btn" onclick="togglePassword('password')">
+                        <span class="toggle-btn" onclick="togglePassword('memPassword')">
                             <i class="bi bi-eye"></i>
                         </span>
                     </div>
@@ -85,7 +85,7 @@
                 <button type="submit" class="btn btn-primary btn-submit">
                     로그인
                 </button>
-                
+                <%-- <sec:csrfInput/> --%>	<!-- csrf 토큰 : 개인, 기업회원 로그인을 위한 것 -->
             </form>
 
             <!-- 구분선 (개인회원만) -->
@@ -158,24 +158,24 @@ function socialLogin(provider) {
 
 // 폼 유효성 검사
 document.getElementById('loginForm').addEventListener('submit', function(e) {
-    const userId = document.getElementById('userId');
-    const password = document.getElementById('password');
+    const memId = document.getElementById('memId');
+    const memPassword = document.getElementById('memPassword');
     let isValid = true;
 
     // 아이디 검사
-    if (!userId.value.trim()) {
-        userId.classList.add('is-invalid');
+    if (!memId.value.trim()) {
+    	memId.classList.add('is-invalid');
         isValid = false;
     } else {
-        userId.classList.remove('is-invalid');
+    	memId.classList.remove('is-invalid');
     }
 
     // 비밀번호 검사
-    if (!password.value) {
-        password.classList.add('is-invalid');
+    if (!memPassword.value) {
+    	memPassword.classList.add('is-invalid');
         isValid = false;
     } else {
-        password.classList.remove('is-invalid');
+    	memPassword.classList.remove('is-invalid');
     }
 
     if (!isValid) {

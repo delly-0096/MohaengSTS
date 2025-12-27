@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.login.mapper.IMemberMapper">
+
+	<select id="selectByMemId" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+		SELECT MEM_NO as memNo,
+		       MEM_ID as memId,
+		       MEM_PASSWORD as memPassword,
+		       MEM_NAME as memName
+		FROM MEMBER
+		WHERE MEM_ID = #{memId}
+    </select>
+    
+</mapper>

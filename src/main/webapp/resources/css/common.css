@@ -124,10 +124,36 @@ input, textarea, select {
     align-items: center;
 }
 
-.logo-img {
+/* .logo-img {
     height: 50px;
     width: auto;
     transition: transform var(--transition-fast);
+    text-shadow:
+    0 4px 12px rgba(0,0,0,0.45),
+    0 1px 2px rgba(0,0,0,0.6);	 
+} */
+
+.header:not(.scrolled) .logo-img {
+	height:50px;
+    width: auto;
+   /*  filter:drop-shadow(0 2px 6px rgba(65, 125, 199, 0.8)); */
+}
+
+.header.scrolled .logo-img {
+	height: 50px;
+    width: auto;
+    filter: none;
+}
+
+/* 스크롤 후 */
+.header.scrolled .logo-text {
+    background: linear-gradient(
+        135deg,
+        var(--primary-color),
+        var(--secondary-color)
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .logo:hover .logo-img {
@@ -152,14 +178,25 @@ input, textarea, select {
     left: 0;
     right: 0;
     height: var(--header-height);
+	/*
     background: var(--white-color);
-    box-shadow: var(--shadow-sm);
-    z-index: 1000;
+    box-shadow: var(--shadow-sm); 
     transition: all var(--transition-normal);
+    */
+    
+    background: transparent;      
+    box-shadow: none;             
+    
+    z-index: 1000;
+    transition: background 0.3s ease, box-shadow 0.3s ease;
+
 }
 
 .header.scrolled {
-    box-shadow: var(--shadow-md);
+    /* box-shadow: var(--shadow-md); */
+    background: #fff;
+ 	border-bottom: 1px solid rgba(0,0,0,0.08);
+ 	box-shadow: 0 2px 10px rgba(0,0,0,0.06);
 }
 
 .header-container {
@@ -824,6 +861,22 @@ input, textarea, select {
     background: var(--gray-lighter);
 }
 
+/* 투명 헤더 상태에서만 */
+.header--transparent .btn-text {
+    color: #4D4C4C;
+    font-weight: 600;
+/*     background: rgba(255,255,255,0.15); */
+    background: #ffffff;
+    border-radius: var(--radius-md);
+    backdrop-filter: blur(4px);
+}
+
+/* hover */
+.header--transparent .btn-text:hover {
+    /* background: rgba(255,255,255,0.3); */
+    color: #156969;
+}
+
 /* ===== 메인 콘텐츠 영역 ===== */
 .main-content {
     flex: 1;
@@ -959,6 +1012,7 @@ input, textarea, select {
 /* ===== 검색 입력 그룹 (자동완성용) ===== */
 .search-input-group {
     position: relative;
+    overflow: visible;
 }
 
 .search-input-group .form-control {

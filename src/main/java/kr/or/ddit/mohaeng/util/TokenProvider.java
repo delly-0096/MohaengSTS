@@ -19,6 +19,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
 import kr.or.ddit.mohaeng.vo.AdminVO;
 import kr.or.ddit.mohaeng.vo.CustomUser;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -32,24 +33,24 @@ public class TokenProvider {
 	private JwtProperties jwtProperties;
 	
 	// 토큰 발급
-	public String generateToken(AdminVO adminVO, Duration expired) {
+	public String generateToken(MemberVO member, Duration expired) {
 		Date now = new Date();
-		return makeToken(new Date(now.getTime() + expired.toMillis()), adminVO);
+		return makeToken(new Date(now.getTime() + expired.toMillis()), member);
 	}
 
 	// 토큰 생성
-	public String makeToken(Date expired, AdminVO adminVO) {
+	public String makeToken(Date expired, MemberVO member) {
 		Date now = new Date();
 		return Jwts.builder()
 				.setHeaderParam(Header.TYPE, Header.JWT_TYPE)
 				.setIssuer(jwtProperties.getIssuer())
 				.setIssuedAt(now)
 				.setExpiration(expired)
-				.setSubject(adminVO.getMemId())
+				.setSubject(member.getMemId())
 				
-				.claim("no", adminVO.getMemNo())
-				.claim("id", adminVO.getMemId())
-				.claim("no", adminVO.getMemNo())
+				.claim("no", member.getMemNo())
+				.claim("id", member.getMemId())
+				.claim("no", member.getMemNo())
 				.signWith(SignatureAlgorithm.HS256, jwtProperties.getSecretKey().getBytes())
 				.compact();
 	}
@@ -73,13 +74,11 @@ public class TokenProvider {
 	public Authentication getAuthentication(String token) {
 		String memId = getUserId(token);
 		UserDetails userDetails = userDetailsService.loadUserByUsername(memId);
-		AdminVO adminVO = ((CustomUser)userDetails).getAdmin();
-		// 권한 한개니까
-//		return new UsernamePasswordAuthenticationToken(userDetails, "",
-//				Collections.singleton(new SimpleGrantedAuthority("관리자")));
+		
+		MemberVO member = ((CustomUser)userDetails).getMember();
 				
 		return new UsernamePasswordAuthenticationToken(userDetails, "", 
-				adminVO.getAuthList().stream()
+				member.getAuthList().stream()
 				.map(auth -> new SimpleGrantedAuthority(auth.getAuth())).
 				collect(Collectors.toList()));
 	}

@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
 import java.util.Date;
+import java.util.List;
 
 import lombok.Data;
 
@@ -25,6 +26,7 @@ public class MemberVO {
 	private Date udtDt; 			/* 수정일 */
 	private Date wdrwDt; 			/* 탈퇴일 */
 	
+	private List<AuthVO> authList;
 	
 	
 	public int getMemNo() {

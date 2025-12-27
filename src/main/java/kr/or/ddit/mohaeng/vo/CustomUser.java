@@ -13,34 +13,18 @@ import lombok.Getter;
 public class CustomUser extends User {
 
 	// 관리자
-	private AdminVO admin;
+	private MemberVO member;
 
 	public CustomUser(String username, String password, Collection<? extends GrantedAuthority> authorities) {
 		super(username, password, authorities);
 	}
 
 	// 관리자
-	public CustomUser(AdminVO admin) {
-		super(admin.getMemId(), admin.getMemPassword(), 
-				admin.getAuthList().stream()
+	public CustomUser(MemberVO member) {
+		super(member.getMemId(), member.getMemPassword(), 
+				member.getAuthList().stream()
 				.map(auth -> new SimpleGrantedAuthority(auth.getAuth())).collect(Collectors.toList()));
-		this.admin = admin;
+		this.member = member;
 	}
 	
-	// 일반
-//	public CustomUser(일반회원) {
-//		super(admin.getMemId(), admin.getMemPassword(), 
-//				admin.getAuthList().stream()
-//				.map(auth -> new SimpleGrantedAuthority(auth.getAuth())).collect(Collectors.toList()));
-//		this.admin = admin;
-//	}
-	
-	// 기업
-//	public CustomUser(기업회원) {
-//		super(admin.getMemId(), admin.getMemPassword(), 
-//				admin.getAuthList().stream()
-//				.map(auth -> new SimpleGrantedAuthority(auth.getAuth())).collect(Collectors.toList()));
-//		this.admin = admin;
-//	}
-
 }

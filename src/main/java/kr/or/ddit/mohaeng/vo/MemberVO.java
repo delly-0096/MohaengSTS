@@ -26,7 +26,7 @@ public class MemberVO {
 	private Date udtDt; 			/* 수정일 */
 	private Date wdrwDt; 			/* 탈퇴일 */
 	
-	private List<AuthVO> authList;	// 권한 정보
+	private List<MemberAuthVO> authList;	// 권한 정보
 	
 	private MemCompVO memComp;
 	private MemUserVO memUser;

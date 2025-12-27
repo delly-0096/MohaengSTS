@@ -5,7 +5,7 @@ import java.util.Date;
 import lombok.Data;
 
 @Data
-public class AuthVO {
+public class MemberAuthVO {
 	// 권한
 	private int memAuthNo;
 	private int memNo;

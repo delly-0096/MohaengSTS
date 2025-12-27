@@ -9,6 +9,9 @@ import org.springframework.security.core.userdetails.User;
 
 import lombok.Getter;
 
+/**
+ * 관리자전용
+ */
 @Getter
 public class CustomUser extends User {
 

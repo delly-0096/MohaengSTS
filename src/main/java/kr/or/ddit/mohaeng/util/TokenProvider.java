@@ -50,7 +50,7 @@ public class TokenProvider {
 				
 				.claim("no", member.getMemNo())
 				.claim("id", member.getMemId())
-				.claim("no", member.getMemNo())
+				.claim("auth", member.getAuthList())
 				.signWith(SignatureAlgorithm.HS256, jwtProperties.getSecretKey().getBytes())
 				.compact();
 	}

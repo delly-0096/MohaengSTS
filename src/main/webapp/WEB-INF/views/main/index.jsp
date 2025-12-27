@@ -8,15 +8,28 @@
 
 <!-- 히어로 섹션 -->
 <section class="hero-section">
-    <div class="hero-bg" style="background-image: url('https://images.unsplash.com/photo-1488085061387-422e29b40080?w=1920&q=80');"></div>
+     <video class="hero-video" autoplay muted loop playsinline>
+        <source src="${pageContext.request.contextPath}/resources/videos/hero.mp4" type="video/mp4">
+    </video>
+    
     <div class="hero-overlay"></div>
 
     <div class="hero-content">
-        <div class="hero-logo-img">
-            <img src="${pageContext.request.contextPath}/resources/images/moheng_CI.png" alt="모행" class="hero-brand-img">
-        </div>
-        <p class="hero-tagline">AI가 추천하는 나만의 맞춤 여행, 지금 시작하세요</p>
-
+<%--         <div class="hero-logo-img">
+            <img src="${pageContext.request.contextPath}/resources/images/moheng_CI_con.png" alt="모행" class="hero-brand-img">
+        </div> --%>
+        
+<%--         <div class="hero-text-wrapper">
+	        <div class="hero-logo motion-logo">
+	            <img src="${pageContext.request.contextPath}/resources/images/moheng_CI.png" alt="모행" class="hero-brand-img">
+	        </div>
+        </div> --%>
+        
+		<div class="hero-text">
+		  <img class="hero-logo-img" src="${pageContext.request.contextPath}/resources/images/moheng_CI_con.png" alt="모행" class="hero-brand-img">
+		  <p class="hero-tagline">AI가 추천하는 나만의 맞춤 여행, 지금 시작하세요</p>
+		</div>
+		
         <!-- 여행 검색 폼 -->
         <div class="search-form-container">
             <div class="travel-type-tabs">
@@ -83,7 +96,7 @@
                 </div>
                 <h3 class="feature-title">스마트 일정 관리</h3>
                 <p class="feature-desc">
-                    원더로그 스타일의 직관적인 플래너로 여행지, 숙소, 맛집을 쉽게 추가하고 일정을 관리하세요.
+                    직관적인 플래너로 여행지, 숙소, 맛집을 쉽게 추가하고 일정을 관리하세요.
                 </p>
             </div>
 

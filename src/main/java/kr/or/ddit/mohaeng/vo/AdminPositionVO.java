@@ -12,4 +12,5 @@ public class AdminPositionVO {
 	private String posiDesc;
 	private String auth;
 	private String useYn;
+	
 }

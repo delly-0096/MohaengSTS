@@ -9,20 +9,15 @@ import org.springframework.security.core.userdetails.User;
 
 import lombok.Getter;
 
-/**
- * 관리자전용
- */
 @Getter
 public class CustomUser extends User {
 
-	// 관리자
 	private MemberVO member;
 
 	public CustomUser(String username, String password, Collection<? extends GrantedAuthority> authorities) {
 		super(username, password, authorities);
 	}
 
-	// 관리자
 	public CustomUser(MemberVO member) {
 		super(member.getMemId(), member.getMemPassword(), 
 				member.getAuthList().stream()

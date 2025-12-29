@@ -1,11 +1,16 @@
 package kr.or.ddit.mohaeng.adminLogin.controller.conn;
 
+import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -16,11 +21,13 @@ import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.adminLogin.dto.AdminLoginRequest;
 import kr.or.ddit.mohaeng.adminLogin.service.IAdminService;
 import kr.or.ddit.mohaeng.captchaApi.service.ICaptchaAPIService;
+import kr.or.ddit.mohaeng.util.TokenProvider;
 import kr.or.ddit.mohaeng.vo.AdminLoginVO;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5175",
+@CrossOrigin(origins = "http://localhost:5174",
 		  allowCredentials = "true")
 @RestController
 @RequestMapping("/api/admin")
@@ -31,6 +38,9 @@ public class ConnetController {
 	
 	@Autowired
 	private ICaptchaAPIService captchaService;
+	
+	@Autowired
+	private TokenProvider tokenProvider;
 
 	@PostMapping("/login")
 	public ResponseEntity<?> login (@RequestBody AdminLoginRequest req,
@@ -80,16 +90,38 @@ public class ConnetController {
         			"needCaptcha", failCnt + 1 >= 1
         			));
         }
+        
+    	// 1. 권한 생성
+        List<GrantedAuthority> authorities =
+            List.of(new SimpleGrantedAuthority("ROLE_ADMIN"));
+
+        // 2. Authentication 직접 생성
+        UsernamePasswordAuthenticationToken authentication =
+            new UsernamePasswordAuthenticationToken(
+                admin.getMemId(),     // principal (보통 username)
+                null,                 // credentials (이미 검증 끝)
+                authorities
+            );
 
         
         // 로그인 성공
         session.removeAttribute("ADMIN_FAIL_CNT");
-        session.setAttribute("ADMIN_LOGIN", admin.getMemId());
+        
+        // memberVO == 로그인에 성공한 관리자 계정
+        MemberVO member = new MemberVO();
+        member.setMemId(admin.getMemId());
+        member.setMemNo(admin.getMemNo());          // 있으면
+        member.setAuthList(member.getAuthList());    // ⭐ 중요
+        
+        // 만료시간 설정 (예: 30분)
+        Date now = new Date();
+        Date expired = new Date(now.getTime() + 30 * 60 * 1000);
+        
+        String token = tokenProvider.makeToken(expired, member);
         
         Map<String, Object> body = new HashMap();
-        body.put("loginId", admin.getMemId());
-        body.put("name", admin.getMemName());
-        body.put("role", admin.getAuth());
+        body.put("accessToken", token);
+        body.put("tokenType", "Bearer ");
         body.put("department", admin.getDeptName());
         
         return ResponseEntity.ok(body);

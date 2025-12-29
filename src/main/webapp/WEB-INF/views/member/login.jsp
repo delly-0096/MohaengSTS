@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:set var="pageTitle" value="로그인" />
 <c:set var="pageCss" value="member" />
@@ -38,7 +39,7 @@
                 <!-- 아이디 -->
                 <div class="form-group">
                     <label class="form-label">아이디</label>
-                    <input type="text" class="form-control" name="memId" id="memId"
+                    <input type="text" class="form-control" name="username" id="memId"
                            placeholder="아이디를 입력하세요" value="${memId != null ? memId : ''}" required>
                     <div class="form-error">
                         <i class="bi bi-exclamation-circle"></i>
@@ -50,7 +51,7 @@
                 <div class="form-group">
                     <label class="form-label">비밀번호</label>
                     <div class="password-toggle">
-                        <input type="password" class="form-control" name="memPassword" id="memPassword"
+                        <input type="password" class="form-control" name="password" id="memPassword"
                                placeholder="비밀번호를 입력하세요" required>
                         <span class="toggle-btn" onclick="togglePassword('memPassword')">
                             <i class="bi bi-eye"></i>
@@ -96,6 +97,7 @@
 	                    로그인
 	                </button>
                 </div>
+                <sec:csrfInput/>
             </form>
 
             <!-- 구분선 (개인회원만) -->

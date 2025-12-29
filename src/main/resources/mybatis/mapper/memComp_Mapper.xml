@@ -7,4 +7,12 @@
         FROM MEM_COMP
         WHERE MEM_NO = #{memNo}
     </select>
+    
+    <select id="selectAprvYnByMemNo" parameterType="int" resultType="int">
+	    SELECT COUNT(*)
+	    FROM MEM_COMP
+	    WHERE MEM_NO = #{memNo}
+	      AND APRV_YN = 'Y'
+	</select>
+    
 </mapper>

@@ -24,6 +24,7 @@ public class MemberVO {
 	private Date regDt; 			/* 가입일 */
 	private Date udtDt; 			/* 수정일 */
 	private Date wdrwDt; 			/* 탈퇴일 */
+	
 	public int getMemNo() {
 		return memNo;
 	}

@@ -28,6 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 		  // 1. 일반/기업/관리자 통합 조회
         MemberVO member = memberMapper.selectById(username);
         System.out.println("member : " + member);
+        
         if (member == null) {
             throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username);
         }

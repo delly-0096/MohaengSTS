@@ -27,7 +27,7 @@ import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@CrossOrigin(origins = "http://localhost:5174",
+@CrossOrigin(origins = "http://localhost:7272",
 		  allowCredentials = "true")
 @RestController
 @RequestMapping("/api/admin")

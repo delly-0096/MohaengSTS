@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.config;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +19,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.DispatcherType;
 import kr.or.ddit.mohaeng.filter.TokenAuthenticationFilter;
@@ -72,18 +77,19 @@ public class SecurityConfig {
 	@Order(1)
 	@Bean
 	protected SecurityFilterChain filterChainReact(HttpSecurity http) throws Exception {
-		http.csrf((csrf) -> csrf.disable());
-		http.formLogin((login) -> login.disable());
-		http.httpBasic((basic) -> basic.disable());
-		http.headers( 
-				(config) -> config.frameOptions((fOpt) -> fOpt.sameOrigin())
-		);
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.csrf((csrf) -> csrf.disable())
+			.formLogin((login) -> login.disable())
+			.httpBasic((basic) -> basic.disable())
+			.headers( 
+					(config) -> config.frameOptions((fOpt) -> fOpt.sameOrigin())
+			);
 		
 		http.sessionManagement(
 				(management) -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 			);
 		http.addFilterBefore(new TokenAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
-		http.securityMatcher("/api/react/**")
+		http.securityMatcher("/api/admin/**")
 			.authorizeHttpRequests(
 			(authorize) -> 
 				authorize.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ASYNC).permitAll()
@@ -100,36 +106,50 @@ public class SecurityConfig {
 		// csrf 토큰 보내기
 		// 로그인 페이지에 <sec:csrfInput/>이거 계속 담기
 		
-		// 세션 기반으로 동작할 필터 체인의 1차 방어선
-		http.securityMatcher("/**")
-				.authorizeHttpRequests(
-					(authorize) -> 
-						authorize.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ASYNC).permitAll()
-								.requestMatchers(PASS_URL).permitAll()
-								.anyRequest().authenticated()
-					);
+	    http.securityMatcher("/**")
+        .authorizeHttpRequests(authorize ->
+            authorize
+                .dispatcherTypeMatchers(
+                    DispatcherType.FORWARD,
+                    DispatcherType.ASYNC
+                ).permitAll()
+                .requestMatchers(PASS_URL).permitAll()
+                .requestMatchers("/member/login").permitAll()
+                .anyRequest().authenticated()
+        )
+        .csrf(csrf -> csrf.disable())   // 일단 테스트용
+        .formLogin(form -> form.disable())
+        .httpBasic(hbasic -> hbasic.disable());
 
-		http.exceptionHandling((exception) -> exception.accessDeniedHandler(new CustomAccessDeniedHandler()));
-		
-		// 7. 사용자 정의 로그인 페이지
-		http.httpBasic((hbasic) -> hbasic.disable());
-		http.formLogin(
-			(login) -> login.loginPage("/member/login")
-							.loginProcessingUrl("/member/login")
-							.successHandler(new CustomLoginSuccessHandler())	// 로그인 성공 처리자
-							.failureHandler(new CustomLoginFailureHandler())	// 로그인 실패 처리자
-		);
-		
-		http.sessionManagement(session->session.maximumSessions(1));	// 최대 접근 세션 개수
-		
-		http.logout(
-			(logout) -> logout.logoutUrl("/logout")
-								.invalidateHttpSession(true)	// 로그아웃 시, session 삭제
-								.logoutSuccessUrl("/member/login")
-								// .deleteCookies("JSESSION_ID", "remember-me")	// 로그아웃 시, 쿠키 삭제
-		);
-		
-		return http.build();
+    http.exceptionHandling(exception ->
+        exception.accessDeniedHandler(new CustomAccessDeniedHandler())
+    );
+
+    http.sessionManagement(session ->
+        session.maximumSessions(1)
+    );
+
+    http.logout(logout ->
+        logout.logoutUrl("/logout")
+            .invalidateHttpSession(true)
+            .logoutSuccessUrl("/member/login")
+    );
+
+    return http.build();
+	}
+	
+	@Bean
+	protected CorsConfigurationSource corsConfigurationSource() {
+	    CorsConfiguration config = new CorsConfiguration();
+	    config.setAllowedOrigins(List.of("http://localhost:7272"));
+	    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	    config.setAllowedHeaders(List.of("*"));
+	    config.setAllowCredentials(true);
+
+	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/**", config);
+	    return source;
+	    
 	}
 	
 	@Bean

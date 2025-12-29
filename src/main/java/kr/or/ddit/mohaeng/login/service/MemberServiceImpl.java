@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.login.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.login.mapper.IMemCompMapper;
@@ -11,11 +12,19 @@ import kr.or.ddit.mohaeng.vo.MemberVO;
 public class MemberServiceImpl implements IMemberService {
 
 
+
 	@Autowired
     private IMemberMapper memberMapper;
 	
 	@Autowired
     private IMemCompMapper memCompMapper;
+	
+	@Autowired
+	private PasswordEncoder passwordEncoder;
+
+    MemberServiceImpl(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
 	
 	/**
 	 *	<p> 로그인 </p>
@@ -46,13 +55,22 @@ public class MemberServiceImpl implements IMemberService {
 		return "PERSONAL";
 	}
 
+	/**
+	 *	<p> 비밀번호 체크 </p>
+	 *	@date 2025.12.29
+	 *	@author kdrs
+	 *	@param memId 회원 아이디 정보, memPassword 회원 비밀번호 정보
+	 *	@return 회원이 직접 입력한 비밀번호와 암호화된 비밀번호 체크
+	 */
 	@Override
 	public boolean checkPassword(String memId, String memPassword) {
 		
-	    MemberVO member = memberMapper.selectByMemId(memId);
+		MemberVO member = memberMapper.selectByMemId(memId);
 	    if (member == null) return false;
 
-	    return memPassword.equals(member.getMemPassword());
+	    String encodedPassword = member.getMemPassword(); // DB 암호문
+
+	    return passwordEncoder.matches(memPassword, encodedPassword);
 	}
 
 

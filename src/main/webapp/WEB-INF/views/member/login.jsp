@@ -33,6 +33,7 @@
 
             <!-- 로그인 폼 -->
             <form class="auth-form" id="loginForm" action="${pageContext.request.contextPath}/member/login" method="POST">
+            <sec:csrfInput/>
                 <input type="hidden" name="returnUrl" value="${param.returnUrl}">
                 <input type="hidden" name="memberType" id="memberType" value="${memberType != null ? memberType : 'PERSONAL'}">
 
@@ -84,6 +85,7 @@
                 <!-- CAPTCHA 영역 -->
                 <c:if test="${needCaptcha}">
 				    <div class="captcha-wrapper">
+				    <sec:csrfInput/>
 						 <div class="g-recaptcha" data-sitekey="6Ld9JjksAAAAAIae-uKh3mI2Q8cz8k5ivcVCV5kj" data-action="LOGIN" 
 						 data-callback="onCaptchaSuccess" data-expired-callback="onCaptchaExpired"></div>
 <!-- 						<div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" data-action="LOGIN"></div> -->

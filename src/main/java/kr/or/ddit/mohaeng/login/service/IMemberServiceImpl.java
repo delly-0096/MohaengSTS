@@ -8,7 +8,7 @@ import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
 @Service
-public class IMamberServiceImpl implements IMemberService {
+public class IMemberServiceImpl implements IMemberService {
 
 
 	@Autowired

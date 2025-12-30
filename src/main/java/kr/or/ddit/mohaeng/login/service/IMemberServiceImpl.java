@@ -9,8 +9,6 @@ import kr.or.ddit.mohaeng.vo.MemberVO;
 
 @Service
 public class IMemberServiceImpl implements IMemberService {
-
-
 	@Autowired
     private IMemberMapper memberMapper;
 	

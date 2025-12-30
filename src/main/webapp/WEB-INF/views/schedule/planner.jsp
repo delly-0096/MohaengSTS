@@ -59,63 +59,26 @@
                     <i class="bi bi-pencil planner-day-edit-icon"></i>
                 </div>
                 <div class="planner-items" id="day1Items">
-                    <div class="planner-item" draggable="true" data-item-id="1" data-start-time="06:00" data-end-time="08:00" data-cost="5000">
-                        <div class="planner-item-time">
-                            <input type="time" class="time-input time-start" value="06:00" onchange="updateItemTime(1, 1, 'start', this.value)">
-                            <span class="time-separator">~</span>
-                            <input type="time" class="time-input time-end" value="08:00" onchange="updateItemTime(1, 1, 'end', this.value)">
-                        </div>
-                        <div class="planner-item-content">
-                            <span class="planner-item-name">성산일출봉</span>
-                            <span class="planner-item-category">관광지</span>
-                        </div>
-                        <div class="planner-item-cost">
-                            <input type="text" class="cost-input" value="5,000" placeholder="0" onclick="this.select()" onchange="updateItemCost(1, 1, this.value)">
-                            <span class="cost-unit">원</span>
-                        </div>
-                        <div class="planner-item-actions">
-                            <button onclick="viewItemDetail(1)"><i class="bi bi-info-circle"></i></button>
-                            <button onclick="removeItem(1, 1)"><i class="bi bi-trash"></i></button>
-                        </div>
-                    </div>
-                    <div class="planner-item" draggable="true" data-item-id="2" data-start-time="12:00" data-end-time="13:00" data-cost="25000">
-                        <div class="planner-item-time">
-                            <input type="time" class="time-input time-start" value="12:00" onchange="updateItemTime(1, 2, 'start', this.value)">
-                            <span class="time-separator">~</span>
-                            <input type="time" class="time-input time-end" value="13:00" onchange="updateItemTime(1, 2, 'end', this.value)">
-                        </div>
-                        <div class="planner-item-content">
-                            <span class="planner-item-name">해녀의집</span>
-                            <span class="planner-item-category">맛집</span>
-                        </div>
-                        <div class="planner-item-cost">
-                            <input type="text" class="cost-input" value="25,000" placeholder="0" onclick="this.select()" onchange="updateItemCost(1, 2, this.value)">
-                            <span class="cost-unit">원</span>
-                        </div>
-                        <div class="planner-item-actions">
-                            <button onclick="viewItemDetail(2)"><i class="bi bi-info-circle"></i></button>
-                            <button onclick="removeItem(1, 2)"><i class="bi bi-trash"></i></button>
-                        </div>
-                    </div>
-                    <div class="planner-item" draggable="true" data-item-id="3" data-start-time="14:30" data-end-time="17:00" data-cost="15000">
-                        <div class="planner-item-time">
-                            <input type="time" class="time-input time-start" value="14:30" onchange="updateItemTime(1, 3, 'start', this.value)">
-                            <span class="time-separator">~</span>
-                            <input type="time" class="time-input time-end" value="17:00" onchange="updateItemTime(1, 3, 'end', this.value)">
-                        </div>
-                        <div class="planner-item-content">
-                            <span class="planner-item-name">우도</span>
-                            <span class="planner-item-category">관광지</span>
-                        </div>
-                        <div class="planner-item-cost">
-                            <input type="text" class="cost-input" value="15,000" placeholder="0" onclick="this.select()" onchange="updateItemCost(1, 3, this.value)">
-                            <span class="cost-unit">원</span>
-                        </div>
-                        <div class="planner-item-actions">
-                            <button onclick="viewItemDetail(3)"><i class="bi bi-info-circle"></i></button>
-                            <button onclick="removeItem(1, 3)"><i class="bi bi-trash"></i></button>
-                        </div>
-                    </div>
+<!--                     <div class="planner-item" draggable="true" data-item-id="1" data-start-time="06:00" data-end-time="08:00" data-cost="5000"> -->
+<!--                         <div class="planner-item-time"> -->
+<!--                             <input type="time" class="time-input time-start" value="06:00" onchange="updateItemTime(1, 1, 'start', this.value)"> -->
+<!--                             <span class="time-separator">~</span> -->
+<!--                             <input type="time" class="time-input time-end" value="08:00" onchange="updateItemTime(1, 1, 'end', this.value)"> -->
+<!--                         </div> -->
+<!--                         <div class="planner-item-content"> -->
+<!--                             <span class="planner-item-name">성산일출봉</span> -->
+<!--                             <span class="planner-item-category">관광지</span> -->
+<!--                         </div> -->
+<!--                         <div class="planner-item-cost"> -->
+<!--                             <input type="text" class="cost-input" value="5,000" placeholder="0" onclick="this.select()" onchange="updateItemCost(1, 1, this.value)"> -->
+<!--                             <span class="cost-unit">원</span> -->
+<!--                         </div> -->
+<!--                         <div class="planner-item-actions"> -->
+<!--                             <button onclick="viewItemDetail(1)"><i class="bi bi-info-circle"></i></button> -->
+<!--                             <button onclick="removeItem(1, 1)"><i class="bi bi-trash"></i></button> -->
+<!--                         </div> -->
+<!--                     </div> -->
+                    
                 </div>
                 <button class="add-place-btn" onclick="openAddPlaceModal(1)" style="margin-top: 8px; padding: 10px;">
                     <i class="bi bi-plus"></i> 장소 추가
@@ -609,6 +572,9 @@ let itemIdCounter = 100; // 새 아이템 ID 생성용
 let selectedVisibility = 'public'; // 기본값: 전체 공개
 let totalBudget = 0; // 총 예산
 
+let startDt = "";
+let endDt = "";
+
 // 일차 데이터 저장
 let dayData = {
     1: { theme: '', date: '' },
@@ -624,9 +590,29 @@ document.addEventListener('DOMContentLoaded', function() {
     budgetModal = new bootstrap.Modal(document.getElementById('budgetModal'));
     initDragAndDrop();
     calculateAllCosts(); // 초기 비용 계산
-
+	
+    console.log(sessionStorage.getItem('preferenceData'));
+    
     // 선호도 데이터 로드
     const preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
+    let travelDates = preferenceData.travelDates;
+    
+    //당일치기인지 체크
+    if(travelDates.length > 10) {
+        travelDates = travelDates.replaceAll("~", "");
+        travelDates = travelDates.replaceAll("  ", " ");
+        
+        startDt = travelDates.split(" ")[0];
+        endDt = travelDates.split(" ")[1];
+    } else {
+        startDt = travelDates;
+        endDt = travelDates;
+    }
+    
+    console.log(startDt)
+    console.log(endDt)
+
+    
     if (preferenceData.destination) {
         document.getElementById('tripTitle').textContent = preferenceData.destination + ' 여행';
     }

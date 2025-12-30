@@ -8,6 +8,7 @@ const contextPath = document.querySelector('meta[name="context-path"]')?.content
 
 // ===== 문서 로드 완료 시 실행 =====
 document.addEventListener('DOMContentLoaded', function() {
+	initLocationData();
     initHeader();
     initFlatpickr();
     initAnimations();
@@ -398,7 +399,18 @@ function getCurrentTravelType() {
 function showAutocomplete(dropdown, query, travelType) {
     // 국내 여행지만 필터링
     const results = filterLocations(locationData.domestic, query, false);
+	
     renderAutocomplete(dropdown, results, query, 'domestic');
+}
+
+async function initLocationData() {
+	const response = await fetch("/schedule/regionList")
+	
+	const dataList = await response.json();
+	
+	locationData.domestic = dataList;
+	
+	return dataList;
 }
 
 function filterLocations(locations, query, isOverseas) {
@@ -434,6 +446,8 @@ function renderAutocomplete(dropdown, results, query, travelType) {
         item.addEventListener('click', function() {
             const input = dropdown.previousElementSibling;
             input.value = this.dataset.name;
+            input.dataset.code = this.dataset.code;
+			
             hideAutocomplete(dropdown);
         });
     });

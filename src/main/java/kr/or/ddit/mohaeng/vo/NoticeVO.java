@@ -21,7 +21,7 @@ public class NoticeVO {
 	private String status;				//삭제여부
 	private int attachNo;				//첨부파일
 
-	
+	//깃테스트
 	//기존에 추가된 파일들 중, 삭제하겠다고 체크한 파일 번호가 저장될 필드
 
 	private Integer[] delFileNo;

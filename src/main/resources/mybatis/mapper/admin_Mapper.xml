@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.adminLogin.mapper.IAdminMapper">
+	
+	<select id="selectByLoginId" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.AdminLoginVO">
+
+    SELECT
+        m.MEM_NO        AS memNo,
+        m.MEM_ID        AS memId,
+        m.MEM_PASSWORD  AS memPassword,
+        m.MEM_NAME      AS memName,
+        a.POSI_NO       AS posiNo,
+        a.DEPT_NAME     AS deptName
+    FROM MEMBER m
+    JOIN MEM_ADMIN a
+        ON m.MEM_NO = a.MEM_NO
+    JOIN MEMBER_AUTH auth
+        ON m.MEM_NO = auth.MEM_NO
+    WHERE m.MEM_ID = #{loginId}
+      AND m.DEL_YN = 'N'
+      AND m.ENABLED = 1
+</select>
+	
+</mapper>

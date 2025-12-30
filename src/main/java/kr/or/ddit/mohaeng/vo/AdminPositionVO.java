@@ -1,5 +1,6 @@
 package kr.or.ddit.mohaeng.vo;
 
+<<<<<<< HEAD
 import java.util.Date;
 import java.util.List;
 
@@ -16,4 +17,20 @@ public class AdminPositionVO {
 	private String posiDesc;
 	private String auth;
 	private String useYn;
+=======
+import lombok.Data;
+
+@Data
+public class AdminPositionVO {
+	
+	// position - 관리자 권한
+	private int posiNo;
+	private String posiCd;
+	private String posiName;
+	private String posiDesc;
+	private String auth;
+	private String useYn;
+	
+	
+>>>>>>> refs/remotes/origin/feature/deresa
 }

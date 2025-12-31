@@ -16,13 +16,23 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	ITripScheduleMapper iTripScheduleMapper;
 	
 	@Override
-	public List<Params> selectRegionList() {
+	public List<Map<String, Object>> selectRegionList() {
 		return iTripScheduleMapper.selectRegionList();
 	}
 	
 	@Override
-	public List selectPopRegionList() {
+	public List<Map<String, Object>> selectPopRegionList() {
 		return iTripScheduleMapper.selectPopRegionList();
+	}
+
+	@Override
+	public List<Map<String, Object>> selectTourPlaceList() {
+		return iTripScheduleMapper.selectTourPlaceList();
+	}
+
+	@Override
+	public Params searchRegion(Params params) {
+		return iTripScheduleMapper.searchRegion(params);
 	}
 	
 	

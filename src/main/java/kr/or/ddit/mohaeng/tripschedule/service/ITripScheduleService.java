@@ -7,9 +7,14 @@ import kr.or.ddit.util.Params;
 
 public interface ITripScheduleService {
 
-	public List<Params> selectRegionList();
+	public List<Map<String, Object>> selectRegionList();
 
-	public List selectPopRegionList();
+	public List<Map<String, Object>> selectPopRegionList();
+
+	public List<Map<String, Object>> selectTourPlaceList();
+
+	public Params searchRegion(Params params);
+	
 	
 	
 

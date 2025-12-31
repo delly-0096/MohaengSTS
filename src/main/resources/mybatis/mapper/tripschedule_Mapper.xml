@@ -31,4 +31,42 @@
 		  FROM REGION
 		 WHERE POP_RGN_YN = 'Y'
 	</select>
+	
+	<select id="selectTourPlaceList" resultType="kr.or.ddit.util.Params">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ADDR
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+		  FROM TOUR_PLACE
+	</select>
+	
+	<select id="searchRegion" resultType="kr.or.ddit.util.Params" parameterType="kr.or.ddit.util.Params">
+		SELECT RGN_NO
+			 , RGN_NO AS CODE
+			 , RGN_NM
+			 , RGN_NM AS NAME
+			 , RGN_DETAIL
+			 , RGN_DETAIL AS SUB
+			 , RGN_DESC
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , POP_RGN_YN
+		  FROM REGION
+		 WHERE RGN_NO = #{rgnNo}
+	</select>
 </mapper>

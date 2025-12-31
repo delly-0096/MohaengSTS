@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.support.notice.mapper.INoticeMapper">
+	<!-- 공지 상세 -->
+	<select id="selectNotice" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.NoticeVO">
+     SELECT
+      NTC_NO     AS ntcNo,
+      NTC_TITLE  AS ntcTitle,
+      NTC_CONTENT AS ntcContent,
+      REG_ID     AS regId,
+      REG_DT     AS regDt,
+      NTC_TYPE   AS ntcType,
+      VIEW_CNT   AS viewCnt,
+      STATUS     AS status,
+      ATTACH_NO  AS attachNo
+     FROM NOTICE
+     WHERE NTC_NO = #{ntcNo}
+
+</select>
+	 <!-- 조회수 증가 -->
+		<update id="incrementHit" parameterType="int">
+ 		   UPDATE NOTICE
+   		   SET VIEW_CNT = NVL(VIEW_CNT, 0) + 1
+   		   WHERE NTC_NO = #{ntcNo}
+ 		 </update>
+		
+		<select id="selectNoticeList" resultType="kr.or.ddit.mohaeng.vo.NoticeVO">
+ 		 SELECT
+ 		   NTC_NO AS ntcNo,
+ 		   NTC_TITLE AS ntcTitle,
+ 		   REG_DT AS regDt,
+ 		   NTC_TYPE AS ntcType,
+ 		   VIEW_CNT AS viewCnt
+ 		 FROM NOTICE
+ 		 WHERE STATUS = 'N'
+ 		 ORDER BY NTC_NO DESC
+</select>
+
+</mapper>

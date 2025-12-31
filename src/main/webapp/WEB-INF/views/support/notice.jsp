@@ -46,20 +46,41 @@
                 <button class="faq-category" data-category="update">업데이트</button>
             </div>
 
-            <!-- 공지사항 리스트 -->
-            <div class="notice-list">
-                <div class="notice-item" data-category="notice">
-                    <span class="notice-badge notice">공지</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="${pageContext.request.contextPath}/support/notice/1">[공지] 개인정보 처리방침 개정 안내</a>
-                        </h4>
-                        <div class="notice-meta">2024.03.15</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 1,234
-                    </div>
-                </div>
+			<!-- 공지사항 리스트 -->
+			<div class="notice-list">
+
+			  <c:choose>
+			    <c:when test="${empty noticeList}">
+			      <div class="notice-item" style="justify-content:center;">
+			        등록된 공지사항이 없습니다.
+			      </div>
+			    </c:when>
+
+			    <c:otherwise>
+			      <c:forEach var="item" items="${noticeList}">
+			        <div class="notice-item" data-category="${item.ntcType}">
+			          <!-- 배지(카테고리) -->
+			          <span class="notice-badge notice">${item.ntcType}</span>
+
+			          <div class="notice-content">
+			            <!-- ✅ 제목 클릭 → 상세 이동 -->
+			            <h4 class="notice-title">
+			              <a href="${pageContext.request.contextPath}/support/notice/detail?ntcNo=${item.ntcNo}">
+			                ${item.ntcTitle}
+			              </a>
+			            </h4>
+			            <div class="notice-meta">${item.regDt}</div>
+			          </div>
+
+			          <div class="notice-views">
+			            <i class="bi bi-eye me-1"></i> ${item.viewCnt}
+			          </div>
+			        </div>
+			      </c:forEach>
+			    </c:otherwise>
+			  </c:choose>
+
+			</div>
 
                 <div class="notice-item" data-category="event">
                     <span class="notice-badge event">이벤트</span>

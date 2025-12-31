@@ -265,56 +265,56 @@
                     </button>
                 </div>
 
-                <div class="search-result-item">
-                    <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=80&h=80&fit=crop&q=80"
-                         alt="카페" class="search-result-image">
-                    <div class="search-result-content">
-                        <h5 class="search-result-name">봄날카페</h5>
-                        <span class="search-result-category">카페 · 오션뷰</span>
-                        <div class="search-result-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span>4.6</span>
-                            <span class="text-muted">(892)</span>
-                        </div>
-                    </div>
-                    <button class="search-result-add" onclick="addToItinerary(6, '봄날카페', '카페')">
-                        <i class="bi bi-plus"></i>
-                    </button>
-                </div>
+<!--                 <div class="search-result-item"> -->
+<!--                     <img src="https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=80&h=80&fit=crop&q=80" -->
+<!--                          alt="카페" class="search-result-image"> -->
+<!--                     <div class="search-result-content"> -->
+<!--                         <h5 class="search-result-name">봄날카페</h5> -->
+<!--                         <span class="search-result-category">카페 · 오션뷰</span> -->
+<!--                         <div class="search-result-rating"> -->
+<!--                             <i class="bi bi-star-fill"></i> -->
+<!--                             <span>4.6</span> -->
+<!--                             <span class="text-muted">(892)</span> -->
+<!--                         </div> -->
+<!--                     </div> -->
+<!--                     <button class="search-result-add" onclick="addToItinerary(6, '봄날카페', '카페')"> -->
+<!--                         <i class="bi bi-plus"></i> -->
+<!--                     </button> -->
+<!--                 </div> -->
 
-                <div class="search-result-item">
-                    <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=80&h=80&fit=crop&q=80"
-                         alt="맛집" class="search-result-image">
-                    <div class="search-result-content">
-                        <h5 class="search-result-name">제주갈치조림</h5>
-                        <span class="search-result-category">맛집 · 해산물</span>
-                        <div class="search-result-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span>4.5</span>
-                            <span class="text-muted">(567)</span>
-                        </div>
-                    </div>
-                    <button class="search-result-add" onclick="addToItinerary(7, '제주갈치조림', '맛집')">
-                        <i class="bi bi-plus"></i>
-                    </button>
-                </div>
+<!--                 <div class="search-result-item"> -->
+<!--                     <img src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=80&h=80&fit=crop&q=80" -->
+<!--                          alt="맛집" class="search-result-image"> -->
+<!--                     <div class="search-result-content"> -->
+<!--                         <h5 class="search-result-name">제주갈치조림</h5> -->
+<!--                         <span class="search-result-category">맛집 · 해산물</span> -->
+<!--                         <div class="search-result-rating"> -->
+<!--                             <i class="bi bi-star-fill"></i> -->
+<!--                             <span>4.5</span> -->
+<!--                             <span class="text-muted">(567)</span> -->
+<!--                         </div> -->
+<!--                     </div> -->
+<!--                     <button class="search-result-add" onclick="addToItinerary(7, '제주갈치조림', '맛집')"> -->
+<!--                         <i class="bi bi-plus"></i> -->
+<!--                     </button> -->
+<!--                 </div> -->
 
-                <div class="search-result-item">
-                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=80&fit=crop&q=80"
-                         alt="해변" class="search-result-image">
-                    <div class="search-result-content">
-                        <h5 class="search-result-name">금능해수욕장</h5>
-                        <span class="search-result-category">관광지 · 해변</span>
-                        <div class="search-result-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span>4.7</span>
-                            <span class="text-muted">(445)</span>
-                        </div>
-                    </div>
-                    <button class="search-result-add" onclick="addToItinerary(8, '금능해수욕장', '관광지')">
-                        <i class="bi bi-plus"></i>
-                    </button>
-                </div>
+<!--                 <div class="search-result-item"> -->
+<!--                     <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=80&fit=crop&q=80" -->
+<!--                          alt="해변" class="search-result-image"> -->
+<!--                     <div class="search-result-content"> -->
+<!--                         <h5 class="search-result-name">금능해수욕장</h5> -->
+<!--                         <span class="search-result-category">관광지 · 해변</span> -->
+<!--                         <div class="search-result-rating"> -->
+<!--                             <i class="bi bi-star-fill"></i> -->
+<!--                             <span>4.7</span> -->
+<!--                             <span class="text-muted">(445)</span> -->
+<!--                         </div> -->
+<!--                     </div> -->
+<!--                     <button class="search-result-add" onclick="addToItinerary(8, '금능해수욕장', '관광지')"> -->
+<!--                         <i class="bi bi-plus"></i> -->
+<!--                     </button> -->
+<!--                 </div> -->
             </div>
         </div>
     </aside>
@@ -559,6 +559,7 @@
     </div>
 </div>
 
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9976009a2fb2e0385884b79eca12dd63&libraries=services,clusterer"></script>
 <script>
 //map
 
@@ -574,6 +575,10 @@ let totalBudget = 0; // 총 예산
 
 let startDt = "";
 let endDt = "";
+let diffDay = 0;
+let duration = 0;
+
+const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
 // 일차 데이터 저장
 let dayData = {
@@ -583,7 +588,7 @@ let dayData = {
     4: { theme: '', date: '' }
 };
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     selectDayModal = new bootstrap.Modal(document.getElementById('selectDayModal'));
     saveScheduleModal = new bootstrap.Modal(document.getElementById('saveScheduleModal'));
     editDayModal = new bootstrap.Modal(document.getElementById('editDayModal'));
@@ -609,9 +614,40 @@ document.addEventListener('DOMContentLoaded', function() {
         endDt = travelDates;
     }
     
-    console.log(startDt)
-    console.log(endDt)
-
+    diffDay = getDaysDiff(startDt, endDt);
+    duration = diffDay + 1;
+    
+    let plannerDay = "";
+    
+    for(let i = 0; i < duration; i++) {
+		let dDay = i + 1;
+    	let durDate = new Date(startDt);
+    	durDate.setDate(durDate.getDate() + i);
+    	let shortWeekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(durDate);
+    	let dDateMonth = durDate.getMonth() + 1;
+    	let dDateDay = durDate.getDate();
+    	console.log(shortWeekday);
+    	plannerDay += `
+    		<div class="planner-day" data-day="\${dDay}">
+            <div class="planner-day-header" onclick="openEditDayModal(\${dDay})">
+                <div class="planner-day-header-content">
+                    <span class="planner-day-title" id="dayTitle\${dDay}">\${dDay}일차</span>
+                    <span class="planner-day-theme" id="dayTheme\${dDay}"></span>
+                </div>
+                <span class="planner-day-date" id="dayDate\${dDay}">\${dDateMonth}월 \${dDateDay}일 (\${shortWeekday})</span>
+                <i class="bi bi-pencil planner-day-edit-icon"></i>
+            </div>
+            <div class="planner-items" id="day\${dDay}Items">
+				
+            </div>
+            <button class="add-place-btn" onclick="openAddPlaceModal(\${dDay})" style="margin-top: 8px; padding: 10px;">
+                <i class="bi bi-plus"></i> 장소 추가
+            </button>
+        </div>
+        `
+    }
+    
+    $("#itineraryContent").html(plannerDay);
     
     if (preferenceData.destination) {
         document.getElementById('tripTitle').textContent = preferenceData.destination + ' 여행';
@@ -619,6 +655,35 @@ document.addEventListener('DOMContentLoaded', function() {
     if (preferenceData.travelDates) {
         document.getElementById('tripDates').textContent = preferenceData.travelDates;
     }
+    
+    console.log(preferenceData);
+    let destinationcode = preferenceData.destinationcode
+    let destinationData = await initDestinationData(destinationcode)
+    let tourPlace = initTourPlaceList(destinationcode)
+    
+    let latitude = destinationData.latitude;
+    let longitude = destinationData.longitude;
+    
+	// 1. 맵 객체 생성 (div id가 'map'이라고 가정)
+	const myMap = new KakaoMapHelper('map');
+	
+	// 2. 지도 초기화 (서울 시청 기준)
+	myMap.init(latitude, longitude);
+// 	35.1796	129.0756
+	 // 3. 테스트: 내가 가진 데이터(TOUR_PLACE) 루프 돌면서 찍기
+	 const tourPlaces = [
+	     { title: preferenceData.destination, lat: latitude, lng: longitude, id: 1 },
+// 	     { title: 'N서울타워', lat: 37.5511, lng: 126.9882, id: 2 },
+// 	     { title: '북촌한옥마을', lat: 37.5826, lng: 126.9830, id: 3 }
+	 ];
+	
+	tourPlaces.forEach(place => {
+	    // 마커 추가 (위도, 경도, 제목, 커스텀데이터)
+	    myMap.addMarker(place.lat, place.lng, place.title, { id: place.id });
+	});
+	
+	// 4. 마커가 다 보이도록 지도 줌 레벨 자동 조정
+	myMap.fitBounds();
 });
 
 // 일자 선택
@@ -874,7 +939,7 @@ function confirmAddPlace() {
     showToast(selectedItem.name + '이(가) ' + selectedDay + '일차 ' + startTime + ' ~ ' + endTime + '에 추가되었습니다.', 'success');
 
     // 일정 탭으로 전환
-    switchPlannerTab('itinerary');
+//     switchPlannerTab('itinerary');
 
     selectedItem = null;
 }
@@ -1196,6 +1261,61 @@ function updateItemCost(day, itemId, value) {
     }
 
     calculateAllCosts();
+}
+
+async function initDestinationData(destinationcode) {
+	const response = await fetch("/schedule/searchRegion?rgnNo="+destinationcode)
+	
+	const dataList = await response.json();
+	
+	return dataList;
+}
+
+async function initTourPlaceList(areaCode) {
+	const response = await fetch(`/schedule/initTourPlaceList?areaCode=\${areaCode}`)
+	
+	const dataList = await response.json();
+	
+	console.log(dataList);
+	
+	let items = dataList.response.body.items.item;
+	
+	let placeData = "";
+
+	let outputCnt = 0;
+	
+	for(let i = 0; i < items.length && outputCnt < 5; i++) {
+		let tourPlace = items[i];
+		
+		if(tourPlace.firstimage2) {
+			placeData += `
+		        <div class="search-result-item">
+		        <img src="\${ tourPlace.firstimage2 }"
+		             alt="\${ tourPlace.title }" class="search-result-image">
+		        <div class="search-result-content">
+		            <h5 class="search-result-name">\${ tourPlace.title }</h5>
+		            <span class="search-result-category">관광지 · 자연</span>
+		            <div class="search-result-rating">
+		                <i class="bi bi-star-fill"></i>
+		                <span>4.8</span>
+		                <span class="text-muted">(1,234)</span>
+		            </div>
+		        </div>
+		        <button class="search-result-add" onclick="addToItinerary(5, '\${ tourPlace.title }', '관광지')">
+		            <i class="bi bi-plus"></i>
+		        </button>
+		    </div>
+			`;
+			
+			outputCnt++;
+		}
+	}
+	
+	
+	
+	$("#searchResults").html(placeData);
+	
+	return dataList;
 }
 
 // 비용 입력 포맷팅 (숫자만, 쉼표 추가)

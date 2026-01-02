@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <c:set var="pageTitle" value="운영자 문의" />
 <c:set var="pageCss" value="mypage" />
@@ -20,26 +21,29 @@
                 <div class="stats-grid">
                     <div class="stat-card primary">
                         <div class="stat-icon"><i class="bi bi-chat-dots"></i></div>
-                        <div class="stat-value">3</div>
+                        <div class="stat-value">${status.total}</div>
                         <div class="stat-label">전체 문의</div>
                     </div>
                     <div class="stat-card secondary">
                         <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
-                        <div class="stat-value">2</div>
+                        <div class="stat-value">${status.answered}</div>
                         <div class="stat-label">답변 완료</div>
                     </div>
                     <div class="stat-card accent">
                         <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-                        <div class="stat-value">1</div>
+                        <div class="stat-value">${status.waiting}</div>
                         <div class="stat-label">답변 대기</div>
                     </div>
                 </div>
 
                 <!-- 탭 -->
                 <div class="mypage-tabs">
-                    <button class="mypage-tab active" data-filter="all">전체</button>
-                    <button class="mypage-tab" data-filter="answered">답변 완료</button>
-                    <button class="mypage-tab" data-filter="waiting">답변 대기</button>
+                    <button class="mypage-tab ${currentFilter == 'all' ? 'active' : ''}"
+                            onclick="changeFilter('all')">전체</button>
+                    <button class="mypage-tab ${currentFilter == 'answered' ? 'active' : ''}"
+                            onclick="changeFilter('answered')">답변 완료</button>
+                    <button class="mypage-tab ${currentFilter == 'waiting' ? 'active' : ''}"
+                            onclick="changeFilter('waiting')">답변 대기</button>
                     <a href="${pageContext.request.contextPath}/support/inquiry#write" class="btn btn-primary btn-sm ms-auto">
                         <i class="bi bi-pencil me-1"></i>문의 작성
                     </a>
@@ -50,150 +54,140 @@
                     <div class="section-header">
                         <h3><i class="bi bi-list-ul"></i> 문의 내역</h3>
                         <div class="d-flex gap-2">
-                            <select class="form-select form-select-sm" style="width: 120px;">
-                                <option>최근 3개월</option>
-                                <option>최근 6개월</option>
-                                <option>최근 1년</option>
-                                <option>전체</option>
+                            <select class="form-select form-select-sm" style="width: 120px;"
+                                    onchange="changeMonths(this.value)">
+                                <option value="3" ${currentMonths == 3 ? 'selected' : ''}>최근 3개월</option>
+                                <option value="6" ${currentMonths == 6 ? 'selected' : ''}>최근 6개월</option>
+                                <option value="12" ${currentMonths == 12 ? 'selected' : ''}>최근 1년</option>
+                                <option value="0" ${currentMonths == 0 ? 'selected' : ''}>전체</option>
                             </select>
                         </div>
                     </div>
 
                     <div class="inquiry-list-mypage">
-                        <!-- 문의 1 - 답변 완료 -->
-                        <div class="inquiry-item-mypage" data-status="answered">
-                            <div class="inquiry-item-header-mypage" onclick="toggleInquiry(this)">
-                                <div class="inquiry-info">
-                                    <span class="inquiry-category">결제/환불</span>
-                                    <h4 class="inquiry-title">환불 요청 관련 문의드립니다.</h4>
-                                    <div class="inquiry-meta">
-                                        <span>2024.03.10</span>
+                        <c:choose>
+                            <c:when test="${empty inquiryList}">
+                                <div class="empty-state" style="text-align: center; padding: 60px 20px; color: #999;">
+                                    <i class="bi bi-inbox" style="font-size: 48px; margin-bottom: 16px;"></i>
+                                    <p style="font-size: 16px; margin: 0;">문의 내역이 없습니다.</p>
+                                </div>
+                            </c:when>
+                            <c:otherwise>
+                                <c:forEach var="inquiry" items="${inquiryList}">
+                                    <!-- 문의 아이템 -->
+                                    <div class="inquiry-item-mypage" data-status="${inquiry.inqryStatus}">
+                                        <div class="inquiry-item-header-mypage" onclick="toggleInquiry(this)">
+                                            <div class="inquiry-info">
+                                                <span class="inquiry-category">${inquiry.categoryName}</span>
+                                                <h4 class="inquiry-title">${inquiry.inqryTitle}</h4>
+                                                <div class="inquiry-meta">
+                                                    <span>${inquiry.regDtStr}</span>
+                                                </div>
+                                            </div>
+                                            <div class="inquiry-status-wrap">
+                                                <c:choose>
+                                                    <c:when test="${inquiry.inqryStatus == 'answered'}">
+                                                        <span class="inquiry-status answered">답변완료</span>
+                                                    </c:when>
+                                                    <c:when test="${inquiry.inqryStatus == 'waiting'}">
+                                                        <span class="inquiry-status waiting">답변대기</span>
+                                                    </c:when>
+                                                </c:choose>
+                                                <i class="bi bi-chevron-down"></i>
+                                            </div>
+                                        </div>
+                                        <div class="inquiry-body-mypage">
+                                            <div class="inquiry-question">
+                                                <div class="inquiry-label">문의 내용</div>
+                                                <p>${fn:replace(inquiry.inqryCn, newLineChar, '<br>')}</p>
+                                            </div>
+                                            <c:if test="${inquiry.inqryStatus == 'answered' && not empty inquiry.replyCn}">
+                                                <div class="inquiry-answer-box">
+                                                    <div class="inquiry-label">답변
+                                                        <span class="answer-date">${inquiry.replyDtStr}</span>
+                                                    </div>
+                                                    <p>${fn:replace(inquiry.replyCn, newLineChar, '<br>')}</p>
+                                                </div>
+                                            </c:if>
+                                        </div>
                                     </div>
-                                </div>
-                                <div class="inquiry-status-wrap">
-                                    <span class="inquiry-status answered">답변완료</span>
-                                    <i class="bi bi-chevron-down"></i>
-                                </div>
-                            </div>
-                            <div class="inquiry-body-mypage">
-                                <div class="inquiry-question">
-                                    <div class="inquiry-label">문의 내용</div>
-                                    <p>지난 주 예약한 제주 스쿠버다이빙 체험을 취소하고 싶습니다. 환불 가능한지 확인 부탁드립니다.</p>
-                                </div>
-                                <div class="inquiry-answer-box">
-                                    <div class="inquiry-label">답변 <span class="answer-date">2024.03.11 10:15</span></div>
-                                    <p>
-                                        안녕하세요, 모행입니다.<br><br>
-                                        문의주신 예약건 확인했습니다. 이용일 기준 7일 이상 남아있어 전액 환불 가능합니다.<br>
-                                        마이페이지 > 결제 내역에서 직접 취소하시거나, 자동 취소 처리해드릴까요?<br><br>
-                                        추가 문의사항이 있으시면 말씀해주세요.<br>
-                                        감사합니다.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 문의 2 - 답변 대기 -->
-                        <div class="inquiry-item-mypage" data-status="waiting">
-                            <div class="inquiry-item-header-mypage" onclick="toggleInquiry(this)">
-                                <div class="inquiry-info">
-                                    <span class="inquiry-category">포인트</span>
-                                    <h4 class="inquiry-title">포인트 적립이 안됐어요</h4>
-                                    <div class="inquiry-meta">
-                                        <span>2024.03.14</span>
-                                    </div>
-                                </div>
-                                <div class="inquiry-status-wrap">
-                                    <span class="inquiry-status waiting">답변대기</span>
-                                    <i class="bi bi-chevron-down"></i>
-                                </div>
-                            </div>
-                            <div class="inquiry-body-mypage">
-                                <div class="inquiry-question">
-                                    <div class="inquiry-label">문의 내용</div>
-                                    <p>어제 이용 완료한 한라산 트레킹 투어 포인트가 아직 적립되지 않았습니다. 확인 부탁드립니다.</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 문의 3 - 답변 완료 -->
-                        <div class="inquiry-item-mypage" data-status="answered">
-                            <div class="inquiry-item-header-mypage" onclick="toggleInquiry(this)">
-                                <div class="inquiry-info">
-                                    <span class="inquiry-category">일정/예약</span>
-                                    <h4 class="inquiry-title">예약 일정 변경 가능한가요?</h4>
-                                    <div class="inquiry-meta">
-                                        <span>2024.02.28</span>
-                                    </div>
-                                </div>
-                                <div class="inquiry-status-wrap">
-                                    <span class="inquiry-status answered">답변완료</span>
-                                    <i class="bi bi-chevron-down"></i>
-                                </div>
-                            </div>
-                            <div class="inquiry-body-mypage">
-                                <div class="inquiry-question">
-                                    <div class="inquiry-label">문의 내용</div>
-                                    <p>3월 5일로 예약한 서핑 레슨을 3월 12일로 변경하고 싶습니다. 가능할까요?</p>
-                                </div>
-                                <div class="inquiry-answer-box">
-                                    <div class="inquiry-label">답변 <span class="answer-date">2024.02.28 14:30</span></div>
-                                    <p>
-                                        안녕하세요, 모행입니다.<br><br>
-                                        예약 일정 변경 확인했습니다. 3월 12일 동일 시간대로 변경 처리 완료되었습니다.<br>
-                                        변경된 예약 내역은 마이페이지 > 결제 내역에서 확인하실 수 있습니다.<br><br>
-                                        즐거운 여행 되세요!
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
 
                 <!-- 페이지네이션 -->
-                <div class="pagination-container">
-                    <nav>
-                        <ul class="pagination">
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+                <c:if test="${totalPages > 0}">
+                    <div class="pagination-container">
+                        <nav>
+                            <ul class="pagination">
+                                <!-- 이전 페이지 -->
+                                <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                                    <a class="page-link" href="javascript:goToPage(${currentPage - 1})">
+                                        <i class="bi bi-chevron-left"></i>
+                                    </a>
+                                </li>
+
+                                <!-- 페이지 번호 -->
+                                <c:forEach begin="1" end="${totalPages}" var="pageNum">
+                                    <li class="page-item ${currentPage == pageNum ? 'active' : ''}">
+                                        <a class="page-link" href="javascript:goToPage(${pageNum})">${pageNum}</a>
+                                    </li>
+                                </c:forEach>
+
+                                <!-- 다음 페이지 -->
+                                <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                                    <a class="page-link" href="javascript:goToPage(${currentPage + 1})">
+                                        <i class="bi bi-chevron-right"></i>
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </div>
+                </c:if>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-// 탭 필터링
-document.querySelectorAll('.mypage-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.mypage-tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-
-        const filter = this.dataset.filter;
-        const items = document.querySelectorAll('.inquiry-item-mypage');
-
-        items.forEach(item => {
-            if (filter === 'all') {
-                item.style.display = 'block';
-            } else {
-                const status = item.dataset.status;
-                item.style.display = status === filter ? 'block' : 'none';
-            }
-        });
-    });
-});
-
 // 문의 아코디언
 function toggleInquiry(header) {
     const item = header.closest('.inquiry-item-mypage');
     item.classList.toggle('active');
+}
+
+// 필터 변경
+function changeFilter(filter) {
+    const url = '${pageContext.request.contextPath}/mypage/inquiries';
+    const params = new URLSearchParams();
+    params.append('filter', filter);
+    params.append('months', '${currentMonths}');
+    params.append('page', '1');
+    window.location.href = url + '?' + params.toString();
+}
+
+// 조회 기간 변경
+function changeMonths(months) {
+    const url = '${pageContext.request.contextPath}/mypage/inquiries';
+    const params = new URLSearchParams();
+    params.append('filter', '${currentFilter}');
+    params.append('months', months);
+    params.append('page', '1');
+    window.location.href = url + '?' + params.toString();
+}
+
+// 페이지 이동
+function goToPage(page) {
+    if (page < 1 || page > ${totalPages}) return;
+
+    const url = '${pageContext.request.contextPath}/mypage/inquiries';
+    const params = new URLSearchParams();
+    params.append('filter', '${currentFilter}');
+    params.append('months', '${currentMonths}');
+    params.append('page', page);
+    window.location.href = url + '?' + params.toString();
 }
 </script>
 

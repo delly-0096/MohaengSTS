@@ -1,8 +1,11 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <c:set var="pageTitle" value="1:1 문의" />
 <c:set var="pageCss" value="support" />
+<c:set var="newLine" value="
+" />
 
 <%@ include file="../common/header.jsp" %>
 
@@ -30,12 +33,12 @@
         <div class="inquiry-container">
             <!-- 탭 -->
             <div class="inquiry-tabs">
-                <button class="inquiry-tab active" data-tab="history">운영자 문의</button>
-                <button class="inquiry-tab" data-tab="write">문의 작성</button>
+                <button class="inquiry-tab ${currentTab == 'history' ? 'active' : ''}" data-tab="history">문의 내역</button>
+                <button class="inquiry-tab ${currentTab == 'write' ? 'active' : ''}" data-tab="write">문의 작성</button>
             </div>
 
             <!-- 문의 작성 폼 -->
-            <div class="inquiry-content-area" id="writeTab" style="display: none;">
+            <div class="inquiry-content-area" id="writeTab" style="display: ${currentTab == 'write' ? 'block' : 'none'};">
                 <div class="inquiry-form">
                     <h3><i class="bi bi-pencil me-2"></i>문의하기</h3>
 
@@ -44,44 +47,41 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">문의 유형 <span class="text-danger">*</span></label>
-                                    <select class="form-control form-select" required>
+                                    <select class="form-control form-select" id="inqryCtgryCd" required>
                                         <option value="">선택해주세요</option>
-                                        <option>회원/계정</option>
-                                        <option>일정/예약</option>
-                                        <option>결제/환불</option>
-                                        <option>포인트</option>
-                                        <option>서비스 이용</option>
-                                        <option>기타</option>
+                                        <c:forEach var="category" items="${categoryList}">
+                                            <option value="${category.cd}">${category.cdName}</option>
+                                        </c:forEach>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">관련 예약번호 (선택)</label>
-                                    <input type="text" class="form-control" placeholder="예약번호가 있다면 입력해주세요">
+                                    <input type="text" class="form-control" id="inquiryTargetNo" placeholder="예약번호가 있다면 입력해주세요">
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">제목 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" placeholder="문의 제목을 입력해주세요" required>
+                            <input type="text" class="form-control" id="inqryTitle" placeholder="문의 제목을 입력해주세요" required>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">문의 내용 <span class="text-danger">*</span></label>
-                            <textarea class="form-control" rows="8" placeholder="문의하실 내용을 상세히 작성해주세요" required></textarea>
+                            <textarea class="form-control" id="inqryCn" rows="8" placeholder="문의하실 내용을 상세히 작성해주세요" required></textarea>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">첨부파일 (선택)</label>
-                            <input type="file" class="form-control" multiple accept="image/*,.pdf,.doc,.docx">
+                            <input type="file" class="form-control" id="attachFile" multiple accept="image/*,.pdf,.doc,.docx">
                             <small class="text-muted">최대 5개, 각 10MB 이하 (이미지, PDF, DOC 파일)</small>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">답변 받을 이메일 <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" value="${sessionScope.loginUser.email}" required>
+                            <input type="email" class="form-control" id="inqryEmail" value="" required>
                             <small class="text-muted">답변 알림이 발송됩니다.</small>
                         </div>
 
@@ -110,115 +110,95 @@
             </div>
 
             <!-- 문의 내역 -->
-            <div class="inquiry-content-area" id="historyTab">
+            <div class="inquiry-content-area" id="historyTab" style="display: ${currentTab == 'history' ? 'block' : 'none'};">
                 <c:choose>
-                    <c:when test="${not empty sessionScope.loginUser}">
+                    <c:when test="${not empty sessionScope.loginMember}">
                         <!-- 카테고리 필터 -->
                         <div class="faq-categories mb-4">
-                            <button class="faq-category active" data-category="all">전체</button>
-                            <button class="faq-category" data-category="account">회원/계정</button>
-                            <button class="faq-category" data-category="schedule">일정/예약</button>
-                            <button class="faq-category" data-category="payment">결제/환불</button>
-                            <button class="faq-category" data-category="point">포인트</button>
-                            <button class="faq-category" data-category="service">서비스 이용</button>
-                            <button class="faq-category" data-category="etc">기타</button>
+                            <button class="faq-category ${empty currentCategory || currentCategory == 'all' ? 'active' : ''}"
+                                    onclick="changeCategory('all')">전체</button>
+                            <c:forEach var="category" items="${categoryList}">
+                                <button class="faq-category ${currentCategory == category.cd ? 'active' : ''}"
+                                        onclick="changeCategory('${category.cd}')">${category.cdName}</button>
+                            </c:forEach>
                         </div>
 
                         <div class="inquiry-list">
-                            <!-- 문의 1 - 답변 완료 -->
-                            <div class="inquiry-item" data-category="payment">
-                                <div class="inquiry-item-header">
-                                    <div class="inquiry-item-info">
-                                        <h4 class="inquiry-item-title">환불 요청 관련 문의드립니다.</h4>
-                                        <div class="inquiry-item-meta">
-                                            <span class="badge bg-secondary me-2">결제/환불</span>
-                                            2024.03.10 14:32
+                            <c:choose>
+                                <c:when test="${empty inquiryList}">
+                                    <div class="text-center py-5" style="color: #999;">
+                                        <i class="bi bi-inbox" style="font-size: 48px;"></i>
+                                        <p class="mt-3">문의 내역이 없습니다.</p>
+                                    </div>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:forEach var="inquiry" items="${inquiryList}">
+                                        <!-- 문의 아이템 -->
+                                        <div class="inquiry-item">
+                                            <div class="inquiry-item-header">
+                                                <div class="inquiry-item-info">
+                                                    <h4 class="inquiry-item-title">${inquiry.inqryTitle}</h4>
+                                                    <div class="inquiry-item-meta">
+                                                        <span class="badge bg-secondary me-2">${inquiry.categoryName}</span>
+                                                        ${inquiry.regDtStr}
+                                                    </div>
+                                                </div>
+                                                <c:choose>
+                                                    <c:when test="${inquiry.inqryStatus == 'answered'}">
+                                                        <span class="inquiry-status answered">답변완료</span>
+                                                    </c:when>
+                                                    <c:when test="${inquiry.inqryStatus == 'waiting'}">
+                                                        <span class="inquiry-status waiting">답변대기</span>
+                                                    </c:when>
+                                                </c:choose>
+                                            </div>
+                                            <div class="inquiry-item-body">
+                                                <div class="inquiry-content">
+                                                    <div class="inquiry-content-label">문의 내용</div>
+                                                    <p>${fn:replace(inquiry.inqryCn, newLine, '<br>')}</p>
+                                                </div>
+                                                <c:if test="${inquiry.inqryStatus == 'answered' && not empty inquiry.replyCn}">
+                                                    <div class="inquiry-answer">
+                                                        <div class="inquiry-content-label">답변 (${inquiry.replyDtStr})</div>
+                                                        <p>${fn:replace(inquiry.replyCn, newLine, '<br>')}</p>
+                                                    </div>
+                                                </c:if>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <span class="inquiry-status answered">답변완료</span>
-                                </div>
-                                <div class="inquiry-item-body">
-                                    <div class="inquiry-content">
-                                        <div class="inquiry-content-label">문의 내용</div>
-                                        <p>지난 주 예약한 제주 스쿠버다이빙 체험을 취소하고 싶습니다. 환불 가능한지 확인 부탁드립니다.</p>
-                                    </div>
-                                    <div class="inquiry-answer">
-                                        <div class="inquiry-content-label">답변 (2024.03.11 10:15)</div>
-                                        <p>
-                                            안녕하세요, 모행입니다.<br><br>
-                                            문의주신 예약건 확인했습니다. 이용일 기준 7일 이상 남아있어 전액 환불 가능합니다.<br>
-                                            마이페이지 > 결제 내역에서 직접 취소하시거나, 자동 취소 처리해드릴까요?<br><br>
-                                            추가 문의사항이 있으시면 말씀해주세요.<br>
-                                            감사합니다.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 문의 2 - 답변 대기 -->
-                            <div class="inquiry-item" data-category="point">
-                                <div class="inquiry-item-header">
-                                    <div class="inquiry-item-info">
-                                        <h4 class="inquiry-item-title">포인트 적립이 안됐어요</h4>
-                                        <div class="inquiry-item-meta">
-                                            <span class="badge bg-secondary me-2">포인트</span>
-                                            2024.03.14 16:45
-                                        </div>
-                                    </div>
-                                    <span class="inquiry-status waiting">답변대기</span>
-                                </div>
-                                <div class="inquiry-item-body">
-                                    <div class="inquiry-content">
-                                        <div class="inquiry-content-label">문의 내용</div>
-                                        <p>어제 이용 완료한 한라산 트레킹 투어 포인트가 아직 적립되지 않았습니다. 확인 부탁드립니다.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 문의 3 - 답변 완료 -->
-                            <div class="inquiry-item" data-category="schedule">
-                                <div class="inquiry-item-header">
-                                    <div class="inquiry-item-info">
-                                        <h4 class="inquiry-item-title">예약 일정 변경 가능한가요?</h4>
-                                        <div class="inquiry-item-meta">
-                                            <span class="badge bg-secondary me-2">일정/예약</span>
-                                            2024.02.28 09:20
-                                        </div>
-                                    </div>
-                                    <span class="inquiry-status answered">답변완료</span>
-                                </div>
-                                <div class="inquiry-item-body">
-                                    <div class="inquiry-content">
-                                        <div class="inquiry-content-label">문의 내용</div>
-                                        <p>3월 5일로 예약한 서핑 레슨을 3월 12일로 변경하고 싶습니다. 가능할까요?</p>
-                                    </div>
-                                    <div class="inquiry-answer">
-                                        <div class="inquiry-content-label">답변 (2024.02.28 14:30)</div>
-                                        <p>
-                                            안녕하세요, 모행입니다.<br><br>
-                                            예약 일정 변경 확인했습니다. 3월 12일 동일 시간대로 변경 처리 완료되었습니다.<br>
-                                            변경된 예약 내역은 마이페이지 > 결제 내역에서 확인하실 수 있습니다.<br><br>
-                                            즐거운 여행 되세요!
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                                    </c:forEach>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
 
                         <!-- 페이지네이션 -->
-                        <div class="pagination-container">
-                            <nav>
-                                <ul class="pagination">
-                                    <li class="page-item">
-                                        <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                                    </li>
-                                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
+                        <c:if test="${totalPages > 0}">
+                            <div class="pagination-container">
+                                <nav>
+                                    <ul class="pagination">
+                                        <!-- 이전 페이지 -->
+                                        <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                                            <a class="page-link" href="javascript:goToPage(${currentPage - 1})">
+                                                <i class="bi bi-chevron-left"></i>
+                                            </a>
+                                        </li>
+
+                                        <!-- 페이지 번호 -->
+                                        <c:forEach begin="1" end="${totalPages}" var="pageNum">
+                                            <li class="page-item ${currentPage == pageNum ? 'active' : ''}">
+                                                <a class="page-link" href="javascript:goToPage(${pageNum})">${pageNum}</a>
+                                            </li>
+                                        </c:forEach>
+
+                                        <!-- 다음 페이지 -->
+                                        <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                                            <a class="page-link" href="javascript:goToPage(${currentPage + 1})">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </c:if>
                     </c:when>
                     <c:otherwise>
                         <div class="text-center py-5">
@@ -239,11 +219,17 @@
 <script>
 // 탭 전환 함수
 function switchTab(tabName) {
-    document.querySelectorAll('.inquiry-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.inquiry-tab[data-tab="' + tabName + '"]').classList.add('active');
+    const url = '${pageContext.request.contextPath}/support/inquiry';
+    const params = new URLSearchParams();
+    params.append('tab', tabName);
 
-    document.getElementById('writeTab').style.display = tabName === 'write' ? 'block' : 'none';
-    document.getElementById('historyTab').style.display = tabName === 'history' ? 'block' : 'none';
+    // 현재 카테고리 유지
+    if (tabName === 'history') {
+        params.append('category', '${currentCategory}');
+        params.append('page', '${currentPage}');
+    }
+
+    window.location.href = url + '?' + params.toString();
 }
 
 // 페이지 로드 시 URL 해시 확인
@@ -258,8 +244,6 @@ document.querySelectorAll('.inquiry-tab').forEach(tab => {
     tab.addEventListener('click', function() {
         const tabName = this.dataset.tab;
         switchTab(tabName);
-        // URL 해시 업데이트
-        history.replaceState(null, null, '#' + tabName);
     });
 });
 
@@ -271,31 +255,34 @@ document.querySelectorAll('.inquiry-item-header').forEach(header => {
     });
 });
 
-// 문의 내역 카테고리 필터링
-document.querySelectorAll('#historyTab .faq-category').forEach(category => {
-    category.addEventListener('click', function() {
-        document.querySelectorAll('#historyTab .faq-category').forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
+// 카테고리 변경
+function changeCategory(category) {
+    const url = '${pageContext.request.contextPath}/support/inquiry';
+    const params = new URLSearchParams();
+    params.append('tab', 'history');
+    params.append('category', category);
+    params.append('page', '1');
+    window.location.href = url + '?' + params.toString();
+}
 
-        const cat = this.dataset.category;
-        const items = document.querySelectorAll('.inquiry-item');
+// 페이지 이동
+function goToPage(page) {
+    if (page < 1 || page > ${totalPages}) return;
 
-        items.forEach(item => {
-            if (cat === 'all') {
-                item.style.display = 'block';
-            } else {
-                item.style.display = item.dataset.category === cat ? 'block' : 'none';
-            }
-        });
-    });
-});
+    const url = '${pageContext.request.contextPath}/support/inquiry';
+    const params = new URLSearchParams();
+    params.append('tab', 'history');
+    params.append('category', '${currentCategory}');
+    params.append('page', page);
+    window.location.href = url + '?' + params.toString();
+}
 
-// 문의 등록
+// 문의 등록 폼
 document.getElementById('inquiryForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    const isLoggedIn = ${not empty sessionScope.loginUser};
-
+    // 로그인 체크
+    const isLoggedIn = ${not empty sessionScope.loginMember};
     if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
             sessionStorage.setItem('returnUrl', window.location.href);
@@ -304,10 +291,40 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
         return;
     }
 
-    showToast('문의가 등록되었습니다. 빠른 시일 내에 답변드리겠습니다.', 'success');
+    // 폼 데이터 수집
+    const formData = {
+        inqryCtgryCd: document.getElementById('inqryCtgryCd').value,
+        inqryTitle: document.getElementById('inqryTitle').value,
+        inqryCn: document.getElementById('inqryCn').value,
+        inquiryTargetNo: document.getElementById('inquiryTargetNo').value || null,
+        inqryEmail: document.getElementById('inqryEmail').value
+    };
 
-    // 폼 초기화
-    this.reset();
+    // AJAX 요청
+    fetch('${pageContext.request.contextPath}/support/inquiry', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(formData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            // 문의 내역 탭으로 이동
+            window.location.href = '${pageContext.request.contextPath}/support/inquiry?tab=history';
+        } else {
+            alert(data.message);
+            if (data.redirect) {
+                window.location.href = data.redirect;
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('문의 등록 중 오류가 발생했습니다.');
+    });
 });
 </script>
 

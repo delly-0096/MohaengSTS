@@ -2,6 +2,8 @@ package kr.or.ddit.mohaeng.tripschedule.controller;
 
 import java.net.URI;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,9 +19,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.servlet.ModelAndView;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.servlet.http.HttpServletRequest;
 import kr.or.ddit.mohaeng.login.controller.LoginController;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
+import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.util.Params;
 import lombok.extern.slf4j.Slf4j;
 
@@ -74,24 +81,33 @@ public class TripScheduleController {
 		RestClient restClient = RestClient.create();
 
 		String urlString = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2?MobileOS=WEB&MobileApp=mohaeng&_type=json&arrange=O"
-				+ "pageNo=1&numOfRows=10"
+				+ "&pageNo=1&numOfRows=10"
+				+ "&contentTypeId=12"
 				+ "&areaCode=" + params.get("areaCode")
 				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
 
 		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
 		URI uri = URI.create(urlString);
-
-		Map<String, Object> responseMap = restClient.get()
-		    .uri(uri)
-		    .retrieve()
-		    .body(Map.class);
 		
+		JsonNode responseNode = restClient.get()
+			    .uri(uri)
+			    .retrieve()
+			    .body(JsonNode.class);
 		
-		System.out.println(responseMap);
-//		params = tripScheduleService.searchRegion(params);
-//		System.out.println(params);
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> responseMap = mapper.convertValue(responseNode, Map.class);
+		
+		JsonNode itemsNode = responseNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item");
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, String>> tourPlaceList = objectMapper.convertValue(itemsNode, new TypeReference<>() {});
+		
+		tripScheduleService.mergeSearchTourPlace(tourPlaceList);
+		
 		return new ResponseEntity<Map<String, Object>>(responseMap, HttpStatus.OK);
 	}
-	
 	
 }

@@ -69,4 +69,66 @@
 		  FROM REGION
 		 WHERE RGN_NO = #{rgnNo}
 	</select>
+	
+	<update id="mergeSearchTourPlace" parameterType="java.util.List">
+	MERGE INTO TOUR_PLACE T
+	      USING (
+	          <foreach collection="list" item="item" separator="UNION ALL">
+	              SELECT #{item.plcNo}     AS PLC_NO
+	                   , #{item.rgnNo}     AS RGN_NO
+	                   , #{item.placeType} AS PLACE_TYPE
+	                   , #{item.plcNm}     AS PLC_NM
+	                   , #{item.plcZip}    AS PLC_ZIP
+	                   , #{item.plcAddr1}  AS PLC_ADDR1
+	                   , #{item.plcAddr2}  AS PLC_ADDR2
+	                   , #{item.latitude}  AS LATITUDE
+	                   , #{item.longitude} AS LONGITUDE
+	                   , #{item.regId}     AS REG_ID
+	                   , #{item.defaultImg} AS DEFAULT_IMG
+	              FROM DUAL
+	          </foreach>
+	      ) S
+	      ON (T.PLC_NO = S.PLC_NO)
+	      WHEN MATCHED THEN
+	          UPDATE SET 
+	                T.RGN_NO      = S.RGN_NO
+	              , T.PLACE_TYPE  = S.PLACE_TYPE
+	              , T.PLC_NM      = S.PLC_NM
+	              , T.PLC_ZIP     = S.PLC_ZIP
+	              , T.PLC_ADDR1   = S.PLC_ADDR1
+	              , T.PLC_ADDR2   = S.PLC_ADDR2
+	              , T.LATITUDE    = S.LATITUDE
+	              , T.LONGITUDE   = S.LONGITUDE
+	              , T.DEFAULT_IMG = S.DEFAULT_IMG
+	              , T.MOD_ID	  = S.REG_ID  
+	              , T.MOD_DT      = SYSDATE  
+	            WHEN NOT MATCHED THEN
+	          INSERT (
+	                PLC_NO
+	              , RGN_NO
+	              , PLACE_TYPE
+	              , PLC_NM
+	              , PLC_ZIP
+	              , PLC_ADDR1
+	              , PLC_ADDR2
+	              , LATITUDE
+	              , LONGITUDE
+	              , REG_ID
+	              , DEFAULT_IMG
+	              , REG_DT  )
+	          VALUES (
+	                S.PLC_NO
+	              , S.RGN_NO
+	              , S.PLACE_TYPE
+	              , S.PLC_NM
+	              , S.PLC_ZIP
+	              , S.PLC_ADDR1
+	              , S.PLC_ADDR2
+	              , S.LATITUDE
+	              , S.LONGITUDE
+	              , S.REG_ID
+	              , S.DEFAULT_IMG
+	              , SYSDATE
+	          )
+	</update>
 </mapper>

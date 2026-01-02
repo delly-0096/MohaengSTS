@@ -110,4 +110,15 @@ public class TripScheduleController {
 		return new ResponseEntity<Map<String, Object>>(responseMap, HttpStatus.OK);
 	}
 	
+	@GetMapping("/my")
+	public String mySchedule() {
+		
+		return "/schedule/my";
+	}
+	
+	@GetMapping("/bookmark")
+	public String bookmark() {
+		
+		return "/schedule/bookmark";
+	}
 }

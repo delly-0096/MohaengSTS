@@ -21,7 +21,7 @@
 
             <!-- 회원 유형 선택 탭 -->
             <div class="login-type-tabs">
-                <button type="button" class="login-type-tab ${memberType == 'PERSONAL' || empty memberType ? 'active' : ''}" data-type="PERSONAL">
+                <button type="button" class="login-type-tab ${memberType == 'MEMBER' || empty memberType ? 'active' : ''}" data-type="MEMBER">
                     <i class="bi bi-person"></i>
                     <span>개인회원</span>
                 </button>
@@ -35,7 +35,7 @@
             <form class="auth-form" id="loginForm" action="${pageContext.request.contextPath}/member/login" method="POST">
             <sec:csrfInput/>
                 <input type="hidden" name="returnUrl" value="${param.returnUrl}">
-                <input type="hidden" name="memberType" id="memberType" value="${memberType != null ? memberType : 'PERSONAL'}">
+                <input type="hidden" name="memberType" id="memberType" value="${memberType != null ? memberType : 'MEMBER'}">
 
                 <!-- 아이디 -->
                 <div class="form-group">
@@ -67,7 +67,7 @@
                 <!-- 로그인 옵션 -->
                 <div class="login-options">
                     <label class="remember-me">
-                        <input type="checkbox" name="rememberMe" id="rememberMe">
+                        <input type="checkbox" name="remember-me" id="rememberMe">
                         <span>로그인 상태 유지</span>
                     </label>
                     <a href="${pageContext.request.contextPath}/member/find" class="forgot-password">
@@ -81,6 +81,14 @@
                         <i class="bi bi-exclamation-triangle me-2"></i>${errorMessage}
                     </div>
                 </c:if>
+                
+                <!-- 성공 메시지 -->
+                <c:if test="${not empty successMessage}">
+				    <div class="alert alert-success mb-3" role="alert">
+				        <i class="bi bi-check-circle me-2"></i>
+				        ${successMessage}
+				    </div>
+				</c:if>
                 
                 <!-- CAPTCHA 영역 -->
                 <c:if test="${needCaptcha}">

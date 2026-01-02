@@ -203,6 +203,7 @@
 .auth-form .form-control {
     padding: 14px 16px;
     font-size: 15px;
+    padding-right: 4.5rem;
 }
 
 .password-toggle {
@@ -215,7 +216,7 @@
 
 .password-toggle .toggle-btn {
     position: absolute;
-    right: 16px;
+    right: 1.75rem;
     top: 50%;
     transform: translateY(-50%);
     color: var(--gray-medium);

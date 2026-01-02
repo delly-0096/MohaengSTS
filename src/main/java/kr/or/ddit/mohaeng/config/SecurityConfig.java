@@ -44,17 +44,40 @@ public class SecurityConfig {
 	@Autowired
 	private TokenProvider tokenProvider;
 	
-	// 허용 url test
+	// 비회원 허용 url
 	private static final String[] PASS_URL = {
 			"/",
 			"/member/login",
+			"/member/register",
+			"/member/register/member",
+			"/member/register/company",
+			"/member/find",
+			"/member/idCheck",
+			"/member/find",
+			"/idCheck",
+			"/error",
+			"/mohaeng",
+			"/.well-known/**"		// 크롬 개발자 도구로의 요청
+	};
+	
+	// 일반회원 허용 url test
+	private static final String[] MEMBER_PASS_URL = {
+			"/",
+			"/error",
+			"/mohaeng",
+			"/.well-known/**"		// 크롬 개발자 도구로의 요청
+	};
+	
+	// 기업회원 허용 url test
+	private static final String[] BUSINESS_PASS_URL = {
+			"/",
 			"/error",
 			"/mohaeng",
 			"/.well-known/**"		// 크롬 개발자 도구로의 요청
 	};
 	
 	
-	// 허용할 리엑트 요청 url 테스트용
+	// 관리자 허용 url
 	private static final String[] REACT_PASS_URL = {
 			"/api/admin/login"
 
@@ -73,7 +96,7 @@ public class SecurityConfig {
 				.requestMatchers("/resources/**");	// 정적 리소스
 	}
 	
-	// 시큐리티 체인 - react 처리용
+	// 시큐리티 체인 - react 관리자 페이지
 	@Order(1)
 	@Bean
 	protected SecurityFilterChain filterChainReact(HttpSecurity http) throws Exception {
@@ -99,14 +122,16 @@ public class SecurityConfig {
 		return http.build();
 	}
 	
-	// 
+	// 시큐리티 체인 - 회원 페이지
 	@Order(2)
 	@Bean
 	protected SecurityFilterChain filterChainSession(HttpSecurity http) throws Exception {
 		// csrf 토큰 보내기
 		// 로그인 페이지에 <sec:csrfInput/>이거 계속 담기
 		
-	    http.securityMatcher("/**")
+	    http
+	    .securityMatcher("/**")
+	    .csrf(csrf -> csrf.disable())   // 일단 테스트용
         .authorizeHttpRequests(authorize ->
             authorize
                 .dispatcherTypeMatchers(
@@ -114,10 +139,11 @@ public class SecurityConfig {
                     DispatcherType.ASYNC
                 ).permitAll()
                 .requestMatchers(PASS_URL).permitAll()
+//                .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
+//                .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
                 .requestMatchers("/member/login").permitAll()
                 .anyRequest().authenticated()
         )
-        .csrf(csrf -> csrf.disable())   // 일단 테스트용
         .formLogin(form -> form.disable())
         .httpBasic(hbasic -> hbasic.disable());
 

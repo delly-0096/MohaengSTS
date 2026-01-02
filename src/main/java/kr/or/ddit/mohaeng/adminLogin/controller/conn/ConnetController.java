@@ -1,5 +1,6 @@
 package kr.or.ddit.mohaeng.adminLogin.controller.conn;
 
+import java.time.Duration;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ import kr.or.ddit.mohaeng.adminLogin.service.IAdminService;
 import kr.or.ddit.mohaeng.captchaApi.service.ICaptchaAPIService;
 import kr.or.ddit.mohaeng.util.TokenProvider;
 import kr.or.ddit.mohaeng.vo.AdminLoginVO;
+import kr.or.ddit.mohaeng.vo.MemberAuthVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -110,17 +112,16 @@ public class ConnetController {
         // memberVO == 로그인에 성공한 관리자 계정
         MemberVO member = new MemberVO();
         member.setMemId(admin.getMemId());
-        member.setMemNo(admin.getMemNo());          // 있으면
-        member.setAuthList(member.getAuthList());    // ⭐ 중요
+        member.setMemNo(admin.getMemNo());
         
-        // 만료시간 설정 (예: 30분)
-        Date now = new Date();
-        Date expired = new Date(now.getTime() + 30 * 60 * 1000);
+        MemberAuthVO auth = new MemberAuthVO();
+        auth.setAuth("ROLE_ADMIN");
+        member.setAuthList(List.of(auth));
         
-        String token = tokenProvider.makeToken(expired, member);
-        
+        String token = tokenProvider.generateToken(member, Duration.ofMinutes(30)); 
+       
         Map<String, Object> body = new HashMap();
-        body.put("accessToken", token);
+        body.put("access_token", token);
         body.put("tokenType", "Bearer ");
         body.put("department", admin.getDeptName());
         

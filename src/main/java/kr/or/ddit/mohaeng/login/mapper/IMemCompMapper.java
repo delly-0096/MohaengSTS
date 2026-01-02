@@ -2,6 +2,10 @@ package kr.or.ddit.mohaeng.login.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import kr.or.ddit.mohaeng.vo.CompanyVO;
+import kr.or.ddit.mohaeng.vo.MemCompVO;
+import kr.or.ddit.mohaeng.vo.MemberVO;
+
 @Mapper
 public interface IMemCompMapper {
 
@@ -18,5 +22,39 @@ public interface IMemCompMapper {
 	 * @return 승인된 회원이면 1 아닐시 0
 	 */
 	public int selectAprvYnByMemNo(int memNo);
+
+	/**
+	 *	<p> 회원가입시 통합회원 정보 저장 </p>
+	 *	@date 2026.01.01
+	 *	@author kdrs
+	 *	@param memberVO 회원가입 정보
+	 *	@return ServiceResult 회원가입 후 결과(OK, FAILED)
+	 */
+	public int insertMember(MemberVO memberVO);
+
+	/**
+	 *	<p> 회원가입시 기업회원 권한 정보 저장 </p>
+	 *	@date 2026.01.01
+	 *	@author kdrs
+	 *	@param memberVO 회원가입 정보
+	 *	@return ServiceResult 회원가입 후 결과(OK, FAILED)
+	 */
+	public int insertAuth(int memNo, String string);
+
+	/**
+	 *	<p> 회원가입시 기업 정보 저장 </p>
+	 *	@date 2026.01.01
+	 *	@author kdrs
+	 *	@param companyVO 회원가입 정보
+	 */
+	public int insertCompany(CompanyVO companyVO);
+
+	/**
+	 *	<p> 회원가입시 기업회원 정보 저장 </p>
+	 *	@date 2025.12.31
+	 *	@author kdrs
+	 *	@return ServiceResult 회원가입 후 결과(OK, FAILED)
+	 */
+	public int insertMemComp(MemCompVO memCompVO);
 
 }

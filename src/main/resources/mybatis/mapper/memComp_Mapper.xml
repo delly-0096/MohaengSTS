@@ -14,5 +14,63 @@
 	    WHERE MEM_NO = #{memNo}
 	      AND APRV_YN = 'Y'
 	</select>
+	
+	<!-- 회원가입 -->
+    <insert id="insertMember" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+    	<selectKey keyProperty="memNo" resultType="int" order="BEFORE">
+    		SELECT SEQ_MEMBER_NO.NEXTVAL FROM dual
+    	</selectKey>
+    	
+		 INSERT INTO MEMBER
+		    (MEM_NO, MEM_ID, MEM_PASSWORD, MEM_NAME, MEM_EMAIL
+		    , MEM_PROFILE, POINT, MEM_STATUS, DEL_YN, WDRW_RESN
+		    , ENABLED, MEM_SNS_YN, SNS_TYPE, SNS_ID, REG_DT, UDT_DT, WDRW_DT)
+		VALUES
+		    ( #{memNo}, #{memId}, #{memPassword}, #{memName}, #{memEmail}
+		    , NULL, 0, 'WAIT', 'N', NULL
+		    , 1, 'N', NULL, NULL, SYSDATE, NULL, NULL )
+    </insert>
+    
+    <!-- 기업회원 권한 저장 -->
+	<insert id="insertAuth" parameterType="kr.or.ddit.mohaeng.vo.MemberAuthVO">
+	
+	    INSERT INTO MEMBER_AUTH (
+	        MEM_AUTH_NO, MEM_NO, AUTH, REG_DT
+	    ) VALUES (
+	        SEQ_MEMBER_AUTH_NO.NEXTVAL, #{memNo}, 'BUSINESS', SYSDATE
+	    )
+	</insert>
+	
+	<!-- 기업 정보 저장 -->
+	<insert id="insertCompany" parameterType="kr.or.ddit.mohaeng.vo.CompanyVO">
+	    <selectKey keyProperty="compNo" resultType="int" order="BEFORE">
+    		SELECT SEQ_COMPANY_NO.NEXTVAL FROM dual
+    	</selectKey>
+	    INSERT INTO COMPANY (
+		COMP_NO, MEM_NO, BRNO, PRMMI_MNNO, BZMN_NM, RPRSV_NM, 
+		RPRSV_EMLADR, COMP_ZIP, COMP_ADDR1, COMP_ADDR2, COMP_URL,
+		COMP_TEL, BANK_CD, DEPOSITOR, ACCOUNT_NO, COMP_BIZ_FILE,
+		INDUSTRY_CD, COMP_INTRO        
+    ) VALUES (
+		#{compNo}, #{memNo}, #{brno}, #{prmmiMnno}, #{bzmnNm}, #{rprsvNm},
+        #{rprsvEmladr}, #{compZip}, #{compAddr1}, #{compAddr2}, #{compUrl},
+        #{compTel}, #{bankCd}, #{depositor}, #{accountNo}, #{compBizFile},
+        #{industryCd}, #{compIntro}
+    )
+
+	</insert>
+	
+	<!-- 기업회원 정보 저장 -->
+	<insert id="insertMemComp" parameterType="kr.or.ddit.mohaeng.vo.MemCompVO">
+	    INSERT INTO MEM_COMP (
+	        MEM_NO, MEM_COMP_TEL, MEM_COMP_EMAIL, MASTER_YN, APRV_YN, APRV_DT, REJ_RSN
+	    ) VALUES (
+	        #{memNo}, #{memCompTel}, #{memCompEmail}, 'Y', 'N', NULL, NULL
+	    )
+	</insert>
+	
+	
+	
+	
     
 </mapper>

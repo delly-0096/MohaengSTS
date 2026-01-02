@@ -10,7 +10,8 @@
         m.MEM_PASSWORD  AS memPassword,
         m.MEM_NAME      AS memName,
         a.POSI_NO       AS posiNo,
-        a.DEPT_NAME     AS deptName
+        a.DEPT_NAME     AS deptName,
+        auth.AUTH			AS auth
     FROM MEMBER m
     JOIN MEM_ADMIN a
         ON m.MEM_NO = a.MEM_NO

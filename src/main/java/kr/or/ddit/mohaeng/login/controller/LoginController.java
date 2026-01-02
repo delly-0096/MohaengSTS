@@ -3,7 +3,10 @@ package kr.or.ddit.mohaeng.login.controller;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -11,25 +14,30 @@ import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.captchaApi.service.ICaptchaAPIService;
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
 import kr.or.ddit.mohaeng.login.service.IMemberService;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller
-@RequestMapping("/")
+@RequestMapping("/member")
 public class LoginController {
 
 	private static int CAPTCHA_THRESHOLD = 3;
@@ -44,15 +52,14 @@ public class LoginController {
 	private IMemberMapper memberMapper;
 	
 	/* 로그인 화면 */
-	@GetMapping("/member/login")
+	@GetMapping("/login")
 	public String loginPage() {
-		log.info("loginPage() 실행");
+		log.info("loginPage() 실행...!");
 	    return "member/login"; // JSP 경로
 	}
 	
 	/* 회원 로그인 기능 */
-	// TODO: JWT 적용 시 session loginMember 제거 후 토큰 기반으로 교체
-	@PostMapping("/member/login")
+	@PostMapping("/login")
 	public String login(@RequestParam String username,
 						@RequestParam String password,
 						@RequestParam String memberType,
@@ -61,7 +68,7 @@ public class LoginController {
 						HttpServletResponse response,
 						RedirectAttributes ra
 			) {
-		log.info("login() 실행");
+		log.info("login() 실행...!");
 		
 		
 		Integer failCnt = (Integer) session.getAttribute("LOGIN_FAIL_CNT");
@@ -130,8 +137,6 @@ public class LoginController {
 		    return "redirect:/member/login";
 		}
 		
-	
-
 		Map<String, Object> loginMember = new HashMap<>();
 	    loginMember.put("memId", username);
 	    loginMember.put("memType", memType);
@@ -159,8 +164,81 @@ public class LoginController {
 		return "redirect:/";
 	}
 	
+	// 회원가입 화면
+	@GetMapping("/register")
+	public String registerPage(Model model) {
+		log.info("registerPage() 실행...!");
+		return "member/register";
+	}
+	
+	// 일반 회원가입 기능
+	@PostMapping("/register/member")
+	public String registerMember(MemberVO memberVO, Model model, RedirectAttributes ra) {
+		log.info("register() 실행...!");
+		
+		// 일반회원 가입
+		String goPage = "";
+		ServiceResult result = memberService.register(memberVO);
+		
+		if (result == ServiceResult.OK) {
+		    ra.addFlashAttribute("successMessage", "회원가입이 완료되었습니다. 로그인 해주세요!");
+		    ra.addFlashAttribute("memId", memberVO.getMemId());
+		    goPage = "redirect:/member/login";
+		} else {
+		    model.addAttribute("errorMessage", "회원가입 중 오류가 발생했습니다.");
+		    model.addAttribute("member", memberVO);
+		    goPage = "member/register";
+		}
+
+		
+		return goPage;
+	}
+	
+	// 일반 회원가입 기능
+	@PostMapping("/register/company")
+	public String registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile,
+							Model model, RedirectAttributes ra) {
+		log.info("registerBusiness() 실행...!");
+		
+		// 일반회원 가입
+		String goPage = "";
+		ServiceResult result = memberService.registerCompany(memberVO, companyVO, bizFile);
+
+		if (result == ServiceResult.OK) {
+		    ra.addFlashAttribute("successMessage", "회원가입이 완료되었습니다. <br> 승인 후 로그인이 가능합니다.");
+		    ra.addFlashAttribute("memId", memberVO.getMemId());
+		    goPage = "redirect:/member/login";
+		} else {
+		    model.addAttribute("errorMessage", "가입 정보를 확인해주세요.");
+		    model.addAttribute("member", memberVO);
+		    model.addAttribute("company", companyVO);
+		    goPage = "member/register";
+		}
+
+		
+		return goPage;
+	}
+	
+	// 아이디 중복확인
+	@PostMapping("/idCheck")
+	public ResponseEntity<ServiceResult> idCheck(@RequestBody Map<String, String> map) {
+		log.info("idCheck() 실행...!");
+		log.info("id : {}", map.get("memId"));
+		ServiceResult result = memberService.idCheck(map.get("memId"));
+		return new ResponseEntity<ServiceResult>(result, HttpStatus.OK);
+	
+	}
+	
+	// 아이디 & 비밀번호 찾기 화면
+	@GetMapping("/find")
+	public String findPage() {
+		log.info("findPage() 실행...!");
+	    return "member/find";
+	}
+	
+	
 	/* 로그아웃 기능 */
-	@GetMapping("/member/logout")
+	@GetMapping("/logout")
 	public String logout(HttpSession session) {
 		session.invalidate();
 		

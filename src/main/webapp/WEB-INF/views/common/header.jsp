@@ -132,7 +132,6 @@
 
         <div class="side-menu-body">
             <!-- 일정 계획 (기업회원은 표시하지 않음) -->
-            <sec:authorize access="hasAuthority('MEMBER')">
                 <div class="side-menu-section">
                     <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
                         <span><i class="bi bi-calendar3 me-2"></i>일정 계획</span>
@@ -142,7 +141,7 @@
                         <a href="${pageContext.request.contextPath}/schedule/search" class="side-menu-item">
                             <i class="bi bi-calendar-plus me-2"></i>일정 계획
                         </a>
-                        <sec:authorize access="isAuthenticated()">
+	            <sec:authorize access="hasAuthority('MEMBER')">
                             <a href="${pageContext.request.contextPath}/schedule/my" class="side-menu-item">
                                 <i class="bi bi-calendar-check me-2"></i>내 일정
                             </a>
@@ -152,7 +151,7 @@
                         </sec:authorize>
                     </div>
                 </div>
-            </sec:authorize>
+
 
             <!-- 관광 상품 -->
             <div class="side-menu-section">

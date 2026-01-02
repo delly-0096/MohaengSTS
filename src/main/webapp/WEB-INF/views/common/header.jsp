@@ -10,6 +10,9 @@
     <meta name="description" content="모행 - AI 기반 개인 맞춤형 관광 서비스 플랫폼">
     <title>모행 - ${pageTitle != null ? pageTitle : '나만의 여행을 계획하세요'}</title>
 
+	<!-- axios -->
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
     <!-- Context Path Meta Tag -->
     <meta name="context-path" content="${pageContext.request.contextPath}">
 

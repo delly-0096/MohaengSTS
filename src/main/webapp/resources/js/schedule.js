@@ -11,7 +11,7 @@ class KakaoMapHelper {
         this.container = document.getElementById(containerId);
         this.map = null;
         this.markers = []; // 마커 관리용 배열
-        this.clusterer = null;
+       /* this.clusterer = null;*/
         this.ps = new kakao.maps.services.Places(); // 장소 검색 객체
         this.geocoder = new kakao.maps.services.Geocoder(); // 주소-좌표 변환 객체
         this.infowindow = new kakao.maps.InfoWindow({zIndex:1});
@@ -32,11 +32,11 @@ class KakaoMapHelper {
         this.map.addControl(zoomControl, kakao.maps.ControlPosition.RIGHT);
 
         // 클러스터러 세팅 (마커 많을 때 뭉쳐서 보여줌)
-        this.clusterer = new kakao.maps.MarkerClusterer({
+/*        this.clusterer = new kakao.maps.MarkerClusterer({
             map: this.map, 
             averageCenter: true, 
             minLevel: 6 
-        });
+        });*/
         
         console.log("Kakao Map Initialized!");
     }
@@ -66,7 +66,7 @@ class KakaoMapHelper {
         });
 
         this.markers.push(marker);
-        this.clusterer.addMarker(marker); // 클러스터러에도 추가
+        /*this.clusterer.addMarker(marker);*/ // 클러스터러에도 추가
         return marker;
     }
 

@@ -14,5 +14,11 @@ public interface INoticeMapper {
  public NoticeVO selectNotice(int ntcNo);
 
  public List<NoticeVO> selectNoticeList();
+ 
+ public int insertNotice(NoticeVO noticeVO);
+
+ public int updateNotice(NoticeVO noticeVO);
+
+ public int deleteNotice(int ntcNo);
   
 }

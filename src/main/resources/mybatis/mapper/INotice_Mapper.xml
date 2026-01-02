@@ -25,15 +25,63 @@
  		 </update>
 		
 		<select id="selectNoticeList" resultType="kr.or.ddit.mohaeng.vo.NoticeVO">
- 		 SELECT
- 		   NTC_NO AS ntcNo,
- 		   NTC_TITLE AS ntcTitle,
- 		   REG_DT AS regDt,
- 		   NTC_TYPE AS ntcType,
- 		   VIEW_CNT AS viewCnt
- 		 FROM NOTICE
- 		 WHERE STATUS = 'N'
- 		 ORDER BY NTC_NO DESC
-</select>
+			  SELECT
+			    NTC_NO    AS ntcNo,
+			    NTC_TITLE AS ntcTitle,
+			    REG_DT    AS regDt,
+			    NTC_TYPE  AS ntcType,
+			    VIEW_CNT  AS viewCnt
+			  FROM NOTICE
+			  WHERE UPPER(TRIM(NVL(STATUS,'n'))) = 'N'
+			  ORDER BY NTC_NO DESC
+			</select>
+			
+			<!-- 공지사항 등록-->
+		<insert id="insertNotice"
+        parameterType="kr.or.ddit.mohaeng.vo.NoticeVO">
+			  INSERT INTO NOTICE (
+			    NTC_NO,
+			    NTC_TITLE,
+			    NTC_CONTENT,
+			    REG_ID,
+			    REG_DT,
+			    NTC_TYPE,
+			    VIEW_CNT,
+			    STATUS
+			  ) VALUES (
+			    NOTICE_SEQ.NEXTVAL,
+			    #{ntcTitle},
+			    #{ntcContent},
+			    #{regId},
+			    SYSDATE,
+			    #{ntcType},
+			    0,
+			    'n'
+			  )
+</insert>
+			<!--수정-->
+			<update id="updateNotice" parameterType="kr.or.ddit.mohaeng.vo.NoticeVO">
+				  UPDATE NOTICE
+				  SET
+				    NTC_TITLE   = #{ntcTitle},
+				    NTC_CONTENT = #{ntcContent},
+				    NTC_TYPE    = #{ntcType}
+				  WHERE NTC_NO = #{ntcNo}
+			</update>
+
+			<!--삭제-->
+			
+			<update id="deleteNotice" parameterType="int">
+				  UPDATE NOTICE
+				  SET STATUS = 'y'
+				  WHERE NTC_NO = #{ntcNo}
+			</update>
+
+			
+			
+			
+			
+			
+			
 
 </mapper>

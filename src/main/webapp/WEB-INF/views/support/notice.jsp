@@ -55,12 +55,20 @@
 			        등록된 공지사항이 없습니다.
 			      </div>
 			    </c:when>
-
+		
 			    <c:otherwise>
 			      <c:forEach var="item" items="${noticeList}">
 			        <div class="notice-item" data-category="${item.ntcType}">
 			          <!-- 배지(카테고리) -->
-			          <span class="notice-badge notice">${item.ntcType}</span>
+					  <span class="notice-badge ${item.ntcType}">
+					    <c:choose>
+					      <c:when test="${item.ntcType eq 'notice'}">공지</c:when>
+					      <c:when test="${item.ntcType eq 'event'}">이벤트</c:when>
+					      <c:when test="${item.ntcType eq 'update'}">업데이트</c:when>
+					      <c:otherwise>공지</c:otherwise>
+					    </c:choose>
+					  </span>
+
 
 			          <div class="notice-content">
 			            <!-- ✅ 제목 클릭 → 상세 이동 -->
@@ -82,123 +90,7 @@
 
 			</div>
 
-                <div class="notice-item" data-category="event">
-                    <span class="notice-badge event">이벤트</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[이벤트] 봄맞이 제주도 여행 할인 프로모션</a>
-                        </h4>
-                        <div class="notice-meta">2024.03.14</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 2,567
-                    </div>
-                </div>
-
-                <div class="notice-item" data-category="update">
-                    <span class="notice-badge update">업데이트</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[업데이트] AI 일정 추천 기능 개선 안내</a>
-                        </h4>
-                        <div class="notice-meta">2024.03.12</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 892
-                    </div>
-                </div>
-
-                <div class="notice-item" data-category="notice">
-                    <span class="notice-badge notice">공지</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[공지] 2024년 3월 정기 점검 안내</a>
-                        </h4>
-                        <div class="notice-meta">2024.03.10</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 567
-                    </div>
-                </div>
-
-                <div class="notice-item" data-category="event">
-                    <span class="notice-badge event">이벤트</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[이벤트] 신규 회원 가입 시 5,000P 적립!</a>
-                        </h4>
-                        <div class="notice-meta">2024.03.08</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 3,456
-                    </div>
-                </div>
-
-                <div class="notice-item" data-category="notice">
-                    <span class="notice-badge notice">공지</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[공지] 포인트 정책 변경 안내</a>
-                        </h4>
-                        <div class="notice-meta">2024.03.05</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 1,023
-                    </div>
-                </div>
-
-                <div class="notice-item" data-category="update">
-                    <span class="notice-badge update">업데이트</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[업데이트] 모바일 웹 UI 개선 안내</a>
-                        </h4>
-                        <div class="notice-meta">2024.03.01</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 678
-                    </div>
-                </div>
-
-                <div class="notice-item" data-category="notice">
-                    <span class="notice-badge notice">공지</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[공지] 2월 정산 완료 안내 (기업회원)</a>
-                        </h4>
-                        <div class="notice-meta">2024.02.28</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 234
-                    </div>
-                </div>
-
-                <div class="notice-item" data-category="event">
-                    <span class="notice-badge event">이벤트</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[이벤트] 후기 작성 이벤트 당첨자 발표</a>
-                        </h4>
-                        <div class="notice-meta">2024.02.25</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 1,789
-                    </div>
-                </div>
-
-                <div class="notice-item" data-category="notice">
-                    <span class="notice-badge notice">공지</span>
-                    <div class="notice-content">
-                        <h4 class="notice-title">
-                            <a href="#">[공지] 설 연휴 고객센터 운영 안내</a>
-                        </h4>
-                        <div class="notice-meta">2024.02.05</div>
-                    </div>
-                    <div class="notice-views">
-                        <i class="bi bi-eye me-1"></i> 2,134
-                    </div>
-                </div>
-            </div>
+      
 
             <!-- 페이지네이션 -->
             <div class="pagination-container">

@@ -29,6 +29,8 @@ public class NoticeController {
 		List<NoticeVO> noticeList = noticeService.selectNoticeList();
 		model.addAttribute("noticeList",noticeList);
 		log.info("noticeForm()....  실행");
+		log.info("noticeForm() 실행, size={}", noticeList.size());
+
 		return "support/notice";
 	}
     
@@ -41,6 +43,7 @@ public class NoticeController {
 		return "support/notice-detail";
 	}
 	
+
 	
 	
 }

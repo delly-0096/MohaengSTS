@@ -34,5 +34,26 @@ public class NoticeServiceImpl  implements INoticeService{
 		return noticeMapper.selectNoticeList();
 	}
 
+	//관리자 인서트 등록
+	@Override
+	public int insertNotice(NoticeVO noticeVO) {
+		noticeVO.setStatus("n");
+		noticeVO.setViewCnt(0);
+		return noticeMapper.insertNotice(noticeVO);
+		
+	}
+
+	@Override
+	public int updateNotice(NoticeVO noticeVO) {
+		return noticeMapper.updateNotice(noticeVO);
+		
+	}
+
+	@Override
+	public int deleteNotice(int ntcNo) {
+		return noticeMapper.deleteNotice(ntcNo);
+		
+	}
+
 }
  

@@ -61,12 +61,12 @@
 		</dependency>
 		
         <!-- Spring Boot Security (추후 로그인 구현 시 사용) -->
-        <!--
+        
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
-        -->
+        
 
         <!-- Oracle JDBC (추후 DB 연동 시 사용) -->
         
@@ -169,7 +169,6 @@
 		
 		
 		<!--스프링 시큐리티 설정-->
-		<!--
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
@@ -178,7 +177,6 @@
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-taglibs</artifactId>
 		</dependency>
-		-->
 		<!--스프링 시큐리티 설정 END-->
         
         

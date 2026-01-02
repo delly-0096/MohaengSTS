@@ -73,7 +73,7 @@ public class InquiryServiceImpl implements IInquiryService{
 
 		// [1] 초기값 세팅: 사용자가 입력 안 해도 기본으로 들어가야 하는 값들
 		inquiry.setDelYn("N"); //삭제 여부는 일단 '아니오(N)'
-		inquiry.setInqryStatus("답변대기"); //방금 썼으니 상태는 '답변대기'
+		inquiry.setInqryStatus("waiting"); //방금 썼으니 상태는 '답변대기'
 
 		// [2] DB에 저장
 		return inquiryMapper.insertInquiry(inquiry);

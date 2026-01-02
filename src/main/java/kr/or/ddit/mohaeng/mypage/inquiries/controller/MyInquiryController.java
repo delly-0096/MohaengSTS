@@ -5,14 +5,17 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.mypage.inquiries.service.IMyInquiryService;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.InquiryVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
@@ -24,49 +27,26 @@ public class MyInquiryController {
 	private IMyInquiryService iInquiryService;
 
 
-	// ==================== 마이페이지 - 문의 내역 ====================
-
 	/**
-	 * 마이페이지 > 문의 내역 (조회 전용)
-	 * @param filter 필터 (all, answered, waiting)
-	 * @param months 조회 기간 (3, 6, 12, 0=전체)
-	 * @param page 페이지 번호
-	 * @param session 세션
-	 * @param model 모델
-	 * @return 문의 내역 페이지
-	 */
+     * 마이페이지 > 문의 내역 (Spring Security 적용 버전)
+     */
 	@GetMapping({"/inquiries", "/business/inquiries"})
 	public String inquriesList(
 			@RequestParam(defaultValue = "all") String filter,
 			@RequestParam(defaultValue = "3") int months,
 			@RequestParam(defaultValue = "1") int page,
-			HttpSession session, Model model
-			) {
-				/*
-				 * //로그인 체크 MemberVO loginMember = (MemberVO)
-				 * session.getAttribute("loginMember"); if (loginMember == null) { return
-				 * "redirect:/member/login"; }
-				 */
+			@AuthenticationPrincipal CustomUserDetails userDetails, // Security 정보 주입
+			HttpServletRequest request, Model model) {
 
-				//로그인 체크
-				Object loginObj = session.getAttribute("loginMember");
-				if (loginObj == null) {
-					return "redirect:/member/login";
-				}
+		// 1. 로그인 체크 (UserDetails가 없으면 로그인 페이지로)
+		if (userDetails == null) {
+			return "redirect:/member/login";
+		}
 
-				// HashMap인 경우 처리
-				int memNo=1;
-//			    if (loginObj instanceof MemberVO) {
-//			        memNo = ((MemberVO) loginObj).getMemNo();
-//			    } else if (loginObj instanceof Map) {
-//			    	System.out.println("보따리 속 내용물은?"+loginObj.toString());
-//			    	memNo = Integer.parseInt(String.valueOf(((Map)loginObj).get("MEM_NO")));
-//			    } else {
-//			        return "redirect:/member/login";
-//			    }
+		// 2. 회원 번호 추출 (이미 시큐리티에 담긴 검증된 정보 사용)
+		int memNo = userDetails.getMember().getMemNo();
 
-		//[주문서 작성]문의 목록 조회 파라미터
-		//db에 전달할 조회 조건들을 Map상자에 담음
+		// 3. 데이터 조회 파라미터 셋팅
 		Map<String, Object> params = new HashMap<>();
 		params.put("memNo", memNo);
 		params.put("filter", filter);
@@ -92,7 +72,9 @@ public class MyInquiryController {
 		model.addAttribute("currentFilter", filter); // 화면의 필터 상태를 유지하기 위해 다시 보냄
 		model.addAttribute("currentMonths", months); // 화면의 조회기간 상태를 유지하기 위해 다시 보냄
 
-		return "mypage/inquiries";
+		// 7. 경로 분기 (일반 마이페이지 vs 기업 마이페이지)
+		// URL에 /business가 포함되어 있다면 기업용 경로, 아니면 일반 경로 반환
+		return request.getRequestURI().contains("/business") ? "mypage/business/inquiries" : "mypage/inquiries";
 
 	}
 

@@ -41,23 +41,23 @@ import lombok.extern.slf4j.Slf4j;
 public class LoginController {
 
 	private static int CAPTCHA_THRESHOLD = 3;
-	
+
 	@Autowired
 	private IMemberService memberService;
-	
+
 	@Autowired
 	private ICaptchaAPIService captchaService;
-	
+
 	@Autowired
 	private IMemberMapper memberMapper;
-	
+
 	/* 로그인 화면 */
 	@GetMapping("/login")
 	public String loginPage() {
 		log.info("loginPage() 실행...!");
 	    return "member/login"; // JSP 경로
 	}
-	
+
 	/* 회원 로그인 기능 */
 	@PostMapping("/login")
 	public String login(@RequestParam String username,
@@ -69,11 +69,11 @@ public class LoginController {
 						RedirectAttributes ra
 			) {
 		log.info("login() 실행...!");
-		
-		
+
+
 		Integer failCnt = (Integer) session.getAttribute("LOGIN_FAIL_CNT");
 		if (failCnt == null) failCnt = 0;
-		
+
 		// CAPTCHA 검증
 		if (failCnt >= CAPTCHA_THRESHOLD) {
 		    boolean captchaOk = captchaService.verify(request);
@@ -86,19 +86,19 @@ public class LoginController {
 		        return "redirect:/member/login";
 		    }
 		}
-		
-		
+
+
 		String memType = memberService.getMemberType(username);
-		
+
 		//존재하지 않는 로그인
 		if(memType == null) {
 			ra.addFlashAttribute("errorMessage", "입력하신 아이디로 가입된 회원이 없습니다.");
 			ra.addFlashAttribute("memId", username);
 			ra.addFlashAttribute("memberType", memberType);
-			
+
 			return "redirect:/member/login";
 		}
-		
+
 		// 기업회원 승인 대기
 		if("BUSINESS_NOT_APPROVED".equals(memType)) {
 			ra.addFlashAttribute("errorMessage",
@@ -106,20 +106,20 @@ public class LoginController {
 
 			return "redirect:/member/login";
 		}
-		
+
 		// 회원 유형 불일치
 		if(!memType.equals(memberType)) {
 			ra.addFlashAttribute("errorMessage", "해당 회원의 유형이 일치하지 않습니다.");
 			ra.addFlashAttribute("memId", username);
 			ra.addFlashAttribute("memberType", memberType);
-			
+
 			return "redirect:/member/login";
 		}
-		
-		
+
+
 		// 비밀번호 불일치
 		boolean passwordMatched = memberService.checkPassword(username, password);
-		
+
 		if (!passwordMatched) {
 
 		    failCnt++;
@@ -136,17 +136,21 @@ public class LoginController {
 		    ra.addFlashAttribute("memberType", memberType);
 		    return "redirect:/member/login";
 		}
-		
+		MemberVO member = memberMapper.selectById(username);
+
 		Map<String, Object> loginMember = new HashMap<>();
 	    loginMember.put("memId", username);
 	    loginMember.put("memType", memType);
 	    loginMember.put("memName", username);
-		
+	    loginMember.put("memNo", member.getMemNo());
+	    loginMember.put("memEmail", member.getMemEmail());
+
+
 		session.setAttribute("loginMember", loginMember);
+//		session.setAttribute("memberInfo", member);
 		session.removeAttribute("LOGIN_FAIL_CNT");
-		
+
 		var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + memType));
-		MemberVO member = memberMapper.selectById(username);
 		CustomUserDetails userDetails = new CustomUserDetails(member);
 		Authentication auth =
 			    new UsernamePasswordAuthenticationToken(
@@ -160,26 +164,26 @@ public class LoginController {
 	    SecurityContextHolder.setContext(context);
 
 	    new HttpSessionSecurityContextRepository().saveContext(context, request, response);
-		
+
 		return "redirect:/";
 	}
-	
+
 	// 회원가입 화면
 	@GetMapping("/register")
 	public String registerPage(Model model) {
 		log.info("registerPage() 실행...!");
 		return "member/register";
 	}
-	
+
 	// 일반 회원가입 기능
 	@PostMapping("/register/member")
 	public String registerMember(MemberVO memberVO, Model model, RedirectAttributes ra) {
 		log.info("register() 실행...!");
-		
+
 		// 일반회원 가입
 		String goPage = "";
 		ServiceResult result = memberService.register(memberVO);
-		
+
 		if (result == ServiceResult.OK) {
 		    ra.addFlashAttribute("successMessage", "회원가입이 완료되었습니다. 로그인 해주세요!");
 		    ra.addFlashAttribute("memId", memberVO.getMemId());
@@ -190,16 +194,16 @@ public class LoginController {
 		    goPage = "member/register";
 		}
 
-		
+
 		return goPage;
 	}
-	
+
 	// 일반 회원가입 기능
 	@PostMapping("/register/company")
 	public String registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile,
 							Model model, RedirectAttributes ra) {
 		log.info("registerBusiness() 실행...!");
-		
+
 		// 일반회원 가입
 		String goPage = "";
 		ServiceResult result = memberService.registerCompany(memberVO, companyVO, bizFile);
@@ -215,10 +219,10 @@ public class LoginController {
 		    goPage = "member/register";
 		}
 
-		
+
 		return goPage;
 	}
-	
+
 	// 아이디 중복확인
 	@PostMapping("/idCheck")
 	public ResponseEntity<ServiceResult> idCheck(@RequestBody Map<String, String> map) {
@@ -226,22 +230,22 @@ public class LoginController {
 		log.info("id : {}", map.get("memId"));
 		ServiceResult result = memberService.idCheck(map.get("memId"));
 		return new ResponseEntity<ServiceResult>(result, HttpStatus.OK);
-	
+
 	}
-	
+
 	// 아이디 & 비밀번호 찾기 화면
 	@GetMapping("/find")
 	public String findPage() {
 		log.info("findPage() 실행...!");
 	    return "member/find";
 	}
-	
-	
+
+
 	/* 로그아웃 기능 */
 	@GetMapping("/logout")
 	public String logout(HttpSession session) {
 		session.invalidate();
-		
+
 		return "redirect:/";
 	}
 }

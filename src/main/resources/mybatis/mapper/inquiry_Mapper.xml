@@ -79,7 +79,7 @@
 	 <!-- 문의 목록 조회 (카테고리별) -->
 	<select id="selectInquiryListByCategory" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
 		select
-			i.INQRY_NO as inquryNo,
+			i.INQRY_NO as inqryNo,
 			i.INQRY_CTGRY_CD as inqryCtgryCd,
 			i.MEM_NO as memNo,
 			i.INQRY_STATUS as inqryStatus,
@@ -144,7 +144,11 @@
 
 	<!-- 문의 등록 -->
 	<insert id="insertInquiry" parameterType="kr.or.ddit.mohaeng.vo.InquiryVO" useGeneratedKeys="true" keyProperty="inqryNo">
+	<selectKey keyProperty="inqryNo" resultType="int" order="BEFORE">
+		SELECT SEQ_INQUIRY.NEXTVAL FROM DUAL
+	</selectKey>
 		insert into INQUIRY(
+			INQRY_NO,
 			INQRY_CTGRY_CD,
 			MEM_NO,
 			INQRY_STATUS,
@@ -156,6 +160,7 @@
 			REG_DT,
 			DEL_YN
 		)values(
+			#{inqryNo},
 			#{inqryCtgryCd},
 			#{memNo},
 			#{inqryStatus},
@@ -164,22 +169,22 @@
 			#{inquiryTargetNo},
 			#{inqryEmail},
 			#{attachNo},
-			NOW(),
+			sysdate,
 			#{delYn}
 		)
 	</insert>
 
 	<!-- 문의 카테고리 목록 조회 -->
-	<select id="selectInquiryCategoryList" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+	<select id="selectInquiryCategoryList" resultType="kr.or.ddit.mohaeng.vo.CodeVO">
 		select
-			c.CD as cd,
-			c.CDGR as cdgr,
-			c.CD_NAME as cdName,
-			c.CD_DESC as cdDesc,
-			c.USE_YN as useYn
-		from CODE c
-		WHERE c.CDGR='INQUIRY_TYPE'
-		AND c.USE_YN = 'Y'
-		ORDER BY c.CD
+			CD as cd,
+			CDGR as cdgr,
+			CD_NAME as cdName,
+			CD_DESC as cdDesc,
+			USE_YN as useYn
+		from CODE
+		WHERE CDGR='INQRY_CAT'
+		AND USE_YN = 'Y'
+		ORDER BY CD
 	</select>
 </mapper>

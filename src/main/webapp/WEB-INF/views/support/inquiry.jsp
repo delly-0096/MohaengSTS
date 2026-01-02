@@ -81,7 +81,7 @@
 
                         <div class="form-group">
                             <label class="form-label">답변 받을 이메일 <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="inqryEmail" value="" required>
+                            <input type="email" class="form-control" id="inqryEmail" value="${loginEmail}" placeholder="이메일을 입력해주세요" required>
                             <small class="text-muted">답변 알림이 발송됩니다.</small>
                         </div>
 

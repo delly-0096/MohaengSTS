@@ -21,6 +21,5 @@ public class FaqVO {
 	private String useYn;
 	private String regId;
 	private Date regDt;
-    
-    
+
 }

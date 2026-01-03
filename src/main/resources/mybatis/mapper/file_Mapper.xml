@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.file.mapper.IFileMapper">
+
+	<insert id="insertAttachFile" parameterType="kr.or.ddit.mohaeng.vo.AttachFileVO">
+	    <selectKey keyProperty="attachNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_ATTACH_FILE.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO ATTACH_FILE (
+	        ATTACH_NO, REG_ID, REG_DT
+	    ) VALUES (
+	        #{attachNo}, #{regId}, SYSDATE
+	    )
+	</insert>
+	
+	<insert id="insertAttachFileDetail" parameterType="kr.or.ddit.mohaeng.vo.AttachFileDetailVO">
+	    INSERT INTO ATTACH_FILE_DETAIL (
+	        FILE_NO, ATTACH_NO, FILE_NAME, FILE_ORIGINAL_NAME, 
+	        FILE_EXT, FILE_SIZE, FILE_PATH, FILE_GB_CD, 
+	        MIMY_TYPE, USE_YN, REG_ID, REG_DT
+	    ) VALUES (
+	        SEQ_ATTACH_FILE_DETAIL.NEXTVAL, #{attachNo}, #{fileName}, #{fileOriginalName},
+	        #{fileExt}, #{fileSize}, #{filePath}, 'BIZ', 
+	        #{mimyType}, 'Y', #{regId}, SYSDATE
+	    )
+	</insert>
+	
+	<!-- 프로필 이미지 첨부파일 상세 조회 -->
+	<select id="selectProfileFileDetail"
+        resultType="kr.or.ddit.mohaeng.vo.AttachFileDetailVO">
+	    SELECT *
+	    FROM attach_file_detail
+	    WHERE attach_no = #{attachNo}
+	</select>
+	
+	<!-- 프로필 이미지 첨부파일 상세 삭제 -->
+	<delete id="deleteAttachFileDetail">
+	    DELETE FROM attach_file_detail
+	    WHERE attach_no = #{attachNo}
+	</delete>
+	
+	<!-- 프로필 이미지 첨부파일 마스터 삭제 -->
+	<delete id="deleteAttachFile">
+	    DELETE FROM attach_file
+	    WHERE attach_no = #{attachNo}
+	</delete>
+	
+</mapper>

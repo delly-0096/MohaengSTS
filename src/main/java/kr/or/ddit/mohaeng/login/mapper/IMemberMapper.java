@@ -1,8 +1,11 @@
 package kr.or.ddit.mohaeng.login.mapper;
 
+import java.util.Map;
+
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import kr.or.ddit.mohaeng.vo.MemUserVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
 @Mapper
@@ -61,5 +64,37 @@ public interface IMemberMapper {
 	 *	@return 회원 아이디가 존재하는지 유무 판별
 	 */
 	public MemberVO idCheck(@Param("memId") String memId);
+
+	/**
+	 *	<p> 내 정보 수정시 아이디 조회 </p>
+	 *	@date 2026.01.01
+	 *	@author kdrs
+	 * @param username 세션을 통해 들어온 아이디 값 (memId)
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 */
+	public MemberVO findById(String memId);
+
+
+	/**
+	 *	<p> 정보 수정 시 회원 테이블 변경 </p>
+	 *	@date 2026.01.02
+	 *	@author kdrs
+	 * @param memberVO 회원 정보를 담은 MemberVO
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 */
+	public void updateMember(MemberVO member);
+
+	/**
+	 *	<p> 정보 수정 시 일반 회원 테이블 변경 </p>
+	 *	@date 2026.01.02
+	 *	@author kdrs
+	 * @param MemUserVO 일반 회원 정보를 담은 테이블
+	 * @return 조회된 일반 회원 정보를 담은 MemUserVO 객체 (없을 경우 null)
+	 */
+	public void updateMemUser(MemUserVO userDetail);
+
+	public Integer selectProfileAttachNo(int memNo);
+
+	public void clearMemberProfile(int memNo);
 
 }

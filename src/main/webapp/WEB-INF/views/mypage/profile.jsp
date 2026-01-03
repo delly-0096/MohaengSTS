@@ -17,21 +17,28 @@
                 </div>
 
                 <form class="profile-edit-form" id="profileForm" action="${pageContext.request.contextPath}/mypage/profile/update" method="POST" enctype="multipart/form-data">
+                	<input type="hidden" name="profileImageDeleted" id="profileImageDeleted" value="false">
                     <!-- 프로필 이미지 섹션 -->
                     <div class="content-section">
                         <h5 class="form-section-title"><i class="bi bi-image me-2"></i>프로필 이미지</h5>
-                        <div class="profile-image-upload">
-                            <c:choose>
-                                <c:when test="${not empty sessionScope.loginUser.profileImage}">
-                                    <img src="${sessionScope.loginUser.profileImage}" alt="프로필" class="profile-image-preview" id="profilePreview">
-                                </c:when>
-                                <c:otherwise>
-                                    <div class="profile-image-preview default-avatar" id="profilePreviewDefault">
-                                        <i class="bi bi-person-fill"></i>
-                                    </div>
-                                    <img src="" alt="프로필" class="profile-image-preview" id="profilePreview" style="display: none;">
-                                </c:otherwise>
-                            </c:choose>
+                        	<div class="profile-image-upload">
+                        		<div id="profileContainer" class="profile-image-preview-container">
+		                            <!-- 기본 아이콘 -->
+								    <i class="bi bi-person profile-default-icon"
+								       style="${not empty profileImgUrl ? 'display:none;' : ''}">
+								    </i>
+
+	                          		<!-- 프로필 이미지 -->
+								    <img
+								        id="profilePreview"
+								        class="profile-image-preview"
+								        src="${not empty profileImgUrl 
+								              ? pageContext.request.contextPath.concat(profileImgUrl) 
+								              : ''}"
+								        style="${not empty profileImgUrl ? '' : 'display:none;'}"
+								        alt="프로필 이미지"
+								    >
+								</div>
                             <div class="profile-image-actions">
                                 <input type="file" name="profileImage" id="profileImage" accept="image/*" hidden>
                                 <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profileImage').click()">
@@ -54,7 +61,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">아이디</label>
-                                    <input type="text" class="form-control" value="${sessionScope.loginUser.userId}" readonly disabled>
+                                    <input type="text" class="form-control" value="${member.memId}" readonly disabled>
                                     <div class="form-hint">아이디는 변경할 수 없습니다.</div>
                                 </div>
                             </div>
@@ -63,8 +70,8 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">이메일 <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" name="email" id="email"
-                                           value="${sessionScope.loginUser.email}" placeholder="이메일을 입력하세요" required>
+                                    <input type="email" class="form-control" name="memEmail" id="email"
+                                           value="${member.memEmail}" placeholder="이메일을 입력하세요" required>
                                     <div class="form-hint">알림 및 비밀번호 찾기에 사용됩니다.</div>
                                     <div class="form-error">
                                         <i class="bi bi-exclamation-circle"></i>
@@ -77,8 +84,8 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">이름 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="userName" id="userName"
-                                           value="${sessionScope.loginUser.userName}" placeholder="이름을 입력하세요" required>
+                                    <input type="text" class="form-control" name="memName" id="userName"
+                                           value="${member.memName}" placeholder="이름을 입력하세요" readonly disabled>
                                     <div class="form-error">
                                         <i class="bi bi-exclamation-circle"></i>
                                         <span>이름을 입력해주세요.</span>
@@ -91,7 +98,7 @@
                                 <div class="form-group">
                                     <label class="form-label">닉네임 <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" name="nickname" id="nickname"
-                                           value="${sessionScope.loginUser.nickname}" placeholder="닉네임을 입력하세요" required>
+                                           value="${member.memUser.nickname}" placeholder="닉네임을 입력하세요" required>
                                     <div class="form-hint">2~10자 이내로 입력해주세요.</div>
                                     <div class="form-error">
                                         <i class="bi bi-exclamation-circle"></i>
@@ -104,8 +111,8 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">전화번호 <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" name="phone" id="phone"
-                                           value="${sessionScope.loginUser.phone}" placeholder="'-' 없이 숫자만 입력하세요" maxlength="11" required>
+                                    <input type="tel" class="form-control" name="tel" id="phone"
+                                           value="${member.memUser.tel}" placeholder="'-' 없이 숫자만 입력하세요" maxlength="11" required>
                                     <div class="form-error">
                                         <i class="bi bi-exclamation-circle"></i>
                                         <span>올바른 전화번호 형식이 아닙니다.</span>
@@ -117,11 +124,11 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">생년월일 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control birthdate-picker" name="birthDate" id="birthDate"
-                                           value="${sessionScope.loginUser.birthDate}" placeholder="생년월일을 선택하세요" readonly required>
+                                    <input type="date" class="form-control birthdate-picker" name="birthDate" id="birthDate"
+                                           value="${member.memUser.birthDate}" placeholder="생년월일을 선택하세요" required>
                                     <div class="form-error">
                                         <i class="bi bi-exclamation-circle"></i>
-                                        <span>생년월일을 선택해주세요.</span>
+                                        <span>생년월일을 선택해주세요. </span>
                                     </div>
                                 </div>
                             </div>
@@ -132,21 +139,21 @@
                                     <label class="form-label">성별 <span class="text-muted">(선택)</span></label>
                                     <div class="gender-selector">
                                         <label class="gender-option">
-                                            <input type="radio" name="gender" value="M" ${sessionScope.loginUser.gender == 'M' ? 'checked' : ''}>
+                                            <input type="radio" name="gender" value="M" ${member.memUser.gender == 'M' ? 'checked' : ''}>
                                             <span class="gender-label">
                                                 <i class="bi bi-gender-male"></i>
                                                 남성
                                             </span>
                                         </label>
                                         <label class="gender-option">
-                                            <input type="radio" name="gender" value="F" ${sessionScope.loginUser.gender == 'F' ? 'checked' : ''}>
+                                            <input type="radio" name="gender" value="F" ${member.memUser.gender == 'F' ? 'checked' : ''}>
                                             <span class="gender-label">
                                                 <i class="bi bi-gender-female"></i>
                                                 여성
                                             </span>
                                         </label>
                                         <label class="gender-option">
-                                            <input type="radio" name="gender" value="" ${empty sessionScope.loginUser.gender ? 'checked' : ''}>
+                                            <input type="radio" name="gender" value="" ${empty member.memUser.gender ? 'checked' : ''}>
                                             <span class="gender-label">
                                                 <i class="bi bi-dash"></i>
                                                 기타
@@ -165,16 +172,16 @@
                         <div class="form-group">
                             <label class="form-label">주소 <span class="text-danger">*</span></label>
                             <div class="input-with-btn">
-                                <input type="text" class="form-control" name="postcode" id="postcode"
-                                       value="${sessionScope.loginUser.postcode}" placeholder="우편번호" readonly>
+                                <input type="text" class="form-control" name="zip" id="postcode"
+                                       value="${member.memUser.zip}" placeholder="우편번호" readonly>
                                 <button type="button" class="btn btn-outline" onclick="searchAddress()">
                                     <i class="bi bi-search me-1"></i>주소검색
                                 </button>
                             </div>
-                            <input type="text" class="form-control mt-2" name="address" id="address"
-                                   value="${sessionScope.loginUser.address}" placeholder="기본주소" readonly>
-                            <input type="text" class="form-control mt-2" name="addressDetail" id="addressDetail"
-                                   value="${sessionScope.loginUser.addressDetail}" placeholder="상세주소를 입력하세요">
+                            <input type="text" class="form-control mt-2" name="addr1" id="address"
+                                   value="${member.memUser.addr1}" placeholder="기본주소" readonly>
+                            <input type="text" class="form-control mt-2" name="addr2" id="addressDetail"
+                                   value="${member.memUser.addr2}" placeholder="상세주소를 입력하세요">
                             <div class="form-error">
                                 <i class="bi bi-exclamation-circle"></i>
                                 <span>주소를 입력해주세요.</span>
@@ -414,6 +421,10 @@
 // 프로필 이미지 미리보기
 document.getElementById('profileImage').addEventListener('change', function(e) {
     const file = e.target.files[0];
+    if (!file) return;
+    
+    document.getElementById('profileImageDeleted').value = 'false';
+
     if (file) {
         // 파일 크기 체크 (5MB)
         if (file.size > 5 * 1024 * 1024) {
@@ -430,32 +441,45 @@ document.getElementById('profileImage').addEventListener('change', function(e) {
         }
 
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const previewImg = document.getElementById('profilePreview');
-            const previewDefault = document.getElementById('profilePreviewDefault');
-
-            previewImg.src = e.target.result;
-            previewImg.style.display = 'block';
-            if (previewDefault) {
-                previewDefault.style.display = 'none';
-            }
+        reader.onload = function(evt) {
+        	const img = document.getElementById('profilePreview');
+            const icon = document.querySelector('.profile-default-icon');
+            img.src = evt.target.result;
+            img.style.display = 'block';
+            icon.style.display = 'none';
         };
         reader.readAsDataURL(file);
+
         showToast('이미지가 선택되었습니다.', 'success');
     }
 });
 
-function resetProfileImage() {
-    const previewImg = document.getElementById('profilePreview');
-    const previewDefault = document.getElementById('profilePreviewDefault');
+window.addEventListener('DOMContentLoaded', () => {
+    const img = document.getElementById('profilePreview');
 
-    previewImg.src = '';
-    previewImg.style.display = 'none';
-    if (previewDefault) {
-        previewDefault.style.display = 'flex';
+    // base64 미리보기 상태면 건드리지 않음
+    if (img && img.src.startsWith('data:image')) {
+        return;
     }
-    document.getElementById('profileImage').value = '';
-    showToast('기본 이미지로 변경되었습니다.', 'info');
+
+    // 서버 이미지 정상 유지
+});
+
+function resetProfileImage() {
+    const img = document.getElementById('profilePreview');
+    const icon = document.querySelector('.profile-default-icon');
+    const fileInput = document.getElementById('profileImage');
+    const deletedFlag = document.getElementById('profileImageDeleted');
+
+    img.src = '';
+    img.style.display = 'none';
+
+    icon.style.display = 'block';
+
+    if (fileInput) fileInput.value = '';
+    if (deletedFlag) deletedFlag.value = 'true';
+
+    showToast('기본 아이콘으로 변경되었습니다.', 'info');
 }
 
 // 비밀번호 보기/숨기기
@@ -639,7 +663,7 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
     showToast('회원 정보가 수정되었습니다.', 'success');
 
     // 실제 구현 시 아래 주석 해제
-    // this.submit();
+   	this.submit();
 });
 
 // 입력 시 에러 상태 제거
@@ -648,7 +672,6 @@ document.querySelectorAll('.form-control').forEach(input => {
         this.classList.remove('is-invalid');
     });
 });
-
 // 회원 탈퇴 모달 열기
 function openWithdrawModal() {
     // 모달 초기화

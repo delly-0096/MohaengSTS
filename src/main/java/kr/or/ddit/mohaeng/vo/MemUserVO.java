@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
+import java.util.Date;
+
 import lombok.Data;
 
 @Data

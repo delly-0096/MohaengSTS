@@ -2,8 +2,10 @@ package kr.or.ddit.mohaeng.flight.service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -137,8 +139,11 @@ public class FlightServiceImpl implements IFlightService {
 		if(rawTime != null && !rawTime.isEmpty()) {
 			if(form == 1) {
 				LocalDateTime parseDateTime = LocalDateTime.parse(rawTime, formatter);
+				String dayOfWeek = parseDateTime.getDayOfWeek()
+                        .getDisplayName(TextStyle.SHORT, Locale.KOREAN);
 				vo.setDepTime(parseDateTime);
 				vo.setStartDt(parseDateTime.toLocalDate());
+				vo.setDomesticDays(dayOfWeek);
 			}
 			else {
 				LocalDateTime parseDateTime = LocalDateTime.parse(rawTime, formatter);

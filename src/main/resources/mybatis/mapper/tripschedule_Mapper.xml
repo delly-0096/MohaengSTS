@@ -32,7 +32,7 @@
 		 WHERE POP_RGN_YN = 'Y'
 	</select>
 	
-	<select id="selectTourPlaceList" resultType="kr.or.ddit.util.Params">
+	<select id="selectTourPlaceList" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
 		SELECT PLC_NO
 			 , RGN_NO
 			 , PLACE_TYPE

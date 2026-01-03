@@ -58,6 +58,6 @@ public class FlightController {
 	// POST로 보내기
 	@GetMapping("/booking")
 	public String flightBooking() {
-		return "product/flight-booking";
+		return "product/flightBooking";
 	}
 }

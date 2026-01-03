@@ -14,10 +14,10 @@ import lombok.Data;
 public class FlightScheduleVO {
 	// 운항 일정
 	
-	private int scheduleNo;       // 항공일정키
-	private String fltProdId;     // 
+	private int scheduleNo;       	 // 항공일정키
+	private String fltProdId;     	 // ??
 	
-	private String flightSymbol;  // 항공편번호
+	private String flightSymbol;  	 // 항공편번호
 	private String depAirportId;     // 출발공항 - id
 	private String arrAirportId;     // 도착공항 - id
 	
@@ -27,7 +27,7 @@ public class FlightScheduleVO {
 	@DateTimeFormat(pattern = "a HH:mm")
 	@JsonFormat(pattern = "a HH:mm")
 	private LocalDateTime arrTime;       // 도착시간
-	private String domesticDays;  // 월/화/수 등
+	private String domesticDays;  		 // 월/화/수 등
 	
 	@DateTimeFormat(pattern = "yyyyMMdd")
 	@JsonFormat(pattern = "yyyyMMdd")

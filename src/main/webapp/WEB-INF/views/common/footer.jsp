@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
     </main>
     <!-- 메인 콘텐츠 끝 -->
@@ -38,15 +39,15 @@
                 <div class="footer-section">
                     <h4 class="footer-title">서비스</h4>
                     <div class="footer-links">
-                        <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
+                        <sec:authorize access="hasAuthority('MEMBER')">
                             <a href="${pageContext.request.contextPath}/schedule/search" class="footer-link">일정 검색</a>
-                        </c:if>
+                        </sec:authorize>
                         <a href="${pageContext.request.contextPath}/product/flight" class="footer-link">항공</a>
                         <a href="${pageContext.request.contextPath}/product/accommodation" class="footer-link">숙박</a>
                         <a href="${pageContext.request.contextPath}/product/tour" class="footer-link">투어/체험/티켓</a>
-                        <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
+                        <sec:authorize access="hasAuthority('MEMBER')">
                             <a href="${pageContext.request.contextPath}/community/talk" class="footer-link">여행톡</a>
-                        </c:if>
+                        </sec:authorize>
                         <a href="${pageContext.request.contextPath}/community/travel-log" class="footer-link">여행기록</a>
                     </div>
                 </div>

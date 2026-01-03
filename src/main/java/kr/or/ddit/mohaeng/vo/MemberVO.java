@@ -13,7 +13,7 @@ public class MemberVO {
 	private String memPassword; 	/* 비밀번호 */
 	private String memName; 		/* 이름 */
 	private String memEmail; 		/* 이메일 */
-	private int memProfile; 		/* 프로필 */
+	private Integer memProfile; 		/* 프로필 */
 	private int point; 				/* 마일리지 */
 	private String memStatus; 		/* 회원의 계정상태 */
 	private String delYn;			/* 탈퇴여부 Y(삭제),  N(미삭제) */

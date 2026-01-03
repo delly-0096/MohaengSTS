@@ -1,6 +1,9 @@
 package kr.or.ddit.mohaeng.config;
 
 import java.util.List;
+import java.util.Map;
+
+import javax.sql.DataSource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -18,16 +21,20 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.filter.TokenAuthenticationFilter;
 import kr.or.ddit.mohaeng.security.CustomAccessDeniedHandler;
-import kr.or.ddit.mohaeng.security.CustomLoginFailureHandler;
-import kr.or.ddit.mohaeng.security.CustomLoginSuccessHandler;
 import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
 import kr.or.ddit.mohaeng.util.TokenProvider;
 import lombok.extern.slf4j.Slf4j;
@@ -37,6 +44,9 @@ import lombok.extern.slf4j.Slf4j;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+	
+	@Autowired
+	private DataSource dataSource;
 	
 	@Autowired
 	private CustomUserDetailsService customUserDetailsService;
@@ -54,10 +64,14 @@ public class SecurityConfig {
 			"/member/find",
 			"/member/idCheck",
 			"/member/find",
+			"/mypage/profile",
+			"/mypage/profile/update",
 			"/idCheck",
 			"/error",
-			"/mohaeng",
-			"/.well-known/**"		// 크롬 개발자 도구로의 요청
+			"/mohaeng/**",
+			"/.well-known/**",		// 크롬 개발자 도구로의 요청
+			"/upload/**",
+			"/resources/**"
 	};
 	
 	// 일반회원 허용 url test
@@ -155,11 +169,30 @@ public class SecurityConfig {
         session.maximumSessions(1)
     );
 
+    // 로그인 상태 유지
+    http.rememberMe(remember -> remember
+    		.key("mohaengKey") 								// 쿠키 암호화 키 (원하는 문자열)
+    		.tokenRepository(persistentTokenRepository()) 	// DB 저장소 설정
+    		.userDetailsService(customUserDetailsService) 	// 인증 유저 확인 서비스
+    		.tokenValiditySeconds(604800) 					// 쿠키 유효기간 (7일: 60*60*24*7)
+    		.rememberMeServices(rememberMeServices())
+    );
+    
     http.logout(logout ->
         logout.logoutUrl("/logout")
-            .invalidateHttpSession(true)
-            .logoutSuccessUrl("/member/login")
+              .logoutRequestMatcher(new AntPathRequestMatcher("/member/logout", "GET")) // GET 방식 허용 추가
+              .addLogoutHandler((request, response, authentication) -> {
+                  log.info("로그아웃 핸들러 진입!"); 
+                  if (authentication != null) {
+                      log.info("로그아웃 유저명: " + authentication.getName());
+                      persistentTokenRepository().removeUserTokens(authentication.getName());
+                  }
+              })
+			.invalidateHttpSession(true)           		// 세션 무효화
+			.deleteCookies("JSESSIONID", "remember-me")	// 세션 쿠키와 자동로그인 쿠키 모두 삭제
+			.logoutSuccessUrl("/member/login")
     );
+    
 
     return http.build();
 	}
@@ -180,11 +213,11 @@ public class SecurityConfig {
 	
 	@Bean
 	protected AuthenticationManager authenticationManager(
-			BCryptPasswordEncoder bCryptPasswordEncoder
+			PasswordEncoder passwordEncoder
 			) {
 		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
 		authProvider.setUserDetailsService(customUserDetailsService);
-		authProvider.setPasswordEncoder(bCryptPasswordEncoder);
+		authProvider.setPasswordEncoder(passwordEncoder);
 		return new ProviderManager(authProvider);
 	}
 	
@@ -192,6 +225,29 @@ public class SecurityConfig {
 	@Bean
 	protected PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
+	}
+	
+	// DB 저장소
+	@Bean
+	protected PersistentTokenRepository persistentTokenRepository() {
+		log.info("Remember-Me DB 저장소 빈 생성 시작");
+        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+        repo.setDataSource(dataSource);
+        return repo;
+    }
+	
+	@Bean
+	protected RememberMeServices rememberMeServices() {
+	    JdbcTokenRepositoryImpl db = new JdbcTokenRepositoryImpl();
+	    db.setDataSource(dataSource);
+	    
+	    // 키값("mohaengKey")은 설정과 반드시 일치해야 함
+	    PersistentTokenBasedRememberMeServices service = 
+	        new PersistentTokenBasedRememberMeServices("mohaengKey", customUserDetailsService, db);
+	    
+	    service.setParameter("remember-me"); // 체크박스 name값
+	    service.setTokenValiditySeconds(604800); // 7일
+	    return service;
 	}
 	
 }

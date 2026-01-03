@@ -1,0 +1,2668 @@
+/* ===================================
+   모행(MOHAENG) - 커뮤니티 페이지 스타일
+=================================== */
+
+/* ===== 공통 커뮤니티 스타일 ===== */
+.community-page {
+    padding: 40px 0 80px;
+    min-height: calc(100vh - var(--header-height));
+    background: var(--light-color);
+}
+
+.community-header {
+    margin-bottom: 32px;
+}
+
+.community-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.community-header p {
+    color: var(--gray-dark);
+}
+
+/* ===== 여행톡 (게시판) ===== */
+.board-container {
+    background: white;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+}
+
+/* 카테고리 탭 */
+.board-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 20px;
+    border-bottom: 1px solid var(--gray-lighter);
+    overflow-x: auto;
+}
+
+.board-tab {
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-dark);
+    background: var(--gray-lighter);
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    border: none;
+}
+
+.board-tab:hover {
+    background: var(--gray-light);
+}
+
+.board-tab.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* 게시판 헤더 */
+.board-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+.board-search {
+    display: flex;
+    gap: 8px;
+}
+
+.board-search input {
+    width: 250px;
+    padding: 10px 16px;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+}
+
+.board-search input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* 게시글 리스트 */
+.post-list {
+    list-style: none;
+}
+
+.post-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px;
+    border-bottom: 1px solid var(--gray-lighter);
+    transition: background var(--transition-fast);
+}
+
+.post-item:hover {
+    background: var(--light-color);
+}
+
+.post-item:last-child {
+    border-bottom: none;
+}
+
+.post-category {
+    padding: 4px 10px;
+    background: var(--gray-lighter);
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-dark);
+    white-space: nowrap;
+}
+
+.post-category.notice {
+    background: var(--danger-color);
+    color: white;
+}
+
+.post-category.companion {
+    background: var(--primary-color);
+    color: white;
+}
+
+.post-category.info {
+    background: var(--secondary-color);
+    color: white;
+}
+
+.post-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.post-title {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.post-title a {
+    color: var(--dark-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.post-title a:hover {
+    color: var(--primary-color);
+}
+
+.post-title .comment-count {
+    color: var(--primary-color);
+    font-size: 13px;
+}
+
+.post-meta {
+    font-size: 13px;
+    color: var(--gray-medium);
+    display: flex;
+    gap: 12px;
+}
+
+.post-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--gray-medium);
+    white-space: nowrap;
+}
+
+.post-stats span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* 페이지네이션 */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    padding: 24px;
+}
+
+.pagination {
+    display: flex;
+    gap: 4px;
+}
+
+.page-link {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    color: var(--gray-dark);
+    transition: all var(--transition-fast);
+}
+
+.page-link:hover {
+    background: var(--gray-lighter);
+}
+
+.page-item.active .page-link {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* ===== 여행기록 (인스타그램 스타일) ===== */
+.travellog-page {
+    padding: 40px 0 80px;
+}
+
+.travellog-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.travellog-header h1 {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+/* 필터 탭 */
+.travellog-filters {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--gray-lighter);
+    padding-bottom: 16px;
+}
+
+.travellog-filter {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--gray-medium);
+    padding-bottom: 16px;
+    margin-bottom: -16px;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.travellog-filter:hover {
+    color: var(--dark-color);
+}
+
+.travellog-filter.active {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-color);
+}
+
+/* 여행기록 그리드 */
+.travellog-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+}
+
+.travellog-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-normal);
+}
+
+.travellog-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* 카드 헤더 (사용자 정보) */
+.travellog-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+}
+
+.travellog-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+}
+
+.travellog-user-info {
+    flex: 1;
+}
+
+.travellog-username {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.travellog-location {
+    font-size: 12px;
+    color: var(--gray-medium);
+}
+
+.travellog-more-btn {
+    color: var(--gray-medium);
+    padding: 4px;
+}
+
+/* 카드 이미지 */
+.travellog-card-image {
+    position: relative;
+    aspect-ratio: 1;
+}
+
+.travellog-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.travellog-image-count {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+/* 카드 액션 */
+.travellog-card-actions {
+    display: flex;
+    gap: 16px;
+    padding: 12px 16px;
+}
+
+.travellog-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--gray-dark);
+    font-size: 14px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.travellog-action-btn:hover {
+    color: var(--primary-color);
+}
+
+.travellog-action-btn.liked {
+    color: var(--accent-color);
+}
+
+.travellog-action-btn.bookmarked {
+    color: var(--warning-color);
+}
+
+.travellog-action-btn i {
+    font-size: 20px;
+}
+
+/* 카드 콘텐츠 */
+.travellog-card-content {
+    padding: 0 16px 16px;
+}
+
+.travellog-likes {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.travellog-text {
+    font-size: 14px;
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.travellog-text .username {
+    font-weight: 600;
+}
+
+.travellog-date {
+    font-size: 12px;
+    color: var(--gray-medium);
+    margin-top: 8px;
+}
+
+/* ===== 여행기록 상세 모달 ===== */
+.travellog-modal .modal-dialog {
+    max-width: 1000px;
+}
+
+.travellog-modal .modal-content {
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+}
+
+.travellog-modal .modal-body {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    padding: 0;
+    min-height: 600px;
+}
+
+.travellog-modal-image {
+    background: #000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.travellog-modal-image img {
+    max-width: 100%;
+    max-height: 600px;
+    object-fit: contain;
+}
+
+.travellog-modal-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.travellog-modal-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+.travellog-modal-comments {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.comment-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    flex-shrink: 0;
+}
+
+.comment-content {
+    flex: 1;
+}
+
+.comment-username {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.comment-text {
+    font-size: 14px;
+    margin-top: 2px;
+}
+
+.comment-meta {
+    font-size: 12px;
+    color: var(--gray-medium);
+    margin-top: 4px;
+}
+
+.travellog-modal-input {
+    display: flex;
+    gap: 12px;
+    padding: 16px;
+    border-top: 1px solid var(--gray-lighter);
+}
+
+.travellog-modal-input input {
+    flex: 1;
+    border: none;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.travellog-modal-input input:focus {
+    outline: none;
+}
+
+.travellog-modal-input button {
+    color: var(--primary-color);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+/* 로그인 유도 오버레이 */
+.login-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.login-overlay.active {
+    display: flex;
+}
+
+.login-overlay-content {
+    text-align: center;
+    max-width: 400px;
+    padding: 40px;
+}
+
+.login-overlay-content h3 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.login-overlay-content p {
+    color: var(--gray-dark);
+    margin-bottom: 24px;
+}
+
+/* ===== 검색 영역 개선 ===== */
+.board-search .search-type {
+    width: 100px;
+    padding: 10px 12px;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    background: white;
+}
+
+.board-search .search-type:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* 검색 결과 메시지 */
+.search-result-message {
+    padding: 16px 20px;
+    background: var(--light-color);
+    border-bottom: 1px solid var(--gray-lighter);
+    font-size: 14px;
+    color: var(--gray-dark);
+}
+
+.search-result-message strong {
+    color: var(--primary-color);
+}
+
+/* ===== 글쓰기 페이지 ===== */
+.write-container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 40px;
+    box-shadow: var(--shadow-sm);
+}
+
+.write-form .form-group {
+    margin-bottom: 24px;
+}
+
+.write-form .form-label {
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+/* 동행 구하기 추가 정보 */
+.companion-info {
+    background: var(--light-color);
+    padding: 20px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+}
+
+.companion-info .form-group {
+    margin-bottom: 0;
+}
+
+/* 파일 업로드 영역 */
+.file-upload-area {
+    border: 2px dashed var(--gray-light);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-fast);
+}
+
+.file-upload-area.dragover {
+    border-color: var(--primary-color);
+    background: var(--light-color);
+}
+
+.file-upload-placeholder {
+    padding: 40px;
+    text-align: center;
+    cursor: pointer;
+}
+
+.file-upload-placeholder i {
+    font-size: 48px;
+    color: var(--gray-medium);
+    margin-bottom: 12px;
+    display: block;
+}
+
+.file-upload-placeholder p {
+    color: var(--gray-dark);
+    margin-bottom: 8px;
+}
+
+.file-upload-placeholder small {
+    color: var(--gray-medium);
+}
+
+/* 파일 미리보기 */
+.file-preview-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.file-preview-item {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.file-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.file-preview-item .remove-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border: none;
+    font-size: 14px;
+}
+
+.file-preview-item .remove-btn:hover {
+    background: var(--danger-color);
+}
+
+.file-preview-item .file-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 4px 6px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* 태그 */
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.tag-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.tag-item button {
+    background: none;
+    border: none;
+    color: var(--primary-dark);
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.tag-item button:hover {
+    color: var(--danger-color);
+}
+
+/* 글쓰기 버튼 영역 */
+.write-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--gray-lighter);
+}
+
+/* ===== 글쓰기 폼 (기존) ===== */
+.write-form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 40px;
+    box-shadow: var(--shadow-md);
+}
+
+.write-form-header {
+    margin-bottom: 32px;
+}
+
+.write-form-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.image-upload-area {
+    border: 2px dashed var(--gray-light);
+    border-radius: var(--radius-lg);
+    padding: 60px 40px;
+    text-align: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    margin-bottom: 24px;
+}
+
+.image-upload-area:hover {
+    border-color: var(--primary-color);
+    background: var(--light-color);
+}
+
+.image-upload-area i {
+    font-size: 48px;
+    color: var(--gray-medium);
+    margin-bottom: 16px;
+}
+
+.image-upload-area p {
+    color: var(--gray-dark);
+    margin-bottom: 8px;
+}
+
+.image-upload-area small {
+    color: var(--gray-medium);
+}
+
+.uploaded-images {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.uploaded-image {
+    position: relative;
+    aspect-ratio: 1;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+}
+
+.uploaded-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.uploaded-image .remove-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* ===== 여행기록 작성 페이지 ===== */
+.travellog-write-page {
+    padding: 0;
+    background: var(--light-color);
+    min-height: calc(100vh - var(--header-height));
+}
+
+.travellog-write-container {
+    background: white;
+    min-height: calc(100vh - var(--header-height));
+}
+
+.travellog-write-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-lighter);
+    position: sticky;
+    top: var(--header-height);
+    background: white;
+    z-index: 10;
+}
+
+.travellog-write-header h2 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.travellog-write-header .btn-back {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--dark-color);
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+}
+
+.travellog-write-header .btn-back:hover {
+    background: var(--gray-lighter);
+}
+
+.travellog-write-header .btn-submit {
+    padding: 8px 20px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.travellog-write-header .btn-submit:hover {
+    background: var(--primary-dark);
+}
+
+.travellog-write-header .btn-submit:disabled {
+    background: var(--gray-light);
+    cursor: not-allowed;
+}
+
+.travellog-write-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+
+/* 이미지 섹션 */
+.travellog-image-section {
+    border-right: 1px solid var(--gray-lighter);
+    min-height: 500px;
+}
+
+.image-upload-wrapper {
+    position: relative;
+    aspect-ratio: 1;
+    background: var(--dark-color);
+}
+
+.image-upload-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+}
+
+.image-upload-placeholder i {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.8;
+}
+
+.image-upload-placeholder h4 {
+    font-size: 20px;
+    font-weight: 400;
+    margin-bottom: 8px;
+}
+
+.image-upload-placeholder p {
+    font-size: 14px;
+    opacity: 0.7;
+}
+
+/* 이미지 슬라이더 */
+.image-preview-slider {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+.slider-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.slider-container .slide {
+    position: absolute;
+    inset: 0;
+    display: none;
+}
+
+.slider-container .slide.active {
+    display: block;
+}
+
+.slider-container .slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    background: var(--dark-color);
+}
+
+.slider-nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-fast);
+    z-index: 5;
+}
+
+.slider-nav:hover {
+    background: white;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.slider-nav.prev {
+    left: 12px;
+}
+
+.slider-nav.next {
+    right: 12px;
+}
+
+.slider-dots {
+    position: absolute;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 5;
+}
+
+.slider-dots .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.5);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.slider-dots .dot.active {
+    background: white;
+    width: 8px;
+    height: 8px;
+}
+
+.btn-remove-image {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    transition: background var(--transition-fast);
+}
+
+.btn-remove-image:hover {
+    background: var(--danger-color);
+}
+
+.btn-add-more {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.9);
+    border: none;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    font-size: 18px;
+    z-index: 5;
+    transition: all var(--transition-fast);
+}
+
+.btn-add-more:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+/* 썸네일 리스트 */
+.image-thumbnail-list {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    overflow-x: auto;
+    background: var(--light-color);
+}
+
+.thumbnail-item {
+    position: relative;
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: 2px solid transparent;
+    transition: border-color var(--transition-fast);
+}
+
+.thumbnail-item.active {
+    border-color: var(--primary-color);
+}
+
+.thumbnail-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.thumbnail-number {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 18px;
+    height: 18px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+}
+
+/* 콘텐츠 섹션 */
+.travellog-content-section {
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.writer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--gray-lighter);
+    margin-bottom: 16px;
+}
+
+.writer-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.writer-name {
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.travellog-textarea {
+    width: 100%;
+    min-height: 150px;
+    border: none;
+    resize: none;
+    font-size: 15px;
+    line-height: 1.6;
+    padding: 0;
+}
+
+.travellog-textarea:focus {
+    outline: none;
+}
+
+.travellog-textarea::placeholder {
+    color: var(--gray-medium);
+}
+
+.char-count {
+    text-align: right;
+    font-size: 12px;
+    color: var(--gray-medium);
+    padding: 8px 0 16px;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+/* 옵션 아이템 */
+.travellog-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--gray-lighter);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.travellog-option:hover {
+    background: var(--light-color);
+    margin: 0 -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.option-icon {
+    width: 24px;
+    color: var(--gray-dark);
+    font-size: 18px;
+}
+
+.option-content {
+    flex: 1;
+}
+
+.option-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.option-value {
+    display: block;
+    font-size: 12px;
+    color: var(--gray-medium);
+    margin-top: 2px;
+}
+
+.option-desc {
+    display: block;
+    font-size: 12px;
+    color: var(--gray-medium);
+    margin-top: 2px;
+}
+
+.travellog-option > i:last-child {
+    color: var(--gray-light);
+    font-size: 14px;
+}
+
+.visibility-select {
+    border: none;
+    background: none;
+    font-size: 14px;
+    color: var(--primary-color);
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+}
+
+.visibility-select:focus {
+    outline: none;
+    background: var(--light-color);
+}
+
+/* 위치 입력 영역 */
+.location-input-area,
+.date-input-area,
+.tag-input-area {
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+.location-search {
+    position: relative;
+}
+
+.location-search i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-medium);
+}
+
+.location-search input {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+}
+
+.location-search input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.location-suggestions {
+    margin-top: 8px;
+}
+
+.location-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: var(--radius-md);
+    transition: background var(--transition-fast);
+}
+
+.location-item:hover {
+    background: var(--light-color);
+}
+
+.location-item i {
+    color: var(--primary-color);
+}
+
+/* 인기 태그 */
+.popular-tags {
+    margin-top: 16px;
+}
+
+.popular-tag-label {
+    font-size: 12px;
+    color: var(--gray-medium);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.popular-tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.popular-tag {
+    padding: 6px 12px;
+    background: var(--gray-lighter);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--gray-dark);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.popular-tag:hover {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 992px) {
+    .travellog-write-body {
+        grid-template-columns: 1fr;
+    }
+
+    .travellog-image-section {
+        border-right: none;
+        border-bottom: 1px solid var(--gray-lighter);
+    }
+
+    .image-upload-wrapper {
+        aspect-ratio: 4/3;
+    }
+
+    .travellog-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .travellog-modal .modal-body {
+        grid-template-columns: 1fr;
+    }
+
+    .travellog-modal-image {
+        max-height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .board-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+    }
+
+    .board-search {
+        width: 100%;
+    }
+
+    .board-search input {
+        flex: 1;
+    }
+
+    .post-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .post-stats {
+        margin-top: 8px;
+    }
+
+    .travellog-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .travellog-filters {
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .travellog-filter {
+        white-space: nowrap;
+    }
+
+    .write-form-container {
+        padding: 24px;
+    }
+
+    .uploaded-images {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+/* ===== 블로그 스타일 여행기록 에디터 (New) ===== */
+
+/* 새로운 레이아웃 */
+.travellog-write-body-new {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 0;
+    min-height: calc(100vh - var(--header-height) - 60px);
+}
+
+/* 블로그 에디터 섹션 */
+.blog-editor-section {
+    padding: 0;
+    background: white;
+    border-right: 1px solid var(--gray-lighter);
+    overflow: visible;
+}
+
+/* 커버 이미지 */
+.cover-image-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 21/9;
+    background: linear-gradient(135deg, var(--gray-lighter), var(--gray-light));
+    overflow: hidden;
+}
+
+.cover-image-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.cover-image-placeholder:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.cover-image-placeholder i {
+    font-size: 48px;
+    color: var(--gray-medium);
+    margin-bottom: 12px;
+}
+
+.cover-image-placeholder span {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--gray-dark);
+}
+
+.cover-image-placeholder p {
+    font-size: 14px;
+    color: var(--gray-medium);
+    margin-top: 4px;
+}
+
+.cover-image-preview {
+    position: absolute;
+    inset: 0;
+}
+
+.cover-image-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cover-image-overlay {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    gap: 8px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.cover-image-preview:hover .cover-image-overlay {
+    opacity: 1;
+}
+
+.btn-cover-change,
+.btn-cover-remove {
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background var(--transition-fast);
+}
+
+.btn-cover-change:hover {
+    background: rgba(0, 0, 0, 0.85);
+}
+
+.btn-cover-remove:hover {
+    background: var(--danger-color);
+}
+
+/* 제목 입력 */
+.blog-title-input {
+    padding: 24px 32px 16px;
+}
+
+.blog-title-input input {
+    width: 100%;
+    border: none;
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--dark-color);
+    padding: 0;
+}
+
+.blog-title-input input:focus {
+    outline: none;
+}
+
+.blog-title-input input::placeholder {
+    color: var(--gray-light);
+}
+
+/* 일정 연결 배너 */
+.schedule-link-banner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0 32px 24px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, rgba(74, 144, 217, 0.08), rgba(74, 144, 217, 0.04));
+    border: 1px dashed var(--primary-color);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.schedule-link-banner:hover {
+    background: linear-gradient(135deg, rgba(74, 144, 217, 0.12), rgba(74, 144, 217, 0.08));
+    border-style: solid;
+}
+
+.schedule-link-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.schedule-link-content {
+    flex: 1;
+}
+
+.schedule-link-title {
+    display: block;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 2px;
+}
+
+.schedule-link-desc {
+    display: block;
+    font-size: 13px;
+    color: var(--gray-medium);
+}
+
+.schedule-link-banner > i:last-child {
+    color: var(--gray-medium);
+    font-size: 18px;
+}
+
+/* 연결된 일정 카드 */
+.linked-schedule-card {
+    margin: 0 32px 24px;
+    background: white;
+    border: 1px solid var(--primary-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.linked-schedule-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--primary-color);
+    color: white;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.linked-schedule-header i:first-child {
+    font-size: 16px;
+}
+
+.linked-schedule-header .btn-unlink {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: white;
+    opacity: 0.8;
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+}
+
+.linked-schedule-header .btn-unlink:hover {
+    opacity: 1;
+}
+
+.linked-schedule-body {
+    padding: 16px;
+}
+
+.linked-schedule-body h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px;
+}
+
+.linked-schedule-meta {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--gray-dark);
+    margin-bottom: 12px;
+}
+
+.linked-schedule-meta i {
+    margin-right: 4px;
+    color: var(--primary-color);
+}
+
+.linked-schedule-places {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.place-chip {
+    padding: 4px 10px;
+    background: var(--gray-lighter);
+    border-radius: 20px;
+    font-size: 12px;
+    color: var(--gray-dark);
+}
+
+.place-chip.more {
+    background: var(--primary-light);
+    color: var(--primary-dark);
+}
+
+/* 블로그 에디터 */
+.blog-editor {
+    padding: 0 32px 24px;
+    min-height: 300px;
+    overflow: visible;
+}
+
+.editor-block {
+    position: relative;
+    margin-bottom: 16px;
+    overflow: visible;
+}
+
+.editor-block:hover .block-actions {
+    opacity: 1;
+}
+
+.block-actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+    z-index: 10;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 4px;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.block-action-btn {
+    width: 32px;
+    height: 32px;
+    background: white;
+    border: 1px solid var(--gray-lighter);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--gray-medium);
+    transition: all var(--transition-fast);
+}
+
+.block-action-btn:hover {
+    background: var(--gray-lighter);
+    color: var(--gray-dark);
+}
+
+.block-action-btn.delete:hover {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    color: white;
+}
+
+/* 텍스트 블록 */
+.text-block .block-textarea {
+    width: 100%;
+    border: none;
+    resize: none;
+    font-size: 16px;
+    line-height: 1.8;
+    padding: 12px 0;
+    min-height: 80px;
+    color: var(--dark-color);
+}
+
+.text-block .block-textarea:focus {
+    outline: none;
+}
+
+.text-block .block-textarea::placeholder {
+    color: var(--gray-light);
+}
+
+/* 이미지 블록 */
+.image-block-content {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--gray-lighter);
+}
+
+.image-block-content img {
+    width: 100%;
+    max-height: 500px;
+    object-fit: contain;
+    display: block;
+}
+
+.image-caption {
+    width: 100%;
+    border: none;
+    border-top: 1px solid var(--gray-lighter);
+    padding: 12px 16px;
+    font-size: 14px;
+    color: var(--gray-dark);
+    text-align: center;
+    background: var(--light-color);
+}
+
+.image-caption:focus {
+    outline: none;
+    background: white;
+}
+
+.image-caption::placeholder {
+    color: var(--gray-medium);
+}
+
+/* 구분선 블록 */
+.block-divider {
+    border: none;
+    border-top: 2px solid var(--gray-lighter);
+    margin: 24px 0;
+}
+
+/* 일차 헤더 블록 */
+.day-header-block {
+    margin: 32px 0 20px;
+    padding-top: 24px;
+    border-top: 2px solid var(--gray-lighter);
+}
+
+.day-header-block:first-child {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: none;
+}
+
+.day-header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.day-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+}
+
+.day-date {
+    font-size: 15px;
+    color: var(--gray-dark);
+    font-weight: 500;
+}
+
+/* 미리보기 - 일차 헤더 */
+.preview-day-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 40px 0 24px;
+    padding-top: 32px;
+    border-top: 2px solid var(--gray-lighter);
+}
+
+.preview-day-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    border-radius: 20px;
+}
+
+.preview-day-date {
+    font-size: 15px;
+    color: var(--gray-dark);
+    font-weight: 500;
+}
+
+/* 장소 블록 */
+.place-block-content {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: var(--light-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: 12px;
+}
+
+.place-block-content img {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.place-block-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.place-block-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px;
+    color: var(--dark-color);
+}
+
+.place-block-info h4 i {
+    color: var(--primary-color);
+    margin-right: 4px;
+}
+
+.place-block-info p {
+    font-size: 13px;
+    color: var(--gray-medium);
+    margin: 0;
+}
+
+/* 장소 시간 정보 */
+.place-time-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    color: var(--gray-dark);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.place-time-info i {
+    font-size: 13px;
+    color: var(--gray-medium);
+}
+
+/* 장소 별점 */
+.place-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px dashed var(--gray-lighter);
+}
+
+.place-rating .rating-label {
+    font-size: 12px;
+    color: var(--gray-medium);
+    font-weight: 500;
+}
+
+.place-rating .star-rating {
+    display: flex;
+    gap: 2px;
+}
+
+.place-rating .star-rating i {
+    font-size: 18px;
+    color: #ddd;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.place-rating .star-rating i:hover {
+    transform: scale(1.2);
+    color: #ffc107;
+}
+
+.place-rating .star-rating i.bi-star-fill {
+    color: #ffc107;
+}
+
+.place-rating .star-rating:hover i {
+    color: #ddd;
+}
+
+.place-rating .star-rating:hover i:hover,
+.place-rating .star-rating:hover i:hover ~ i,
+.place-rating .star-rating:hover i.hovered {
+    color: #ffc107;
+}
+
+.place-rating .rating-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color);
+    min-width: 28px;
+}
+
+.place-block .block-textarea {
+    width: 100%;
+    border: 1px solid var(--gray-lighter);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-size: 15px;
+    line-height: 1.6;
+    min-height: 80px;
+    resize: none;
+}
+
+.place-block .block-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+/* 블록 추가 툴바 */
+.add-block-toolbar {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px 32px;
+    border-top: 1px solid var(--gray-lighter);
+    background: var(--light-color);
+}
+
+.add-block-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 16px 24px;
+    background: white;
+    border: 1px solid var(--gray-lighter);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.add-block-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-light);
+}
+
+.add-block-btn i {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.add-block-btn span {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-dark);
+}
+
+/* 설정 패널 */
+.settings-panel {
+    background: var(--light-color);
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-height: calc(100vh - var(--header-height) - 60px);
+    overflow-y: auto;
+    position: sticky;
+    top: calc(var(--header-height) + 60px);
+}
+
+.writer-info-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: white;
+    border-radius: var(--radius-lg);
+}
+
+.settings-panel .writer-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.writer-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-panel .writer-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.writer-status {
+    font-size: 12px;
+    color: var(--gray-medium);
+}
+
+.settings-section {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 20px;
+}
+
+.settings-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+.settings-title i {
+    color: var(--primary-color);
+}
+
+.setting-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-lighter);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.setting-item:last-child {
+    border-bottom: none;
+}
+
+.setting-item:hover:not(.no-arrow) {
+    background: var(--light-color);
+    margin: 0 -20px;
+    padding-left: 20px;
+    padding-right: 20px;
+}
+
+.setting-item.no-arrow {
+    cursor: default;
+}
+
+.setting-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--light-color);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-color);
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.setting-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.setting-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.setting-value {
+    display: block;
+    font-size: 12px;
+    color: var(--gray-medium);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.setting-desc {
+    display: block;
+    font-size: 11px;
+    color: var(--gray-medium);
+    margin-top: 2px;
+}
+
+.setting-arrow {
+    color: var(--gray-light);
+    font-size: 14px;
+}
+
+.setting-input-area {
+    display: none;
+    padding: 12px 0;
+}
+
+.search-input-wrapper {
+    position: relative;
+}
+
+.search-input-wrapper i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--gray-medium);
+}
+
+.search-input-wrapper input {
+    width: 100%;
+    padding: 12px 12px 12px 40px;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--radius-md);
+    font-size: 14px;
+}
+
+.search-input-wrapper input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.settings-actions {
+    margin-top: auto;
+}
+
+/* 일정 선택 모달 */
+.schedule-modal-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.schedule-modal-tab {
+    padding: 8px 16px;
+    background: var(--gray-lighter);
+    border: none;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--gray-dark);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.schedule-modal-tab:hover {
+    background: var(--gray-light);
+}
+
+.schedule-modal-tab.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.schedule-modal-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.schedule-modal-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--light-color);
+    border: 2px solid transparent;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.schedule-modal-item:hover {
+    border-color: var(--primary-color);
+    background: white;
+}
+
+.schedule-modal-item.selected {
+    border-color: var(--primary-color);
+    background: rgba(74, 144, 217, 0.05);
+}
+
+.schedule-modal-image {
+    position: relative;
+    width: 100px;
+    height: 75px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.schedule-modal-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.schedule-modal-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.schedule-modal-badge.completed {
+    background: var(--success-color);
+    color: white;
+}
+
+.schedule-modal-badge.upcoming {
+    background: var(--primary-color);
+    color: white;
+}
+
+.schedule-modal-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.schedule-modal-info h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 6px;
+}
+
+.schedule-modal-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: var(--gray-medium);
+    margin-bottom: 8px;
+}
+
+.schedule-modal-meta i {
+    margin-right: 4px;
+}
+
+.schedule-modal-places {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.schedule-modal-select {
+    color: var(--gray-light);
+    font-size: 24px;
+}
+
+.schedule-modal-item:hover .schedule-modal-select,
+.schedule-modal-item.selected .schedule-modal-select {
+    color: var(--primary-color);
+}
+
+.schedule-modal-empty {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--gray-medium);
+}
+
+.schedule-modal-empty i {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+}
+
+/* 장소 검색 모달 */
+.place-search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.place-search-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--light-color);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+
+.place-search-item:hover {
+    background: var(--gray-lighter);
+}
+
+.place-search-item img {
+    width: 60px;
+    height: 45px;
+    object-fit: cover;
+    border-radius: var(--radius-sm);
+}
+
+.place-search-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.place-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.place-address {
+    font-size: 12px;
+    color: var(--gray-medium);
+}
+
+/* 미리보기 모달 */
+.preview-container {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 40px;
+}
+
+.preview-cover {
+    margin: -40px -40px 32px;
+}
+
+.preview-cover img {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+}
+
+.preview-title {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--dark-color);
+    margin: 0 0 16px;
+}
+
+.preview-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: var(--gray-dark);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+.preview-meta i {
+    margin-right: 6px;
+    color: var(--primary-color);
+}
+
+.preview-schedule {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--primary-light);
+    color: var(--primary-dark);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 24px;
+}
+
+.preview-text {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--dark-color);
+    margin: 0 0 24px;
+}
+
+.preview-figure {
+    margin: 24px 0;
+    text-align: center;
+}
+
+.preview-figure img {
+    max-width: 100%;
+    border-radius: var(--radius-lg);
+}
+
+.preview-figure figcaption {
+    margin-top: 12px;
+    font-size: 14px;
+    color: var(--gray-medium);
+}
+
+.preview-divider {
+    border: none;
+    border-top: 2px solid var(--gray-lighter);
+    margin: 32px 0;
+}
+
+.preview-place {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    background: var(--light-color);
+    border-radius: var(--radius-lg);
+    margin-bottom: 16px;
+}
+
+.preview-place img {
+    width: 120px;
+    height: 90px;
+    object-fit: cover;
+    border-radius: var(--radius-md);
+}
+
+.preview-place-info h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 4px;
+}
+
+.preview-place-info p {
+    font-size: 13px;
+    color: var(--gray-medium);
+    margin: 0;
+}
+
+.preview-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--gray-lighter);
+}
+
+.preview-tags span {
+    color: var(--primary-color);
+    font-size: 14px;
+}
+
+/* 반응형 - 블로그 에디터 */
+@media (max-width: 1200px) {
+    .travellog-write-body-new {
+        grid-template-columns: 1fr 320px;
+    }
+}
+
+@media (max-width: 992px) {
+    .travellog-write-body-new {
+        grid-template-columns: 1fr;
+    }
+
+    .blog-editor-section {
+        border-right: none;
+    }
+
+    .settings-panel {
+        position: static;
+        max-height: none;
+        border-top: 1px solid var(--gray-lighter);
+    }
+
+    .cover-image-wrapper {
+        aspect-ratio: 16/9;
+    }
+
+    .block-actions {
+        top: 8px;
+        right: 8px;
+    }
+}
+
+@media (max-width: 768px) {
+    .blog-title-input {
+        padding: 20px 16px 12px;
+    }
+
+    .blog-title-input input {
+        font-size: 22px;
+    }
+
+    .schedule-link-banner {
+        margin: 0 16px 20px;
+        padding: 12px 16px;
+    }
+
+    .schedule-link-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .linked-schedule-card {
+        margin: 0 16px 20px;
+    }
+
+    .blog-editor {
+        padding: 0 16px 20px;
+    }
+
+    .add-block-toolbar {
+        padding: 16px;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .add-block-btn {
+        padding: 12px 16px;
+        flex: 1;
+        min-width: 70px;
+    }
+
+    .add-block-btn i {
+        font-size: 20px;
+    }
+
+    .add-block-btn span {
+        font-size: 11px;
+    }
+
+    .settings-panel {
+        padding: 16px;
+    }
+
+    .preview-container {
+        padding: 24px;
+    }
+
+    .preview-title {
+        font-size: 24px;
+    }
+
+    .schedule-modal-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .schedule-modal-image {
+        width: 100%;
+        height: 120px;
+    }
+}
+
+/* ===== 인피니티 스크롤 ===== */
+.infinite-scroll-loader {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 40px 0;
+}
+
+.infinite-scroll-loader .loader-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.infinite-scroll-loader .spinner-border {
+    width: 40px;
+    height: 40px;
+}
+
+.infinite-scroll-end {
+    text-align: center;
+    padding: 40px 0;
+    color: var(--gray-dark);
+}
+
+.infinite-scroll-end p {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-size: 14px;
+    margin: 0;
+}
+
+.infinite-scroll-end p::before,
+.infinite-scroll-end p::after {
+    content: '';
+    width: 40px;
+    height: 1px;
+    background: var(--gray-light);
+}

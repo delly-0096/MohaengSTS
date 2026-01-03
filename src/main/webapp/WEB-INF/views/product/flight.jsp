@@ -73,8 +73,7 @@
 					</div>
 				</div>
 
-				<!-- 다구간 검색 폼 -->
-
+				<!-- 승객 정보 -->
 				<div class="search-form-row mt-3">
 					<div class="form-group passenger-dropdown">
 						<label class="form-label">승객</label> <input type="text"
@@ -123,9 +122,7 @@
 						<label class="form-label">좌석 등급</label> <select
 							class="form-control form-select" id="cabinClass">
 							<option value="economy">일반석</option>
-							<option value="premium">프리미엄 일반석</option>
 							<option value="business">비즈니스석</option>
-							<option value="first">일등석</option>
 						</select>
 					</div>
 				</div>
@@ -190,7 +187,7 @@
 </div>
 
 <script>
-// 승객 정보
+// 승객 정보 - 2번제 결제하기 누르면 이동하기
 let passengers = { adult: 1, child: 0, infant: 0 };
 
 // ==================== 항공편 선택 상태 관리 ====================
@@ -198,6 +195,8 @@ let currentSearchType = 'round'; // round - 왕복, oneway - 편도, multi
 let currentSelectionStep = 0; // 현재 선택 단계 (0: 가는편, 1: 오는편)
 let selectedFlights = []; // 선택된 항공편 목록
 let totalSegments = 2; // 총 선택해야 할 구간 수 (왕복: 2, 편도: 1)
+
+const list = document.getElementById('selectedFlightsList');
 
 // 검색 타입 탭 전환
 document.querySelectorAll('.search-tab').forEach(tab => {
@@ -207,7 +206,7 @@ document.querySelectorAll('.search-tab').forEach(tab => {
 
         const type = this.dataset.type;
         currentSearchType = type;
-        resetFlightSelection();
+//         resetFlightSelection();
 		
         if (type === 'oneway') {
             document.getElementById('returnDateGroup').style.display = 'none';
@@ -253,55 +252,63 @@ function updateSelectionStepIndicator() {
     }
 }
 
-// 항공편 선택 처리 - 수정
-function selectFlight(id, airline, flightSymbol, depTime, arrTime, depAirport, arrAirport, price) {
+// 항공편 선택 처리 - id, data, searchData, startDate, duration, 
+function selectFlight(id, airline, flightSymbol, depTime, arrTime, startDate, domesticDays, depAirport, arrAirport, price, duration) {
     const flightData = {
-        id: id,
+        id: id,							// id
         airline: airline,
-        flightSymbol : flightSymbol,
+        flightSymbol: flightSymbol,
         departureTime: depTime,
         arrivalTime: arrTime,
+        startDate : startDate,			// 자체
+        domesticDays : domesticDays,
         departureAirport: depAirport,
         arrivalAirport: arrAirport,
         price: price,
+        duration : duration,			// 자체
         step: currentSelectionStep
     };
 
-    // 편도인 경우 바로 결제 페이지로 이동
-    if (currentSearchType === 'oneway') {
-        goToBooking([flightData]);
-        return;
-    }
-
-    
-    // 왕복인 경우
     selectedFlights.push(flightData);
     currentSelectionStep++;
-
+    
+    // 편도인 경우 바로 결제 페이지로 이동
+    if (currentSearchType === 'oneway' || currentSelectionStep === 2) {
+        goToBooking(/* [flightData] */);
+        console.log("ddd");
+        return;
+    }
+    
+	
     // 선택한 항공편 표시 업데이트
     updateSelectedFlightsDisplay();
-
-    // 마지막 구간인 경우 결제 페이지로 이동
-    if (currentSelectionStep >= totalSegments) {
-        // 잠시 후 결제 페이지로 이동 (선택 결과 보여주기 위해)
-        setTimeout(() => {
-            goToBooking(selectedFlights);
-        }, 500);
-    } else {
-        // 다음 구간 선택을 위해 버튼 및 표시 업데이트 -> axios 실행
-        updateFlightButtons();
-        updateSelectionStepIndicator();
-
-        // 스크롤을 검색 결과 상단으로 이동
-        document.getElementById('flightResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+// 	console.log("selectFlight currentSelectionStep : ", currentSelectionStep);
+	
+    /////////////////////////////////////////////
+    // 3번쨰일때 실행할 것
+    if(currentSelectionStep > totalSegments){
+    	resetFlightSelection();
+    	selectedFlights.push(flightData);
+        currentSelectionStep = 1;
+    	console.log("selectFlight currentSelectionStep 몇번째인지 : ", currentSelectionStep);
     }
+    
+    // 다음 구간 선택을 위해 버튼 및 표시 업데이트
+    updateFlightButtons();
+    updateSelectionStepIndicator();
+
+    // axios 실행
+    searchFlights();
+    
+    // 스크롤을 검색 결과 상단으로 이동
+	document.getElementById('flightResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
 }
 
 // 선택한 항공편 표시 업데이트
 function updateSelectedFlightsDisplay() {
     const container = document.getElementById('selectedFlightsContainer');
-    const list = document.getElementById('selectedFlightsList');
-
+ 
     if (selectedFlights.length === 0) {
         container.style.display = 'none';
         return;
@@ -315,20 +322,19 @@ function updateSelectedFlightsDisplay() {
     selectedFlights.forEach((flight, index) => {
     	const label = 
     		(currentSearchType === 'round') ? (index === 0 ? '가는편' : '오는편') : '편도';
-    		
-        
-        totalPrice += flight.price;
-		
+        console.log("flight 객체 : ", flight);
+		// 날짜 넣기??
+        totalPrice += parseInt(flight.price);
         html += '<div class="selected-flight-item">' +
             '<div class="selected-flight-info">' +
                 '<span class="selected-flight-label">' + label + '</span>' +
-                '<div class="selected-flight-detail">' +
+                '<div class="selected-flight-detail">' + flight.startDate + '(' + flight.domesticDays + ')' + 
                     '<span class="selected-flight-time">' + flight.departureTime + ' → ' + flight.arrivalTime + '</span>' +
                     '<span class="selected-flight-route">' + flight.departureAirport + ' → ' + flight.arrivalAirport + '</span>' +
                 '</div>' +
                 '<span class="selected-flight-airline">' + flight.airline + ' (' + flight.flightSymbol + ')</span>' +
             '</div>' +
-            '<span class="selected-flight-price">' + flight.price.toLocaleString() + '원</span>' +
+            '<span class="selected-flight-price">' + flight.price + '원</span>' +
         '</div>';
     });
 
@@ -337,14 +343,13 @@ function updateSelectedFlightsDisplay() {
         html += '<div class="selected-flights-total">' +
             '<div>' +
                 '<span class="total-price-label">총 금액</span>' +
-                '<span class="total-price-value ms-3">' + totalPrice.toLocaleString() + '원</span>' +
+                '<span class="total-price-value ms-3">' + totalPrice + '원</span>' +
             '</div>' +
-            '<a href="${pageContext.request.contextPath}/product/flight/booking" class="btn btn-primary btn-lg">' +
+            '<div class="btn btn-primary btn-lg" onclick="goToBooking()">' +
                 '<i class="bi bi-credit-card me-2"></i>결제하기' +
-            '</a>' +
+            '</div>' +
         '</div>';
     }
-
     list.innerHTML = html;
 }
 
@@ -361,21 +366,23 @@ function resetFlightSelection() {
 }
 
 // 결제 페이지로 이동
-function goToBooking(flights) {
+function goToBooking() {
+	console.log("selectedFlights length : ",selectedFlights.length);
+	if (!selectedFlights || selectedFlights.length === 0) return;
+	
     // 항공편 데이터를 sessionStorage에 저장
     const bookingData = {
         tripType: currentSearchType,
         totalSegments: totalSegments,
-        flights: flights.map((f, index) => ({
+        flights: selectedFlights.map((f, index) => ({
             ...f,
             segmentIndex: index,
             segmentLabel: getSegmentLabel(index)
         }))
     };
     sessionStorage.setItem('flightBookingData', JSON.stringify(bookingData));
-
-    const flightIds = flights.map(f => f.id).join(',');
-    
+// 	console.log('sessionStorage.key', sessionStorage);
+    const flightIds = selectedFlights.map(f => f.id).join(',');
     
     window.location.href = '/product/flight/booking?flightIds=' + flightIds + '&type=' + currentSearchType;
 }
@@ -436,7 +443,7 @@ var flightIsLoading = false;
 var flightHasMore = false;	// 인피니티 스크롤 적용시
 var flightTotalPages = 4;
 
-// 추가 항공편 데모 데이터
+// 추가 항공편 데모 데이터 - 인피니티
 var additionalFlights = [
     {
         airline: '아시아나',
@@ -450,11 +457,10 @@ var additionalFlights = [
         price: 62000,
         fuel: 28000,
         tax: 24000,
-        baggage: '15kg'
     }
 ];
 
-
+// 스크롤 초기화
 function initFlightInfiniteScroll() {
     var loader = document.getElementById('flightScrollLoader');
     if (!loader) return;
@@ -534,7 +540,23 @@ function createFlightCard(data, searchData, id) {
     var buttonText = (currentSearchType === 'oneway' || isLastStep) ? '결제하기' : '선택';
     
     if(data.economyCharge === 0 || (data.airlineNm == '/' || data.airlineNm === null)) return '';
-
+	
+	let depTimeSet = data.depTime.split(" ");	// 오전, 오후 분리
+	let arrTimeSet = data.arrTime.split(" ");
+	
+	let depAp = depTimeSet[0] == "오전" ? 0 : 12;
+	let arrAp = arrTimeSet[0] == "오전" ? 0 : 12;
+	
+	let startDate = searchData.startDt.substring(0, 4) + "년 " + searchData.startDt.substring(4, 6) + "월 " + searchData.startDt.substring(6, 8) + "일 "; 
+	
+	let depTime = depTimeSet[1].split(":");
+	let arrTime = arrTimeSet[1].split(":");
+	
+	let timeSet = (parseInt(arrAp * 60) + parseInt(arrTime[0] * 60) + parseInt(arrTime[1]))
+	- (parseInt(depAp * 60) + parseInt(depTime[0] * 60) + parseInt(depTime[1]));
+	
+	let duration = parseInt(timeSet / 60) + "시간 " + (timeSet % 60) + "분"; 
+	
     return `<div class="flight-card" data-flight-id="\${id}">
         <div class="flight-card-content">
             <div class="flight-info">
@@ -544,7 +566,7 @@ function createFlightCard(data, searchData, id) {
                 </div>
             </div>
             <div class="flight-duration">
-                <div class="duration-text">\${data.duration}비행시간</div>
+                <div class="duration-text">\${duration}</div>
                 <div class="duration-line">
                     <i class="bi bi-airplane"></i>
                 </div>
@@ -561,8 +583,8 @@ function createFlightCard(data, searchData, id) {
                 <div class="price">\${data.economyCharge}<span class="price-unit">원</span></div>
                 <button type="button" class="btn btn-primary btn-sm flight-action-btn" 
                     onclick="selectFlight('\${id}', '\${data.airlineNm}', '\${data.flightSymbol}',
-                    '\${data.depTime}', '\${data.arrTime}', '\${searchData.depIata}', '\${searchData.arrIata}',
-                    '\${data.economyCharge}')">
+                    '\${data.depTime}', '\${data.arrTime}', '\${startDate}' , '\${data.domesticDays}', '\${searchData.depIata}', '\${searchData.arrIata}',
+                    '\${data.economyCharge}', '\${duration}')">
                     \${buttonText}
                 </button>
             </div>
@@ -570,11 +592,46 @@ function createFlightCard(data, searchData, id) {
     </div>`;
 }
 
+// id, data, searchData, startDate, duration, 
+
+// 도착지는 출발지와 같을수 없음 필터
+document.querySelector('#destination').addEventListener("click", function(e){
+	let dp = document.querySelector('#departure').value;
+	let ds = document.querySelector('#destination').value;
+	if(dp === ds){
+		// 같은 것 삭제
+		document.querySelector('#returnDate').value = "";
+		showToast('도착지는 출발지와 같을 수 없습니다.', 'error');
+	}
+});
+
+// 날짜 필터
+document.querySelector('#returnDate').addEventListener("change", function(e){
+	let stDt = document.querySelector('#departDate').value.replaceAll("-","");
+	let edDt = document.querySelector('#returnDate').value.replaceAll("-","");
+	if(parseInt(stDt) > parseInt(edDt)){
+		document.querySelector('#returnDate').value = "";
+		showToast('오는날은 가는날 보다 빠를 수 없습니다.', 'error');
+	}
+});
+
 // 검색 폼 제출
 document.getElementById('flightSearchForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const result = document.querySelector('.flight-result');
+    // 초기화
+	console.log("submit reset 전 currentSelectionStep : ", currentSelectionStep);
+//    	selectedFlights = [];
+//    	currentSelectionStep = 1;
+//    	list.innerHTML = "";
+  	resetFlightSelection();
+    
+    searchFlights();
+});
+
+function searchFlights() {
+    
+	const result = document.querySelector('.flight-result');
     result.innerHTML = ``;
     const searchCount = document.querySelector(".results-count");
     searchCount.innerHTML = ``;
@@ -582,13 +639,16 @@ document.getElementById('flightSearchForm').addEventListener('submit', function(
     const activeTab = document.querySelector('.search-tab.active');
     const searchType = activeTab ? activeTab.dataset.type : 'round';	// 왕복, 편도
     
-    
     const departure = document.querySelector('#departure').value;
     const destination = document.querySelector('#destination').value;
+    const depAirportId = document.querySelector('#depAirportId').value;
+    const arrAirportId = document.querySelector('#arrAirportId').value;
+    const depIata = document.querySelector('#depIataCode').value;
+    const arrIata = document.querySelector('#arrIataCode').value;
 	const startDt = document.querySelector('#departDate').value;
     const endDt = document.querySelector('#returnDate').value;
 	
-    if (!departure || !destination) {
+    if (!departure) {
         showToast('출발지를 입력해주세요.', 'error');
         return;
     }
@@ -603,39 +663,34 @@ document.getElementById('flightSearchForm').addEventListener('submit', function(
     	return
     }
     
-    if(!endDt){
+    if(currentSearchType === 'round' && !endDt){
     	showToast('오는날을 입력해주세요.', 'error');
     	return
     }
     
-    
-    
 	// 출발시간 = 
     const searchData = {
     	type : searchType,
-    	depAirportNm : departure, 										// 출발지
-    	depAirportId : document.querySelector('#depAirportId').value,	// 출발지 코드
-    	depIata : document.querySelector('#depIataCode').value,			// 출발지 3글자 코드
-    	startDt : startDt.replaceAll("-", ""), 
-    	arrAirportNm : destination, 									// 도착지  
-    	arrAirportId : document.querySelector('#arrAirportId').value,	// 도착지 코드
-    	arrIata : document.querySelector('#arrIataCode').value,			// 도착지 3글자 코드
-		endDt : endDt.replaceAll("-", "")
+    	depAirportNm : (currentSelectionStep === 0) ? departure : destination, 		// 출발지
+    	depAirportId : (currentSelectionStep === 0) ? depAirportId : arrAirportId,	// 출발지 코드
+    	depIata : (currentSelectionStep === 0) ? depIata : arrIata,					// 출발지 3글자 코드
+    	startDt : (currentSelectionStep === 0) ? startDt.replaceAll("-", "") : endDt.replaceAll("-", ""), 	// 뭔가 조건 걸기
+    	arrAirportNm : (currentSelectionStep === 0) ? destination : departure, 		// 도착지  
+    	arrAirportId : (currentSelectionStep === 0) ? arrAirportId : depAirportId,	// 도착지 코드
+    	arrIata : (currentSelectionStep === 0) ? arrIata : depIata					// 도착지 3글자 코드
+// 		endDt : endDt.replaceAll("-", "")
     	// 탑승자 정보 - 성인, 유아
     }
     
-    
     // 왕복/편도 검색
-
     showToast('항공편을 검색하고 있습니다...', 'info');
-    
     
     // 실제 구현 시 API 호출 또는 검색 결과 페이지로 이동 - axios 설정
     axios.post(`/product/flight/searchFlight`, searchData
     ).then(res => {
     	const flight = res.data;
 	    let searchSize = flight.length;
-    	let noMoney = 0;  
+    	let noMoney = 0;  // 금액 안나올때
     	if(flight != null && searchSize > 0){
 	    	console.log("결과", flight);
 	    	// 출력하기
@@ -659,8 +714,7 @@ document.getElementById('flightSearchForm').addEventListener('submit', function(
     	console.log("error 발생 : ", error);
   		flightHasMore = false;
     });
-    
-});
+}
 
 
 // 출발지, 도착지 검색
@@ -716,18 +770,13 @@ function selectAirportItem(item, dropdown) {
     	iataInput.value = item.dataset.code;
     }
     dropdown.classList.remove('active');
-    
-    console.log("매핑", {
-    	name: input.value,
-        id: idInput ? idInput.value : '없음',
-        iata: iataInput ? iataInput.value : '없음'
-    });
 }
 
 // 자동완성 아이템 HTML 생성 -> 검색창에 들어갈 데이터 입력
 function createAutocompleteItemHtml(location, query) {
     const highlightedName = query ? location.airportNm.replace(new RegExp('(' + query + ')', 'gi'), '<mark>$1</mark>') : location.airportNm;
-	// -> data-?? 는 dataset
+    // 이전에 선택되었으면 없어짐 if(??) return "";
+    
     return '<div class="autocomplete-item" data-name="' + location.airportNm + '" data-code="' + location.iataCode + '" data-id="' + location.airportId + '">' +
            		'<div class="autocomplete-item-icon"><i class="bi-geo-alt"></i></div>' +
           		'<div class="autocomplete-item-info"><div class="autocomplete-item-name">' + highlightedName + '</div>' +
@@ -767,6 +816,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 //페이지 로드 시 날짜 선택기 초기화
 document.addEventListener('DOMContentLoaded', function() {
+	// session에 담아놓을지?
+	
+	
     // 일반 검색 날짜 선택기
     if (typeof flatpickr !== 'undefined') {
         flatpickr('.date-picker', {
@@ -778,5 +830,5 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 </script>
 
-<c:set var="pageJs" value="product" />
+<%-- <c:set var="pageJs" value="product" /> --%>
 <%@ include file="../common/footer.jsp"%>

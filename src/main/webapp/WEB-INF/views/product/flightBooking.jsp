@@ -46,22 +46,19 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">이름 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" id="bookerName"
-                                           value="${sessionScope.loginUser.userName}" required>
+                                    <input type="text" class="form-control" id="bookerName" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">연락처 <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" id="bookerPhone"
-                                           value="${sessionScope.loginUser.phone}" placeholder="010-0000-0000" required>
+                                    <input type="tel" class="form-control" id="bookerPhone" placeholder="010-0000-0000" required>
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-group mb-0">
                                     <label class="form-label">이메일 <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" id="bookerEmail"
-                                           value="${sessionScope.loginUser.email}" required>
+                                    <input type="email" class="form-control" id="bookerEmail" required>
                                     <small class="text-muted">결제 확인 및 탑승권이 발송됩니다.</small>
                                 </div>
                             </div>
@@ -208,7 +205,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100 pay-btn">
-                        <i class="bi bi-lock me-2"></i><span id="payBtnText">104,000원 결제하기</span>
+                        <i class="bi bi-lock me-2"></i><span id="payBtnText"> 원 결제하기</span>
                     </button>
                 </form>
             </div>
@@ -230,7 +227,7 @@
                     <div class="summary-details">
                         <div class="summary-row">
                             <span class="summary-label">탑승객</span>
-                            <span class="summary-value" id="summaryPassengers">성인 1명</span>
+                            <span class="summary-value" id="summaryPassengers">성인  명</span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">좌석 등급</span>
@@ -240,26 +237,28 @@
                             <span class="summary-label">선택 좌석</span>
                             <span class="summary-value" id="summarySeats">-</span>
                         </div>
+                        
+                        
                         <div class="summary-row" id="summarySeatFeeRow" style="display: none;">
                             <span class="summary-label">좌석 추가요금</span>
-                            <span class="summary-value" id="summarySeatFee">0원</span>
+                            <span class="summary-value" id="summarySeatFee"> 원</span>
                         </div>
                         <div class="summary-divider"></div>
                         <div class="summary-row">
                             <span class="summary-label">항공 운임 합계</span>
-                            <span class="summary-value" id="summaryFare">52,000원 x 1</span>
+                            <span class="summary-value" id="summaryFare"> 원 x 1</span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">유류할증료</span>
-                            <span class="summary-value" id="summaryFuel">28,000원</span>
+                            <span class="summary-value" id="summaryFuel">12100원으로 갈지??</span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">세금 및 수수료</span>
-                            <span class="summary-value" id="summaryTax">24,000원</span>
+                            <span class="summary-value" id="summaryTax">4000원 고정</span>
                         </div>
                         <div class="summary-row total">
                             <span class="summary-label">총 결제금액</span>
-                            <span class="summary-value" id="totalAmount">104,000원</span>
+                            <span class="summary-value" id="totalAmount"> 원</span>
                         </div>
                     </div>
 
@@ -309,7 +308,7 @@
 
 <script>
 var passengerCount = { adult: 1, child: 0, infant: 0 };
-var basePrice = 52000;
+var basePrice = 0;
 var fuelSurcharge = 28000;
 var taxAndFees = 24000;
 var selectedSeats = [];
@@ -317,68 +316,76 @@ var seatExtraFee = 0;
 var seatSelectionModal;
 
 // 항공편 예약 데이터
-var bookingData = null;
-var totalFlightPrice = 0;
+let bookingData = null;
+let totalFlightPrice = 0;
 
 // 로그인 여부 확인
-var isLoggedIn = ${not empty sessionScope.loginUser};
-var userType = '${sessionScope.loginUser.userType}';
 
 document.addEventListener('DOMContentLoaded', function() {
+	const storedData = sessionStorage.getItem('flightBookingData');
+	if (storedData) {
+		console.log("asdf");
+	    const parsedData = JSON.parse(storedData);
+	    console.log("세션 저장된것들", parsedData);
+	    
+	    bookingData = parsedData;
+	    initFlightDisplay();
+	}
+	
     // 비회원 접근 시 로그인 안내
-    if (!isLoggedIn) {
-        showLoginRequired();
-        return;
-    }
+//     if (!isLoggedIn) {
+//         showLoginRequired();
+//         return;
+//     }
 
-    // 기업회원 접근 제한
-    if (userType === 'BUSINESS') {
-        showBusinessRestricted();
-        return;
-    }
+//     // 기업회원 접근 제한
+//     if (userType === 'BUSINESS') {
+//         showBusinessRestricted();
+//         return;
+//     }
 
     // URL 파라미터에서 정보 가져오기
-    var urlParams = new URLSearchParams(window.location.search);
+//     var urlParams = new URLSearchParams(window.location.search);
 
     // sessionStorage에서 항공편 데이터 가져오기
-    var storedData = sessionStorage.getItem('flightBookingData');
-    if (storedData) {
-        bookingData = JSON.parse(storedData);
-        initFlightDisplay();
-    } else {
-        // 기본 데모 데이터 (sessionStorage가 없는 경우)
-        bookingData = {
-            tripType: urlParams.get('type') || 'round',
-            totalSegments: 2,
-            flights: [
-                {
-                    id: 1,
-                    airline: '대한항공 KE1201',
-                    departureTime: '07:00',
-                    arrivalTime: '08:05',
-                    departureAirport: 'GMP',
-                    arrivalAirport: 'CJU',
-                    price: 52000,
-                    baggage: '15kg',
-                    segmentLabel: '가는편'
-                }
-            ]
-        };
-        if (bookingData.tripType === 'round') {
-            bookingData.flights.push({
-                id: 2,
-                airline: '대한항공 KE1202',
-                departureTime: '18:00',
-                arrivalTime: '19:10',
-                departureAirport: 'CJU',
-                arrivalAirport: 'GMP',
-                price: 52000,
-                baggage: '15kg',
-                segmentLabel: '오는편'
-            });
-        }
-        initFlightDisplay();
-    }
+//     var storedData = sessionStorage.getItem('flightBookingData');
+//     if (storedData) {
+//         bookingData = JSON.parse(storedData);
+//         initFlightDisplay();
+//     } else {
+//         // 기본 데모 데이터 (sessionStorage가 없는 경우)
+//         bookingData = {
+//             tripType: urlParams.get('type') || 'round',
+//             totalSegments: 2,
+//             flights: [
+//                 {
+//                     id: 1,
+//                     airline: '대한항공 KE1201',
+//                     departureTime: '07:00',
+//                     arrivalTime: '08:05',
+//                     departureAirport: 'GMP',
+//                     arrivalAirport: 'CJU',
+//                     price: 52000,
+//                     baggage: '15kg',
+//                     segmentLabel: '가는편'
+//                 }
+//             ]
+//         };
+//         if (bookingData.tripType === 'round') {
+//             bookingData.flights.push({
+//                 id: 2,
+//                 airline: '대한항공 KE1202',
+//                 departureTime: '18:00',
+//                 arrivalTime: '19:10',
+//                 departureAirport: 'CJU',
+//                 arrivalAirport: 'GMP',
+//                 price: 52000,
+//                 baggage: '15kg',
+//                 segmentLabel: '오는편'
+//             });
+//         }
+//         initFlightDisplay();
+//     }
 
     // 탑승객 정보 초기화
     initPassengers();
@@ -413,13 +420,13 @@ function initFlightDisplay() {
     totalFlightPrice = 0;
 
     bookingData.flights.forEach(function(flight, index) {
-        totalFlightPrice += flight.price;
+        totalFlightPrice += parseInt(flight.price);
 
         // 라벨 클래스 결정
         var labelClass = '';
         if (bookingData.tripType === 'round') {
             labelClass = index === 0 ? '' : 'return';
-        } else if (bookingData.tripType === 'multi') {
+        } else {
             labelClass = 'segment';
         }
 
@@ -442,7 +449,6 @@ function getTripTypeText(type) {
     switch(type) {
         case 'round': return '왕복';
         case 'oneway': return '편도';
-        case 'multi': return '다구간';
         default: return '왕복';
     }
 }
@@ -474,9 +480,8 @@ function createFlightCardHtml(flight, labelClass) {
                     '<span class="airport">' + flight.departureAirport + ' ' + depName + '</span>' +
                 '</div>' +
                 '<div class="flight-summary-arrow">' +
-                    '<span class="duration">약 1시간</span>' +
+                    '<span class="duration">' + flight.duration + '</span>' +
                     '<div class="arrow-line"><i class="bi bi-airplane"></i></div>' +
-                    '<span class="flight-type">직항</span>' +
                 '</div>' +
                 '<div class="flight-summary-point">' +
                     '<span class="time">' + flight.arrivalTime + '</span>' +
@@ -485,7 +490,7 @@ function createFlightCardHtml(flight, labelClass) {
             '</div>' +
             '<div class="flight-summary-details">' +
                 '<span class="flight-airline">' + flight.airline + '</span>' +
-                '<span class="flight-price">' + flight.price.toLocaleString() + '원</span>' +
+                '<span class="flight-price">' + flight.price + '원</span>' +
             '</div>' +
         '</div>' +
     '</div>';
@@ -500,64 +505,6 @@ function createSummarySegmentHtml(flight, labelClass) {
         '</div>' +
         '<span class="summary-segment-price">' + flight.price.toLocaleString() + '원</span>' +
     '</div>';
-}
-
-// 로그인 필요 안내
-function showLoginRequired() {
-    var mainContent = document.querySelector('.booking-main');
-    var summaryContent = document.querySelector('.booking-summary');
-
-    if (mainContent) {
-        mainContent.innerHTML =
-            '<div class="login-required-box">' +
-                '<div class="login-required-icon"><i class="bi bi-person-lock"></i></div>' +
-                '<h3>로그인이 필요합니다</h3>' +
-                '<p>항공권 결제는 회원만 이용할 수 있습니다.<br>로그인 후 다시 시도해주세요.</p>' +
-                '<div class="login-required-buttons">' +
-                    '<a href="${pageContext.request.contextPath}/member/login" class="btn btn-primary btn-lg">' +
-                        '<i class="bi bi-box-arrow-in-right me-2"></i>로그인</a>' +
-                    '<a href="${pageContext.request.contextPath}/member/join" class="btn btn-outline btn-lg">' +
-                        '<i class="bi bi-person-plus me-2"></i>회원가입</a>' +
-                '</div>' +
-                '<a href="${pageContext.request.contextPath}/product/flight" class="back-link">' +
-                    '<i class="bi bi-arrow-left me-1"></i>항공권 검색으로 돌아가기</a>' +
-            '</div>';
-    }
-
-    if (summaryContent) {
-        summaryContent.style.display = 'none';
-    }
-
-    // 현재 URL 저장 (로그인 후 돌아오기 위해)
-    sessionStorage.setItem('returnUrl', window.location.href);
-}
-
-// 기업회원 접근 제한 안내
-function showBusinessRestricted() {
-    var mainContent = document.querySelector('.booking-main');
-    var summaryContent = document.querySelector('.booking-summary');
-
-    if (mainContent) {
-        mainContent.innerHTML =
-            '<div class="login-required-box">' +
-                '<div class="login-required-icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">' +
-                    '<i class="bi bi-building-exclamation" style="color: #d97706;"></i></div>' +
-                '<h3>기업회원은 이용할 수 없습니다</h3>' +
-                '<p>항공권 결제 서비스는 일반회원 전용입니다.<br>기업회원은 상품 등록 및 관리 기능을 이용해주세요.</p>' +
-                '<div class="login-required-buttons">' +
-                    '<a href="${pageContext.request.contextPath}/mypage/business/dashboard" class="btn btn-primary btn-lg">' +
-                        '<i class="bi bi-speedometer2 me-2"></i>기업 대시보드</a>' +
-                    '<a href="${pageContext.request.contextPath}/product/manage" class="btn btn-outline btn-lg">' +
-                        '<i class="bi bi-box-seam me-2"></i>상품 관리</a>' +
-                '</div>' +
-                '<a href="${pageContext.request.contextPath}/product/flight" class="back-link">' +
-                    '<i class="bi bi-arrow-left me-1"></i>항공권 검색으로 돌아가기</a>' +
-            '</div>';
-    }
-
-    if (summaryContent) {
-        summaryContent.style.display = 'none';
-    }
 }
 
 // 탑승객 정보 초기화
@@ -731,14 +678,15 @@ function calculateTotal() {
     // 항공 운임은 이미 모든 구간 합계 (basePrice = totalFlightPrice)
     // 유류할증료/세금은 구간 수 x 인원 수
     var additionalFees = (fuelSurcharge + taxAndFees) * segmentCount;
-    var total = (basePrice + additionalFees) * totalPassengers + seatExtraFee;
+//     var total = parseInt(bookingData.flights[0].price) + parseInt(bookingData.flights[1].price);
+    	//(basePrice + additionalFees) * totalPassengers + seatExtraFee;	// 합계 금액
 
     // 요금 표시 업데이트
-    document.getElementById('summaryFare').textContent = basePrice.toLocaleString() + '원 x ' + totalPassengers + '명';
+    document.getElementById('summaryFare').textContent = totalFlightPrice + '원 x ' + totalPassengers + '명';
     document.getElementById('summaryFuel').textContent = (fuelSurcharge * segmentCount).toLocaleString() + '원 x ' + totalPassengers + '명';
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPassengers + '명';
-    document.getElementById('totalAmount').textContent = total.toLocaleString() + '원';
-    document.getElementById('payBtnText').textContent = total.toLocaleString() + '원 결제하기';
+    document.getElementById('totalAmount').textContent = totalFlightPrice + '원';
+    document.getElementById('payBtnText').textContent = totalFlightPrice + '원 결제하기';
 
     // 탑승객 정보 업데이트
     var passengerText = [];
@@ -949,5 +897,5 @@ document.getElementById('flightBookingForm').addEventListener('submit', function
 });
 </script>
 
-<c:set var="pageJs" value="product" />
+<%-- <c:set var="pageJs" value="product" /> --%>
 <%@ include file="../common/footer.jsp" %>

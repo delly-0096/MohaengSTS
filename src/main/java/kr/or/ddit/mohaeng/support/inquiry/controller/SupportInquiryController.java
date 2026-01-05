@@ -1,10 +1,14 @@
 package kr.or.ddit.mohaeng.support.inquiry.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,10 +18,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServletRequest;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.support.inquiry.service.IInquiryService;
+import kr.or.ddit.mohaeng.vo.CodeVO;
 import kr.or.ddit.mohaeng.vo.InquiryVO;
 
 /**
@@ -92,7 +98,9 @@ public class SupportInquiryController {
     @PostMapping("/support/inquiry")
     @ResponseBody
     public Map<String, Object> submitInquiry(
-            @RequestBody InquiryVO inquiry,
+            InquiryVO inquiry,
+            @RequestParam(value = "attachFiles", required = false)
+            List<MultipartFile> attachFiles,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Map<String, Object> result = new HashMap<>();
@@ -114,10 +122,39 @@ public class SupportInquiryController {
         inquiry.setInqryStatus("waiting"); // 기본값: 답변 대기
         inquiry.setDelYn("N");             // 기본값: 미삭제
 
+        // 첨부파일 처리 로직 추가
+        if (attachFiles != null && !attachFiles.isEmpty()) {
+            // TODO: 파일 저장 로직 구현
+            // inquiryService.saveAttachments(inquiry.getInqryNo(), attachFiles);
+        }
+
+        // 1. 문의 등록
         int insertResult = inquiryService.insertInquiry(inquiry);
 
-        result.put("success", insertResult > 0);
-        result.put("message", insertResult > 0 ? "문의가 등록되었습니다." : "등록에 실패했습니다.");
+        if (insertResult > 0) {
+            // 2. 첨부파일 저장 (문의 등록 성공 시에만)
+            if (attachFiles != null && !attachFiles.isEmpty()) {
+                try {
+                    int savedFiles = inquiryService.saveInquiryAttachments(
+                        inquiry.getInqryNo(),
+                        attachFiles
+                    );
+                    System.out.println("저장된 파일 개수: " + savedFiles);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    result.put("success", false);
+                    result.put("message", "파일 저장 중 오류가 발생했습니다.");
+                    return result;
+                }
+            }
+
+            result.put("success", true);
+            result.put("message", "문의가 등록되었습니다.");
+        } else {
+            result.put("success", false);
+            result.put("message", "등록에 실패했습니다.");
+        }
+
 
         return result;
     }
@@ -150,4 +187,13 @@ public class SupportInquiryController {
         }
         return result;
     }
+
+    @PreAuthorize("permitAll()")
+    @GetMapping("/test")
+    @ResponseBody
+    public List<CodeVO> testMethod(){
+
+		return inquiryService.getInquiryCategoryList();
+
+    };
 }

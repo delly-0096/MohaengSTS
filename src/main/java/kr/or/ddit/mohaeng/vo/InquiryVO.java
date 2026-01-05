@@ -38,4 +38,6 @@ public class InquiryVO {
     private String regDtStr;            // 등록일 문자열
     private String replyDtStr;          // 답변일 문자열
 
+    private String filePath; // 추가: 파일 경로를 담을 변수 (DB의 FILE_PATH와 매핑)
+
 }

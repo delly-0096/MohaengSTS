@@ -117,7 +117,7 @@
 
 	<!-- 문의 상세 조회 -->
 	<select id="selectInquiryDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
-		selct
+		select
 			i.INQRY_NO as inqryNo,
 			i.INQRY_CTGRY_CD as inqryCtgryCd,
 			i.MEM_NO as memNo,
@@ -169,7 +169,7 @@
 			#{inquiryTargetNo},
 			#{inqryEmail},
 			#{attachNo},
-			sysdate,
+			SYSDATE,
 			#{delYn}
 		)
 	</insert>
@@ -177,14 +177,89 @@
 	<!-- 문의 카테고리 목록 조회 -->
 	<select id="selectInquiryCategoryList" resultType="kr.or.ddit.mohaeng.vo.CodeVO">
 		select
-			CD as cd,
-			CDGR as cdgr,
-			CD_NAME as cdName,
-			CD_DESC as cdDesc,
-			USE_YN as useYn
+			CD,
+			CDGR,
+			CD_NAME,
+			CD_DESC,
+			USE_YN
 		from CODE
 		WHERE CDGR='INQRY_CAT'
 		AND USE_YN = 'Y'
 		ORDER BY CD
+	</select>
+
+	<!-- 첨부파일 정보 저장 -->
+	<insert id="insertAttachFile" parameterType="map">
+    <selectKey keyProperty="attachNo" resultType="int" order="BEFORE">
+        SELECT SEQ_ATTACH_FILE.NEXTVAL FROM DUAL
+    </selectKey>
+	    INSERT INTO ATTACH_FILE(
+	    	ATTACH_NO
+	    	,REG_ID
+			,REG_DT
+	    )VALUES(
+	    	#{attachNo}
+	    	,#{regId}
+	    	, SYSDATE
+	    )
+	</insert>
+
+	<!-- ATTACH_FILE_DETAIL 테이블에 파일 정보 저장 -->
+	<insert id="insertAttachFileDetail" parameterType="map" >
+		<selectKey keyProperty="fileNo" resultType="int" order="BEFORE">
+			SELECT SEQ_ATTACH_FILE_DETAIL.NEXTVAL FROM DUAL
+		</selectKey>
+
+		 INSERT INTO ATTACH_FILE_DETAIL (
+	        FILE_NO
+	        ,ATTACH_NO
+	        ,FILE_NAME
+	        ,FILE_ORIGINAL_NAME
+	        ,FILE_EXT
+	        ,FILE_SIZE
+	        ,FILE_PATH
+	        ,FILE_GB_CD
+			,MIME_TYPE
+			,USE_YN
+			,REG_ID
+	        ,REG_DT
+	    ) VALUES (
+	        #{fileNo}
+	        ,#{attachNo}
+	        ,#{fileName}
+	        ,#{fileOriginalName}
+	        ,#{fileExt}
+	        ,#{fileSize}
+	        ,#{filePath}
+	        ,#{fileGbCd}
+	        ,#{mimeType}
+	        ,#{useYn}
+	        ,#{regId}
+	        ,SYSDATE
+	    )
+	</insert>
+
+
+	<!-- 문의 첨부파일 개수 업데이트 -->
+	<update id="updateInquiryAttachCount">
+	    UPDATE INQUIRY
+	    SET ATTACH_NO = #{attachNo}
+	    WHERE INQRY_NO = #{inqryNo}
+	</update>
+
+	<!-- 첨부파일 목록 조회  -->
+	<select id="selectAttachFileList" parameterType="int" resultType="map">
+		select
+			afd.FILE_NO
+			,afd.FILE_ORIGINAL_NAME
+			,afd.FILE_EXT
+			,afd.FILE_SIZE
+			,afd.FILE_PATH
+		from INQUIRY i
+		inner join ATTACH_FILE_DETAIL afd on i.ATTACH_NO = agd.ATTACH_NO
+		where i.INQRY_NO = #{inqryNo}
+		  and afd.USE_YN = 'Y'
+		order by agd.REG_DT
+
 	</select>
 </mapper>

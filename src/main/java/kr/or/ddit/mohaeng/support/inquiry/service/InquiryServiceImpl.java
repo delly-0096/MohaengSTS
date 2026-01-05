@@ -1,11 +1,19 @@
 package kr.or.ddit.mohaeng.support.inquiry.service;
 
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.support.inquiry.mapper.IInquiryMapper;
 import kr.or.ddit.mohaeng.vo.CodeVO;
@@ -19,6 +27,8 @@ public class InquiryServiceImpl implements IInquiryService{
 	@Autowired
 	private IInquiryMapper inquiryMapper;
 
+	@Value("${kr.or.ddit.upload.path}")
+	private String uploadPath; // "C:/upload/"
 
 
 	@Override
@@ -112,5 +122,86 @@ public class InquiryServiceImpl implements IInquiryService{
 			}
 			return list;
 
+	}
+	@Override
+	@Transactional
+	public int saveInquiryAttachments(int inqryNo, List<MultipartFile> files) {
+	    if (files == null || files.isEmpty()) {
+	        return 0;
+	    }
+
+	    //INQUIRY에서 MEM_NO 조회
+	    InquiryVO inquiry = inquiryMapper.selectInquiryDetail(inqryNo);
+	    int memNo = inquiry.getMemNo(); //회원번호 가져오기
+
+	    // 1. 먼저 ATTACH_FILE 테이블에 레코드 생성
+	    Map<String, Object> attachFileMap = new HashMap<>();
+	    attachFileMap.put("regId", memNo); 		   //REG_ID
+
+	    inquiryMapper.insertAttachFile(attachFileMap);
+	    int attachNo = (int) attachFileMap.get("attachNo");  // 생성된 ATTACH_NO
+
+	    int savedCount = 0;
+
+	    // 날짜별 폴더 생성
+	    String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
+	    String fullPath = uploadPath + "inquiry/" + datePath;
+	    File uploadDir = new File(fullPath);
+	    if (!uploadDir.exists()) {
+	        uploadDir.mkdirs();
+	    }
+
+	    // 2. 각 파일을 ATTACH_FILE_DETAIL에 저장
+	    for (MultipartFile file : files) {
+	        if (file.isEmpty()) continue;
+
+	        try {
+	            String originalFilename = file.getOriginalFilename();
+	            String mimeType = file.getContentType();
+
+	            String extension = "";
+	            if (originalFilename != null && originalFilename.contains(".")) {
+	                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+	            }
+	            String savedFilename = UUID.randomUUID().toString() + extension;
+
+	            // 파일 저장
+	            File destFile = new File(uploadDir, savedFilename);
+	            file.transferTo(destFile);
+
+	            // DB에 파일 정보 저장
+	            Map<String, Object> fileDetailMap = new HashMap<>();
+	            fileDetailMap.put("attachNo", attachNo);  // 부모 테이블의 PK
+	            fileDetailMap.put("fileName", savedFilename);
+	            fileDetailMap.put("fileOriginalName", originalFilename);
+	            fileDetailMap.put("fileExt", extension.replace(".", ""));
+	            fileDetailMap.put("fileSize", file.getSize());
+	            fileDetailMap.put("filePath", "/inquiry/" + savedFilename);
+	            fileDetailMap.put("fileGbCd", "ATTACH");
+	            fileDetailMap.put("mimeType", mimeType); // MIME 타입
+	            fileDetailMap.put("useYn", "Y"); // 사용 여부
+	            fileDetailMap.put("regId", memNo); // REG_ID 추가
+
+	            inquiryMapper.insertAttachFileDetail(fileDetailMap);
+	            savedCount++;
+
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	            throw new RuntimeException("파일 저장 중 오류가 발생했습니다: " + e.getMessage(), e);
+	        }
+	    }
+
+	    // 3. INQUIRY 테이블의 ATTACH_NO 업데이트
+	    if (savedCount > 0) {
+	        inquiryMapper.updateInquiryAttachCount(inqryNo, attachNo);
+	    }
+
+	    return savedCount;
+	}
+
+	@Override
+	public List<Map<String, Object>> getAttachFileList(int inqryNo) {
+		log.info("첨부파일 목록 조회 - inqryNo:{}", inqryNo);
+		return inquiryMapper.selectAttachFileList(inqryNo);
 	}
 }

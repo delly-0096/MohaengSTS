@@ -26,7 +26,9 @@ public class CustomUserDetails implements UserDetails {
 	    }
 
 	    return member.getAuthList().stream()
-	        .map(auth -> new SimpleGrantedAuthority(auth.getAuth()))
+    		.map(auth -> auth.getAuth())
+            .filter(a -> a != null && !a.trim().isEmpty())
+            .map(SimpleGrantedAuthority::new)
 	        .toList();
 	}
 
@@ -51,7 +53,6 @@ public class CustomUserDetails implements UserDetails {
         return member.getEnabled() == 1;
     }
 
-    // ===== 추가 getter (JSP/Controller용) =====
     public String getMemName() {
         return member.getMemName();
     }
@@ -60,5 +61,13 @@ public class CustomUserDetails implements UserDetails {
         return member;
     }
 	
+    // ===== 프로필 이미지 경로 =====
+    public String getMemProfilePath() {
+    	String path = member.getMemProfilePath();
+        if (path == null) return null;
+
+        // /resources 제거
+        return path.replace("/resources", "");
+    }
 
 }

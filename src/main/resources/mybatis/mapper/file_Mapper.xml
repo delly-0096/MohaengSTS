@@ -20,7 +20,7 @@
 	        MIMY_TYPE, USE_YN, REG_ID, REG_DT
 	    ) VALUES (
 	        SEQ_ATTACH_FILE_DETAIL.NEXTVAL, #{attachNo}, #{fileName}, #{fileOriginalName},
-	        #{fileExt}, #{fileSize}, #{filePath}, 'BIZ', 
+	        #{fileExt}, #{fileSize}, #{filePath}, #{fileGbCd}, 
 	        #{mimyType}, 'Y', #{regId}, SYSDATE
 	    )
 	</insert>

@@ -3,6 +3,10 @@ package kr.or.ddit.mohaeng.mypage.profile.controller;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
@@ -17,8 +21,10 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.file.service.IFileService;
+import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
 import kr.or.ddit.mohaeng.login.service.IMemberService;
 import kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
@@ -36,54 +42,102 @@ public class ProfileController {
     
     @Autowired
     private IMemberService memberService;
+    
+    @Autowired
+    private IMemberMapper memberMapper;
 	
-    /* 내 정보 조회 */
+    /* 일반회원 내 정보 조회 */
     @GetMapping("/profile")
     public String myProfile(HttpSession session, Model model) {
 
+    	// 1. 세션 체크
         Object authMember = session.getAttribute("loginMember");
-        if (authMember == null) {
-            return "redirect:/member/login";
-        }
+        if (authMember == null) return "redirect:/member/login";
 
-        String memId = null;
-
+        String memId = "";
         if (authMember instanceof MemberVO) {
             memId = ((MemberVO) authMember).getMemId();
         } else if (authMember instanceof Map) {
-            Object idObj = ((Map<?, ?>) authMember).get("memId");
-            if (idObj != null) {
-                memId = String.valueOf(idObj);
-            }
+            memId = String.valueOf(((Map<?, ?>) authMember).get("memId"));
         }
 
-
         if (memId == null || memId.isBlank()) {
-            // 세션 관리
             session.invalidate();
             return "redirect:/member/login";
         }
 
-        // 회원 기본 정보 조회
+        // 2. DB 최신 정보 조회 (조인 쿼리 findById 사용)
         MemberVO memberDetail = memberService.findById(memId);
-
         if (memberDetail == null) {
             session.invalidate();
             return "redirect:/member/login";
         }
 
-        model.addAttribute("member", memberDetail);
+        // 3. 경로 가공 및 세션 동기화 (핵심!)
+        String rawPath = memberDetail.getMemProfilePath(); 
+        String processedPath = null;
 
-        if (memberDetail.getMemProfile() != null) {
-            AttachFileDetailVO profileFile =
-                    fileSerivce.getProfileFile(memberDetail.getMemProfile());
-
-            if (profileFile != null) {
-                model.addAttribute("profileImgUrl", profileFile.getFilePath().replace("/resources/upload", "/upload"));
-            }
+        if (rawPath != null && !rawPath.isEmpty()) {
+            processedPath = rawPath.replace("/resources", "");
         }
 
+        // 세션 Map 업데이트 (헤더/사이드바 즉시 반영용)
+        if (authMember instanceof Map) {
+            Map<String, Object> loginMember = (Map<String, Object>) authMember;
+            loginMember.put("memProfile", processedPath);
+        }
+
+        model.addAttribute("member", memberDetail);
+        model.addAttribute("profileImgUrl", processedPath); // 본문용
+
         return "mypage/profile";
+    }
+    
+    /* 기업회원 내 정보 조회 */
+    @GetMapping("/business/profile")
+    public String myProfileBusiness(HttpSession session, Model model) {
+    	
+    	// 1. 세션 체크
+    	Object authMember = session.getAttribute("loginMember");
+    	if (authMember == null) return "redirect:/member/login";
+    	
+    	String memId = "";
+    	if (authMember instanceof MemberVO) {
+    		memId = ((MemberVO) authMember).getMemId();
+    	} else if (authMember instanceof Map) {
+    		memId = String.valueOf(((Map<?, ?>) authMember).get("memId"));
+    	}
+    	
+    	if (memId == null || memId.isBlank()) {
+    		session.invalidate();
+    		return "redirect:/member/login";
+    	}
+    	
+    	// DB 최신 정보 조회 (조인 쿼리 findById 사용)
+    	MemberVO memberDetail = memberService.findById(memId);
+    	if (memberDetail == null) {
+    		session.invalidate();
+    		return "redirect:/member/login";
+    	}
+    	
+    	// 경로 가공 및 세션 동기화
+    	String rawPath = memberDetail.getMemProfilePath(); 
+    	String processedPath = null;
+    	
+    	if (rawPath != null && !rawPath.isEmpty()) {
+    		processedPath = rawPath.replace("/resources", "");
+    	}
+    	
+    	// 세션 Map 업데이트 (헤더/사이드바 즉시 반영용)
+    	if (authMember instanceof Map) {
+    		Map<String, Object> loginMember = (Map<String, Object>) authMember;
+    		loginMember.put("memProfile", processedPath);
+    	}
+    	
+    	model.addAttribute("member", memberDetail);
+    	model.addAttribute("profileImgUrl", processedPath); // 본문용
+    	
+    	return "mypage/business/profile";
     }
 
 
@@ -94,7 +148,7 @@ public class ProfileController {
 								HttpSession session, RedirectAttributes rttr) {
 		log.info("DTO 데이터 확인: " + updateDTO);
 		
-		// 1. 세션에서 꺼내기 (특정 타입으로 단정짓지 않음)
+		// 세션에서 꺼내기 (특정 타입으로 단정짓지 않음)
 	    Object sessionObj = session.getAttribute("loginMember");
 	    
 	    if (sessionObj == null) {
@@ -104,7 +158,7 @@ public class ProfileController {
 	    String memId = "";
 	    int memNo = 0;
 
-	    // 2. 타입에 따라 안전하게 데이터 추출
+	    // 타입에 따라 안전하게 데이터 추출
 	    if (sessionObj instanceof kr.or.ddit.mohaeng.vo.MemberVO) {
 	        kr.or.ddit.mohaeng.vo.MemberVO vo = (kr.or.ddit.mohaeng.vo.MemberVO) sessionObj;
 	        memId = vo.getMemId();
@@ -117,11 +171,11 @@ public class ProfileController {
 	        memNo = (noObj instanceof Integer) ? (Integer)noObj : Integer.parseInt(String.valueOf(noObj));
 	    }
 
-	    // 3. 비밀번호 확인을 위해 DB에서 최신 정보 조회 (Map에는 비번이 없을 수 있으므로)
+	   // 비밀번호 확인을 위해 DB에서 최신 정보 조회 (Map에는 비번이 없을 수 있으므로)
 	   MemberVO memberDetail = memberService.findById(memId);
 
 	    if (!passwordEncoder.matches(updateDTO.getCurrentPassword(), memberDetail.getMemPassword())) {
-	        rttr.addFlashAttribute("error", "현재 비밀번호가 일치하지 않습니다.");
+	        rttr.addFlashAttribute("errorMessage", "현재 비밀번호가 일치하지 않습니다.");
 	        return "redirect:/mypage/profile";
 	    }
 
@@ -133,11 +187,34 @@ public class ProfileController {
 	    }
 
 	    memberService.updateMemberProfile(updateDTO);
+	    
+	    // DB 업데이트 후
+	    MemberVO updatedMember = memberService.findById(memId); // 최신 경로 포함
+	    String updatedPath = updatedMember.getMemProfilePath();
+	    
+	    if (updatedPath != null) {
+	        updatedPath = updatedPath.replace("/resources", ""); // 경로 가공
+	    }
 
-	    rttr.addFlashAttribute("message", "정보가 성공적으로 수정되었습니다.");
+	    // 세션 Map 갱신 (중요!)
+	    if (sessionObj instanceof Map) {
+	        Map<String, Object> loginMember = (Map<String, Object>) sessionObj;
+	        loginMember.put("memProfile", updatedPath); // 가공된 경로 주입
+	        loginMember.put("memName", updatedMember.getMemName()); // 이름 변경 시 대비
+	    }
+
+	    // 4. 시큐리티 권한 갱신 (기존 로직 유지)
+	    CustomUserDetails newUserDetails = new CustomUserDetails(updatedMember);
+	    Authentication newAuth = new UsernamePasswordAuthenticationToken(
+	            newUserDetails, null, newUserDetails.getAuthorities()
+	    );
+	    SecurityContextHolder.getContext().setAuthentication(newAuth);
+	   
+	    rttr.addFlashAttribute("successMessage", "정보가 성공적으로 수정되었습니다.");
 	    return "redirect:/mypage/profile";
 		
 	}
 
+	
 	
 }

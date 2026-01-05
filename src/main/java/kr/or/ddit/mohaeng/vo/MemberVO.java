@@ -32,6 +32,6 @@ public class MemberVO {
 	private MemUserVO memUser;
 	private MemAdminVO admin;
 
-	
+	private String memProfilePath;
 	
 }

@@ -10,6 +10,7 @@
 		<result property="memName" column="MEM_NAME"/>
 		<result property="memEmail" column="MEM_EMAIL"/>
 		<result property="memProfile" column="MEM_PROFILE"/>
+		<result property="memProfilePath" column="MEM_PROFILE_PATH"/>
 		<result property="point" column="POINT"/>
 		<result property="memStatus" column="MEM_STATUS"/>
 		<result property="delYn" column="DEL_YN"/>
@@ -53,9 +54,19 @@
     
     <!-- security & jwt용 id 매핑 -->
     <select id="selectById" parameterType="string" resultMap="memberMap">
-    	SELECT M.MEM_NO, MEM_ID, MEM_PASSWORD, MEM_NAME, AUTH
-    	  FROM MEMBER M LEFT OUTER JOIN MEMBER_AUTH MA ON(M.MEM_NO = MA.MEM_NO)
-    	 WHERE M.MEM_ID = #{username}
+    	SELECT 
+    			M.MEM_NO
+    		  , MEM_ID
+    		  , MEM_PASSWORD
+    		  , MEM_NAME
+    		  , AUTH
+    		  , C.FILE_PATH AS MEM_PROFILE_PATH
+    	 FROM MEMBER M
+	     LEFT OUTER JOIN MEMBER_AUTH MA 
+	          ON M.MEM_NO = MA.MEM_NO
+	     LEFT OUTER JOIN ATTACH_FILE_DETAIL C 
+	          ON M.MEM_PROFILE = C.ATTACH_NO
+	    WHERE M.MEM_ID = #{username}
     </select>
     
     <!-- 회원가입 -->
@@ -105,11 +116,23 @@
 	<!-- 내 정보 수정시 아이디 정보 조회 -->
 	<select id="findById" resultMap="memberMap">
 	    SELECT 
-	        A.MEM_NO, A.MEM_ID, A.MEM_NAME, A.MEM_EMAIL, A.MEM_PASSWORD, A.MEM_PROFILE,
-	        B.NICKNAME, B.TEL, B.ZIP, B.ADDR1, B.ADDR2, B.BIRTH_DATE, B.GENDER,
-	        C.FILE_PATH  FROM MEMBER A
+		        A.MEM_NO
+		      , A.MEM_ID
+		      , A.MEM_NAME
+		      , A.MEM_EMAIL
+		      , A.MEM_PASSWORD
+		      , B.NICKNAME
+		      , B.TEL
+		      , B.ZIP
+		      , B.ADDR1
+		      , B.ADDR2
+		      , B.BIRTH_DATE
+		      , B.GENDER
+		      , C.FILE_PATH AS memProfilePath
+		 FROM MEMBER A
 	    LEFT OUTER JOIN MEM_USER B ON (A.MEM_NO = B.MEM_NO)
-	    LEFT OUTER JOIN ATTACH_FILE_DETAIL C ON (A.MEM_PROFILE = C.ATTACH_NO) WHERE A.MEM_ID = #{username}
+	    LEFT OUTER JOIN ATTACH_FILE_DETAIL C ON (A.MEM_PROFILE = C.ATTACH_NO) 
+	    WHERE A.MEM_ID = #{username}
 	</select>
 	
 	<!-- 회원 정보 수정 (member table) -->

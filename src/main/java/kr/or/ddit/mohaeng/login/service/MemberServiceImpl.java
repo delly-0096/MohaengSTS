@@ -153,7 +153,7 @@ public class MemberServiceImpl implements IMemberService {
 	    
 	    // 파일 업로드 처리 (사업자 등록증)
 	    if (bizFile != null && !bizFile.isEmpty()) {
-	    	int attachNo = fileService.uploadFile(bizFile, memNo);
+	    	int attachNo = fileService.uploadBizFile(bizFile, memNo);
 	    	companyVO.setCompBizFile(attachNo);
 	    }
 	    

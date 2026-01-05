@@ -38,44 +38,46 @@ public class FileServiceImpl implements IFileService{
 	 */
 	@Override
 	@Transactional
-	public int uploadFile(MultipartFile bizFile, int memNo) {
-		try {
-            // 1. ATTACH_FILE 마스터 저장
-            AttachFileVO attachVO = new AttachFileVO();
-            attachVO.setRegId(memNo);
-            fileMapper.insertAttachFile(attachVO); // 여기서 시퀀스 번호 생성됨
-            int attachNo = attachVO.getAttachNo();
+	public int uploadBizFile(MultipartFile bizFile, int memNo) {
+		if (bizFile == null || bizFile.isEmpty()) return 0;
 
-            // 2. 파일 저장 경로 설정 (실제 경로로 수정 필요)
-            String uploadPath = "C:/mohaeng/upload/biz_file";
-            File folder = new File(uploadPath);
-            if (!folder.exists()) folder.mkdirs();
+	    try {
+	        // 1. ATTACH_FILE 마스터
+	        AttachFileVO attachVO = new AttachFileVO();
+	        attachVO.setRegId(memNo);
+	        fileMapper.insertAttachFile(attachVO);
+	        int attachNo = attachVO.getAttachNo();
 
-            String originalName = bizFile.getOriginalFilename();
-            String uuid = UUID.randomUUID().toString();
-            String fileName = uuid + "_" + originalName;
-            
-            // 3. 실제 파일 물리적 저장
-            File saveFile = new File(uploadPath, fileName);
-            bizFile.transferTo(saveFile);
+	        // 2. 파일 정보
+	        String originalName = bizFile.getOriginalFilename();
+	        String ext = originalName.substring(originalName.lastIndexOf(".") + 1);
+	        String saveName = UUID.randomUUID().toString() + "." + ext;
 
-            // 4. ATTACH_FILE_DETAIL 상세 정보 저장
-            AttachFileDetailVO detailVO = new AttachFileDetailVO();
-            detailVO.setAttachNo(attachNo);
-            detailVO.setFileName(fileName);
-            detailVO.setFileOriginalName(originalName);
-            detailVO.setFileSize(bizFile.getSize());
-            detailVO.setFilePath(uploadPath + "/" + fileName);
-            detailVO.setFileExt(originalName.substring(originalName.lastIndexOf(".") + 1));
-            detailVO.setRegId(memNo);
-            
-            fileMapper.insertAttachFileDetail(detailVO);
+	        File target = new File(uploadPath, saveName);
+	        if (!target.getParentFile().exists()) {
+	            target.getParentFile().mkdirs();
+	        }
 
-            return attachNo; // 생성된 마스터 번호 반환
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("파일 업로드 처리 중 에러 발생!");
-        }
+	        // 3. 물리적 저장
+	        bizFile.transferTo(target);
+
+	        // 4. ATTACH_FILE_DETAIL
+	        AttachFileDetailVO detailVO = new AttachFileDetailVO();
+	        detailVO.setAttachNo(attachNo);
+	        detailVO.setFileName(saveName);
+	        detailVO.setFileOriginalName(originalName);
+	        detailVO.setFileExt(ext);
+	        detailVO.setFileSize(bizFile.getSize());
+	        detailVO.setFilePath("/resources/upload/biz/" + saveName); // 서버 접근 경로
+	        detailVO.setFileGbCd("ATTACH");   // 기업 첨부
+	        detailVO.setRegId(memNo);
+
+	        fileMapper.insertAttachFileDetail(detailVO);
+
+	        return attachNo;
+	    } catch (Exception e) {
+	        throw new RuntimeException("파일 업로드 처리 중 에러 발생", e);
+	    }
     }
 
 	/**
@@ -89,7 +91,7 @@ public class FileServiceImpl implements IFileService{
 	public int saveFile(MultipartFile file, int regId) {
 		if (file == null || file.isEmpty()) return 0;
 		
-		// ATTACH_FILE (마스터) 테이블 등록
+		// ATTACH_FILE (마스터)
 		AttachFileVO attachVO = new AttachFileVO();
         attachVO.setRegId(regId); 	// 쿼리의 #{regId}와 매칭
         fileMapper.insertAttachFile(attachVO);
@@ -97,8 +99,8 @@ public class FileServiceImpl implements IFileService{
 		
 		// 물리적 파일 저장 준비
 		String originalName = file.getOriginalFilename();
-		String ext = originalName.substring(originalName.lastIndexOf("."));
-		String saveName = UUID.randomUUID().toString() + ext;	// 파일명 중복 방지
+		String ext = originalName.substring(originalName.lastIndexOf(".") + 1);
+		String saveName = UUID.randomUUID().toString() + "." + ext;	// 파일명 중복 방지
 		
 		File target = new File(uploadPath, saveName);
 		if (!target.getParentFile().exists()) {
@@ -117,6 +119,7 @@ public class FileServiceImpl implements IFileService{
             detailVO.setFileExt(ext); 										// #{fileExt}
             detailVO.setFileSize(file.getSize()); 							// #{fileSize}
             detailVO.setFilePath("/resources/upload/profile/" + saveName); 	// 서버 접근 경로 #{filePath}
+            detailVO.setFileGbCd("PROFILE"); 								//  파일 분류 fileGbCd
             detailVO.setMimyType(file.getContentType()); 					// #{mimyType}
             detailVO.setRegId(regId); 										// #{regId}
 			

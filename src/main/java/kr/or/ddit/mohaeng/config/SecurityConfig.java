@@ -65,6 +65,7 @@ public class SecurityConfig {
 			"/member/idCheck",
 			"/member/find",
 			"/mypage/profile",
+			"/mypage/business/profile",
 			"/mypage/profile/update",
 			"/idCheck",
 			"/error",

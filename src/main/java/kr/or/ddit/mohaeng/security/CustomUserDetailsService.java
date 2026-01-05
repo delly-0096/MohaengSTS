@@ -25,7 +25,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 		System.out.println("username : " + username);
-		  // 1. 일반/기업/관리자 통합 조회
+		  // 일반/기업/관리자 통합 조회
         MemberVO member = memberMapper.selectById(username);
         System.out.println("member : " + member);
         
@@ -33,8 +33,7 @@ public class CustomUserDetailsService implements UserDetailsService {
             throw new UsernameNotFoundException("사용자를 찾을 수 없습니다: " + username);
         }
 
-        // 2. CustomUser로 감싸서 반환
-        return new CustomUser(member);
+        return new CustomUserDetails(member);
 		
 	}
 

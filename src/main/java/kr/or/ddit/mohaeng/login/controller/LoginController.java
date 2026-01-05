@@ -149,23 +149,32 @@ public class LoginController {
 	    loginMember.put("memType", memType);
 	    loginMember.put("memName", username);
 	    loginMember.put("memNo", member.getMemNo());
+	    
+	    String profilePath = member.getMemProfilePath(); 
+	    if (profilePath != null) {
+	        // 텍스트에서 /resources 부분을 제거하여 /upload/... 만 남김
+	        profilePath = profilePath.replace("/resources", "");
+	    }
+	    loginMember.put("memProfile", profilePath);	    
+	    
 		
 		session.setAttribute("loginMember", loginMember);
 		session.removeAttribute("LOGIN_FAIL_CNT");
 		
-		var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + memType));
 		CustomUserDetails userDetails = new CustomUserDetails(member);
+
+		// ⚠️ 권한은 CustomUserDetails 기준으로만 사용
 		Authentication auth =
-			    new UsernamePasswordAuthenticationToken(
-			        userDetails,
-			        null,
-			        userDetails.getAuthorities()
-			    );
+		    new UsernamePasswordAuthenticationToken(
+		        userDetails,
+		        null,
+		        userDetails.getAuthorities()
+		    );
 
-	    SecurityContext context = SecurityContextHolder.createEmptyContext();
-	    context.setAuthentication(auth);
-	    SecurityContextHolder.setContext(context);
-
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(auth);
+		SecurityContextHolder.setContext(context);
+		
 	    new HttpSessionSecurityContextRepository().saveContext(context, request, response);
 	    
 	    String rememberMe = request.getParameter("remember-me");

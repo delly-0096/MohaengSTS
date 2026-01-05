@@ -14,13 +14,13 @@ import kr.or.ddit.mohaeng.vo.AttachFileVO;
 public interface IFileService {
 
 	/**
-	 *	<p> 파일 업로드 </p>
+	 *	<p> 기업회원 가입시 파일 업로드 </p>
 	 *	@date 2026.01.02
 	 *	@author kdrs
 	 *	@param bizFile 기업회원이 업로드 한 파일, memNo 기업회원 계정 no
 	 *	@return 업로드 처리
 	 */
-	public int uploadFile(MultipartFile file, int memNo);
+	public int uploadBizFile(MultipartFile file, int memNo);
 
 	/**
 	 *	<p> 프로필 파일 저장 </p>

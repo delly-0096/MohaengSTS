@@ -18,63 +18,71 @@
 
                 <div class="content-section">
                     <form class="profile-form" id="businessProfileForm" style="max-width: 100%;" action="${pageContext.request.contextPath}/mypage/profile/update" method="POST" enctype="multipart/form-data">
-                        <!-- 기업 로고 -->
-                        <div class="profile-image-upload">
-							<div id="profileContainer" class="profile-image-preview-container">
-		                            <!-- 기본 아이콘 -->
-								    <i class="bi bi-person profile-default-icon"
-								       style="${not empty profileImgUrl ? 'display:none;' : ''}">
-								    </i>                        
-                            <img src="${not empty profileImgUrl 
-								              ? pageContext.request.contextPath.concat(profileImgUrl) 
-								              : ''}"
-								        style="${not empty profileImgUrl ? '' : 'display:none;'}"
-                                 alt="기업 로고" class="profile-image-preview" id="logoPreview">
-                            </div>
-                            <div class="profile-image-actions">
-                                <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="previewLogo(this)">
-                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('logoInput').click()">
-                                    <i class="bi bi-camera me-1"></i>로고 변경
-                                </button>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="resetProfileImage()">
-                                    <i class="bi bi-trash me-1"></i>삭제
-                                </button>
-                            </div>
-                            <small class="text-muted d-block mt-2">권장 크기: 200x200px (최대 2MB)</small>
-                        </div>
-
+                        <input type="hidden" name="profileImageDeleted" id="profileImageDeleted" value="false">
+                        <!-- 로고 이미지 섹션 -->
+                        <div class="content-section">
+							<h5 class="form-section-title"><i class="bi bi-image me-2"></i>프로필 로고 이미지</h5>
+		                        <div class="profile-image-upload">
+									<div id="profileContainer" class="profile-image-preview-container">
+				                            <!-- 기본 아이콘 -->
+										    <i class="bi bi-person profile-default-icon"
+										       style="${not empty profileImgUrl ? 'display:none;' : ''}">
+										    </i>                     
+										    <!-- 프로필 이미지 -->
+				                            <img
+					                            id="profilePreview"
+					                            class="profile-image-preview" 
+					                            src="${not empty profileImgUrl 
+												       ? pageContext.request.contextPath.concat(profileImgUrl) 
+												       : ''}"
+												        style="${not empty profileImgUrl ? '' : 'display:none;'}"
+				                                 alt="로고 프로필 이미지" 
+				                                 >
+		                            </div>
+		                            <div class="profile-image-actions">
+		                                <input type="file" name="profileImage" id="profileImage" accept="image/*" hidden>
+		                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profileImage').click()">
+		                                    <i class="bi bi-camera me-1"></i>로고 이미지 변경
+		                                </button>
+		                                <button type="button" class="btn btn-outline btn-sm" onclick="resetProfileImage()">
+		                                    <i class="bi bi-trash me-1"></i>삭제
+		                                </button>
+		                            <p class="form-hint mt-2 mb-0">권장 크기: 200x200px (최대 2MB)</p>
+		                            </div>
+	                        </div>
+						</div>
                         <div class="row">
                             <!-- 기업 기본 정보 (읽기전용) -->
                             <div class="col-lg-6">
                                 <h5 class="form-section-title"><i class="bi bi-building me-2"></i>기업 기본 정보</h5>
                                 <div class="form-group">
                                     <label class="form-label">기업명</label>
-                                    <input type="text" class="form-control" value="모행 투어" readonly disabled>
+                                    <input type="text" class="form-control" name="bzmnNm" id="bzmnNm" value="모행 투어" readonly disabled>
                                     <small class="text-muted">기업 정보 변경은 고객센터로 문의해주세요.</small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">사업자등록번호</label>
-                                    <input type="text" class="form-control" value="123-45-67890" readonly disabled>
+                                    <input type="text" class="form-control" name="brno" id="brno" value="123-45-67890" readonly disabled>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">업종</label>
-                                    <input type="text" class="form-control" value="관광/레저" readonly disabled>
+                                    <input type="text" class="form-control" name="industryCd" id="industryCd" value="관광/레저" readonly disabled>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">사업장 주소</label>
-                                    <input type="text" class="form-control mb-2" value="63535" readonly disabled>
-                                    <input type="text" class="form-control mb-2" value="제주특별자치도 서귀포시 중문관광로 72" readonly disabled>
-                                    <input type="text" class="form-control" value="3층 301호" readonly disabled>
+                                    <input type="text" class="form-control mb-2" name="compZip" id="compZip" value="63535" readonly disabled>
+                                    <input type="text" class="form-control mb-2" name="compAddr1" id="compAddr1" value="제주특별자치도 서귀포시 중문관광로 72" readonly disabled>
+                                    <input type="text" class="form-control" name="compAddr2" id="compAddr2" value="3층 301호" readonly disabled>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">회사 홈페이지</label>
-                                    <input type="url" class="form-control" name="companyWebsite" id="companyWebsite"
+                                    <input type="url" class="form-control" name="compUrl" id="companyWebsite"
                                            value="https://www.mohaengtour.com" placeholder="예: https://www.example.com">
                                     <small class="text-muted">https://를 포함하여 입력해주세요.</small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">기업 소개</label>
-                                    <textarea class="form-control" name="companyDescription" id="companyDescription"
+                                    <textarea class="form-control" name="compIntro" id="companyDescription"
                                               rows="4" maxlength="1000"
                                               placeholder="기업에 대한 간단한 소개를 입력해주세요. (최대 1000자)">제주도 전문 여행사 모행투어입니다. 현지 전문가와 함께하는 프리미엄 투어 서비스를 제공합니다. 소규모 그룹 투어부터 맞춤 프라이빗 투어까지 다양한 여행 상품을 만나보세요.</textarea>
                                     <small class="text-muted">고객에게 보여질 기업 소개입니다. 제공하는 서비스, 특장점 등을 작성해주세요.</small>
@@ -86,20 +94,20 @@
                                 <h5 class="form-section-title"><i class="bi bi-person me-2"></i>담당자 정보</h5>
                                 <div class="form-group">
                                     <label class="form-label">담당자명 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="managerName" id="managerName" value="홍길동" required>
+                                    <input type="text" class="form-control" name="memName" id="managerName" value="홍길동" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">담당자 이메일 <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" name="managerEmail" id="managerEmail" value="mohaeng.tour@example.com" required>
+                                    <input type="email" class="form-control" name="memEmail" id="managerEmail" value="mohaeng.tour@example.com" required>
                                     <small class="text-muted">알림 수신 및 비밀번호 찾기에 사용됩니다.</small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">담당자 연락처 <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" name="managerPhone" id="managerPhone" value="01012345678" placeholder="'-' 없이 입력" maxlength="11" required>
+                                    <input type="tel" class="form-control" name="memCompTel" id="managerPhone" value="01012345678" placeholder="'-' 없이 입력" maxlength="11" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">대표 전화번호</label>
-                                    <input type="tel" class="form-control" value="064-123-4567" readonly disabled>
+                                    <input type="tel" class="form-control" name="compTel" id="compTel" value="064-123-4567" readonly disabled>
                                     <small class="text-muted">대표 전화번호 변경은 고객센터로 문의해주세요.</small>
                                 </div>
                             </div>
@@ -111,19 +119,19 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">은행</label>
-                                    <input type="text" class="form-control" value="신한은행" readonly disabled>
+                                    <input type="text" class="form-control" name="bankCd" id="bankCd" value="신한은행" readonly disabled>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">계좌번호</label>
-                                    <input type="text" class="form-control" value="110-***-***890" readonly disabled>
+                                    <input type="text" class="form-control" name="accountNo" id="accountNo" value="110-***-***890" readonly disabled>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">예금주</label>
-                                    <input type="text" class="form-control" value="(주)모행투어" readonly disabled>
+                                    <input type="text" class="form-control" name="depositor" id="depositor" value="(주)모행투어" readonly disabled>
                                 </div>
                             </div>
                             <div class="col-12">
@@ -307,42 +315,70 @@ document.getElementById('businessProfileForm').addEventListener('submit', functi
     showToast('회원 정보가 수정되었습니다.', 'success');
 });
 
-// 로고 미리보기
-function previewLogo(input) {
-    if (input.files && input.files[0]) {
-        var file = input.files[0];
+//프로필 이미지 미리보기
+document.getElementById('profileImage').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    document.getElementById('profileImageDeleted').value = 'false';
 
-        // 파일 크기 체크 (2MB)
-        if (file.size > 2 * 1024 * 1024) {
-            showToast('파일 크기는 2MB 이하여야 합니다.', 'error');
-            input.value = '';
+    if (file) {
+        // 파일 크기 체크 (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('이미지 크기는 5MB 이하만 가능합니다.', 'error');
+            this.value = '';
             return;
         }
 
-        // 이미지 파일 체크
+        // 파일 형식 체크
         if (!file.type.startsWith('image/')) {
             showToast('이미지 파일만 업로드 가능합니다.', 'error');
-            input.value = '';
+            this.value = '';
             return;
         }
 
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('logoPreview').src = e.target.result;
-            showToast('로고가 변경되었습니다. 저장 버튼을 눌러 적용하세요.', 'success');
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+        	const img = document.getElementById('profilePreview');
+            const icon = document.querySelector('.profile-default-icon');
+            img.src = evt.target.result;
+            img.style.display = 'block';
+            icon.style.display = 'none';
         };
         reader.readAsDataURL(file);
+
+        showToast('이미지가 선택되었습니다.', 'success');
     }
+});
+
+/* window.addEventListener('DOMContentLoaded', () => {
+    const img = document.getElementById('profilePreview');
+
+    // base64 미리보기 상태면 건드리지 않음
+    if (img && img.src.startsWith('data:image')) {
+        return;
+    }
+
+    // 서버 이미지 정상 유지
+}); */
+
+function resetProfileImage() {
+    const img = document.getElementById('profilePreview');
+    const icon = document.querySelector('.profile-default-icon');
+    const fileInput = document.getElementById('profileImage');
+    const deletedFlag = document.getElementById('profileImageDeleted');
+
+    img.src = '';
+    img.style.display = 'none';
+
+    icon.style.display = 'block';
+
+    if (fileInput) fileInput.value = '';
+    if (deletedFlag) deletedFlag.value = 'true';
+
+    showToast('기본 아이콘으로 변경되었습니다.', 'info');
 }
 
-// 로고 삭제
-function deleteLogo() {
-    if (confirm('로고를 삭제하시겠습니까?')) {
-        document.getElementById('logoPreview').src = 'https://via.placeholder.com/200x200?text=LOGO';
-        document.getElementById('logoInput').value = '';
-        showToast('로고가 삭제되었습니다. 저장 버튼을 눌러 적용하세요.', 'info');
-    }
-}
 </script>
 
 <c:set var="pageJs" value="mypage" />

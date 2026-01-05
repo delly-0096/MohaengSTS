@@ -114,7 +114,7 @@ public class ProfileController {
     	}
     	
     	// DB 최신 정보 조회 (조인 쿼리 findById 사용)
-    	MemberVO memberDetail = memberService.findById(memId);
+    	MemberVO memberDetail = memberService.findByCompId(memId);
     	if (memberDetail == null) {
     		session.invalidate();
     		return "redirect:/member/login";
@@ -209,9 +209,18 @@ public class ProfileController {
 	            newUserDetails, null, newUserDetails.getAuthorities()
 	    );
 	    SecurityContextHolder.getContext().setAuthentication(newAuth);
-	   
+	    
+	    // 5. redirect 분기
+	    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+	    String redirectUrl = "/mypage/profile";
+
+	    if (auth.getAuthorities().stream()
+	            .anyMatch(a -> a.getAuthority().contains("BUSINESS"))) {
+	        redirectUrl = "/mypage/business/profile";
+	    }
+
 	    rttr.addFlashAttribute("successMessage", "정보가 성공적으로 수정되었습니다.");
-	    return "redirect:/mypage/profile";
+	    return "redirect:" + redirectUrl;
 		
 	}
 

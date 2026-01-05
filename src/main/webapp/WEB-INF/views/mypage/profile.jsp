@@ -38,7 +38,7 @@
 								        style="${not empty profileImgUrl ? '' : 'display:none;'}"
 								        alt="프로필 이미지"
 								    >
-								</div>
+							</div>
                             <div class="profile-image-actions">
                                 <input type="file" name="profileImage" id="profileImage" accept="image/*" hidden>
                                 <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profileImage').click()">
@@ -453,7 +453,7 @@ document.getElementById('profileImage').addEventListener('change', function(e) {
         showToast('이미지가 선택되었습니다.', 'success');
     }
 });
-
+/* 
 window.addEventListener('DOMContentLoaded', () => {
     const img = document.getElementById('profilePreview');
 
@@ -463,7 +463,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     // 서버 이미지 정상 유지
-});
+}); */
 
 function resetProfileImage() {
     const img = document.getElementById('profilePreview');

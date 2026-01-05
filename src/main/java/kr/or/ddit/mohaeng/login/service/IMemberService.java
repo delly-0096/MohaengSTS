@@ -57,7 +57,7 @@ public interface IMemberService {
 	ServiceResult registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile);
 
 	/**
-	 *	<p> 내 정보 수정시 아이디 조회 </p>
+	 *	<p> 일반회원 : 내 정보 수정시 아이디 조회 </p>
 	 *	@date 2025.12.31
 	 *	@author kdrs
 	 * @param username 세션을 통해 들어온 아이디 값 (memId)
@@ -73,6 +73,16 @@ public interface IMemberService {
 	 *	@return void (Transactional에 의해 실패 시 롤백됨)
 	 */
 	public void updateMemberProfile(MemberUpdateDTO updateDTO);
+
+
+	/**
+	 *	<p> 일반회원 : 내 정보 수정시 아이디 조회 </p>
+	 *	@date 2026.01.05
+	 *	@author kdrs
+	 * @param username 세션을 통해 들어온 아이디 값 (memId)
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 */
+	public MemberVO findByCompId(String memId);
 
 
 

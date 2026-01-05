@@ -159,6 +159,7 @@
         <div class="side-menu-body">
             <!-- 일정 계획 (기업회원은 표시하지 않음) -->
                 <div class="side-menu-section">
+                	<sec:authorize access="!isAuthenticated() or hasRole('MEMBER')">
                     <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
                         <span><i class="bi bi-calendar3 me-2"></i>일정 계획</span>
                         <i class="bi bi-chevron-down"></i>
@@ -176,6 +177,7 @@
                             </a>
                         </sec:authorize>
                     </div>
+                    </sec:authorize>
                 </div>
 
 

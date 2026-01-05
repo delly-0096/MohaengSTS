@@ -249,7 +249,6 @@ public class MemberServiceImpl implements IMemberService {
 		userDetail.setMemNo(dto.getMemNo());
 		userDetail.setNickname(dto.getNickname());
 		userDetail.setBirthDate(dto.getBirthDate());
-		log.info("dto 찍어보자 : " + dto.getBirthDate());
 		userDetail.setGender(dto.getGender());
 		userDetail.setZip(dto.getZip());
 		userDetail.setAddr1(dto.getAddr1());
@@ -259,6 +258,18 @@ public class MemberServiceImpl implements IMemberService {
 		memberMapper.updateMember(member);
 		memberMapper.updateMemUser(userDetail);
 		
+	}
+
+	/**
+	 *	<p> 기업회원 : 내 정보 수정시 아이디 조회 </p>
+	 *	@date 2026.01.05
+	 *	@author kdrs
+	 * @param username 세션을 통해 들어온 아이디 값 (memId)
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 */
+	@Override
+	public MemberVO findByCompId(String memId) {
+		return memCompMapper.findByCompId(memId);
 	}
 
 

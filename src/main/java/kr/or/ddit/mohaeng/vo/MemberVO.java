@@ -28,9 +28,10 @@ public class MemberVO {
 	
 	private List<MemberAuthVO> authList;	// 권한 정보
 	
-	private MemCompVO memComp;
-	private MemUserVO memUser;
-	private MemAdminVO admin;
+	private CompanyVO company;		/* 기업 정보 */
+	private MemCompVO memComp;		/* 기업 회원 부가 정보 */
+	private MemUserVO memUser;		/* 일반 회원 부가 정보 */
+	private MemAdminVO admin;		/* 관리자 */
 
 	private String memProfilePath;
 	

@@ -53,7 +53,8 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			String addr2 = tourPlace.get("addr2");
 			String mapy = tourPlace.get("mapy");
 			String mapx = tourPlace.get("mapx");
-			String defaultImg = tourPlace.get("firstimage2");
+//			String defaultImg = tourPlace.get("firstimage2");
+			String defaultImg = tourPlace.get("firstimage");
 			
 			TourPlaceVO tourPlaceVO = new TourPlaceVO(contentid, areacode, contenttypeid, title, zip, addr1, addr2
 					, mapy, mapx, "0", defaultImg);
@@ -63,6 +64,90 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		iTripScheduleMapper.mergeSearchTourPlace(tourPlaceList);
 	}
 	
-	
+	@Override
+	public Params contentIdCheck(Params params) {
+	    String contentTypeId = params.getString("contentTypeId");
+	    
+	    // 값을 담는 게 아니라, API의 '필드명(Key)'을 담을 변수
+	    String operationHoursKey = "";
+	    String plcPriceKey = "";
+	    
+	    switch (contentTypeId) {
+	        case "12": // 관광지
+	            operationHoursKey = "usetime";
+	            // 12번은 명확한 이용요금 필드가 없고 보통 usetime에 섞여 있음.
+	            // 비정형이라도 좋다면 'expguide'(체험안내)를 가격 키로 지정
+	            plcPriceKey = "expguide"; 
+	            break;
+
+	        case "14": // 문화시설
+	            operationHoursKey = "usetimeculture";
+	            plcPriceKey = "usefee";
+	            break;
+
+	        case "15": // 축제/공연/행사
+	            operationHoursKey = "playtime";
+	            plcPriceKey = "usetimefestival";
+	            break;
+
+	        case "25": // 여행코스
+	            // 코스는 시간이 아니라 'taketime'(소요시간) 필드를 사용
+	            operationHoursKey = "taketime";
+	            plcPriceKey = ""; // 코스는 가격 관련 필드가 아예 없음
+	            break;
+
+	        case "28": // 레포츠
+	            operationHoursKey = "usetimeleports";
+	            plcPriceKey = "usefeeleports";
+	            break;
+
+	        case "32": // 숙박
+	            // 숙박은 입실/퇴실 시간 두 가지 키가 필요함
+	            // 프론트에서 split해서 쓰거나 로직 처리를 위해 콤마로 구분해서 전달 추천
+	            operationHoursKey = "checkintime,checkouttime"; 
+	            plcPriceKey = ""; // 숙박비는 intro 정보에 없음 (객실정보 별도 조회 필요)
+	            break;
+
+	        case "38": // 쇼핑
+	            operationHoursKey = "opentime";
+	            // 가격 대신 판매품목(saleitem) 필드명을 매핑
+	            plcPriceKey = "saleitem"; 
+	            break;
+
+	        case "39": // 음식점
+	            operationHoursKey = "opentimefood";
+	            // 가격 대신 대표메뉴(treatmenu) 필드명을 매핑
+	            plcPriceKey = "treatmenu"; 
+	            break;
+
+	        default:
+	            operationHoursKey = "";
+	            plcPriceKey = "";
+	            break;
+	    }
+	    
+	    // 결과 Params에 '필드명'을 저장
+	    params.put("operationHours", operationHoursKey);
+	    params.put("plcPrice", plcPriceKey);
+	    
+	    return params;
+	}
+
+	@Override
+	public TourPlaceVO searchPlaceDetail(TourPlaceVO tourPlaceVO) {
+		return iTripScheduleMapper.searchPlaceDetail(tourPlaceVO);
+	}
+
+	@Override
+	public int saveTourPlacInfo(TourPlaceVO tourPlaceVO) {
+		return iTripScheduleMapper.saveTourPlacInfo(tourPlaceVO);
+	}
+
+	// 텍스트 정제용 프라이빗 메소드 (예시)
+//	private String cleanText(String input) {
+//	    if (input == null) return "";
+//	    // HTML 태그 제거 (<br> -> 줄바꿈 등) 처리가 필요할 수 있음
+//	    return input.replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "").trim();
+//	}
 
 }

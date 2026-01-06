@@ -21,4 +21,8 @@ public interface ITripScheduleMapper {
 
 	public void mergeSearchTourPlace(List<TourPlaceVO> dataList);
 
+	public TourPlaceVO searchPlaceDetail(TourPlaceVO tourPlaceVO);
+
+	public int saveTourPlacInfo(TourPlaceVO tourPlaceVO);
+
 }

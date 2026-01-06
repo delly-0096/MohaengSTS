@@ -17,5 +17,11 @@ public interface ITripScheduleService {
 	public Params searchRegion(Params params);
 
 	public void mergeSearchTourPlace(List<Map<String, String>> dataList);
+
+	public Params contentIdCheck(Params params);
+
+	public TourPlaceVO searchPlaceDetail(TourPlaceVO tourPlaceVO);
+
+	public int saveTourPlacInfo(TourPlaceVO tourPlaceVO);
 	
 }

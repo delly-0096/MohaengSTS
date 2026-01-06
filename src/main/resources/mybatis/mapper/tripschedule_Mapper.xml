@@ -38,7 +38,9 @@
 			 , PLACE_TYPE
 			 , PLC_NM
 			 , PLC_DESC
-			 , PLC_ADDR
+			 , PLC_ZIP
+			 , PLC_ADDR1
+			 , PLC_ADDR2
 			 , ATTACH_NO
 			 , LATITUDE
 			 , LONGITUDE
@@ -115,8 +117,8 @@
 	              , LONGITUDE
 	              , REG_ID
 	              , DEFAULT_IMG
-	              , REG_DT  )
-	          VALUES (
+	              , REG_DT  
+	          ) VALUES (
 	                S.PLC_NO
 	              , S.RGN_NO
 	              , S.PLACE_TYPE
@@ -130,5 +132,38 @@
 	              , S.DEFAULT_IMG
 	              , SYSDATE
 	          )
+	</update>
+	
+	<select id="searchPlaceDetail" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+		  FROM TOUR_PLACE
+		 WHERE PLC_NO = #{plcNo}
+	</select>
+	
+	<update id="saveTourPlacInfo" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		UPDATE TOUR_PLACE
+		   SET PLC_DESC = #{plcDesc}
+			 , OPERATION_HOURS = #{operationHours}
+			 , PLC_PRICE = #{plcPrice}
+		 WHERE PLC_NO = #{plcNo}
 	</update>
 </mapper>

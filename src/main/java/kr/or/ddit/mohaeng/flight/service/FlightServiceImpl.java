@@ -99,6 +99,11 @@ public class FlightServiceImpl implements IFlightService {
 			        vo.setArrAirportNm(flightSchedule.getArrAirportNm());
 			        vo.setDepAirportNm(flightSchedule.getDepAirportNm());
 			        
+			        if(vo.getAirlineNm().indexOf("대한") != -1 || vo.getAirlineNm().indexOf("아시아나") != -1) {
+			        	vo.setCheckedBaggage(20);
+			        }else {
+			        	vo.setCheckedBaggage(15);
+			        }
 			        String rawDepTime = node.path("depPlandTime").asText();
 			        timeFormatter(vo ,rawDepTime, 1);
 			        
@@ -128,7 +133,7 @@ public class FlightServiceImpl implements IFlightService {
 			e.printStackTrace();
 		}
 		
-		if(flightSchedule.getSorting() == "") {
+		if(flightSchedule.getSorting() == "") {	// 기본 sort = 최저가
 			return flightScheduleList;
 		}
 		return flightScheduleList;

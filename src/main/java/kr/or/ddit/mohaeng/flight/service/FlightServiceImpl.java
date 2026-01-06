@@ -118,7 +118,15 @@ public class FlightServiceImpl implements IFlightService {
 		        vo.setAirlineNm(items.path("airlineNm").asText());       // 항공사명
 		        vo.setFlightSymbol(items.path("vihicleId").asText());       // 편명 데이터 없음
 		        vo.setEconomyCharge(items.path("economyCharge").asInt());// 요금
-		    	
+
+		        vo.setArrAirportNm(flightSchedule.getArrAirportNm());
+		        vo.setDepAirportNm(flightSchedule.getDepAirportNm());
+		        
+		        if(vo.getAirlineNm().indexOf("대한") != -1 || vo.getAirlineNm().indexOf("아시아나") != -1) {
+		        	vo.setCheckedBaggage(20);
+		        }else {
+		        	vo.setCheckedBaggage(15);
+		        }
 		        
 		        String rawDepTime = items.path("depPlandTime").asText();
 		        timeFormatter(vo ,rawDepTime, 1);

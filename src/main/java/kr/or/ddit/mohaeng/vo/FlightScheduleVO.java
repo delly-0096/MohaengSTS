@@ -15,10 +15,10 @@ public class FlightScheduleVO {
 	// 운항 일정
 	
 	private int scheduleNo;       	 // 항공일정키
-	private String fltProdId;     	 // ??
+	private String fltProdId;     	 // 항공권 키
 	
 	private String flightSymbol;  	 // 항공편번호
-	private String depAirportId;     // 출발공항 - id
+	private String depAirportId;     // 출발공항 - id(영문 5자리)
 	private String arrAirportId;     // 도착공항 - id
 	
 	@DateTimeFormat(pattern = "a HH:mm")
@@ -37,6 +37,18 @@ public class FlightScheduleVO {
 	private LocalDate endDt;           // 운항종료일
 
 	
+	
+	
+	// 수하물 정보
+	private int checkedBaggage;  // 무료 위탁 수하물 - 몇키로 인지입력 15 or 20
+	private int carryOnBaggage = 10;  // 기내 수하물 - 10kg
+	
+	// 공항 iata코드
+	private String depIata;			// 출발지 iata코드 ?? 사용여부는 알아서
+	private String arrIata;			// 도착지 iata코드
+	
+	
+	
 	// api에 있는 것들
 	private String airlineNm;        // 항공사
 	
@@ -51,9 +63,3 @@ public class FlightScheduleVO {
 	private int numOfRows = 100;
 	private String sorting = "";	// 정렬 - 최저가순, 최단시간순, 출발시간순
 }
-
-/*
-destination = arrAirpotNm
-departDate = 출발일 -> String?
-returnDate = 귀국일(두번째) 티켓
-*/

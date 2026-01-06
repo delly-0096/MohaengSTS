@@ -1,8 +1,11 @@
 package kr.or.ddit.mohaeng.login.service;
 
+import java.util.Map;
+
 import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
+import kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
@@ -52,6 +55,25 @@ public interface IMemberService {
 	 *	@return ServiceResult 회원가입 후 결과(OK, FAILED)
 	 */
 	ServiceResult registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile);
+
+	/**
+	 *	<p> 내 정보 수정시 아이디 조회 </p>
+	 *	@date 2025.12.31
+	 *	@author kdrs
+	 * @param username 세션을 통해 들어온 아이디 값 (memId)
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 */
+	public MemberVO findById(String memId);
+
+	/**
+	 *	<p> 내 정보 수정 </p>
+	 *	@date 2025.12.31
+	 *	@author kdrs
+	 *	@param updateDTO 회원 정보 수정 데이터(프로필 이미지, 기본정보, 상세정보, 비밀번호 등 포함)
+	 *	@return void (Transactional에 의해 실패 시 롤백됨)
+	 */
+	public void updateMemberProfile(MemberUpdateDTO updateDTO);
+
 
 
 }

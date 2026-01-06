@@ -48,21 +48,38 @@
             <!-- 헤더 우측 영역 -->
             <div class="header-right">
                     <sec:authorize access="isAuthenticated()">
+					    <sec:authentication property="principal.memProfilePath" var="profileImgPath"/>
                         <!-- 로그인 상태 - 알림 버튼 -->
                         <button class="header-notification-btn" onclick="toggleNotificationPanel()" title="알림">
                             <i class="bi bi-bell"></i>
                             <span class="notification-badge" id="notificationBadge">3</span>
                         </button>
                         <!-- 로그인 상태 - 마이페이지 링크 -->
-                        <a href="${pageContext.request.contextPath}/mypage/profile" class="header-user-link">
+                        <a href="
+							    <sec:authorize access='hasAuthority("BUSINESS")'>
+							        ${pageContext.request.contextPath}/mypage/business/profile
+							    </sec:authorize>
+							    <sec:authorize access='hasAuthority("MEMBER")'>
+							        ${pageContext.request.contextPath}/mypage/profile
+							    </sec:authorize>
+						" class="header-user-link">
                             <span class="user-avatar">
-                                    <sec:authorize access="hasAuthority('BUSINESS')">
-                                        <i class="bi bi-building"></i>
-                                    </sec:authorize>
-                                    <sec:authorize access="hasAuthority('MEMBER')">
-                                        <i class="bi bi-person"></i>
-                                    </sec:authorize>
-                            </span>
+							    <c:choose>
+							        <c:when test="${not empty profileImgPath}">
+							            <img src="${profileImgPath}"
+							                 class="profile-img-render"
+							                 alt="프로필 이미지">
+							        </c:when>
+							        <c:otherwise>
+							            <sec:authorize access="hasAuthority('BUSINESS')">
+							                <i class="bi bi-building"></i>
+							            </sec:authorize>
+							            <sec:authorize access="hasAuthority('MEMBER')">
+							                <i class="bi bi-person"></i>
+							            </sec:authorize>
+							        </c:otherwise>
+							    </c:choose>
+							</span>
                             <span class="user-name"><sec:authentication property="principal.username"/>님</span>
                         </a>
                     </sec:authorize>
@@ -102,12 +119,21 @@
                 <div class="side-menu-user">
                     <div class="side-menu-user-info">
                         <span class="side-menu-avatar">
-                                <sec:authorize access="hasAuthority('BUSINESS')">
-                                    <i class="bi bi-building"></i>
-                                </sec:authorize>
-                                <sec:authorize access="hasAuthority('MEMBER')">
-                                    <i class="bi bi-person"></i>
-                                </sec:authorize>
+							    <c:choose>
+							        <c:when test="${not empty profileImgPath}">
+							            <img src="${profileImgPath}"
+							                 class="profile-img-render"
+							                 alt="프로필 이미지">
+							        </c:when>
+							        <c:otherwise>
+							            <sec:authorize access="hasAuthority('BUSINESS')">
+							                <i class="bi bi-building"></i>
+							            </sec:authorize>
+							            <sec:authorize access="hasAuthority('MEMBER')">
+							                <i class="bi bi-person"></i>
+							            </sec:authorize>
+							        </c:otherwise>
+							    </c:choose>
                         </span>
                         <div class="side-menu-user-detail">
                             <span class="side-menu-user-name"><sec:authentication property="principal.username"/>님</span>

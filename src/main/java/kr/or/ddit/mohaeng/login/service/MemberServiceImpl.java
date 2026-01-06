@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.login.service;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -7,18 +9,27 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
+import kr.or.ddit.mohaeng.file.mapper.IFileMapper;
+import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.login.mapper.IMemCompMapper;
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
+import kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.MemCompVO;
+import kr.or.ddit.mohaeng.vo.MemUserVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class MemberServiceImpl implements IMemberService {
 
-//	@Autowired
-//	private IFileMapper iFileMapper;
-
+	@Autowired
+	private IFileService fileService; 
+	
+	@Autowired
+	private IFileMapper iFileMapper;
+	
 	@Autowired
     private IMemberMapper memberMapper;
 	
@@ -132,6 +143,7 @@ public class MemberServiceImpl implements IMemberService {
 		memberVO.setMemPassword(passwordEncoder.encode(memberVO.getMemPassword()));
 		memberVO.setMemStatus("WAIT");
 		
+		try {
 		// MEMBER 테이블 저장
 		memCompMapper.insertMember(memberVO);
 	    int memNo = memberVO.getMemNo();
@@ -140,10 +152,10 @@ public class MemberServiceImpl implements IMemberService {
 	    memCompMapper.insertAuth(memNo, "BUSINESS");
 	    
 	    // 파일 업로드 처리 (사업자 등록증)
-//	    if (bizFile != null && !bizFile.isEmpty()) {
-//	    	int attachNo = fileService.uploadFile(bizFile, memNo);
-//	    	companyVO.setCompBizFile(attachNo);
-//	    }
+	    if (bizFile != null && !bizFile.isEmpty()) {
+	    	int attachNo = fileService.uploadBizFile(bizFile, memNo);
+	    	companyVO.setCompBizFile(attachNo);
+	    }
 	    
 	    // COMPANY 테이블 저장 (기업 마스터)
 	    companyVO.setMemNo(memNo);
@@ -152,14 +164,17 @@ public class MemberServiceImpl implements IMemberService {
 	    
 	    // MEM_COMP 테이블 저장 (기업 담당자 전용 정보)
 	    MemCompVO memCompVO = new MemCompVO();
-	    memCompVO.setMemNo(memNo);
-	    
+	    memCompVO.setMemNo(memNo);	    
 	    memCompVO.setMemCompTel(companyVO.getCompTel());     // 담당자 연락처
 	    memCompVO.setMemCompEmail(companyVO.getRprsvEmladr()); // 담당자 이메일
 	    memCompVO.setMasterYn("Y"); // 최초 가입자이므로 마스터 권한 부여
 	    memCompVO.setAprvYn("N");   // 승인 상태 'N' (대기)
 		
 	    memCompMapper.insertMemComp(memCompVO);
+		
+		} catch (Exception e) {
+			throw new RuntimeException("회원가입 중 파일 처리 오류 발생", e);
+		}
 
 	    
 	    return ServiceResult.OK;
@@ -185,6 +200,65 @@ public class MemberServiceImpl implements IMemberService {
 		}
 		
 		return result;
+	}
+
+	/**
+	 *	<p> 내 정보 수정시 아이디 조회 </p>
+	 *	@date 2025.12.31
+	 *	@author kdrs
+	 * @param username 세션을 통해 들어온 아이디 값 (memId)
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 */
+	@Override
+	public MemberVO findById(String memId) {
+		return memberMapper.findById(memId);
+	}
+
+	
+	/**
+	 *	<p> 내 정보 수정 </p>
+	 *	@date 2025.12.31
+	 *	@author kdrs
+	 *	@param updateDTO 회원 정보 수정 데이터(프로필 이미지, 기본정보, 상세정보, 비밀번호 등 포함)
+	 *	@return void (Transactional에 의해 실패 시 롤백됨)
+	 */
+	@Override
+	@Transactional
+	public void updateMemberProfile(MemberUpdateDTO dto) {
+		// MemberVO 객체 생성 및 기본 세팅
+		MemberVO member = new MemberVO();
+		member.setMemNo(dto.getMemNo());
+		member.setMemName(dto.getMemName());
+		member.setMemEmail(dto.getMemEmail());
+		
+		// 비밀번호 변경 시 암호화
+		if(dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
+			member.setMemPassword(passwordEncoder.encode(dto.getNewPassword()));
+		}
+		
+		// 프로필 이미지 처리
+		if (dto.isProfileImageDeleted()) {
+		    member.setMemProfile(null);
+		} 
+		else if (dto.getProfileImage() != null && !dto.getProfileImage().isEmpty()) {
+		    int newAttachNo = fileService.saveFile(dto.getProfileImage(), dto.getMemNo());
+		    member.setMemProfile(newAttachNo);
+		}
+		
+		MemUserVO userDetail = new MemUserVO();
+		userDetail.setMemNo(dto.getMemNo());
+		userDetail.setNickname(dto.getNickname());
+		userDetail.setBirthDate(dto.getBirthDate());
+		log.info("dto 찍어보자 : " + dto.getBirthDate());
+		userDetail.setGender(dto.getGender());
+		userDetail.setZip(dto.getZip());
+		userDetail.setAddr1(dto.getAddr1());
+		userDetail.setAddr2(dto.getAddr2());
+		userDetail.setTel(dto.getTel());
+		
+		memberMapper.updateMember(member);
+		memberMapper.updateMemUser(userDetail);
+		
 	}
 
 

@@ -21,7 +21,7 @@
 		<update id="incrementHit" parameterType="int">
  		   UPDATE NOTICE
    		   SET VIEW_CNT = NVL(VIEW_CNT, 0) + 1
-   		   WHERE NTC_NO = #{ntcNo}
+   		   WHERE NTC_NO = #{value}
  		 </update>
 		
 		<select id="selectNoticeList" resultType="kr.or.ddit.mohaeng.vo.NoticeVO">
@@ -30,9 +30,11 @@
 			    NTC_TITLE AS ntcTitle,
 			    REG_DT    AS regDt,
 			    NTC_TYPE  AS ntcType,
-			    VIEW_CNT  AS viewCnt
+			    VIEW_CNT  AS viewCnt,
+			    STATUS     AS status,
+      			ATTACH_NO  AS attachNo
 			  FROM NOTICE
-			  WHERE UPPER(TRIM(NVL(STATUS,'n'))) = 'N'
+			  WHERE STATUS= 'PUBLISHED'
 			  ORDER BY NTC_NO DESC
 			</select>
 			
@@ -49,14 +51,14 @@
 			    VIEW_CNT,
 			    STATUS
 			  ) VALUES (
-			    NOTICE_SEQ.NEXTVAL,
+			    SEQ_NOTICE.NEXTVAL,
 			    #{ntcTitle},
 			    #{ntcContent},
 			    #{regId},
 			    SYSDATE,
 			    #{ntcType},
 			    0,
-			    'n'
+			    'PUBLISHED'
 			  )
 </insert>
 			<!--수정-->
@@ -65,7 +67,9 @@
 				  SET
 				    NTC_TITLE   = #{ntcTitle},
 				    NTC_CONTENT = #{ntcContent},
-				    NTC_TYPE    = #{ntcType}
+				    NTC_TYPE    = #{ntcType},
+				    STATUS = #{status},
+                    ATTACH_NO = #{attachNo}
 				  WHERE NTC_NO = #{ntcNo}
 			</update>
 
@@ -74,7 +78,7 @@
 			<update id="deleteNotice" parameterType="int">
 				  UPDATE NOTICE
 				  SET STATUS = 'y'
-				  WHERE NTC_NO = #{ntcNo}
+				  WHERE NTC_NO = #{value}
 			</update>
 
 			

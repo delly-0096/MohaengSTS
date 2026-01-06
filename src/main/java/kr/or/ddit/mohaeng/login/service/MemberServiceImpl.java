@@ -41,7 +41,7 @@ public class MemberServiceImpl implements IMemberService {
 	public String getMemberType(String memId) {
 		MemberVO member = memberMapper.selectByMemId(memId);
 		
-	    if (member == null) {
+	    if (member == null) {  
 	        return null; // 로그인 실패
 	    }
 		

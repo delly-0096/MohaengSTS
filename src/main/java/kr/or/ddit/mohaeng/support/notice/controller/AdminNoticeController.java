@@ -2,10 +2,9 @@ package kr.or.ddit.mohaeng.support.notice.controller;
 
 import java.util.List;
 
-import org.eclipse.tags.shaded.org.apache.bcel.generic.RETURN;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @Slf4j
+@CrossOrigin(origins = {"http://localhost:7272"},
+allowCredentials = "true")
 @RequestMapping("/api/admin/notices")
 public class AdminNoticeController {
      @Autowired	
@@ -30,12 +31,16 @@ public class AdminNoticeController {
   //관리자 목록조회
      @GetMapping
      public List<NoticeVO> list() {
-    	 return noticeService.selectNoticeList();
+    	 List<NoticeVO> list= noticeService.selectNoticeList();
+    	 log.info("list:"+ list);
+    	 return list;
      }
      
   //관리자 등록 
+     @PostMapping
     public  int insert(@RequestBody NoticeVO vo) {
-    	vo.setRegId("admin");
+    	 log.info("vo{}",  vo);      
+    	vo.setRegId("9001");
     	return noticeService.insertNotice(vo);
     
     	
@@ -44,6 +49,7 @@ public class AdminNoticeController {
     @PutMapping("/{ntcNo}")
     public int update(@PathVariable int ntcNo, @RequestBody NoticeVO vo) {
     	vo.setNtcNo(ntcNo);
+    	log.info("체킁: {}",vo);
     	return noticeService.updateNotice(vo);
     	
     }

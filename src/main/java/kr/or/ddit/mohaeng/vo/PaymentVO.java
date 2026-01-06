@@ -17,4 +17,9 @@ public class PaymentVO {
 	private String payStatus; 	// 결제상태(Y,N,WAIT)
 	private Date cancelDt; 		// 취소일시
 	private String cancelReason;// 취소사유
+	
+	// 토스 api용 변수
+	private int amount; 		// 가격
+	private String orderId;		// 주문
+	private String paymentKey;	// payment 키
 }

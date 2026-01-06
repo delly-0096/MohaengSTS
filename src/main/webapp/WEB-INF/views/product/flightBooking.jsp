@@ -4,6 +4,21 @@
 <c:set var="pageTitle" value="항공권 결제" />
 <c:set var="pageCss" value="product" />
 
+<style>
+.vixore0 {
+	display: none;
+}
+
+.agreement-divider {
+	margin-left: 5px;
+}
+</style>
+<!-- position: absolute -->
+
+
+<!-- 토스페이먼츠 cdn -->
+<script src="https://js.tosspayments.com/v2/standard"></script>
+
 <%@ include file="../common/header.jsp" %>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/product-flightBooking.css">
 
@@ -139,74 +154,49 @@
                     </div>
 
                     <!-- 결제 수단 -->
+                    <!-- 토스로 변경 -->
                     <div class="booking-section">
                         <h3><i class="bi bi-credit-card me-2"></i>결제 수단</h3>
-                        <div class="payment-methods">
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="card" checked>
-                                <div class="payment-method-content">
-                                    <i class="bi bi-credit-card"></i>
-                                    <span>신용/체크카드</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="kakao">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-chat-fill" style="color: #FEE500;"></i>
-                                    <span>카카오페이</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="naver">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-n-circle" style="color: #03C75A;"></i>
-                                    <span>네이버페이</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="bank">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-bank"></i>
-                                    <span>계좌이체</span>
-                                </div>
-                            </label>
-                        </div>
+    
+    					<div id="payment-method" class="w-100"></div>
+    					<div id="agreement"></div>
                     </div>
 
                     <!-- 약관 동의 -->
                     <div class="booking-section">
-                        <h3><i class="bi bi-check-square me-2"></i>약관 동의</h3>
+                        <h3><!-- <i class="bi bi-check-square me-2"></i> -->약관 동의</h3>
                         <div class="agreement-list">
                             <label class="agreement-item all">
                                 <input type="checkbox" id="agreeAll" onchange="toggleAllAgree()">
                                 <span><strong>전체 동의</strong></span>
                             </label>
-                            <div class="agreement-divider"></div>
-                            <label class="agreement-item">
-                                <input type="checkbox" class="agree-item" required>
-                                <span>[필수] 항공권 구매 약관 동의</span>
-                                <a href="#" class="agreement-link">보기</a>
-                            </label>
-                            <label class="agreement-item">
-                                <input type="checkbox" class="agree-item" required>
-                                <span>[필수] 개인정보 수집 및 이용 동의</span>
-                                <a href="#" class="agreement-link">보기</a>
-                            </label>
-                            <label class="agreement-item">
-                                <input type="checkbox" class="agree-item" required>
-                                <span>[필수] 취소/환불 규정 동의</span>
-                                <a href="#" class="agreement-link">보기</a>
-                            </label>
-                            <label class="agreement-item">
-                                <input type="checkbox" id="agreeMarketing">
-                                <span>[선택] 마케팅 정보 수신 동의</span>
-                            </label>
+                            <div class="agreement-divider">
+	                            <label class="agreement-item">
+	                                <input type="checkbox" class="agree-item" required>
+	                                <span>[필수] 항공권 구매 약관 동의</span>
+	                                <a href="#" class="agreement-link">보기</a>
+	                            </label><br/>
+	                            <label class="agreement-item">
+	                                <input type="checkbox" class="agree-item" required>
+	                                <span>[필수] 개인정보 수집 및 이용 동의</span>
+	                                <a href="#" class="agreement-link">보기</a>
+	                            </label><br/>
+	                            <label class="agreement-item">
+	                                <input type="checkbox" class="agree-item" required>
+	                                <span>[필수] 취소/환불 규정 동의</span>
+	                                <a href="#" class="agreement-link">보기</a>
+	                            </label><br/>
+	                            <label class="agreement-item">
+	                                <input type="checkbox" id="agreeMarketing">
+	                                <span>[선택] 마케팅 정보 수신 동의</span>
+	                            </label>
+                            </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100 pay-btn">
-                        <i class="bi bi-lock me-2"></i><span id="payBtnText"> 원 결제하기</span>
-                    </button>
+                    <button type="submit" id="payment-button" class="btn btn-primary btn-lg w-100 pay-btn">
+    					<i class="bi bi-lock me-2"></i><span id="payBtnText">원 결제하기</span>
+					</button>
                 </form>
             </div>
 
@@ -227,11 +217,11 @@
                     <div class="summary-details">
                         <div class="summary-row">
                             <span class="summary-label">탑승객</span>
-                            <span class="summary-value" id="summaryPassengers">성인  명</span>
+                            <span class="summary-value" id="summaryPassengers">성인 n명</span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">좌석 등급</span>
-                            <span class="summary-value" id="summaryCabin">일반석</span>
+                            <span class="summary-value" id="summaryCabin">일반석 -- economy면</span>
                         </div>
                         <div class="summary-row" id="summarySeatsRow" style="display: none;">
                             <span class="summary-label">선택 좌석</span>
@@ -304,45 +294,98 @@
     </div>
 </div>
 
-
+<!-- test_ck_Z61JOxRQVEo1qgev4G5R8W0X9bAq -->
 
 <script>
-var passengerCount = { adult: 1, child: 0, infant: 0 };
-var basePrice = 0;
-var fuelSurcharge = 28000;
-var taxAndFees = 24000;
-var selectedSeats = [];
-var seatExtraFee = 0;
-var seatSelectionModal;
+let passengerCount = { adult: 1, child: 0, infant: 0 };
+let basePrice = 0;
+let fuelSurcharge = 28000;
+let taxAndFees = 24000;
+let selectedSeats = [];
+let seatExtraFee = 0;
+let seatSelectionModal;
 
 // 항공편 예약 데이터
 let bookingData = null;
 let totalFlightPrice = 0;
 
-// 로그인 여부 확인
+let paymentWidgets = null;	// 토스 객체
 
-document.addEventListener('DOMContentLoaded', function() {
+async function main() {
+	const button = document.getElementById("payment-button");
+//   const coupon = document.getElementById("coupon-box");
+  // ------  결제위젯 초기화 ------
+	const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+	const tossPayments = TossPayments(clientKey);
+	// 회원 결제
+	const customerKey = "MyKgi0HwDJKFeRDGmc_wM";
+	const widgets = tossPayments.widgets({
+	  customerKey,
+	});
+	
+// 	const method = document.querySelector("#payment-method");
+	
+	// 비회원 결제
+	// const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
+	
+	// ------ 주문의 결제 금액 설정 ------
+	await widgets.setAmount({
+	  currency: "KRW",
+	  value: totalFlightPrice,
+	});
+	
+	console.log("totalFlightPrice : ", totalFlightPrice);
+	await Promise.all([
+	  // ------  결제 UI 렌더링 ------
+	  widgets.renderPaymentMethods({
+	    selector: "#payment-method",
+	    variantKey: "DEFAULT",
+	  }),
+	  // ------  이용약관 UI 렌더링 ------
+// 	  widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" }),
+	]);
+	
+	const testMode = document.querySelector(".pmwv6m0 vixore0");
+	console.log("testMode : ", testMode);
+	
+// ------  주문서의 결제 금액이 변경되었을 경우 결제 금액 업데이트 ------
+//   coupon.addEventListener("change", async function () {
+//     if (coupon.checked) {
+//       await widgets.setAmount({
+//         currency: "KRW",
+//         value: 50000 - 5000,
+//       });
+
+//       return;
+//     }
+
+//     await widgets.setAmount({
+//       currency: "KRW",
+//       value: 50000,
+//     });
+//   });
+
+  // ------ '결제하기' 버튼 누르면 결제창 띄우기 ------
+	button.addEventListener("click", async function () {
+		// 
+		await widgets.requestPayment({
+			orderId: "51zJw6x_hwJHq81-5tgPW",						// 결제번호
+			orderName: "토스 티셔츠 외 2건",							// 상품 번호
+			successUrl: window.location.origin + "/success.html",	// 성공 위치
+			failUrl: window.location.origin + "/fail.html",			// 실패 위치
+			customerEmail: "customer123@gmail.com",					// 결제자 이메일
+			customerName: "김토스",									// 결제자 이름
+			customerMobilePhone: "01012341234",						// 결제자 전화번호
+		});
+	});
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
 	const storedData = sessionStorage.getItem('flightBookingData');
 	if (storedData) {
-		console.log("asdf");
-	    const parsedData = JSON.parse(storedData);
-	    console.log("세션 저장된것들", parsedData);
-	    
-	    bookingData = parsedData;
+	    bookingData = JSON.parse(storedData);;
 	    initFlightDisplay();
 	}
-	
-    // 비회원 접근 시 로그인 안내
-//     if (!isLoggedIn) {
-//         showLoginRequired();
-//         return;
-//     }
-
-//     // 기업회원 접근 제한
-//     if (userType === 'BUSINESS') {
-//         showBusinessRestricted();
-//         return;
-//     }
 
     // URL 파라미터에서 정보 가져오기
 //     var urlParams = new URLSearchParams(window.location.search);
@@ -371,35 +414,37 @@ document.addEventListener('DOMContentLoaded', function() {
 //                 }
 //             ]
 //         };
-//         if (bookingData.tripType === 'round') {
-//             bookingData.flights.push({
-//                 id: 2,
-//                 airline: '대한항공 KE1202',
-//                 departureTime: '18:00',
-//                 arrivalTime: '19:10',
-//                 departureAirport: 'CJU',
-//                 arrivalAirport: 'GMP',
-//                 price: 52000,
-//                 baggage: '15kg',
-//                 segmentLabel: '오는편'
-//             });
-//         }
-//         initFlightDisplay();
 //     }
 
-    // 탑승객 정보 초기화
-    initPassengers();
-
-    // 탑승인원 버튼 상태 초기화
-    updateCountButtons();
-
-    // 좌석 선택 모달 초기화
-    seatSelectionModal = new bootstrap.Modal(document.getElementById('seatSelectionModal'));
+    initPassengers();		// 탑승객 정보 초기화
+    updateCountButtons();	// 탑승인원 버튼 상태 초기화
+    seatSelectionModal = new bootstrap.Modal(document.getElementById('seatSelectionModal'));	// 좌석 선택 모달 초기화
     initSeatMap();
-
-    // 총 금액 계산
     calculateTotal();
+    
+    await main();
+//     await initTossWidget();
 });
+
+//[추가] 토스 위젯 초기화 함수
+async function initTossWidget() {
+    // 본인의 클라이언트 키로 교체하세요
+    const tossPayments = await loadTossPayments("");
+    paymentWidgets = tossPayments.widgets({ customerKey: "ANONYMOUS" });
+
+    // 현재 계산된 총 금액 가져오기
+    const amount = parseInt(document.getElementById('totalAmount').textContent.replace(/[^0-9]/g, ""));
+
+    await paymentWidgets.setAmount({
+        currency: "KRW",
+        value: amount
+    });
+
+    // 위젯 렌더링
+    await paymentWidgets.renderPaymentMethods({ selector: "#payment-method", variantKey: "DEFAULT" });
+    await paymentWidgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" });
+}
+
 
 // 항공편 표시 초기화
 function initFlightDisplay() {
@@ -455,6 +500,7 @@ function getTripTypeText(type) {
 
 // 항공편 카드 HTML 생성
 function createFlightCardHtml(flight, labelClass) {
+	// 정보 db에서 가져와야되나?
     var airportNames = {
         'GMP': '김포',
         'CJU': '제주',
@@ -528,7 +574,7 @@ function initPassengers() {
     }
 }
 
-// 탑승객 카드 추가
+// 탑승객 카드 추가 - 탑승객 정보도 담아야될지??
 function addPassengerCard(container, type, num) {
     var typeLabels = { adult: '성인', child: '소아', infant: '유아' };
     var typeLabel = typeLabels[type];
@@ -670,8 +716,9 @@ function updateCountButtons() {
     }
 }
 
-// 총 금액 계산
+// 총 금액 계산 - 짐 까지 정해야됨
 function calculateTotal() {
+	// 이거 고쳐야됨
     var totalPassengers = passengerCount.adult + passengerCount.child;
     var segmentCount = bookingData ? bookingData.flights.length : 1;
 
@@ -685,10 +732,10 @@ function calculateTotal() {
     document.getElementById('summaryFare').textContent = totalFlightPrice + '원 x ' + totalPassengers + '명';
     document.getElementById('summaryFuel').textContent = (fuelSurcharge * segmentCount).toLocaleString() + '원 x ' + totalPassengers + '명';
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPassengers + '명';
-    document.getElementById('totalAmount').textContent = totalFlightPrice + '원';
-    document.getElementById('payBtnText').textContent = totalFlightPrice + '원 결제하기';
+    document.getElementById('totalAmount').textContent = totalFlightPrice * passengerCount.adult + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
+    document.getElementById('payBtnText').textContent = totalFlightPrice * passengerCount.adult + '원 결제하기';	// 원래는 총 인원수 맞춰서 계산해야됨
 
-    // 탑승객 정보 업데이트
+    // 탑승객 정보 업데이트 - 이것 또한
     var passengerText = [];
     if (passengerCount.adult > 0) passengerText.push('성인 ' + passengerCount.adult + '명');
     if (passengerCount.child > 0) passengerText.push('소아 ' + passengerCount.child + '명');
@@ -701,7 +748,7 @@ function openSeatSelection() {
     seatSelectionModal.show();
 }
 
-// 좌석 배치 초기화
+// 좌석 배치 초기화 -- 수정해야됨
 function initSeatMap() {
     var seatMap = document.getElementById('seatMap');
     var columns = ['A', 'B', 'C', '', 'D', 'E', 'F'];
@@ -720,7 +767,8 @@ function initSeatMap() {
     });
     html += '</div>';
 
-    // 좌석 행
+    // 좌석 행 -- 여기서 좌석 조정해야됨 
+    // 안되는 좌석 불러오기
     for (var i = 1; i <= rows; i++) {
         html += '<div class="seat-row">';
         html += '<div class="seat-row-number">' + i + '</div>';
@@ -850,7 +898,7 @@ document.querySelectorAll('.agree-item').forEach(function(item) {
     });
 });
 
-// 폼 제출
+// 폼 제출 - 전송
 document.getElementById('flightBookingForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -890,8 +938,9 @@ document.getElementById('flightBookingForm').addEventListener('submit', function
 
         showToast('항공권 결제가 완료되었습니다!', 'success');
 
+        // 결제완료창 가기전에 
         setTimeout(function() {
-            window.location.href = '${pageContext.request.contextPath}/product/complete?type=flight';
+            window.location.href = '/product/flight/complete?type=flight';
         }, 500);
     }, 1500);
 });

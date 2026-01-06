@@ -591,7 +591,6 @@ function initFlatpickr() {
             maxDate: 'today',
             disableMobile: true,
             position: 'below',
-            defaultDate: '1990-01-01'
         });
     });
 }

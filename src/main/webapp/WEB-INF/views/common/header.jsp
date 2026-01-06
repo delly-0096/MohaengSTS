@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <!DOCTYPE html>
 <html lang="ko">
@@ -35,7 +36,7 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/${pageCss}.css">
     </c:if>
 </head>
-<body data-logged-in="<c:choose><c:when test="${not empty sessionScope.loginMember}">true</c:when><c:otherwise>false</c:otherwise></c:choose>">
+<body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize> <sec:authorize access='isAnonymous()'>false</sec:authorize>">
     <!-- 헤더 -->
     <header class="header" id="header">
         <div class="header-container">
@@ -46,35 +47,48 @@
 
             <!-- 헤더 우측 영역 -->
             <div class="header-right">
-                <c:choose>
-                    <c:when test="${not empty sessionScope.loginMember}">
+                    <sec:authorize access="isAuthenticated()">
+					    <sec:authentication property="principal.memProfilePath" var="profileImgPath"/>
                         <!-- 로그인 상태 - 알림 버튼 -->
                         <button class="header-notification-btn" onclick="toggleNotificationPanel()" title="알림">
                             <i class="bi bi-bell"></i>
                             <span class="notification-badge" id="notificationBadge">3</span>
                         </button>
                         <!-- 로그인 상태 - 마이페이지 링크 -->
-                        <a href="${pageContext.request.contextPath}/mypage/profile" class="header-user-link">
+                        <a href="
+							    <sec:authorize access='hasAuthority("BUSINESS")'>
+							        ${pageContext.request.contextPath}/mypage/business/profile
+							    </sec:authorize>
+							    <sec:authorize access='hasAuthority("MEMBER")'>
+							        ${pageContext.request.contextPath}/mypage/profile
+							    </sec:authorize>
+						" class="header-user-link">
                             <span class="user-avatar">
-                                <c:choose>
-                                    <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
-                                        <i class="bi bi-building"></i>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <i class="bi bi-person"></i>
-                                    </c:otherwise>
-                                </c:choose>
-                            </span>
-                            <span class="user-name">${sessionScope.loginMember.memName}님</span>
+							    <c:choose>
+							        <c:when test="${not empty profileImgPath}">
+							            <img src="${profileImgPath}"
+							                 class="profile-img-render"
+							                 alt="프로필 이미지">
+							        </c:when>
+							        <c:otherwise>
+							            <sec:authorize access="hasAuthority('BUSINESS')">
+							                <i class="bi bi-building"></i>
+							            </sec:authorize>
+							            <sec:authorize access="hasAuthority('MEMBER')">
+							                <i class="bi bi-person"></i>
+							            </sec:authorize>
+							        </c:otherwise>
+							    </c:choose>
+							</span>
+                            <span class="user-name"><sec:authentication property="principal.username"/>님</span>
                         </a>
-                    </c:when>
-                    <c:otherwise>
+                    </sec:authorize>
+                    <sec:authorize access="isAnonymous()">
                         <!-- 비로그인 상태 -->
                         <a href="${pageContext.request.contextPath}/member/login" class="btn btn-text btn-sm">
                             로그인
                         </a>
-                    </c:otherwise>
-                </c:choose>
+                    </sec:authorize>
 
                 <!-- 햄버거 메뉴 버튼 -->
                 <button class="hamburger-btn" id="hamburgerBtn" onclick="toggleSideMenu()">
@@ -101,27 +115,31 @@
         </div>
 
         <!-- 사이드 메뉴 사용자 정보 -->
-        <c:choose>
-            <c:when test="${not empty sessionScope.loginMember}">
+        <sec:authorize access="isAuthenticated()">
                 <div class="side-menu-user">
                     <div class="side-menu-user-info">
                         <span class="side-menu-avatar">
-                            <c:choose>
-                                <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
-                                    <i class="bi bi-building"></i>
-                                </c:when>
-                                <c:otherwise>
-                                    <i class="bi bi-person"></i>
-                                </c:otherwise>
-                            </c:choose>
+							    <c:choose>
+							        <c:when test="${not empty profileImgPath}">
+							            <img src="${profileImgPath}"
+							                 class="profile-img-render"
+							                 alt="프로필 이미지">
+							        </c:when>
+							        <c:otherwise>
+							            <sec:authorize access="hasAuthority('BUSINESS')">
+							                <i class="bi bi-building"></i>
+							            </sec:authorize>
+							            <sec:authorize access="hasAuthority('MEMBER')">
+							                <i class="bi bi-person"></i>
+							            </sec:authorize>
+							        </c:otherwise>
+							    </c:choose>
                         </span>
                         <div class="side-menu-user-detail">
-                            <span class="side-menu-user-name">${sessionScope.loginMember.memName}님</span>
+                            <span class="side-menu-user-name"><sec:authentication property="principal.username"/>님</span>
                             <span class="side-menu-user-type">
-                                <c:choose>
-                                    <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS'}">기업회원</c:when>
-                                    <c:otherwise>일반회원</c:otherwise>
-                                </c:choose>
+                                    <sec:authorize access="hasAuthority('BUSINESS')">기업회원</sec:authorize>
+                                    <sec:authorize access="hasAuthority('MEMBER')">일반회원</sec:authorize>
                             </span>
                         </div>
                     </div>
@@ -129,30 +147,17 @@
                         <i class="bi bi-box-arrow-right"></i>
                     </a>
                 </div>
-            </c:when>
-            <c:otherwise>
+            </sec:authorize>
+			<sec:authorize access="isAnonymous()">
                 <div class="side-menu-auth">
                     <a href="${pageContext.request.contextPath}/member/login" class="btn btn-outline btn-sm">로그인</a>
                     <a href="${pageContext.request.contextPath}/member/register" class="btn btn-primary btn-sm">회원가입</a>
                 </div>
-                <!-- 테스트 로그인 버튼 -->
-<%--                 <div class="side-menu-test-login">
-                    <p class="test-login-label"><i class="bi bi-bug me-1"></i>테스트 로그인</p>
-                    <div class="test-login-buttons">
-                        <a href="${pageContext.request.contextPath}/member/test-login/general" class="btn btn-test general">
-                            <i class="bi bi-person me-1"></i>일반회원
-                        </a>
-                        <a href="${pageContext.request.contextPath}/member/test-login/business" class="btn btn-test business">
-                            <i class="bi bi-building me-1"></i>기업회원
-                        </a>
-                    </div> 
-                </div> --%>
-            </c:otherwise>
-        </c:choose>
+            </sec:authorize>
+
 
         <div class="side-menu-body">
             <!-- 일정 계획 (기업회원은 표시하지 않음) -->
-            <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
                 <div class="side-menu-section">
                     <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
                         <span><i class="bi bi-calendar3 me-2"></i>일정 계획</span>
@@ -162,17 +167,17 @@
                         <a href="${pageContext.request.contextPath}/schedule/search" class="side-menu-item">
                             <i class="bi bi-calendar-plus me-2"></i>일정 계획
                         </a>
-                        <c:if test="${not empty sessionScope.loginMember}">
+	            <sec:authorize access="hasAuthority('MEMBER')">
                             <a href="${pageContext.request.contextPath}/schedule/my" class="side-menu-item">
                                 <i class="bi bi-calendar-check me-2"></i>내 일정
                             </a>
                             <a href="${pageContext.request.contextPath}/schedule/bookmark" class="side-menu-item">
                                 <i class="bi bi-bookmark me-2"></i>내 북마크
                             </a>
-                        </c:if>
+                        </sec:authorize>
                     </div>
                 </div>
-            </c:if>
+
 
             <!-- 관광 상품 -->
             <div class="side-menu-section">
@@ -181,11 +186,11 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="side-menu-section-content">
-                    <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
+                    <sec:authorize access="hasAuthority('BUSINESS')">
                         <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item">
                             <i class="bi bi-gear me-2"></i>상품 관리
                         </a>
-                    </c:if>
+                    </sec:authorize>
                     <a href="${pageContext.request.contextPath}/product/flight" class="side-menu-item">
                         <i class="bi bi-airplane me-2"></i>항공
                     </a>
@@ -205,11 +210,11 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="side-menu-section-content">
-                    <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
+                     <sec:authorize access="hasAuthority('MEMBER')">
                         <a href="${pageContext.request.contextPath}/community/talk" class="side-menu-item">
                             <i class="bi bi-chat-dots me-2"></i>여행톡
                         </a>
-                    </c:if>
+                    </sec:authorize>
                     <a href="${pageContext.request.contextPath}/community/travel-log" class="side-menu-item">
                         <i class="bi bi-journal-richtext me-2"></i>여행기록
                     </a>
@@ -217,15 +222,14 @@
             </div>
 
             <!-- 마이페이지 (로그인 회원만) -->
-            <c:if test="${not empty sessionScope.loginMember}">
+            <sec:authorize access="isAuthenticated()">
                 <div class="side-menu-section">
                     <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
                         <span><i class="bi bi-person-circle me-2"></i>마이페이지</span>
                         <i class="bi bi-chevron-down"></i>
                     </div>
                     <div class="side-menu-section-content">
-                        <c:choose>
-                            <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
+                            <sec:authorize access="hasAuthority('BUSINESS')">
                                 <a href="${pageContext.request.contextPath}/mypage/business/dashboard" class="side-menu-item">
                                     <i class="bi bi-speedometer2 me-2"></i>대시보드
                                 </a>
@@ -247,8 +251,8 @@
                                 <a href="${pageContext.request.contextPath}/mypage/business/inquiries" class="side-menu-item">
                                     <i class="bi bi-chat-dots me-2"></i>운영자 문의
                                 </a>
-                            </c:when>
-                            <c:otherwise>
+                            </sec:authorize>
+                            <sec:authorize access="hasAuthority('MEMBER')">
                                 <a href="${pageContext.request.contextPath}/mypage/profile" class="side-menu-item">
                                     <i class="bi bi-person me-2"></i>회원 정보 수정
                                 </a>
@@ -270,11 +274,10 @@
                                 <a href="${pageContext.request.contextPath}/mypage/inquiries" class="side-menu-item">
                                     <i class="bi bi-chat-dots me-2"></i>운영자 문의
                                 </a>
-                            </c:otherwise>
-                        </c:choose>
+							</sec:authorize>
                     </div>
                 </div>
-            </c:if>
+            </sec:authorize>
 
             <!-- 고객지원 -->
             <div class="side-menu-section">
@@ -305,7 +308,7 @@
     </div>
 
     <!-- 알림 패널 (로그인 시에만 표시) -->
-    <c:if test="${not empty sessionScope.loginMember}">
+    <sec:authorize access="isAuthenticated()">
         <div class="notification-overlay" id="notificationOverlay" onclick="closeNotificationPanel()"></div>
         <div class="notification-panel" id="notificationPanel">
             <div class="notification-panel-header">
@@ -371,11 +374,13 @@
                 <button class="btn btn-sm btn-outline" onclick="markAllAsRead()">모두 읽음 처리</button>
             </div>
         </div>
-    </c:if>
+    </sec:authorize>
 
     <!-- 로그인 상태 전역 변수 및 사이드 메뉴 함수 -->
     <script>
-        var isLoggedIn = <c:choose><c:when test="${not empty sessionScope.loginMember}">true</c:when><c:otherwise>false</c:otherwise></c:choose>;
+    var isLoggedIn =
+    	<sec:authorize access="isAuthenticated()">true</sec:authorize>
+    	<sec:authorize access="isAnonymous()">false</sec:authorize>;
 
         // 사이드 메뉴 토글 (햄버거 메뉴용 - 즉시 사용 가능하도록 header에 정의)
         function toggleSideMenu() {

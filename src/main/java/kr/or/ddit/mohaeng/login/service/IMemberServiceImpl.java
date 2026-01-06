@@ -2,9 +2,13 @@ package kr.or.ddit.mohaeng.login.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.login.mapper.IMemCompMapper;
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
+import kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO;
+import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
 @Service
@@ -36,6 +40,42 @@ public class IMemberServiceImpl implements IMemberService {
         } else {
             return "PERSONAL";
         }
+	}
+
+	@Override
+	public boolean checkPassword(String memId, String memPassword) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public ServiceResult register(MemberVO memberVO) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ServiceResult idCheck(String memId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ServiceResult registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public MemberVO findById(String memId) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void updateMemberProfile(MemberUpdateDTO updateDTO) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

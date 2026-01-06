@@ -1,0 +1,254 @@
+package kr.or.ddit.mohaeng.config;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.sql.DataSource;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.RememberMeServices;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import jakarta.servlet.DispatcherType;
+import jakarta.servlet.http.HttpSession;
+import kr.or.ddit.mohaeng.filter.TokenAuthenticationFilter;
+import kr.or.ddit.mohaeng.security.CustomAccessDeniedHandler;
+import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
+import kr.or.ddit.mohaeng.util.TokenProvider;
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+	
+	@Autowired
+	private DataSource dataSource;
+	
+	@Autowired
+	private CustomUserDetailsService customUserDetailsService;
+	
+	@Autowired
+	private TokenProvider tokenProvider;
+	
+	// 비회원 허용 url
+	private static final String[] PASS_URL = {
+			"/",
+			"/member/login",
+			"/member/register",
+			"/member/register/member",
+			"/member/register/company",
+			"/member/find",
+			"/member/idCheck",
+			"/member/find",
+			"/mypage/profile",
+			"/mypage/business/profile",
+			"/mypage/profile/update",
+			"/idCheck",
+			"/error",
+			"/mohaeng/**",
+			"/.well-known/**",		// 크롬 개발자 도구로의 요청
+			"/upload/**",
+			"/resources/**"
+	};
+	
+	// 일반회원 허용 url test
+	private static final String[] MEMBER_PASS_URL = {
+			"/",
+			"/error",
+			"/mohaeng",
+			"/.well-known/**"		// 크롬 개발자 도구로의 요청
+	};
+	
+	// 기업회원 허용 url test
+	private static final String[] BUSINESS_PASS_URL = {
+			"/",
+			"/error",
+			"/mohaeng",
+			"/.well-known/**"		// 크롬 개발자 도구로의 요청
+	};
+	
+	
+	// 관리자 허용 url
+	private static final String[] REACT_PASS_URL = {
+			"/api/admin/login"
+
+		};
+	
+	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService) {
+		this.tokenProvider = tokenProvider;
+		this.customUserDetailsService = customUserDetailsService;
+	}
+
+	// 정적 리소스 허용
+	@Bean
+	public WebSecurityCustomizer configure() {
+		return (web) -> web.ignoring()
+				.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
+				.requestMatchers("/resources/**");	// 정적 리소스
+	}
+	
+	// 시큐리티 체인 - react 관리자 페이지
+	@Order(1)
+	@Bean
+	protected SecurityFilterChain filterChainReact(HttpSecurity http) throws Exception {
+		http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+			.csrf((csrf) -> csrf.disable())
+			.formLogin((login) -> login.disable())
+			.httpBasic((basic) -> basic.disable())
+			.headers( 
+					(config) -> config.frameOptions((fOpt) -> fOpt.sameOrigin())
+			);
+		
+		http.sessionManagement(
+				(management) -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+			);
+		http.addFilterBefore(new TokenAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
+		http.securityMatcher("/api/admin/**")
+			.authorizeHttpRequests(
+			(authorize) -> 
+				authorize.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ASYNC).permitAll()
+						.requestMatchers(REACT_PASS_URL).permitAll()
+						.anyRequest().authenticated()
+		);
+		return http.build();
+	}
+	
+	// 시큐리티 체인 - 회원 페이지
+	@Order(2)
+	@Bean
+	protected SecurityFilterChain filterChainSession(HttpSecurity http) throws Exception {
+		// csrf 토큰 보내기
+		// 로그인 페이지에 <sec:csrfInput/>이거 계속 담기
+		
+	    http
+	    .securityMatcher("/**")
+	    .csrf(csrf -> csrf.disable())   // 일단 테스트용
+        .authorizeHttpRequests(authorize ->
+            authorize
+                .dispatcherTypeMatchers(
+                    DispatcherType.FORWARD,
+                    DispatcherType.ASYNC
+                ).permitAll()
+                .requestMatchers(PASS_URL).permitAll()
+//                .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
+//                .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
+                .requestMatchers("/member/login").permitAll()
+                .anyRequest().authenticated()
+        )
+        .formLogin(form -> form.disable())
+        .httpBasic(hbasic -> hbasic.disable());
+
+    http.exceptionHandling(exception ->
+        exception.accessDeniedHandler(new CustomAccessDeniedHandler())
+    );
+
+    http.sessionManagement(session ->
+        session.maximumSessions(1)
+    );
+
+    // 로그인 상태 유지
+    http.rememberMe(remember -> remember
+    		.key("mohaengKey") 								// 쿠키 암호화 키 (원하는 문자열)
+    		.tokenRepository(persistentTokenRepository()) 	// DB 저장소 설정
+    		.userDetailsService(customUserDetailsService) 	// 인증 유저 확인 서비스
+    		.tokenValiditySeconds(604800) 					// 쿠키 유효기간 (7일: 60*60*24*7)
+    		.rememberMeServices(rememberMeServices())
+    );
+    
+    http.logout(logout ->
+        logout.logoutUrl("/logout")
+              .logoutRequestMatcher(new AntPathRequestMatcher("/member/logout", "GET")) // GET 방식 허용 추가
+              .addLogoutHandler((request, response, authentication) -> {
+                  log.info("로그아웃 핸들러 진입!"); 
+                  if (authentication != null) {
+                      log.info("로그아웃 유저명: " + authentication.getName());
+                      persistentTokenRepository().removeUserTokens(authentication.getName());
+                  }
+              })
+			.invalidateHttpSession(true)           		// 세션 무효화
+			.deleteCookies("JSESSIONID", "remember-me")	// 세션 쿠키와 자동로그인 쿠키 모두 삭제
+			.logoutSuccessUrl("/member/login")
+    );
+    
+
+    return http.build();
+	}
+	
+	@Bean
+	protected CorsConfigurationSource corsConfigurationSource() {
+	    CorsConfiguration config = new CorsConfiguration();
+	    config.setAllowedOrigins(List.of("http://localhost:7272"));
+	    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	    config.setAllowedHeaders(List.of("*"));
+	    config.setAllowCredentials(true);
+
+	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+	    source.registerCorsConfiguration("/**", config);
+	    return source;
+	    
+	}
+	
+	@Bean
+	protected AuthenticationManager authenticationManager(
+			PasswordEncoder passwordEncoder
+			) {
+		DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
+		authProvider.setUserDetailsService(customUserDetailsService);
+		authProvider.setPasswordEncoder(passwordEncoder);
+		return new ProviderManager(authProvider);
+	}
+	
+	
+	@Bean
+	protected PasswordEncoder passwordEncoder() {
+		return new BCryptPasswordEncoder();
+	}
+	
+	// DB 저장소
+	@Bean
+	protected PersistentTokenRepository persistentTokenRepository() {
+		log.info("Remember-Me DB 저장소 빈 생성 시작");
+        JdbcTokenRepositoryImpl repo = new JdbcTokenRepositoryImpl();
+        repo.setDataSource(dataSource);
+        return repo;
+    }
+	
+	@Bean
+	protected RememberMeServices rememberMeServices() {
+	    JdbcTokenRepositoryImpl db = new JdbcTokenRepositoryImpl();
+	    db.setDataSource(dataSource);
+	    
+	    // 키값("mohaengKey")은 설정과 반드시 일치해야 함
+	    PersistentTokenBasedRememberMeServices service = 
+	        new PersistentTokenBasedRememberMeServices("mohaengKey", customUserDetailsService, db);
+	    
+	    service.setParameter("remember-me"); // 체크박스 name값
+	    service.setTokenValiditySeconds(604800); // 7일
+	    return service;
+	}
+	
+}

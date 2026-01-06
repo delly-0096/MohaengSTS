@@ -17,17 +17,26 @@
                 </div>
 
                 <div class="content-section">
-                    <form class="profile-form" id="businessProfileForm" style="max-width: 100%;">
+                    <form class="profile-form" id="businessProfileForm" style="max-width: 100%;" action="${pageContext.request.contextPath}/mypage/profile/update" method="POST" enctype="multipart/form-data">
                         <!-- 기업 로고 -->
                         <div class="profile-image-upload">
-                            <img src="https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200&h=200&fit=crop&q=80"
+							<div id="profileContainer" class="profile-image-preview-container">
+		                            <!-- 기본 아이콘 -->
+								    <i class="bi bi-person profile-default-icon"
+								       style="${not empty profileImgUrl ? 'display:none;' : ''}">
+								    </i>                        
+                            <img src="${not empty profileImgUrl 
+								              ? pageContext.request.contextPath.concat(profileImgUrl) 
+								              : ''}"
+								        style="${not empty profileImgUrl ? '' : 'display:none;'}"
                                  alt="기업 로고" class="profile-image-preview" id="logoPreview">
+                            </div>
                             <div class="profile-image-actions">
                                 <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="previewLogo(this)">
                                 <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('logoInput').click()">
                                     <i class="bi bi-camera me-1"></i>로고 변경
                                 </button>
-                                <button type="button" class="btn btn-outline-danger btn-sm" onclick="deleteLogo()">
+                                <button type="button" class="btn btn-outline btn-sm" onclick="resetProfileImage()">
                                     <i class="bi bi-trash me-1"></i>삭제
                                 </button>
                             </div>

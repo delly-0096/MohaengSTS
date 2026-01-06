@@ -657,8 +657,8 @@ document.addEventListener('click', function(e) {
     }
 });
 
-function addToItinerary(id, name, category, latitude, longitude) {
-    selectedItem = { id, name, category, latitude, longitude };
+function addToItinerary(id, name, category, latitude, longitude, contentid, contenttypeid) {
+    selectedItem = { id, name, category, latitude, longitude , contentid, contenttypeid};
     selectDayModal.show();
 }
 
@@ -693,8 +693,12 @@ function confirmAddPlace() {
     newItem.className = 'planner-item';
     newItem.draggable = true;
     newItem.dataset.itemId = newItemId;
+    newItem.dataset.contentid = selectedItem.contentid;
+    newItem.dataset.contenttypeid = selectedItem.contenttypeid;
     newItem.dataset.startTime = startTime;
     newItem.dataset.endTime = endTime;
+    newItem.dataset.latitude = selectedItem.latitude;
+    newItem.dataset.longitude = selectedItem.longitude;
     newItem.dataset.cost = 0;
     newItem.innerHTML =
         '<div class="planner-item-time">' +
@@ -735,34 +739,74 @@ function confirmAddPlace() {
     selectedItem = null;
 }
 
-function viewItemDetail(itemId) {
+async function viewItemDetail(itemId) {
+	let itemContentId = "";
+	let contenttypeId = "";
+	
+	let plannerItems = $(".planner-items").children();
+	
+	for(let i = 0; i < plannerItems.length && itemContentId == ""; i++) {
+		let plannerItem = $(".planner-items").children().eq(i)
+		if(itemId == plannerItem.attr("data-item-id")) {
+			itemContentId = plannerItem.attr("data-contentid")
+			contenttypeId = plannerItem.attr("data-contenttypeid")
+		}
+	}
+	
+// 	document.querySelectorAll(".planner-item").forEach(()=>{
+// 		itemContentId = this;
+// 		console.log(itemContentId);
+// 	});	
+	
     const modal = new bootstrap.Modal(document.getElementById('placeDetailModal'));
+    
     document.getElementById('placeDetailBody').innerHTML = `
+	    <div class="text-center">
+			<div class="spinner-border text-primary" style="width: 10rem; height: 10rem;" role="status">
+			  <span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	`
+	
+	modal.show();
+	
+    let placeItem = await searchPlaceDetail(itemContentId, contenttypeId);
+// 	placeItem.plcDesc = (placeItem.plcDesc).replaceAll('\n', '<br>');
+	console.log(placeItem);
+	
+// 	console.log(placeItem.expguide)
+// 	                 onerror="this.src='https://via.placeholder.com/400x300?text=성산일출봉'">
+
+	let plcDesc = (placeItem.plcDesc+"").replaceAll(/\\n/g, '<br>');
+	console.log("plcDesc:  " + plcDesc)
+	let operationHours = (placeItem.operationHours+"").replaceAll(/\\n/g, '<br>');
+	let plcPrice = (placeItem.plcPrice+"").replaceAll(/\\n/g, '<br>');
+	
+    document.getElementById('placeDetailBody').innerHTML =	`
         <div class="text-center">
-            <img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=400&h=300&fit=crop&q=80"
-                 alt="성산일출봉" class="w-100 rounded mb-3"
-                 onerror="this.src='https://via.placeholder.com/400x300?text=성산일출봉'">
-            <h5>성산일출봉</h5>
-            <p class="text-muted mb-3">제주 서귀포시 성산읍</p>
-            <p>유네스코 세계자연유산으로 지정된 제주도의 대표 관광지입니다.</p>
+            <img src="\${placeItem.defaultImg}"
+                 alt="\${placeItem.plcNm}" class="w-100 rounded mb-3">
+
+            <h5>\${placeItem.plcNm}</h5>
+            <p class="text-muted mb-3">\${placeItem.plcAddr1}</p>
+            <p style="white-space: pre-wrap; word-break: break-all;">\${plcDesc}</p>
             <hr>
             <div class="d-flex justify-content-around text-center">
-                <div>
+                <div class="col">
                     <i class="bi bi-clock text-primary mb-1" style="font-size: 24px;"></i>
-                    <p class="mb-0 small">일출 1시간 전~20:00</p>
+                    <p class="mb-0 small">\${operationHours}</p>
                 </div>
-                <div>
+                <div class="col">
                     <i class="bi bi-currency-dollar text-primary mb-1" style="font-size: 24px;"></i>
-                    <p class="mb-0 small">성인 5,000원</p>
+                    <p class="mb-0 small">\${ placeItem.plcPrice ? plcPrice : 'x' }</p>
                 </div>
-                <div>
+                <div class="col">
                     <i class="bi bi-star-fill text-warning mb-1" style="font-size: 24px;"></i>
                     <p class="mb-0 small">4.7점</p>
                 </div>
             </div>
         </div>
     `;
-    modal.show();
 }
 
 function removeItem(day, itemId) {
@@ -827,14 +871,57 @@ function getDragAfterElement(container, y) {
 }
 
 function saveSchedule() {
-    const isLoggedIn = ${not empty sessionScope.loginUser};
+    const isLoggedIn = ${not empty sessionScope.loginMember};
 
     if (!isLoggedIn) {
         sessionStorage.setItem('returnUrl', window.location.href);
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+
+			let tempPlanDataList = new Array;
+            let tempPlanData = new Array;
+
+            let plannerDayList = document.querySelectorAll(".planner-day");
+            
+            let plannerItems = document.querySelectorAll(".planner-item");
+
+            plannerItems.forEach(item => {
+                let parentItem = item.closest(".planner-day");
+                let day = parentItem.dataset.day;
+                let itemId = item.dataset.itemId;
+                let contentid = item.dataset.contentid;
+                let contenttypeid = item.dataset.contenttypeid;
+                let startTime = item.dataset.startTime;
+                let endTime = item.dataset.endTime;
+                let cost = item.dataset.cost;
+                let latitude = item.dataset.latitude;
+                let longitude = item.dataset.longitude;
+                let itemName = item.querySelector(".planner-item-name").innerText;
+                let itemCategory = item.querySelector(".planner-item-category").innerText;
+
+                tempPlanData = {
+                    day : day,
+                    itemId : itemId,
+                    contentid : contentid,
+                    contenttypeid : contenttypeid,
+                    startTime : startTime,
+                    endTime : endTime,
+                    cost : cost,
+                    itemName : itemName,
+                    itemCategory : itemCategory,
+                    latitude : latitude,
+                    longitude : longitude,
+                }
+
+                tempPlanDataList.push(tempPlanData);
+            });
+
+            console.log(tempPlanDataList);
+
+        	sessionStorage.setItem('tempPlanDataList', JSON.stringify(tempPlanDataList));
+
             window.location.href = '${pageContext.request.contextPath}/member/login';
         }
-        return;
+        // return;
     }
 
     // 공개 설정 모달 표시
@@ -1068,15 +1155,13 @@ async function initTourPlaceList(areaCode) {
 	
 	const dataList = await response.json();
 	
-	console.log(dataList);
-	
 	let items = dataList.response.body.items.item;
 	
 	let placeData = "";
 
 	let outputCnt = 0;
 	
-	for(let i = 0; i < items.length && outputCnt < 5; i++) {
+	for(let i = 0; i < items.length && outputCnt < 15; i++) {
 		let tourPlace = items[i];
 		
 		if(tourPlace.firstimage2) {
@@ -1093,7 +1178,7 @@ async function initTourPlaceList(areaCode) {
 		                <span class="text-muted">(1,234)</span>
 		            </div>
 		        </div>
-		        <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '관광지', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }')">
+		        <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '관광지', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')">
 		            <i class="bi bi-plus"></i>
 		        </button>
 		    </div>
@@ -1104,6 +1189,15 @@ async function initTourPlaceList(areaCode) {
 	}
 	
 	$("#searchResults").html(placeData);
+	
+	return dataList;
+}
+
+async function searchPlaceDetail(contentId, contenttypeId) {
+	const response = await fetch("/schedule/searchPlaceDetail?contentId="+contentId+"&contenttypeId="+contenttypeId);
+	
+	const dataList = await response.json();
+	console.log(dataList)
 	
 	return dataList;
 }

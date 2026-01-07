@@ -16,20 +16,18 @@ public class CustomUserDetails implements UserDetails {
     public CustomUserDetails(MemberVO member) {
         this.member = member;
     }
-
+    
     // 권한
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
+		System.out.println("### getAuthorities CALLED ###");
 	    
-		if (member.getAuthList() == null) {
-	        return List.of();
-	    }
-
-	    return member.getAuthList().stream()
-    		.map(auth -> auth.getAuth())
-            .filter(a -> a != null && !a.trim().isEmpty())
-            .map(SimpleGrantedAuthority::new)
-	        .toList();
+        return member.getAuthList().stream()
+                .map(a -> a.getAuth())
+                .filter(a -> a != null && !a.isBlank())
+                .map(a -> a.startsWith("ROLE_") ? a : "ROLE_" + a)
+                .map(SimpleGrantedAuthority::new)
+                .toList();
 	}
 
 	
@@ -44,8 +42,15 @@ public class CustomUserDetails implements UserDetails {
 		return member.getMemPassword();
 	}
 	
-	@Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return true; }
+	// 계정 만료 여부 (탈퇴/삭제 시 false 처리 가능)
+	@Override public boolean isAccountNonExpired() {
+		return !"WITHDRAWN".equals(member.getMemStatus()) && !"DELETE".equals(member.getMemStatus());
+	}
+	// 계정 잠금 여부 (정지 상태일 때 false)
+	@Override public boolean isAccountNonLocked() { 
+    	// 상태가 'PAUSED'(정지)가 아니면 true (잠기지 않음)
+    	return !"PAUSED".equals(member.getMemStatus()); 
+    }
     @Override public boolean isCredentialsNonExpired() { return true; }
     
     @Override
@@ -69,5 +74,7 @@ public class CustomUserDetails implements UserDetails {
         // /resources 제거
         return path.replace("/resources", "");
     }
+    
+
 
 }

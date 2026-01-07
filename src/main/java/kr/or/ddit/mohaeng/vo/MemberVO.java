@@ -35,4 +35,8 @@ public class MemberVO {
 
 	private String memProfilePath;
 	
+	// 기업 담당자용
+	private String managerName;
+	private String managerEmail;
+	
 }

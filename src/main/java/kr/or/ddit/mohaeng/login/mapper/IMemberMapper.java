@@ -93,8 +93,47 @@ public interface IMemberMapper {
 	 */
 	public void updateMemUser(MemUserVO userDetail);
 
+	/**
+	 * <p>회원 프로필 이미지 첨부파일 번호 조회</p>
+	 * @date 2026.01.02
+	 * @author kdrs
+	 * @param memNo 회원 고유 번호
+	 * @return 프로필 이미지로 연결된 첨부파일 번호
+	 *         (등록된 이미지가 없을 경우 null 반환)
+	 */
 	public Integer selectProfileAttachNo(int memNo);
 
+	/**
+	 * <p>회원 프로필 이미지 연결 해제</p>
+	 * @date 2026.01.02
+	 * @author kdrs
+	 * @param memNo 회원 고유 번호
+	 */
 	public void clearMemberProfile(int memNo);
+
+	/**
+	 * <p>비밀번호 변경을 위한 회원 조회</p>
+	 * @param memNo
+	 * @return
+	 */
+	public MemberVO selectByMemNo(int memNo);
+
+	/**
+	 * 비밀번호 변경을 위한 회원 테이블 변경
+	 * @param memNo
+	 * @return
+	 */
+	public int updatePassword(
+		    @Param("memNo") int memNo,
+		    @Param("encodedPw") String encodedPw
+		);
+
+	/**
+	 * 회원 탈퇴
+	 * @param memNo
+	 * @return
+	 */
+	public int updateWithdraw(MemberVO memberVO);
+
 
 }

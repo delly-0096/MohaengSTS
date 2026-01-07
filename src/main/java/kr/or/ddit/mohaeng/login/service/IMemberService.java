@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
@@ -72,17 +73,32 @@ public interface IMemberService {
 	 *	@param updateDTO 회원 정보 수정 데이터(프로필 이미지, 기본정보, 상세정보, 비밀번호 등 포함)
 	 *	@return void (Transactional에 의해 실패 시 롤백됨)
 	 */
-	public void updateMemberProfile(MemberUpdateDTO updateDTO);
+	public void updateMemberProfile(MemberUpdateDTO updateDTO, boolean isBusiness);
 
 
 	/**
-	 *	<p> 일반회원 : 내 정보 수정시 아이디 조회 </p>
-	 *	@date 2026.01.05
-	 *	@author kdrs
+	 *	<p> 기업회원 : 내 정보 수정시 아이디 조회 </p>
+	 *	@date 2026.01.06
+	 *	@author kdrs 
+	 *
 	 * @param username 세션을 통해 들어온 아이디 값 (memId)
 	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
 	 */
 	public MemberVO findByCompId(String memId);
+
+	public void changePassword(int memNo, String currentPassword, String newPassword);
+	
+	/**
+	 *	<p> 회원 탈퇴 처리 (논리 삭제) </p>
+	 *	@date 2026.01.07
+	 *	@author kdrs
+	 *	@param memNo 탈퇴할 회원의 고유 번호 (PK)
+	 * @param withdrawReason 
+	 *	@param password 본인 확인을 위한 현재 비밀번호
+	 *	@throws RuntimeException 비밀번호 불일치 시 발생
+	 */
+	public void withdrawMember(int memNo, String currentPassword, String withdrawReason);
+
 
 
 

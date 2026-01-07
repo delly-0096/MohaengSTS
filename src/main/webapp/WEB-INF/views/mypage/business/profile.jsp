@@ -57,34 +57,34 @@
                                 <h5 class="form-section-title"><i class="bi bi-building me-2"></i>기업 기본 정보</h5>
                                 <div class="form-group">
                                     <label class="form-label">기업명</label>
-                                    <input type="text" class="form-control" name="bzmnNm" id="bzmnNm" value="모행 투어" readonly disabled>
+                                    <input type="text" class="form-control" name="bzmnNm" id="bzmnNm" value="${member.company.bzmnNm}" readonly disabled>
                                     <small class="text-muted">기업 정보 변경은 고객센터로 문의해주세요.</small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">사업자등록번호</label>
-                                    <input type="text" class="form-control" name="brno" id="brno" value="123-45-67890" readonly disabled>
+                                    <input type="text" class="form-control" name="brno" id="brno" value="${member.company.brno}" readonly disabled>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">업종</label>
-                                    <input type="text" class="form-control" name="industryCd" id="industryCd" value="관광/레저" readonly disabled>
+                                    <input type="text" class="form-control" name="industryCd" id="industryCd" value="${member.company.industryCd}" readonly disabled>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">사업장 주소</label>
-                                    <input type="text" class="form-control mb-2" name="compZip" id="compZip" value="63535" readonly disabled>
-                                    <input type="text" class="form-control mb-2" name="compAddr1" id="compAddr1" value="제주특별자치도 서귀포시 중문관광로 72" readonly disabled>
-                                    <input type="text" class="form-control" name="compAddr2" id="compAddr2" value="3층 301호" readonly disabled>
+                                    <input type="text" class="form-control mb-2" name="compZip" id="compZip" value="${member.company.compZip}" readonly disabled>
+                                    <input type="text" class="form-control mb-2" name="compAddr1" id="compAddr1" value="${member.company.compAddr1}" readonly disabled>
+                                    <input type="text" class="form-control" name="compAddr2" id="compAddr2" value="${member.company.compAddr2}" readonly disabled>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">회사 홈페이지</label>
                                     <input type="url" class="form-control" name="compUrl" id="companyWebsite"
-                                           value="https://www.mohaengtour.com" placeholder="예: https://www.example.com">
+                                           value="${member.company.compUrl}" placeholder="예: https://www.example.com">
                                     <small class="text-muted">https://를 포함하여 입력해주세요.</small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">기업 소개</label>
                                     <textarea class="form-control" name="compIntro" id="companyDescription"
                                               rows="4" maxlength="1000"
-                                              placeholder="기업에 대한 간단한 소개를 입력해주세요. (최대 1000자)">제주도 전문 여행사 모행투어입니다. 현지 전문가와 함께하는 프리미엄 투어 서비스를 제공합니다. 소규모 그룹 투어부터 맞춤 프라이빗 투어까지 다양한 여행 상품을 만나보세요.</textarea>
+                                              placeholder="기업에 대한 간단한 소개를 입력해주세요. (최대 1000자)">${member.company.compIntro}</textarea>
                                     <small class="text-muted">고객에게 보여질 기업 소개입니다. 제공하는 서비스, 특장점 등을 작성해주세요.</small>
                                 </div>
                             </div>
@@ -94,20 +94,20 @@
                                 <h5 class="form-section-title"><i class="bi bi-person me-2"></i>담당자 정보</h5>
                                 <div class="form-group">
                                     <label class="form-label">담당자명 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="memName" id="managerName" value="홍길동" required>
+                                    <input type="text" class="form-control" name="memName" id="managerName" value="${member.memName}" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">담당자 이메일 <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" name="memEmail" id="managerEmail" value="mohaeng.tour@example.com" required>
+                                    <input type="email" class="form-control" name="memEmail" id="managerEmail" value="${member.memEmail}" required>
                                     <small class="text-muted">알림 수신 및 비밀번호 찾기에 사용됩니다.</small>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">담당자 연락처 <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" name="memCompTel" id="managerPhone" value="01012345678" placeholder="'-' 없이 입력" maxlength="11" required>
+                                    <input type="tel" class="form-control" name="memCompTel" id="managerPhone" value="${member.memComp.memCompTel}" placeholder="'-' 없이 입력" maxlength="11" required>
                                 </div>
                                 <div class="form-group">
                                     <label class="form-label">대표 전화번호</label>
-                                    <input type="tel" class="form-control" name="compTel" id="compTel" value="064-123-4567" readonly disabled>
+                                    <input type="tel" class="form-control" name="compTel" id="compTel" value="${member.company.compTel}" readonly disabled>
                                     <small class="text-muted">대표 전화번호 변경은 고객센터로 문의해주세요.</small>
                                 </div>
                             </div>
@@ -119,19 +119,19 @@
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">은행</label>
-                                    <input type="text" class="form-control" name="bankCd" id="bankCd" value="신한은행" readonly disabled>
+                                    <input type="text" class="form-control" name="bankCd" id="bankCd" value="${member.company.bankCd}" readonly disabled>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">계좌번호</label>
-                                    <input type="text" class="form-control" name="accountNo" id="accountNo" value="110-***-***890" readonly disabled>
+                                    <input type="text" class="form-control" name="accountNo" id="accountNo" value="${member.company.accountNo}" readonly disabled>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">예금주</label>
-                                    <input type="text" class="form-control" name="depositor" id="depositor" value="(주)모행투어" readonly disabled>
+                                    <input type="text" class="form-control" name="depositor" id="depositor" value="${member.company.depositor}" readonly disabled>
                                 </div>
                             </div>
                             <div class="col-12">
@@ -139,7 +139,7 @@
                             </div>
                         </div>
 
-                        <!-- 비밀번호 확인 -->
+                         <!-- 비밀번호 확인 섹션 -->
                         <h5 class="form-section-title"><i class="bi bi-lock me-2"></i>비밀번호 확인</h5>
                         <p class="text-muted mb-3">회원정보 수정을 위해 현재 비밀번호를 입력해주세요. 비밀번호 변경을 원하시면 새 비밀번호도 입력하세요.</p>
                         <div class="row mb-4">
@@ -244,75 +244,113 @@ document.getElementById('managerPhone').addEventListener('input', function() {
     this.value = this.value.replace(/[^0-9]/g, '');
 });
 
-// 폼 제출
+//폼 제출
 document.getElementById('businessProfileForm').addEventListener('submit', function(e) {
-    e.preventDefault();
+    e.preventDefault(); // 일단 폼 전송을 완전히 막습니다.
 
-    // 현재 비밀번호 필수 체크
-    const currentPassword = document.getElementById('currentPassword').value;
+    const form = this;
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const currentPassword = currentPasswordInput.value;
+
+    // --- 1. 기본 유효성 검사 (서버 통신 전 실행) ---
+
+    // 현재 비밀번호 입력 확인
     if (!currentPassword) {
         showToast('현재 비밀번호를 입력해주세요.', 'error');
-        document.getElementById('currentPassword').focus();
+        currentPasswordInput.classList.add('is-invalid');
+        currentPasswordInput.focus();
         return;
     }
 
     // 담당자명 체크
-    const managerName = document.getElementById('managerName').value.trim();
-    if (!managerName) {
+    const managerName = document.getElementById('managerName');
+    if (!managerName.value.trim()) {
         showToast('담당자명을 입력해주세요.', 'error');
-        document.getElementById('managerName').focus();
+        managerName.classList.add('is-invalid');
+        managerName.focus();
         return;
     }
 
     // 담당자 이메일 체크
-    const managerEmail = document.getElementById('managerEmail').value.trim();
+    const managerEmail = document.getElementById('managerEmail');
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!managerEmail || !emailRegex.test(managerEmail)) {
+    if (!managerEmail.value.trim() || !emailRegex.test(managerEmail.value)) {
         showToast('올바른 이메일 주소를 입력해주세요.', 'error');
-        document.getElementById('managerEmail').focus();
+        managerEmail.classList.add('is-invalid');
+        managerEmail.focus();
         return;
     }
 
     // 담당자 연락처 체크
-    const managerPhone = document.getElementById('managerPhone').value.trim();
+    const managerPhone = document.getElementById('managerPhone');
     const phoneRegex = /^01[0-9]{8,9}$/;
-    if (!managerPhone || !phoneRegex.test(managerPhone)) {
+    if (!managerPhone.value.trim() || !phoneRegex.test(managerPhone.value)) {
         showToast('올바른 연락처를 입력해주세요.', 'error');
-        document.getElementById('managerPhone').focus();
+        managerPhone.classList.add('is-invalid');
+        managerPhone.focus();
         return;
     }
 
-    // 회사 홈페이지 URL 체크 (선택 항목이지만 입력 시 형식 검증)
-    const companyWebsite = document.getElementById('companyWebsite').value.trim();
-    if (companyWebsite) {
+    // 회사 홈페이지 URL 체크
+    const companyWebsite = document.getElementById('companyWebsite');
+    if (companyWebsite.value.trim()) {
         const urlRegex = /^https?:\/\/.+/;
-        if (!urlRegex.test(companyWebsite)) {
-            showToast('올바른 홈페이지 URL을 입력해주세요. (https://로 시작)', 'error');
-            document.getElementById('companyWebsite').focus();
+        if (!urlRegex.test(companyWebsite.value)) {
+            showToast('올바른 홈페이지 URL을 입력해주세요. (https://...)', 'error');
+            companyWebsite.classList.add('is-invalid');
+            companyWebsite.focus();
             return;
         }
     }
 
     // 새 비밀번호 체크
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-
-    if (newPassword || confirmPassword) {
-        if (newPassword.length < 8) {
+    const newPw = document.getElementById('newPassword');
+    const confirmPw = document.getElementById('confirmPassword');
+    if (newPw.value || confirmPw.value) {
+        if (newPw.value.length < 8) {
             showToast('새 비밀번호는 8자 이상이어야 합니다.', 'error');
-            document.getElementById('newPassword').focus();
+            newPw.classList.add('is-invalid');
+            newPw.focus();
             return;
         }
-
-        if (newPassword !== confirmPassword) {
+        if (newPw.value !== confirmPw.value) {
             showToast('새 비밀번호가 일치하지 않습니다.', 'error');
-            document.getElementById('confirmPassword').focus();
+            confirmPw.classList.add('is-invalid');
+            confirmPw.focus();
             return;
         }
     }
 
-    // 성공
-    showToast('회원 정보가 수정되었습니다.', 'success');
+    // --- 2. 서버 통신 (비밀번호 최종 확인) ---
+    // 여기까지 도달했다면 모든 입력 형식은 올바른 상태입니다.
+    fetch('${pageContext.request.contextPath}/mypage/profile/checkPassword', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            // 만약 403 에러가 발생한다면 CSRF 토큰을 여기에 추가해야 합니다.
+        },
+        body: 'currentPassword=' + encodeURIComponent(currentPassword)
+    })
+    .then(response => {
+        if (!response.ok) throw new Error('서버 응답 오류');
+        return response.json();
+    })
+    .then(isMatched => {
+        if (isMatched === true) {
+            // 비밀번호 일치 시 최종 제출
+            // showToast('정보가 수정되었습니다.', 'success'); // 컨트롤러에서 rttr로 띄우므로 여기선 생략 가능
+            form.submit();
+        } else {
+            // 비밀번호 불일치 시 (새로고침 안 됨)
+            showToast('현재 비밀번호가 일치하지 않습니다.', 'error');
+            currentPasswordInput.classList.add('is-invalid');
+            currentPasswordInput.focus();
+        }
+    })
+    .catch(error => {
+        console.error('CheckPassword Error:', error);
+        showToast('비밀번호 확인 중 오류가 발생했습니다.', 'error');
+    });
 });
 
 //프로필 이미지 미리보기
@@ -351,16 +389,6 @@ document.getElementById('profileImage').addEventListener('change', function(e) {
     }
 });
 
-/* window.addEventListener('DOMContentLoaded', () => {
-    const img = document.getElementById('profilePreview');
-
-    // base64 미리보기 상태면 건드리지 않음
-    if (img && img.src.startsWith('data:image')) {
-        return;
-    }
-
-    // 서버 이미지 정상 유지
-}); */
 
 function resetProfileImage() {
     const img = document.getElementById('profilePreview');

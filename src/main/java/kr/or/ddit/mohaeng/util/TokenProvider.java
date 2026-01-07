@@ -75,12 +75,11 @@ public class TokenProvider {
 		String memId = getUserId(token);
 		UserDetails userDetails = userDetailsService.loadUserByUsername(memId);
 		
-		MemberVO member = ((CustomUser)userDetails).getMember();
-				
-		return new UsernamePasswordAuthenticationToken(userDetails, "", 
-				member.getAuthList().stream()
-				.map(auth -> new SimpleGrantedAuthority(auth.getAuth())).
-				collect(Collectors.toList()));
+		 return new UsernamePasswordAuthenticationToken(
+			        userDetails,
+			        "",
+			        userDetails.getAuthorities()
+			    );
 	}
 	
 	private String getUserId(String token) {

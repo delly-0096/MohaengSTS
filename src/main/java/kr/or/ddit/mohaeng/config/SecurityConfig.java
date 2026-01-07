@@ -67,6 +67,8 @@ public class SecurityConfig {
 			"/mypage/profile",
 			"/mypage/business/profile",
 			"/mypage/profile/update",
+			"/mypage/profile/checkPassword",
+			"/mypage/profile/withdraw",
 			"/idCheck",
 			"/error",
 			"/mohaeng/**",
@@ -154,8 +156,8 @@ public class SecurityConfig {
                     DispatcherType.ASYNC
                 ).permitAll()
                 .requestMatchers(PASS_URL).permitAll()
-//                .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
-//                .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
+//              .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
+//              .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
                 .requestMatchers("/member/login").permitAll()
                 .anyRequest().authenticated()
         )
@@ -191,6 +193,7 @@ public class SecurityConfig {
               })
 			.invalidateHttpSession(true)           		// 세션 무효화
 			.deleteCookies("JSESSIONID", "remember-me")	// 세션 쿠키와 자동로그인 쿠키 모두 삭제
+			.clearAuthentication(true)
 			.logoutSuccessUrl("/member/login")
     );
     

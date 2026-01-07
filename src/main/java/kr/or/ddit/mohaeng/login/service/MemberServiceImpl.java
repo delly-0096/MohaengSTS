@@ -1,6 +1,5 @@
 package kr.or.ddit.mohaeng.login.service;
 
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -139,6 +138,10 @@ public class MemberServiceImpl implements IMemberService {
 			return ServiceResult.EXIST;	// 이미 존재
 		}
 		
+	    // 기업회원의 "대표 회원 정보" 확정
+	    memberVO.setMemName(memberVO.getManagerName());
+	    memberVO.setMemEmail(memberVO.getManagerEmail());
+	    
 		// 비밀번호 암호화
 		memberVO.setMemPassword(passwordEncoder.encode(memberVO.getMemPassword()));
 		memberVO.setMemStatus("WAIT");
@@ -149,7 +152,7 @@ public class MemberServiceImpl implements IMemberService {
 	    int memNo = memberVO.getMemNo();
         
 	    // MEMBER_AUTH 저장
-	    memCompMapper.insertAuth(memNo, "BUSINESS");
+	    memCompMapper.insertAuth(memNo, "ROLE_BUSINESS");
 	    
 	    // 파일 업로드 처리 (사업자 등록증)
 	    if (bizFile != null && !bizFile.isEmpty()) {
@@ -220,21 +223,17 @@ public class MemberServiceImpl implements IMemberService {
 	 *	@date 2025.12.31
 	 *	@author kdrs
 	 *	@param updateDTO 회원 정보 수정 데이터(프로필 이미지, 기본정보, 상세정보, 비밀번호 등 포함)
-	 *	@return void (Transactional에 의해 실패 시 롤백됨)
-	 */
+	 * @return 
+	 **/
 	@Override
 	@Transactional
-	public void updateMemberProfile(MemberUpdateDTO dto) {
+	public void updateMemberProfile(MemberUpdateDTO dto, boolean isBusiness) {
+		
 		// MemberVO 객체 생성 및 기본 세팅
 		MemberVO member = new MemberVO();
 		member.setMemNo(dto.getMemNo());
 		member.setMemName(dto.getMemName());
 		member.setMemEmail(dto.getMemEmail());
-		
-		// 비밀번호 변경 시 암호화
-		if(dto.getNewPassword() != null && !dto.getNewPassword().isEmpty()) {
-			member.setMemPassword(passwordEncoder.encode(dto.getNewPassword()));
-		}
 		
 		// 프로필 이미지 처리
 		if (dto.isProfileImageDeleted()) {
@@ -245,18 +244,46 @@ public class MemberServiceImpl implements IMemberService {
 		    member.setMemProfile(newAttachNo);
 		}
 		
-		MemUserVO userDetail = new MemUserVO();
-		userDetail.setMemNo(dto.getMemNo());
-		userDetail.setNickname(dto.getNickname());
-		userDetail.setBirthDate(dto.getBirthDate());
-		userDetail.setGender(dto.getGender());
-		userDetail.setZip(dto.getZip());
-		userDetail.setAddr1(dto.getAddr1());
-		userDetail.setAddr2(dto.getAddr2());
-		userDetail.setTel(dto.getTel());
-		
 		memberMapper.updateMember(member);
-		memberMapper.updateMemUser(userDetail);
+
+		// 기업 회원
+		if(isBusiness) {
+		
+			log.info("기업 회원 수정을 진행합니다. 회원번호: {}", dto.getMemNo());
+			
+			MemCompVO memComp = new MemCompVO();
+			memComp.setMemNo(dto.getMemNo());
+			memComp.setMemCompTel(dto.getMemCompTel());
+			memComp.setMemCompEmail(dto.getMemEmail());
+			
+			memCompMapper.updateMemComp(memComp);
+			
+			CompanyVO compDetail = new CompanyVO();
+			compDetail.setMemNo(dto.getMemNo());
+			compDetail.setCompUrl(dto.getCompUrl());
+			compDetail.setCompIntro(dto.getCompIntro());
+			compDetail.setBankCd(dto.getBankCd());
+			compDetail.setDepositor(dto.getDepositor());
+			compDetail.setAccountNo(dto.getAccountNo());
+			
+			memCompMapper.updateCompany(compDetail);
+			
+		} else {
+			
+			log.info("일반 회원 수정을 진행합니다. 회원번호: {}", dto.getMemNo());
+			
+			MemUserVO userDetail = new MemUserVO();
+			userDetail.setMemNo(dto.getMemNo());
+			userDetail.setNickname(dto.getNickname());
+			userDetail.setBirthDate(dto.getBirthDate());
+			userDetail.setGender(dto.getGender());
+			userDetail.setZip(dto.getZip());
+			userDetail.setAddr1(dto.getAddr1());
+			userDetail.setAddr2(dto.getAddr2());
+			userDetail.setTel(dto.getTel());
+			
+			memberMapper.updateMemUser(userDetail);
+		}
 		
 	}
 
@@ -270,6 +297,79 @@ public class MemberServiceImpl implements IMemberService {
 	@Override
 	public MemberVO findByCompId(String memId) {
 		return memCompMapper.findByCompId(memId);
+	}
+
+	/**
+	 *	<p> 비밀번호 변경 </p>
+	 *	@date 2026.01.05
+	 *	@author kdrs
+	 * @param username 세션을 통해 들어온 아이디 값 (memId)
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 * @throws IllegalAccessException 
+	 */
+	@Override
+	@Transactional
+	public void changePassword(int memNo, String currentPassword, String newPassword){
+		
+		MemberVO member = memberMapper.selectByMemNo(memNo);
+	    if (member == null) {
+	        throw new IllegalArgumentException("회원 정보가 존재하지 않습니다.");
+	    }
+
+	    if (!passwordEncoder.matches(currentPassword, member.getMemPassword())) {
+	        throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+	    }
+
+	    if (passwordEncoder.matches(newPassword, member.getMemPassword())) {
+	        throw new IllegalArgumentException("기존 비밀번호와 동일한 비밀번호는 사용할 수 없습니다.");
+	    }
+
+	    String encodedPw = passwordEncoder.encode(newPassword);
+
+	    int updated = memberMapper.updatePassword(memNo, encodedPw);
+
+	    log.info("🔐 비밀번호 변경 update row = {}", updated);
+
+	    if (updated != 1) {
+	        throw new RuntimeException("비밀번호 변경 실패 (DB update 실패)");
+	    }
+	}
+
+	/**
+	 *	<p> 회원 탈퇴 처리 (논리 삭제) </p>
+	 *	@date 2026.01.07
+	 *	@author kdrs
+	 *	@param memNo 탈퇴할 회원의 고유 번호 (PK)
+	 *	@param password 본인 확인을 위한 현재 비밀번호
+	 *	@throws RuntimeException 비밀번호 불일치 시 발생
+	 */
+	@Override
+	@Transactional
+	public void withdrawMember(int memNo, String currentPassword, String withdrawReason) {
+		log.info("탈퇴 진행 - 회원번호: {}, 사유: {}", memNo, withdrawReason);
+		
+		// 회원 정보 조회
+		MemberVO member = memberMapper.selectByMemNo(memNo);
+		
+		// 비밀번호 일치 여부 확인
+		if (member == null || !passwordEncoder.matches(currentPassword, member.getMemPassword())) {
+			throw new RuntimeException("비밀번호가 일치하지 않습니다.");
+		}
+		
+		if ("0".equals(member.getEnabled())) {
+			throw new RuntimeException("이미 탈퇴 처리된 계정입니다.");
+		}
+		
+		MemberVO withdrawInfo = new MemberVO();
+	    withdrawInfo.setMemNo(memNo);
+	    withdrawInfo.setWdrwResn(withdrawReason);
+		
+	    int result = memberMapper.updateWithdraw(withdrawInfo);
+	    
+	    if (result <= 0) {
+	        throw new RuntimeException("탈퇴 처리 중 오류가 발생했습니다.");
+	    }
+
 	}
 
 

@@ -1,6 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
+<meta name="_csrf" content="${_csrf.token}"/>
+<meta name="_csrf_header" content="${_csrf.headerName}"/>
+
 <c:set var="pageTitle" value="회원 정보 수정" />
 <c:set var="pageCss" value="mypage" />
 
@@ -192,16 +195,16 @@
                     <!-- 비밀번호 확인 섹션 -->
                     <div class="content-section">
                         <h5 class="form-section-title"><i class="bi bi-lock me-2"></i>비밀번호 확인</h5>
-                        <p class="text-muted mb-4">회원정보 수정을 위해 현재 비밀번호를 입력해주세요. 비밀번호 변경을 원하시면 새 비밀번호도 입력하세요.</p>
+                        <p class="text-muted mb-3">회원정보 수정을 위해 현재 비밀번호를 입력해주세요. 비밀번호 변경을 원하시면 새 비밀번호도 입력하세요.</p>
 
                         <div class="row">
                             <!-- 현재 비밀번호 -->
-                            <div class="col-md-12">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">현재 비밀번호 <span class="text-danger">*</span></label>
                                     <div class="password-toggle">
                                         <input type="password" class="form-control" name="currentPassword" id="currentPassword"
-                                               placeholder="현재 비밀번호를 입력하세요" required>
+                                               placeholder="현재 비밀번호를 입력하세요">
                                         <span class="toggle-btn" onclick="togglePassword('currentPassword')">
                                             <i class="bi bi-eye"></i>
                                         </span>
@@ -215,12 +218,12 @@
                             </div>
 
                             <!-- 새 비밀번호 -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-group">
                                     <label class="form-label">새 비밀번호 <span class="text-muted">(선택)</span></label>
                                     <div class="password-toggle">
                                         <input type="password" class="form-control" name="newPassword" id="newPassword"
-                                               placeholder="변경 시에만 입력하세요" onkeyup="checkPasswordStrength()">
+                                               placeholder="변경 시에만 입력하세요">
                                         <span class="toggle-btn" onclick="togglePassword('newPassword')">
                                             <i class="bi bi-eye"></i>
                                         </span>
@@ -231,25 +234,25 @@
                                         </div>
                                         <span class="strength-text" id="strengthText">영문, 숫자, 특수문자 포함 8자 이상</span>
                                     </div>
-                                    <div class="form-error">
+                                    <div class="form-error" id="passwordError" style="display:none;">
                                         <i class="bi bi-exclamation-circle"></i>
-                                        <span>비밀번호는 8자 이상이어야 합니다.</span>
+                                        <span>비밀번호는 영문, 숫자, 특수문자를 포함해 8자 이상이어야 합니다.</span>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- 새 비밀번호 확인 -->
-                            <div class="col-md-6">
-                                <div class="form-group">
+                            <div class="col-md-4">
+                                <div class="form-group mb-0">
                                     <label class="form-label">새 비밀번호 확인</label>
                                     <div class="password-toggle">
                                         <input type="password" class="form-control" name="confirmPassword" id="confirmPassword"
-                                               placeholder="새 비밀번호를 다시 입력하세요" onkeyup="checkPasswordMatch()">
+                                               placeholder="새 비밀번호를 다시 입력하세요">
                                         <span class="toggle-btn" onclick="togglePassword('confirmPassword')">
                                             <i class="bi bi-eye"></i>
                                         </span>
                                     </div>
-                                    <div class="form-error">
+                                    <div class="form-error" id="passwordMatchError" style="display:none;">
                                         <i class="bi bi-exclamation-circle"></i>
                                         <span>비밀번호가 일치하지 않습니다.</span>
                                     </div>
@@ -261,6 +264,7 @@
                             </div>
                         </div>
                     </div>
+                    
 
                     <!-- 알림 설정 섹션 -->
                     <div class="content-section">
@@ -387,7 +391,7 @@
                 <!-- 탈퇴 사유 입력 -->
                 <div class="form-group mt-4">
                     <label class="form-label">탈퇴 사유 <span class="text-danger">*</span></label>
-                    <textarea class="form-control" id="withdrawReason" rows="3"
+                    <textarea class="form-control" name="wdrwResn" id="withdrawReason" rows="3"
                               placeholder="탈퇴 사유를 입력해주세요." required></textarea>
                     <div class="form-hint mt-1">서비스 개선을 위해 탈퇴 사유를 남겨주시면 감사하겠습니다.</div>
                 </div>
@@ -453,17 +457,6 @@ document.getElementById('profileImage').addEventListener('change', function(e) {
         showToast('이미지가 선택되었습니다.', 'success');
     }
 });
-/* 
-window.addEventListener('DOMContentLoaded', () => {
-    const img = document.getElementById('profilePreview');
-
-    // base64 미리보기 상태면 건드리지 않음
-    if (img && img.src.startsWith('data:image')) {
-        return;
-    }
-
-    // 서버 이미지 정상 유지
-}); */
 
 function resetProfileImage() {
     const img = document.getElementById('profilePreview');
@@ -482,6 +475,14 @@ function resetProfileImage() {
     showToast('기본 아이콘으로 변경되었습니다.', 'info');
 }
 
+// 비밀번호 로직 선언
+const newPw = document.getElementById('newPassword');
+const confirmPw = document.getElementById('confirmPassword');
+
+newPw.addEventListener('input', checkPasswordStrength);
+confirmPw.addEventListener('input', () => checkPasswordMatch(false));
+confirmPw.addEventListener('blur', () => checkPasswordMatch(true));
+
 // 비밀번호 보기/숨기기
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
@@ -498,9 +499,12 @@ function togglePassword(inputId) {
 
 // 비밀번호 강도 체크
 function checkPasswordStrength() {
-    const password = document.getElementById('newPassword').value;
+    const password = newPw.value;
     const strengthBar = document.getElementById('strengthBar');
     const strengthText = document.getElementById('strengthText');
+    
+    document.getElementById('passwordError').style.display = 'none';
+    document.getElementById('newPassword').classList.remove('is-invalid');
 
     let strength = 0;
     if (password.length >= 8) strength++;
@@ -510,48 +514,111 @@ function checkPasswordStrength() {
     if (password.match(/[^a-zA-Z0-9]/)) strength++;
 
     strengthBar.className = 'strength-bar-fill';
-
-    if (password.length === 0) {
-        strengthBar.style.width = '0';
-        strengthText.textContent = '영문, 숫자, 특수문자 포함 8자 이상';
-    } else if (strength <= 2) {
-        strengthBar.classList.add('weak');
-        strengthText.textContent = '약함';
-    } else if (strength === 3) {
-        strengthBar.classList.add('fair');
-        strengthText.textContent = '보통';
-    } else if (strength === 4) {
-        strengthBar.classList.add('good');
-        strengthText.textContent = '좋음';
-    } else {
-        strengthBar.classList.add('strong');
-        strengthText.textContent = '매우 강함';
-    }
-
-    checkPasswordMatch();
-}
-
-// 비밀번호 일치 확인
-function checkPasswordMatch() {
-    const password = document.getElementById('newPassword').value;
-    const passwordConfirm = document.getElementById('confirmPassword');
-    const confirmValue = passwordConfirm.value;
-    const successEl = document.getElementById('passwordMatchSuccess');
-
-    if (confirmValue.length === 0) {
-        passwordConfirm.classList.remove('is-invalid');
-        successEl.style.display = 'none';
+    
+    if (!password) {
+        strengthBar.style.width = '0%';
+        strengthText.textContent = '대소문자 영문, 숫자, 특수문자 포함 8자 이상';
+        confirmPw.value = '';
         return;
     }
 
-    if (password === confirmValue) {
-        passwordConfirm.classList.remove('is-invalid');
-        successEl.style.display = 'flex';
+    if (password.length === 0) {
+        strengthBar.style.width = '0%';
+        strengthText.textContent = '대소문자 영문, 숫자, 특수문자 포함 8자 이상';
+    } else if (strength <= 2) {
+        strengthBar.classList.add('weak');
+    	strengthBar.style.width = '25%';
+        strengthText.textContent = '약함';
+    } else if (strength === 3) {
+        strengthBar.classList.add('fair');
+        strengthBar.style.width = '50%';
+        strengthText.textContent = '보통';
+    } else if (strength === 4) {
+        strengthBar.classList.add('good');
+        strengthBar.style.width = '75%';
+        strengthText.textContent = '좋음';
     } else {
-        passwordConfirm.classList.add('is-invalid');
+        strengthBar.classList.add('strong');
+        strengthBar.style.width = '100%';
+        strengthText.textContent = '매우 강함';
+    }
+
+    // 비밀번호 확인도 체크
+    checkPasswordMatch();
+}
+
+//비밀번호 길이 체크
+function isValidPassword(password) {
+    return (
+        password.length >= 8 &&
+        /[a-zA-Z]/.test(password) &&
+        /[0-9]/.test(password) &&
+        /[^a-zA-Z0-9]/.test(password)
+    );
+}
+
+// 비밀번호 일치 확인
+function checkPasswordMatch(force = false) {
+    const password = document.getElementById('newPassword').value;
+    const passwordConfirm = document.getElementById('confirmPassword');
+    const confirmValue = passwordConfirm.value;
+    
+    const successEl = document.getElementById('passwordMatchSuccess');
+    const errorEl = document.getElementById('passwordMatchError');
+
+    // 아무것도 안 쳤으면 전부 숨김
+    if (confirmValue.length === 0) {
+        passwordConfirm.classList.remove('is-invalid');
         successEl.style.display = 'none';
+        errorEl.style.display = 'none';
+        return;
+    }
+
+ 	// 타이핑 중 (keyup)
+ 	if (!force) {
+	    if (password === confirmValue) {
+            successEl.style.display = 'flex';
+            errorEl.style.display = 'none';
+            passwordConfirm.classList.remove('is-invalid');
+	    } else {
+            // 타이핑 중엔 실패 문구 안 띄움
+            successEl.style.display = 'none';
+            errorEl.style.display = 'none';
+            passwordConfirm.classList.remove('is-invalid');
+	    }
+	    return;
+ 	}
+ 	
+ 	// blur 시점
+    if (password === confirmValue) {
+        successEl.style.display = 'flex';
+        errorEl.style.display = 'none';
+        passwordConfirm.classList.remove('is-invalid');
+    } else {
+        successEl.style.display = 'none';
+        errorEl.style.display = 'flex';
+        passwordConfirm.classList.add('is-invalid');
     }
 }
+
+document.getElementById('newPassword').addEventListener('blur', () => {
+
+    const pwInput = document.getElementById('newPassword');
+    if (!pwInput) return;
+
+    const password = pwInput.value || '';
+    const errorEl = document.getElementById('passwordError');
+
+    if (!pwInput.value) return;
+
+    if (!isValidPassword(pwInput.value)) {
+        pwInput.classList.add('is-invalid');
+        errorEl.style.display = 'flex';
+    } else {
+        pwInput.classList.remove('is-invalid');
+        errorEl.style.display = 'none';
+    }
+});
 
 // 주소 검색 (다음 우편번호 API)
 function searchAddress() {
@@ -578,8 +645,9 @@ document.getElementById('phone').addEventListener('input', function() {
 document.getElementById('profileForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
+    const form = this;
     let isValid = true;
-
+    
     // 필수 필드 검사
     const userName = document.getElementById('userName');
     const nickname = document.getElementById('nickname');
@@ -626,30 +694,21 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
         isValid = false;
     }
 
-    // 비밀번호 검사
-    const currentPassword = document.getElementById('currentPassword').value;
+ 	// 새 비밀번호 입력 시 검사
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
-
-    // 현재 비밀번호는 필수
-    if (!currentPassword) {
-        document.getElementById('currentPassword').classList.add('is-invalid');
-        isValid = false;
-    }
-
-    // 새 비밀번호 입력 시 검사
     if (newPassword || confirmPassword) {
-        if (newPassword.length < 8 && newPassword.length > 0) {
+        if (newPassword.length < 8) {
             document.getElementById('newPassword').classList.add('is-invalid');
             isValid = false;
         }
-
         if (newPassword !== confirmPassword) {
             document.getElementById('confirmPassword').classList.add('is-invalid');
             isValid = false;
         }
     }
-
+    
+	 // 기본 유효성 검사 실패 시 종료
     if (!isValid) {
         showToast('입력 정보를 확인해주세요.', 'error');
         const firstInvalid = document.querySelector('.is-invalid');
@@ -658,12 +717,49 @@ document.getElementById('profileForm').addEventListener('submit', function(e) {
         }
         return;
     }
-
-    // 성공 시
-    showToast('회원 정보가 수정되었습니다.', 'success');
-
-    // 실제 구현 시 아래 주석 해제
-   	this.submit();
+    
+    const currentPasswordInput = document.getElementById('currentPassword');
+    const currentPassword = currentPasswordInput.value;
+    
+    // 기본적인 유효성 검사 (기존 코드 유지)
+    if(!currentPassword) {
+    	showToast('현재 비밀번호를 입력해주세요.' , 'error');
+    	document.getElementById('currentPassword').focus();
+    	return;
+    }
+    
+ // 모든 기본 검사가 통과된 후, 마지막으로 DB와 비밀번호를 대조합니다.
+    fetch('${pageContext.request.contextPath}/mypage/profile/checkPassword', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            // Spring Security를 사용 중이라면 CSRF 토큰이 필요할 수 있습니다.
+            'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content
+        },
+        body: 'currentPassword=' + encodeURIComponent(currentPassword)
+    })
+    .then(response => {
+    	// 서버 응답 자체가 실패(404, 500 등)했을 경우 catch로 보냄
+    	if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(isMatched => {
+        if (isMatched === true) {
+            // 모든 검증 완료! 실제 폼을 서버로 제출합니다.
+            form.submit();
+        } else {
+            // 비밀번호 불일치 시 (새로고침 안 됨)
+            showToast('현재 비밀번호가 일치하지 않습니다.', 'error');
+            currentPasswordInput.classList.add('is-invalid');
+            currentPasswordInput.focus();
+        }
+    })
+    .catch(error => {
+    	console.error('CheckPassword Error:', error);
+        showToast('비밀번호 확인 중 오류가 발생했습니다.', 'error');
+    });
 });
 
 // 입력 시 에러 상태 제거
@@ -714,12 +810,43 @@ function confirmWithdraw() {
 
     console.log('탈퇴 데이터:', withdrawData);
 
-    // 탈퇴 처리
-    showToast('회원 탈퇴가 완료되었습니다. 그동안 이용해 주셔서 감사합니다.', 'info');
+	// 실제 서버 전송 로직
+    if (confirm('정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        
+        const formData = new URLSearchParams();
+        formData.append('currentPassword', password); // 서버 파라미터명과 일치시켜야 함
+        formData.append('withdrawReason', reason);   // 사유를 기록한다면 추가
 
+        fetch('${pageContext.request.contextPath}/mypage/profile/withdraw', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                // Spring Security 사용 시 CSRF 토큰은 필수입니다!
+                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content 
+            },
+            body: formData
+        })
+        .then(response => {
+            if (response.redirected) {
+                // 성공 시 서버에서 보낸 리다이렉트 경로(메인 등)로 이동
+                showToast('회원 탈퇴가 완료되었습니다.', 'success');
+                setTimeout(() => {
+                    window.location.href = response.url;
+                }, 1500);
+            } else {
+                return response.text().then(text => { throw new Error(text) });
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('비밀번호가 틀렸거나 탈퇴 처리 중 오류가 발생했습니다.', 'error');
+        });
+    }
+        
     setTimeout(() => {
         window.location.href = '${pageContext.request.contextPath}/';
     }, 2000);
+    
 }
 </script>
 

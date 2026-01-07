@@ -1,6 +1,8 @@
 package kr.or.ddit.mohaeng.login.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -161,15 +164,24 @@ public class LoginController {
 		session.setAttribute("loginMember", loginMember);
 		session.removeAttribute("LOGIN_FAIL_CNT");
 		
-		CustomUserDetails userDetails = new CustomUserDetails(member);
+		// 회원 타입에 따라 권한 생성
+		List<GrantedAuthority> authorities = new ArrayList<>();
 
-		// ⚠️ 권한은 CustomUserDetails 기준으로만 사용
+		/*
+		 * if ("BUSINESS".equals(memType)) { authorities.add(new
+		 * SimpleGrantedAuthority("BUSINESS")); } else { authorities.add(new
+		 * SimpleGrantedAuthority("MEMBER")); }
+		 */
+		CustomUserDetails userDetails =
+		        new CustomUserDetails(member);
+
+		// Authentication 생성
 		Authentication auth =
-		    new UsernamePasswordAuthenticationToken(
-		        userDetails,
-		        null,
-		        userDetails.getAuthorities()
-		    );
+		        new UsernamePasswordAuthenticationToken(
+		                userDetails,
+		                null,
+		                userDetails.getAuthorities()
+		        );
 
 		SecurityContext context = SecurityContextHolder.createEmptyContext();
 		context.setAuthentication(auth);

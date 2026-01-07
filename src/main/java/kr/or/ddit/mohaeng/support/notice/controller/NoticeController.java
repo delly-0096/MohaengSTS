@@ -41,7 +41,7 @@ public class NoticeController {
 		NoticeVO noticeVO = noticeService.selectNotice(ntcNo) ;
 		model.addAttribute("notice",noticeVO);
 		return "support/notice-detail";
-	}
+	} 
 	
 
 	

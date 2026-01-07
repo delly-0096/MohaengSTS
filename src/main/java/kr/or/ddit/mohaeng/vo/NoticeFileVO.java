@@ -14,12 +14,20 @@ public class NoticeFileVO {
 	private String fileName;
 	private long fileSize;
 	private String fileFancysize;
-	private String fileMime;
 	private String fileSavepath;
 	private int fileDowncount;
-	private String attachNo;
-	
-	public NoticeFileVO() {
+	private int attachNo;
+	private String fileSaveName; // 임시저장파일장소
+	private String fileOriginalName;
+	private String fileExt;
+    private String filePath;
+	private String fileGbCd;            // NOTICE
+    private String mimeType;
+    private int regId;
+    private String regDt;
+    private String useYn;
+    
+    public NoticeFileVO() {
 		
 	}
 	
@@ -27,7 +35,7 @@ public class NoticeFileVO {
 		this.item = item;
 		this.fileName = item.getOriginalFilename();  //원본명
 		this.fileSize = item.getSize();  			//바이트 용량
-		this.fileMime = item.getContentType();		//mime 타입	
+		this.mimeType = item.getContentType();		//mime 타입	
 		this.fileFancysize = FileUtils.byteCountToDisplaySize(fileSize); //보기좋게 변환
 		
 	}

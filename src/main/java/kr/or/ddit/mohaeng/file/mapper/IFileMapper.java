@@ -8,7 +8,9 @@ import kr.or.ddit.mohaeng.vo.AttachFileVO;
 @Mapper
 public interface IFileMapper {
 
-    /**
+    
+
+	/**
      * <p> 첨부파일 마스터 정보 등록 </p>
      * @date 2026.01.02
      * @author kdrs

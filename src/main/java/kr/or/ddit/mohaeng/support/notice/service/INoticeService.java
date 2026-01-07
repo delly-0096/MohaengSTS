@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.vo.NoticeFileVO;
 import kr.or.ddit.mohaeng.vo.NoticeVO;
 
@@ -14,11 +15,13 @@ public interface INoticeService {
 
   public List<NoticeVO> selectNoticeList();
 
-  public int insertNotice(NoticeVO noticeVO);
+  public ServiceResult insertNotice(NoticeVO noticeVO) throws Exception;
 
   public int updateNotice(NoticeVO noticeVO);
 
   public int deleteNotice(int ntcNo);
+
+  public NoticeFileVO getFileInfo(int fileNo);
 	
 
 }

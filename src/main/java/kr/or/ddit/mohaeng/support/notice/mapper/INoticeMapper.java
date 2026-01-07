@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import kr.or.ddit.mohaeng.vo.NoticeFileVO;
 import kr.or.ddit.mohaeng.vo.NoticeVO;
 
 @Mapper
@@ -20,5 +21,7 @@ public interface INoticeMapper {
  public int updateNotice(NoticeVO noticeVO);
 
  public int deleteNotice(int ntcNo);
+
+ public NoticeFileVO getFileInfo(int fileNo);
   
 }

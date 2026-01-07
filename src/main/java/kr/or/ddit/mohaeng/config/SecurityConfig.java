@@ -94,8 +94,9 @@ public class SecurityConfig {
 	
 	// 관리자 허용 url
 	private static final String[] REACT_PASS_URL = {
-			"/api/admin/login"
-
+			"/api/admin/login",
+			"/api/admin/notices/thumbnail/**"
+			
 		};
 	
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService) {

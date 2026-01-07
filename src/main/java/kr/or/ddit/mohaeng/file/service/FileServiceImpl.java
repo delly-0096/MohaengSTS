@@ -2,6 +2,8 @@ package kr.or.ddit.mohaeng.file.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -186,5 +188,53 @@ public class FileServiceImpl implements IFileService{
 	        return null;
 	    }
 	    return fileMapper.selectProfileFileDetail(attachNo);
+	}
+	
+	
+	@Override
+	public int saveFileList(List<MultipartFile> files, Map<String, String> uploadInfo, int regId) {
+		if (files == null || files.isEmpty()) return 0;
+		
+		// ATTACH_FILE (마스터)
+		AttachFileVO attachVO = new AttachFileVO();
+        attachVO.setRegId(regId); 	// 쿼리의 #{regId}와 매칭
+        fileMapper.insertAttachFile(attachVO);
+		int attachNo = attachVO.getAttachNo();
+		
+		for(MultipartFile file : files) {
+			// 물리적 파일 저장 준비
+			String originalName = file.getOriginalFilename();
+			String ext = originalName.substring(originalName.lastIndexOf(".") + 1);
+			String saveName = UUID.randomUUID().toString() + "." + ext;	// 파일명 중복 방지
+			
+			File target = new File(uploadPath + uploadInfo.get("filePath"), saveName);
+			if (!target.getParentFile().exists()) {
+			    target.getParentFile().mkdirs(); 
+			}
+			
+			try {
+				// 물리적 파일 저장
+				file.transferTo(target);
+				
+				// ATTACH_FILE_DETAIL
+				AttachFileDetailVO detailVO = new AttachFileDetailVO();
+	            detailVO.setAttachNo(attachNo);
+	            detailVO.setFileName(saveName); 								// #{fileName}
+	            detailVO.setFileOriginalName(originalName); 					// #{fileOriginalName}
+	            detailVO.setFileExt(ext); 										// #{fileExt}
+	            detailVO.setFileSize(file.getSize()); 							// #{fileSize}
+	            detailVO.setFilePath(uploadInfo.get("filePath")  +"/" + saveName); 	// 서버 접근 경로 #{filePath}
+	            detailVO.setFileGbCd(uploadInfo.get("fileGbCd")); 								//  파일 분류 fileGbCd
+	            detailVO.setMimyType(file.getContentType()); 					// #{mimyType}
+	            detailVO.setRegId(regId); 										// #{regId}
+				
+	            fileMapper.insertAttachFileDetail(detailVO);
+			} catch (IOException e) {
+	            log.error("파일 저장 중 오류 발생: {}", e.getMessage());
+	            throw new RuntimeException("파일 저장 실패", e);
+	        }
+		}
+        return attachNo; // 생성된 마스터 번호 반환
+		
 	}
 }

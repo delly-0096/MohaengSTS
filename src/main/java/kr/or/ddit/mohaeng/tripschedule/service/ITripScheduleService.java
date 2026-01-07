@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
+import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
+import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
 
 public interface ITripScheduleService {
@@ -23,5 +25,11 @@ public interface ITripScheduleService {
 	public TourPlaceVO searchPlaceDetail(TourPlaceVO tourPlaceVO);
 
 	public int saveTourPlacInfo(TourPlaceVO tourPlaceVO);
+
+	public int insertTripSchedule(Params params);
+
+	public int insertTripScheduleDetails(Map<String, Object> plannerDay);
+
+	public int insertTripSchedulePlace(TripSchedulePlaceVO placeVO);
 	
 }

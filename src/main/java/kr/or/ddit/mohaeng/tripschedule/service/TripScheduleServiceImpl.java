@@ -10,6 +10,9 @@ import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.tripschedule.mapper.ITripScheduleMapper;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
+import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
+import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
+import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
 
 @Service
@@ -143,6 +146,65 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		return iTripScheduleMapper.saveTourPlacInfo(tourPlaceVO);
 	}
 
+	@Override
+	public int insertTripSchedule(Params params) {
+		
+	    TripScheduleVO tripScheduleVO = new TripScheduleVO(params.getInt("memNo"), null, "REGION", params.getInt("schdlStartDt"), "REGION", params.getInt("schdlEndDt")
+	    		, "UPCOMING", params.getString("schdlStartDt"), params.getString("schdlEndDt")
+	    		, params.getInt("travelerCount"), params.getString("aiRecomYn"), params.getString("publicYn"), (long) params.getInt("totalBudget"));
+	    
+	    int resultSchedule = iTripScheduleMapper.insertTripSchedule(tripScheduleVO);
+	    
+	    List<Map<String, Object>> plannerDayList = (List<Map<String, Object>>) params.get("details");
+	    String StartDt = tripScheduleVO.getSchdlStartDt();
+	    if(resultSchedule > 0) {
+	    	for(Map<String, Object> plannerDay : plannerDayList) {
+		    	System.out.println("plannerDay : " + plannerDay);
+		    	TripScheduleDetailsVO detailsVO = new TripScheduleDetailsVO(tripScheduleVO.getSchdlNo(), plannerDay.get("schdlTitle")+"", Integer.parseInt(plannerDay.get("schdlDt")+""));
+		    	detailsVO.setSchdlStartDt(StartDt);
+		    	
+		    	plannerDay.put("detailsVO", detailsVO);
+		    	int resultDetails = insertTripScheduleDetails(plannerDay);
+		    }
+	    }
+		
+		return resultSchedule;
+	}
+	
+	@Override
+	public int insertTripScheduleDetails(Map<String, Object> plannerDay) {
+		
+		TripScheduleDetailsVO detailsVO = (TripScheduleDetailsVO) plannerDay.get("detailsVO");
+		
+		int resultDetails = iTripScheduleMapper.insertTripScheduleDetails(detailsVO);
+		
+		int schdlDetailsNo = detailsVO.getSchdlDetailsNo();
+		if(resultDetails > 0) {
+			List<Map<String, String>> plannerItemList = (List<Map<String, String>>) plannerDay.get("places");
+	    	for(Map<String, String> plannerItem : plannerItemList) {
+	    		System.out.println("plannerItem : " + plannerItem);
+	    		
+	    		int placeId = Integer.parseInt(plannerItem.get("placeId"));
+	    		int placeOrder = Integer.parseInt(String.valueOf(plannerItem.get("placeOrder")));
+//	    		int destId = Integer.parseInt(plannerItem.get("destId"));
+	    		Integer planCost = Integer.parseInt(plannerItem.get("planCost"));
+	    		TripSchedulePlaceVO placeVO = new TripSchedulePlaceVO(schdlDetailsNo, plannerItem.get("placeType") , placeId, placeOrder
+	    				, plannerItem.get("placeStartTime"), plannerItem.get("placeEndTime")
+	    				, "N", plannerItem.get("destType"), planCost);
+	    		
+//	    		placeVO.set
+	    		insertTripSchedulePlace(placeVO);
+	    	}
+		}
+		
+		return resultDetails;
+	}
+	
+	@Override
+	public int insertTripSchedulePlace(TripSchedulePlaceVO placeVO) {
+		return iTripScheduleMapper.insertTripSchedulePlace(placeVO);
+	}
+	
 	// 텍스트 정제용 프라이빗 메소드 (예시)
 //	private String cleanText(String input) {
 //	    if (input == null) return "";

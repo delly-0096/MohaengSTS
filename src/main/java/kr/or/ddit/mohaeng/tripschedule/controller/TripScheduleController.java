@@ -11,11 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -28,8 +32,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import kr.or.ddit.mohaeng.login.controller.LoginController;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
+import kr.or.ddit.mohaeng.vo.CustomUser;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
+import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
+import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
+import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,9 +46,15 @@ import lombok.extern.slf4j.Slf4j;
 @Controller
 @RequestMapping("/schedule")
 public class TripScheduleController {
+
+    private final WebSecurityCustomizer configure;
 	
 	@Autowired
 	ITripScheduleService tripScheduleService;
+
+    TripScheduleController(WebSecurityCustomizer configure) {
+        this.configure = configure;
+    }
 	
 	@GetMapping("/search")
 	public String search(Model model) {
@@ -51,13 +66,13 @@ public class TripScheduleController {
 	}
 	
 	@ResponseBody
-	@GetMapping("/regionList")
+	@GetMapping("/common/regionList")
 	public ResponseEntity<List> searchRegionList(Model model) {
 		return new ResponseEntity<List>(tripScheduleService.selectRegionList(), HttpStatus.OK);
 	}
 	
 	@ResponseBody
-	@GetMapping("/searchRegion")
+	@GetMapping("/common/searchRegion")
 	public ResponseEntity<Params> searchRegion(HttpServletRequest req ,Model model) {
 		Params params = Params.of(req);
 		System.out.println(params);
@@ -76,7 +91,7 @@ public class TripScheduleController {
 	}
 	
 	@ResponseBody
-	@GetMapping("/initTourPlaceList")
+	@GetMapping("/common/initTourPlaceList")
 	public ResponseEntity<Map<String, Object>> initTourPlaceList(HttpServletRequest req ,Model model) {
 		Params params = Params.of(req);
 		RestClient restClient = RestClient.create();
@@ -112,24 +127,20 @@ public class TripScheduleController {
 	}
 	
 	@ResponseBody
-	@GetMapping("/searchPlaceDetail")
-	public ResponseEntity<TourPlaceVO> searchPlaceDetail(HttpServletRequest req ,Model model) {
-		Params params = Params.of(req);
+	@GetMapping("/common/searchPlaceDetail")
+	public ResponseEntity<TourPlaceVO> searchPlaceDetail(int contentId, int contenttypeId, Model model) {
+		Params params = new Params();
 		RestClient restClient = RestClient.create();
-		
-		int contentId = params.getInt("contentId");
+		params.put("contentId", contentId);
+		params.put("contenttypeId", contenttypeId);
 		
 		TourPlaceVO myTourPlaceVO = new TourPlaceVO();
 		myTourPlaceVO.setPlcNo(contentId);
 		myTourPlaceVO =	tripScheduleService.searchPlaceDetail(myTourPlaceVO);
-		
-		Map<String, Object> resultMap = new HashMap<>();
 
 		if(StringUtils.hasText(myTourPlaceVO.getPlcDesc())) {
 			return new ResponseEntity<TourPlaceVO>(myTourPlaceVO, HttpStatus.OK);
 		}
-		
-		String contenttypeId = params.getString("contenttypeId");
 		
 		String introUrlString = "https://apis.data.go.kr/B551011/KorService2/detailIntro2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
 				+ "&contentId=" + contentId
@@ -137,7 +148,7 @@ public class TripScheduleController {
 				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
 		
 		String detailUrlString = "https://apis.data.go.kr/B551011/KorService2/detailCommon2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
-				+ "&contentId=" + params.get("contentId")
+				+ "&contentId=" + contentId
 				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
 		
 		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
@@ -155,14 +166,6 @@ public class TripScheduleController {
 				.path("item")
 				.get(0);
 		
-//		JsonNode resultItem = null;
-//		if (introItemNode.isArray() && !introItemNode.isEmpty()) {
-//		    resultItem = introItemNode.get(0);
-//		} else {
-//		    // 데이터가 없을 때의 처리 (로그를 남기거나 빈 객체 반환 등)
-//		    System.out.println("데이터가 존재하지 않습니다.");
-//		}
-		
 		JsonNode detailNode = restClient.get()
 				.uri(detailUri)
 				.retrieve()
@@ -173,17 +176,6 @@ public class TripScheduleController {
 				.path("items")
 				.path("item")
 				.get(0);
-		
-		
-//		ObjectMapper introObjectMapper = new ObjectMapper();
-//		Map<String, String> tourPlaceIntro = introObjectMapper.convertValue(introItemNode, new TypeReference<>() {});
-//		resultMap.put("tourPlaceIntro", tourPlaceIntro);
-//		System.out.println("tourPlaceIntro : " + tourPlaceIntro);
-//		
-//		ObjectMapper detailObjectMapper = new ObjectMapper();
-//		Map<String, String> tourPlaceDetail = detailObjectMapper.convertValue(detailItemNode, new TypeReference<>() {});
-//		resultMap.put("tourPlaceDetail", tourPlaceDetail);
-//		System.out.println("tourPlaceDetail : " + tourPlaceDetail);
 		
 		//어떤 키값에 비용과 이용시간 정보가 있는건지 체킹 후 params 에 넣음
 		tripScheduleService.contentIdCheck(params);
@@ -213,15 +205,31 @@ public class TripScheduleController {
 		return new ResponseEntity<TourPlaceVO>(tourPlaceVO, HttpStatus.OK);
 	}
 	
+	@PostMapping("/insert")
+	@ResponseBody
+	public ResponseEntity<?> insertTourSchedule(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@RequestBody Params params
+			) {
+		System.out.println("params : " + params);
+
+	    int memNo = customUser.getMember().getMemNo();
+	    params.put("memNo", memNo);
+	    
+	    int resultSchedule = tripScheduleService.insertTripSchedule(params);
+	    
+	    return ResponseEntity.ok(1); 
+	}
+	
 	@GetMapping("/my")
 	public String mySchedule() {
 		
-		return "/schedule/my";
+		return "schedule/my";
 	}
 	
 	@GetMapping("/bookmark")
 	public String bookmark() {
 		
-		return "/schedule/bookmark";
+		return "schedule/bookmark";
 	}
 }

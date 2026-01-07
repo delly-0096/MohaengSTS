@@ -166,4 +166,100 @@
 			 , PLC_PRICE = #{plcPrice}
 		 WHERE PLC_NO = #{plcNo}
 	</update>
+	
+	<insert id="insertTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO">
+		<selectKey keyProperty="schdlNo" resultType="int" order="BEFORE">
+	        SELECT NVL(MAX(SCHDL_NO)+1, 1) FROM TRIP_SCHEDULE
+	    </selectKey>
+		INSERT INTO TRIP_SCHEDULE (
+		       SCHDL_NO
+		     , MEM_NO
+		     , PREF_NO
+		     , START_PLACE_TYPE
+		     , START_PLACE_ID
+		     , TARGET_PLACE_TYPE
+		     , TARGET_PLACE_ID
+		     , SCHDL_STATUS
+		     , SCHDL_START_DT
+		     , SCHDL_END_DT
+		     , TRAVELER_CNT
+		     , TOTAL_BUDGET
+		     , AI_RECOM_YN
+		     , PUBLIC_YN
+		     , REG_DT
+		     , DEL_YN
+			 ) VALUES (
+			   #{schdlNo}
+			 , #{memNo}
+			 , #{prefNo, jdbcType=INTEGER}
+			 , #{startPlaceType}
+			 , #{startPlaceId}
+			 , #{targetPlaceType}
+			 , #{targetPlaceId}
+			 , #{schdlStatus}
+			 , #{schdlStartDt}
+			 , #{schdlEndDt}
+			 , #{travelerCnt}
+			 , #{totalBudget}
+			 , #{aiRecomYn}
+			 , #{publicYn}
+			 , sysdate
+			 , 'N'
+			 )
+	</insert>
+	
+	<insert id="insertTripScheduleDetails" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO">
+		<selectKey keyProperty="schdlDetailsNo" resultType="int" order="BEFORE">
+	        SELECT NVL(MAX(SCHDL_DETAILS_NO) + 1, 1) FROM TRIP_SCHEDULE_DETAILS
+	    </selectKey>
+		INSERT INTO TRIP_SCHEDULE_DETAILS (
+			   SCHDL_DETAILS_NO
+			 , SCHDL_NO
+			 , SCHDL_TITLE
+			 , SCHDL_START_DT
+			 , SCHDL_END_DT
+			 , SCHDL_DT
+			 ) VALUES (
+			   #{schdlDetailsNo}
+			 , #{schdlNo}
+			 , #{schdlTitle}
+			 , TO_CHAR(TO_DATE(#{schdlStartDt}, 'YYYY-MM-DD') + (#{schdlDt}-1), 'YYYY-MM-DD')
+			 , TO_CHAR(TO_DATE(#{schdlStartDt}, 'YYYY-MM-DD') + (#{schdlDt}), 'YYYY-MM-DD')
+			 , #{schdlDt}
+			 )
+	</insert>
+	
+	<insert id="insertTripSchedulePlace" parameterType="kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO">
+		<selectKey keyProperty="schdlPlcNo" resultType="int" order="BEFORE">
+	        SELECT NVL(MAX(SCHDL_PLC_NO) + 1, 1) FROM TRIP_SCHEDULE_PLACE
+	    </selectKey>
+		INSERT INTO TRIP_SCHEDULE_PLACE (
+			   SCHDL_PLC_NO
+			 , SCHDL_DETAILS_NO
+			 , PLACE_TYPE
+			 , PLACE_ID
+			 , PLACE_ORDER
+			 , PLACE_START_TIME
+			 , PLACE_END_TIME
+			 , ALL_DAY_YN
+			 , DEST_TYPE
+			 , DEST_ID
+<!-- 			 , MOVE_TYPE -->
+			 , PLAN_COST
+			 ) VALUES (
+			   #{schdlPlcNo}
+			 , #{schdlDetailsNo}
+			 , #{placeType}
+			 , #{placeId}
+			 , #{placeOrder}
+			 , #{placeStartTime}
+			 , #{placeEndTime}
+			 , #{allDayYn}
+			 , #{placeType}
+			 , #{placeId}
+<!-- 			 , :v10 -->
+			 , #{planCost}
+			 )
+	</insert>
+	
 </mapper>

@@ -6,6 +6,9 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
+import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
+import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
+import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
 
 @Mapper
@@ -24,5 +27,11 @@ public interface ITripScheduleMapper {
 	public TourPlaceVO searchPlaceDetail(TourPlaceVO tourPlaceVO);
 
 	public int saveTourPlacInfo(TourPlaceVO tourPlaceVO);
+
+	public int insertTripSchedule(TripScheduleVO tripScheduleVO);
+
+	public int insertTripScheduleDetails(TripScheduleDetailsVO detailsVO);
+
+	public int insertTripSchedulePlace(TripSchedulePlaceVO placeVO);
 
 }

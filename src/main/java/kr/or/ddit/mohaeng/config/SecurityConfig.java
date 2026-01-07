@@ -69,6 +69,9 @@ public class SecurityConfig {
 			"/mypage/profile/update",
 			"/idCheck",
 			"/error",
+			"/schedule/search",
+			"/schedule/planner",
+			"/schedule/common/**",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
@@ -80,6 +83,7 @@ public class SecurityConfig {
 			"/",
 			"/error",
 			"/mohaeng",
+			"/schedule/**",
 			"/.well-known/**"		// 크롬 개발자 도구로의 요청
 	};
 	

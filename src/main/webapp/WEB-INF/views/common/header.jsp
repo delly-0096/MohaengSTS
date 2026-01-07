@@ -36,7 +36,7 @@
         <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/${pageCss}.css">
     </c:if>
 </head>
-<body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize> <sec:authorize access='isAnonymous()'>false</sec:authorize>">
+<body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize><sec:authorize access='isAnonymous()'>false</sec:authorize>">
     <!-- 헤더 -->
     <header class="header" id="header">
         <div class="header-container">

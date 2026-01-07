@@ -469,6 +469,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 	
 	// 4. 마커가 다 보이도록 지도 줌 레벨 자동 조정
 	myMap.fitBounds();
+	
+	initReturn();
 });
 
 // 일자 선택
@@ -872,7 +874,8 @@ function getDragAfterElement(container, y) {
 
 function saveSchedule() {
     const isLoggedIn = ${not empty sessionScope.loginMember};
-
+	console.log("${sessionScope}")
+	console.log("${sessionScope.loginMember}")
     if (!isLoggedIn) {
         sessionStorage.setItem('returnUrl', window.location.href);
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
@@ -951,21 +954,97 @@ function selectVisibility(visibility) {
 }
 
 // 일정 저장 확인
+// function confirmSaveSchedule() {
+//     var visibilityLabels = {
+//         'public': '전체 공개',
+//         'private': '비공개'
+//     };
+
+//     // 일정 저장 (실제 구현 시 AJAX)
+//     console.log('저장 설정:', selectedVisibility);
+
+//     saveScheduleModal.hide();
+//     showToast('일정이 ' + visibilityLabels[selectedVisibility] + '로 저장되었습니다!', 'success');
+
+//     setTimeout(function() {
+//         window.location.href = '${pageContext.request.contextPath}/schedule/my';
+//     }, 1500);
+// }
+
 function confirmSaveSchedule() {
-    var visibilityLabels = {
-        'public': '전체 공개',
-        'private': '비공개'
+    // 1. Master 데이터 추출 (TRIP_SCHEDULE 매핑)
+    const masterData = {
+        schdlStartDt: startDt, // 시작일 (YYYY-MM-DD)
+        schdlEndDt: endDt,     // 종료일
+        totalBudget: totalBudget,
+        publicYn: selectedVisibility === 'public' ? 'Y' : 'N',
+        aiRecomYn : 'N',
+        prefNo: preferenceData.prefNo || null, // 선호도 번호가 있다면
+        startPlaceId : preferenceData.departurecode,
+        targetPlaceId : preferenceData.destinationcode,
+        travelerCount : preferenceData.travelerCount,
+        details: [] // 상세 일차 데이터를 담을 배열
     };
 
-    // 일정 저장 (실제 구현 시 AJAX)
-    console.log('저장 설정:', selectedVisibility);
+    // 2. 일차별 데이터 및 장소 데이터 추출 (DETAILS & PLACE 매핑)
+    for (let d = 1; d <= duration; d++) {
+        const dayInfo = dayData[d] || {};
+        
+        const detailObj = {
+            schdlDt: d,                         // 1일차, 2일차...
+            schdlTitle: dayInfo.theme || d + "일차", // 일차별 테마
+            places: []                          // 해당 일차의 장소들
+        };
 
-    saveScheduleModal.hide();
-    showToast('일정이 ' + visibilityLabels[selectedVisibility] + '로 저장되었습니다!', 'success');
+        // 해당 일차의 장소 아이템들 수집
+        const items = document.querySelectorAll('#day' + d + 'Items .planner-item');
+        items.forEach((item, index) => {
+            detailObj.places.push({
+                placeId: item.dataset.contentid,        // PLACE_ID
+                placeType: item.dataset.contenttypeid,  // PLACE_TYPE
+                placeStartTime: item.dataset.startTime, // 방문시간
+                placeEndTime: item.dataset.endTime,     // 방문종료시간
+                placeOrder: index + 1,                  // 순서 (순차적으로)
+                // DB에는 없지만 필요시 전달할 추가 정보
+                plcNm: item.querySelector('.planner-item-name').innerText,
+                planCost: item.dataset.cost.replace(/[^0-9]/g, '')
+            });
+        });
 
-    setTimeout(function() {
-        window.location.href = '${pageContext.request.contextPath}/schedule/my';
-    }, 1500);
+        masterData.details.push(detailObj);
+    }
+
+    // 데이터 유효성 검사
+    if (masterData.details.every(d => d.places.length === 0)) {
+        showToast('최소 하나 이상의 장소를 추가해야 저장 가능합니다.', 'warning');
+        return;
+    }
+
+    // 3. 서버 전송 (AJAX)
+    fetch('${pageContext.request.contextPath}/schedule/insert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(masterData)
+    })
+    .then(response => response.json())
+    .then(res => {
+        if (res > 0 || res.status === 'success') {
+            showToast('일정이 안전하게 저장되었습니다!', 'success');
+            
+            // 성공 시 세션 스토리지 정리 (앞서 질문하신 특정 아이템 삭제)
+            sessionStorage.removeItem('tempPlanDataList');
+            
+            setTimeout(() => {
+                window.location.href = '${pageContext.request.contextPath}/schedule/my';
+            }, 1000);
+        } else {
+            showToast('저장 중 오류가 발생했습니다.', 'danger');
+        }
+    })
+    .catch(err => {
+        console.error('Save Error:', err);
+        showToast('서버 통신 실패', 'danger');
+    });
 }
 
 // 일차 수정 모달 열기
@@ -1143,7 +1222,7 @@ function updateItemCost(day, itemId, value) {
 }
 
 async function initDestinationData(destinationcode) {
-	const response = await fetch("/schedule/searchRegion?rgnNo="+destinationcode)
+	const response = await fetch("/schedule/common/searchRegion?rgnNo="+destinationcode)
 	
 	const dataList = await response.json();
 	
@@ -1151,7 +1230,7 @@ async function initDestinationData(destinationcode) {
 }
 
 async function initTourPlaceList(areaCode) {
-	const response = await fetch(`/schedule/initTourPlaceList?areaCode=\${areaCode}`)
+	const response = await fetch("/schedule/common/initTourPlaceList?areaCode="+areaCode)
 	
 	const dataList = await response.json();
 	
@@ -1194,7 +1273,7 @@ async function initTourPlaceList(areaCode) {
 }
 
 async function searchPlaceDetail(contentId, contenttypeId) {
-	const response = await fetch("/schedule/searchPlaceDetail?contentId="+contentId+"&contenttypeId="+contenttypeId);
+	const response = await fetch("/schedule/common/searchPlaceDetail?contentId="+contentId+"&contenttypeId="+contenttypeId);
 	
 	const dataList = await response.json();
 	console.log(dataList)
@@ -1292,7 +1371,64 @@ function initTemplate() {
     if (preferenceData.travelDates) {
         document.getElementById('tripDates').textContent = preferenceData.travelDates;
     }
-     
+    
+}
+
+function initReturn() {
+	let tempPlanDataList = sessionStorage.getItem("tempPlanDataList");
+	let planDataList = JSON.parse(tempPlanDataList)
+    console.log(planDataList);
+	
+	if(planDataList && planDataList.length > 0) {
+		planDataList.forEach(item => {
+            console.log(item)
+			itemIdCounter++;
+		    var newItemId = itemIdCounter;
+		    var newItem = document.createElement('div');
+		    
+		    newItem.className = 'planner-item';
+		    newItem.draggable = true;
+		    newItem.dataset.itemId = item.itemId;
+		    newItem.dataset.contentid = item.contentid;
+		    newItem.dataset.contenttypeid = item.contenttypeid;
+		    newItem.dataset.startTime = item.startTime;
+		    newItem.dataset.endTime = item.endTime;
+		    newItem.dataset.latitude = item.latitude;
+		    newItem.dataset.longitude = item.longitude;
+		    newItem.dataset.cost = item.cost;
+		    
+		    newItem.innerHTML =
+		        '<div class="planner-item-time">' +
+		            '<input type="time" class="time-input time-start" value="' + item.startTime + '" onchange="updateItemTime(' + item.day + ', ' + item.itemId + ', \'start\', this.value)">' +
+		            '<span class="time-separator">~</span>' +
+		            '<input type="time" class="time-input time-end" value="' + item.endTime + '" onchange="updateItemTime(' + item.day + ', ' + item.itemId + ', \'end\', this.value)">' +
+		        '</div>' +
+		        '<div class="planner-item-content">' +
+		            '<span class="planner-item-name">' + item.itemName + '</span>' +
+		            '<span class="planner-item-category">' + item.itemCategory + '</span>' +
+		        '</div>' +
+		        '<div class="planner-item-cost">' +
+		            '<input type="text" class="cost-input" value="0" placeholder="0" onclick="this.select()" onchange="updateItemCost(' + item.day + ', ' + item.itemId + ', this.value)">' +
+		            '<span class="cost-unit">원</span>' +
+		        '</div>' +
+		        '<div class="planner-item-actions">' +
+		            '<button onclick="viewItemDetail(' + item.itemId + ')"><i class="bi bi-info-circle"></i></button>' +
+		            '<button onclick="removeItem(' + item.day + ', ' + item.itemId + ')"><i class="bi bi-trash"></i></button>' +
+		        '</div>';
+		        
+	        let itemsContainer = document.getElementById('day' + item.day + 'Items');
+	        if (!itemsContainer) {
+	            console.error('Container not found');
+	            return;
+	        }
+	        
+    		itemsContainer.appendChild(newItem);
+		    initDragAndDropForItem(newItem);
+			myMap.addMarker(item.latitude, item.longitude, item.itemName, { id: item.itemId });
+			myMap.fitBounds();
+        });
+	}
+
 }
 </script>
 

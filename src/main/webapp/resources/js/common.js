@@ -8,6 +8,7 @@ const contextPath = document.querySelector('meta[name="context-path"]')?.content
 
 // ===== 문서 로드 완료 시 실행 =====
 document.addEventListener('DOMContentLoaded', function() {
+	initReturnRedirect();
 	initLocationData();
     initHeader();
     initFlatpickr();
@@ -404,10 +405,10 @@ function showAutocomplete(dropdown, query, travelType) {
 }
 
 async function initLocationData() {
-	const response = await fetch("/schedule/regionList")
+	const response = await fetch("/schedule/common/regionList")
 	
 	const dataList = await response.json();
-	/*console.log(dataList);*/
+	console.log(dataList);
 	locationData.domestic = dataList;
 	
 	return dataList;
@@ -651,6 +652,17 @@ function requireLogin(returnUrl) {
         return false;
     }
     return true;
+}
+
+function initReturnRedirect() {
+	const isLoggedIn = document.body.dataset.loggedIn === 'true';
+	let returnUrl = sessionStorage.getItem('returnUrl');
+	console.log(isLoggedIn)
+	console.log(returnUrl)
+	if(isLoggedIn && returnUrl){
+		sessionStorage.removeItem('returnUrl');
+		location.href=returnUrl;
+	}
 }
 
 // 로그인 필요 알림

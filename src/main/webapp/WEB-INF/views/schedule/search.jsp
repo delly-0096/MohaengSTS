@@ -795,7 +795,7 @@
 <script>
 let currentStep = 1;
 let totalSteps = 5;
-let travelerCount = 2;
+let travelerCount = 1;
 let planMethod = 'recommend'; // 기본값: 추천 받기
 
 // 여행지 빠른 선택
@@ -862,6 +862,7 @@ function goToPlanner() {
         destination: document.getElementById('destination').value,
         destinationcode : document.getElementById('destination').dataset.code,
         travelDates: document.getElementById('travelDates').value,
+        travelerCount : travelerCount,
         travelers: travelerCount,
         planMethod: 'self'
     };

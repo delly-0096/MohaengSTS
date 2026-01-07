@@ -23,39 +23,60 @@
                 	<input type="hidden" name="profileImageDeleted" id="profileImageDeleted" value="false">
                     <!-- 프로필 이미지 섹션 -->
                     <div class="content-section">
-                        <h5 class="form-section-title"><i class="bi bi-image me-2"></i>프로필 이미지</h5>
-                        	<div class="profile-image-upload">
-                        		<div id="profileContainer" class="profile-image-preview-container">
-		                            <!-- 기본 아이콘 -->
-								    <i class="bi bi-person profile-default-icon"
-								       style="${not empty profileImgUrl ? 'display:none;' : ''}">
-								    </i>
-
-	                          		<!-- 프로필 이미지 -->
-								    <img
-								        id="profilePreview"
-								        class="profile-image-preview"
-								     	src="<c:url value='/upload${profileImgUrl}' />"
-								        style="${not empty profileImgUrl ? '' : 'display:none;'}"
-								        alt="프로필 이미지"
-								    >
-							</div>
-                            <div class="profile-image-actions">
-                                <input type="file" name="profileImage" id="profileImage" accept="image/*" hidden>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profileImage').click()">
-                                    <i class="bi bi-camera me-2"></i>이미지 변경
-                                </button>
-                                <button type="button" class="btn btn-outline btn-sm" onclick="resetProfileImage()">
-                                    <i class="bi bi-trash me-2"></i>삭제
-                                </button>
-                                <p class="form-hint mt-2 mb-0">JPG, PNG 파일 (최대 5MB)</p>
-                            </div>
-                        </div>
-                    </div>
-
+					    <div class="profile-top-layout">
+					        <div class="profile-left-part">
+					            <h5 class="form-section-title"><i class="bi bi-image me-2 text-brand"></i>프로필 이미지</h5>
+					            <div class="profile-image-upload">
+					                <div id="profileContainer" class="profile-image-preview-container">
+					                    <i class="bi bi-person profile-default-icon" style="${not empty profileImgUrl ? 'display:none;' : ''}"></i>
+					                    <img id="profilePreview" class="profile-image-preview" src="<c:url value='/upload${profileImgUrl}' />" 
+					                         style="${not empty profileImgUrl ? '' : 'display:none;'}" alt="프로필 이미지">
+					                </div>
+					                <div class="profile-image-actions">
+					                    <input type="file" name="profileImage" id="profileImage" accept="image/*" hidden>
+					                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profileImage').click()">
+					                        <i class="bi bi-camera me-2"></i>프로필 변경
+					                    </button>
+					                    <button type="button" class="btn btn-outline btn-sm" onclick="resetProfileImage()">
+					                        <i class="bi bi-trash me-2"></i>프로필 삭제
+					                    </button>
+					                    <p class="form-hint mt-2 mb-0">JPG, PNG 파일 (최대 5MB)</p>
+					                </div>
+					            </div>
+					        </div>
+					        
+					<!-- 알림 설정 섹션 -->
+					        <div class="profile-right-part">
+					            <h5 class="form-section-title"><i class="bi bi-bell me-2 text-brand"></i>알림 설정</h5>
+					            <div class="notification-list compact-grid">
+					                <div class="notification-item">
+					                    <label for="notifyReservation">예약 확정/취소</label>
+					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyReservation" id="notifyReservation" checked></div>
+					                </div>
+					                <div class="notification-item">
+					                    <label for="notifySchedule">여행 일정 리마인드</label>
+					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifySchedule" id="notifySchedule" checked></div>
+					                </div>
+					                <div class="notification-item">
+					                    <label for="notifyCommunity">커뮤니티 댓글/답글</label>
+					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyCommunity" id="notifyCommunity" checked></div>
+					                </div>
+					                <div class="notification-item">
+					                    <label for="notifyPoint">포인트 적립/사용</label>
+					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyPoint" id="notifyPoint"></div>
+					                </div>
+					                <div class="notification-item">
+					                    <label for="notifyInquiry">1:1 문의 답변</label>
+					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyInquiry" id="notifyInquiry" checked></div>
+					                </div>
+					            </div>
+					        </div>
+					    </div>
+					</div>
+	                    
                     <!-- 기본 정보 섹션 -->
                     <div class="content-section">
-                        <h5 class="form-section-title"><i class="bi bi-person me-2"></i>기본 정보</h5>
+                        <h5 class="form-section-title"><i class="bi bi-person me-2 text-brand"></i>기본 정보</h5>
 
                         <div class="row">
                             <!-- 아이디 (읽기전용) -->
@@ -168,7 +189,7 @@
 
                     <!-- 주소 정보 섹션 -->
                     <div class="content-section">
-                        <h5 class="form-section-title"><i class="bi bi-geo-alt me-2"></i>주소 정보</h5>
+                        <h5 class="form-section-title"><i class="bi bi-geo-alt me-2 text-brand"></i>주소 정보</h5>
 
                         <div class="form-group">
                             <label class="form-label">주소 <span class="text-danger">*</span></label>
@@ -192,7 +213,7 @@
 
                     <!-- 비밀번호 확인 섹션 -->
                     <div class="content-section">
-                        <h5 class="form-section-title"><i class="bi bi-lock me-2"></i>비밀번호 확인</h5>
+                        <h5 class="form-section-title"><i class="bi bi-lock me-2 text-brand"></i>비밀번호 확인</h5>
                         <p class="text-muted mb-3">회원정보 수정을 위해 현재 비밀번호를 입력해주세요. 비밀번호 변경을 원하시면 새 비밀번호도 입력하세요.</p>
 
                         <div class="row">
@@ -262,46 +283,10 @@
                             </div>
                         </div>
                     </div>
-                    
-
-                    <!-- 알림 설정 섹션 -->
-                    <div class="content-section">
-                        <h5 class="form-section-title"><i class="bi bi-bell me-2"></i>알림 설정</h5>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="notifyReservation" id="notifyReservation" checked>
-                            <label class="form-check-label" for="notifyReservation">
-                                예약 확정/취소 알림 (이메일)
-                            </label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="notifySchedule" id="notifySchedule" checked>
-                            <label class="form-check-label" for="notifySchedule">
-                                여행 일정 리마인드 알림 (이메일)
-                            </label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="notifyCommunity" id="notifyCommunity" checked>
-                            <label class="form-check-label" for="notifyCommunity">
-                                커뮤니티 댓글/답글 알림 (이메일)
-                            </label>
-                        </div>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="checkbox" name="notifyPoint" id="notifyPoint">
-                            <label class="form-check-label" for="notifyPoint">
-                                포인트 적립/사용 알림 (이메일)
-                            </label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" name="notifyInquiry" id="notifyInquiry" checked>
-                            <label class="form-check-label" for="notifyInquiry">
-                                문의 답변 알림 (이메일)
-                            </label>
-                        </div>
-                    </div>
-
+                   
                     <!-- 마케팅 수신 동의 섹션 -->
                     <div class="content-section">
-                        <h5 class="form-section-title"><i class="bi bi-megaphone me-2"></i>마케팅 수신 동의</h5>
+                        <h5 class="form-section-title"><i class="bi bi-megaphone me-2 text-brand"></i>마케팅 수신 동의</h5>
                         <p class="text-muted mb-3">여행 정보, 할인 혜택 등 유용한 소식을 받아보세요.</p>
 
                         <div class="marketing-options">
@@ -340,27 +325,30 @@
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="bi bi-check-lg me-2"></i>저장하기
                         </button>
-                        <button type="button" class="btn btn-outline btn-lg" onclick="location.href='${pageContext.request.contextPath}/mypage'">
+                        <button type="button" class="btn btn-outline btn-lg" onclick="history.back()">
                             취소
                         </button>
                     </div>
                 </form>
 
                 <!-- 계정 탈퇴 섹션 -->
-                <div class="content-section danger-section">
-                    <h5 class="form-section-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>계정 탈퇴</h5>
-                    <p class="text-muted mb-3">
-                        계정을 탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다.<br>
-                        작성한 게시글, 예약 내역, 포인트 등 모든 정보가 영구적으로 삭제됩니다.
-                    </p>
-                    <button type="button" class="btn btn-outline-danger" onclick="openWithdrawModal()">
-                        <i class="bi bi-person-x me-2"></i>회원 탈퇴
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+				<div class="content-section danger-section">
+				    <div class="danger-flex-container">
+				        <div class="danger-text">
+				            <h5 class="form-section-title text-danger"><i class="bi bi-exclamation-triangle me-2"></i>계정 탈퇴</h5>
+				            <p class="text-muted mb-0"> 계정을 탈퇴하면 모든 데이터가 삭제되며 복구할 수 없습니다.<br>
+				                작성한 게시글, 예약 내역, 포인트 등 정보가 영구 삭제됩니다.
+				            </p>
+				        </div>
+				        <div class="danger-action">
+				            <button type="button" class="btn btn-outline-danger" onclick="openWithdrawModal()">
+				                <i class="bi bi-person-x me-2"></i>회원 탈퇴
+				            </button>
+				        </div>
+				    </div>
+				</div>
+		    </div>
+		</div>
 
 <!-- 회원 탈퇴 모달 -->
 <div class="modal fade" id="withdrawModal" tabindex="-1">

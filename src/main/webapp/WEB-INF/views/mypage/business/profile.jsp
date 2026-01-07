@@ -15,104 +15,155 @@
                     <h1>회원 정보 수정</h1>
                     <p>담당자 정보 및 비밀번호를 수정할 수 있습니다</p>
                 </div>
-
-                <div class="content-section">
+				
                     <form class="profile-form" id="businessProfileForm" style="max-width: 100%;" action="${pageContext.request.contextPath}/mypage/profile/update" method="POST" enctype="multipart/form-data">
                         <input type="hidden" name="profileImageDeleted" id="profileImageDeleted" value="false">
-                        <!-- 로고 이미지 섹션 -->
-                        <div class="content-section">
-							<h5 class="form-section-title"><i class="bi bi-image me-2"></i>프로필 로고 이미지</h5>
-		                        <div class="profile-image-upload">
-									<div id="profileContainer" class="profile-image-preview-container">
-				                            <!-- 기본 아이콘 -->
-										    <i class="bi bi-person profile-default-icon"
-										       style="${not empty profileImgUrl ? 'display:none;' : ''}">
-										    </i>                     
-										    <!-- 프로필 이미지 -->
-				                            <img
-					                            id="profilePreview"
-					                            class="profile-image-preview" 
-					                            src="<c:url value='/upload${profileImgUrl}' />"
-												        style="${not empty profileImgUrl ? '' : 'display:none;'}"
-				                                 alt="로고 프로필 이미지" 
-				                                 >
-		                            </div>
-		                            <div class="profile-image-actions">
-		                                <input type="file" name="profileImage" id="profileImage" accept="image/*" hidden>
-		                                <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profileImage').click()">
-		                                    <i class="bi bi-camera me-1"></i>로고 이미지 변경
-		                                </button>
-		                                <button type="button" class="btn btn-outline btn-sm" onclick="resetProfileImage()">
-		                                    <i class="bi bi-trash me-1"></i>삭제
-		                                </button>
-		                            <p class="form-hint mt-2 mb-0">권장 크기: 200x200px (최대 2MB)</p>
-		                            </div>
-	                        </div>
-						</div>
-                        <div class="row">
-                            <!-- 기업 기본 정보 (읽기전용) -->
-                            <div class="col-lg-6">
-                                <h5 class="form-section-title"><i class="bi bi-building me-2"></i>기업 기본 정보</h5>
-                                <div class="form-group">
-                                    <label class="form-label">기업명</label>
-                                    <input type="text" class="form-control" name="bzmnNm" id="bzmnNm" value="${member.company.bzmnNm}" readonly disabled>
-                                    <small class="text-muted">기업 정보 변경은 고객센터로 문의해주세요.</small>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">사업자등록번호</label>
-                                    <input type="text" class="form-control" name="brno" id="brno" value="${member.company.brno}" readonly disabled>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">업종</label>
-                                    <input type="text" class="form-control" name="industryCd" id="industryCd" value="${member.company.industryCd}" readonly disabled>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">사업장 주소</label>
-                                    <input type="text" class="form-control mb-2" name="compZip" id="compZip" value="${member.company.compZip}" readonly disabled>
-                                    <input type="text" class="form-control mb-2" name="compAddr1" id="compAddr1" value="${member.company.compAddr1}" readonly disabled>
-                                    <input type="text" class="form-control" name="compAddr2" id="compAddr2" value="${member.company.compAddr2}" readonly disabled>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">회사 홈페이지</label>
-                                    <input type="url" class="form-control" name="compUrl" id="companyWebsite"
-                                           value="${member.company.compUrl}" placeholder="예: https://www.example.com">
-                                    <small class="text-muted">https://를 포함하여 입력해주세요.</small>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">기업 소개</label>
-                                    <textarea class="form-control" name="compIntro" id="companyDescription"
-                                              rows="4" maxlength="1000"
-                                              placeholder="기업에 대한 간단한 소개를 입력해주세요. (최대 1000자)">${member.company.compIntro}</textarea>
-                                    <small class="text-muted">고객에게 보여질 기업 소개입니다. 제공하는 서비스, 특장점 등을 작성해주세요.</small>
-                                </div>
-                            </div>
-
-                            <!-- 담당자 정보 (수정가능) -->
-                            <div class="col-lg-6">
-                                <h5 class="form-section-title"><i class="bi bi-person me-2"></i>담당자 정보</h5>
-                                <div class="form-group">
-                                    <label class="form-label">담당자명 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" name="memName" id="managerName" value="${member.memName}" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">담당자 이메일 <span class="text-danger">*</span></label>
-                                    <input type="email" class="form-control" name="memEmail" id="managerEmail" value="${member.memEmail}" required>
-                                    <small class="text-muted">알림 수신 및 비밀번호 찾기에 사용됩니다.</small>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">담당자 연락처 <span class="text-danger">*</span></label>
-                                    <input type="tel" class="form-control" name="memCompTel" id="managerPhone" value="${member.memComp.memCompTel}" placeholder="'-' 없이 입력" maxlength="11" required>
-                                </div>
-                                <div class="form-group">
-                                    <label class="form-label">대표 전화번호</label>
-                                    <input type="tel" class="form-control" name="compTel" id="compTel" value="${member.company.compTel}" readonly disabled>
-                                    <small class="text-muted">대표 전화번호 변경은 고객센터로 문의해주세요.</small>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 정산 정보 (읽기전용) -->
-                        <h5 class="form-section-title"><i class="bi bi-bank me-2"></i>정산 정보</h5>
+		                    <!-- 프로필 이미지 섹션 -->
+		                    <div class="content-section">
+							    <div class="profile-top-layout">
+							        <div class="profile-left-part">
+							            <h5 class="form-section-title"><i class="bi bi-image me-2 text-brand"></i>프로필 이미지</h5>
+							            <div class="profile-image-upload">
+							                <div id="profileContainer" class="profile-image-preview-container">
+							                    <i class="bi bi-person profile-default-icon" style="${not empty profileImgUrl ? 'display:none;' : ''}"></i>
+							                    <img id="profilePreview" class="profile-image-preview" src="<c:url value='/upload${profileImgUrl}' />" 
+							                         style="${not empty profileImgUrl ? '' : 'display:none;'}" alt="로고 프로필 이미지">
+							                </div>
+							                <div class="profile-image-actions">
+							                    <input type="file" name="profileImage" id="profileImage" accept="image/*" hidden>
+							                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profileImage').click()">
+							                        <i class="bi bi-camera me-2"></i>로고 이미지 변경
+							                    </button>
+							                    <button type="button" class="btn btn-outline btn-sm" onclick="resetProfileImage()">
+							                        <i class="bi bi-trash me-2"></i>로고 이미지 삭제
+							                    </button>
+							                    <p class="form-hint mt-2 mb-0">권장 크기: 200x200px (최대 2MB)</p>
+							                </div>
+							            </div>
+							        </div>
+							        
+							<!-- 알림 설정 섹션 -->
+							        <div class="profile-right-part">
+							            <h5 class="form-section-title"><i class="bi bi-bell me-2 text-brand"></i>알림 설정</h5>
+							            <div class="notification-list compact-grid">
+							                <div class="notification-item" id="notifyOrder">
+							                    <label for="notifyReservation" for="notifyOrder">새 예약 알림</label>
+							                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyReservation" id="notifyReservation" checked></div>
+							                </div>
+							                <div class="notification-item" id="notifyReview">
+							                    <label for="notifySchedule" for="notifyReview">새 후기 알림</label>
+							                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifySchedule" id="notifySchedule" checked></div>
+							                </div>
+							                <div class="notification-item" id="notifyInquiry">
+							                    <label for="notifyCommunity" for="notifyInquiry">문의 알림</label>
+							                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyCommunity" id="notifyCommunity" checked></div>
+							                </div>
+							                <div class="notification-item" id="notifySettlement">
+							                    <label for="notifyPoint" for="notifySettlement">정산 완료 알림</label>
+							                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyPoint" id="notifyPoint"></div>
+							                </div>
+							                <div class="notification-item" id="notifyMarketing">
+							                    <label for="notifyInquiry" for="notifyMarketing">마케팅 정보 수신</label>
+							                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyInquiry" id="notifyInquiry" checked></div>
+							                </div>
+							            </div>
+							        </div>
+							    </div>
+							</div>
+							
+							<!-- 기업 정보 -->
+							<div class="content-section company-info-card">
+							    <div class="row g-5">
+							        <div class="col-lg-6 pe-lg-5 border-end">
+										<h5 class="form-section-title mb-4">
+										        <i class="bi bi-building-check text-brand"></i> 기업 기본 정보
+							            </h5>
+							            
+							            <div class="form-group">
+							                <label class="form-label">기업명</label>
+							                <div class="field-base readonly-field">
+							                    <i class="bi bi-lock-fill me-2 small"></i> ${member.company.bzmnNm}
+							                </div>
+							            </div>
+							
+							            <div class="row">
+							                <div class="col-6">
+							                    <div class="form-group">
+							                        <label class="form-label">사업자번호</label>
+							                        <div class="field-base readonly-field">${member.company.brno}</div>
+							                    </div>
+							                </div>
+							                <div class="col-6">
+							                    <div class="form-group">
+							                        <label class="form-label">업종</label>
+							                        <div class="field-base readonly-field">${member.company.industryCd}</div>
+							                    </div>
+							                </div>
+							            </div>
+							
+							            <div class="form-group">
+							                <label class="form-label">사업장 주소</label>
+							                <div class="field-base readonly-field address-display">
+							                    <div class="fw-bold text-dark">${member.company.compAddr1}</div>
+							                    <div class="small">${member.company.compAddr2} (${member.company.compZip})</div>
+							                </div>
+							                <small class="text-muted mt-2 d-block"><i class="bi bi-info-circle me-1"></i> 주소 변경은 고객센터로 문의하세요.</small>
+							            </div>
+							
+							            <div class="form-group">
+							                <label class="form-label">기업 소개</label>
+							                <div class="editable-input-container rounded-3">
+							                    <textarea class="form-control" id="companyIntro" name="compIntro" rows="5" maxlength="1000" placeholder="기업을 소개해주세요.">${member.company.compIntro}</textarea>
+							                </div>
+							                <div class="text-end mt-1">
+							                    <small class="text-muted"><span id="charCount">0</span> / 1000자</small>
+							                </div>
+							            </div>
+							        </div>
+							
+									<!-- 기업 담당자 정보  -->
+							        <div class="col-lg-6 ps-lg-5">
+										<h5 class="form-section-title mb-4">
+										        <i class="bi bi-person-gear text-brand"></i>담당자 설정
+										</h5>
+							
+							            <div class="form-group">
+							                <label class="form-label">담당자 이름 <span class="text-danger ms-1">*</span></label>
+							                <div class="field-base editable-input-container">
+							                    <input type="text" class="form-control" name="memName" value="${member.memName}" required>
+							                </div>
+							            </div>
+							
+							            <div class="form-group">
+							                <label class="form-label">비즈니스 이메일 <span class="text-danger ms-1">*</span></label>
+							                <div class="field-base editable-input-container d-flex">
+							                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+							                    <input type="email" class="form-control border-0" name="memEmail" value="${member.memEmail}" required>
+							                </div>
+							            </div>
+							
+							            <div class="form-group">
+							                <label class="form-label">담당자 연락처 <span class="text-danger ms-1">*</span></label>
+							                <div class="field-base editable-input-container d-flex">
+							                    <span class="input-group-text"><i class="bi bi-phone"></i></span>
+							                    <input type="tel" class="form-control border-0" name="memCompTel" value="${member.memComp.memCompTel}" required>
+							                </div>
+							            </div>
+							
+							            <div class="form-group">
+							                <label class="form-label">기업 대표 전화</label>
+							                <div class="field-base readonly-field">
+							                    <i class="bi bi-telephone me-2 small"></i> ${member.company.compTel}
+							                </div>
+							                <small class="text-muted mt-2 d-block">대표 번호 변경은 관리자 승인이 필요합니다.</small>
+							            </div>
+							        </div>
+							    </div>
+							</div>
+                    
+                    <!-- 정산 정보 (읽기전용) -->
+                    <div class="content-section">
+                        <h5 class="form-section-title"><i class="bi bi-bank me-2 text-brand"></i>정산 정보</h5>
                         <div class="row mb-4">
                             <div class="col-md-4">
                                 <div class="form-group">
@@ -136,9 +187,11 @@
                                 <small class="text-muted"><i class="bi bi-info-circle me-1"></i>정산 정보 변경은 고객센터로 문의해주세요.</small>
                             </div>
                         </div>
-
-                         <!-- 비밀번호 확인 섹션 -->
-                        <h5 class="form-section-title"><i class="bi bi-lock me-2"></i>비밀번호 확인</h5>
+					</div>
+					
+                    <!-- 비밀번호 확인 섹션 -->
+					<div class="content-section">
+                        <h5 class="form-section-title"><i class="bi bi-lock me-2 text-brand"></i>비밀번호 확인</h5>
                         <p class="text-muted mb-3">회원정보 수정을 위해 현재 비밀번호를 입력해주세요. 비밀번호 변경을 원하시면 새 비밀번호도 입력하세요.</p>
                         <div class="row mb-4">
                             <div class="col-md-4">
@@ -161,45 +214,46 @@
                                 </div>
                             </div>
                         </div>
+					</div>
+					
+					<!-- 마케팅 수신 동의 섹션 -->
+                    <div class="content-section">
+                        <h5 class="form-section-title"><i class="bi bi-megaphone me-2 text-brand"></i>마케팅 수신 동의</h5>
+                        <p class="text-muted mb-3"> 기업 회원만의 유용한 소식을 받아보세요.</p>
 
-                        <!-- 알림 설정 -->
-                        <h5 class="form-section-title"><i class="bi bi-bell me-2"></i>알림 설정</h5>
-                        <div class="row mb-4">
-                            <div class="col-12">
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="notifyOrder" checked>
-                                    <label class="form-check-label" for="notifyOrder">
-                                        새 예약 알림 (이메일)
-                                    </label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="notifyReview" checked>
-                                    <label class="form-check-label" for="notifyReview">
-                                        새 후기 알림 (이메일)
-                                    </label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="notifyInquiry" checked>
-                                    <label class="form-check-label" for="notifyInquiry">
-                                        문의 알림 (이메일)
-                                    </label>
-                                </div>
-                                <div class="form-check mb-2">
-                                    <input class="form-check-input" type="checkbox" id="notifySettlement" checked>
-                                    <label class="form-check-label" for="notifySettlement">
-                                        정산 완료 알림 (이메일)
-                                    </label>
-                                </div>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="notifyMarketing">
-                                    <label class="form-check-label" for="notifyMarketing">
-                                        마케팅 정보 수신 (이메일)
-                                    </label>
-                                </div>
+                        <div class="marketing-options">
+                            <div class="marketing-option">
+                                <label class="marketing-check">
+                                    <input type="checkbox" name="agreeEmailMarketing" id="agreeEmailMarketing">
+                                    <span class="marketing-label">
+                                        <i class="bi bi-envelope me-2"></i>
+                                        이메일 수신 동의
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="marketing-option">
+                                <label class="marketing-check">
+                                    <input type="checkbox" name="agreeSmsMarketing" id="agreeSmsMarketing">
+                                    <span class="marketing-label">
+                                        <i class="bi bi-chat-dots me-2"></i>
+                                        SMS 수신 동의
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="marketing-option">
+                                <label class="marketing-check">
+                                    <input type="checkbox" name="agreePushMarketing" id="agreePushMarketing">
+                                    <span class="marketing-label">
+                                        <i class="bi bi-bell me-2"></i>
+                                        푸시 알림 수신 동의
+                                    </span>
+                                </label>
                             </div>
                         </div>
-
-                        <div class="d-flex gap-3">
+                    </div>
+					
+						<!-- 버튼 영역 -->
+                    <div class="form-actions">
                             <button type="submit" class="btn btn-primary btn-lg">
                                 <i class="bi bi-check-lg me-2"></i>저장하기
                             </button>
@@ -208,17 +262,26 @@
                             </button>
                         </div>
                     </form>
-                </div>
 
                 <!-- 안내 메시지 -->
-                <div class="content-section">
-                    <div class="alert alert-info mb-0">
-                        <i class="bi bi-info-circle me-2"></i>
-                        <strong>기업 정보 변경 안내</strong><br>
-                        기업명, 사업자등록번호, 사업장 주소, 정산 정보 등 주요 정보의 변경이 필요한 경우<br>
-                        고객센터(1588-0000)로 문의하시거나 1:1 문의를 이용해주세요.
-                    </div>
-                </div>
+                <div class="content-section info-section">
+				    <div class="info-flex-container">
+				        <div class="info-text">
+				            <h5 class="form-section-title text-info">
+				                <i class="bi bi-info-circle me-2"></i>기업 정보 변경 안내
+				            </h5>
+				            <p class="text-muted mb-0">
+				                기업명, 사업자등록번호, 주소, 정산 정보 등 주요 정보 변경은<br>
+				                고객센터(1588-0000) 또는 1:1 문의를 이용해주세요.
+				            </p>
+				        </div>
+				        <div class="info-action">
+				            <button type="button" class="btn btn-outline-info btn-sm" onclick="location.href='${pageContext.request.contextPath}/support/inquiry'">
+				                <i class="bi bi-headset me-2"></i>1:1 문의하기
+				            </button>
+				        </div>
+				    </div>
+				</div>
             </div>
         </div>
     </div>
@@ -404,6 +467,52 @@ function resetProfileImage() {
 
     showToast('기본 아이콘으로 변경되었습니다.', 'info');
 }
+
+//사업자 등록번호 하이픈 자동 추가 예시 (123-12-31232)
+function formatBusinessNumber(value) {
+    if (!value) return value;
+    value = value.replace(/[^0-9]/g, ''); // 숫자만 남기기
+    if (value.length <= 3) return value;
+    if (value.length <= 5) return `${value.slice(0, 3)}-${value.slice(3)}`;
+    return `${value.slice(0, 3)}-${value.slice(3, 5)}-${value.slice(5, 10)}`;
+}
+
+// 적용할 인풋 아이디에 연결
+const bizInput = document.getElementById('brno');
+if(bizInput) {
+    bizInput.addEventListener('input', (e) => {
+        e.target.value = formatBusinessNumber(e.target.value);
+    });
+}
+
+// 기업 소개
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.getElementById('companyIntro'); // HTML의 id와 일치해야 함
+    const charCount = document.getElementById('charCount');
+
+    // 글자 수 업데이트 함수
+    function updateCharCount() {
+        const length = textarea.value.length;
+        charCount.innerText = length;
+
+        // 디자인 디테일: 900자가 넘어가면 빨간색으로 강조해서 경고 주기
+        if (length >= 900) {
+            charCount.style.color = '#dc3545';
+            charCount.style.fontWeight = 'bold';
+        } else {
+            charCount.style.color = '#888';
+            charCount.style.fontWeight = 'normal';
+        }
+    }
+
+    // 1. 초기 로딩 시 실행 (기존 데이터가 있을 수 있으므로)
+    if (textarea && charCount) {
+        updateCharCount();
+
+        // 2. 입력할 때마다 실시간 실행
+        textarea.addEventListener('input', updateCharCount);
+    }
+});
 
 </script>
 

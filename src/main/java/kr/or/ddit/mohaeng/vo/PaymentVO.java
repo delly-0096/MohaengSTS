@@ -19,7 +19,9 @@ public class PaymentVO {
 	private String cancelReason;// 취소사유
 	
 	// 토스 api용 변수
-	private int amount; 		// 가격
+	private String paymentType;	// 결제 타입 키
+	private long amount; 		// 가격
 	private String orderId;		// 주문
 	private String paymentKey;	// payment 키
+	
 }

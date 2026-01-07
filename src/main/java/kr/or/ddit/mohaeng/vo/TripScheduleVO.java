@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -24,6 +26,10 @@ public class TripScheduleVO {
 	private String delDt; // 삭제일자
 	private Long totalBudget; // 총 여행 예산
 	
+	private List<TripScheduleDetailsVO> tripScheduleDetailsList;
+
+	public TripScheduleVO() {}
+	
 	public TripScheduleVO(int memNo, Integer prefNo, String startPlaceType, int startPlaceId, String targetPlaceType,
 			int targetPlaceId, String schdlStatus, String schdlStartDt, String schdlEndDt, int travelerCnt,
 			String aiRecomYn, String publicYn, Long totalBudget) {
@@ -41,5 +47,6 @@ public class TripScheduleVO {
 		this.aiRecomYn = aiRecomYn;
 		this.totalBudget = totalBudget;
 	}
+
 	
 }

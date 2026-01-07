@@ -34,4 +34,6 @@ public interface ITripScheduleMapper {
 
 	public int insertTripSchedulePlace(TripSchedulePlaceVO placeVO);
 
+	public List<TripScheduleVO> selectTripScheduleList(int memNo);
+
 }

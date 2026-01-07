@@ -31,5 +31,7 @@ public interface ITripScheduleService {
 	public int insertTripScheduleDetails(Map<String, Object> plannerDay);
 
 	public int insertTripSchedulePlace(TripSchedulePlaceVO placeVO);
+
+	public List<TripScheduleVO> selectTripScheduleList(int memNo);
 	
 }

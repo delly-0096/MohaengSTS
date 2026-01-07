@@ -222,7 +222,11 @@ public class TripScheduleController {
 	}
 	
 	@GetMapping("/my")
-	public String mySchedule() {
+	public String mySchedule(
+			@AuthenticationPrincipal CustomUserDetails customUser) {
+		int memNo = customUser.getMember().getMemNo();
+		
+		List<TripScheduleVO> scheduleVO = tripScheduleService.selectTripScheduleList(memNo);
 		
 		return "schedule/my";
 	}

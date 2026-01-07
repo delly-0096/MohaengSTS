@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -11,6 +13,8 @@ public class TripScheduleDetailsVO {
 	private String schdlEndDt; // 해당 일자의 끝(시작일자+1일)
 	private String bgColor; // 지도 표기 핀의 색
 	private int schdlDt; // 전체일정중 몇일
+	
+	private List<TripSchedulePlaceVO> tripSchedulePlaceList;
 	
 	public TripScheduleDetailsVO() {
 	}

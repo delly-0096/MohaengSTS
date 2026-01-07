@@ -1,6 +1,112 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.tripschedule.mapper.ITripScheduleMapper">
+	
+	<resultMap id="tripScheduleResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleVO">
+        <id property="schdlNo" column="SCHDL_NO" />
+        
+        <result property="memNo"            column="MEM_NO" />
+        <result property="prefNo"           column="PREF_NO" />
+        <result property="startPlaceType"   column="START_PLACE_TYPE" />
+        <result property="startPlaceId"     column="START_PLACE_ID" />
+        <result property="targetPlaceType"  column="TARGET_PLACE_TYPE" />
+        <result property="targetPlaceId"    column="TARGET_PLACE_ID" />
+        <result property="schdlStatus"      column="SCHDL_STATUS" />
+        <result property="schdlStartDt"     column="SCHDL_START_DT" />
+        <result property="schdlEndDt"       column="SCHDL_END_DT" />
+        <result property="travelerCnt"      column="TRAVELER_CNT" />
+        <result property="totalBudget"      column="TOTAL_BUDGET" />
+        <result property="aiRecomYn"        column="AI_RECOM_YN" />
+        <result property="publicYn"         column="PUBLIC_YN" />
+        <result property="regDt"            column="TS_REG_DT" />
+        <result property="modDt"            column="TS_MOD_DT" />
+
+        <collection property="tripScheduleDetailsList" 
+                    resultMap="tripScheduleDetailsResultMap" 
+                    notNullColumn="SCHDL_DETAILS_NO" />
+    </resultMap>
+
+    <resultMap id="tripScheduleDetailsResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO">
+        <id property="schdlDetailsNo" column="SCHDL_DETAILS_NO" />
+        <result property="schdlNo"      column="SCHDL_NO" />
+        <result property="schdlTitle"   column="SCHDL_TITLE" />
+        <result property="schdlStartDt" column="DETAILS_START_DT" />
+        <result property="schdlEndDt"   column="DETAILS_END_DT" />
+        <result property="schdlDt"      column="SCHDL_DT" />
+        <result property="bgColor"      column="BG_COLOR" />
+                            
+        <collection property="tripSchedulePlaceList" 
+                    resultMap="tripSchedulePlaceResultMap" 
+                    notNullColumn="SCHDL_PLC_NO" />
+    </resultMap>
+
+    <resultMap id="tripSchedulePlaceResultMap" type="kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO">
+        <id property="schdlPlcNo" column="SCHDL_PLC_NO" />
+        <result property="schdlDetailsNo" column="SCHDL_DETAILS_NO" />
+        <result property="placeType"      column="PLACE_TYPE" />
+        <result property="placeId"        column="PLACE_ID" />
+        <result property="planCost"       column="PLAN_COST" />
+        <result property="placeOrder"     column="PLACE_ORDER" />
+        <result property="placeStartTime" column="PLACE_START_TIME" />
+        <result property="placeEndTime"   column="PLACE_END_TIME" />
+        <result property="allDayYn"       column="ALL_DAY_YN" />
+        <result property="destType"       column="DEST_TYPE" />
+        <result property="destId"         column="DEST_ID" />
+        <result property="moveType"       column="MOVE_TYPE" />
+    </resultMap>
+
+    <select id="selectTripScheduleList" parameterType="int" resultMap="tripScheduleResultMap">
+        SELECT
+            TS.SCHDL_NO,
+            TS.MEM_NO,
+            TS.PREF_NO,
+            TS.START_PLACE_TYPE,
+            TS.START_PLACE_ID,
+            TS.TARGET_PLACE_TYPE,
+            TS.TARGET_PLACE_ID,
+            TS.SCHDL_STATUS,
+            TS.SCHDL_START_DT,
+            TS.SCHDL_END_DT,
+            TS.TRAVELER_CNT,
+            TS.TOTAL_BUDGET,
+            TS.AI_RECOM_YN,
+            TS.PUBLIC_YN,
+            TS.REG_DT           AS TS_REG_DT,
+            TS.MOD_DT           AS TS_MOD_DT,
+            
+            TSD.SCHDL_DETAILS_NO,
+            TSD.SCHDL_TITLE,
+            TSD.SCHDL_START_DT  AS DETAILS_START_DT,
+            TSD.SCHDL_END_DT    AS DETAILS_END_DT,
+            TSD.SCHDL_DT,
+            TSD.BG_COLOR,
+            
+            TSP.SCHDL_PLC_NO,
+            TSP.PLACE_TYPE,
+            TSP.PLACE_ID,
+            TSP.PLAN_COST,
+            TSP.PLACE_ORDER,
+            TSP.PLACE_START_TIME,
+            TSP.PLACE_END_TIME,
+            TSP.ALL_DAY_YN,
+            TSP.DEST_TYPE,
+            TSP.DEST_ID,
+            TSP.MOVE_TYPE
+        FROM
+            TRIP_SCHEDULE TS
+        LEFT JOIN
+            TRIP_SCHEDULE_DETAILS TSD
+            ON TS.SCHDL_NO = TSD.SCHDL_NO
+        LEFT JOIN
+            TRIP_SCHEDULE_PLACE TSP
+            ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
+        WHERE
+            TS.MEM_NO = #{memNo}
+        ORDER BY
+            TSD.SCHDL_DT ASC, 
+            TSP.PLACE_ORDER ASC
+    </select>
+
 	<select id="selectRegionList" resultType="kr.or.ddit.util.Params">
 		SELECT RGN_NO
 			 , RGN_NO AS CODE

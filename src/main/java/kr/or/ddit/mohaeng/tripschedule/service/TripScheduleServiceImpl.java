@@ -204,6 +204,16 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	public int insertTripSchedulePlace(TripSchedulePlaceVO placeVO) {
 		return iTripScheduleMapper.insertTripSchedulePlace(placeVO);
 	}
+
+	@Override
+	public List<TripScheduleVO> selectTripScheduleList(int memNo) {
+		List<TripScheduleVO> scheduleList = iTripScheduleMapper.selectTripScheduleList(memNo);
+		if(scheduleList.size() > 0) {
+			System.out.println("scheduleList : " + scheduleList);
+		}
+		
+		return scheduleList;
+	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)
 //	private String cleanText(String input) {

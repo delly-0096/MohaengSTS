@@ -73,8 +73,7 @@ public class SecurityConfig {
 			"/error",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
-			"/upload/**",
-			"/resources/**"
+			"/upload/**"
 	};
 	
 	// 일반회원 허용 url test
@@ -110,7 +109,7 @@ public class SecurityConfig {
 	public WebSecurityCustomizer configure() {
 		return (web) -> web.ignoring()
 				.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
-				.requestMatchers("/resources/**");	// 정적 리소스
+				.requestMatchers("/resources/**", "/upload/**"); // 정적 리소스
 	}
 	
 	// 시큐리티 체인 - react 관리자 페이지

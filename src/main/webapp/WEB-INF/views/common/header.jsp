@@ -48,7 +48,7 @@
             <!-- 헤더 우측 영역 -->
             <div class="header-right">
                     <sec:authorize access="isAuthenticated()">
-					    <sec:authentication property="principal.memProfilePath" var="profileImgPath"/>
+					    <sec:authentication property="principal.memProfilePath" var="profileImgUrl"/>
                         <!-- 로그인 상태 - 알림 버튼 -->
                         <button class="header-notification-btn" onclick="toggleNotificationPanel()" title="알림">
                             <i class="bi bi-bell"></i>
@@ -60,8 +60,8 @@
 							       class="header-user-link">
 							        <span class="user-avatar">
 							            <c:choose>
-							                <c:when test="${not empty profileImgPath}">
-							                    <img src="${profileImgPath}"
+							                <c:when test="${not empty profileImgUrl}">
+							                    <img src="<c:url value='/upload${profileImgUrl}' />"
 							                         class="profile-img-render"
 							                         alt="프로필 이미지">
 							                </c:when>
@@ -81,8 +81,8 @@
 							       class="header-user-link">
 							        <span class="user-avatar">
 							            <c:choose>
-							                <c:when test="${not empty profileImgPath}">
-							                    <img src="${profileImgPath}"
+							                <c:when test="${not empty profileImgUrl}">
+							                    <img src="<c:url value='/upload${profileImgUrl}' />"
 							                         class="profile-img-render"
 							                         alt="프로필 이미지">
 							                </c:when>
@@ -134,8 +134,8 @@
                     <div class="side-menu-user-info">
                         <span class="side-menu-avatar">
 							    <c:choose>
-							        <c:when test="${not empty profileImgPath}">
-							            <img src="${profileImgPath}"
+							        <c:when test="${not empty profileImgUrl}">
+							            <img src="<c:url value='/upload${profileImgUrl}' />"
 							                 class="profile-img-render"
 							                 alt="프로필 이미지">
 							        </c:when>

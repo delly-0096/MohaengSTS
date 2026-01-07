@@ -32,9 +32,7 @@
 				                            <img
 					                            id="profilePreview"
 					                            class="profile-image-preview" 
-					                            src="${not empty profileImgUrl 
-												       ? pageContext.request.contextPath.concat(profileImgUrl) 
-												       : ''}"
+					                            src="<c:url value='/upload${profileImgUrl}' />"
 												        style="${not empty profileImgUrl ? '' : 'display:none;'}"
 				                                 alt="로고 프로필 이미지" 
 				                                 >

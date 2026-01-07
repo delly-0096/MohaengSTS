@@ -54,7 +54,7 @@ public class ProfileController {
     @GetMapping("/profile")
     public String myProfile(HttpSession session, Model model) {
 
-    	// 1. 세션 체크
+    	// 세션 체크
         Object authMember = session.getAttribute("loginMember");
         if (authMember == null) return "redirect:/member/login";
 
@@ -70,29 +70,26 @@ public class ProfileController {
             return "redirect:/member/login";
         }
 
-        // 2. DB 최신 정보 조회 (조인 쿼리 findById 사용)
+        // DB 최신 정보 조회 (조인 쿼리 findById 사용)
         MemberVO memberDetail = memberService.findById(memId);
         if (memberDetail == null) {
             session.invalidate();
             return "redirect:/member/login";
         }
 
-        // 3. 경로 가공 및 세션 동기화 (핵심!)
-        String rawPath = memberDetail.getMemProfilePath(); 
-        String processedPath = null;
-
-        if (rawPath != null && !rawPath.isEmpty()) {
-            processedPath = rawPath.replace("/resources", "");
-        }
+        // 경로 가공 및 세션 동기화 
+        String processedPath = memberDetail.getMemProfilePath();
 
         // 세션 Map 업데이트 (헤더/사이드바 즉시 반영용)
+     // 세션 Map 업데이트 (헤더/사이드바에서 바로 사용)
         if (authMember instanceof Map) {
             Map<String, Object> loginMember = (Map<String, Object>) authMember;
-            loginMember.put("memProfile", processedPath);
+            // 이제 loginMember에는 "/profile/uuid.png"만 들어갑니다.
+            loginMember.put("memProfile", processedPath); 
         }
 
         model.addAttribute("member", memberDetail);
-        model.addAttribute("profileImgUrl", processedPath); // 본문용
+        model.addAttribute("profileImgUrl", processedPath); // "/profile/파일명.png"
 
         return "mypage/profile";
     }
@@ -125,17 +122,12 @@ public class ProfileController {
     	}
 
     	// 경로 가공 및 세션 동기화
-    	String rawPath = memberDetail.getMemProfilePath(); 
-    	String processedPath = null;
+    	String processedPath = memberDetail.getMemProfilePath();
     	
-    	if (rawPath != null && !rawPath.isEmpty()) {
-    		processedPath = rawPath.replace("/resources", "");
-    	}
-    	
-    	// 세션 Map 업데이트 (헤더/사이드바 즉시 반영용)
     	if (authMember instanceof Map) {
-    		Map<String, Object> loginMember = (Map<String, Object>) authMember;
-    		loginMember.put("memProfile", processedPath);
+    	    Map<String, Object> loginMember = (Map<String, Object>) authMember;
+    	    // 이제 loginMember에는 "/profile/uuid.png"만 들어갑니다.
+    	    loginMember.put("memProfile", processedPath); 
     	}
     	
     	model.addAttribute("member", memberDetail);

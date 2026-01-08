@@ -701,8 +701,9 @@
 
 /* ===== 기업회원 - 알림 내역 ===== */
 .notification-list {
-    display: flex;
-    flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
 }
 
 .notification-list .notification-item {
@@ -1572,53 +1573,64 @@
     font-size: 18px;
 }
 
-/* 알림 설정 섹션 커스텀 */
+/* 알림 설정 섹션 */
 .notification-settings {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, min-content); /* 내용에 맞게 조절 */
-    gap: 15px;
-    margin-top: 15px;
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 12px;
 }
 
-/* 알림 설정 리스트 컨테이너 */
-.notification-list {
-    max-width: 650px;    /* 너무 넓지 않게 최대 너비 제한 */
-    margin: 20px auto;   /* 섹션 내에서 중앙 정렬 */
-}
-
-/* 개별 알림 항목 카드 스타일 */
-.notification-item {
-	display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 15px; /* 전체적인 상하좌우 패딩 균형 조정 */
-    background: #f8f9fa;
-    border-radius: 12px;
-    border: 1px solid #eee;
-    transition: all 0.2s ease;
-    margin-bottom: 10px;
-    height: 45px; /* 모든 카드의 높이를 통일해서 정렬감 부여 */
-}
-
-.notification-item:hover {
-    background: #ffffff;
-    border-color: #1a7f7f;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-}
-
-.notification-item label {
-	cursor: pointer;
-    font-weight: 500;
-    color: #444;
-    margin-bottom: 0; /* 부트스트랩 기본 마진 제거 */
-    
-    /* 핵심: 왼쪽 여백을 20px 이상으로 확 줍니다 */
-    padding-left: 15px; 
-    
-    flex-grow: 1;
+/* 설정용 아이템 */
+.notification-settings .notification-item {
     display: flex;
     align-items: center;
-    height: 100%;
+    justify-content: space-between;
+    min-width: 0;
+}
+
+/* 리스트 컨테이너 */
+.notification-list {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+}
+
+/* 알림 아이템 */
+.notification-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border-radius: 10px;
+    border: 1px solid #eee;
+    transition: background 0.2s ease, border-color 0.2s ease;
+
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 45px;
+}
+
+/* 라벨 */
+.notification-item label {
+    cursor: pointer;
+    font-weight: 500;
+    color: #444;
+
+    flex: 1;
+    display: flex;
+    align-items: center;
+
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* hover */
+.notification-item:hover {
+    background: #fff;
+    border-color: #1a7f7f;
+    box-shadow: none; /* 과도한 존재감 제거 */
 }
 
 /* 부트스트랩 스위치 스타일 강조 */
@@ -1710,8 +1722,12 @@ display: flex;
     box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
 }
 
-/* 모바일 대응: 화면 좁아지면 다시 위아래로 */
-@media (max-width: 768px) {
+/* 반응형 */
+@media (max-width: 1100px) {
+	
+	.notification-settings {
+    grid-template-columns: 1fr;
+  	}
     .danger-flex-container {
         flex-direction: column;
         align-items: flex-start;
@@ -2506,18 +2522,10 @@ border-top: none;
 
 /* 오른쪽 알림 영역 */
 .profile-right-part {
-    flex: 0 1 auto; 
+    flex: 1 1 0;
     min-width: 0;
-    max-width: 600px; /* 너무 퍼지지 않게 최대 너비 제한 */
+    max-width: none;
 }
-
-/* 알림 리스트 2열 그리드 배치 */
-.notification-list.compact-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 200px); 
-    gap: 5px 15px;
-    margin-top: 18px;
-} 
 
 /* 개별 알림 아이템 */
 .notification-item {
@@ -2525,15 +2533,13 @@ border-top: none;
     align-items: center;
     justify-content: space-between;
     
-    /* 핵심: 패딩을 줄여 높이 축소 */
-    padding: 4px px; 
+    padding: 6px 8px; 
     
-    background: #f8f9fa;
-    border: 1px solid #ebedef;
-    border-radius: 6px; /* 모서리 곡률도 살짝 줄이면 더 깔끔함 */
-    max-width: 220px; 
+    background: transparent;
+    border: none;
+    border-radius: 0; /* 모서리 곡률도 살짝 줄이면 더 깔끔함 */
+    max-width: none; 
     
-    /* 불필요한 마진 제거 */
     margin-bottom: 0 !important;
 }
 
@@ -2544,9 +2550,7 @@ border-top: none;
 }
 
 .notification-item:hover {
-    border-color: #0d9488;
-    background: #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+	background: #f1f5f9;
 }
 
 .notification-item label {

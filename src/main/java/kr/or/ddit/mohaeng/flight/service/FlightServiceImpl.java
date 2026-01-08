@@ -20,7 +20,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import kr.or.ddit.mohaeng.flight.mapper.IFlightMapper;
 import kr.or.ddit.mohaeng.vo.AirlineVO;
 import kr.or.ddit.mohaeng.vo.AirportVO;
-import kr.or.ddit.mohaeng.vo.FlightScheduleVO;
+import kr.or.ddit.mohaeng.vo.FlightProductVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -54,8 +54,8 @@ public class FlightServiceImpl implements IFlightService {
 	
 	// 항공권 조회 - db 저장 필요없음
 	@Override
-	public List<FlightScheduleVO> getFlightList(FlightScheduleVO flightSchedule) {
-		List<FlightScheduleVO> flightScheduleList = new ArrayList<>();
+	public List<FlightProductVO> getFlightList(FlightProductVO flightProduct) {
+		List<FlightProductVO> flightProductList = new ArrayList<>();
 
 		try {
 			String baseUrl = "http://apis.data.go.kr/1613000/DmstcFlightNvgInfoService/getFlightOpratInfoList";
@@ -63,11 +63,11 @@ public class FlightServiceImpl implements IFlightService {
 			StringBuilder urlBuilder = new StringBuilder(baseUrl);
 			urlBuilder.append("?serviceKey=" + serviceKey);
 			urlBuilder.append("&_type=json");
-			urlBuilder.append("&pageNo=" + flightSchedule.getPageNo());
-			urlBuilder.append("&numOfRows=" + flightSchedule.getNumOfRows());
-			urlBuilder.append("&depAirportId=" + flightSchedule.getDepAirportId());
-			urlBuilder.append("&arrAirportId=" + flightSchedule.getArrAirportId());
-			urlBuilder.append("&depPlandTime=" + flightSchedule.getStartDt().toString().replaceAll("-", ""));
+			urlBuilder.append("&pageNo=" + flightProduct.getPageNo());
+			urlBuilder.append("&numOfRows=" + flightProduct.getNumOfRows());
+			urlBuilder.append("&depAirportId=" + flightProduct.getDepAirportId());
+			urlBuilder.append("&arrAirportId=" + flightProduct.getArrAirportId());
+			urlBuilder.append("&depPlandTime=" + flightProduct.getStartDt().toString().replaceAll("-", ""));
 	
 			// 4. RestTemplate 설정
 			RestTemplate restTemplate = new RestTemplate();
@@ -86,18 +86,16 @@ public class FlightServiceImpl implements IFlightService {
 			JsonNode items = root.path("response").path("body").path("items").path("item");
 			
 			
-
-			
 			if (items.isArray()) {
 			    for (JsonNode node : items) {
-			    	FlightScheduleVO vo = new FlightScheduleVO();
+			    	FlightProductVO vo = new FlightProductVO();
 			        
 			        vo.setAirlineNm(node.path("airlineNm").asText());       // 항공사명
 			        vo.setFlightSymbol(node.path("vihicleId").asText()); 	// 편명
 			        vo.setEconomyCharge(node.path("economyCharge").asInt());// 요금
 			        
-			        vo.setArrAirportNm(flightSchedule.getArrAirportNm());
-			        vo.setDepAirportNm(flightSchedule.getDepAirportNm());
+			        vo.setArrAirportNm(flightProduct.getArrAirportNm());
+			        vo.setDepAirportNm(flightProduct.getDepAirportNm());
 			        
 			        if(vo.getAirlineNm().indexOf("대한") != -1 || vo.getAirlineNm().indexOf("아시아나") != -1) {
 			        	vo.setCheckedBaggage(20);
@@ -110,17 +108,17 @@ public class FlightServiceImpl implements IFlightService {
 			        String rawArrTime = node.path("arrPlandTime").asText(); 
 			        timeFormatter(vo , rawArrTime, 2);
 			        
-			        flightScheduleList.add(vo);
+			        flightProductList.add(vo);
 			    }
 			} else if (items.isObject()) {
-		    	FlightScheduleVO vo = new FlightScheduleVO();
+		    	FlightProductVO vo = new FlightProductVO();
 		        
 		        vo.setAirlineNm(items.path("airlineNm").asText());       // 항공사명
 		        vo.setFlightSymbol(items.path("vihicleId").asText());       // 편명 데이터 없음
 		        vo.setEconomyCharge(items.path("economyCharge").asInt());// 요금
 
-		        vo.setArrAirportNm(flightSchedule.getArrAirportNm());
-		        vo.setDepAirportNm(flightSchedule.getDepAirportNm());
+		        vo.setArrAirportNm(flightProduct.getArrAirportNm());
+		        vo.setDepAirportNm(flightProduct.getDepAirportNm());
 		        
 		        if(vo.getAirlineNm().indexOf("대한") != -1 || vo.getAirlineNm().indexOf("아시아나") != -1) {
 		        	vo.setCheckedBaggage(20);
@@ -134,20 +132,20 @@ public class FlightServiceImpl implements IFlightService {
 		        String rawArrTime = items.path("arrPlandTime").asText(); 
 		        timeFormatter(vo ,rawArrTime, 2);
 		        
-		        flightScheduleList.add(vo);
+		        flightProductList.add(vo);
 			}
 			
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
 		
-		if(flightSchedule.getSorting() == "") {	// 기본 sort = 최저가
-			return flightScheduleList;
+		if(flightProduct.getSorting() == "") {	// 기본 sort = 최저가
+			return flightProductList;
 		}
-		return flightScheduleList;
+		return flightProductList;
 	}
 	
-	public void timeFormatter(FlightScheduleVO vo, String rawTime, int form) {
+	public void timeFormatter(FlightProductVO vo, String rawTime, int form) {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 		if(rawTime != null && !rawTime.isEmpty()) {
 			if(form == 1) {

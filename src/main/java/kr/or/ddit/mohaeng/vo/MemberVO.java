@@ -25,6 +25,7 @@ public class MemberVO {
 	private Date regDt; 			/* 가입일 */
 	private Date udtDt; 			/* 수정일 */
 	private Date wdrwDt; 			/* 탈퇴일 */
+	private String TempPwYn;		/* 임시 비밀번호 상태 Y, N */
 	
 	private List<MemberAuthVO> authList;	// 권한 정보
 	

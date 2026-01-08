@@ -99,6 +99,33 @@ public interface IMemberService {
 	 */
 	public void withdrawMember(int memNo, String currentPassword, String withdrawReason);
 
+	/**
+	 * <p> 아이디 찾기 처리 </p>
+	 * @date 2026.01.08
+	 * @author kdrs
+	 * @param memberVO 이름(memName)과 이메일(memEmail) 정보를 담은 객체
+	 * @return 조회된 회원의 마스킹 처리된 아이디 (일치 정보 없을 시 null 반환)
+	 */
+	public String findIdProcess(MemberVO memberVO);
+
+	/**
+	 * <p> 비밀번호 찾기를 위한 사용자 본인 확인 </p>
+	 * @date 2026.01.08
+	 * @author kdrs
+	 * @param memberVO 아이디(memId), 이름(memName), 이메일(memEmail) 정보를 담은 객체
+	 * @return 본인 확인 결과 (성공 시 "success", 실패 시 "fail" 등)
+	 */
+	public boolean findPasswordProcess(MemberVO memberVO);
+
+	/**
+	 * <p> 비밀번호 재설정 인증 메일 발송 </p>
+	 * @date 2026.01.08
+	 * @author kdrs
+	 * @param memberVO 수신자 이메일 정보 및 인증에 필요한 정보를 담은 객체
+	 * @throws RuntimeException 메일 발송 실패 시 발생
+	 */
+	public void sendPasswordResetMail(MemberVO memberVO);
+
 
 
 

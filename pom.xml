@@ -114,9 +114,7 @@
             <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
-        
-        
-        
+
 		<!-- 파일 핸들링을 위한 의존 라이브러리 -->
 		<dependency>
 			<groupId>commons-io</groupId>
@@ -167,7 +165,6 @@
 		</dependency>
 		<!-- JWT 의존 라이브러리 End -->
 		
-		
 		<!--스프링 시큐리티 설정-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -178,8 +175,6 @@
 			<artifactId>spring-security-taglibs</artifactId>
 		</dependency>
 		<!--스프링 시큐리티 설정 END-->
-        
-        
         
         <!-- Spring Boot Validation -->
         <dependency>

@@ -216,6 +216,7 @@
 	    WHERE MEM_NO = #{memNo}
 	</update>
 	
+	<!-- 탈퇴한 아이디 탈퇴로 상태값 변경 -->
 	<update id="updateWithdraw">
 		UPDATE MEMBER
 		SET
@@ -228,6 +229,45 @@
 		WHERE MEM_NO = #{memNo}
 		  AND DEL_YN = 'N'
 	</update>
+	
+	<!-- 아이디 찾기 시 아이디 조회 -->
+	<select id="findIdByNameAndEmail" parameterType="kr.or.ddit.mohaeng.vo.MemberVO" resultType="string">
+		SELECT MEM_ID 
+	   	 FROM MEMBER 
+		WHERE MEM_NAME = #{memName} 
+		  AND MEM_EMAIL = #{memEmail}
+		  AND DEL_YN = 'N'
+	</select>
+	
+	<!-- 비밀번호 찾기 시 회원 존재여부 확인 -->
+	<select id="checkMemberForPwReset" resultType="int" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+		SELECT COUNT(*) 
+		FROM MEMBER 
+		WHERE MEM_ID = #{memId} 
+		  AND MEM_NAME = #{memName} 
+		  AND MEM_EMAIL = #{memEmail}
+		  AND DEL_YN = 'N'
+	</select>
 
+	<!-- 비밀번호 찾기 시 임시 비밀번호 저장 -->
+	<update id="updateTempPwYn">
+	    UPDATE MEMBER
+	    SET TEMP_PW_YN = #{tempPwYn}
+	    WHERE MEM_NO = #{memNo}
+	</update>
+	
+	<!-- 비밀번호 재설정을 위한 회원 조회 -->
+	<select id="selectForPwReset" parameterType="kr.or.ddit.mohaeng.vo.MemberVO" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+	    SELECT
+	      	  MEM_NO
+	      	, MEM_ID
+	      	, MEM_NAME
+	      	, MEM_EMAIL
+	     FROM MEMBER
+	    WHERE MEM_ID = #{memId}
+	      AND MEM_NAME = #{memName}
+	      AND MEM_EMAIL = #{memEmail}
+	      AND DEL_YN = 'N'
+	</select>
 	
 </mapper>

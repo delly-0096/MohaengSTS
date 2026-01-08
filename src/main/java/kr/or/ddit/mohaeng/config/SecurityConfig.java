@@ -69,11 +69,14 @@ public class SecurityConfig {
 			"/mypage/profile/update",
 			"/mypage/profile/checkPassword",
 			"/mypage/profile/withdraw",
+			"/member/find/id",
+			"/member/find/password",
 			"/idCheck",
 			"/error",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
-			"/upload/**"
+			"/upload/**",
+			"/mail/test"
 	};
 	
 	// 일반회원 허용 url test

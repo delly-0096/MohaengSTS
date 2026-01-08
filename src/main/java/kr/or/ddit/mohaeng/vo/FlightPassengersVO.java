@@ -6,12 +6,12 @@ import lombok.Data;
 
 @Data
 public class FlightPassengersVO {
+	
 	private int passengerId; // 탑승객 식별 ID
-	private int flightSeatNo; // 좌석정보 키
-	private int reserveNo; // 예약 번호
+	
+	private int reserveNo;      // 항공예약키	외래키
 	private String lastName; // 성
 	private String firstName; // 이름
-	
 	
 	private Date birthDate; // 탑승객 생년월일
 	private String gender; // 성별 (M/F)

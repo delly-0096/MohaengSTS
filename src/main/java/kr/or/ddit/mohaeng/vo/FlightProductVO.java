@@ -14,8 +14,9 @@ import lombok.Data;
 public class FlightProductVO {
 	// 운항 일정
 	
-	private String fltProdId;     	 // 항공권 키
+	private String fltProdId;     	 // 항공권 키 - 일자 + 순서 (db변경해야됨)
 	
+	private int airlineId;           // 항공사 ID
 	private String flightSymbol;  	 // 항공편번호
 	private String depAirportId;     // 출발공항 - id(영문 5자리)
 	private String arrAirportId;     // 도착공항 - id(영문 5자리)
@@ -36,7 +37,6 @@ public class FlightProductVO {
 	private LocalDate endDt;           // 운항종료일
 
 	
-	private int airlineId;          // 항공사 ID
 	private int extraBaggagePrice;	// 추가 위탁 수하물 비용 2000원
 	
 	// 수하물 정보

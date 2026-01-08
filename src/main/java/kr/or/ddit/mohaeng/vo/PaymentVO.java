@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
 import java.util.Date;
+import java.util.List;
 
 import lombok.Data;
 
@@ -8,7 +9,7 @@ import lombok.Data;
 public class PaymentVO {
 	// 결제
 	
-	private String payNo; 		// 결제키
+	private String payNo; 		// 결제키 (결제번호 || 주문번호) -> 각 결제 항목 약자 + 일자로 구현 예정
 	private int memNo; 			// 회원키
 	private int payTotalAmt; 	// 결제금액
 	private int usePoint;		// 사용포인트
@@ -17,6 +18,14 @@ public class PaymentVO {
 	private String payStatus; 	// 결제상태(Y,N,WAIT)
 	private Date cancelDt; 		// 취소일시
 	private String cancelReason;// 취소사유
+	
+	
+	// 결제할 때 insert할 값들
+	private List<FlightProductVO> flightProductList;			// 항공 상품 목록
+	private List<FlightPassengersVO> flightPassengersList;		// 항공 탑승객 목록
+	private List<FlightReservationVO> flightReservationList;	// 항공 예약 목록
+	
+	
 	
 	// 토스 api용 변수
 	private String paymentType;	// 결제 타입 키

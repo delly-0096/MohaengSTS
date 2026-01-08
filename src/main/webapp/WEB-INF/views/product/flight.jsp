@@ -189,14 +189,19 @@
 <script>
 // 승객 정보 - 2번제 결제하기 누르면 이동하기
 let passengers = { adult: 1, child: 0, infant: 0 };
-
+// session 저장을 여기서도 하고 받을지
 // ==================== 항공편 선택 상태 관리 ====================
 let currentSearchType = 'round'; // round - 왕복, oneway - 편도, multi
 let currentSelectionStep = 0; // 현재 선택 단계 (0: 가는편, 1: 오는편)
 let selectedFlights = []; // 선택된 항공편 목록
 let totalSegments = 2; // 총 선택해야 할 구간 수 (왕복: 2, 편도: 1)
 
+let storedData = null;	// storage에 저장된 정보
+
+
 const list = document.getElementById('selectedFlightsList');
+
+let selectedFlightList = [];	// 선택한 항공권 저장
 
 // 검색 타입 탭 전환
 document.querySelectorAll('.search-tab').forEach(tab => {
@@ -254,6 +259,7 @@ function updateSelectionStepIndicator() {
 
 // 항공편 선택 처리 - id, data, searchData, startDate, duration, 
 function selectFlight(id, airline, flightSymbol, depTime, arrTime, startDate, domesticDays, depAirport, arrAirport, price, duration) {
+	cabinClass = document.querySelector("#cabinClass");
     const flightData = {
         id: id,							// id
         airline: airline,
@@ -266,7 +272,12 @@ function selectFlight(id, airline, flightSymbol, depTime, arrTime, startDate, do
         arrivalAirport: arrAirport,
         price: price,
         duration : duration,			// 자체
-        step: currentSelectionStep
+        step: currentSelectionStep,
+        adult : passengers.adult,
+        child : passengers.child,
+        infant : passengers.infant,
+        cabinClass : cabinClass.value == "economy" ? "일반석" : "비즈니스"
+        // 짐 무게?
     };
 
     selectedFlights.push(flightData);
@@ -370,7 +381,6 @@ function goToBooking() {
 	console.log("selectedFlights length : ",selectedFlights.length);
 	if (!selectedFlights || selectedFlights.length === 0) return;
 	
-    // 항공편 데이터를 sessionStorage에 저장
     const bookingData = {
         tripType: currentSearchType,
         totalSegments: totalSegments,
@@ -380,11 +390,12 @@ function goToBooking() {
             segmentLabel: getSegmentLabel(index)
         }))
     };
-    sessionStorage.setItem('flightBookingData', JSON.stringify(bookingData));
-// 	console.log('sessionStorage.key', sessionStorage);
-    const flightIds = selectedFlights.map(f => f.id).join(',');
     
-    window.location.href = '/product/flight/booking?flightIds=' + flightIds + '&type=' + currentSearchType;
+    // 항공편 데이터를 sessionStorage에 저장
+    sessionStorage.setItem('flightBookingData', JSON.stringify(bookingData));
+    
+    const flightIds = selectedFlights.map(f => f.id).join(',');
+    window.location.href = '/product/flight/booking'/* ?flightIds=' + flightIds + '&type=' + currentSearchType */;
 }
 
 // 구간 라벨 생성
@@ -535,6 +546,9 @@ function getFlightsForPage(page) {
 
 // - infiniteScroll 받을때
 function createFlightCard(data, searchData, id) {
+	
+	console.log("data : ", data); // 이거 session에 담는다.
+	
     // 버튼 텍스트 결정
     var isLastStep = (currentSelectionStep >= totalSegments - 1);
     var buttonText = (currentSearchType === 'oneway' || isLastStep) ? '결제하기' : '선택';
@@ -556,7 +570,7 @@ function createFlightCard(data, searchData, id) {
 	- (parseInt(depAp * 60) + parseInt(depTime[0] * 60) + parseInt(depTime[1]));
 	
 	let duration = parseInt(timeSet / 60) + "시간 " + (timeSet % 60) + "분"; 
-	
+	// id에 돌아오는것, 가는것 알파벳 추가?
     return `<div class="flight-card" data-flight-id="\${id}">
         <div class="flight-card-content">
             <div class="flight-info">
@@ -578,7 +592,9 @@ function createFlightCard(data, searchData, id) {
                     <div class="airport">\${searchData.arrAirportNm}</div>
                 </div>
             </div>
-
+            <div class="flight-baggage">
+				<i class="bi bi-luggage-fill"></i><span>\${data.checkedBaggage} kg</span>
+			</div>
             <div class="flight-price">
                 <div class="price">\${data.economyCharge}<span class="price-unit">원</span></div>
                 <button type="button" class="btn btn-primary btn-sm flight-action-btn" 
@@ -660,15 +676,15 @@ function searchFlights() {
     
     if(!startDt){
     	showToast('가는날을 입력해주세요.', 'error');
-    	return
+    	return;
     }
     
     if(currentSearchType === 'round' && !endDt){
     	showToast('오는날을 입력해주세요.', 'error');
-    	return
+    	return;
     }
     
-	// 출발시간 = 
+	// 출발시간 = vo에 매칭할 정보
     const searchData = {
     	type : searchType,
     	depAirportNm : (currentSelectionStep === 0) ? departure : destination, 		// 출발지
@@ -678,7 +694,6 @@ function searchFlights() {
     	arrAirportNm : (currentSelectionStep === 0) ? destination : departure, 		// 도착지  
     	arrAirportId : (currentSelectionStep === 0) ? arrAirportId : depAirportId,	// 도착지 코드
     	arrIata : (currentSelectionStep === 0) ? arrIata : depIata					// 도착지 3글자 코드
-// 		endDt : endDt.replaceAll("-", "")
     	// 탑승자 정보 - 성인, 유아
     }
     
@@ -695,7 +710,7 @@ function searchFlights() {
 	    	console.log("결과", flight);
 	    	// 출력하기
 	    	for(let i = 0; i < searchSize; i++){
-	    		if(flight[i].economyCharge === 0 || (flight[i].airlineNm == '/' || flight[i].airlineNm === null)) {
+	    		if(flight[i].economyCharge === 0 || (flight[i].airlineNm === '/' || flight[i].airlineNm === null)) {
 	    			noMoney++;
 	    		}
 	    		else{
@@ -707,6 +722,8 @@ function searchFlights() {
     		result.innerHTML = `<div>검색결과가 없습니다.</div>`;
     		flightHasMore = false;
     	}
+    	
+    	
     	let resultSize = searchSize - noMoney;
    		searchCount.innerHTML = `<strong>\${searchData.depAirportNm} (\${searchData.depAirportId})</strong> → <strong>\${searchData.arrAirportNm} (\${searchData.arrAirportId})</strong> 검색 결과 <strong>\${resultSize}</strong>개`;
     })
@@ -719,6 +736,9 @@ function searchFlights() {
 
 // 출발지, 도착지 검색
 function showSegmentAutocomplete(dropdown, query) {
+	
+	// 그냥 여기서 indexOf나 valueOf를 가져오는게 나을수도??
+	
 	axios.get(`/product/flight/search`,{
 		params : {
 			keyword : query
@@ -783,9 +803,23 @@ function createAutocompleteItemHtml(location, query) {
            '<div class="autocomplete-item-sub">' + location.cityName + '</div></div></div>';
 }
 
+function renderStoredData(storedData) {
+	console.log("storedData : ", storedData);
+}
 
 document.addEventListener('DOMContentLoaded', function() {
     // 모든 자동완성 인풋 박스를 찾습니다.
+    
+	// session에 담아놓을지?
+	storedData = sessionStorage.getItem('flightBookingData');
+    if(storedData){
+    	storedData = JSON.parse(storedData);
+    	console.log("저장 데이터 : ", storedData);
+    	renderStoredData(storedData);
+    }
+    
+    // 받는 것은 성공. 그런데 어떻게 뿌릴지는 모르겠다
+    
     const autoInputs = document.querySelectorAll('.location-autocomplete');
 
     autoInputs.forEach(input => {
@@ -802,8 +836,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const query = this.value.trim();
             showSegmentAutocomplete(dropdown, query);
         });
-        
     });
+	
+    // 일반 검색 날짜 선택기 - flatpickr함수. 한번 선택하면 today를 아닌걸로 바꿀까?
+    if (typeof flatpickr !== 'undefined') {
+        flatpickr('.date-picker', {
+            dateFormat: 'Y-m-d',
+            minDate: 'today',
+            locale: 'ko'
+        });
+    }
+    
 });
 
 // //페이지 로드시 초기화
@@ -813,21 +856,6 @@ document.addEventListener('DOMContentLoaded', function() {
 //     updateFlightButtons();
 //     updateSelectionStepIndicator();
 // });
-
-//페이지 로드 시 날짜 선택기 초기화
-document.addEventListener('DOMContentLoaded', function() {
-	// session에 담아놓을지?
-	
-	
-    // 일반 검색 날짜 선택기
-    if (typeof flatpickr !== 'undefined') {
-        flatpickr('.date-picker', {
-            dateFormat: 'Y-m-d',
-            minDate: 'today',
-            locale: 'ko'
-        });
-    }
-});
 </script>
 
 <%-- <c:set var="pageJs" value="product" /> --%>

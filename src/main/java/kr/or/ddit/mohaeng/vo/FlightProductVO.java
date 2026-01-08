@@ -11,15 +11,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 @Data
-public class FlightScheduleVO {
+public class FlightProductVO {
 	// 운항 일정
 	
-	private int scheduleNo;       	 // 항공일정키
 	private String fltProdId;     	 // 항공권 키
 	
 	private String flightSymbol;  	 // 항공편번호
 	private String depAirportId;     // 출발공항 - id(영문 5자리)
-	private String arrAirportId;     // 도착공항 - id
+	private String arrAirportId;     // 도착공항 - id(영문 5자리)
 	
 	@DateTimeFormat(pattern = "a HH:mm")
 	@JsonFormat(pattern = "a HH:mm")
@@ -37,24 +36,25 @@ public class FlightScheduleVO {
 	private LocalDate endDt;           // 운항종료일
 
 	
-	
+	private int airlineId;          // 항공사 ID
+	private int extraBaggagePrice;	// 추가 위탁 수하물 비용 2000원
 	
 	// 수하물 정보
 	private int checkedBaggage;  // 무료 위탁 수하물 - 몇키로 인지입력 15 or 20
 	private int carryOnBaggage = 10;  // 기내 수하물 - 10kg
 	
+	
+	
 	// 공항 iata코드
 	private String depIata;			// 출발지 iata코드 ?? 사용여부는 알아서
 	private String arrIata;			// 도착지 iata코드
-	
-	
+
+
 	
 	// api에 있는 것들
 	private String airlineNm;        // 항공사
-	
 	private String depAirportNm;     // 출발공항
 	private String arrAirportNm;     // 도착공항
-	
 	private int economyCharge;       // 일반요금
 	private int prestigeCharge;      // 비즈니스 요금
 	

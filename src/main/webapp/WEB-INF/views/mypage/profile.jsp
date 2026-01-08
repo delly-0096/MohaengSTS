@@ -403,7 +403,8 @@
         </div>
     </div>
 </div>
-
+</div>
+</div>
 <!-- 다음 주소 검색 API -->
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
@@ -835,6 +836,12 @@ function confirmWithdraw() {
     
 }
 </script>
-
+<c:if test="${not empty successMessage}">
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            showToast("${successMessage}", "success");
+        });
+    </script>
+</c:if>
 <c:set var="pageJs" value="mypage" />
 <%@ include file="../common/footer.jsp" %>

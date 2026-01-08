@@ -128,6 +128,11 @@ let orderId;
 let amount;
 let paymentType;
 
+
+// 예약 세션 스토리지 가져올 객체 
+let storedData = null;
+
+
 document.addEventListener("DOMContentLoaded", async function(){
 	paymentKey = document.querySelector("#paymentKey");
 	orderId = document.querySelector("#orderId");
@@ -136,22 +141,35 @@ document.addEventListener("DOMContentLoaded", async function(){
 	
 	loading = document.querySelector("#payment-loading");
 	
+	storedData = sessionStorage.getItem("flightBookingData")
+	
+	console.log("storedData : ", storedData);
+	
 	if('${error}' !== "error"){
+		if(storedData){
+			storedData = JSON.parse(storedData); 
+		}
+		
 		const requestData = {
 	        paymentKey: paymentKey.value,
 	        orderId: orderId.value,
 	        amount: amount.value,
 	        paymentType : paymentType.value
 	    };
+		
 		console.log("requestData ", requestData);
 		
-		const response = await fetch("/product/payment/confirm", {
+		const response = await fetch("/product/payment/flight/confirm", {
 			method : "post",
 			headers : {"Content-Type" : "application/json"},
 			body : JSON.stringify(requestData)
 		});
 		
 		console.log("response : ", response);
+		
+		// 성공시 해당 위치에 데이터 출력
+		
+		
 		
 		loading.style.display = "none";
 	}else{

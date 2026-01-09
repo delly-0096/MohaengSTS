@@ -2,12 +2,8 @@ package kr.or.ddit.mohaeng.vo;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
-
-import org.springframework.format.annotation.DateTimeFormat;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 @Data

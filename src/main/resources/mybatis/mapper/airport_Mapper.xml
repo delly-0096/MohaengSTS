@@ -49,4 +49,19 @@
 		from airline
 	</select>
 
+	<select id="selectAirline" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.AirlineVO">
+		select
+			airline_id, airline_nm, iata_code
+		from airline
+		where airline_nm = #{airlineNm}
+	</select>
+	
+	
+	<select id="getPayPerson" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+		select
+			m.mem_no, m.mem_name, m.mem_email, mu.tel
+		from member m left outer join mem_user mu on(m.mem_no = mu.mem_no)
+		where mem_id = #{memId}
+	</select>
+	
 </mapper>

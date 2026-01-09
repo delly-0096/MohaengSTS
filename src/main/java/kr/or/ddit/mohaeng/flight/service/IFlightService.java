@@ -5,6 +5,7 @@ import java.util.List;
 import kr.or.ddit.mohaeng.vo.AirlineVO;
 import kr.or.ddit.mohaeng.vo.AirportVO;
 import kr.or.ddit.mohaeng.vo.FlightProductVO;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 
 public interface IFlightService {
 	public int registerAirport();
@@ -13,5 +14,6 @@ public interface IFlightService {
 	public List<AirportVO> getAirportList();
 	public List<AirlineVO> getAirlineList();
 
-	public List<FlightProductVO> getFlightList(FlightProductVO flightProduct); 
+	public List<FlightProductVO> getFlightList(FlightProductVO flightProduct);
+	public MemberVO getPayPerson(String memId); 
 }

@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import kr.or.ddit.mohaeng.flight.service.IFlightService;
 import kr.or.ddit.mohaeng.vo.AirportVO;
 import kr.or.ddit.mohaeng.vo.FlightProductVO;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -47,16 +48,26 @@ public class FlightController {
 	
 	@ResponseBody
 	@PostMapping("/searchFlight")
-	public List<FlightProductVO> searchFlight(@RequestBody FlightProductVO flightSchedule){
-		System.out.println("flight service다 : " + flightSchedule);
-		log.info("flightController.searchFlight => {}", flightSchedule);
-		return service.getFlightList(flightSchedule);
+	public List<FlightProductVO> searchFlight(@RequestBody FlightProductVO flightProduct){
+		System.out.println("flight service다 : " + flightProduct);
+		log.info("flightController.searchFlight => {}", flightProduct);
+		return service.getFlightList(flightProduct);
+	}
+	
+	@ResponseBody
+	@PostMapping("/user")
+	public MemberVO flighterInfo(@RequestBody MemberVO memberVO) {
+		log.info("결제할 정보 가져오기 {}", memberVO.getMemId());
+		MemberVO member = service.getPayPerson(memberVO.getMemId());
+		return member;
 	}
 	
 	
-	// POST로 보내기
+	
 	@GetMapping("/booking")
-	public String flightBooking() {
+	public String flightBooking(/* @RequestBody List<FlightProductVO> flightList */) {
+		// 여기서 db에 정보를 담을지
+		
 		return "product/flightBooking";
 	}
 	

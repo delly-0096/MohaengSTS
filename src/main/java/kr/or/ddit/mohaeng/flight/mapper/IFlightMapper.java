@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Mapper;
 
 import kr.or.ddit.mohaeng.vo.AirlineVO;
 import kr.or.ddit.mohaeng.vo.AirportVO;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 
 @Mapper
 public interface IFlightMapper {
@@ -13,8 +14,10 @@ public interface IFlightMapper {
 	public List<AirportVO> selectAirportList(String keyword);	// 공항 목록 검색
 	public int registerAirline(AirlineVO vo);					// 항공 등록
 	
+	public AirlineVO selectAirline(String airlineNm);			// 항공사 id 가져오기 위한 것
+	
 	
 	public List<AirportVO> getAirportList();
 	public List<AirlineVO> getAirlineList();
-	
+	public MemberVO getPayPerson(String memId);
 }

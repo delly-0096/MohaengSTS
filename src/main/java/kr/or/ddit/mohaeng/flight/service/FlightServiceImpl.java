@@ -21,6 +21,7 @@ import kr.or.ddit.mohaeng.flight.mapper.IFlightMapper;
 import kr.or.ddit.mohaeng.vo.AirlineVO;
 import kr.or.ddit.mohaeng.vo.AirportVO;
 import kr.or.ddit.mohaeng.vo.FlightProductVO;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -81,11 +82,11 @@ public class FlightServiceImpl implements IFlightService {
 	        log.info("응답 데이터: {}", jsonResponse);
 	
 	        // 4. Jackson ObjectMapper를 이용한 파싱
-	        ObjectMapper mapper = new ObjectMapper();
-	        JsonNode root = mapper.readTree(jsonResponse);
+	        ObjectMapper objectMapper = new ObjectMapper();
+	        JsonNode root = objectMapper.readTree(jsonResponse);
 			JsonNode items = root.path("response").path("body").path("items").path("item");
 			
-			
+
 			if (items.isArray()) {
 			    for (JsonNode node : items) {
 			    	FlightProductVO vo = new FlightProductVO();
@@ -93,6 +94,7 @@ public class FlightServiceImpl implements IFlightService {
 			        vo.setAirlineNm(node.path("airlineNm").asText());       // 항공사명
 			        vo.setFlightSymbol(node.path("vihicleId").asText()); 	// 편명
 			        vo.setEconomyCharge(node.path("economyCharge").asInt());// 요금
+			        // vo.setPrestigeCharge(node.path("economyCharge").asInt()); // 비즈니스 요금 세팅
 			        
 			        vo.setArrAirportNm(flightProduct.getArrAirportNm());
 			        vo.setDepAirportNm(flightProduct.getDepAirportNm());
@@ -108,14 +110,19 @@ public class FlightServiceImpl implements IFlightService {
 			        String rawArrTime = node.path("arrPlandTime").asText(); 
 			        timeFormatter(vo , rawArrTime, 2);
 			        
+			        AirlineVO airlineVO = mapper.selectAirline(vo.getAirlineNm());
+			        if(airlineVO != null) {
+			        	vo.setAirlineId(airlineVO.getAirlineId());
+			        }
+			        
 			        flightProductList.add(vo);
 			    }
 			} else if (items.isObject()) {
 		    	FlightProductVO vo = new FlightProductVO();
 		        
-		        vo.setAirlineNm(items.path("airlineNm").asText());       // 항공사명
+		        vo.setAirlineNm(items.path("airlineNm").asText());       	// 항공사명
 		        vo.setFlightSymbol(items.path("vihicleId").asText());       // 편명 데이터 없음
-		        vo.setEconomyCharge(items.path("economyCharge").asInt());// 요금
+		        vo.setEconomyCharge(items.path("economyCharge").asInt());	// 요금
 
 		        vo.setArrAirportNm(flightProduct.getArrAirportNm());
 		        vo.setDepAirportNm(flightProduct.getDepAirportNm());
@@ -131,6 +138,11 @@ public class FlightServiceImpl implements IFlightService {
 		        
 		        String rawArrTime = items.path("arrPlandTime").asText(); 
 		        timeFormatter(vo ,rawArrTime, 2);
+		        
+		        AirlineVO airlineVO = mapper.selectAirline(vo.getAirlineNm());
+		        if(airlineVO != null) {
+		        	vo.setAirlineId(airlineVO.getAirlineId());
+		        }
 		        
 		        flightProductList.add(vo);
 			}
@@ -158,9 +170,8 @@ public class FlightServiceImpl implements IFlightService {
 			}
 			else {
 				LocalDateTime parseDateTime = LocalDateTime.parse(rawTime, formatter);
-				vo.setArrTime(parseDateTime);;
+				vo.setArrTime(parseDateTime);
 				vo.setEndDt(parseDateTime.toLocalDate());
-				
 			}
 		}
 	}
@@ -228,6 +239,15 @@ public class FlightServiceImpl implements IFlightService {
 			log.info("registerAirport : regist ", status);
 		}
 		return status;
+	}
+
+	@Override
+	public MemberVO getPayPerson(String memId) {
+		MemberVO result = mapper.getPayPerson(memId);
+		if(result != null) {
+			return result;
+		}
+		return null;
 	}
 
 

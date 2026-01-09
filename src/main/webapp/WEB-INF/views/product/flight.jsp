@@ -18,9 +18,10 @@
 				<i class="bi bi-airplane me-3"></i>항공권 검색
 			</h1>
 			<p>국내 항공권을 한 번에 비교하고 최저가를 찾아보세요</p>
+			<br/>
 		</div>
 	</div>
-
+	
 	<div class="container">
 		<!-- 검색 박스 -->
 		<div class="search-box">
@@ -28,7 +29,9 @@
 				<button class="search-tab active" data-type="round">왕복</button>
 				<button class="search-tab" data-type="oneway">편도</button>
 			</div>
-
+			
+			
+			
 			<form id="flightSearchForm">
 				<!-- 왕복/편도 검색 폼 -->
 				<div id="normalSearchForm">
@@ -157,6 +160,7 @@
 			<div class="results-header">
 				<p class="results-count">
 					<!-- 검색 결과 출력 -->
+<!-- 					<button type="button" onclick="getMember()">정보</button> -->
 				</p>
 				<div class="sort-options">
 					<button class="sort-btn active" data-sort="price">최저가순</button>
@@ -258,35 +262,58 @@ function updateSelectionStepIndicator() {
 }
 
 // 항공편 선택 처리 - id, data, searchData, startDate, duration, 
-function selectFlight(id, airline, flightSymbol, depTime, arrTime, startDate, domesticDays, depAirport, arrAirport, price, duration) {
+// function selectFlight(id, airline, flightSymbol, depTime, arrTime, startDate, domesticDays, depAirport, arrAirport, price, duration, checkedBaggage) {
+function selectFlight(jsonSendData) {
 	cabinClass = document.querySelector("#cabinClass");
-    const flightData = {
-        id: id,							// id
-        airline: airline,
-        flightSymbol: flightSymbol,
-        departureTime: depTime,
-        arrivalTime: arrTime,
-        startDate : startDate,			// 자체
-        domesticDays : domesticDays,
-        departureAirport: depAirport,
-        arrivalAirport: arrAirport,
-        price: price,
-        duration : duration,			// 자체
-        step: currentSelectionStep,
-        adult : passengers.adult,
-        child : passengers.child,
-        infant : passengers.infant,
-        cabinClass : cabinClass.value == "economy" ? "일반석" : "비즈니스"
-        // 짐 무게?
-    };
-
+	
+	const flightData = JSON.parse(jsonSendData); 
+	console.log("jsonData : ", flightData.airlineId);
+	
+//     const flightData = {
+//         id: sendData.id,							// id - 조정
+//         airline: sendData.airline,				// 항공사
+//         flightSymbol: sendData.flightSymbol,		// 항공사 iata코드
+//         departureTime: sendData.depTime,			// 출발 시간
+//         arrivalTime: sendData.arrTime,			// 도착 시간
+//         startDate : sendData.startDate,			// 자체
+//         domesticDays : sendData.domesticDays,	// 출발일
+//         departureAirport: sendData.depAirport,	// 출발 공항 코드
+//         arrivalAirport: sendData.arrAirport,		// 출발 공항 코드
+//         price: sendData.price,					// 가격 - 결제 || 예약 정보에 들어갈 것들
+//         duration : sendData.duration,			// 걸린 시간
+//         step: currentSelectionStep,		// 숫자 낮은것 부터 insert
+//         adult : passengers.adult,		
+//         child : passengers.child,
+//         infant : passengers.infant,
+//         cabinClass : cabinClass.value == "economy" ? "일반석" : "비즈니스"
+//         checkedBaggage : sendData.checkedBaggage   // 짐 무게?
+//         id: id,							// id - 조정
+//         airline: airline,				// 항공사
+//         flightSymbol: flightSymbol,		// 항공사 iata코드
+//         departureTime: depTime,			// 출발 시간
+//         arrivalTime: arrTime,			// 도착 시간
+//         startDate : startDate,			// 자체
+//         domesticDays : domesticDays,	// 출발일
+//         departureAirport: depAirport,	// 출발 공항 코드
+//         arrivalAirport: arrAirport,		// 출발 공항 코드
+//         price: price,					// 가격 - 결제 || 예약 정보에 들어갈 것들
+//         duration : duration,			// 걸린 시간
+//         step: currentSelectionStep,		// 숫자 낮은것 부터 insert
+//         adult : passengers.adult,		
+//         child : passengers.child,
+//         infant : passengers.infant,
+//         cabinClass : cabinClass.value == "economy" ? "일반석" : "비즈니스",
+//         checkedBaggage : checkedBaggage   // 짐 무게?
+//     };
+	console.log("flightData : ", flightData);
+    
+    
     selectedFlights.push(flightData);
     currentSelectionStep++;
     
     // 편도인 경우 바로 결제 페이지로 이동
     if (currentSearchType === 'oneway' || currentSelectionStep === 2) {
-        goToBooking(/* [flightData] */);
-        console.log("ddd");
+        goToBooking();
         return;
     }
     
@@ -340,10 +367,10 @@ function updateSelectedFlightsDisplay() {
             '<div class="selected-flight-info">' +
                 '<span class="selected-flight-label">' + label + '</span>' +
                 '<div class="selected-flight-detail">' + flight.startDate + '(' + flight.domesticDays + ')' + 
-                    '<span class="selected-flight-time">' + flight.departureTime + ' → ' + flight.arrivalTime + '</span>' +
-                    '<span class="selected-flight-route">' + flight.departureAirport + ' → ' + flight.arrivalAirport + '</span>' +
+                    '<span class="selected-flight-time">' + flight.depTimeFormmater + ' → ' + flight.arrTimeFormmater + '</span>' +
+                    '<span class="selected-flight-route">' + flight.depIata + ' → ' + flight.arrIata + '</span>' +
                 '</div>' +
-                '<span class="selected-flight-airline">' + flight.airline + ' (' + flight.flightSymbol + ')</span>' +
+                '<span class="selected-flight-airline">' + flight.airlineNm + ' (' + flight.flightSymbol + ')</span>' +
             '</div>' +
             '<span class="selected-flight-price">' + flight.price + '원</span>' +
         '</div>';
@@ -392,7 +419,8 @@ function goToBooking() {
     };
     
     // 항공편 데이터를 sessionStorage에 저장
-    sessionStorage.setItem('flightBookingData', JSON.stringify(bookingData));
+//     sessionStorage.removeItem('flightProduct');
+    sessionStorage.setItem('flightProduct', JSON.stringify(bookingData));
     
     const flightIds = selectedFlights.map(f => f.id).join(',');
     window.location.href = '/product/flight/booking'/* ?flightIds=' + flightIds + '&type=' + currentSearchType */;
@@ -546,36 +574,68 @@ function getFlightsForPage(page) {
 
 // - infiniteScroll 받을때
 function createFlightCard(data, searchData, id) {
+	cabinClass = document.querySelector("#cabinClass");
 	
-	console.log("data : ", data); // 이거 session에 담는다.
+	let fltProdId = searchData.startDt + "" + id;	// 일단 항공권 id = 일자 + id
 	
-    // 버튼 텍스트 결정
-    var isLastStep = (currentSelectionStep >= totalSegments - 1);
-    var buttonText = (currentSearchType === 'oneway' || isLastStep) ? '결제하기' : '선택';
+	// 버튼 텍스트 결정
+    let isLastStep = (currentSelectionStep >= totalSegments - 1);
+    let buttonText = (currentSearchType === 'oneway' || isLastStep) ? '결제하기' : '선택';
     
     if(data.economyCharge === 0 || (data.airlineNm == '/' || data.airlineNm === null)) return '';
 	
-	let depTimeSet = data.depTime.split(" ");	// 오전, 오후 분리
+    let startDate = searchData.startDt.substring(0, 4) + "년 " + searchData.startDt.substring(4, 6) + "월 " + searchData.startDt.substring(6, 8) + "일 "; 
+	
+	let depTimeSet = data.depTime.split(" ");	// 날짜 시간 분리
 	let arrTimeSet = data.arrTime.split(" ");
 	
-	let depAp = depTimeSet[0] == "오전" ? 0 : 12;
-	let arrAp = arrTimeSet[0] == "오전" ? 0 : 12;
+	let depAp = depTimeSet[1].split(":");	// 시 분 분리	
+	let arrAp = arrTimeSet[1].split(":");
 	
-	let startDate = searchData.startDt.substring(0, 4) + "년 " + searchData.startDt.substring(4, 6) + "월 " + searchData.startDt.substring(6, 8) + "일 "; 
+	let depTimeFormmater = parseInt(depAp[0]) > 12 ? 
+			"오후 " + (parseInt(depAp[0]) - 12) + ":" + depAp[1] :
+			"오전 " + depTimeSet[1];
+	let arrTimeFormmater = parseInt(arrAp[0]) > 12 ?
+			"오후 " + (parseInt(arrAp[0]) - 12) + ":" + arrAp[1] :
+			"오전 " + arrTimeSet[1];
+			
 	
-	let depTime = depTimeSet[1].split(":");
-	let arrTime = arrTimeSet[1].split(":");
-	
-	let timeSet = (parseInt(arrAp * 60) + parseInt(arrTime[0] * 60) + parseInt(arrTime[1]))
-	- (parseInt(depAp * 60) + parseInt(depTime[0] * 60) + parseInt(depTime[1]));
+	let timeSet = (parseInt(arrAp[0] * 60) + parseInt(arrAp[1]))
+	- (parseInt(depAp[0] * 60) + parseInt(depAp[1]));
 	
 	let duration = parseInt(timeSet / 60) + "시간 " + (timeSet % 60) + "분"; 
+	
+	let cabin = cabinClass.value == "economy" ? "일반석" : "비즈니스";
+	
+	let price = cabin == "일반석" ? data.economyCharge : data.prestigeCharge;
+	
+	const sendData = {
+		...data,
+		...searchData,
+		fltProdId : parseInt(fltProdId),	
+		startDate : startDate,
+		duration : duration,
+		step: currentSelectionStep,		// 숫자 낮은것 부터 insert
+	    adult : passengers.adult,		
+	    child : passengers.child,
+	    infant : passengers.infant,
+	    cabinClass : cabin,
+	    price : price,					// 가격 세팅
+	    depTimeFormmater : depTimeFormmater,
+	    arrTimeFormmater : arrTimeFormmater
+	};
+	
+	const jsonSendData = JSON.stringify(sendData).replace(/"/g, '&quot;');
+	
+	
 	// id에 돌아오는것, 가는것 알파벳 추가?
-    return `<div class="flight-card" data-flight-id="\${id}">
+	// 선택한 클래스에 따라 요금을 economey, prestige로 변경하기
+			
+    return `<div class="flight-card" data-flight-id="\${fltProdId}">
         <div class="flight-card-content">
             <div class="flight-info">
                 <div class="flight-time">
-                    <div class="time">\${data.depTime}</div>
+                    <div class="time">\${depTimeFormmater}</div>
                     <div class="airport">\${searchData.depAirportNm}</div>
                 </div>
             </div>
@@ -588,7 +648,7 @@ function createFlightCard(data, searchData, id) {
             </div>
             <div class="flight-info">
                 <div class="flight-time">
-                    <div class="time">\${data.arrTime}</div>
+                    <div class="time">\${arrTimeFormmater}</div>
                     <div class="airport">\${searchData.arrAirportNm}</div>
                 </div>
             </div>
@@ -596,17 +656,19 @@ function createFlightCard(data, searchData, id) {
 				<i class="bi bi-luggage-fill"></i><span>\${data.checkedBaggage} kg</span>
 			</div>
             <div class="flight-price">
-                <div class="price">\${data.economyCharge}<span class="price-unit">원</span></div>
+                <div class="price">\${price}<span class="price-unit">원</span></div>
                 <button type="button" class="btn btn-primary btn-sm flight-action-btn" 
-                    onclick="selectFlight('\${id}', '\${data.airlineNm}', '\${data.flightSymbol}',
-                    '\${data.depTime}', '\${data.arrTime}', '\${startDate}' , '\${data.domesticDays}', '\${searchData.depIata}', '\${searchData.arrIata}',
-                    '\${data.economyCharge}', '\${duration}')">
+                    onclick="selectFlight('\${jsonSendData}')">
                     \${buttonText}
                 </button>
             </div>
         </div>
     </div>`;
 }
+
+// onclick="selectFlight('\${id}', '\${data.airlineNm}', '\${data.flightSymbol}',
+//     '\${data.depTime}', '\${data.arrTime}', '\${startDate}' , '\${data.domesticDays}', '\${searchData.depIata}', '\${searchData.arrIata}',
+//     '\${data.economyCharge}', '\${duration}', '\${data.checkedBaggage}')">
 
 // id, data, searchData, startDate, duration, 
 
@@ -714,6 +776,7 @@ function searchFlights() {
 	    			noMoney++;
 	    		}
 	    		else{
+// 	    			flight.prestigeCharge = flight.economyCharge + (flight.economyCharge * );
 		    		result.innerHTML += createFlightCard(flight[i], searchData, i);
 	    		}
 	    	}
@@ -725,7 +788,7 @@ function searchFlights() {
     	
     	
     	let resultSize = searchSize - noMoney;
-   		searchCount.innerHTML = `<strong>\${searchData.depAirportNm} (\${searchData.depAirportId})</strong> → <strong>\${searchData.arrAirportNm} (\${searchData.arrAirportId})</strong> 검색 결과 <strong>\${resultSize}</strong>개`;
+   		searchCount.innerHTML = `<strong>\${searchData.depAirportNm} (\${searchData.depIata})</strong> → <strong>\${searchData.arrAirportNm} (\${searchData.arrIata})</strong> 검색 결과 <strong>\${resultSize}</strong>개`;
     })
     .catch(error => {
     	console.log("error 발생 : ", error);
@@ -848,6 +911,20 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
 });
+
+// async function getMember(){
+// 	console.log("user.username : ", "${user.username}");
+// 	const userData = await fetch("/product/flight/user", {
+// 		method : "post",
+// 		headers : {"Content-Type" : "application/json"},
+// 		body : JSON.stringify({memId : "${user.username}"})
+// 	});
+	
+// 	console.log("userData : ", userData);
+	
+// 	const customData = await userData.json();
+// 	console.log("customData : ", customData);
+// }
 
 // //페이지 로드시 초기화
 // document.addEventListener('DOMContentLoaded', function() {

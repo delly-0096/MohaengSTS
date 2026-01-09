@@ -178,4 +178,8 @@ public interface IMemberMapper {
 	 */
 	public MemberVO selectForPwReset(MemberVO memberVO);
 
+	public MemberVO findByEmail(String email);
+
+	public int insertSocialMember(MemberVO member);
+
 }

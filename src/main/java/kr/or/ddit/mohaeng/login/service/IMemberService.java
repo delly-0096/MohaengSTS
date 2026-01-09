@@ -86,6 +86,14 @@ public interface IMemberService {
 	 */
 	public MemberVO findByCompId(String memId);
 
+	/**
+	 *	<p> 비밀번호 변경 </p>
+	 * @date 2026.01.09
+	 * @author kdrs
+	 * @param memNo
+	 * @param currentPassword
+	 * @param newPassword
+	 */
 	public void changePassword(int memNo, String currentPassword, String newPassword);
 	
 	/**
@@ -125,6 +133,15 @@ public interface IMemberService {
 	 * @throws RuntimeException 메일 발송 실패 시 발생
 	 */
 	public void sendPasswordResetMail(MemberVO memberVO);
+
+	/**
+	 * <p>임시 비밀번호 사용 여부를 해제한다.</p>
+	 * @date 2026.01.09
+	 * @author kdrs
+	 * @param memNo 회원 번호
+	 * @param tempPwYn 임시 비밀번호 사용 여부 ('Y' / 'N')
+	 */
+	public void updateTempPwYn(int memNo, String string);
 
 
 

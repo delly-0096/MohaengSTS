@@ -270,4 +270,44 @@
 	      AND DEL_YN = 'N'
 	</select>
 	
+	<!-- sns 로그인 시 이메일 조회 (없을시 회원가입 하기 위한 목적) -->
+	<select id="findByEmail" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+	    SELECT *
+	    FROM MEMBER
+	    WHERE MEM_EMAIL = #{memEmail}
+	      AND DEL_YN = 'N'
+	</select>
+	
+	<insert id="insertSocialMember" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+	    INSERT INTO MEMBER (
+	        MEM_NO
+	        , MEM_ID
+	        , MEM_PASSWORD
+	        , MEM_EMAIL
+	        , MEM_NAME
+	        , MEM_STATUS
+	        , MEM_SNS_YN
+	        , SNS_TYPE
+	        , SNS_ID
+	        , ENABLED
+	        , DEL_YN
+	        , REG_DT
+	        , TEMP_PW_YN
+	    ) VALUES (
+	        SEQ_MEMBER_NO.NEXTVAL
+	        , #{memId}
+	        , #{memPassword}
+	        , #{memEmail}
+	        , #{memName}
+	        , 'ACTIVE'
+	        , 'Y'
+	        , #{snsType}
+	        , #{snsId}
+	        , 1
+	        , 'N'
+	        , SYSDATE
+	        , 'N'
+	    )
+	</insert>
+	
 </mapper>

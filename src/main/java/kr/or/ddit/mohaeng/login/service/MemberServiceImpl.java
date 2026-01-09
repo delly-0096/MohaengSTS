@@ -3,6 +3,7 @@ package kr.or.ddit.mohaeng.login.service;
 
 import java.util.UUID;
 
+import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,7 +41,6 @@ public class MemberServiceImpl implements IMemberService {
 	
 	@Autowired
     private IMemCompMapper memCompMapper;
-	
 	
 	@Autowired
 	private PasswordEncoder passwordEncoder;
@@ -586,6 +586,25 @@ public class MemberServiceImpl implements IMemberService {
 		</body>
 		</html>
 		""".formatted(safeName, tempPassword, profileUrl);
+	}
+
+	/**
+	 * <p>임시 비밀번호 사용 여부를 해제한다.</p>
+	 * @date 2026.01.09
+	 * @author kdrs
+	 * @param memNo 회원 번호
+	 * @param tempPwYn 임시 비밀번호 사용 여부 ('Y' / 'N')
+	 */
+	@Override
+	@Transactional
+	public void updateTempPwYn(int memNo, String tempPwYn) {
+		
+		 int result = memberMapper.updateTempPwYn(memNo, tempPwYn);
+
+		    if (result <= 0) {
+		        throw new RuntimeException("임시 비밀번호 상태 변경 실패");
+		    }
+		
 	}
 
 

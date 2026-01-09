@@ -12,6 +12,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,6 +24,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
@@ -141,7 +144,10 @@ public class ProfileController {
 	/* 정보 수정 기능 */
 	@PostMapping("/profile/update")
 	public String updateProfile(@ModelAttribute MemberUpdateDTO updateDTO, 
-								HttpSession session, RedirectAttributes rttr) {
+								HttpSession session,
+						        HttpServletRequest request,
+						        HttpServletResponse response,
+								RedirectAttributes rttr) {
 		
 		log.info("DTO 데이터 확인: " + updateDTO);
 
@@ -167,17 +173,25 @@ public class ProfileController {
 	        return "redirect:" + redirectUrl;
 	    }
 	    
-	    try {
-	    // 비밀번호 변경 처리 (입력값이 있을 때만)
+	   
         if (updateDTO.getNewPassword() != null && !updateDTO.getNewPassword().isBlank()) {
             if (!updateDTO.getNewPassword().equals(updateDTO.getConfirmPassword())) {
                 rttr.addFlashAttribute("errorMessage", "새 비밀번호 확인이 일치하지 않습니다.");
                 return "redirect:" + redirectUrl;
             }
-            memberService.changePassword(memNo, updateDTO.getCurrentPassword(), updateDTO.getNewPassword());
+            
+            // 비밀번호 변경 + TEMP_PW_YN = 'N'
+            memberService.changePassword(memNo, updateDTO.getCurrentPassword() ,updateDTO.getNewPassword());
+            memberService.updateTempPwYn(memNo, "N");
+            
+            // 즉시 강제 로그아웃
+            new SecurityContextLogoutHandler().logout(request, response, auth);
+            rttr.addFlashAttribute("successMessage", "비밀번호가 변경되었습니다. 다시 로그인해주세요.");
+            return "redirect:/member/login";
         }
 	    
         // 프로필 정보 업데이트
+        try {
         updateDTO.setMemNo(memNo);
         if (updateDTO.isProfileImageDeleted()) {
             fileSerivce.deleteProfileFile(memNo);

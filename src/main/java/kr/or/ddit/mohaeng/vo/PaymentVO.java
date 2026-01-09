@@ -1,6 +1,6 @@
 package kr.or.ddit.mohaeng.vo;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import lombok.Data;
@@ -17,9 +17,9 @@ public class PaymentVO {
 	private String payMethodCd; // 공통코드
 	
 	
-	private Date payDt; 		// 결제일시
+	private OffsetDateTime payDt; 		// 결제일시 - json에서 제공하는 형태
 	private String payStatus; 	// 결제상태(Y,N,WAIT)
-	private Date cancelDt; 		// 취소일시
+	private OffsetDateTime cancelDt; 		// 취소일시
 	private String cancelReason;// 취소사유
 	
 	

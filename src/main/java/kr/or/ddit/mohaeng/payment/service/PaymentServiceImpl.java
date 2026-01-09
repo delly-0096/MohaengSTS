@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.payment.service;
 
 import java.nio.charset.StandardCharsets;
+import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,11 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
-import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.payment.mapper.IPaymentMapper;
 import kr.or.ddit.mohaeng.vo.FlightPassengersVO;
 import kr.or.ddit.mohaeng.vo.FlightProductVO;
-import kr.or.ddit.mohaeng.vo.FlightReservationVO;
 import kr.or.ddit.mohaeng.vo.PaymentVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -71,12 +70,20 @@ public class PaymentServiceImpl implements IPaymentService {
                 // memNo이미 존재
                 paymentVO.setPayNo(responseBody.get("orderId").toString());
                 paymentVO.setPaymentKey(responseBody.get("paymentKey").toString()); // 아직 필요유무 모름
-//                paymentVO.setPayTotalAmt(responseBody.get("amount"));	// 숫자
+                int amount = (int) responseBody.get("totalAmount");
+                paymentVO.setPayTotalAmt(amount);	// 숫자
                 paymentVO.setPayMethodCd(responseBody.get("method").toString());
-//                paymentVO.setPayDt(responseBody.get("approvedAt"));	// 날짜
+
+                String approvedAtStr = responseBody.get("approvedAt").toString();
+                OffsetDateTime payDt = OffsetDateTime.parse(approvedAtStr);
+                paymentVO.setPayDt(payDt);	// 날짜
                 paymentVO.setPayStatus(responseBody.get("status").toString());
-//                paymentVO.setUsePoint(responseBody.get("discount"));	// 사용포인트
+                
+                int discount = responseBody.get("discount") == null ? 0 : (int) responseBody.get("discount");
+                paymentVO.setUsePoint(discount);	// 사용포인트
                 // 취소 사유 2개는 패스
+                
+                log.info("paymentVO : {}", paymentVO);
                 
                 int payResult = mapper.insertPayment(paymentVO);
                 

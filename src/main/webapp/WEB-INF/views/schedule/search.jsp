@@ -868,6 +868,7 @@ function goToPlanner() {
     };
 
     sessionStorage.setItem('preferenceData', JSON.stringify(preferenceData));
+    
     window.location.href = '${pageContext.request.contextPath}/schedule/planner';
 }
 

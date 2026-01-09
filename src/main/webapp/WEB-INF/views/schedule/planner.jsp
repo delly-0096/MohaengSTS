@@ -10,7 +10,10 @@
     <!-- 사이드바: 일정 리스트 -->
     <aside class="planner-sidebar">
         <div class="planner-sidebar-header">
-            <h1 class="planner-trip-title" id="tripTitle">제주도 여행</h1>
+            <h1 class="planner-trip-title" id="tripTitle" onclick="openEditSchdlNmModal()">
+            	<span class="" id="schdlNm">제주도 여행</span>
+            	<span class="budget-edit-icon"><i class="bi bi-pencil"></i></span>
+            </h1>
             <p class="planner-trip-dates" id="tripDates">2024.03.15 - 2024.03.18 (3박 4일)</p>
 
             <!-- 예산 요약 -->
@@ -263,7 +266,7 @@
                                 <i class="bi bi-lock"></i>
                             </div>
                             <div class="visibility-option-info">
-                                <span class="visibility-option-title">비공개</span>
+                                <span class="visibility-option-`title`">비공개</span>
                                 <span class="visibility-option-desc">나만 이 일정을 볼 수 있습니다</span>
                             </div>
                             <div class="visibility-option-check">
@@ -396,6 +399,32 @@
     </div>
 </div>
 
+<!-- 제목 수정 모달 -->
+<div class="modal fade" id="editSchdlNmModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-pencil-square me-2"></i><span id="editSchdlNmModalTitle">일정명 수정</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+<!--                 <input type="hidden" id="editingSchdlNm" value=""> -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold"><i class="bi bi-tag me-1"></i>여행일정 제목</label>
+                    <input type="text" class="form-control" id="editingSchdlNm">
+                    <small class="text-muted">여행일정의 제목을 입력 해 주세요</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="confirmEditSchdlNm()">
+                    <i class="bi bi-check-lg me-1"></i>적용
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9976009a2fb2e0385884b79eca12dd63&libraries=services,clusterer"></script>
 <script>
 //map
@@ -405,6 +434,7 @@ let daySelectButtons = document.querySelector("#daySelectButtons")
 let selectedItem = null;
 let selectDayModal;
 let saveScheduleModal;
+let editSchdlNmModal
 let editDayModal;
 let budgetModal;
 let selectedDay = 1;
@@ -420,6 +450,7 @@ let startDt = "";
 let endDt = "";
 let diffDay = 0;
 let duration = 0;
+let schdlNm = "";
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
@@ -435,6 +466,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     selectDayModal = new bootstrap.Modal(document.getElementById('selectDayModal'));
     saveScheduleModal = new bootstrap.Modal(document.getElementById('saveScheduleModal'));
     editDayModal = new bootstrap.Modal(document.getElementById('editDayModal'));
+    editSchdlNmModal = new bootstrap.Modal(document.getElementById('editSchdlNmModal'));
     budgetModal = new bootstrap.Modal(document.getElementById('budgetModal'));
     
     calculateAllCosts(); // 초기 비용 계산
@@ -921,6 +953,7 @@ function saveSchedule() {
             console.log(tempPlanDataList);
 
         	sessionStorage.setItem('tempPlanDataList', JSON.stringify(tempPlanDataList));
+        	sessionStorage.setItem('tempSchdlNm', schdlNm);
 
             window.location.href = '${pageContext.request.contextPath}/member/login';
         }
@@ -974,6 +1007,7 @@ function selectVisibility(visibility) {
 function confirmSaveSchedule() {
     // 1. Master 데이터 추출 (TRIP_SCHEDULE 매핑)
     const masterData = {
+    	schdlNm : schdlNm,
         schdlStartDt: startDt, // 시작일 (YYYY-MM-DD)
         schdlEndDt: endDt,     // 종료일
         totalBudget: totalBudget,
@@ -992,7 +1026,7 @@ function confirmSaveSchedule() {
         
         const detailObj = {
             schdlDt: d,                         // 1일차, 2일차...
-            schdlTitle: dayInfo.theme || d + "일차", // 일차별 테마
+            schdlTitle: dayInfo.theme, // 일차별 테마
             places: []                          // 해당 일차의 장소들
         };
 
@@ -1033,7 +1067,7 @@ function confirmSaveSchedule() {
             
             // 성공 시 세션 스토리지 정리 (앞서 질문하신 특정 아이템 삭제)
             sessionStorage.removeItem('tempPlanDataList');
-            
+            sessionStorage.removeItem('tempSchdlNm');
             setTimeout(() => {
                 window.location.href = '${pageContext.request.contextPath}/schedule/my';
             }, 1000);
@@ -1045,6 +1079,19 @@ function confirmSaveSchedule() {
         console.error('Save Error:', err);
         showToast('서버 통신 실패', 'danger');
     });
+}
+
+// 여행일정명 수정 모달 열기
+function openEditSchdlNmModal() {
+console.log(schdlNm);
+    document.getElementById('editingSchdlNm').value = schdlNm;
+    document.getElementById('editSchdlNmModalTitle').textContent = '여행일정 제목 수정';
+
+    // 현재 테마 불러오기
+//     var currentTheme = dayData[day].theme || '';
+//     document.getElementById('editSchdlNm').value = currentTheme;
+
+    editSchdlNmModal.show();
 }
 
 // 일차 수정 모달 열기
@@ -1071,6 +1118,21 @@ function setQuickTheme(theme) {
             chips[i].classList.add('active');
         }
     }
+}
+
+//여행일정 제목 수정 확인
+function confirmEditSchdlNm() {
+    var day = parseInt(document.getElementById('editingDay').value);
+    var theme = document.getElementById('editDayTheme').value.trim();
+
+    // 데이터 저장
+    schdlNm = document.getElementById('editingSchdlNm').value;
+
+    // 표시 업데이트
+    document.getElementById('schdlNm').innerText = schdlNm;
+    
+    editSchdlNmModal.hide();
+    showToast('여행일정 제목이 수정되었습니다.', 'success');
 }
 
 // 일차 수정 확인
@@ -1365,7 +1427,8 @@ function initTemplate() {
     
     //제목 작성
     if (preferenceData.destination) {
-        document.getElementById('tripTitle').textContent = preferenceData.destination + ' 여행';
+        document.getElementById('schdlNm').textContent = preferenceData.destination + ' 여행';
+        schdlNm = preferenceData.destination + ' 여행';
     }
     //여행기간 작성
     if (preferenceData.travelDates) {
@@ -1376,10 +1439,16 @@ function initTemplate() {
 
 function initReturn() {
 	let tempPlanDataList = sessionStorage.getItem("tempPlanDataList");
-	let planDataList = JSON.parse(tempPlanDataList)
+	let tempSchdlNm = sessionStorage.getItem("tempSchdlNm");
+	
+	
+	let planDataList = JSON.parse(tempPlanDataList);
     console.log(planDataList);
 	
 	if(planDataList && planDataList.length > 0) {
+		document.querySelector("#schdlNm").innerText = tempSchdlNm;
+		
+		schdlNm = tempSchdlNm;
 		planDataList.forEach(item => {
             console.log(item)
 			itemIdCounter++;

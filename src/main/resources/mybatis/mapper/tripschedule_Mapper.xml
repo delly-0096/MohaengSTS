@@ -11,6 +11,7 @@
         <result property="startPlaceId"     column="START_PLACE_ID" />
         <result property="targetPlaceType"  column="TARGET_PLACE_TYPE" />
         <result property="targetPlaceId"    column="TARGET_PLACE_ID" />
+        <result property="schdlNm"   	    column="SCHDL_NM" />
         <result property="schdlStatus"      column="SCHDL_STATUS" />
         <result property="schdlStartDt"     column="SCHDL_START_DT" />
         <result property="schdlEndDt"       column="SCHDL_END_DT" />
@@ -20,6 +21,7 @@
         <result property="publicYn"         column="PUBLIC_YN" />
         <result property="regDt"            column="TS_REG_DT" />
         <result property="modDt"            column="TS_MOD_DT" />
+        <result property="bkmkYn"            column="BKMK_YN" />
 
         <collection property="tripScheduleDetailsList" 
                     resultMap="tripScheduleDetailsResultMap" 
@@ -53,58 +55,126 @@
         <result property="destType"       column="DEST_TYPE" />
         <result property="destId"         column="DEST_ID" />
         <result property="moveType"       column="MOVE_TYPE" />
+        <result property="plcNm"       	  column="PLC_NM" />
+        
+        <association property="tourPlace" resultMap="tourPlaceResultMap" />
     </resultMap>
+    
+    <resultMap id="tourPlaceResultMap" type="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+    	<id property="plcNo" column="PLC_NO" />
+	    <result property="placeType" column="PLACE_TYPE" />
+        <result property="placeName"      column="PLACE_NAME" />
+	    <result property="plcNm" column="PLC_NM" />
+	    <result property="plcDesc" column="PLC_DESC" />
+	    <result property="plcZip" column="PLC_ZIP" />
+	    <result property="attachNo" column="IMG_ATTACH_NO" />
+	    <result property="latitude" column="LATITUDE" />
+	    <result property="longitude" column="LONGITUDE" />
+	    <result property="operationHours" column="OPERATION_HOURS" />
+	    <result property="plcPrice" column="PLC_PRICE" />
+	    <result property="regId" column="REG_ID" />
+	    <result property="regDt" column="REG_DT" />
+	    <result property="modId" column="MOD_ID" />
+	    <result property="modDt" column="MOD_DT" />
+	    <result property="pclStatusCd" column="PCL_STATUS_CD" />
+	    <result property="popTrvlYn" column="POP_TRVL_YN" />
+	    <result property="defaultImg" column="DEFAULT_IMG" />
+	    <result property="plcAddr1" column="PLC_ADDR1" />
+	    <result property="plcAddr2" column="PLC_ADDR2" />
+	</resultMap>
+    
+    <sql id="tripScheduleColumns">
+    	 	  TS.SCHDL_NO
+		    , TS.MEM_NO
+		    , TS.PREF_NO
+		    , TS.START_PLACE_TYPE
+		    , TS.START_PLACE_ID
+		    , TS.TARGET_PLACE_TYPE
+		    , TS.TARGET_PLACE_ID
+		    , TS.SCHDL_NM
+		    , TS.SCHDL_STATUS
+		    , TS.SCHDL_START_DT
+		    , TS.SCHDL_END_DT
+		    , TS.TRAVELER_CNT
+		    , TS.TOTAL_BUDGET
+		    , TS.AI_RECOM_YN
+		    , TS.PUBLIC_YN
+		    , TS.REG_DT           AS TS_REG_DT
+		    , TS.MOD_DT           AS TS_MOD_DT
+		    
+		    , TSD.SCHDL_DETAILS_NO
+		    , TSD.SCHDL_TITLE
+		    , TSD.SCHDL_START_DT  AS DETAILS_START_DT
+		    , TSD.SCHDL_END_DT    AS DETAILS_END_DT
+		    , TSD.SCHDL_DT
+		    , TSD.BG_COLOR
+		    
+		    , TSP.SCHDL_PLC_NO
+		    , TSP.PLACE_TYPE
+		    , TSP.PLACE_ID
+		    , TSP.PLAN_COST
+		    , TSP.PLACE_ORDER
+		    , TSP.PLACE_START_TIME
+		    , TSP.PLACE_END_TIME
+		    , TSP.ALL_DAY_YN
+		    , TSP.DEST_TYPE
+		    , TSP.DEST_ID
+		    , TSP.MOVE_TYPE
+		    , (SELECT TP.PLC_NM FROM TOUR_PLACE TP WHERE TP.PLC_NO = TSP.DEST_ID) AS PLC_NM
+		    , (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END 
+	             FROM TRIP_SCHEDULE_BOOKMARK B 
+	            WHERE B.SCHDL_NO = TS.SCHDL_NO 
+	              AND B.MEM_NO = #{memNo}
+	           ) AS BKMK_YN
+    </sql>
 
     <select id="selectTripScheduleList" parameterType="int" resultMap="tripScheduleResultMap">
-        SELECT
-            TS.SCHDL_NO,
-            TS.MEM_NO,
-            TS.PREF_NO,
-            TS.START_PLACE_TYPE,
-            TS.START_PLACE_ID,
-            TS.TARGET_PLACE_TYPE,
-            TS.TARGET_PLACE_ID,
-            TS.SCHDL_STATUS,
-            TS.SCHDL_START_DT,
-            TS.SCHDL_END_DT,
-            TS.TRAVELER_CNT,
-            TS.TOTAL_BUDGET,
-            TS.AI_RECOM_YN,
-            TS.PUBLIC_YN,
-            TS.REG_DT           AS TS_REG_DT,
-            TS.MOD_DT           AS TS_MOD_DT,
-            
-            TSD.SCHDL_DETAILS_NO,
-            TSD.SCHDL_TITLE,
-            TSD.SCHDL_START_DT  AS DETAILS_START_DT,
-            TSD.SCHDL_END_DT    AS DETAILS_END_DT,
-            TSD.SCHDL_DT,
-            TSD.BG_COLOR,
-            
-            TSP.SCHDL_PLC_NO,
-            TSP.PLACE_TYPE,
-            TSP.PLACE_ID,
-            TSP.PLAN_COST,
-            TSP.PLACE_ORDER,
-            TSP.PLACE_START_TIME,
-            TSP.PLACE_END_TIME,
-            TSP.ALL_DAY_YN,
-            TSP.DEST_TYPE,
-            TSP.DEST_ID,
-            TSP.MOVE_TYPE
-        FROM
-            TRIP_SCHEDULE TS
-        LEFT JOIN
-            TRIP_SCHEDULE_DETAILS TSD
-            ON TS.SCHDL_NO = TSD.SCHDL_NO
-        LEFT JOIN
-            TRIP_SCHEDULE_PLACE TSP
-            ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
-        WHERE
-            TS.MEM_NO = #{memNo}
-        ORDER BY
-            TSD.SCHDL_DT ASC, 
-            TSP.PLACE_ORDER ASC
+        SELECT <include refid="tripScheduleColumns"/>
+		  FROM TRIP_SCHEDULE TS
+		  LEFT JOIN TRIP_SCHEDULE_DETAILS TSD
+		    ON TS.SCHDL_NO = TSD.SCHDL_NO
+		  LEFT JOIN TRIP_SCHEDULE_PLACE TSP
+		    ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
+		 WHERE TS.MEM_NO = #{memNo}
+		   AND TS.DEL_YN != 'Y'
+		 ORDER BY TSD.SCHDL_DT ASC
+		     	, TSP.PLACE_ORDER ASC
+    </select>
+    
+    <select id="selectTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO" resultMap="tripScheduleResultMap">
+        SELECT <include refid="tripScheduleColumns"/>
+        	 , TP.PLC_NO
+        	 , TP.RGN_NO
+        	 , TP.PLACE_TYPE
+			 , (SELECT CONTENT_TYPE_NAME FROM TOUR_CONTENT_TYPE CT WHERE CT.CONTENT_TYPE_ID = TP.PLACE_TYPE) AS PLACE_NAME
+        	 , TP.PLC_NM
+        	 , TP.PLC_DESC
+        	 , TP.PLC_ZIP
+        	 , TP.ATTACH_NO AS IMG_ATTACH_NO
+        	 , TP.LATITUDE
+        	 , TP.LONGITUDE
+        	 , TP.OPERATION_HOURS
+        	 , TP.PLC_PRICE
+        	 , TP.REG_ID
+        	 , TP.REG_DT
+        	 , TP.MOD_ID
+        	 , TP.MOD_DT
+        	 , TP.PCL_STATUS_CD
+        	 , TP.POP_TRVL_YN
+        	 , TP.DEFAULT_IMG
+        	 , TP.PLC_ADDR1
+        	 , TP.PLC_ADDR2
+		  FROM TRIP_SCHEDULE TS
+		  LEFT JOIN TRIP_SCHEDULE_DETAILS TSD
+		    ON TS.SCHDL_NO = TSD.SCHDL_NO
+		  LEFT JOIN TRIP_SCHEDULE_PLACE TSP
+		    ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
+		  LEFT JOIN TOUR_PLACE TP
+		    ON TSP.PLACE_ID = TP.PLC_NO
+		 WHERE TS.MEM_NO = #{memNo}
+		   AND TS.SCHDL_NO = #{schdlNo}
+		 ORDER BY TSD.SCHDL_DT ASC
+		     	, TSP.PLACE_ORDER ASC
     </select>
 
 	<select id="selectRegionList" resultType="kr.or.ddit.util.Params">
@@ -240,7 +310,7 @@
 	          )
 	</update>
 	
-	<select id="searchPlaceDetail" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+	<select id="searchPlaceDetail" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
 		SELECT PLC_NO
 			 , RGN_NO
 			 , PLACE_TYPE
@@ -285,6 +355,7 @@
 		     , START_PLACE_ID
 		     , TARGET_PLACE_TYPE
 		     , TARGET_PLACE_ID
+		     , SCHDL_NM
 		     , SCHDL_STATUS
 		     , SCHDL_START_DT
 		     , SCHDL_END_DT
@@ -302,6 +373,7 @@
 			 , #{startPlaceId}
 			 , #{targetPlaceType}
 			 , #{targetPlaceId}
+			 , #{schdlNm}
 			 , #{schdlStatus}
 			 , #{schdlStartDt}
 			 , #{schdlEndDt}
@@ -368,4 +440,35 @@
 			 )
 	</insert>
 	
+	<update id="deleteTripSchedule" parameterType="int">
+		UPDATE TRIP_SCHEDULE
+		   SET DEL_YN = 'Y'
+			 , DEL_DT = SYSDATE
+		 WHERE SCHDL_NO = #{schdlNo}
+	</update>
+	
+	<select id="checkBookmarkExists" parameterType="kr.or.ddit.util.Params" resultType="int">
+		SELECT COUNT(*)
+	     FROM TRIP_SCHEDULE_BOOKMARK
+	    WHERE MEM_NO = #{memNo}
+      	  AND SCHDL_NO = #{schdlNo}
+	</select>
+	
+	<insert id="insertBookmark" parameterType="kr.or.ddit.util.Params">
+	    INSERT INTO TRIP_SCHEDULE_BOOKMARK (
+	        MEM_NO
+	        , SCHDL_NO
+	        , REG_DT
+	    ) VALUES (
+	        #{memNo}
+	        , #{schdlNo}
+	        , SYSDATE
+	    )
+	</insert>
+	
+	<delete id="deleteBookmark" parameterType="kr.or.ddit.util.Params">
+	    DELETE FROM TRIP_SCHEDULE_BOOKMARK
+	    WHERE MEM_NO = #{memNo}
+	      AND SCHDL_NO = #{schdlNo}
+	</delete>
 </mapper>

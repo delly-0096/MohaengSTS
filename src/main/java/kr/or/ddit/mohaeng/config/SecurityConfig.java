@@ -1,7 +1,6 @@
 package kr.or.ddit.mohaeng.config;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -32,7 +31,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.DispatcherType;
-import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.filter.TokenAuthenticationFilter;
 import kr.or.ddit.mohaeng.security.CustomAccessDeniedHandler;
 import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
@@ -98,8 +96,8 @@ public class SecurityConfig {
 	
 	// 관리자 허용 url
 	private static final String[] REACT_PASS_URL = {
-			"/api/admin/login"
-
+			"/api/admin/login",
+			"/api/schedule/**"
 		};
 	
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService) {

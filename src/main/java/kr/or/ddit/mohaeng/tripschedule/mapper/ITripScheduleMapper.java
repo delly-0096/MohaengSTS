@@ -35,5 +35,15 @@ public interface ITripScheduleMapper {
 	public int insertTripSchedulePlace(TripSchedulePlaceVO placeVO);
 
 	public List<TripScheduleVO> selectTripScheduleList(int memNo);
+	
+	public TripScheduleVO selectTripSchedule(TripScheduleVO tripScheduleVO);
+
+	public int checkBookmarkExists(Params params);
+
+	public int deleteBookmark(Params params);
+
+	public int insertBookmark(Params params);
+
+	public int deleteTripSchedule(int schdlNo);
 
 }

@@ -1,12 +1,17 @@
 package kr.or.ddit.mohaeng.tripschedule.service;
 
+import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+
+import com.fasterxml.jackson.databind.JsonNode;
 
 import kr.or.ddit.mohaeng.tripschedule.mapper.ITripScheduleMapper;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
@@ -132,7 +137,7 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	    // 결과 Params에 '필드명'을 저장
 	    params.put("operationHours", operationHoursKey);
 	    params.put("plcPrice", plcPriceKey);
-	    
+	    System.out.println("params : " + params);
 	    return params;
 	}
 
@@ -149,8 +154,8 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	@Override
 	public int insertTripSchedule(Params params) {
 		
-	    TripScheduleVO tripScheduleVO = new TripScheduleVO(params.getInt("memNo"), null, "REGION", params.getInt("schdlStartDt"), "REGION", params.getInt("schdlEndDt")
-	    		, "UPCOMING", params.getString("schdlStartDt"), params.getString("schdlEndDt")
+	    TripScheduleVO tripScheduleVO = new TripScheduleVO(params.getInt("memNo"), null, "REGION", params.getInt("startPlaceId"), "REGION", params.getInt("targetPlaceId")
+	    		, "UPCOMING", params.getString("schdlNm"), params.getString("schdlStartDt"), params.getString("schdlEndDt")
 	    		, params.getInt("travelerCount"), params.getString("aiRecomYn"), params.getString("publicYn"), (long) params.getInt("totalBudget"));
 	    
 	    int resultSchedule = iTripScheduleMapper.insertTripSchedule(tripScheduleVO);
@@ -210,9 +215,180 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		List<TripScheduleVO> scheduleList = iTripScheduleMapper.selectTripScheduleList(memNo);
 		if(scheduleList.size() > 0) {
 			System.out.println("scheduleList : " + scheduleList);
+			
+			for(TripScheduleVO tripSchedule : scheduleList) {
+			    List<String> displayPlaceNames = new ArrayList<>(); // 화면에 표시할 2개만 담을 리스트
+			    int totalPlaceCnt = 0;
+			    String getUrl = "";
+			    
+			    for(TripScheduleDetailsVO details : tripSchedule.getTripScheduleDetailsList()) {
+			        List<TripSchedulePlaceVO> places = details.getTripSchedulePlaceList();
+			        if(places != null) {
+			            for(TripSchedulePlaceVO place : places) {
+			                // 전체 개수는 계속 세고
+			                totalPlaceCnt++;
+			                // 그 중 앞의 2개만 리스트에 담기
+			                if(displayPlaceNames.size() < 2) {
+			                    displayPlaceNames.add(place.getPlcNm());
+			                }
+			                if(getUrl.equals("")) {
+			                	TourPlaceVO placeVO = new TourPlaceVO();
+			                	placeVO.setPlcNo(place.getDestId());
+			                	placeVO = searchPlaceDetail(placeVO);
+			                	if(placeVO.getDefaultImg() == null) {
+			                		System.out.println("placeVO : " + placeVO);
+			                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
+			                		getUrl = placeVO.getDefaultImg();
+			                	} else {
+			                		getUrl = placeVO.getDefaultImg();
+			                	}
+			                	
+			                	tripSchedule.setThumbnail(getUrl);
+			                	
+			                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
+			                	if(placeVO.getAttachNo() != 0) {
+//			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
+			                	}
+			                }
+			            }
+			        }
+			    }
+			    tripSchedule.setPlaceCnt(totalPlaceCnt);
+			    tripSchedule.setDisplayPlaceNames(displayPlaceNames); // VO에 필드 추가 필요
+			}
 		}
 		
 		return scheduleList;
+	}
+	
+	@Override
+	public TripScheduleVO selectTripSchedule(TripScheduleVO params) {
+		TripScheduleVO tripSchedule = iTripScheduleMapper.selectTripSchedule(params);
+		if(tripSchedule != null) {
+			int totalPlaceCnt = 0;
+			String getUrl = "";
+		    
+		    for(TripScheduleDetailsVO details : tripSchedule.getTripScheduleDetailsList()) {
+		        List<TripSchedulePlaceVO> places = details.getTripSchedulePlaceList();
+		        if(places != null) {
+		            for(TripSchedulePlaceVO place : places) {
+		            	totalPlaceCnt++;
+		                if(getUrl.equals("")) {
+		                	TourPlaceVO placeVO = new TourPlaceVO();
+		                	placeVO.setPlcNo(place.getDestId());
+		                	placeVO = searchPlaceDetail(placeVO);
+		                	if(placeVO.getDefaultImg() == null) {
+		                		System.out.println("placeVO : " + placeVO);
+		                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
+		                		getUrl = placeVO.getDefaultImg();
+		                	} else {
+		                		getUrl = placeVO.getDefaultImg();
+		                	}
+		                	
+		                	tripSchedule.setThumbnail(getUrl);
+		                	
+		                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
+		                	if(placeVO.getAttachNo() != 0) {
+//			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
+		                	}
+		                }
+		            }
+		        }
+		    }
+		    tripSchedule.setPlaceCnt(totalPlaceCnt);
+		}
+		
+		return tripSchedule;
+	}
+	
+	public TourPlaceVO updateTourPlace(int contentId, String contenttypeId) {
+		Params params = new Params();
+		RestClient restClient = RestClient.create();
+		params.put("contentId", contentId);
+		params.put("contenttypeId", contenttypeId);
+		
+		String introUrlString = "https://apis.data.go.kr/B551011/KorService2/detailIntro2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
+				+ "&contentId=" + contentId
+				+ "&contentTypeId=" + contenttypeId
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+		
+		String detailUrlString = "https://apis.data.go.kr/B551011/KorService2/detailCommon2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
+				+ "&contentId=" + contentId
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+		
+		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
+		URI introUri = URI.create(introUrlString);
+		URI detailUri = URI.create(detailUrlString);
+		
+		JsonNode introNode = restClient.get()
+			    .uri(introUri)
+			    .retrieve()
+			    .body(JsonNode.class);
+		
+		JsonNode introItemNode = introNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item")
+				.get(0);
+		
+		JsonNode detailNode = restClient.get()
+				.uri(detailUri)
+				.retrieve()
+				.body(JsonNode.class);
+		
+		JsonNode detailItemNode = detailNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item")
+				.get(0);
+		
+		//어떤 키값에 비용과 이용시간 정보가 있는건지 체킹 후 params 에 넣음
+		contentIdCheck(params);
+		
+		System.out.println("		JsonNode detailItemNode : "+ detailItemNode);
+		
+		String plcDesc = detailItemNode.get("overview")+"";
+		String plcNm = detailItemNode.get("title")+"";
+		String operationHours = introItemNode.get(params.getString("operationhours"))+"";
+		String plcPrice = introItemNode.get(params.getString("plcprice"))+"";
+		String defaultImg = detailItemNode.get("firstimage")+"";
+		String plcAddr1 = detailItemNode.get("addr1")+"";
+		
+		TourPlaceVO tourPlaceVO = new TourPlaceVO();
+		tourPlaceVO.setPlcNo(contentId);
+		tourPlaceVO.setPlcNm(plcNm);
+		tourPlaceVO.setPlcDesc(plcDesc.replace("\"", ""));
+		tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
+		tourPlaceVO.setPlcPrice(plcPrice.replace("\"", ""));
+		tourPlaceVO.setDefaultImg(defaultImg.replace("\"", ""));
+		tourPlaceVO.setPlcAddr1(plcAddr1.replace("\"", ""));
+		
+		int cnt = saveTourPlacInfo(tourPlaceVO);
+		
+		return tourPlaceVO;
+	}
+
+	@Override
+	public boolean toggleBookmark(Params params) {
+		// 1. 해당 유저의 해당 일정 북마크가 있는지 확인 (식별 관계 PK 조회)
+	    int count = iTripScheduleMapper.checkBookmarkExists(params);
+	    
+	    if(params.get("bkmkYn").equals("Y")) {
+	    	if (count == 0) {
+	    		iTripScheduleMapper.insertBookmark(params);
+		        return true; // 등록됨
+	    	} else {
+	    		return true;
+	    	}
+	    } else {
+	    	iTripScheduleMapper.deleteBookmark(params);
+	        return false; // 해제됨
+	    }
+	}
+
+	@Override
+	public int deleteTripSchedule(int schdlNo) {
+		return iTripScheduleMapper.deleteTripSchedule(schdlNo);
 	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)

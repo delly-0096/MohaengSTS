@@ -17,6 +17,9 @@ public class TripSchedulePlaceVO {
 	private String moveType; // 이동수단(도보,차량 등)
 	private Integer planCost; // 지출예산
 	
+	private String plcNm;
+	private TourPlaceVO tourPlace;
+	
 	public TripSchedulePlaceVO() {}
 
 	public TripSchedulePlaceVO(int schdlDetailsNo, String placeType, int placeId, int placeOrder, String placeStartTime,

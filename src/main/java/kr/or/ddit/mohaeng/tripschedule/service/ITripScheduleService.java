@@ -33,5 +33,11 @@ public interface ITripScheduleService {
 	public int insertTripSchedulePlace(TripSchedulePlaceVO placeVO);
 
 	public List<TripScheduleVO> selectTripScheduleList(int memNo);
+
+	public boolean toggleBookmark(Params params);
+
+	public TripScheduleVO selectTripSchedule(TripScheduleVO params);
+
+	public int deleteTripSchedule(int schdlNo);
 	
 }

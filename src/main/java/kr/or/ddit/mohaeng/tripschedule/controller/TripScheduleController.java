@@ -19,6 +19,7 @@ import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -31,6 +32,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
+import kr.or.ddit.mohaeng.adminLogin.controller.conn.ConnetController;
 import kr.or.ddit.mohaeng.login.controller.LoginController;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
@@ -46,15 +48,9 @@ import lombok.extern.slf4j.Slf4j;
 @Controller
 @RequestMapping("/schedule")
 public class TripScheduleController {
-
-    private final WebSecurityCustomizer configure;
 	
 	@Autowired
 	ITripScheduleService tripScheduleService;
-
-    TripScheduleController(WebSecurityCustomizer configure) {
-        this.configure = configure;
-    }
 	
 	@GetMapping("/search")
 	public String search(Model model) {
@@ -88,6 +84,25 @@ public class TripScheduleController {
 //		model.addAttribute("tourPlaceList", tourPlaceList);
 		
 		return "schedule/planner";
+	}
+	
+	@GetMapping("/view/{schdlNo}")
+	public String plannerView(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@PathVariable int schdlNo,
+			Model model
+			) {
+		int memNo = customUser.getMember().getMemNo();
+		TripScheduleVO params = new TripScheduleVO();
+		params.setSchdlNo(schdlNo);
+		params.setMemNo(memNo);
+		TripScheduleVO schedule = tripScheduleService.selectTripSchedule(params);
+		
+		System.out.println("schedule :" + schedule);
+		
+		model.addAttribute("schedule", schedule);
+		
+		return "schedule/view";
 	}
 	
 	@ResponseBody
@@ -218,16 +233,32 @@ public class TripScheduleController {
 	    
 	    int resultSchedule = tripScheduleService.insertTripSchedule(params);
 	    
-	    return ResponseEntity.ok(1); 
+	    return ResponseEntity.ok(1);
 	}
+	
+	@PostMapping("/delete")
+	@ResponseBody
+	public ResponseEntity<?> deleteTourSchedule(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@RequestBody Params params
+			) {
+		int memNo = customUser.getMember().getMemNo();
+		int schdlNo = params.getInt("schdlNo");
+		
+		int result = tripScheduleService.deleteTripSchedule(schdlNo);
+		
+		return ResponseEntity.ok(1);
+	}
+	
+	
 	
 	@GetMapping("/my")
 	public String mySchedule(
-			@AuthenticationPrincipal CustomUserDetails customUser) {
+			@AuthenticationPrincipal CustomUserDetails customUser, Model model) {
 		int memNo = customUser.getMember().getMemNo();
 		
-		List<TripScheduleVO> scheduleVO = tripScheduleService.selectTripScheduleList(memNo);
-		
+		List<TripScheduleVO> scheduleList = tripScheduleService.selectTripScheduleList(memNo);
+		model.addAttribute("scheduleList", scheduleList);
 		return "schedule/my";
 	}
 	
@@ -235,5 +266,39 @@ public class TripScheduleController {
 	public String bookmark() {
 		
 		return "schedule/bookmark";
+	}
+	
+	@ResponseBody
+	@PostMapping("/bookmark/modify")
+	public ResponseEntity<Map<String, Object>> bookmarkModify(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@RequestBody Params params
+			) {
+		Map<String, Object> result = new HashMap<>();
+		
+	    int memNo = customUser.getMember().getMemNo();
+	    params.put("memNo", memNo);
+	    
+		// 1. 파라미터 체크 (Params 활용)
+	    if (params.get("schdlNo") == null || params.get("memNo") == null) {
+	        result.put("message", "필수 파라미터가 누락되었습니다.");
+	        return ResponseEntity.badRequest().body(result); // 400 Bad Request
+	    }
+
+	    try {
+	        // 2. 서비스 로직 (식별 관계 북마크 토글)
+	        // 존재하면 삭제(0), 없으면 등록(1) 후 현재 상태 반환
+	        boolean isBookmarked = tripScheduleService.toggleBookmark(params);
+	        
+	        result.put("success", true);
+	        result.put("isBookmarked", isBookmarked);
+	        
+	        return ResponseEntity.ok(result); // 200 OK
+	        
+	    } catch (Exception e) {
+	        result.put("success", false);
+	        result.put("error", e.getMessage());
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result); // 500 Error
+	    }
 	}
 }

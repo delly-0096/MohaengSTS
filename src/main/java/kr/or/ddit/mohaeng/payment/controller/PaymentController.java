@@ -1,8 +1,11 @@
 package kr.or.ddit.mohaeng.payment.controller;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.configurationprocessor.json.JSONObject;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -85,25 +88,24 @@ public class PaymentController {
 	
 	
 	/**
-	 * 
-	 * 
-	 * @param paymentVO		: json 객체
-	 * @return
+	 * <p>항공 상품 결제</p>
+	 * @date 2025.01.09
+	 * @author sdg
+	 * @param paymentVO	json 객체 - 탑승객, 항공권, 예약 객체의 리스트타입
+	 * @return api 응답 객체
 	 */
 	@ResponseBody
-	@PostMapping("/confirm")
-    public ResponseEntity<String> confirmPayment(@RequestBody PaymentVO paymentVO) {
-		ResponseEntity<String> entity = null;
-		log.info("confirmPayment jsonBody : {}", paymentVO);
-		ServiceResult result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨
+	@PostMapping("/flight/confirm")
+    public ResponseEntity<Map<String, Object>> confirmFlightPayment(@RequestBody PaymentVO paymentVO) {
+		log.info("confirmFlightPayment productList : {}", paymentVO.getFlightProductList());
+		log.info("confirmFlightPayment passengersList : {}", paymentVO.getFlightPassengersList());
+		Map<String, Object> result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨 - serviceResult타입은 아님
 		// 그래서 타입이 뭐냐
 		
-		
-		
-		if(result.equals(ServiceResult.OK)) {
-			return entity = new ResponseEntity<String>(result.toString(), HttpStatus.OK);
+		if(result != null) {
+			return new ResponseEntity<>(result, HttpStatus.OK);
 		} else {
-			return entity = new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
 		}
     }
 }

@@ -6,6 +6,10 @@
 
 <%@ include file="../common/header.jsp" %>
 
+<sec:authorize access="isAuthenticated()">
+    <sec:authentication property="principal" var="user" />
+</sec:authorize>
+
 <div class="booking-page">
     <div class="container">
         <!-- 결제 단계 -->
@@ -54,11 +58,11 @@
                 <h4>결제 상세</h4>
                 <div class="detail-row">
                     <span class="label">결제번호</span>
-                    <span class="value"><strong> </strong></span>
+                    <span class="value"><strong id="payNo"> </strong></span>
                 </div>
                 <div class="detail-row">
                     <span class="label">상품명</span>
-                    <span class="value"> </span>
+                    <span class="value" id="orderName"> </span>
                 </div>
                 <div class="detail-row">
                     <span class="label">이용일시</span>
@@ -70,11 +74,11 @@
                 </div>
                 <div class="detail-row">
                     <span class="label">결제금액</span>
-                    <span class="value"><strong class="text-primary"> 원</strong></span>
+                    <span class="value"><strong class="text-primary" id="totalAmount"> </strong>원</span>
                 </div>
                 <div class="detail-row">
                     <span class="label">결제수단</span>
-                    <span class="value"> </span>
+                    <span class="value" id="method"> </span>
                 </div>
             </div>
 
@@ -132,29 +136,60 @@ let paymentType;
 // 예약 세션 스토리지 가져올 객체 
 let storedData = null;
 
+let flightProduct = null;	// 항공 product storage
+let passengers = null;
 
 document.addEventListener("DOMContentLoaded", async function(){
+	// api용
 	paymentKey = document.querySelector("#paymentKey");
 	orderId = document.querySelector("#orderId");
 	amount = document.querySelector("#amount");
 	paymentType = document.querySelector("#paymentType");
-	
 	loading = document.querySelector("#payment-loading");
 	
-	storedData = sessionStorage.getItem("flightBookingData")
+	// db에 넣을 정보
+	flightProduct = sessionStorage.getItem("flightProduct");
+	passengers = sessionStorage.getItem("passengers");
 	
-	console.log("storedData : ", storedData);
+	console.log("flightProduct : ", flightProduct);
+	console.log("passengers : ", passengers);
 	
-	if('${error}' !== "error"){
-		if(storedData){
-			storedData = JSON.parse(storedData); 
+	// payNo, orderName, totalAmount, method
+	let payNo = document.querySelector("#payNo");
+	let orderName = document.querySelector("#orderName");
+	let totalAmount = document.querySelector("#totalAmount");
+	let method = document.querySelector("#method");
+	
+	if('${error}' != "error"){
+		console.log("user.username : ", "${user.username}");
+		const userData = await fetch("/product/flight/user", {
+			method : "post",
+			headers : {"Content-Type" : "application/json"},
+			body : JSON.stringify({memId : "${user.username}"})
+		});
+		
+		console.log("userData : ", userData);
+		
+		const customData = await userData.json();
+		console.log("customData : ", customData);
+		
+		
+		if(flightProduct){
+			flightProduct = JSON.parse(flightProduct); 
+		}
+		
+		if(passengers){
+			passengers = JSON.parse(passengers);
 		}
 		
 		const requestData = {
 	        paymentKey: paymentKey.value,
 	        orderId: orderId.value,
 	        amount: amount.value,
-	        paymentType : paymentType.value
+	        paymentType : paymentType.value,
+	        memNo : customData.memNo,
+	        flightProductList : flightProduct != null ? flightProduct.flights : null,
+	        flightPassengersList : passengers != null ? passengers : null
 	    };
 		
 		console.log("requestData ", requestData);
@@ -167,19 +202,29 @@ document.addEventListener("DOMContentLoaded", async function(){
 		
 		console.log("response : ", response);
 		
-		// 성공시 해당 위치에 데이터 출력
+		if (response.ok) {
+		    const resultData = await response.json(); 
+		    console.log("서버에서 받은 API 결과값:", resultData);
+		    
+			payNo.innerHTML = resultData.orderId;
+			orderName.innerHTML = resultData.orderName;
+			totalAmount.innerHTML = resultData.totalAmount;
+			if (resultData.method == '간편결제'){
+				method.innerHTML = resultData.easyPay.provider;
+			} else{
+				method.innerHTML = resultData.method;
+			}
+		    loading.style.display = "none";
+		} else {
+		    console.error("결제 승인 실패");
+		}
 		
-		
-		
-		loading.style.display = "none";
 	}else{
 // 		loading.style.display = "block";
 		console.log("error 발생");
 		console.log('${error}', '${code}');
 		loading.style.display = "none";
 	}
-	
-	
 });
 </script>
 

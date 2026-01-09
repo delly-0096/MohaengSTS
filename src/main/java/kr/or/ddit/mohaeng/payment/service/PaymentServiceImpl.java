@@ -5,15 +5,21 @@ import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import kr.or.ddit.mohaeng.ServiceResult;
+import kr.or.ddit.mohaeng.payment.mapper.IPaymentMapper;
+import kr.or.ddit.mohaeng.vo.FlightPassengersVO;
+import kr.or.ddit.mohaeng.vo.FlightProductVO;
+import kr.or.ddit.mohaeng.vo.FlightReservationVO;
 import kr.or.ddit.mohaeng.vo.PaymentVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -21,9 +27,13 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class PaymentServiceImpl implements IPaymentService {
 
+	@Autowired
+	private IPaymentMapper mapper;
+	
 	// 결제
 	@Override
-	public ServiceResult confirmPayment(PaymentVO paymentVO) {
+	@Transactional
+	public Map<String, Object> confirmPayment(PaymentVO paymentVO) {
 		log.info("PaymentServiceImpl - confirmPayment {}", paymentVO);
 		
 		// api - 요청
@@ -51,55 +61,64 @@ public class PaymentServiceImpl implements IPaymentService {
             // 응답 결과를 Map으로 받으면 편리합니다. 필요시 전용 VO를 만드셔도 됩니다.
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
-            if (response.getStatusCode() == HttpStatus.OK) {
+            if (response.getStatusCode() == HttpStatus.OK) {	// server 연결 성공
+            	Map<String, Object> responseBody = response.getBody();
+
+            	
                 log.info("결제 승인 API 성공: {}", response.getBody());
                 
-                // 6. DB 저장 로직 (Mapper 호출)
+                // api 에서 가져올 정보
+                // memNo이미 존재
+                paymentVO.setPayNo(responseBody.get("orderId").toString());
+                paymentVO.setPaymentKey(responseBody.get("paymentKey").toString()); // 아직 필요유무 모름
+//                paymentVO.setPayTotalAmt(responseBody.get("amount"));	// 숫자
+                paymentVO.setPayMethodCd(responseBody.get("method").toString());
+//                paymentVO.setPayDt(responseBody.get("approvedAt"));	// 날짜
+                paymentVO.setPayStatus(responseBody.get("status").toString());
+//                paymentVO.setUsePoint(responseBody.get("discount"));	// 사용포인트
+                // 취소 사유 2개는 패스
+                
+                int payResult = mapper.insertPayment(paymentVO);
                 
                 // 응답 받은 데이터(response.getBody())를 PaymentVO에 셋팅하거나 가공하여 insert/update
                 // 예: paymentVO.setPayStatus("Y");
                 // int row = paymentMapper.insertPayment(paymentVO);
                 
+                // 결제 상세 정보 담기
+                // payNo = orderId로 세팅
+                // memNo 불러오려면?
+                // payTotalAmt = price
+                // payMethodCd = method = rksvusrufwp, 
+                // payStatus = status로 세팅 (DONE이 결제 한 것)
+                // payDt = approvedAt로 세팅
+                // 
                 
-                return ServiceResult.OK; 
+                
+                
+                // 항공권 담기
+                for(FlightProductVO flightProductVO : paymentVO.getFlightProductList()) {
+                	// 해당 정보와 일치하는 항공권 있는지 확인하기. 없으면 insert
+                }
+                
+                // 예약 정보 담기
+//                for(FlightReservationVO flightReservationVO : paymentVO.getFlightReservationList()) {
+//                	// 얘도 한번 확인하기
+//                	// orderId가 결제번호!
+//                }
+                
+                // 탑승객 정보 담기
+                for(FlightPassengersVO flightPassengersVO : paymentVO.getFlightPassengersList()) {
+                	// 얘도 한번 확인
+                }
+                
+                return responseBody; 
             } else {
                 log.error("결제 승인 API 실패: {}", response.getStatusCode());
-                return ServiceResult.FAILED;
+                return null;
             }
         } catch (Exception e) {
             log.error("API 호출 중 예외 발생: {}", e.getMessage());
-            return ServiceResult.FAILED;
+            return null;
         }
-        
-        // 이렇게 하면 받을수 있을지도??
-//        @Override
-//        @Transactional
-//        public Map<String, Object> confirmPayment(PaymentVO paymentVO) {
-//            // ... (헤더 설정 및 RestTemplate 호출 로직)
-//            
-//            try {
-//                ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
-//                
-//                if (response.getStatusCode() == HttpStatus.OK) {
-//                    Map<String, Object> responseBody = response.getBody();
-//                    
-//                    // [중요] 여기서 DB 저장을 먼저 수행하세요!
-//                    // responseBody에 들어있는 approvedAt, paymentKey 등을 꺼내서 
-//                    // paymentMapper.insertPayment(paymentVO) 실행
-//                    
-//                    return responseBody; // 토스에서 받은 데이터를 그대로 컨트롤러로 반환
-//                }
-//            } catch (Exception e) {
-//                log.error("결제 승인 중 예외 발생", e);
-//            }
-//            return null; // 실패 시 null 혹은 예외를 던짐
-//        }
-        
-		
-		
-        // 결과 
-//        ServiceResult result = null;
-//		return result;
 	}
-
 }

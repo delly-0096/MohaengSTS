@@ -434,11 +434,11 @@ async function main() {
 	        return;
 	    }
 		
-			    
+		// "flt" + bookingData.flights[0].startDt + "11"	    
 		
 		console.log("bookingData : ", bookingData.flights[0].startDate )
 		await widgets.requestPayment({
-			orderId: "flt" + bookingData.flights[0].startDt + "11",			// 결제번호 - 일단 임의
+			orderId: "test" + bookingData.flights[0].startDt,			// 결제번호 - 일단 임의
 			orderName: "1",													// 상품명
 			// paymentKey, paymentType, amount는 기본적으로 포함되어 있음
 			successUrl: window.location.origin + "/product/payment/flight",	// 성공 위치 - 리다이렉트로 이동

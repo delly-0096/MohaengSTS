@@ -168,10 +168,6 @@ public class LoginController {
 
 		session.setAttribute("loginMember", loginMember);
 		session.removeAttribute("LOGIN_FAIL_CNT");
-
-
-		CustomUserDetails userDetails = new CustomUserDetails(member);
-
 	
 		// 회원 타입에 따라 권한 생성
 		List<GrantedAuthority> authorities = new ArrayList<>();

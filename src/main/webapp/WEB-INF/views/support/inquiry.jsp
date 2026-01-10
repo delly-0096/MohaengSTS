@@ -1,8 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 
 <c:set var="pageTitle" value="1:1 문의" />
 <c:set var="pageCss" value="support" />
+<c:set var="newLine" value="
+" />
 
 <%@ include file="../common/header.jsp" %>
 
@@ -30,58 +35,57 @@
         <div class="inquiry-container">
             <!-- 탭 -->
             <div class="inquiry-tabs">
-                <button class="inquiry-tab active" data-tab="history">운영자 문의</button>
-                <button class="inquiry-tab" data-tab="write">문의 작성</button>
+                <button class="inquiry-tab ${currentTab == 'history' ? 'active' : ''}" data-tab="history">문의 내역</button>
+                <button class="inquiry-tab ${currentTab == 'write' ? 'active' : ''}" data-tab="write">문의 작성</button>
             </div>
 
             <!-- 문의 작성 폼 -->
-            <div class="inquiry-content-area" id="writeTab" style="display: none;">
+            <div class="inquiry-content-area" id="writeTab" style="display: ${currentTab == 'write' ? 'block' : 'none'};">
                 <div class="inquiry-form">
                     <h3><i class="bi bi-pencil me-2"></i>문의하기</h3>
 
-                    <form id="inquiryForm">
+                    <form id="inquiryForm" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">문의 유형 <span class="text-danger">*</span></label>
-                                    <select class="form-control form-select" required>
+                                    <select class="form-control form-select" id="inqryCtgryCd" required>
                                         <option value="">선택해주세요</option>
-                                        <option>회원/계정</option>
-                                        <option>일정/예약</option>
-                                        <option>결제/환불</option>
-                                        <option>포인트</option>
-                                        <option>서비스 이용</option>
-                                        <option>기타</option>
+                                        <c:forEach var="category" items="${categoryList}">
+                                            <option value="${category.cd}">${category.cdName}</option>
+                                        </c:forEach>
                                     </select>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">관련 예약번호 (선택)</label>
-                                    <input type="text" class="form-control" placeholder="예약번호가 있다면 입력해주세요">
+                                    <input type="text" class="form-control" id="inquiryTargetNo" placeholder="예약번호가 있다면 입력해주세요">
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">제목 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" placeholder="문의 제목을 입력해주세요" required>
+                            <input type="text" class="form-control" id="inqryTitle" placeholder="문의 제목을 입력해주세요" required>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">문의 내용 <span class="text-danger">*</span></label>
-                            <textarea class="form-control" rows="8" placeholder="문의하실 내용을 상세히 작성해주세요" required></textarea>
+                            <textarea class="form-control" id="inqryCn" rows="8" placeholder="문의하실 내용을 상세히 작성해주세요" required></textarea>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">첨부파일 (선택)</label>
-                            <input type="file" class="form-control" multiple accept="image/*,.pdf,.doc,.docx">
+                            <input type="file" class="form-control" id="attachFile" multiple accept="image/*,.pdf,.doc,.docx">
+                            <!--div 추가함  -->
+                            <div id="filePreviewContainer" class="mt-3 d-flex flex-wrap gap-2"></div>
                             <small class="text-muted">최대 5개, 각 10MB 이하 (이미지, PDF, DOC 파일)</small>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">답변 받을 이메일 <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" value="${sessionScope.loginUser.email}" required>
+                            <input type="email" class="form-control" id="inqryEmail" value="${loginEmail}" placeholder="이메일을 입력해주세요" required>
                             <small class="text-muted">답변 알림이 발송됩니다.</small>
                         </div>
 
@@ -110,115 +114,98 @@
             </div>
 
             <!-- 문의 내역 -->
-            <div class="inquiry-content-area" id="historyTab">
+            <div class="inquiry-content-area" id="historyTab" style="display: ${currentTab == 'history' ? 'block' : 'none'};">
                 <c:choose>
-                    <c:when test="${not empty sessionScope.loginUser}">
+                    <c:when test="${not empty sessionScope.loginMember}">
                         <!-- 카테고리 필터 -->
                         <div class="faq-categories mb-4">
-                            <button class="faq-category active" data-category="all">전체</button>
-                            <button class="faq-category" data-category="account">회원/계정</button>
-                            <button class="faq-category" data-category="schedule">일정/예약</button>
-                            <button class="faq-category" data-category="payment">결제/환불</button>
-                            <button class="faq-category" data-category="point">포인트</button>
-                            <button class="faq-category" data-category="service">서비스 이용</button>
-                            <button class="faq-category" data-category="etc">기타</button>
+                            <button class="faq-category ${empty currentCategory || currentCategory == 'all' ? 'active' : ''}"
+                                    onclick="changeCategory('all')">전체</button>
+                            <c:forEach var="category" items="${categoryList}">
+                                <button class="faq-category ${currentCategory == category.cd ? 'active' : ''}"
+                                        onclick="changeCategory('${category.cd}')">${category.cdName}</button>
+                            </c:forEach>
                         </div>
 
                         <div class="inquiry-list">
-                            <!-- 문의 1 - 답변 완료 -->
-                            <div class="inquiry-item" data-category="payment">
-                                <div class="inquiry-item-header">
-                                    <div class="inquiry-item-info">
-                                        <h4 class="inquiry-item-title">환불 요청 관련 문의드립니다.</h4>
-                                        <div class="inquiry-item-meta">
-                                            <span class="badge bg-secondary me-2">결제/환불</span>
-                                            2024.03.10 14:32
-                                        </div>
+                            <c:choose>
+                                <c:when test="${empty inquiryList}">
+                                    <div class="text-center py-5" style="color: #999;">
+                                        <i class="bi bi-inbox" style="font-size: 48px;"></i>
+                                        <p class="mt-3">문의 내역이 없습니다.</p>
                                     </div>
-                                    <span class="inquiry-status answered">답변완료</span>
-                                </div>
-                                <div class="inquiry-item-body">
-                                    <div class="inquiry-content">
-                                        <div class="inquiry-content-label">문의 내용</div>
-                                        <p>지난 주 예약한 제주 스쿠버다이빙 체험을 취소하고 싶습니다. 환불 가능한지 확인 부탁드립니다.</p>
-                                    </div>
-                                    <div class="inquiry-answer">
-                                        <div class="inquiry-content-label">답변 (2024.03.11 10:15)</div>
-                                        <p>
-                                            안녕하세요, 모행입니다.<br><br>
-                                            문의주신 예약건 확인했습니다. 이용일 기준 7일 이상 남아있어 전액 환불 가능합니다.<br>
-                                            마이페이지 > 결제 내역에서 직접 취소하시거나, 자동 취소 처리해드릴까요?<br><br>
-                                            추가 문의사항이 있으시면 말씀해주세요.<br>
-                                            감사합니다.
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                                </c:when>
+                                <c:otherwise>
+                                    <c:forEach var="inquiry" items="${inquiryList}">
+                                        <!-- 문의 아이템 -->
+                                        <div class="inquiry-item">
+                                            <div class="inquiry-item-header">
+                                                <div class="inquiry-item-info">
+                                                    <h4 class="inquiry-item-title">${inquiry.inqryTitle}</h4>
+                                                    <div class="inquiry-item-meta">
+                                                        <span class="badge bg-secondary me-2">${inquiry.categoryName}</span>
+                                                        ${inquiry.regDtStr}
+                                                    </div>
+                                                </div>
+                                                <c:choose>
+                                                    <c:when test="${inquiry.inqryStatus == 'answered'}">
+                                                        <span class="inquiry-status answered">답변완료</span>
+                                                    </c:when>
+                                                    <c:when test="${inquiry.inqryStatus == 'waiting'}">
+                                                        <span class="inquiry-status waiting">답변대기</span>
+                                                    </c:when>
+                                                </c:choose>
+                                            </div>
+                                            <div class="inquiry-item-body">
+                                                <div class="inquiry-content">
+                                                    <div class="inquiry-content-label">문의 내용</div>
+                                                    <p>${fn:replace(inquiry.inqryCn, newLine, '<br>')}</p>
+                                                </div>
+                                                <!--첨부파일  -->
+												<div class="attachArea" data-inqry-no="${inquiry.inqryNo}"></div>
 
-                            <!-- 문의 2 - 답변 대기 -->
-                            <div class="inquiry-item" data-category="point">
-                                <div class="inquiry-item-header">
-                                    <div class="inquiry-item-info">
-                                        <h4 class="inquiry-item-title">포인트 적립이 안됐어요</h4>
-                                        <div class="inquiry-item-meta">
-                                            <span class="badge bg-secondary me-2">포인트</span>
-                                            2024.03.14 16:45
+                                                <c:if test="${inquiry.inqryStatus == 'answered' && not empty inquiry.replyCn}">
+                                                    <div class="inquiry-answer">
+                                                        <div class="inquiry-content-label">답변 (${inquiry.replyDtStr})</div>
+                                                        <p>${fn:replace(inquiry.replyCn, newLine, '<br>')}</p>
+                                                    </div>
+                                                </c:if>
+                                            </div>
                                         </div>
-                                    </div>
-                                    <span class="inquiry-status waiting">답변대기</span>
-                                </div>
-                                <div class="inquiry-item-body">
-                                    <div class="inquiry-content">
-                                        <div class="inquiry-content-label">문의 내용</div>
-                                        <p>어제 이용 완료한 한라산 트레킹 투어 포인트가 아직 적립되지 않았습니다. 확인 부탁드립니다.</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- 문의 3 - 답변 완료 -->
-                            <div class="inquiry-item" data-category="schedule">
-                                <div class="inquiry-item-header">
-                                    <div class="inquiry-item-info">
-                                        <h4 class="inquiry-item-title">예약 일정 변경 가능한가요?</h4>
-                                        <div class="inquiry-item-meta">
-                                            <span class="badge bg-secondary me-2">일정/예약</span>
-                                            2024.02.28 09:20
-                                        </div>
-                                    </div>
-                                    <span class="inquiry-status answered">답변완료</span>
-                                </div>
-                                <div class="inquiry-item-body">
-                                    <div class="inquiry-content">
-                                        <div class="inquiry-content-label">문의 내용</div>
-                                        <p>3월 5일로 예약한 서핑 레슨을 3월 12일로 변경하고 싶습니다. 가능할까요?</p>
-                                    </div>
-                                    <div class="inquiry-answer">
-                                        <div class="inquiry-content-label">답변 (2024.02.28 14:30)</div>
-                                        <p>
-                                            안녕하세요, 모행입니다.<br><br>
-                                            예약 일정 변경 확인했습니다. 3월 12일 동일 시간대로 변경 처리 완료되었습니다.<br>
-                                            변경된 예약 내역은 마이페이지 > 결제 내역에서 확인하실 수 있습니다.<br><br>
-                                            즐거운 여행 되세요!
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
+                                    </c:forEach>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
 
                         <!-- 페이지네이션 -->
-                        <div class="pagination-container">
-                            <nav>
-                                <ul class="pagination">
-                                    <li class="page-item">
-                                        <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                                    </li>
-                                    <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                    <li class="page-item">
-                                        <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                                    </li>
-                                </ul>
-                            </nav>
-                        </div>
+                        <c:if test="${totalPages > 0}">
+                            <div class="pagination-container">
+                                <nav>
+                                    <ul class="pagination">
+                                        <!-- 이전 페이지 -->
+                                        <li class="page-item ${currentPage == 1 ? 'disabled' : ''}">
+                                            <a class="page-link" href="javascript:goToPage(${currentPage - 1})">
+                                                <i class="bi bi-chevron-left"></i>
+                                            </a>
+                                        </li>
+
+                                        <!-- 페이지 번호 -->
+                                        <c:forEach begin="1" end="${totalPages}" var="pageNum">
+                                            <li class="page-item ${currentPage == pageNum ? 'active' : ''}">
+                                                <a class="page-link" href="javascript:goToPage(${pageNum})">${pageNum}</a>
+                                            </li>
+                                        </c:forEach>
+
+                                        <!-- 다음 페이지 -->
+                                        <li class="page-item ${currentPage == totalPages ? 'disabled' : ''}">
+                                            <a class="page-link" href="javascript:goToPage(${currentPage + 1})">
+                                                <i class="bi bi-chevron-right"></i>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </nav>
+                            </div>
+                        </c:if>
                     </c:when>
                     <c:otherwise>
                         <div class="text-center py-5">
@@ -237,13 +224,20 @@
 </div>
 
 <script>
+
 // 탭 전환 함수
 function switchTab(tabName) {
-    document.querySelectorAll('.inquiry-tab').forEach(t => t.classList.remove('active'));
-    document.querySelector('.inquiry-tab[data-tab="' + tabName + '"]').classList.add('active');
+    const url = '${pageContext.request.contextPath}/support/inquiry';
+    const params = new URLSearchParams();
+    params.append('tab', tabName);
 
-    document.getElementById('writeTab').style.display = tabName === 'write' ? 'block' : 'none';
-    document.getElementById('historyTab').style.display = tabName === 'history' ? 'block' : 'none';
+    // 현재 카테고리 유지
+    if (tabName === 'history') {
+        params.append('category', '${currentCategory}');
+        params.append('page', '${currentPage}');
+    }
+
+    window.location.href = url + '?' + params.toString();
 }
 
 // 페이지 로드 시 URL 해시 확인
@@ -258,8 +252,6 @@ document.querySelectorAll('.inquiry-tab').forEach(tab => {
     tab.addEventListener('click', function() {
         const tabName = this.dataset.tab;
         switchTab(tabName);
-        // URL 해시 업데이트
-        history.replaceState(null, null, '#' + tabName);
     });
 });
 
@@ -271,31 +263,35 @@ document.querySelectorAll('.inquiry-item-header').forEach(header => {
     });
 });
 
-// 문의 내역 카테고리 필터링
-document.querySelectorAll('#historyTab .faq-category').forEach(category => {
-    category.addEventListener('click', function() {
-        document.querySelectorAll('#historyTab .faq-category').forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
+// 카테고리 변경
+function changeCategory(category) {
+    const url = '${pageContext.request.contextPath}/support/inquiry';
+    const params = new URLSearchParams();
+    params.append('tab', 'history');
+    params.append('category', category);
+    params.append('page', '1');
+    window.location.href = url + '?' + params.toString();
+}
 
-        const cat = this.dataset.category;
-        const items = document.querySelectorAll('.inquiry-item');
+// 페이지 이동
+function goToPage(page) {
+    if (page < 1 || page > ${totalPages}) return;
 
-        items.forEach(item => {
-            if (cat === 'all') {
-                item.style.display = 'block';
-            } else {
-                item.style.display = item.dataset.category === cat ? 'block' : 'none';
-            }
-        });
-    });
-});
+    const url = '${pageContext.request.contextPath}/support/inquiry';
+    const params = new URLSearchParams();
+    params.append('tab', 'history');
+    params.append('category', '${currentCategory}');
+    params.append('page', page);
+    window.location.href = url + '?' + params.toString();
+}
 
-// 문의 등록
+// 문의 등록 폼
+// 수정된 코드
 document.getElementById('inquiryForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    const isLoggedIn = ${not empty sessionScope.loginUser};
-
+    // 로그인 체크
+    const isLoggedIn = ${not empty sessionScope.loginMember};
     if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
             sessionStorage.setItem('returnUrl', window.location.href);
@@ -304,11 +300,196 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
         return;
     }
 
-    showToast('문의가 등록되었습니다. 빠른 시일 내에 답변드리겠습니다.', 'success');
+    // FormData 사용 (파일 포함)
+    const formData = new FormData();
+    formData.append('inqryCtgryCd', document.getElementById('inqryCtgryCd').value);
+    formData.append('inqryTitle', document.getElementById('inqryTitle').value);
+    formData.append('inqryCn', document.getElementById('inqryCn').value);
+    formData.append('inqryEmail', document.getElementById('inqryEmail').value);
 
-    // 폼 초기화
-    this.reset();
+    const targetNo = document.getElementById('inquiryTargetNo').value;
+    if (targetNo) {
+        formData.append('inquiryTargetNo', targetNo);
+    }
+
+    // ✅ selectedFiles 배열에서 파일 추가
+    if (selectedFiles.length > 0) {
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
+    }
+
+    // AJAX 요청
+    fetch('${pageContext.request.contextPath}/support/inquiry', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('detail response:', data);
+        if (data.success) {
+            alert(data.message);
+            // ✅ 폼 제출 성공 후 selectedFiles 초기화
+            selectedFiles = [];
+            document.getElementById('filePreviewContainer').innerHTML = '';
+            window.location.href = '${pageContext.request.contextPath}/support/inquiry?tab=history';
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('문의 등록 중 오류가 발생했습니다.');
+    });
 });
+/*추가함  */
+let selectedFiles = [];
+
+document.getElementById('attachFile').addEventListener('change', function(e) {
+    const container = document.getElementById('filePreviewContainer');
+    const newFiles = Array.from(e.target.files);
+
+    if (selectedFiles.length + newFiles.length > 5) {
+        alert("파일은 최대 5개까지만 업로드 가능합니다.");
+        e.target.value = "";
+        return;
+    }
+
+    newFiles.forEach(file => {
+        selectedFiles.push(file);
+    });
+
+    renderFilePreview();
+    e.target.value = "";
+});
+
+// ✅ 파일 미리보기 렌더링 함수
+function renderFilePreview() {
+    const container = document.getElementById('filePreviewContainer');
+    container.innerHTML = '';
+
+    selectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.style.cssText = "width: 100px; position: relative; border: 1px solid #ddd; padding: 5px; border-radius: 5px; text-align: center;";
+
+        // 삭제 버튼 추가
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '×';
+        removeBtn.type = 'button';
+        removeBtn.style.cssText = "position: absolute; top: 0; right: 0; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;";
+        removeBtn.onclick = function() {
+            selectedFiles.splice(index, 1);
+            renderFilePreview();
+        };
+        fileItem.appendChild(removeBtn);
+
+        // 이미지 미리보기
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.style.cssText = "width: 100%; height: 80px; object-fit: cover; border-radius: 3px;";
+                fileItem.prepend(img);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            const icon = document.createElement('div');
+            icon.innerHTML = '<i class="bi bi-file-earmark-text" style="font-size: 2rem; color: #666;"></i>';
+            fileItem.appendChild(icon);
+        }
+
+        const fileName = document.createElement('div');
+        fileName.innerText = file.name;
+        fileName.style.cssText = "font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 5px;";
+        fileItem.appendChild(fileName);
+
+        container.appendChild(fileItem);
+    });
+}
+ /*카피본  */
+/*
+document.getElementById('attachFile').addEventListener('change', function(e) {
+    const container = document.getElementById('filePreviewContainer');
+    container.innerHTML = ''; // 기존 미리보기 초기화
+
+    const files = e.target.files;
+
+    if (files.length > 5) {
+        alert("파일은 최대 5개까지만 업로드 가능합니다.");
+        this.value = ""; // 선택 초기화
+        return;
+    }
+
+    Array.from(files).forEach((file, index) => {
+        const reader = new FileReader();
+
+        // 파일 아이템을 담을 div 생성
+        const fileItem = document.createElement('div');
+        fileItem.style.cssText = "width: 100px; position: relative; border: 1px solid #ddd; padding: 5px; border-radius: 5px; text-align: center;";
+
+        // 이미지 파일인 경우 미리보기 생성
+        if (file.type.startsWith('image/')) {
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.style.cssText = "width: 100%; height: 80px; object-fit: cover; border-radius: 3px;";
+                fileItem.prepend(img);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // 이미지가 아닌 경우 아이콘과 파일명 표시
+            const icon = document.createElement('div');
+            icon.innerHTML = '<i class="bi bi-file-earmark-text" style="font-size: 2rem; color: #666;"></i>';
+            fileItem.appendChild(icon);
+        }
+
+        // 파일 이름 표시 (글씨)
+        const fileName = document.createElement('div');
+        fileName.innerText = file.name;
+        fileName.style.cssText = "font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 5px;";
+        fileItem.appendChild(fileName);
+
+        container.appendChild(fileItem);
+    });
+}); */
+
+/*다운로드용  */
+function loadAttachFiles(inqryNo, targetDiv) {
+
+//    fetch(`${pageContext.request.contextPath}/support/inquiry/detail/${inqryNo}`)
+      fetch(contextPath + '/support/inquiry/detail/' + inqryNo)
+         .then(res => res.json())
+         .then(data => {
+        	 console.log('attachFiles:', data.inquiry.attachFiles);
+        	 console.log(data.inquiry.attachFiles[0]);
+             if (!data.success || !data.inquiry.attachFiles) return;
+
+             let html = '<ul class="attachment-list">';
+
+             data.inquiry.attachFiles.forEach((file) => {
+            	 html += `
+            		    <li>
+            		        <span>\${file.FILE_ORIGINAL_NAME}</span>
+            		        <a href="${contextPath}/support/inquiry/download?fileNo=\${file.FILE_NO}">
+            		            [다운로드]
+            		        </a>
+            		    </li>
+            		`;
+             });
+             html +='</ul>';
+             targetDiv.innerHTML = html;
+         });
+}
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.attachArea').forEach(div => {
+        const inqryNo = div.dataset.inqryNo;
+        if (inqryNo) {
+            loadAttachFiles(inqryNo, div);
+        }
+    });
+});
+
 </script>
 
 <c:set var="pageJs" value="support" />

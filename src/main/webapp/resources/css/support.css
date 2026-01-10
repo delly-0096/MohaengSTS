@@ -478,6 +478,36 @@
     border-radius: var(--radius-md);
     border-left: 3px solid var(--primary-color);
 }
+.inquiry-attachments {
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+/*문의 첨부 추가  */
+.attachment-list {
+    list-style: none;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+.attachment-list li {
+    padding: 8px 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.attachment-list li:last-child {
+    border-bottom: none;
+}
+
+.attachment-list a {
+    color: #333;
+    text-decoration: none;
+}
+
+.attachment-list a:hover {
+    color: #007bff;
+    text-decoration: underline;
+}
 
 /* ===== 챗봇 전용 페이지 스타일 ===== */
 .chatbot-page {

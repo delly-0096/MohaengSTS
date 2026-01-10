@@ -8,6 +8,8 @@ const contextPath = document.querySelector('meta[name="context-path"]')?.content
 
 // ===== 문서 로드 완료 시 실행 =====
 document.addEventListener('DOMContentLoaded', function() {
+	initReturnRedirect();
+	initLocationData();
     initHeader();
     initFlatpickr();
     initAnimations();
@@ -398,7 +400,18 @@ function getCurrentTravelType() {
 function showAutocomplete(dropdown, query, travelType) {
     // 국내 여행지만 필터링
     const results = filterLocations(locationData.domestic, query, false);
+	
     renderAutocomplete(dropdown, results, query, 'domestic');
+}
+
+async function initLocationData() {
+	const response = await fetch("/schedule/common/regionList")
+	
+	const dataList = await response.json();
+	console.log(dataList);
+	locationData.domestic = dataList;
+	
+	return dataList;
 }
 
 function filterLocations(locations, query, isOverseas) {
@@ -434,6 +447,8 @@ function renderAutocomplete(dropdown, results, query, travelType) {
         item.addEventListener('click', function() {
             const input = dropdown.previousElementSibling;
             input.value = this.dataset.name;
+            input.dataset.code = this.dataset.code;
+			
             hideAutocomplete(dropdown);
         });
     });
@@ -577,7 +592,6 @@ function initFlatpickr() {
             maxDate: 'today',
             disableMobile: true,
             position: 'below',
-            defaultDate: '1990-01-01'
         });
     });
 }
@@ -638,6 +652,17 @@ function requireLogin(returnUrl) {
         return false;
     }
     return true;
+}
+
+function initReturnRedirect() {
+	const isLoggedIn = document.body.dataset.loggedIn === 'true';
+	let returnUrl = sessionStorage.getItem('returnUrl');
+	console.log(isLoggedIn)
+	console.log(returnUrl)
+	if(isLoggedIn && returnUrl){
+		sessionStorage.removeItem('returnUrl');
+		location.href=returnUrl;
+	}
 }
 
 // 로그인 필요 알림

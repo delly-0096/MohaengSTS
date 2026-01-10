@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <c:set var="pageTitle" value="공지사항" />
 <c:set var="pageCss" value="support" />
@@ -34,41 +35,49 @@
                     <div class="mb-3">
                         <span class="notice-badge notice">공지</span>
                     </div>
-                    <h1>[공지] 개인정보 처리방침 개정 안내</h1>
+                    <h1>${notice.ntcTitle}</h1>
                     <div class="notice-detail-meta">
-                        <span><i class="bi bi-calendar3 me-1"></i> 2024.03.15</span>
-                        <span><i class="bi bi-eye me-1"></i> 1,234</span>
+                        <span><i class="bi bi-calendar3 me-1"></i> ${notice.regDt}</span>
+                        <span><i class="bi bi-eye me-1"></i> ${notice.viewCnt}</span>
                     </div>
                 </div>
 
                 <div class="notice-detail-body">
-                    <p>안녕하세요, 모행입니다.</p>
-                    <br>
-                    <p>개인정보 처리방침이 아래와 같이 개정될 예정임을 안내드립니다.</p>
-                    <br>
-                    <h4>1. 개정 사유</h4>
-                    <p>개인정보 보호법 개정에 따른 처리방침 변경</p>
-                    <br>
-                    <h4>2. 주요 변경 사항</h4>
-                    <ul>
-                        <li>개인정보 수집 항목 명확화</li>
-                        <li>개인정보 보유 기간 상세 안내</li>
-                        <li>제3자 제공 동의 절차 강화</li>
-                        <li>이용자 권리 행사 방법 구체화</li>
-                    </ul>
-                    <br>
-                    <h4>3. 시행일</h4>
-                    <p>2024년 4월 1일부터 시행</p>
-                    <br>
-                    <h4>4. 문의</h4>
-                    <p>개정된 개인정보 처리방침에 대한 문의사항은 고객센터(1588-0000) 또는 1:1 문의를 통해 문의해 주시기 바랍니다.</p>
-                    <br>
-                    <p>앞으로도 이용자의 개인정보 보호를 위해 최선을 다하겠습니다.</p>
-                    <br>
-                    <p>감사합니다.</p>
+                 ${notice.ntcContent}
                 </div>
-
-                <div class="notice-detail-footer">
+                
+                <div class="row">
+                	<h5>첨부파일</h5>
+                	<hr/>
+                	<c:forEach items="${notice.noticeFileList }" var="fileDetailVO">
+	                	<div class="col-md-3">
+			                <div class="card">
+			                	<div class="card-header bg-main-color">${fileDetailVO.fileOriginalName }</div>
+			                	<div class="card-body">
+			                		<c:choose>
+			                			<c:when test="${fn:startsWith(fileDetailVO.mimeType, 'image/') }">
+			                				<img src="${pageContext.request.contextPath }/upload${fileDetailVO.filePath}" alt="${fileDetailVO.fileOriginalName }"/>
+			                			</c:when>
+			                			<c:otherwise>
+			                				${fileDetailVO.fileOriginalName }
+			                			</c:otherwise>
+			                		</c:choose>
+			                	</div>
+			                	<div class="card-body">
+									<ul class="list-group">
+										<li class="list-group-item">${fileDetailVO.fileOriginalName }</li>
+										<li class="list-group-item">${fileDetailVO.fileFancysize }</li>
+									</ul>
+								</div>
+								<div class="card-footer text-center">
+									<button type="button" class="btn btn-primary">다운로드</button>
+								</div>
+			                </div>
+	                	</div>
+                	</c:forEach>
+                </div>
+  
+				<div class="notice-detail-footer">
                     <a href="${pageContext.request.contextPath}/support/notice" class="btn btn-outline">
                         <i class="bi bi-list me-2"></i>목록으로
                     </a>

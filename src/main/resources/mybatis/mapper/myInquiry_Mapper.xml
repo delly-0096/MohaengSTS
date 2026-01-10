@@ -1,0 +1,215 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.mypage.inquiries.mapper.IMyInquiryMapper">
+
+	<!-- 문의 목록 조회 (상태별) -->
+	<select id="selectInquiryList" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		select
+			i.INQRY_NO as inqryNo,
+			i.INQRY_CTGRY_CD as inqryCtgryCd,
+			i.MEM_NO as memNo,
+			i.INQRY_STATUS as inqryStatus,
+			i.INQRY_TITLE as inqryTitle,
+			i.INQRY_CN as inqryCn,
+			i.INQUIRY_TARGET_NO as inqryTargetNo,
+			i.INQRY_EMAIL as inqryEmail,
+			i.ATTACH_NO as attachNo,
+			i.REG_DT as regDt,
+			i.MOD_DT as modDt,
+			i.DEL_YN as delYn,
+			i.DEL_DT as delDt,
+			i.REPLY_CN as replyCn,
+			i.REPLY_MEM_NO as replyMemNo,
+			i.REPLY_DT as replyDt,
+			i.REPLY_MOD_DT as replyModDt,
+			c.CD_NAME as categoryName,
+			m.MEM_NAME as memberName
+		from INQUIRY i
+		LEFT JOIN CODE c ON i.INQRY_CTGRY_CD = c.CD AND c.USE_YN='Y'
+		LEFT JOIN MEMBER m ON i.MEM_NO = m.MEM_NO
+		WHERE i.MEM_NO = #{memNo}
+		and i.DEL_YN='N'
+		<if test='filter == "answered"'>
+			AND i.INQRY_STATUS = 'answered'
+		</if>
+		<if test='filter == "waiting"'>
+			AND i.INQRY_STATUS = 'waiting'
+		</if>
+		<if test="months !=0">
+			AND i.REG_DT >= ADD_MONTHS(SYSDATE, -#{months})
+		</if>
+		ORDER BY i.REG_DT DESC
+		OFFSET #{offset} ROWS FETCH NEXT #{pageSize} ROWS ONLY
+	</select>
+
+	<!-- 문의 개수 조회 (상태별) -->
+	<select id="selectInquiryCount" parameterType="int" resultType="int">
+		select COUNT(*)
+		from INQUIRY
+		WHERE MEM_NO = #{memNo}
+		AND DEL_YN='N'
+	</select>
+
+	<!-- 통계 - 전체 -->
+	<select id="selectTotalCount" parameterType="int" resultType="integer">
+		SELECT COUNT(*)
+        FROM INQUIRY
+        WHERE MEM_NO = #{memNo}
+        AND DEL_YN = 'N'
+	</select>
+
+	<!-- 통계 - 답변 완료 -->
+	<select id="selectAnsweredCount" parameterType="int" resultType="integer">
+        SELECT COUNT(*)
+        FROM INQUIRY
+        WHERE MEM_NO = #{memNo}
+        AND DEL_YN = 'N'
+        AND INQRY_STATUS = 'answered'
+	</select>
+
+	<!-- 통계 - 답변 대기 -->
+	<select id="selectWaitingCount" parameterType="int" resultType="integer">
+        SELECT COUNT(*)
+        FROM INQUIRY
+        WHERE MEM_NO = #{memNo}
+        AND DEL_YN = 'N'
+        AND INQRY_STATUS = 'waiting'
+	</select>
+
+	 <!-- 문의 목록 조회 (카테고리별) -->
+	<select id="selectInquiryListByCategory" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		select
+			i.INQRY_NO as inquryNo,
+			i.INQRY_CTGRY_CD as inqryCtgryCd,
+			i.MEM_NO as memNo,
+			i.INQRY_STATUS as inqryStatus,
+			i.INQRY_TITLE as inqryTitle,
+			i.INQRY_CN as inqryCn,
+			i.INQUIRY_TARGET_NO as inquiryTargetNo
+			i.INQRY_EMAIL as inqryEmail,
+			i.REG_DT as regDt,
+			i.REPLY_CN as replyDt,
+			i.REPLY_DT as replyDt,
+			c.CD as cd,
+			c.CD_NAME as categoryName
+		from INQUIRY i
+		LEFT JOIN CODE c ON i.INQRY_CTGRY_CD = c.CD AND c.USE_YN='Y'
+		WHERE i.MEM_NO = #{memNo}
+		AND i.DEL_YN='N'
+		<if test='category !=null and category !="all"'>
+			AND c.CD = #{category}
+		</if>
+		ORDER BY i.REG_DT DESC
+		LIMIT #{pageSize} OFFSET #{offset}
+	</select>
+
+	<!-- 문의 개수 조회 (카테고리별) -->
+	<select id="selectInquiryCountByCategory" parameterType="map" resultType="int">
+		select count(*)
+		from INQUIRY i
+		LETF JOIN CODE c ON i.INQRY_CTGRY_CD = c.CD
+		where i.MEM_NO = #{memNo}
+		AND i.DEL_YN = 'N'
+		<if test='category != null and category != "all"'>
+			AND c.CD=#{category}
+		</if>
+	</select>
+
+	<!-- 문의 상세 조회 -->
+	<select id="selectInquiryDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		selct
+			i.INQRY_NO as inqryNo,
+			i.INQRY_CTGRY_CD as inqryCtgryCd,
+			i.MEM_NO as memNo,
+			i.INQRY_STATUS as inqryStatus,
+			i.INQRY_TITLE as inqryTitle,
+			i.INQRY_CN as inqryCn,
+			i.INQUIRY_TARGET_NO as inquiryTargetNo,
+			i.INQRY_EMAIL as inqryEmail,
+			i.ATTACH_NO as attachNo,
+			i.REG_DT as regDt,
+			i.MOD_DT as modDt,
+			i.DEL_YN as delYn,
+			i.DEL_DT as delDt,
+			i.REPLY_CN as replyCn,
+			i.REPLY_MEM_NO as replyMemNo,
+			i.REPLY_DT as replyDt,
+			i.REPLY_MOD_DT as replyModDt,
+			c.CD_NAME as categoryName
+		from INQUIRY i
+		LEFT JOIN CODE c ON i.INQRY_CTGRY_CD = c.CD AND c.USE_YN = 'Y'
+		WHERE i.INQRY_NO = #{inqryNo}
+		AND i.DEL_YN='N'
+	</select>
+
+	<!-- 문의 등록 -->
+	<insert id="insertInquiry" parameterType="kr.or.ddit.mohaeng.vo.InquiryVO" useGeneratedKeys="true" keyProperty="inqryNo">
+		insert into INQUIRY(
+			INQRY_CTGRY_CD,
+			MEM_NO,
+			INQRY_STATUS,
+			INQRY_TITLE,
+			INQRY_CN,
+			INQUIRY_TARGET_NO,
+			INQRY_EMAIL,
+			ATTACH_NO,
+			REG_DT,
+			DEL_YN
+		)values(
+			#{inqryCtgryCd},
+			#{memNo},
+			#{inqryStatus},
+			#{inqryTitle},
+			#{inqryCn},
+			#{inquiryTargetNo},
+			#{inqryEmail},
+			#{attachNo},
+			NOW(),
+			#{delYn}
+		)
+	</insert>
+
+	<!-- 문의 카테고리 목록 조회 -->
+	<select id="selectInquiryCategoryList" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		select
+			c.CD as cd,
+			c.CDGR as cdgr,
+			c.CD_NAME as cdName,
+			c.CD_DESC as cdDesc,
+			c.USE_YN as useYn,
+		from CODE c
+		WHERE c.CDGR='INQUIRY_TYPE'
+		AND c.USE_YN = 'Y'
+		ORDER BY c.CD
+	</select>
+
+<!-- 01/06 여기부터 추가함  -->
+
+	<!-- 첨부파일 목록 조회  -->
+	<select id="selectAttachFileList" parameterType="int" resultType="map">
+		select
+			afd.FILE_NO
+			,afd.FILE_ORIGINAL_NAME
+			,afd.FILE_EXT
+			,afd.FILE_SIZE
+			,afd.FILE_PATH
+		from INQUIRY i
+		inner join ATTACH_FILE_DETAIL afd on i.ATTACH_NO = afd.ATTACH_NO
+		where i.INQRY_NO = #{inqryNo}
+		  and afd.USE_YN = 'Y'
+		order by afd.REG_DT
+
+	</select>
+
+	<!-- 첨부파일 단건 조회 (다운로드용) -->
+	<select id="selectAttachFile" parameterType="int" resultType="map">
+		select
+			FILE_NO
+			,FILE_ORIGINAL_NAME
+			,FILE_PATH
+		from ATTACH_FILE_DETAIL
+		where FILE_NO=#{fileNo}
+		and USE_YN='Y'
+	</select>
+
+</mapper>

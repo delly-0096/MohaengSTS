@@ -42,7 +42,8 @@
                 <div class="search-form schedule-search-form">
                     <div class="search-input-group">
                         <label>출발지</label>
-                        <span class="input-icon"><i class="bi bi-geo-alt"></i></span>
+<!--                         <span class="input-icon"><i class="bi bi-geo-alt"></i></span> -->
+                        <span class="input-icon"><i class="bi bi-geo-alt-fill"></i></span>
                         <input type="text" class="form-control location-autocomplete" id="departure" placeholder="어디서 출발하시나요?" value="서울" autocomplete="off">
                         <div class="autocomplete-dropdown" id="departureDropdown"></div>
                     </div>
@@ -95,24 +96,27 @@
             <div class="popular-destinations">
                 <label class="popular-label">인기 여행지</label>
                 <div class="destination-chips">
-                    <button type="button" class="destination-chip" onclick="selectDestination('제주도')">
-                        <i class="bi bi-geo-alt"></i> 제주도
-                    </button>
-                    <button type="button" class="destination-chip" onclick="selectDestination('부산')">
-                        <i class="bi bi-geo-alt"></i> 부산
-                    </button>
-                    <button type="button" class="destination-chip" onclick="selectDestination('강릉')">
-                        <i class="bi bi-geo-alt"></i> 강릉
-                    </button>
-                    <button type="button" class="destination-chip" onclick="selectDestination('경주')">
-                        <i class="bi bi-geo-alt"></i> 경주
-                    </button>
-                    <button type="button" class="destination-chip" onclick="selectDestination('여수')">
-                        <i class="bi bi-geo-alt"></i> 여수
-                    </button>
-                    <button type="button" class="destination-chip" onclick="selectDestination('전주')">
-                        <i class="bi bi-geo-alt"></i> 전주
-                    </button>
+                	<c:forEach items="${ popRegionList }" var="popregion">
+                		<button type="button" class="destination-chip" onclick="selectDestination('${ popregion.rgnNm }')">
+	                        <i class="bi bi-geo-alt"></i> ${ popregion.rgnNm }
+	                    </button>
+                	</c:forEach>
+                    
+<!--                     <button type="button" class="destination-chip" onclick="selectDestination('부산')"> -->
+<!--                         <i class="bi bi-geo-alt"></i> 부산 -->
+<!--                     </button> -->
+<!--                     <button type="button" class="destination-chip" onclick="selectDestination('강릉')"> -->
+<!--                         <i class="bi bi-geo-alt"></i> 강릉 -->
+<!--                     </button> -->
+<!--                     <button type="button" class="destination-chip" onclick="selectDestination('경주')"> -->
+<!--                         <i class="bi bi-geo-alt"></i> 경주 -->
+<!--                     </button> -->
+<!--                     <button type="button" class="destination-chip" onclick="selectDestination('여수')"> -->
+<!--                         <i class="bi bi-geo-alt"></i> 여수 -->
+<!--                     </button> -->
+<!--                     <button type="button" class="destination-chip" onclick="selectDestination('전주')"> -->
+<!--                         <i class="bi bi-geo-alt"></i> 전주 -->
+<!--                     </button> -->
                 </div>
             </div>
 
@@ -791,7 +795,7 @@
 <script>
 let currentStep = 1;
 let totalSteps = 5;
-let travelerCount = 2;
+let travelerCount = 1;
 let planMethod = 'recommend'; // 기본값: 추천 받기
 
 // 여행지 빠른 선택
@@ -854,13 +858,17 @@ function goToPlanner() {
     // 기본 정보 저장
     var preferenceData = {
         departure: document.getElementById('departure').value,
+        departurecode : document.getElementById('departure').dataset.code,
         destination: document.getElementById('destination').value,
+        destinationcode : document.getElementById('destination').dataset.code,
         travelDates: document.getElementById('travelDates').value,
+        travelerCount : travelerCount,
         travelers: travelerCount,
         planMethod: 'self'
     };
 
     sessionStorage.setItem('preferenceData', JSON.stringify(preferenceData));
+    
     window.location.href = '${pageContext.request.contextPath}/schedule/planner';
 }
 
@@ -967,6 +975,37 @@ function validateStep(step) {
             if (datesEl) datesEl.focus();
             return false;
         }
+        
+        departureEl.removeAttribute("data-code");
+        destinationEl.removeAttribute("data-code");
+        
+        domesticData = locationData.domestic;
+        
+    	for(const domestic of domesticData) {
+    		let domesticVal = domestic.name;
+    		if(domesticVal == departure) departureEl.dataset.code = domestic.code
+    		if(domesticVal == destination) destinationEl.dataset.code = domestic.code
+    	}
+        
+    	if(!departureEl.dataset.code) {
+            showMessage('해당 출발지를 찾을 수 없습니다.');
+            if (departureEl) datesEl.focus();
+            return false;
+    	}
+    	
+    	if(!destinationEl.dataset.code) {
+    		showMessage('해당 도착지를 찾을 수 없습니다.');
+            if (destinationEl) datesEl.focus();
+            return false;
+    	}
+    	
+//     	if (!dates) {
+//             showMessage('여행 날짜를 선택해주세요.');
+//             if (datesEl) datesEl.focus();
+//             return false;
+//         }
+    	
+    	
     }
 
     if (step === 4) {

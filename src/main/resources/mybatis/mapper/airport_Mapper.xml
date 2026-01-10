@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.flight.mapper.IFlightMapper">
+
+	<insert id="registerAirport" parameterType="kr.or.ddit.mohaeng.vo.AirportVO" useGeneratedKeys="true">
+		<selectKey keyProperty="airportNo" resultType="int" order="BEFORE">
+			select seq_airport.nextval from dual
+		</selectKey>
+		insert into airport(
+			airport_no, airport_nm, airport_id, city_name
+		)values(
+			#{airportNo}, #{airportNm}, #{airportId}, #{airportNm}
+		)
+	</insert>
+
+	<insert id="registerAirline" parameterType="kr.or.ddit.mohaeng.vo.AirlineVO">
+		insert into airline(
+			airline_id, airline_nm
+		)values(
+			#{airlineId}, #{airlineNm}
+		)
+	</insert>
+
+	<select id="selectAirportList" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.AirportVO">
+		select
+			airport_no, airport_nm, iata_code, city_name, airport_id
+		from airport
+		<where>
+			<if test="keyword != null and keyword != ''">
+				(airport_nm LIKE '%' || #{keyword} || '%')
+	            OR (city_name LIKE '%' || #{keyword} || '%')
+	            OR (UPPER(iata_code) LIKE '%' || UPPER(#{keyword}) || '%')
+			</if>
+		</where>
+		order by airport_no
+	</select>
+
+
+	<select id="getAirportList" resultType="kr.or.ddit.mohaeng.vo.AirportVO">
+		select
+			airport_no, airport_nm, iata_code, city_name, airport_id
+		from airport
+		order by airport_no
+	</select>
+	
+	<select id="getAirlineList" resultType="kr.or.ddit.mohaeng.vo.AirlineVO">
+		select
+			airline_id, airline_nm, iata_code
+		from airline
+	</select>
+
+	<select id="selectAirline" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.AirlineVO">
+		select
+			airline_id, airline_nm, iata_code
+		from airline
+		where airline_nm = #{airlineNm}
+	</select>
+	
+	
+	<select id="getPayPerson" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+		select
+			m.mem_no, m.mem_name, m.mem_email, mu.tel
+		from member m left outer join mem_user mu on(m.mem_no = mu.mem_no)
+		where mem_id = #{memId}
+	</select>
+	
+</mapper>

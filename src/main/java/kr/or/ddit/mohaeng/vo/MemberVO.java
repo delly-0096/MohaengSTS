@@ -34,10 +34,13 @@ public class MemberVO {
 	private MemUserVO memUser;		/* 일반 회원 부가 정보 */
 	private MemAdminVO admin;		/* 관리자 */
 
+
+	private String tel;
 	private String memProfilePath;
 	
 	// 기업 담당자용
 	private String managerName;
 	private String managerEmail;
+
 	
 }

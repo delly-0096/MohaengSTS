@@ -17,6 +17,7 @@ import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.support.notice.mapper.INoticeMapper;
 import kr.or.ddit.mohaeng.vo.NoticeFileVO;
 import kr.or.ddit.mohaeng.vo.NoticeVO;
+import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import lombok.RequiredArgsConstructor;
 
 
@@ -137,6 +138,18 @@ public class NoticeServiceImpl  implements INoticeService{
 	@Override
 	public NoticeFileVO getFileInfo(int fileNo) {
 		return noticeMapper.getFileInfo(fileNo);
+	}
+
+	// 페이징 이용
+	@Override
+	public int selectNoticeCount(PaginationInfoVO<NoticeVO> pagingVO) {
+		return noticeMapper.selectNoticeCount(pagingVO);
+	}
+	
+	// 페이징 이용
+	@Override
+	public List<NoticeVO> selectNoticeList(PaginationInfoVO<NoticeVO> pagingVO) {
+		return noticeMapper.selectNoticeList(pagingVO);
 	}
 
 

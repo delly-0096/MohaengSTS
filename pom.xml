@@ -139,6 +139,12 @@
 			<version>3.6</version>
 		</dependency>
 		
+		<dependency>
+			<groupId>com.github.gavlyukovskiy</groupId>
+			<artifactId>p6spy-spring-boot-starter</artifactId>
+			<version>1.11.0</version>
+		</dependency>
+		
 		<!--
 			JSON 객체의 데이터를 직접 만들고 핸들링할 때 사용할 수 있는 라이브러리
 		-->

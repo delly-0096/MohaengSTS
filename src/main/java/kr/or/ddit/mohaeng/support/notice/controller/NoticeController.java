@@ -2,6 +2,7 @@ package kr.or.ddit.mohaeng.support.notice.controller;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import kr.or.ddit.mohaeng.support.notice.service.INoticeService;
 import kr.or.ddit.mohaeng.vo.NoticeVO;
+import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Controller
@@ -24,13 +26,36 @@ public class NoticeController {
 	private INoticeService noticeService;
 	
 	//공지사항 목록화면
-	@GetMapping("")
-	public String noticeForm(Model model) {
-		List<NoticeVO> noticeList = noticeService.selectNoticeList();
-		model.addAttribute("noticeList",noticeList);
-		log.info("noticeForm()....  실행");
-		log.info("noticeForm() 실행, size={}", noticeList.size());
+	@RequestMapping
+	public String noticeForm(
+			@RequestParam(name = "page", required = false, defaultValue = "1") int currentPage,
+			@RequestParam(required = false) String searchWord,
+			@RequestParam(required = false, defaultValue = "all") String ntcType,
+			Model model) {
+		log.info("noticeForm()....  실행"); 
+//		List<NoticeVO> noticeList = noticeService.selectNoticeList();
+//		model.addAttribute("noticeList",noticeList);
+//		log.info("noticeForm() 실행, size={}", noticeList.size());
 
+		PaginationInfoVO<NoticeVO> pagingVO = new PaginationInfoVO<>();
+		
+		// 검색 시 추가
+		if(StringUtils.isNotBlank(searchWord)) {
+			pagingVO.setSearchWord(searchWord);
+			model.addAttribute("searchWord", searchWord);
+		}
+		if(StringUtils.isNotBlank(ntcType)) {
+			pagingVO.setSearchType(ntcType);
+			model.addAttribute("ntcType", ntcType);
+		}
+		
+		pagingVO.setCurrentPage(currentPage);
+		int totalRecord = noticeService.selectNoticeCount(pagingVO);
+		pagingVO.setTotalRecord(totalRecord);
+		List<NoticeVO> dataList = noticeService.selectNoticeList(pagingVO);
+		pagingVO.setDataList(dataList);
+		
+		model.addAttribute("pagingVO", pagingVO);
 		return "support/notice";
 	}
     
@@ -42,6 +67,8 @@ public class NoticeController {
 		model.addAttribute("notice",noticeVO);
 		return "support/notice-detail";
 	} 
+	
+	//관리자페이지 공지사항 파일 가져오기
 	
 
 	

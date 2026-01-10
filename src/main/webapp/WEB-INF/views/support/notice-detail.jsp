@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
 
 <c:set var="pageTitle" value="공지사항" />
 <c:set var="pageCss" value="support" />
@@ -44,8 +45,39 @@
                 <div class="notice-detail-body">
                  ${notice.ntcContent}
                 </div>
-
-                <div class="notice-detail-footer">
+                
+                <div class="row">
+                	<h5>첨부파일</h5>
+                	<hr/>
+                	<c:forEach items="${notice.noticeFileList }" var="fileDetailVO">
+	                	<div class="col-md-3">
+			                <div class="card">
+			                	<div class="card-header bg-main-color">${fileDetailVO.fileOriginalName }</div>
+			                	<div class="card-body">
+			                		<c:choose>
+			                			<c:when test="${fn:startsWith(fileDetailVO.mimeType, 'image/') }">
+			                				<img src="${pageContext.request.contextPath }/upload${fileDetailVO.filePath}" alt="${fileDetailVO.fileOriginalName }"/>
+			                			</c:when>
+			                			<c:otherwise>
+			                				${fileDetailVO.fileOriginalName }
+			                			</c:otherwise>
+			                		</c:choose>
+			                	</div>
+			                	<div class="card-body">
+									<ul class="list-group">
+										<li class="list-group-item">${fileDetailVO.fileOriginalName }</li>
+										<li class="list-group-item">${fileDetailVO.fileFancysize }</li>
+									</ul>
+								</div>
+								<div class="card-footer text-center">
+									<button type="button" class="btn btn-primary">다운로드</button>
+								</div>
+			                </div>
+	                	</div>
+                	</c:forEach>
+                </div>
+  
+				<div class="notice-detail-footer">
                     <a href="${pageContext.request.contextPath}/support/notice" class="btn btn-outline">
                         <i class="bi bi-list me-2"></i>목록으로
                     </a>

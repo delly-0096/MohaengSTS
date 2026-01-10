@@ -2,6 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.support.notice.mapper.INoticeMapper">
 
+	<sql id="searchNotice">
+		<if test="searchWord != null">
+			and ntc_title like '%'||#{searchWord}||'%'
+		</if>
+		<if test="searchType != null and searchType != 'all'">
+			and ntc_type = #{searchType}
+		</if>
+	</sql>
+
 	<resultMap id="noticeMap" type="kr.or.ddit.mohaeng.vo.NoticeVO">
 		<id property="ntcNo" column="NTC_NO" />
 		<result property="ntcNo" column="NTC_NO" />
@@ -51,20 +60,20 @@
 	   WHERE NTC_NO = #{value}
 	 </update>
 		
-	<select id="selectNoticeList" resultType="kr.or.ddit.mohaeng.vo.NoticeVO">
-		  SELECT
-		    NTC_NO    AS ntcNo,
-		    NTC_TITLE AS ntcTitle,
-		    NTC_CONTENT AS ntcContent,
-		    REG_DT    AS regDt,
-		    NTC_TYPE  AS ntcType,
-		    VIEW_CNT  AS viewCnt,
-		    STATUS     AS status,
-  			ATTACH_NO  AS attachNo
-		  FROM NOTICE 
-		  WHERE STATUS= 'PUBLISHED'
-		  ORDER BY NTC_NO DESC
-	</select>
+<!-- 	<select id="selectNoticeList" resultType="kr.or.ddit.mohaeng.vo.NoticeVO"> -->
+<!-- 		  SELECT -->
+<!-- 		    NTC_NO    AS ntcNo, -->
+<!-- 		    NTC_TITLE AS ntcTitle, -->
+<!-- 		    NTC_CONTENT AS ntcContent, -->
+<!-- 		    REG_DT    AS regDt, -->
+<!-- 		    NTC_TYPE  AS ntcType, -->
+<!-- 		    VIEW_CNT  AS viewCnt, -->
+<!-- 		    STATUS     AS status, -->
+<!--   			ATTACH_NO  AS attachNo -->
+<!-- 		  FROM NOTICE  -->
+<!-- 		  WHERE STATUS= 'PUBLISHED' -->
+<!-- 		  ORDER BY NTC_NO DESC -->
+<!-- 	</select> -->
 
 	<!-- 공지사항 등록-->
 		<insert id="insertNotice" parameterType="kr.or.ddit.mohaeng.vo.NoticeVO">
@@ -118,5 +127,49 @@
 		where file_no = #{fileNo}
 	</select>			
 			
+   <select id="selectNoticeFileList"  parameterType="int"   resultType="kr.or.ddit.mohaeng.vo.NoticeFileVO">
+	  select
+	    file_no,
+	    attach_no,
+	    file_name,
+	    file_original_name,
+	    file_ext,
+	    file_size,
+	    file_path,
+	    file_gb_cd,
+	    mimy_type,
+	    use_yn,
+	    reg_id,
+	    reg_dt
+	  from attach_file_detail
+	  where attach_no = #{attachno}
+	    and use_yn = 'y'
+	  order by file_no asc
+	</select>
 
+	<select id="selectNoticeCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+		select count(ntc_no) 
+		from notice
+		where 1=1
+		<include refid="searchNotice"/>
+	</select>
+	
+	<select id="selectNoticeList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.NoticeVO">
+		select b.*
+		from(
+		    select a.*, row_number() over(order by a.ntc_no desc) rnum
+		    from(
+		        select 
+		            NTC_NO, NTC_TITLE, NTC_CONTENT, STATUS, NTC_TYPE, ATTACH_NO, REG_ID, REG_DT, VIEW_CNT, DEL_YN, DEL_DT
+		        from notice
+		        where 1=1
+		        <include refid="searchNotice"/>
+		        order by ntc_no desc
+		    ) a
+		)b
+		<![CDATA[
+			where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+		]]>
+	</select>
+	   
 </mapper>

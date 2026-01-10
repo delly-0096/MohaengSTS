@@ -35,6 +35,7 @@
     <c:if test="${not empty pageCss}">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/${pageCss}.css">
     </c:if>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
 <body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize> <sec:authorize access='isAnonymous()'>false</sec:authorize>">
     <!-- 헤더 -->

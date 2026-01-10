@@ -23,11 +23,10 @@ public class NoticeVO {
 
 	//깃테스트
 	//기존에 추가된 파일들 중, 삭제하겠다고 체크한 파일 번호가 저장될 필드
-
 	private Integer[] delFileNo;
 	//notice(1):noticeFile(n)의 관계성으로 1개의 게시글에 추가된 파일 목록을 관리
 	private List<MultipartFile> ntcFile;
-	private List<NoticeFileVO> noticeFileList; 
+	private List<NoticeFileVO> noticeFileList; // 사용자 화면에 출력할 리스트
 	private int fileCount; //게시글에 포함된
 	/*
 	 * private List<NoticeFileVO> noticeFileList; private int fileCount; //게시글에 포함된

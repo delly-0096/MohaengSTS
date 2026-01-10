@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
@@ -57,7 +58,7 @@ public interface IMemberService {
 	ServiceResult registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile);
 
 	/**
-	 *	<p> 내 정보 수정시 아이디 조회 </p>
+	 *	<p> 일반회원 : 내 정보 수정시 아이디 조회 </p>
 	 *	@date 2025.12.31
 	 *	@author kdrs
 	 * @param username 세션을 통해 들어온 아이디 값 (memId)
@@ -72,7 +73,76 @@ public interface IMemberService {
 	 *	@param updateDTO 회원 정보 수정 데이터(프로필 이미지, 기본정보, 상세정보, 비밀번호 등 포함)
 	 *	@return void (Transactional에 의해 실패 시 롤백됨)
 	 */
-	public void updateMemberProfile(MemberUpdateDTO updateDTO);
+	public void updateMemberProfile(MemberUpdateDTO updateDTO, boolean isBusiness);
+
+
+	/**
+	 *	<p> 기업회원 : 내 정보 수정시 아이디 조회 </p>
+	 *	@date 2026.01.06
+	 *	@author kdrs 
+	 *
+	 * @param username 세션을 통해 들어온 아이디 값 (memId)
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 */
+	public MemberVO findByCompId(String memId);
+
+	/**
+	 *	<p> 비밀번호 변경 </p>
+	 * @date 2026.01.09
+	 * @author kdrs
+	 * @param memNo
+	 * @param currentPassword
+	 * @param newPassword
+	 */
+	public void changePassword(int memNo, String currentPassword, String newPassword);
+	
+	/**
+	 *	<p> 회원 탈퇴 처리 (논리 삭제) </p>
+	 *	@date 2026.01.07
+	 *	@author kdrs
+	 *	@param memNo 탈퇴할 회원의 고유 번호 (PK)
+	 * @param withdrawReason 
+	 *	@param password 본인 확인을 위한 현재 비밀번호
+	 *	@throws RuntimeException 비밀번호 불일치 시 발생
+	 */
+	public void withdrawMember(int memNo, String currentPassword, String withdrawReason);
+
+	/**
+	 * <p> 아이디 찾기 처리 </p>
+	 * @date 2026.01.08
+	 * @author kdrs
+	 * @param memberVO 이름(memName)과 이메일(memEmail) 정보를 담은 객체
+	 * @return 조회된 회원의 마스킹 처리된 아이디 (일치 정보 없을 시 null 반환)
+	 */
+	public String findIdProcess(MemberVO memberVO);
+
+	/**
+	 * <p> 비밀번호 찾기를 위한 사용자 본인 확인 </p>
+	 * @date 2026.01.08
+	 * @author kdrs
+	 * @param memberVO 아이디(memId), 이름(memName), 이메일(memEmail) 정보를 담은 객체
+	 * @return 본인 확인 결과 (성공 시 "success", 실패 시 "fail" 등)
+	 */
+	public boolean findPasswordProcess(MemberVO memberVO);
+
+	/**
+	 * <p> 비밀번호 재설정 인증 메일 발송 </p>
+	 * @date 2026.01.08
+	 * @author kdrs
+	 * @param memberVO 수신자 이메일 정보 및 인증에 필요한 정보를 담은 객체
+	 * @throws RuntimeException 메일 발송 실패 시 발생
+	 */
+	public void sendPasswordResetMail(MemberVO memberVO);
+
+	/**
+	 * <p>임시 비밀번호 사용 여부를 해제한다.</p>
+	 * @date 2026.01.09
+	 * @author kdrs
+	 * @param memNo 회원 번호
+	 * @param tempPwYn 임시 비밀번호 사용 여부 ('Y' / 'N')
+	 */
+	public void updateTempPwYn(int memNo, String string);
+
 
 
 

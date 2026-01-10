@@ -82,6 +82,13 @@ public class TokenProvider {
 				member.getAuthList().stream()
 				.map(auth -> new SimpleGrantedAuthority(auth.getAuth())).
 				collect(Collectors.toList()));
+
+		 return new UsernamePasswordAuthenticationToken(
+			        userDetails,
+			        "",
+			        userDetails.getAuthorities()
+			    );
+
 	}
 	
 	private String getUserId(String token) {

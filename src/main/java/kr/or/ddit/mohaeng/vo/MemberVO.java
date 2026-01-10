@@ -25,13 +25,19 @@ public class MemberVO {
 	private Date regDt; 			/* 가입일 */
 	private Date udtDt; 			/* 수정일 */
 	private Date wdrwDt; 			/* 탈퇴일 */
+	private String TempPwYn;		/* 임시 비밀번호 상태 Y, N */
 	
 	private List<MemberAuthVO> authList;	// 권한 정보
 	
-	private MemCompVO memComp;
-	private MemUserVO memUser;
-	private MemAdminVO admin;
+	private CompanyVO company;		/* 기업 정보 */
+	private MemCompVO memComp;		/* 기업 회원 부가 정보 */
+	private MemUserVO memUser;		/* 일반 회원 부가 정보 */
+	private MemAdminVO admin;		/* 관리자 */
 
 	private String memProfilePath;
+	
+	// 기업 담당자용
+	private String managerName;
+	private String managerEmail;
 	
 }

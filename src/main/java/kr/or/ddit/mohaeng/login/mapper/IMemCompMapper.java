@@ -57,4 +57,35 @@ public interface IMemCompMapper {
 	 */
 	public int insertMemComp(MemCompVO memCompVO);
 
+	/**
+	 *	<p> 내 정보 수정시 아이디 조회 </p>
+	 *	@date 2026.01.05
+	 *	@author kdrs
+	 * @param username 세션을 통해 들어온 아이디 값 (memId)
+	 * @return 조회된 회원 전체 정보를 담은 MemberVO 객체 (없을 경우 null)
+	 */
+	public MemberVO findByCompId(String memId);
+
+	/**
+	 * <p>기업회원 내 정보 수정 (회원-기업 공통 정보)</p>
+	 * @date 2026.01.06
+	 * @author kdrs
+	 * @param memComp
+	 *        기업회원 번호(memNo)를 기준으로
+	 *        수정할 기업 공통 정보를 담은 MemCompVO 객체
+	 */
+	public void updateMemComp(MemCompVO memComp);
+
+	/**
+	 * <p>기업회원 내 정보 수정 (기업 고유 정보)</p>
+	 * @date 2026.01.06
+	 * @author kdrs
+	 * @param compDetail
+	 *        기업회원 번호(memNo) 또는 기업 식별자(compNo)를 기준으로
+	 *        수정할 기업 상세 정보를 담은 CompanyVO 객체
+	 */
+	public void updateCompany(CompanyVO compDetail);
+
+	public void deactivateByMemNo(int memNo);
+
 }

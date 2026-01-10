@@ -1,8 +1,6 @@
 package kr.or.ddit.mohaeng.mypage.profile.dto;
 
-import java.util.Date;
 
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.multipart.MultipartFile;
 
 import lombok.Data;
@@ -20,17 +18,42 @@ public class MemberUpdateDTO {
     private Integer memProfile;
     private MultipartFile profileImage; // 파일 업로드 처리용
     private boolean profileImageDeleted;
-    private String currentPassword;     // 본인 확인용
-    private String newPassword;         // 변경할 비번
+    private String currentPassword;     	// 본인 확인용
+    private String newPassword;         	// 변경할 비밀번호
+    private String confirmPassword;  	    // 변경 비밀번호 확인 (검증용)
+    
 
     // MemUserVO 관련 (상세 정보)
     private String nickname;
     private String birthDate;
     private String gender;
-    private String zip;           		 // JSP의 zip과 매칭
-    private String addr1;             // JSP의 addr1과 매칭
-    private String addr2;       // JSP의 addr2과 매칭
-    private String tel;               // JSP의 tel과 매칭
+    private String zip;           		
+    private String addr1;             
+    private String addr2;       	
+    private String tel;              
+    
+    // MemCompVO 관련 (상세 정보)
+	private String memCompTel; 			// 기업회원 연락처
+	private String memCompEmail; 		// 기업회원 이메일
+    
+	// CompanyVO 관련 (상세 정보)
+	private int compNo; 			/* 회사키 */
+	private String brno; 			/* 사업자등록번호 */
+	private String prmmiMnno; 		/* 통신판매업 신고번호 */
+	private String bzmnNm; 			/* 상호명 */
+	private String rprsvNm;		    /* 대표자 성명 */
+	private String rprsvEmladr; 	/* 대표자 이메일 */
+	private String compZip; 		/* 회사우편번호 */
+	private String compAddr1; 		/* 회사주소 */
+	private String compAddr2; 		/* 회사 상세주소 */
+	private String compUrl; 		/* 회사홈페이지주소 */
+	private String compTel; 		/* 회사연락처 */
+	private String bankCd; 			/* 정산은행 */
+	private String depositor; 		/* 예금주 */
+	private String accountNo; 		/* 계좌정보 */
+	private int compBizFile; 		/* 사업자 등록증 파일 */
+	private String industryCd; 		/* 업종 */
+	private String compIntro; 		/* 기업 소개 */
     
     // 알림/마케팅 설정 (필요시 추가)
     private String notifyReservation;	// 예약 확정/취소 알림 (이메일)

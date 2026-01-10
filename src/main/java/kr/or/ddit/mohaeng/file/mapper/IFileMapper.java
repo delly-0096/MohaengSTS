@@ -1,14 +1,19 @@
 package kr.or.ddit.mohaeng.file.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.AttachFileVO;
+import kr.or.ddit.mohaeng.vo.NoticeFileVO;
 
 @Mapper
 public interface IFileMapper {
 
-    /**
+    
+
+	/**
      * <p> 첨부파일 마스터 정보 등록 </p>
      * @date 2026.01.02
      * @author kdrs
@@ -48,5 +53,10 @@ public interface IFileMapper {
      * @param attachNo 첨부파일 고유 번호
      */
 	public void deleteAttachFile(Integer attachNo);
+	
+	/*
+	 * 일반페이지 공지사항 파일목록 조회
+	 */
+	public List<NoticeFileVO> selectNoticeFileList(int attachNo);
 	
 }

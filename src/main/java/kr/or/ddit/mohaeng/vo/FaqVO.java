@@ -22,5 +22,4 @@ public class FaqVO {
 	private String regId;
 	private Date regDt;
 
-
 }

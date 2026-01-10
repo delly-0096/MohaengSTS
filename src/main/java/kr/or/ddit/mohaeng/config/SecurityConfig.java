@@ -79,9 +79,6 @@ public class SecurityConfig {
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
-			"/mail/test",
-			"/oauth2/**",
-			"/login/oauth2/**"
 	};
 	
 	// 일반회원 허용 url test
@@ -105,8 +102,9 @@ public class SecurityConfig {
 	
 	// 관리자 허용 url
 	private static final String[] REACT_PASS_URL = {
-			"/api/admin/login"
-
+			"/api/admin/login",
+			"/api/admin/notices/thumbnail/**"
+			
 		};
 	
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {

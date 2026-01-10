@@ -1,6 +1,8 @@
 package kr.or.ddit.mohaeng.file.service;
 
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,4 +44,7 @@ public interface IFileService {
 	public void deleteProfileFile(int memNo);
 
 	public AttachFileDetailVO getProfileFile(Integer attachNo);
+
+	int saveFileList(List<MultipartFile> files, Map<String, String> uploadInfo, int regId);
+
 }

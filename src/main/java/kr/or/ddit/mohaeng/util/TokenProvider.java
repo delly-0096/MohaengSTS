@@ -16,6 +16,7 @@ import io.jsonwebtoken.Header;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
 import kr.or.ddit.mohaeng.vo.MemAdminVO;
 import kr.or.ddit.mohaeng.vo.CustomUser;
@@ -73,13 +74,21 @@ public class TokenProvider {
 	// 인증 정보 가져오기
 	public Authentication getAuthentication(String token) {
 		String memId = getUserId(token);
-		UserDetails userDetails = userDetailsService.loadUserByUsername(memId);
+		UserDetails userDetails = userDetailsService.loadUserByUsername(memId);                    
 		
+		MemberVO member = ((CustomUserDetails) userDetails).getMember();
+				 
+		return new UsernamePasswordAuthenticationToken(userDetails, "", 
+				member.getAuthList().stream()
+				.map(auth -> new SimpleGrantedAuthority(auth.getAuth())).
+				collect(Collectors.toList()));
+
 		 return new UsernamePasswordAuthenticationToken(
 			        userDetails,
 			        "",
 			        userDetails.getAuthorities()
 			    );
+
 	}
 	
 	private String getUserId(String token) {

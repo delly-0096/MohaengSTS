@@ -23,7 +23,7 @@ public class TalkServiceImpl implements ITalkService{
         @Autowired
         private IFileService iFileService;
         
-        @Value("${file.upload-notice-path}")
+        @Value("${kr.or.ddit.mohaeng.upload.path}")
         private String uploadNoticePath;
         
         

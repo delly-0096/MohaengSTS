@@ -36,7 +36,7 @@ public class NoticeServiceImpl  implements INoticeService{
 	private IFileService iFileService;
 	
 	
-	@Value("${file.upload-notice-path}")
+	@Value("${kr.or.ddit.mohaeng.upload.path}")
 	private String uploadNoticePath;
 	
 	/*

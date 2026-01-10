@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="mybatis.mapper.ITalk_Mapper">
+
+  <!-- 검색 조건 (공지처럼) -->
+  <sql id="searchBoard">
+    <if test="searchWord != null and searchWord != ''">
+      AND (BOARD_TITLE LIKE '%'||#{searchWord}||'%' OR BOARD_CONTENT LIKE '%'||#{searchWord}||'%')
+    </if>
+    <if test="searchType != null and searchType != 'all'">
+      AND BOARD_CTGRY_CD = #{searchType}
+    </if>
+    <!-- 기본: 삭제글 제외 -->
+    AND DEL_YN = 'N'
+  </sql>
+
+  <!-- Board + 파일조인 결과 매핑 -->
+  <resultMap id="boardMap" type="kr.or.ddit.mohaeng.vo.BoardVO">
+    <id property="boardNo" column="BOARD_NO"/>
+
+    <result property="boardCtgryCd" column="BOARD_CTGRY_CD"/>
+    <result property="writerNo" column="WRITER_NO"/>
+    <result property="attachNo" column="ATTACH_NO"/>
+
+    <result property="boardTitle" column="BOARD_TITLE"/>
+    <result property="boardContent" column="BOARD_CONTENT"/>
+
+    <result property="viewCnt" column="VIEW_CNT"/>
+    <result property="likeCnt" column="LIKE_CNT"/>
+
+    <result property="noticeYn" column="NOTICE_YN"/>
+    <result property="pinYn" column="PIN_YN"/>
+
+    <result property="delYn" column="DEL_YN"/>
+    <result property="delDt" column="DEL_DT"/>
+
+    <result property="regDt" column="REG_DT"/>
+    <result property="modDt" column="MOD_DT"/>
+
+    <!-- 첨부파일 리스트 -->
+    <collection property="boardFileList" resultMap="attachFileDetailMap"/>
+  </resultMap>
+
+  <resultMap id="attachFileDetailMap" type="kr.or.ddit.mohaeng.vo.BoardFileVO">
+    <id property="fileNo" column="FILE_NO"/>
+
+    <result property="fileNo" column="FILE_NO"/>
+    <result property="attachNo" column="ATTACH_NO"/>
+
+    <result property="fileName" column="FILE_NAME"/>
+    <result property="fileOriginalName" column="FILE_ORIGINAL_NAME"/>
+    <result property="fileExt" column="FILE_EXT"/>
+    <result property="fileSize" column="FILE_SIZE"/>
+    <result property="filePath" column="FILE_PATH"/>
+    <result property="fileGbCd" column="FILE_GB_CD"/>
+    <result property="mimeType" column="MIMY_TYPE"/>
+    <result property="useYn" column="USE_YN"/>
+    <result property="regId" column="REG_ID"/>
+    <result property="regDt" column="REG_DT"/>
+  </resultMap>
+
+  <!-- =========================
+       1) 상세 조회 (파일 포함)
+       ========================= -->
+  <select id="selectTalk" parameterType="int" resultMap="boardMap">
+    SELECT
+      b.BOARD_NO, b.BOARD_CTGRY_CD, b.WRITER_NO, b.ATTACH_NO,
+      b.BOARD_TITLE, b.BOARD_CONTENT,
+      b.VIEW_CNT, b.LIKE_CNT,
+      b.NOTICE_YN, b.PIN_YN,
+      b.DEL_YN, b.DEL_DT, b.REG_DT, b.MOD_DT,
+      afd.FILE_NO, afd.FILE_NAME, afd.FILE_ORIGINAL_NAME, afd.FILE_EXT,
+      afd.FILE_SIZE, afd.FILE_PATH, afd.FILE_GB_CD, afd.MIMY_TYPE, afd.USE_YN, afd.REG_ID
+    FROM BOARD b
+      LEFT JOIN ATTACH_FILE af ON (b.ATTACH_NO = af.ATTACH_NO)
+      LEFT JOIN ATTACH_FILE_DETAIL afd ON (af.ATTACH_NO = afd.ATTACH_NO AND afd.USE_YN = 'Y')
+    WHERE b.BOARD_NO = #{value}
+      AND b.DEL_YN = 'N'
+  </select>
+
+  <!-- 조회수 증가 -->
+  <update id="incrementHit" parameterType="int">
+    UPDATE BOARD
+    SET VIEW_CNT = NVL(VIEW_CNT, 0) + 1
+    WHERE BOARD_NO = #{value}
+      AND DEL_YN = 'N'
+  </update>
+
+  <!-- =========================
+       2) 등록
+       ========================= -->
+  <insert id="insertTalk" parameterType="kr.or.ddit.mohaeng.vo.BoardVO">
+    INSERT INTO BOARD (
+      BOARD_NO,
+      BOARD_CTGRY_CD,
+      WRITER_NO,
+      ATTACH_NO,
+      BOARD_TITLE,
+      BOARD_CONTENT,
+      VIEW_CNT,
+      LIKE_CNT,
+      NOTICE_YN,
+      PIN_YN,
+      DEL_YN,
+      REG_DT,
+      MOD_DT
+    ) VALUES (
+      SEQ_BOARD.NEXTVAL,
+      #{boardCtgryCd},
+      #{writerNo},
+      #{attachNo},
+      #{boardTitle},
+      #{boardContent},
+      0,
+      0,
+      NVL(#{noticeYn}, 'N'),
+      NVL(#{pinYn}, 'N'),
+      'N',
+      SYSDATE,
+      NULL
+    )
+  </insert>
+
+  <!-- =========================
+       3) 수정
+       ========================= -->
+  <update id="updateTalk" parameterType="kr.or.ddit.mohaeng.vo.BoardVO">
+    UPDATE BOARD
+    SET
+      BOARD_CTGRY_CD = #{boardCtgryCd},
+      BOARD_TITLE    = #{boardTitle},
+      BOARD_CONTENT  = #{boardContent},
+      ATTACH_NO      = #{attachNo},
+      NOTICE_YN      = NVL(#{noticeYn}, NOTICE_YN),
+      PIN_YN         = NVL(#{pinYn}, PIN_YN),
+      MOD_DT         = SYSDATE
+    WHERE BOARD_NO = #{boardNo}
+      AND DEL_YN = 'N'
+  </update>
+
+  <!-- =========================
+       4) 삭제(소프트)
+       ========================= -->
+  <update id="deleteTalk" parameterType="int">
+    UPDATE BOARD
+    SET DEL_YN = 'Y',
+        DEL_DT = SYSDATE
+    WHERE BOARD_NO = #{value}
+      AND DEL_YN = 'N'
+  </update>
+
+  <!-- =========================
+       5) 목록/페이징 (공지 스타일)
+       ========================= -->
+
+  <select id="selectTalkCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+    SELECT COUNT(BOARD_NO)
+    FROM BOARD
+    WHERE 1=1
+    <include refid="searchBoard"/>
+  </select>
+
+  <select id="selectTalkList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.BoardVO">
+    SELECT b.*
+    FROM (
+      SELECT a.*, ROW_NUMBER() OVER(
+        ORDER BY
+          CASE WHEN a.PIN_YN = 'Y' THEN 0 ELSE 1 END,
+          CASE WHEN a.NOTICE_YN = 'Y' THEN 0 ELSE 1 END,
+          a.BOARD_NO DESC
+      ) rnum
+      FROM (
+        SELECT
+          BOARD_NO, BOARD_CTGRY_CD, WRITER_NO, ATTACH_NO,
+          BOARD_TITLE, BOARD_CONTENT,
+          VIEW_CNT, LIKE_CNT,
+          NOTICE_YN, PIN_YN,
+          DEL_YN, DEL_DT,
+          REG_DT, MOD_DT
+        FROM BOARD
+        WHERE 1=1
+        <include refid="searchBoard"/>
+      ) a
+    ) b
+    <![CDATA[
+      WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+    ]]>
+  </select>
+
+  <!-- =========================
+       6) 좋아요 증감(임시)
+       ========================= -->
+  <update id="increaseLike" parameterType="int">
+    UPDATE BOARD
+    SET LIKE_CNT = NVL(LIKE_CNT,0) + 1
+    WHERE BOARD_NO = #{value}
+      AND DEL_YN = 'N'
+  </update>
+
+  <update id="decreaseLike" parameterType="int">
+    UPDATE BOARD
+    SET LIKE_CNT = CASE WHEN NVL(LIKE_CNT,0) > 0 THEN LIKE_CNT - 1 ELSE 0 END
+    WHERE BOARD_NO = #{value}
+      AND DEL_YN = 'N'
+  </update>
+
+</mapper>

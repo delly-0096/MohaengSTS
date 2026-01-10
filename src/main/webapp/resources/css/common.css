@@ -2113,3 +2113,7 @@ input, textarea, select {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--gray-medium);
 }
+/* hj custom css */
+.bg-main-color {
+	background-color: #1a7f7f;
+}

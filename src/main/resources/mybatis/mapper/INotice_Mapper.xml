@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.support.notice.mapper.INoticeMapper">
+
+	<sql id="searchNotice">
+		<if test="searchWord != null">
+			and ntc_title like '%'||#{searchWord}||'%'
+		</if>
+		<if test="searchType != null and searchType != 'all'">
+			and ntc_type = #{searchType}
+		</if>
+	</sql>
+
+	<resultMap id="noticeMap" type="kr.or.ddit.mohaeng.vo.NoticeVO">
+		<id property="ntcNo" column="NTC_NO" />
+		<result property="ntcNo" column="NTC_NO" />
+		<result property="ntcTitle" column="NTC_TITLE" />
+		<result property="ntcContent" column="NTC_CONTENT" />
+		<result property="status" column="STATUS" />
+		<result property="ntcType" column="NTC_TYPE" />
+		<result property="attachNo" column="ATTACH_NO" />
+		<result property="regId" column="REG_ID" />
+		<result property="regDt" column="REG_DT" />
+		<result property="viewCnt" column="VIEW_CNT" />
+		<result property="delYn" column="DEL_YN" />
+		<result property="delDt" column="DEL_DT" />
+		<collection property="noticeFileList" resultMap="attachFileDetailMap"/>
+	</resultMap>
+	
+	<resultMap id="attachFileDetailMap" type="kr.or.ddit.mohaeng.vo.NoticeFileVO">
+		<id property="fileNo" column="FILE_NO"/>
+		<result property="fileNo" column="FILE_NO"/>
+		<result property="attachNo" column="ATTACH_NO" />
+		<result property="fileName" column="FILE_NAME" />
+		<result property="fileOriginalName" column="FILE_ORIGINAL_NAME" />
+		<result property="fileExt" column="FILE_EXT" />
+		<result property="fileSize" column="FILE_SIZE" />
+		<result property="filePath" column="FILE_PATH" />
+		<result property="fileGbCd" column="FILE_GB_CD" />
+		<result property="mimeType" column="MIMY_TYPE" />
+		<result property="useYn" column="USE_YN" />
+		<result property="regId" column="REG_ID" />
+		<result property="regDt" column="REG_DT" />
+	</resultMap>
+	
+	<!-- 공지 상세 -->
+	<select id="selectNotice" parameterType="int" resultMap="noticeMap">
+     SELECT
+      ntc_no, ntc_title, ntc_content, n.reg_id, n.reg_dt, ntc_type, view_cnt, status, af.attach_no,
+      file_no, file_name, file_original_name, file_ext, file_size, file_path, file_gb_cd, mimy_type, use_yn
+     FROM NOTICE n left outer join attach_file af on(n.attach_no = af.attach_no)
+                   left outer join attach_file_detail afd on(af.attach_no = afd.attach_no)
+     WHERE NTC_NO = #{ntcNo}
+	</select>
+
+	<!-- 조회수 증가 -->
+	<update id="incrementHit" parameterType="int">
+	   UPDATE NOTICE
+	   SET VIEW_CNT = NVL(VIEW_CNT, 0) + 1
+	   WHERE NTC_NO = #{value}
+	 </update>
+		
+<!-- 	<select id="selectNoticeList" resultType="kr.or.ddit.mohaeng.vo.NoticeVO"> -->
+<!-- 		  SELECT -->
+<!-- 		    NTC_NO    AS ntcNo, -->
+<!-- 		    NTC_TITLE AS ntcTitle, -->
+<!-- 		    NTC_CONTENT AS ntcContent, -->
+<!-- 		    REG_DT    AS regDt, -->
+<!-- 		    NTC_TYPE  AS ntcType, -->
+<!-- 		    VIEW_CNT  AS viewCnt, -->
+<!-- 		    STATUS     AS status, -->
+<!--   			ATTACH_NO  AS attachNo -->
+<!-- 		  FROM NOTICE  -->
+<!-- 		  WHERE STATUS= 'PUBLISHED' -->
+<!-- 		  ORDER BY NTC_NO DESC -->
+<!-- 	</select> -->
+
+	<!-- 공지사항 등록-->
+		<insert id="insertNotice" parameterType="kr.or.ddit.mohaeng.vo.NoticeVO">
+		  INSERT INTO NOTICE (
+		      NTC_NO 
+		    , NTC_TITLE
+		    , NTC_CONTENT
+		    , REG_ID
+		    , REG_DT
+		    , NTC_TYPE
+		    , VIEW_CNT
+		    , ATTACH_NO
+		    , STATUS
+		  ) VALUES (
+		      SEQ_NOTICE.NEXTVAL
+		    , #{ntcTitle}
+		    , #{ntcContent}
+		    , #{regId}
+		    , SYSDATE
+		    , #{ntcType}
+		    , 0
+		    , #{attachNo}
+		    , 'PUBLISHED'
+		  )
+		</insert>
+
+	<!--수정-->
+	<update id="updateNotice" parameterType="kr.or.ddit.mohaeng.vo.NoticeVO">
+		  UPDATE NOTICE
+		  SET
+		    NTC_TITLE   = #{ntcTitle},
+		    NTC_CONTENT = #{ntcContent},
+		    NTC_TYPE    = #{ntcType},
+		    STATUS = #{status},
+            ATTACH_NO = #{attachNo}
+		  WHERE NTC_NO = #{ntcNo}
+	</update>
+
+	<!--삭제-->
+			
+	<update id="deleteNotice" parameterType="int">
+		  UPDATE NOTICE
+		  SET STATUS = 'y'
+		  WHERE NTC_NO = #{value}
+	</update>
+
+	<select id="getFileInfo" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.NoticeFileVO">
+		select
+			file_no, attach_no, file_name, file_original_name, file_ext, file_size, file_path, file_gb_cd, mimy_type, use_yn, reg_id, reg_dt
+		from attach_file_detail
+		where file_no = #{fileNo}
+	</select>			
+			
+   <select id="selectNoticeFileList"  parameterType="int"   resultType="kr.or.ddit.mohaeng.vo.NoticeFileVO">
+	  select
+	    file_no,
+	    attach_no,
+	    file_name,
+	    file_original_name,
+	    file_ext,
+	    file_size,
+	    file_path,
+	    file_gb_cd,
+	    mimy_type,
+	    use_yn,
+	    reg_id,
+	    reg_dt
+	  from attach_file_detail
+	  where attach_no = #{attachno}
+	    and use_yn = 'y'
+	  order by file_no asc
+	</select>
+
+	<select id="selectNoticeCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+		select count(ntc_no) 
+		from notice
+		where 1=1
+		<include refid="searchNotice"/>
+	</select>
+	
+	<select id="selectNoticeList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.NoticeVO">
+		select b.*
+		from(
+		    select a.*, row_number() over(order by a.ntc_no desc) rnum
+		    from(
+		        select 
+		            NTC_NO, NTC_TITLE, NTC_CONTENT, STATUS, NTC_TYPE, ATTACH_NO, REG_ID, REG_DT, VIEW_CNT, DEL_YN, DEL_DT
+		        from notice
+		        where 1=1
+		        <include refid="searchNotice"/>
+		        order by ntc_no desc
+		    ) a
+		)b
+		<![CDATA[
+			where b.rnum >= #{startRow} and b.rnum <= #{endRow}
+		]]>
+	</select>
+	   
+</mapper>

@@ -41,7 +41,7 @@
 		<result property="auth" column="AUTH"/>
 		<result property="regDt" column="REG_DT"/>
 	</resultMap>
-	
+
 	<!-- 로그인 시 id 매핑 -->
 	<select id="selectByMemId" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
 		SELECT MEM_NO as memNo,
@@ -51,30 +51,41 @@
 		FROM MEMBER
 		WHERE MEM_ID = #{memId}
     </select>
-    
+
     <!-- security & jwt용 id 매핑 -->
     <select id="selectById" parameterType="string" resultMap="memberMap">
-    	SELECT 
+    	SELECT
     			M.MEM_NO
     		  , MEM_ID
     		  , MEM_PASSWORD
     		  , MEM_NAME
+    		  , MEM_EMAIL
     		  , AUTH
     		  , C.FILE_PATH AS MEM_PROFILE_PATH
     	 FROM MEMBER M
-	     LEFT OUTER JOIN MEMBER_AUTH MA 
+	     LEFT OUTER JOIN MEMBER_AUTH MA
 	          ON M.MEM_NO = MA.MEM_NO
+	     LEFT OUTER JOIN ATTACH_FILE_DETAIL C
+    		  , MEM_STATUS
+    		  , S.CD_NAME AS STATUS_NM
+    		  , MA.AUTH
+    		  , C.FILE_PATH AS MEM_PROFILE_PATH
+    	 FROM MEMBER M
+	     LEFT OUTER JOIN MEMBER_AUTH MA 
+          ON M.MEM_NO = MA.MEM_NO
 	     LEFT OUTER JOIN ATTACH_FILE_DETAIL C 
 	          ON M.MEM_PROFILE = C.ATTACH_NO
+	     LEFT OUTER JOIN CODE S       ON M.MEM_STATUS = S.CD 
+	         AND S.CDGR = 'MEM_STATUS'
 	    WHERE M.MEM_ID = #{username}
     </select>
-    
+
     <!-- 회원가입 -->
     <insert id="insertMember" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
     	<selectKey keyProperty="memNo" resultType="int" order="BEFORE">
     		SELECT SEQ_MEMBER_NO.NEXTVAL FROM dual
     	</selectKey>
-    	
+
 		 INSERT INTO MEMBER
 		    (MEM_NO, MEM_ID, MEM_PASSWORD, MEM_NAME, MEM_EMAIL
 		    , MEM_PROFILE, POINT, MEM_STATUS, DEL_YN, WDRW_RESN
@@ -84,19 +95,19 @@
 		    , NULL, 0, 'ACTIVE', 'N', NULL
 		    , 1, 'N', NULL, NULL, SYSDATE, NULL, NULL )
 
-    		
+
     </insert>
-    
+
     <!-- 일반회원 권한 저장 -->
 	<insert id="insertAuth" parameterType="kr.or.ddit.mohaeng.vo.MemberAuthVO">
-	
+
 	    INSERT INTO MEMBER_AUTH (
 	        MEM_AUTH_NO, MEM_NO, AUTH, REG_DT
 	    ) VALUES (
-	        SEQ_MEMBER_AUTH_NO.NEXTVAL, #{memNo}, 'MEMBER', SYSDATE
+	        SEQ_MEMBER_AUTH_NO.NEXTVAL, #{memNo}, 'ROLE_MEMBER', SYSDATE
 	    )
 	</insert>
-	
+
 	<!-- 일반회원 정보 저장 -->
 	<insert id="insertUser" parameterType="kr.or.ddit.mohaeng.vo.MemUserVO">
     INSERT INTO MEM_USER (
@@ -105,17 +116,17 @@
         #{memNo}, #{memUser.nickname}, #{memUser.birthDate}, #{memUser.gender}, #{memUser.zip}, #{memUser.addr1}, #{memUser.addr2}, #{memUser.tel}
     )
 	</insert>
-	
+
 	<!-- 아이디 중복 체크 -->
 	<select id="idCheck" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
 		SELECT MEM_NO, MEM_ID
 		  FROM MEMBER
 		 WHERE MEM_ID = #{memId}
 	</select>
-	
+
 	<!-- 내 정보 수정시 아이디 정보 조회 -->
 	<select id="findById" resultMap="memberMap">
-	    SELECT 
+	    SELECT
 		        A.MEM_NO
 		      , A.MEM_ID
 		      , A.MEM_NAME
@@ -128,13 +139,13 @@
 		      , B.ADDR2
 		      , B.BIRTH_DATE
 		      , B.GENDER
-		      , C.FILE_PATH AS memProfilePath
+		      , C.FILE_PATH AS MEM_PROFILE_PATH
 		 FROM MEMBER A
 	    LEFT OUTER JOIN MEM_USER B ON (A.MEM_NO = B.MEM_NO)
-	    LEFT OUTER JOIN ATTACH_FILE_DETAIL C ON (A.MEM_PROFILE = C.ATTACH_NO) 
+	    LEFT OUTER JOIN ATTACH_FILE_DETAIL C ON (A.MEM_PROFILE = C.ATTACH_NO)
 	    WHERE A.MEM_ID = #{username}
 	</select>
-	
+
 	<!-- 회원 정보 수정 (member table) -->
 	<update id="updateMember">
 	    UPDATE MEMBER
@@ -142,12 +153,11 @@
 	        <if test="memName != null">MEM_NAME = #{memName},</if>
 	        <if test="memEmail != null">MEM_EMAIL = #{memEmail},</if>
 			<if test="memProfile != null">mem_profile = #{memProfile},</if>
-			<if test="memProfile == null">mem_profile = NULL,</if>
 	        UDT_DT = SYSDATE
 	    </set>
 	    WHERE MEM_NO = #{memNo}
 		</update>
-    
+
     <!-- 회원 정보 수정 (memUser) -->
     <update id="updateMemUser" parameterType="kr.or.ddit.mohaeng.vo.MemUserVO">
 	    UPDATE MEM_USER
@@ -158,22 +168,152 @@
 	        <if test="zip != null">ZIP = #{zip},</if>
 	        <if test="addr1 != null">ADDR1 = #{addr1},</if>
 	        <if test="addr2 != null">ADDR2 = #{addr2},</if>
-	        <if test="tel != null">TEL = #{tel}</if>
+	        <if test="tel != null">TEL = #{tel},</if>
 	    </set>
 	    WHERE MEM_NO = #{memNo}
 	</update>
-	
-	<!-- 회원 프로필 이미지(첨부파일) 조회 및 연결 해제 담당 -->
+
+	<!-- 회원 프로필 이미지(첨부파일) 번호 조회
+     - 프로필 이미지 삭제 및 교체 시 사용 -->
 	<select id="selectProfileAttachNo" resultType="int">
 	    SELECT mem_profile
 	    FROM member
 	    WHERE mem_no = #{memNo}
 	</select>
 	
-	<!-- 회원 프로필 이미지 연결 해제 (프로필 삭제 시 사용) -->
+	<!-- 회원 프로필 이미지 연결 해제
+     - 프로필 이미지 삭제 요청 시 MEMBER 테이블의 연결만 제거 -->
 	<update id="clearMemberProfile">
 	    UPDATE member
 	    SET mem_profile = NULL
 	    WHERE mem_no = #{memNo}
 	</update>
+	
+	<!-- 비밀번호 변경을 위한 회원 조회  -->
+	<select id="selectByMemNo" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+		SELECT 
+			  MEM_NO
+			, MEM_ID
+			, MEM_PASSWORD
+			, MEM_NAME
+			, MEM_EMAIL
+			, MEM_PROFILE
+			, POINT
+			, MEM_STATUS
+			, DEL_YN
+			, WDRW_RESN
+			, ENABLED
+			, MEM_SNS_YN
+			, SNS_TYPE
+			, SNS_ID
+			, REG_DT
+			, UDT_DT
+			, WDRW_DT
+		FROM MEMBER
+	    WHERE MEM_NO = #{memNo}
+	</select>
+	
+	<!-- 비밀번호 변경 -->
+	<update id="updatePassword">
+	    UPDATE MEMBER
+	    SET
+	        MEM_PASSWORD = #{encodedPw},
+	        UDT_DT = SYSDATE
+	    WHERE MEM_NO = #{memNo}
+	</update>
+	
+	<!-- 탈퇴한 아이디 탈퇴로 상태값 변경 -->
+	<update id="updateWithdraw">
+		UPDATE MEMBER
+		SET
+		    DEL_YN = 'Y'
+		  , MEM_STATUS = 'WITHDRAW'
+		  , ENABLED = 0
+		  , WDRW_RESN = #{wdrwResn}
+		  , UDT_DT = SYSDATE
+		  , WDRW_DT = SYSDATE
+		WHERE MEM_NO = #{memNo}
+		  AND DEL_YN = 'N'
+	</update>
+	
+	<!-- 아이디 찾기 시 아이디 조회 -->
+	<select id="findIdByNameAndEmail" parameterType="kr.or.ddit.mohaeng.vo.MemberVO" resultType="string">
+		SELECT MEM_ID 
+	   	 FROM MEMBER 
+		WHERE MEM_NAME = #{memName} 
+		  AND MEM_EMAIL = #{memEmail}
+		  AND DEL_YN = 'N'
+	</select>
+	
+	<!-- 비밀번호 찾기 시 회원 존재여부 확인 -->
+	<select id="checkMemberForPwReset" resultType="int" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+		SELECT COUNT(*) 
+		FROM MEMBER 
+		WHERE MEM_ID = #{memId} 
+		  AND MEM_NAME = #{memName} 
+		  AND MEM_EMAIL = #{memEmail}
+		  AND DEL_YN = 'N'
+	</select>
+
+	<!-- 비밀번호 찾기 시 임시 비밀번호 저장 -->
+	<update id="updateTempPwYn">
+	    UPDATE MEMBER
+	    SET TEMP_PW_YN = #{tempPwYn}
+	    WHERE MEM_NO = #{memNo}
+	</update>
+	
+	<!-- 비밀번호 재설정을 위한 회원 조회 -->
+	<select id="selectForPwReset" parameterType="kr.or.ddit.mohaeng.vo.MemberVO" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+	    SELECT
+	      	  MEM_NO
+	      	, MEM_ID
+	      	, MEM_NAME
+	      	, MEM_EMAIL
+	     FROM MEMBER
+	    WHERE MEM_ID = #{memId}
+	      AND MEM_NAME = #{memName}
+	      AND MEM_EMAIL = #{memEmail}
+	      AND DEL_YN = 'N'
+	</select>
+	
+	<!-- sns 로그인 시 이메일 조회 (없을시 회원가입 하기 위한 목적) -->
+	<select id="findByEmail" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+	    SELECT *
+	    FROM MEMBER
+	    WHERE MEM_EMAIL = #{memEmail}
+	      AND DEL_YN = 'N'
+	</select>
+	
+	<insert id="insertSocialMember" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+	    INSERT INTO MEMBER (
+	        MEM_NO
+	        , MEM_ID
+	        , MEM_PASSWORD
+	        , MEM_EMAIL
+	        , MEM_NAME
+	        , MEM_STATUS
+	        , MEM_SNS_YN
+	        , SNS_TYPE
+	        , SNS_ID
+	        , ENABLED
+	        , DEL_YN
+	        , REG_DT
+	        , TEMP_PW_YN
+	    ) VALUES (
+	        SEQ_MEMBER_NO.NEXTVAL
+	        , #{memId}
+	        , #{memPassword}
+	        , #{memEmail}
+	        , #{memName}
+	        , 'ACTIVE'
+	        , 'Y'
+	        , #{snsType}
+	        , #{snsId}
+	        , 1
+	        , 'N'
+	        , SYSDATE
+	        , 'N'
+	    )
+	</insert>
+	
 </mapper>

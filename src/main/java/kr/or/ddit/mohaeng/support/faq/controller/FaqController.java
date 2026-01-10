@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
@@ -16,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Controller
 @RequestMapping("/support/faq")
+
 public class FaqController {
 
 	@Autowired
@@ -57,6 +60,20 @@ public class FaqController {
 	public FaqVO getFaqDetail(int faqNo) {
 		log.info("FAQ 상세 조회:",faqNo);
 		return faqService.getFaqDetail(faqNo);
+	}
+
+
+	/**
+	 * 조회수 증가
+	 * @param faqNo
+	 * @return
+	 */
+	@PatchMapping("/{faqNo}/views")
+	@ResponseBody
+	public void updateViews(@PathVariable("faqNo") int faqNo) {
+		log.info("조회수 증가 요청 - FAQ 번호: {}", faqNo);
+	    // 사용자가 클릭할 때마다 실행됨
+	    faqService.incrementViews(faqNo);
 	}
 
 	/**

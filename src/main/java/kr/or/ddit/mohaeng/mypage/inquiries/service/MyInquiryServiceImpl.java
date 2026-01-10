@@ -26,6 +26,17 @@ public class MyInquiryServiceImpl implements IMyInquiryService {
 	public List<InquiryVO> getInquiryList(Map<String, Object> params) {
 		log.info("마이페이지 문의 목록 조회 (상태별) - params:",params);
 		List<InquiryVO> list = inquiryMapper.selectInquiryList(params); //DB 조회: Mapper를 통해 DB에서 문의글 리스트를 몽땅 가져와
+
+		// ✅ 첨부파일 목록 붙이기
+	    if (list != null && !list.isEmpty()) {
+	        for (InquiryVO inquiry : list) {
+	            if (inquiry.getAttachNo() != null) {
+	                List<Map<String, Object>> files = inquiryMapper.selectAttachFileList(inquiry.getInqryNo());
+	                inquiry.setAttachFiles(files);
+	            }
+	        }
+	    }
+
 		return formatInquiryDates(list);// [3] 가공 작업: DB에서 가져온 날짜 형식(예: 2023-10-27 15:30:00)을
 	    							    // 화면에 예쁘게 뿌려줄 수 있게(예: 2023.10.27) 변환해서 리턴
 	}
@@ -79,5 +90,46 @@ public class MyInquiryServiceImpl implements IMyInquiryService {
 		}
 		return list;
 	}
+	//문의 상세 조회-(사용자가 게시글 제목을 클릭했을 때 실행)
+	//화면용 메서드
+	 @Override
+	 public InquiryVO getInquiryDetail(int inqryNo) {
+		 log.info("문의 상세 조회-inqryNo:",inqryNo);
+
+		// [1] DB에서 글 번호(inqryNo)로 한 건의 데이터를 가져옴.
+		 InquiryVO inquiry = inquiryMapper.selectInquiryDetail(inqryNo);
+
+		//첨부파일 합치기
+		 List<Map<String, Object>> attachFiles = inquiryMapper.selectAttachFileList(inqryNo);
+
+		 inquiry.setAttachFiles(attachFiles);
+
+		// [2] 데이터가 있을 때만 날짜를 예쁘게 바꿈 (NPE 방지)
+		if (inquiry !=null) {
+			SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd");
+			SimpleDateFormat sdfTime = new SimpleDateFormat("yyyy.MM.dd HH:mm");
+
+			// 작성일은 날짜만, 답변일은 시간까지
+			if (inquiry.getRegDt() != null) {
+				inquiry.setRegDtStr(sdf.format(inquiry.getRegDt()));
+			}
+			if (inquiry.getReplyDt() !=null) {
+				inquiry.setReplyDtStr(sdfTime.format(inquiry.getReplyDt()));
+			}
+		}
+		return inquiry;
+	 }
+	//재사용 / API용 메서드 -Ajax,관리자 화면,다른 화면에서 첨부파일만 필요할 때
+	 @Override
+	 public List<Map<String, Object>> getAttachFileList(int inqryNo) {
+		 log.info("첨부파일 목록 조회 - inqryNo:{}", inqryNo);
+			return inquiryMapper.selectAttachFileList(inqryNo);
+	 }
+	//다운로드 전용
+	 @Override
+	 public Map<String, Object> getAttachFile(int fileNo) {
+		 return inquiryMapper.selectAttachFile(fileNo);
+	 }
+
 
 }

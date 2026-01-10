@@ -101,6 +101,10 @@
                                                 <div class="inquiry-label">문의 내용</div>
                                                 <p>${fn:replace(inquiry.inqryCn, newLineChar, '<br>')}</p>
                                             </div>
+
+                                            <!--첨부파일  -->
+											<div class="attachArea" data-inqry-no="${inquiry.inqryNo}"></div>
+
                                             <c:if test="${inquiry.inqryStatus == 'answered' && not empty inquiry.replyCn}">
                                                 <div class="inquiry-answer-box">
                                                     <div class="inquiry-label">답변
@@ -189,6 +193,42 @@ function goToPage(page) {
     params.append('page', page);
     window.location.href = url + '?' + params.toString();
 }
+/*다운로드용  */
+function loadAttachFiles(inqryNo, targetDiv) {
+
+//    fetch(`${pageContext.request.contextPath}/support/inquiry/detail/${inqryNo}`)
+      fetch(contextPath + '/support/inquiry/detail/' + inqryNo)
+         .then(res => res.json())
+         .then(data => {
+        	 console.log('attachFiles:', data.inquiry.attachFiles);
+        	 console.log(data.inquiry.attachFiles[0]);
+             if (!data.success || !data.inquiry.attachFiles) return;
+
+             let html = '<ul class="attachment-list">';
+
+             data.inquiry.attachFiles.forEach((file) => {
+            	 html += `
+            		    <li>
+            		        <span>\${file.FILE_ORIGINAL_NAME}</span>
+            		        <a href="${contextPath}/support/inquiry/download?fileNo=\${file.FILE_NO}">
+            		            [다운로드]
+            		        </a>
+            		    </li>
+            		`;
+             });
+             html +='</ul>';
+             targetDiv.innerHTML = html;
+         });
+}
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.attachArea').forEach(div => {
+        const inqryNo = div.dataset.inqryNo;
+        if (inqryNo) {
+            loadAttachFiles(inqryNo, div);
+        }
+    });
+});
+
 </script>
 
 <c:set var="pageJs" value="mypage" />

@@ -34,26 +34,44 @@ public class FlightServiceImpl implements IFlightService {
 	// api 서비스키
 	public static final String serviceKey = "a7bc76e60824b232ff8273a1191a079f36c11cee6fdbe0be73f54b73d5c510f9";
 	
-	// 공항 조회 - 검색시
+	/**
+	 * <p>공항 조회</p>
+	 * @author sdg
+	 * @param keyword	공항 검색어
+	 * @return 검색어에 맞는 공항 정보
+	 */
 	@Override
 	public List<AirportVO> selectAirportList(String keyword) {
 		return mapper.selectAirportList(keyword);
 	}
 	
-	// 전체 공항 조회
+	/**
+	 * <p>전체 공항 조회</p>
+	 * @author sdg
+	 * @return 전체 공항 목록
+	 */
 	@Override
 	public List<AirportVO> getAirportList() {
 		return mapper.getAirportList();
 	}
 
-	// 전체 항공사 조회
+	/**
+	 * <p>전체 항공사 조회</p>
+ 	 * @author sdg
+	 * @return 전체 항공사 목록
+	 */
 	@Override
 	public List<AirlineVO> getAirlineList() {
 		return mapper.getAirlineList();
 	}
 	
 	
-	// 항공권 조회 - db 저장 필요없음
+	/**
+	 * <p>항공권 조회</p>
+	 * @author sdg
+	 * @param flightProduct api 필요 정보
+	 * @return 항공권
+	 */
 	@Override
 	public List<FlightProductVO> getFlightList(FlightProductVO flightProduct) {
 		List<FlightProductVO> flightProductList = new ArrayList<>();
@@ -157,10 +175,16 @@ public class FlightServiceImpl implements IFlightService {
 		return flightProductList;
 	}
 	
+	/**
+	 * <p>시간데이터 포맷 설정</p>
+	 * @param vo 데이터 설정할 객체
+	 * @param rawTime api의 시간 문자열
+	 * @param form 출발, 도착 여부
+	 */
 	public void timeFormatter(FlightProductVO vo, String rawTime, int form) {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmm");
 		if(rawTime != null && !rawTime.isEmpty()) {
-			if(form == 1) {
+			if(form == 1) {	// 출발
 				LocalDateTime parseDateTime = LocalDateTime.parse(rawTime, formatter);
 				String dayOfWeek = parseDateTime.getDayOfWeek()
                         .getDisplayName(TextStyle.SHORT, Locale.KOREAN);
@@ -179,8 +203,11 @@ public class FlightServiceImpl implements IFlightService {
 	
 	
 	
-	
-	// 공항 등록
+	/**
+	 * <p>공항 정보 등록</p>
+	 * @author sdg
+	 * @return 성공시 1, 실패시 -1
+	 */
 	@Override
 	public int registerAirport() {
 		String url = "http://apis.data.go.kr/1613000/DmstcFlightNvgInfoService/getArprtList?serviceKey="
@@ -212,7 +239,11 @@ public class FlightServiceImpl implements IFlightService {
 		return status;
 	}
 
-	// 항공사 등록 - 기업회원용
+	/**
+	 * <p>항공사 정보 등록</p>
+	 * @author sdg
+	 * @return 성공시 1, 실패시 -1
+	 */
 	@Override
 	public int registerAirline() {
 		String url = "http://apis.data.go.kr/1613000/DmstcFlightNvgInfoService/getAirmanList?serviceKey="

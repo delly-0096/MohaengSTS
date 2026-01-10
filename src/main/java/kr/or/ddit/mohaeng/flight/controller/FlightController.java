@@ -26,8 +26,13 @@ public class FlightController {
 	@Autowired
 	private IFlightService service;
 	
+	/**
+	 * <p>항공권 조회 페이지</p>
+	 * @author sdg
+	 * @return 항공권 조회 페이지
+	 */
 	@GetMapping("")
-	public String flightPage(Model model) {
+	public String flightPage() {
 		
 //		List<FlightProductVO> flightList = service.getFlightList();
 //		for(FlightProductVO flight : flightList) {
@@ -39,6 +44,11 @@ public class FlightController {
 	}
 	
 	
+	/**
+	 * <p>공항 찾기</p>
+	 * @param keyword	공항 검색어
+	 * @return 검색어의 맞는 공항 정보
+	 */
 	@ResponseBody
 	@GetMapping("/search")
 	public List<AirportVO> searchAirport(@RequestParam(required = false) String keyword){
@@ -46,14 +56,24 @@ public class FlightController {
 		return service.selectAirportList(keyword);
 	}
 	
+	/**
+	 * <p>항공권 검색</p>
+	 * @param flightProduct api 입력 정보
+	 * @return 조건에 맞는 항공권 정보
+	 */
 	@ResponseBody
 	@PostMapping("/searchFlight")
 	public List<FlightProductVO> searchFlight(@RequestBody FlightProductVO flightProduct){
-		System.out.println("flight service다 : " + flightProduct);
 		log.info("flightController.searchFlight => {}", flightProduct);
 		return service.getFlightList(flightProduct);
 	}
 	
+	/**
+	 * <p>결제자 정보 가져오기</p>
+	 * @author sdg
+	 * @param memberVO 회원 id
+	 * @return memNo, memName, memEmail, tel
+	 */
 	@ResponseBody
 	@PostMapping("/user")
 	public MemberVO flighterInfo(@RequestBody MemberVO memberVO) {
@@ -64,28 +84,13 @@ public class FlightController {
 	
 	
 	
+	/**
+	 * <p>예약페이지 이동 컨트롤러
+	 * @author sdg
+	 * @return 예약페이지
+	 */
 	@GetMapping("/booking")
-	public String flightBooking(/* @RequestBody List<FlightProductVO> flightList */) {
-		// 여기서 db에 정보를 담을지
-		
+	public String flightBooking() {
 		return "product/flightBooking";
 	}
-	
-	// 결제 페이지 보내기전에 정보를 여기로 보내서 insert.
-	// insert하고 결제 실패하면 없앤다.
-	
-	
-// 결제정보 insert 하고 보내기 -> 성공시 complete 실패시 다른곳으로
-		
-//		mId: 상점 아이디
-//		lastTransactionKey: 마지막 거래의 키값
-//		paymentKey: 해당 결제의 고유 키
-//		orderId: 상점 주문번호
-//		orderName: 주문명
-//		status: 결제 처리 상태 (DONE: 완료, CANCELED: 취소, PARTIAL_CANCELED: 부분 취소 등)
-//		totalAmount: 총 결제 금액
-//		method: 결제 수단 (카드, 가상계좌, 계좌이체 등)
-//		approvedAt: 결제 승인 시각 (ISO 8601 형식)
-//		card: 카드 결제 시 카드사 정보, 할부 개월 수 등 (결제 수단별 상세 객체 제공)
-	
 }

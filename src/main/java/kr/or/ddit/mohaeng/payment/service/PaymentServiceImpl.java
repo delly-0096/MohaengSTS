@@ -16,9 +16,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import kr.or.ddit.mohaeng.flight.mapper.IFlightMapper;
 import kr.or.ddit.mohaeng.payment.mapper.IPaymentMapper;
 import kr.or.ddit.mohaeng.vo.FlightPassengersVO;
 import kr.or.ddit.mohaeng.vo.FlightProductVO;
+import kr.or.ddit.mohaeng.vo.FlightReservationVO;
 import kr.or.ddit.mohaeng.vo.PaymentVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -27,9 +29,17 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentServiceImpl implements IPaymentService {
 
 	@Autowired
-	private IPaymentMapper mapper;
+	private IPaymentMapper  payMapper;
 	
-	// 결제
+	@Autowired
+	private IFlightMapper flightMapper;
+	
+	/**
+	 * <p>결제</p>
+	 * @author sdg
+	 * @param paymentVO 결제데이터
+	 * @return api 응답 객체
+	 */
 	@Override
 	@Transactional
 	public Map<String, Object> confirmPayment(PaymentVO paymentVO) {
@@ -85,38 +95,41 @@ public class PaymentServiceImpl implements IPaymentService {
                 
                 log.info("paymentVO : {}", paymentVO);
                 
-                int payResult = mapper.insertPayment(paymentVO);
+                int payResult = payMapper.insertPayment(paymentVO);
                 
                 // 응답 받은 데이터(response.getBody())를 PaymentVO에 셋팅하거나 가공하여 insert/update
                 // 예: paymentVO.setPayStatus("Y");
-                // int row = paymentMapper.insertPayment(paymentVO);
+                // int row = paymentpayMapper.insertPayment(paymentVO);
                 
-                // 결제 상세 정보 담기
-                // payNo = orderId로 세팅
-                // memNo 불러오려면?
-                // payTotalAmt = price
-                // payMethodCd = method = rksvusrufwp, 
-                // payStatus = status로 세팅 (DONE이 결제 한 것)
-                // payDt = approvedAt로 세팅
-                // 
                 
+                
+                int productResult = 0;
+                int depProductNo = paymentVO.getFlightProductList().get(0).getFltProdId();
+                int arrProductNo = paymentVO.getFlightProductList().get(1).getFltProdId();
                 
                 
                 // 항공권 담기
                 for(FlightProductVO flightProductVO : paymentVO.getFlightProductList()) {
                 	// 해당 정보와 일치하는 항공권 있는지 확인하기. 없으면 insert
+                	productResult = flightMapper.insertFlight(flightProductVO);	// 항공권 없으면 insert 있으면 안하기
                 }
                 
-                // 예약 정보 담기
-//                for(FlightReservationVO flightReservationVO : paymentVO.getFlightReservationList()) {
-//                	// 얘도 한번 확인하기
-//                	// orderId가 결제번호!
-//                }
+                
+                // 예약 정보 담기 - 
+                for(FlightReservationVO flightReservationVO : paymentVO.getFlightReservationList()) {
+                	// 항공권 + 
+                	// orderId가 결제번호!
+                	 flightReservationVO.setPayNo(paymentVO.getPayNo());
+                	 //를 flightReservation에 setting
+                	 
+                }
                 
                 // 탑승객 정보 담기
                 for(FlightPassengersVO flightPassengersVO : paymentVO.getFlightPassengersList()) {
-                	// 얘도 한번 확인
+                	// 한번에 가는편, 오는편 insert
+                	// flightPassengersVO.setReserveNo("첫번째 그거");
                 }
+                // 탑승객 수 만큼 response에 set하기
                 
                 return responseBody; 
             } else {
@@ -128,4 +141,5 @@ public class PaymentServiceImpl implements IPaymentService {
             return null;
         }
 	}
+	
 }

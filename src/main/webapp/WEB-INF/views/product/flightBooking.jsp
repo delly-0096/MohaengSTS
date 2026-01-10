@@ -400,11 +400,13 @@ async function main() {
 		
 		const customData = await userData.json();
 		console.log("customData : ", customData);
-		///////////
 		
+
 		
 		// 결제 하기전에 탑승객 데이터좀 넣자
 		const passengerInputs = document.querySelectorAll('.passenger-card');
+		
+// 		selectedSeats // 좌석 정보가 담긴 list
 		
 	    const passengerData = Array.from(passengerInputs).map(card => {
 	        return {
@@ -413,16 +415,25 @@ async function main() {
 	            firstName: card.querySelector('input[name^="firstName"]').value,
 	            gender: card.querySelector('select[name^="gender"]').value,
 	            birthDate: card.querySelector('input[name^="birthDate"]').value
-	            // 좌석
+	            // 좌석 - 
 	            // 추가 수하물 무게
 	            // 무게 계산해서 가격 계산
 	        };
 	    });
 	    
+	    
+	    
 		console.log("passengers : ", passengerData);
 		
 		sessionStorage.setItem("passengers", JSON.stringify(passengerData));
 	    
+		
+		// 예약 정보 담기
+		const reservData = {
+			name : "asdf"	// 베타
+		};
+		
+		
 	    // 필수 약관 체크 확인 - 이것도 테이블에 담기
 	    let allAgreed = true;
 	    document.querySelectorAll('.agree-item').forEach(function(agree) {
@@ -434,7 +445,7 @@ async function main() {
 	        return;
 	    }
 		
-		// "flt" + bookingData.flights[0].startDt + "11"	    
+		// "flt" + bookingData.flights[0].startDt + "11"
 		
 		console.log("bookingData : ", bookingData.flights[0].startDate )
 		await widgets.requestPayment({
@@ -613,6 +624,7 @@ function addPassengerCard(container, type, num) {
 
     var div = document.createElement('div');
     div.className = 'passenger-card';
+    // type num은 빼기
     div.innerHTML =
         '<div class="passenger-card-header">' +
             '<h6><i class="bi bi-person-fill me-2"></i>탑승객 ' + num + '</div><span class="passenger-type-badge">' + typeLabel + '</span></h6>' +
@@ -648,8 +660,14 @@ function addPassengerCard(container, type, num) {
                     '<input type="date" class="form-control" name="birthDate' + type + num + '" required>' +
                 '</div>' +
             '</div>' +
+            '<div class="col-md-4">' +
+            '<div class="form-group mb-0">' +
+                '<label class="form-label">수하물 <span class="text-danger">*</span></label>' +
+                '<input type="date" class="form-control" name="extraBaggage' + type + num + '" required>' +
+            '</div>' +
+        '</div>' +
         '</div>';
- 
+ 	// 수하물 여기에 추가??
     container.appendChild(div);
 }
 
@@ -812,9 +830,9 @@ function initSeatMap() {
             if (col === '') {	// 통로
                 html += '<div class="seat-aisle"></div>';
             } else {
-                var seatId = i + col;
+                var seatId = i + col;	// a1 같이
                 var occupied = Math.random() < 0.3;
-                var extra = i <= 3;
+                var extra = i <= 3;		// business
                 var seatClass = occupied ? 'occupied' : (extra ? 'extra available' : 'available');
 
                 html += '<button type="button" class="seat ' + seatClass + '" data-seat="' + seatId + '" ' +
@@ -854,7 +872,7 @@ function toggleSeat(btn) {
     }
 }
 
-// 좌석 선택 확인
+// 좌석 선택 - 인원수 만큼 좌석 받기
 function confirmSeatSelection() {
     // 결제 요약에 좌석 정보 반영
     var seatsRow = document.getElementById('summarySeatsRow');

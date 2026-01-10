@@ -64,4 +64,17 @@
 		where mem_id = #{memId}
 	</select>
 	
+	
+	<insert id="insertFlight" parameterType="kr.or.ddit.mohaeng.vo.FlightProductVO">
+		INSERT INTO flight_product (
+		    flt_prod_id, flight_symbol, dep_airport_id, arr_airport_id
+		    , dep_time, arr_time, domestic_days, start_dt, end_dt
+		    , checked_baggage, carry_on_baggage, extra_baggage_price, airline_id
+		) VALUES (
+		    #{fltProdId}, #{flightSymbol}, #{depAirportId}, #{arrAirportId},
+	        #{depTime}, #{arrTime}, #{domesticDays}, #{startDt}, #{endDt},
+	        #{checkedBaggage}, #{carryOnBaggage}, #{extraBaggagePrice}, #{airlineId}
+		)
+	</insert>
+	
 </mapper>

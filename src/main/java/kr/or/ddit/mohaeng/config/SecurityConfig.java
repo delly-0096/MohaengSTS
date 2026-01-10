@@ -34,6 +34,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.filter.TokenAuthenticationFilter;
+import kr.or.ddit.mohaeng.login.service.CustomOAuth2UserService;
 import kr.or.ddit.mohaeng.security.CustomAccessDeniedHandler;
 import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
 import kr.or.ddit.mohaeng.util.TokenProvider;
@@ -44,6 +45,8 @@ import lombok.extern.slf4j.Slf4j;
 @EnableWebSecurity
 @EnableMethodSecurity
 public class SecurityConfig {
+
+    private final CustomOAuth2UserService customOAuth2UserService;
 	
 	@Autowired
 	private DataSource dataSource;
@@ -67,12 +70,18 @@ public class SecurityConfig {
 			"/mypage/profile",
 			"/mypage/business/profile",
 			"/mypage/profile/update",
+			"/mypage/profile/checkPassword",
+			"/mypage/profile/withdraw",
+			"/member/find/id",
+			"/member/find/password",
 			"/idCheck",
 			"/error",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
-			"/resources/**"
+			"/mail/test",
+			"/oauth2/**",
+			"/login/oauth2/**"
 	};
 	
 	// 일반회원 허용 url test
@@ -80,7 +89,9 @@ public class SecurityConfig {
 			"/",
 			"/error",
 			"/mohaeng",
-			"/.well-known/**"		// 크롬 개발자 도구로의 요청
+			"/.well-known/**",		// 크롬 개발자 도구로의 요청
+			"/oauth2/**",
+			"/login/oauth2/**"
 	};
 	
 	// 기업회원 허용 url test
@@ -98,9 +109,10 @@ public class SecurityConfig {
 
 		};
 	
-	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService) {
+	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {
 		this.tokenProvider = tokenProvider;
 		this.customUserDetailsService = customUserDetailsService;
+		this.customOAuth2UserService = customOAuth2UserService;
 	}
 
 	// 정적 리소스 허용
@@ -108,7 +120,7 @@ public class SecurityConfig {
 	public WebSecurityCustomizer configure() {
 		return (web) -> web.ignoring()
 				.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
-				.requestMatchers("/resources/**");	// 정적 리소스
+				.requestMatchers("/resources/**", "/upload/**"); // 정적 리소스
 	}
 	
 	// 시큐리티 체인 - react 관리자 페이지
@@ -153,9 +165,10 @@ public class SecurityConfig {
                     DispatcherType.FORWARD,
                     DispatcherType.ASYNC
                 ).permitAll()
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 .requestMatchers(PASS_URL).permitAll()
-//                .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
-//                .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
+//              .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
+//              .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
                 .requestMatchers("/member/login").permitAll()
                 .anyRequest().authenticated()
         )
@@ -168,6 +181,14 @@ public class SecurityConfig {
 
     http.sessionManagement(session ->
         session.maximumSessions(1)
+    );
+    
+    // google 로그인
+    http
+    .oauth2Login(oauth2 -> oauth2
+        .loginPage("/member/login")
+        .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+        .defaultSuccessUrl("/", true)
     );
 
     // 로그인 상태 유지
@@ -191,6 +212,7 @@ public class SecurityConfig {
               })
 			.invalidateHttpSession(true)           		// 세션 무효화
 			.deleteCookies("JSESSIONID", "remember-me")	// 세션 쿠키와 자동로그인 쿠키 모두 삭제
+			.clearAuthentication(true)
 			.logoutSuccessUrl("/member/login")
     );
     

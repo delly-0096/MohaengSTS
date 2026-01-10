@@ -1,6 +1,8 @@
 package kr.or.ddit.mohaeng.login.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -23,6 +26,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -149,6 +153,7 @@ public class LoginController {
 	    loginMember.put("memType", memType);
 	    loginMember.put("memName", username);
 	    loginMember.put("memNo", member.getMemNo());
+	    loginMember.put("tempPwYn", member.getTempPwYn());
 	    
 	    String profilePath = member.getMemProfilePath(); 
 	    if (profilePath != null) {
@@ -161,15 +166,24 @@ public class LoginController {
 		session.setAttribute("loginMember", loginMember);
 		session.removeAttribute("LOGIN_FAIL_CNT");
 		
-		CustomUserDetails userDetails = new CustomUserDetails(member);
+		// 회원 타입에 따라 권한 생성
+		List<GrantedAuthority> authorities = new ArrayList<>();
 
-		// ⚠️ 권한은 CustomUserDetails 기준으로만 사용
+		/*
+		 * if ("BUSINESS".equals(memType)) { authorities.add(new
+		 * SimpleGrantedAuthority("BUSINESS")); } else { authorities.add(new
+		 * SimpleGrantedAuthority("MEMBER")); }
+		 */
+		CustomUserDetails userDetails =
+		        new CustomUserDetails(member);
+
+		// Authentication 생성
 		Authentication auth =
-		    new UsernamePasswordAuthenticationToken(
-		        userDetails,
-		        null,
-		        userDetails.getAuthorities()
-		    );
+		        new UsernamePasswordAuthenticationToken(
+		                userDetails,
+		                null,
+		                userDetails.getAuthorities()
+		        );
 
 		SecurityContext context = SecurityContextHolder.createEmptyContext();
 		context.setAuthentication(auth);
@@ -183,6 +197,15 @@ public class LoginController {
 	        // 시큐리티의 Remember-Me 서비스를 수동으로 호출하여 토큰을 생성하고 DB에 저장
 	        rememberMeServices.loginSuccess(request, response, auth);
 	        log.info("Remember-Me 토큰 생성 및 DB 저장 완료");
+	    }
+	    
+	    // 임시 비밀번호 로그인 여부 확인
+	    if ("Y".equals(member.getTempPwYn())) {
+	        ra.addFlashAttribute(
+	            "warningMessage",
+	            "임시 비밀번호로 로그인하셨습니다. 비밀번호를 반드시 변경해주세요."
+	        );
+	        return "redirect:/mypage/profile"; // 내 정보 수정 페이지
 	    }
 		
 		return "redirect:/";
@@ -218,7 +241,7 @@ public class LoginController {
 		return goPage;
 	}
 	
-	// 기업 회원가입 기능
+	/* 기업 회원가입 기능*/
 	@PostMapping("/register/company")
 	public String registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile,
 							Model model, RedirectAttributes ra) {
@@ -243,7 +266,7 @@ public class LoginController {
 		return goPage;
 	}
 	
-	// 아이디 중복확인
+	/* 아이디 중복 확인 */
 	@PostMapping("/idCheck")
 	public ResponseEntity<ServiceResult> idCheck(@RequestBody Map<String, String> map) {
 		log.info("idCheck() 실행...!");
@@ -253,13 +276,52 @@ public class LoginController {
 	
 	}
 	
-	// 아이디 & 비밀번호 찾기 화면
+	/* 아이디 비밀번호 찾기 화면 */
 	@GetMapping("/find")
 	public String findPage() {
 		log.info("findPage() 실행...!");
 	    return "member/find";
 	}
 	
+	/* 아이디 찾기 */
+	@PostMapping("/find/id")
+	@ResponseBody
+	public ResponseEntity<String> findId(@RequestBody MemberVO memberVO) {
+		ResponseEntity<String> entity = null;
+		
+		String foundId = memberService.findIdProcess(memberVO);
+		
+		if(foundId != null) {
+			String maskedId = foundId.replaceAll("(?<=.{2}).", "*");
+			entity = ResponseEntity.ok(maskedId);
+		} else {
+			entity = ResponseEntity.badRequest().build();
+		}
+		
+		return entity;
+		
+	}
+	
+	/* 비밀번호 찾기 */
+	@PostMapping("/find/password")
+	@ResponseBody
+	public ResponseEntity<String> findPassword(@RequestBody MemberVO memberVO) {
+
+		boolean isValid = memberService.findPasswordProcess(memberVO);
+
+	    if (isValid) {
+	    	try {
+	        memberService.sendPasswordResetMail(memberVO);
+	        return ResponseEntity.ok("임시 비밀번호를 이메일로 발송했습니다. 로그인 후 비밀번호를 변경해주세요.");
+	    	} catch(Exception e) {
+	    		return ResponseEntity.internalServerError().body("메일 발송 중 오류가 발생했습니다.");
+	    	}
+	    	
+	    } else {
+	    	// 사용자 정보 불일치 시
+	        return ResponseEntity.badRequest().body("입력하신 정보가 일치하지 않습니다.");
+	    }
+	}
 	
 	/* 로그아웃 기능 */
 	@GetMapping("/logout")

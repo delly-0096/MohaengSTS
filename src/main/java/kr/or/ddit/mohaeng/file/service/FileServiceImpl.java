@@ -26,7 +26,7 @@ public class FileServiceImpl implements IFileService{
 	@Autowired
 	private IMemberMapper memberMapper;
 	
-	@Value("${file.upload-path}") // 설정파일(properties)에 정의된 저장 경로
+	@Value("${kr.or.ddit.mohaeng.upload.path}") // 설정파일(properties)에 정의된 저장 경로
     private String uploadPath;
 	
 	/**
@@ -53,7 +53,7 @@ public class FileServiceImpl implements IFileService{
 	        String ext = originalName.substring(originalName.lastIndexOf(".") + 1);
 	        String saveName = UUID.randomUUID().toString() + "." + ext;
 
-	        File target = new File(uploadPath, saveName);
+	        File target = new File(uploadPath + "biz/" + saveName);
 	        if (!target.getParentFile().exists()) {
 	            target.getParentFile().mkdirs();
 	        }
@@ -68,7 +68,7 @@ public class FileServiceImpl implements IFileService{
 	        detailVO.setFileOriginalName(originalName);
 	        detailVO.setFileExt(ext);
 	        detailVO.setFileSize(bizFile.getSize());
-	        detailVO.setFilePath("/resources/upload/biz/" + saveName); // 서버 접근 경로
+	        detailVO.setFilePath("/biz/" + saveName); // 서버 접근 경로
 	        detailVO.setFileGbCd("ATTACH");   // 기업 첨부
 	        detailVO.setRegId(memNo);
 
@@ -102,7 +102,7 @@ public class FileServiceImpl implements IFileService{
 		String ext = originalName.substring(originalName.lastIndexOf(".") + 1);
 		String saveName = UUID.randomUUID().toString() + "." + ext;	// 파일명 중복 방지
 		
-		File target = new File(uploadPath, saveName);
+		File target = new File(uploadPath + "profile/", saveName);
 		if (!target.getParentFile().exists()) {
 		    target.getParentFile().mkdirs(); 
 		}
@@ -118,7 +118,7 @@ public class FileServiceImpl implements IFileService{
             detailVO.setFileOriginalName(originalName); 					// #{fileOriginalName}
             detailVO.setFileExt(ext); 										// #{fileExt}
             detailVO.setFileSize(file.getSize()); 							// #{fileSize}
-            detailVO.setFilePath("/resources/upload/profile/" + saveName); 	// 서버 접근 경로 #{filePath}
+            detailVO.setFilePath("/profile/" + saveName); 					// 서버 접근 경로 #{filePath}
             detailVO.setFileGbCd("PROFILE"); 								//  파일 분류 fileGbCd
             detailVO.setMimyType(file.getContentType()); 					// #{mimyType}
             detailVO.setRegId(regId); 										// #{regId}
@@ -145,20 +145,17 @@ public class FileServiceImpl implements IFileService{
 	public void deleteProfileFile(int memNo) {
 		
 		// 회원의 프로필 첨부파일 번호 조회
-	    Integer attachNo = memberMapper.selectProfileAttachNo(memNo);
-	    if (attachNo == null) {
-	        return; // 삭제할 프로필 없음
-	    }
-
-	    // 첨부파일 상세 조회 (프로필은 보통 1건)
-	    AttachFileDetailVO detail =
-	        fileMapper.selectProfileFileDetail(attachNo);
+		Integer attachNo = memberMapper.selectProfileAttachNo(memNo);
+	    if (attachNo == null) return;
+	    AttachFileDetailVO detail = fileMapper.selectProfileFileDetail(attachNo);
 
 	    // 실제 파일 삭제
-	    if (detail != null && detail.getFilePath() != null) {
-	        File file = new File(detail.getFilePath());
+	    if (detail != null && detail.getFileName() != null) {
+	        // uploadPath(C:/upload) + 파일명 또는 상대경로
+	        File file = new File(uploadPath, detail.getFileName()); 
 	        if (file.exists()) {
 	            file.delete();
+	            log.info("물리 파일 삭제 성공: {}", file.getAbsolutePath());
 	        }
 	    }
 

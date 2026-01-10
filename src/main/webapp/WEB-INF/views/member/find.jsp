@@ -33,12 +33,12 @@
                 <form class="auth-form" id="findIdForm" onsubmit="return findId(event)">
                     <div class="form-group">
                         <label class="form-label">이름</label>
-                        <input type="text" class="form-control" name="userName" id="findIdName"
+                        <input type="text" class="form-control" name="memName" id="findIdName"
                                placeholder="이름을 입력하세요" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">이메일</label>
-                        <input type="email" class="form-control" name="email" id="findIdEmail"
+                        <input type="email" class="form-control" name="memEmail" id="findIdEmail"
                                placeholder="가입 시 등록한 이메일을 입력하세요" required>
                     </div>
                     <button type="submit" class="btn btn-primary btn-submit">
@@ -52,17 +52,17 @@
                 <form class="auth-form" id="findPwForm" onsubmit="return findPassword(event)">
                     <div class="form-group">
                         <label class="form-label">아이디</label>
-                        <input type="text" class="form-control" name="userId" id="findPwId"
+                        <input type="text" class="form-control" name="memId" id="findPwId"
                                placeholder="아이디를 입력하세요" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">이름</label>
-                        <input type="text" class="form-control" name="userName" id="findPwName"
+                        <input type="text" class="form-control" name="memName" id="findPwName"
                                placeholder="이름을 입력하세요" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">이메일</label>
-                        <input type="email" class="form-control" name="email" id="findPwEmail"
+                        <input type="email" class="form-control" name="memEmail" id="findPwEmail"
                                placeholder="가입 시 등록한 이메일을 입력하세요" required>
                     </div>
                     <button type="submit" class="btn btn-primary btn-submit">
@@ -206,14 +206,29 @@ function findId(e) {
     }
 
     // API 호출 (실제 구현 시)
-    // 데모용 결과 표시
-    var maskedId = maskUserId('user123');
-    document.getElementById('foundUserId').textContent = maskedId;
-
-    // 모달 표시
-    var findIdModal = new bootstrap.Modal(document.getElementById('findIdModal'));
-    findIdModal.show();
-
+	fetch('/member/find/id', {
+		method : 'POST',
+		headers: { 
+	        'Content-Type': 'application/json'
+	    },
+	    body: JSON.stringify({ 
+	        memName: name, 
+	        memEmail: email 
+	    }) // JSON 데이터로 전송
+	})
+	.then(response => {
+		if (!response.ok) throw new Error('일치하는 정보가 없습니다.');
+		return response.text();
+	})
+	.then(maskedId =>{
+		document.getElementById('foundUserId').textContent = maskedId;
+		const findIdModal = new bootstrap.Modal(document.getElementById('findIdModal'));
+		findIdModal.show();
+	})
+	.catch(error => {
+		alert(error.message);
+	})
+    
     return false;
 }
 
@@ -224,36 +239,48 @@ function findPassword(e) {
     var userId = document.getElementById('findPwId').value.trim();
     var name = document.getElementById('findPwName').value.trim();
     var email = document.getElementById('findPwEmail').value.trim();
-
+    
+    const btn = document.querySelector('#findPwForm button');
+    btn.disabled = true;
+    btn.textContent = '전송 중...';
+    
+    // 유효성 검사
     if (!userId || !name || !email) {
-        if (typeof showToast === 'function') {
-            showToast('모든 항목을 입력해주세요.', 'error');
-        } else {
-            alert('모든 항목을 입력해주세요.');
-        }
+        alert('모든 항목을 입력해주세요.');
+        return false;
+    }
+        // 실제 서버 API 호출
+        fetch('/member/find/password', {
+        	method : 'POST',
+        	headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify({ 
+            	memId : userId,
+                memName: name, 
+                memEmail: email 
+            }) // JSON 데이터로 전송
+        })
+        .then(response => {
+        	if (!response.ok) throw new Error('정보가 일치하지 않거나 메일 발송에 실패했습니다.');
+        	return response.text();
+        })
+        .then(msg => {
+        	// 메일 발송 성공시 모달 표시
+        	alert(msg);
+        	// 로그인 안내 모달 (선택)
+            const findPwModal = new bootstrap.Modal(
+                document.getElementById('findPwModal')
+            );
+            findPwModal.show();
+        })
+        .catch(error => {
+        	alert(error.message);
+        })
+        
         return false;
     }
 
-    // API 호출 (실제 구현 시)
-    // 데모용 결과 표시 - 모달로 임시 비밀번호 전송 메시지 표시
-    var findPwModal = new bootstrap.Modal(document.getElementById('findPwModal'));
-    findPwModal.show();
-
-    return false;
-}
-
-// 아이디 마스킹
-function maskUserId(userId) {
-    if (userId.length <= 3) {
-        return userId;
-    }
-    var visible = userId.substring(0, 3);
-    var masked = '';
-    for (var i = 0; i < userId.length - 3; i++) {
-        masked += '*';
-    }
-    return visible + masked;
-}
 </script>
 
 <c:set var="pageJs" value="member" />

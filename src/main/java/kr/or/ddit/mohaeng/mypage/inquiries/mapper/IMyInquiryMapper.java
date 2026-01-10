@@ -51,6 +51,12 @@ public interface IMyInquiryMapper {
 	//문의 카테고리 목록 조회
 	public List<CodeVO> selectInquiryCategoryList();
 
+	//첨부파일 목록 조회
+	public List<Map<String, Object>> selectAttachFileList(int inqryNo);
+
+	//다운로드용
+	public Map<String, Object> selectAttachFile(int fileNo);
+
 
 
 }

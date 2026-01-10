@@ -46,17 +46,18 @@ import lombok.extern.slf4j.Slf4j;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
-	
+
+ private final CustomOAuth2UserService customOAuth2UserService;
+
 	@Autowired
 	private DataSource dataSource;
-	
+
 	@Autowired
 	private CustomUserDetailsService customUserDetailsService;
-	
+
 	@Autowired
 	private TokenProvider tokenProvider;
-	
+
 	// 비회원 허용 url
 	private static final String[] PASS_URL = {
 			"/",
@@ -80,7 +81,7 @@ public class SecurityConfig {
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
 	};
-	
+
 	// 일반회원 허용 url test
 	private static final String[] MEMBER_PASS_URL = {
 			"/",
@@ -90,7 +91,7 @@ public class SecurityConfig {
 			"/oauth2/**",
 			"/login/oauth2/**"
 	};
-	
+
 	// 기업회원 허용 url test
 	private static final String[] BUSINESS_PASS_URL = {
 			"/",
@@ -98,16 +99,17 @@ public class SecurityConfig {
 			"/mohaeng",
 			"/.well-known/**"		// 크롬 개발자 도구로의 요청
 	};
-	
-	
+
+
 	// 관리자 허용 url
 	private static final String[] REACT_PASS_URL = {
 			"/api/admin/login",
 			"/api/admin/notices/thumbnail/**"
 			
 		};
-	
+
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {
+
 		this.tokenProvider = tokenProvider;
 		this.customUserDetailsService = customUserDetailsService;
 		this.customOAuth2UserService = customOAuth2UserService;
@@ -120,7 +122,7 @@ public class SecurityConfig {
 				.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
 				.requestMatchers("/resources/**", "/upload/**"); // 정적 리소스
 	}
-	
+
 	// 시큐리티 체인 - react 관리자 페이지
 	@Order(1)
 	@Bean
@@ -129,31 +131,31 @@ public class SecurityConfig {
 			.csrf((csrf) -> csrf.disable())
 			.formLogin((login) -> login.disable())
 			.httpBasic((basic) -> basic.disable())
-			.headers( 
+			.headers(
 					(config) -> config.frameOptions((fOpt) -> fOpt.sameOrigin())
 			);
-		
+
 		http.sessionManagement(
 				(management) -> management.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
 			);
 		http.addFilterBefore(new TokenAuthenticationFilter(tokenProvider), UsernamePasswordAuthenticationFilter.class);
 		http.securityMatcher("/api/admin/**")
 			.authorizeHttpRequests(
-			(authorize) -> 
+			(authorize) ->
 				authorize.dispatcherTypeMatchers(DispatcherType.FORWARD, DispatcherType.ASYNC).permitAll()
 						.requestMatchers(REACT_PASS_URL).permitAll()
 						.anyRequest().authenticated()
 		);
 		return http.build();
 	}
-	
+
 	// 시큐리티 체인 - 회원 페이지
 	@Order(2)
 	@Bean
 	protected SecurityFilterChain filterChainSession(HttpSecurity http) throws Exception {
 		// csrf 토큰 보내기
 		// 로그인 페이지에 <sec:csrfInput/>이거 계속 담기
-		
+
 	    http
 	    .securityMatcher("/**")
 	    .csrf(csrf -> csrf.disable())   // 일단 테스트용
@@ -197,12 +199,12 @@ public class SecurityConfig {
     		.tokenValiditySeconds(604800) 					// 쿠키 유효기간 (7일: 60*60*24*7)
     		.rememberMeServices(rememberMeServices())
     );
-    
+
     http.logout(logout ->
         logout.logoutUrl("/logout")
               .logoutRequestMatcher(new AntPathRequestMatcher("/member/logout", "GET")) // GET 방식 허용 추가
               .addLogoutHandler((request, response, authentication) -> {
-                  log.info("로그아웃 핸들러 진입!"); 
+                  log.info("로그아웃 핸들러 진입!");
                   if (authentication != null) {
                       log.info("로그아웃 유저명: " + authentication.getName());
                       persistentTokenRepository().removeUserTokens(authentication.getName());
@@ -213,25 +215,25 @@ public class SecurityConfig {
 			.clearAuthentication(true)
 			.logoutSuccessUrl("/member/login")
     );
-    
+
 
     return http.build();
 	}
-	
+
 	@Bean
 	protected CorsConfigurationSource corsConfigurationSource() {
 	    CorsConfiguration config = new CorsConfiguration();
 	    config.setAllowedOrigins(List.of("http://localhost:7272"));
-	    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+	    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS","PATCH")); //<-여기 "PATCH" 추가했어요~~
 	    config.setAllowedHeaders(List.of("*"));
 	    config.setAllowCredentials(true);
 
 	    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
 	    source.registerCorsConfiguration("/**", config);
 	    return source;
-	    
+
 	}
-	
+
 	@Bean
 	protected AuthenticationManager authenticationManager(
 			PasswordEncoder passwordEncoder
@@ -241,13 +243,13 @@ public class SecurityConfig {
 		authProvider.setPasswordEncoder(passwordEncoder);
 		return new ProviderManager(authProvider);
 	}
-	
-	
+
+
 	@Bean
 	protected PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
 	}
-	
+
 	// DB 저장소
 	@Bean
 	protected PersistentTokenRepository persistentTokenRepository() {
@@ -256,19 +258,19 @@ public class SecurityConfig {
         repo.setDataSource(dataSource);
         return repo;
     }
-	
+
 	@Bean
 	protected RememberMeServices rememberMeServices() {
 	    JdbcTokenRepositoryImpl db = new JdbcTokenRepositoryImpl();
 	    db.setDataSource(dataSource);
-	    
+
 	    // 키값("mohaengKey")은 설정과 반드시 일치해야 함
-	    PersistentTokenBasedRememberMeServices service = 
+	    PersistentTokenBasedRememberMeServices service =
 	        new PersistentTokenBasedRememberMeServices("mohaengKey", customUserDetailsService, db);
-	    
+
 	    service.setParameter("remember-me"); // 체크박스 name값
 	    service.setTokenValiditySeconds(604800); // 7일
 	    return service;
 	}
-	
+
 }

@@ -12,12 +12,13 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
+
 public class CustomUserDetails implements UserDetails, OAuth2User {
 	
 	private MemberVO member;
 	private Map<String, Object> attributes;
 	private Collection<? extends GrantedAuthority> authorities;
-	 
+	
     public CustomUserDetails(MemberVO member) {
         this.member = member;
     }
@@ -36,11 +37,16 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     // 권한
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
+
+		if (member.getAuthList() == null) {
+	        return List.of();
+
 		System.out.println("### getAuthorities CALLED ###");
 	    
 	    // OAuth 로그인에서 직접 주입된 권한이 있으면 그거 사용
 	    if (authorities != null && !authorities.isEmpty()) {
 	        return authorities;
+
 	    }
 	    
 	    // 일반 로그인 (DB 기반)
@@ -51,17 +57,21 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 	            .map(SimpleGrantedAuthority::new)
 	            .toList();
 	}
-	
+
 	// Security가 쓰는 ID
 	@Override
 	public String getUsername() {
 		return member.getMemId();
 	}
-	
+
 	@Override
 	public String getPassword() {
 		return member.getMemPassword();
 	}
+
+	@Override public boolean isAccountNonExpired() { return true; }
+    @Override public boolean isAccountNonLocked() { return true; }
+
 	
 	// 계정 만료 여부 (탈퇴/삭제 시 false 처리 가능)
 	@Override public boolean isAccountNonExpired() {
@@ -72,8 +82,9 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     	// 상태가 'PAUSED'(정지)가 아니면 true (잠기지 않음)
     	return !"PAUSED".equals(member.getMemStatus()); 
     }
+
     @Override public boolean isCredentialsNonExpired() { return true; }
-    
+
     @Override
     public boolean isEnabled() {
         return member.getEnabled() == 1;
@@ -86,7 +97,7 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
     public MemberVO getMember() {
         return member;
     }
-	
+
     // ===== 프로필 이미지 경로 =====
     public String getMemProfilePath() {
     	String path = member.getMemProfilePath();

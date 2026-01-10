@@ -3,8 +3,11 @@ package kr.or.ddit.mohaeng.support.inquiry.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import kr.or.ddit.mohaeng.vo.CodeVO;
 import kr.or.ddit.mohaeng.vo.InquiryVO;
+
 
 public interface IInquiryService {
 
@@ -34,18 +37,32 @@ public interface IInquiryService {
 	 */
 	public InquiryVO getInquiryDetail(int inqryNo);
 
-	/**
-	 * 문의 등록
-	 * @param inquiry 문의 정보
-	 * @return 등록 결과 (성공: 1, 실패: 0)
-	 */
-	public int insertInquiry(InquiryVO inquiry);
 
 	/**
 	 * 문의 카테고리 목록 조회
 	 * @return 카테고리 목록
 	 */
 	public List<CodeVO> getInquiryCategoryList();
+
+	/**
+	 * 문의 등록
+	 * @param inquiry
+	 * @param files
+	 * @return
+	 */
+	public int insertInquiryWithFiles(InquiryVO inquiry, List<MultipartFile> files);
+
+	// 첨부파일 목록 조회 메서드 추가
+	public List<Map<String, Object>> getAttachFileList(int inqryNo);
+
+	//다운로드용
+	public Map<String, Object> getAttachFile(int fileNo);
+
+
+
+
+
+
 
 
 }

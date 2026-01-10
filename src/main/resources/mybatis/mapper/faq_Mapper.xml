@@ -2,62 +2,50 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.support.faq.mapper.IFaqMapper">
 
-	<resultMap type="kr.or.ddit.mohaeng.vo.FaqVO" id="faqMap">
-		<id property="faqNo" column="FAQ_NO"/>
-		<result property="faqCategoryCd" column="FAQ_CATEGORY_CD"/>
-		<result property="faqTitle" column="FAQ_TITLE"/>
-		<result property="faqContent" column="FAQ_CONTENT"/>
-		<result property="faqOrder" column="FAQ_ORDER"/>
-		<result property="status" column="STATUS"/>
-		<result property="useYn" column="USE_YN"/>
-		<result property="regId" column="REG_ID"/>
-		<result property="regDt" column="REG_DT"/>
-	</resultMap>
-
 	<!-- FAQ 목록 조회 (사용중인 것만) -->
-	<select id="selectFaqList" resultMap="faqMap">
+	<select id="selectFaqList" resultType="kr.or.ddit.mohaeng.vo.FaqVO">
 		select
 			FAQ_NO,
 			FAQ_CATEGORY_CD,
 			FAQ_TITLE,
 			FAQ_CONTENT,
 			FAQ_ORDER,
-			STATUS,
+			VIEWS,
 			USE_YN,
 			REG_ID,
 			REG_DT
 		from FAQ
-		where USE_YN = '1'
+		where USE_YN = 'Y'
 		ORDER BY FAQ_ORDER ASC, FAQ_NO DESC
 	</select>
 
 	<!-- FAQ 카테고리별 조회 -->
-	<select id="selectFaqListByCategory" resultMap="faqMap">
+	<select id="selectFaqListByCategory" resultType="kr.or.ddit.mohaeng.vo.FaqVO">
 		select
 			FAQ_NO,
 			FAQ_CATEGORY_CD,
 			FAQ_TITLE,
 			FAQ_CONTENT,
 			FAQ_ORDER,
-			STATUS,
+			VIEWS,
 			USE_YN,
 			REG_ID,
 			REG_DT
 		from FAQ
 		where FAQ_CATEGORY_CD=#{faqCategoryCd}
-		  and USE_YN = '1'
+		  and USE_YN = 'Y'
 		ORDER BY FAQ_ORDER ASC, FAQ_NO DESC
 	</select>
 
 	<!-- FAQ 상세 조회 -->
-	<select id="selectFaqDetail" resultMap="faqMap">
+	<select id="selectFaqDetail" resultType="kr.or.ddit.mohaeng.vo.FaqVO">
 		select
 			FAQ_NO,
 			FAQ_CATEGORY_CD,
 			FAQ_TITLE,
 			FAQ_CONTENT,
 			FAQ_ORDER,
-			STATUS,
+			VIEWS,
 			USE_YN,
 			REG_ID,
 			REG_DT
@@ -65,20 +53,26 @@
 		where FAQ_NO=#{faqNo}
 	</select>
 
+	<update id="incrementViews" parameterType="int">
+		update FAQ
+		   set VIEWS = VIEWS + 1
+		where FAQ_NO=#{faqNo}
+	</update>
+
 	<!-- FAQ 검색 -->
-	<select id="searchFaq" resultMap="faqMap">
+	<select id="searchFaq" resultType="kr.or.ddit.mohaeng.vo.FaqVO">
 		select
 			FAQ_NO,
 			FAQ_CATEGORY_CD,
 			FAQ_TITLE,
 			FAQ_CONTENT,
 			FAQ_ORDER,
-			STATUS,
+			VIEWS,
 			USE_YN,
 			REG_ID,
 			REG_DT
 		from FAQ
-		where USE_YN = '1'
+		where USE_YN = 'Y'
 			and(
 				FAQ_TITLE like '%' ||#{keyword}||'%'
 				or FAQ_CONTENT like '%' ||#{keyword}||'%'
@@ -86,4 +80,87 @@
 		ORDER BY FAQ_ORDER ASC, FAQ_NO DESC
 	</select>
 
+
+	<!-- 관리자용 FAQ -->
+
+	<select id="aFaqList" parameterType="kr.or.ddit.mohaeng.vo.FaqVO" resultType="kr.or.ddit.mohaeng.vo.FaqVO">
+		select
+			FAQ_NO
+			,FAQ_CATEGORY_CD
+			,FAQ_TITLE
+			,FAQ_CONTENT
+			,FAQ_ORDER
+			,VIEWS
+			,USE_YN
+			,REG_ID
+			,REG_DT
+		from FAQ
+		where 1=1
+		<if test="faqCategoryCd !=null and faqCategoryCd !='' and faqCategoryCd != 'all'">
+			and FAQ_CATEGORY_CD = #{faqCategoryCd}
+		</if>
+		<if test="useYn !=null and useYn !=''">
+			and USE_YN = #{useYn}
+		</if>
+		<if test="keyword !=null and keyword !=''">
+			and (
+				FAQ_TITLE 	like '%' || #{keyword} || '%'
+			 or FAQ_CONTENT like '%' || #{keyword} || '%'
+			)
+		</if>
+		ORDER BY FAQ_ORDER ASC, FAQ_NO DESC
+	</select>
+
+	<insert id="insertAFaq" parameterType="kr.or.ddit.mohaeng.vo.FaqVO">
+		insert into FAQ(
+			FAQ_NO
+			,FAQ_CATEGORY_CD
+			,FAQ_TITLE
+			,FAQ_CONTENT
+			,FAQ_ORDER
+			,VIEWS
+			,USE_YN
+			,REG_ID
+			,REG_DT
+		) values(
+            SEQ_FAQ.NEXTVAL
+            ,#{faqCategoryCd}
+            ,#{faqTitle}
+            ,#{faqContent}
+            ,(SELECT NVL(MAX(FAQ_ORDER), 0) + 1 FROM FAQ)
+            ,0
+            ,#{useYn}
+            ,#{regId}
+            ,SYSDATE
+		)
+	</insert>
+
+	<update id="updateAFaq" parameterType="kr.or.ddit.mohaeng.vo.FaqVO">
+		update FAQ
+		set
+            FAQ_CATEGORY_CD = #{faqCategoryCd}
+            ,FAQ_TITLE       = #{faqTitle}
+            ,FAQ_CONTENT     = #{faqContent}
+            ,FAQ_ORDER       = #{faqOrder}
+            ,USE_YN          = #{useYn}
+		where FAQ_NO = #{faqNo}
+	</update>
+
+	<delete id="deleteAFaq">
+		delete from FAQ
+		where FAQ_NO = #{faqNo}
+	</delete>
+
+	<update id="updateAFaqUseYn">
+		update FAQ
+		set USE_YN = #{useYn}
+		where FAQ_NO = #{faqNo}
+	</update>
+
+
+	<update id="updateAFaqOrder">
+		update FAQ
+		set FAQ_ORDER = #{faqOrder}
+		where FAQ_NO = #{faqNo}
+	</update>
 </mapper>

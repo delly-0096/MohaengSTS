@@ -17,9 +17,13 @@ public class FaqVO {
 	private String faqTitle;
 	private String faqContent;
 	private int faqOrder;
-	private String status;
+	private int views;
 	private String useYn;
 	private String regId;
 	private Date regDt;
+
+
+ // === 검색 조건용 (DB 컬럼 아님) ===
+	private String keyword;
 
 }

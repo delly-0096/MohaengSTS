@@ -48,26 +48,26 @@ import lombok.extern.slf4j.Slf4j;
 public class LoginController {
 
 	private static int CAPTCHA_THRESHOLD = 3;
-	
+
 	@Autowired
 	private RememberMeServices rememberMeServices;
-	
+
 	@Autowired
 	private IMemberService memberService;
-	
+
 	@Autowired
 	private ICaptchaAPIService captchaService;
-	
+
 	@Autowired
 	private IMemberMapper memberMapper;
-	
+
 	/* 로그인 화면 */
 	@GetMapping("/login")
 	public String loginPage() {
 		log.info("loginPage() 실행...!");
 	    return "member/login"; // JSP 경로
 	}
-	
+
 	/* 회원 로그인 기능 */
 	@PostMapping("/login")
 	public String login(@RequestParam String username,
@@ -79,11 +79,11 @@ public class LoginController {
 						RedirectAttributes ra
 			) {
 		log.info("login() 실행...!");
-		
-		
+
+
 		Integer failCnt = (Integer) session.getAttribute("LOGIN_FAIL_CNT");
 		if (failCnt == null) failCnt = 0;
-		
+
 		// CAPTCHA 검증
 		if (failCnt >= CAPTCHA_THRESHOLD) {
 		    boolean captchaOk = captchaService.verify(request);
@@ -96,19 +96,19 @@ public class LoginController {
 		        return "redirect:/member/login";
 		    }
 		}
-		
-		
+
+
 		String memType = memberService.getMemberType(username);
-		
+
 		//존재하지 않는 로그인
 		if(memType == null) {
 			ra.addFlashAttribute("errorMessage", "입력하신 아이디로 가입된 회원이 없습니다.");
 			ra.addFlashAttribute("memId", username);
 			ra.addFlashAttribute("memberType", memberType);
-			
+
 			return "redirect:/member/login";
 		}
-		
+
 		// 기업회원 승인 대기
 		if("BUSINESS_NOT_APPROVED".equals(memType)) {
 			ra.addFlashAttribute("errorMessage",
@@ -116,20 +116,20 @@ public class LoginController {
 
 			return "redirect:/member/login";
 		}
-		
+
 		// 회원 유형 불일치
 		if(!memType.equals(memberType)) {
 			ra.addFlashAttribute("errorMessage", "해당 회원의 유형이 일치하지 않습니다.");
 			ra.addFlashAttribute("memId", username);
 			ra.addFlashAttribute("memberType", memberType);
-			
+
 			return "redirect:/member/login";
 		}
-		
-		
+
+
 		// 비밀번호 불일치
 		boolean passwordMatched = memberService.checkPassword(username, password);
-		
+
 		if (!passwordMatched) {
 
 		    failCnt++;
@@ -146,26 +146,33 @@ public class LoginController {
 		    ra.addFlashAttribute("memberType", memberType);
 		    return "redirect:/member/login";
 		}
-		
+
 		MemberVO member = memberMapper.selectById(username);
 		Map<String, Object> loginMember = new HashMap<>();
 	    loginMember.put("memId", username);
 	    loginMember.put("memType", memType);
 	    loginMember.put("memName", username);
 	    loginMember.put("memNo", member.getMemNo());
+
+
+	    String profilePath = member.getMemProfilePath();
+
 	    loginMember.put("tempPwYn", member.getTempPwYn());
-	    
-	    String profilePath = member.getMemProfilePath(); 
+	   
 	    if (profilePath != null) {
 	        // 텍스트에서 /resources 부분을 제거하여 /upload/... 만 남김
 	        profilePath = profilePath.replace("/resources", "");
 	    }
-	    loginMember.put("memProfile", profilePath);	    
-	    
-		
+	    loginMember.put("memProfile", profilePath);
+
+
 		session.setAttribute("loginMember", loginMember);
 		session.removeAttribute("LOGIN_FAIL_CNT");
-		
+
+
+		CustomUserDetails userDetails = new CustomUserDetails(member);
+
+	
 		// 회원 타입에 따라 권한 생성
 		List<GrantedAuthority> authorities = new ArrayList<>();
 
@@ -188,9 +195,9 @@ public class LoginController {
 		SecurityContext context = SecurityContextHolder.createEmptyContext();
 		context.setAuthentication(auth);
 		SecurityContextHolder.setContext(context);
-		
+
 	    new HttpSessionSecurityContextRepository().saveContext(context, request, response);
-	    
+
 	    String rememberMe = request.getParameter("remember-me");
 
 	    if ("on".equals(rememberMe)) {
@@ -198,6 +205,7 @@ public class LoginController {
 	        rememberMeServices.loginSuccess(request, response, auth);
 	        log.info("Remember-Me 토큰 생성 및 DB 저장 완료");
 	    }
+
 	    
 	    // 임시 비밀번호 로그인 여부 확인
 	    if ("Y".equals(member.getTempPwYn())) {
@@ -210,23 +218,23 @@ public class LoginController {
 		
 		return "redirect:/";
 	}
-	
+
 	/* 회원가입 화면 */
 	@GetMapping("/register")
 	public String registerPage(Model model) {
 		log.info("registerPage() 실행...!");
 		return "member/register";
 	}
-	
+
 	// 일반 회원가입 기능
 	@PostMapping("/register/member")
 	public String registerMember(MemberVO memberVO, Model model, RedirectAttributes ra) {
 		log.info("register() 실행...!");
-		
+
 		// 일반회원 가입
 		String goPage = "";
 		ServiceResult result = memberService.register(memberVO);
-		
+
 		if (result == ServiceResult.OK) {
 		    ra.addFlashAttribute("successMessage", "회원가입이 완료되었습니다. 로그인 해주세요!");
 		    ra.addFlashAttribute("memId", memberVO.getMemId());
@@ -237,16 +245,16 @@ public class LoginController {
 		    goPage = "member/register";
 		}
 
-		
+
 		return goPage;
 	}
-	
+  
 	/* 기업 회원가입 기능*/
 	@PostMapping("/register/company")
 	public String registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile,
 							Model model, RedirectAttributes ra) {
 		log.info("registerBusiness() 실행...!");
-		
+
 		// 기업회원 가입
 		String goPage = "";
 		ServiceResult result = memberService.registerCompany(memberVO, companyVO, bizFile);
@@ -262,10 +270,10 @@ public class LoginController {
 		    goPage = "member/register";
 		}
 
-		
+
 		return goPage;
 	}
-	
+
 	/* 아이디 중복 확인 */
 	@PostMapping("/idCheck")
 	public ResponseEntity<ServiceResult> idCheck(@RequestBody Map<String, String> map) {
@@ -273,16 +281,16 @@ public class LoginController {
 		log.info("id : {}", map.get("memId"));
 		ServiceResult result = memberService.idCheck(map.get("memId"));
 		return new ResponseEntity<ServiceResult>(result, HttpStatus.OK);
-	
+
 	}
-	
+
 	/* 아이디 비밀번호 찾기 화면 */
 	@GetMapping("/find")
 	public String findPage() {
 		log.info("findPage() 실행...!");
 	    return "member/find";
 	}
-	
+
 	/* 아이디 찾기 */
 	@PostMapping("/find/id")
 	@ResponseBody
@@ -329,12 +337,11 @@ public class LoginController {
 		if (auth != null) {
 	        // 시큐리티 로그아웃 핸들러 실행 (세션 삭제 등)
 	        new SecurityContextLogoutHandler().logout(request, response, auth);
-	        
+
 	        // 자동 로그인 토큰 삭제 (DB 및 쿠키)
-	        rememberMeServices.loginFail(request, response); 
+	        rememberMeServices.loginFail(request, response);
 	        log.info("로그아웃 완료: 자동 로그인 토큰 및 쿠키 삭제");
 	    }
 	    return "redirect:/";
 	}
 }
-

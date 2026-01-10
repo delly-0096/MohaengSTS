@@ -38,8 +38,8 @@ import kr.or.ddit.mohaeng.vo.InquiryVO;
  * Spring Security 표준(@AuthenticationPrincipal)을 사용하여
  * 데이터 누락 방지 및 코드 가독성을 확보함.
  */
-@Controller
-public class SupportInquiryController {
+//@Controller
+public class SupportInquiryController_backup {
 
     @Autowired
     private IInquiryService inquiryService;
@@ -161,7 +161,6 @@ public class SupportInquiryController {
 
         if (userDetails == null) {
             result.put("success", false);
-            result.put("message", "로그인이 필요합니다.");
             return result;
         }
 

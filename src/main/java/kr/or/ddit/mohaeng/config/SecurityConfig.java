@@ -1,7 +1,6 @@
 package kr.or.ddit.mohaeng.config;
 
 import java.util.List;
-import java.util.Map;
 
 import javax.sql.DataSource;
 
@@ -32,7 +31,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import jakarta.servlet.DispatcherType;
-import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.filter.TokenAuthenticationFilter;
 import kr.or.ddit.mohaeng.login.service.CustomOAuth2UserService;
 import kr.or.ddit.mohaeng.security.CustomAccessDeniedHandler;
@@ -77,6 +75,9 @@ public class SecurityConfig {
 			"/member/find/password",
 			"/idCheck",
 			"/error",
+			"/schedule/search",
+			"/schedule/planner",
+			"/schedule/common/**",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
@@ -87,9 +88,11 @@ public class SecurityConfig {
 			"/",
 			"/error",
 			"/mohaeng",
+			"/schedule/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/oauth2/**",
 			"/login/oauth2/**"
+
 	};
 
 	// 기업회원 허용 url test
@@ -104,8 +107,8 @@ public class SecurityConfig {
 	// 관리자 허용 url
 	private static final String[] REACT_PASS_URL = {
 			"/api/admin/login",
+			"/api/schedule/**",
 			"/api/admin/notices/thumbnail/**"
-			
 		};
 
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {

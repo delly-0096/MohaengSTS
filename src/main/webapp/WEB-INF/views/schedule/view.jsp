@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <c:set var="pageTitle" value="일정 상세" />
 <c:set var="pageCss" value="schedule" />
@@ -35,7 +37,9 @@
                     <h1>제주도 3박 4일</h1>
                     <div class="schedule-badges">
                         <span class="schedule-status-badge upcoming">예정</span>
-                        <span class="schedule-status-badge ai">AI 추천</span>
+                        <c:if test="${schedule.aiRecomYn == 'Y'}">
+                            <span class="schedule-status-badge ai">AI 추천</span>
+                        </c:if>
                     </div>
                 </div>
                 <div class="schedule-view-actions">
@@ -61,263 +65,91 @@
                 <i class="bi bi-calendar3"></i>
                 <div>
                     <span class="label">여행 기간</span>
-                    <span class="value">2024.04.15 - 2024.04.18</span>
+                    <span class="value">
+                        ${fn:replace(schedule.schdlStartDt, '-', '.')} - 
+                        ${fn:replace(schedule.schdlEndDt, '-', '.')}
+                    </span>
                 </div>
             </div>
             <div class="summary-item">
                 <i class="bi bi-geo-alt"></i>
                 <div>
                     <span class="label">여행지</span>
-                    <span class="value">제주도</span>
+                    <span class="value">${schedule.rgnNm}</span>
                 </div>
             </div>
             <div class="summary-item">
                 <i class="bi bi-people"></i>
                 <div>
                     <span class="label">인원</span>
-                    <span class="value">2명</span>
+                    <span class="value">${schedule.travelerCnt}명</span>
                 </div>
             </div>
             <div class="summary-item">
                 <i class="bi bi-pin-map"></i>
                 <div>
                     <span class="label">방문 장소</span>
-                    <span class="value">8곳</span>
+                    <span class="value">${schedule.placeCnt}곳</span>
                 </div>
             </div>
         </div>
 
         <!-- 일자별 탭 -->
         <div class="schedule-day-tabs">
-            <button class="schedule-day-btn active" data-day="1" onclick="selectViewDay(1)">
-                <span class="day-num">1</span>
-                <span class="day-date">4/15(월)</span>
-            </button>
-            <button class="schedule-day-btn" data-day="2" onclick="selectViewDay(2)">
-                <span class="day-num">2</span>
-                <span class="day-date">4/16(화)</span>
-            </button>
-            <button class="schedule-day-btn" data-day="3" onclick="selectViewDay(3)">
-                <span class="day-num">3</span>
-                <span class="day-date">4/17(수)</span>
-            </button>
-            <button class="schedule-day-btn" data-day="4" onclick="selectViewDay(4)">
-                <span class="day-num">4</span>
-                <span class="day-date">4/18(목)</span>
-            </button>
+            <c:forEach items="${schedule.tripScheduleDetailsList}" var="detail" varStatus="s">
+                <fmt:parseDate value="${detail.schdlStartDt}" var="startDate" pattern="yyyy-MM-dd" />
+                <button class="schedule-day-btn ${s.index == 0 ? 'active' : ''}" data-day="1" onclick="selectViewDay(${detail.schdlDt})">
+                    <span class="day-num">${detail.schdlDt}</span>
+                    <span class="day-date">
+                        <fmt:formatDate value="${startDate}" pattern="M/d" />(<fmt:formatDate value="${startDate}" pattern="E" />)
+                    </span>
+                </button>
+            </c:forEach>
         </div>
 
         <!-- 일정 타임라인 -->
         <div class="schedule-timeline-wrapper">
             <!-- Day 1 -->
-            <div class="schedule-day-content active" id="viewDay1">
-                <div class="day-header">
-                    <h3>1일차 - 도착 & 동부 탐방</h3>
-                    <span class="day-weather"><i class="bi bi-sun"></i> 18°C</span>
-                </div>
-
-                <div class="schedule-timeline">
-                    <div class="timeline-item transport">
-                        <div class="timeline-marker">
-                            <i class="bi bi-airplane"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">09:00 - 10:10</div>
-                            <div class="timeline-card">
-                                <div class="timeline-info">
-                                    <span class="category-tag transport">이동</span>
-                                    <h4>김포 → 제주 (항공편)</h4>
-                                    <p><i class="bi bi-clock"></i> 비행시간 약 1시간 10분</p>
-                                </div>
-                            </div>
-                        </div>
+            <c:forEach items="${schedule.tripScheduleDetailsList}" var="detail" varStatus="dst">
+                <div class="schedule-day-content ${dst.index == 0 ? 'active' : ''}" id="viewDay${detail.schdlDt}" style="display: ${dst.index == 0 ? 'block' : 'none'};">
+                    <div class="day-header">
+                        <h3>${detail.schdlDt}일차 - ${detail.schdlTitle}</h3>
+                        <span class="day-weather"><i class="bi bi-sun"></i> 18°C</span>
                     </div>
 
-                    <div class="timeline-item">
-                        <div class="timeline-marker">1</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">11:00 - 12:30</div>
-                            <div class="timeline-card with-image">
-                                <img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=200&h=150&fit=crop&q=80" alt="성산일출봉">
-                                <div class="timeline-info">
-                                    <span class="category-tag attraction">관광지</span>
-                                    <h4>성산일출봉</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 성산읍</p>
-                                    <div class="timeline-meta">
-                                        <span><i class="bi bi-star-fill text-warning"></i> 4.7</span>
-                                        <span><i class="bi bi-clock"></i> 약 1시간 30분</span>
+                    <div class="schedule-timeline">
+                        <c:forEach items="${detail.tripSchedulePlaceList}" var="place" varStatus="pst">
+                            <div class="timeline-item">
+                                <div class="timeline-marker">${pst.count}</div>
+                                <div class="timeline-content">
+                                    <div class="timeline-time">${place.placeStartTime} - ${place.placeEndTime}</div>
+                                    <div class="timeline-card with-image">
+                                        <c:if test="${ place.tourPlace.attachNo != 0 }">
+                                               <img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=200&h=150&fit=crop&q=80" alt="성산일출봉">
+                                        </c:if>
+                                        <c:if test="${ place.tourPlace.attachNo == 0 }">
+                                            <img src="${ place.tourPlace.defaultImg}" alt="성산일출봉">
+                                        </c:if>
+                                        <div class="timeline-info">
+                                            <span class="category-tag attraction">${place.tourPlace.placeName}</span>
+                                            <h4>${place.tourPlace.plcNm}</h4>
+                                            <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 성산읍</p>
+                                            <div class="timeline-meta">
+                                                <span><i class="bi bi-star-fill text-warning"></i> 4.7</span>
+                                                <span><i class="bi bi-clock"></i> 약 1시간 30분</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-marker">2</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">12:30 - 14:00</div>
-                            <div class="timeline-card with-image">
-                                <img src="https://images.unsplash.com/photo-1553621042-f6e147245754?w=200&h=150&fit=crop&q=80" alt="해녀의집">
-                                <div class="timeline-info">
-                                    <span class="category-tag restaurant">맛집</span>
-                                    <h4>해녀의집</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 성산읍</p>
-                                    <div class="timeline-meta">
-                                        <span><i class="bi bi-star-fill text-warning"></i> 4.5</span>
-                                        <span><i class="bi bi-currency-won"></i> 약 15,000원</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-marker">3</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">14:30 - 16:30</div>
-                            <div class="timeline-card with-image">
-                                <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" alt="우도">
-                                <div class="timeline-info">
-                                    <span class="category-tag attraction">관광지</span>
-                                    <h4>우도</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 제주시 우도면</p>
-                                    <div class="timeline-meta">
-                                        <span><i class="bi bi-star-fill text-warning"></i> 4.8</span>
-                                        <span><i class="bi bi-clock"></i> 약 2시간</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-marker">4</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">18:00 - 19:30</div>
-                            <div class="timeline-card with-image">
-                                <img src="https://images.unsplash.com/photo-1544025162-d76694265947?w=200&h=150&fit=crop&q=80" alt="흑돼지거리">
-                                <div class="timeline-info">
-                                    <span class="category-tag restaurant">맛집</span>
-                                    <h4>제주 흑돼지거리</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 제주시 연동</p>
-                                    <div class="timeline-meta">
-                                        <span><i class="bi bi-star-fill text-warning"></i> 4.6</span>
-                                        <span><i class="bi bi-currency-won"></i> 약 25,000원</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="timeline-item">
-                        <div class="timeline-marker">
-                            <i class="bi bi-house"></i>
-                        </div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">20:00</div>
-                            <div class="timeline-card">
-                                <div class="timeline-info">
-                                    <span class="category-tag accommodation">숙소</span>
-                                    <h4>제주 신라 호텔</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주시 중문관광로</p>
-                                </div>
-                            </div>
-                        </div>
+                        </c:forEach>
                     </div>
                 </div>
-            </div>
-
-            <!-- Day 2 -->
-            <div class="schedule-day-content" id="viewDay2" style="display: none;">
-                <div class="day-header">
-                    <h3>2일차 - 서부 해안 드라이브</h3>
-                    <span class="day-weather"><i class="bi bi-cloud-sun"></i> 17°C</span>
-                </div>
-                <div class="schedule-timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-marker">1</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">09:00 - 11:00</div>
-                            <div class="timeline-card with-image">
-                                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=200&h=150&fit=crop&q=80" alt="협재해수욕장">
-                                <div class="timeline-info">
-                                    <span class="category-tag attraction">관광지</span>
-                                    <h4>협재해수욕장</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 제주시 한림읍</p>
-                                    <div class="timeline-meta">
-                                        <span><i class="bi bi-star-fill text-warning"></i> 4.7</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-marker">2</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">12:00 - 14:00</div>
-                            <div class="timeline-card">
-                                <div class="timeline-info">
-                                    <span class="category-tag restaurant">맛집</span>
-                                    <h4>애월 해안도로 카페</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 제주시 애월읍</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-marker">3</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">15:00 - 17:00</div>
-                            <div class="timeline-card">
-                                <div class="timeline-info">
-                                    <span class="category-tag attraction">관광지</span>
-                                    <h4>오설록 티뮤지엄</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 안덕면</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Day 3 -->
-            <div class="schedule-day-content" id="viewDay3" style="display: none;">
-                <div class="day-header">
-                    <h3>3일차 - 중문관광단지</h3>
-                    <span class="day-weather"><i class="bi bi-sun"></i> 19°C</span>
-                </div>
-                <div class="schedule-timeline">
-                    <div class="timeline-item">
-                        <div class="timeline-marker">1</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">10:00 - 12:00</div>
-                            <div class="timeline-card">
-                                <div class="timeline-info">
-                                    <span class="category-tag attraction">관광지</span>
-                                    <h4>중문대포해안 주상절리대</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 중문동</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <div class="timeline-marker">2</div>
-                        <div class="timeline-content">
-                            <div class="timeline-time">14:00 - 17:00</div>
-                            <div class="timeline-card">
-                                <div class="timeline-info">
-                                    <span class="category-tag attraction">관광지</span>
-                                    <h4>천제연폭포</h4>
-                                    <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 중문동</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </c:forEach>
+            
 
             <!-- Day 4 -->
-            <div class="schedule-day-content" id="viewDay4" style="display: none;">
+            <%-- <div class="schedule-day-content" id="viewDay4" style="display: none;">
                 <div class="day-header">
                     <h3>4일차 - 마지막 날</h3>
                     <span class="day-weather"><i class="bi bi-cloud"></i> 16°C</span>
@@ -351,7 +183,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> --%>
         </div>
 
         <!-- 하단 버튼 -->
@@ -1208,7 +1040,28 @@ function shareSchedule() {
     }
 }
 
-function toggleScheduleViewBookmark(button) {
+// function toggleScheduleViewBookmark(button) {
+//     var icon = button.querySelector('i');
+//     if (icon.classList.contains('bi-bookmark')) {
+//         icon.classList.remove('bi-bookmark');
+//         icon.classList.add('bi-bookmark-fill');
+//         button.innerHTML = '<i class="bi bi-bookmark-fill me-1"></i>북마크됨';
+//         if (typeof showToast === 'function') {
+//             showToast('북마크에 추가되었습니다.', 'success');
+//         }
+//     } else {
+//         icon.classList.remove('bi-bookmark-fill');
+//         icon.classList.add('bi-bookmark');
+//         button.innerHTML = '<i class="bi bi-bookmark me-1"></i>북마크';
+//         if (typeof showToast === 'function') {
+//             showToast('북마크가 해제되었습니다.', 'info');
+//         }
+//     }
+// }
+async function toggleScheduleViewBookmark(button) {
+    var icon = button.querySelector('i');
+
+    let bkmkYn = 'N';
     var icon = button.querySelector('i');
     if (icon.classList.contains('bi-bookmark')) {
         icon.classList.remove('bi-bookmark');
@@ -1217,6 +1070,7 @@ function toggleScheduleViewBookmark(button) {
         if (typeof showToast === 'function') {
             showToast('북마크에 추가되었습니다.', 'success');
         }
+        bkmkYn = 'Y';
     } else {
         icon.classList.remove('bi-bookmark-fill');
         icon.classList.add('bi-bookmark');
@@ -1224,11 +1078,35 @@ function toggleScheduleViewBookmark(button) {
         if (typeof showToast === 'function') {
             showToast('북마크가 해제되었습니다.', 'info');
         }
+        bkmkYn = 'N';
     }
+    
+    await fetch('${pageContext.request.contextPath}/schedule/bookmark/modify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            schdlNo: '${schedule.schdlNo}',
+            bkmkYn: bkmkYn
+        })
+    });
 }
-
-function deleteSchedule() {
+async function deleteSchedule() {
     if (confirm('이 일정을 삭제하시겠습니까?\n삭제된 일정은 복구할 수 없습니다.')) {
+
+        let resultData = await fetch('${pageContext.request.contextPath}/schedule/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                schdlNo: '${schedule.schdlNo}'
+            })
+        });
+
+        console.log(resultData);
+
         if (typeof showToast === 'function') {
             showToast('일정이 삭제되었습니다.', 'success');
         }

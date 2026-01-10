@@ -60,7 +60,7 @@
                     </c:when>
                     <c:otherwise>
                         <c:forEach items="${faqList}" var="faq">
-                            <div class="faq-item" data-category="${faq.faqCategoryCd}">
+                            <div class="faq-item" data-category="${faq.faqCategoryCd}" data-id="${faq.faqNo}">
                                 <div class="faq-question">
                                     <div class="faq-question-text">
                                         <span class="badge
@@ -153,6 +153,21 @@ function handleAccordionClick() {
  // 클릭한 아이템 토글
  if (!wasActive) {
      item.classList.add('active');
+
+  // 조회수 증가 로직 추가
+     const faqNo = item.dataset.id; // 위에서 심은 data-id 값을 가져옴
+     console.log("보내려는 FAQ 번호:", faqNo);
+     if (faqNo) {
+         fetch((contextPath + '/support/faq/' + faqNo + '/views').replace(/\/+/g, '/'), {
+             method: 'PATCH'
+         })
+         .then(res => {
+             if (res.ok) {
+                 console.log(`FAQ ${faqNo}번 조회수 증가 성공 (서버 응답: void)`);
+             }
+         })
+         .catch(error => console.error('조회수 요청 실패:', error));
+     }
  }
 }
 
@@ -203,7 +218,7 @@ function renderFaqList(faqList) {
      const badgeClass = getBadgeClass(faq.faqCategoryCd);
 
      html += `
-         <div class="faq-item" data-category="${faq.faqCategoryCd}">
+         <div class="faq-item" data-category="${faq.faqCategoryCd}" data-id="${faq.faqNo}">/*추가함  */
              <div class="faq-question">
                  <div class="faq-question-text">
                      <span class="badge ${badgeClass}">${categoryName}</span>

@@ -33,5 +33,19 @@ public interface IMyInquiryService {
 	public Map<String, Integer> getInquiryStats(int memNo);
 
 
+	/**
+	 * 문의 상세 조회
+	 * @param inqryNo 문의번호
+	 * @return 문의 상세
+	 */
+	public InquiryVO getInquiryDetail(int inqryNo);
+
+	// 첨부파일 목록 조회 메서드 추가
+	public List<Map<String, Object>> getAttachFileList(int inqryNo);
+
+	//다운로드용
+	public Map<String, Object> getAttachFile(int fileNo);
+
+
 
 }

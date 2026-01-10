@@ -1,11 +1,18 @@
 package kr.or.ddit.mohaeng.support.inquiry.controller;
 
+import java.net.URLEncoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -36,6 +43,9 @@ public class SupportInquiryController {
 
     @Autowired
     private IInquiryService inquiryService;
+
+	@Value("${kr.or.ddit.upload.path}")
+	private String uploadPath; // "C:/upload/"
 
     /**
      * 문의 목록 조회 및 작성 페이지 통합 처리
@@ -99,10 +109,8 @@ public class SupportInquiryController {
     @ResponseBody
     public Map<String, Object> submitInquiry(
             InquiryVO inquiry,
-            @RequestParam(value = "attachFiles", required = false)
-            List<MultipartFile> attachFiles,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
-
+    	System.out.println("userDetails: " + userDetails);
         Map<String, Object> result = new HashMap<>();
 
         if (userDetails == null) {
@@ -122,39 +130,20 @@ public class SupportInquiryController {
         inquiry.setInqryStatus("waiting"); // 기본값: 답변 대기
         inquiry.setDelYn("N");             // 기본값: 미삭제
 
-        // 첨부파일 처리 로직 추가
-        if (attachFiles != null && !attachFiles.isEmpty()) {
-            // TODO: 파일 저장 로직 구현
-            // inquiryService.saveAttachments(inquiry.getInqryNo(), attachFiles);
-        }
+        List<MultipartFile> files = inquiry.getFiles();
 
         // 1. 문의 등록
-        int insertResult = inquiryService.insertInquiry(inquiry);
-
-        if (insertResult > 0) {
-            // 2. 첨부파일 저장 (문의 등록 성공 시에만)
-            if (attachFiles != null && !attachFiles.isEmpty()) {
-                try {
-                    int savedFiles = inquiryService.saveInquiryAttachments(
-                        inquiry.getInqryNo(),
-                        attachFiles
-                    );
-                    System.out.println("저장된 파일 개수: " + savedFiles);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    result.put("success", false);
-                    result.put("message", "파일 저장 중 오류가 발생했습니다.");
-                    return result;
-                }
-            }
+        try{
+        	int insertResult = inquiryService.insertInquiryWithFiles(inquiry, files);
+        	System.out.println("files : " + files);
 
             result.put("success", true);
             result.put("message", "문의가 등록되었습니다.");
-        } else {
+        } catch(Exception e) {
+        	e.printStackTrace();
             result.put("success", false);
             result.put("message", "등록에 실패했습니다.");
         }
-
 
         return result;
     }
@@ -172,6 +161,7 @@ public class SupportInquiryController {
 
         if (userDetails == null) {
             result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
             return result;
         }
 
@@ -181,6 +171,7 @@ public class SupportInquiryController {
         if (inquiry != null && inquiry.getMemNo() == userDetails.getMember().getMemNo()) {
             result.put("success", true);
             result.put("inquiry", inquiry);
+            result.put("files", inquiryService.getAttachFileList(inqryNo));
         } else {
             result.put("success", false);
             result.put("message", "권한이 없습니다.");
@@ -196,4 +187,27 @@ public class SupportInquiryController {
 		return inquiryService.getInquiryCategoryList();
 
     };
+
+    //첨부파일 다운로드 컨트롤러
+    @GetMapping("/support/inquiry/download")
+    //responseEntity : HTTP응답코드, 헤더, 바디를 조립해서 브라우저에게 던져줌.
+    public ResponseEntity<Resource> download(@RequestParam int fileNo) throws Exception {
+
+        Map<String, Object> file = inquiryService.getAttachFile(fileNo);
+
+
+
+        Path path = Paths.get(uploadPath+(String) file.get("FILE_PATH"));
+        Resource resource = new FileSystemResource(path);
+
+        String fileName = (String) file.get("FILE_ORIGINAL_NAME");
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" +
+                URLEncoder.encode(fileName, "UTF-8") + "\"")
+            .body(resource);
+    }
+
+
 }

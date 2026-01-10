@@ -161,25 +161,8 @@
                                                     <div class="inquiry-content-label">문의 내용</div>
                                                     <p>${fn:replace(inquiry.inqryCn, newLine, '<br>')}</p>
                                                 </div>
-                                                 <!-- 첨부파일 목록 추가 -->
-											    <c:if test="${not empty inquiry.attachFiles}">
-											        <div class="inquiry-attachments mt-3">
-											            <div class="inquiry-content-label">첨부파일</div>
-											            <ul class="attachment-list">
-											                <c:forEach var="file" items="${inquiry.attachFiles}">
-											                    <li>
-											                        <i class="bi bi-paperclip me-1"></i>
-											                        <a href="${pageContext.request.contextPath}/support/inquiry/download?fileNo=${file.FILE_NO}" download>
-											                            ${file.FILE_ORIGINAL_NAME}
-											                        </a>
-											                        <span class="text-muted ms-2" style="font-size: 0.85em;">
-											                            (<fmt:formatNumber value="${file.FILE_SIZE / 1024}" pattern="#,##0.0" /> KB)
-											                        </span>
-											                    </li>
-											                </c:forEach>
-											            </ul>
-											        </div>
-											    </c:if>
+                                                <!--첨부파일  -->
+												<div class="attachArea" data-inqry-no="${inquiry.inqryNo}"></div>
 
                                                 <c:if test="${inquiry.inqryStatus == 'answered' && not empty inquiry.replyCn}">
                                                     <div class="inquiry-answer">
@@ -241,6 +224,7 @@
 </div>
 
 <script>
+
 // 탭 전환 함수
 function switchTab(tabName) {
     const url = '${pageContext.request.contextPath}/support/inquiry';
@@ -302,6 +286,7 @@ function goToPage(page) {
 }
 
 // 문의 등록 폼
+// 수정된 코드
 document.getElementById('inquiryForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -327,23 +312,26 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
         formData.append('inquiryTargetNo', targetNo);
     }
 
-    // 첨부파일 추가
-    const fileInput = document.getElementById('attachFile');
-    if (fileInput.files.length > 0) {
-        for (let i = 0; i < fileInput.files.length; i++) {
-            formData.append('attachFiles', fileInput.files[i]);
-        }
+    // ✅ selectedFiles 배열에서 파일 추가
+    if (selectedFiles.length > 0) {
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
     }
 
-    // AJAX 요청 (Content-Type 헤더 제거 - 자동으로 multipart/form-data 설정됨)
+    // AJAX 요청
     fetch('${pageContext.request.contextPath}/support/inquiry', {
         method: 'POST',
-        body: formData  // FormData 객체 전송
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
+        console.log('detail response:', data);
         if (data.success) {
             alert(data.message);
+            // ✅ 폼 제출 성공 후 selectedFiles 초기화
+            selectedFiles = [];
+            document.getElementById('filePreviewContainer').innerHTML = '';
             window.location.href = '${pageContext.request.contextPath}/support/inquiry?tab=history';
         } else {
             alert(data.message);
@@ -355,6 +343,72 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
     });
 });
 /*추가함  */
+let selectedFiles = [];
+
+document.getElementById('attachFile').addEventListener('change', function(e) {
+    const container = document.getElementById('filePreviewContainer');
+    const newFiles = Array.from(e.target.files);
+
+    if (selectedFiles.length + newFiles.length > 5) {
+        alert("파일은 최대 5개까지만 업로드 가능합니다.");
+        e.target.value = "";
+        return;
+    }
+
+    newFiles.forEach(file => {
+        selectedFiles.push(file);
+    });
+
+    renderFilePreview();
+    e.target.value = "";
+});
+
+// ✅ 파일 미리보기 렌더링 함수
+function renderFilePreview() {
+    const container = document.getElementById('filePreviewContainer');
+    container.innerHTML = '';
+
+    selectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.style.cssText = "width: 100px; position: relative; border: 1px solid #ddd; padding: 5px; border-radius: 5px; text-align: center;";
+
+        // 삭제 버튼 추가
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '×';
+        removeBtn.type = 'button';
+        removeBtn.style.cssText = "position: absolute; top: 0; right: 0; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;";
+        removeBtn.onclick = function() {
+            selectedFiles.splice(index, 1);
+            renderFilePreview();
+        };
+        fileItem.appendChild(removeBtn);
+
+        // 이미지 미리보기
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.style.cssText = "width: 100%; height: 80px; object-fit: cover; border-radius: 3px;";
+                fileItem.prepend(img);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            const icon = document.createElement('div');
+            icon.innerHTML = '<i class="bi bi-file-earmark-text" style="font-size: 2rem; color: #666;"></i>';
+            fileItem.appendChild(icon);
+        }
+
+        const fileName = document.createElement('div');
+        fileName.innerText = file.name;
+        fileName.style.cssText = "font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 5px;";
+        fileItem.appendChild(fileName);
+
+        container.appendChild(fileItem);
+    });
+}
+ /*카피본  */
+/*
 document.getElementById('attachFile').addEventListener('change', function(e) {
     const container = document.getElementById('filePreviewContainer');
     container.innerHTML = ''; // 기존 미리보기 초기화
@@ -397,6 +451,42 @@ document.getElementById('attachFile').addEventListener('change', function(e) {
         fileItem.appendChild(fileName);
 
         container.appendChild(fileItem);
+    });
+}); */
+
+/*다운로드용  */
+function loadAttachFiles(inqryNo, targetDiv) {
+
+//    fetch(`${pageContext.request.contextPath}/support/inquiry/detail/${inqryNo}`)
+      fetch(contextPath + '/support/inquiry/detail/' + inqryNo)
+         .then(res => res.json())
+         .then(data => {
+        	 console.log('attachFiles:', data.inquiry.attachFiles);
+        	 console.log(data.inquiry.attachFiles[0]);
+             if (!data.success || !data.inquiry.attachFiles) return;
+
+             let html = '<ul class="attachment-list">';
+
+             data.inquiry.attachFiles.forEach((file) => {
+            	 html += `
+            		    <li>
+            		        <span>\${file.FILE_ORIGINAL_NAME}</span>
+            		        <a href="${contextPath}/support/inquiry/download?fileNo=\${file.FILE_NO}">
+            		            [다운로드]
+            		        </a>
+            		    </li>
+            		`;
+             });
+             html +='</ul>';
+             targetDiv.innerHTML = html;
+         });
+}
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.attachArea').forEach(div => {
+        const inqryNo = div.dataset.inqryNo;
+        if (inqryNo) {
+            loadAttachFiles(inqryNo, div);
+        }
     });
 });
 

@@ -1,6 +1,12 @@
 package kr.or.ddit.mohaeng.vo;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,5 +45,8 @@ public class InquiryVO {
     private String replyDtStr;          // 답변일 문자열
 
     private String filePath; // 추가: 파일 경로를 담을 변수 (DB의 FILE_PATH와 매핑)
+
+    private List<Map<String, Object>> attachFiles; // DB 조인 결과를 담을 리스트
+    private List<MultipartFile> files;
 
 }

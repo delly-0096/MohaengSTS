@@ -38,6 +38,16 @@ public class InquiryServiceImpl implements IInquiryService{
 		// DB 호출: 이번엔 '카테고리 필터'가 걸린 전용 매퍼 메서드를 호출
 		List<InquiryVO> list = inquiryMapper.selectInquiryListByCategory(params);
 
+		// ✅ 첨부파일 목록 붙이기
+	    if (list != null && !list.isEmpty()) {
+	        for (InquiryVO inquiry : list) {
+	            if (inquiry.getAttachNo() != null) {
+	                List<Map<String, Object>> files = inquiryMapper.selectAttachFileList(inquiry.getInqryNo());
+	                inquiry.setAttachFiles(files);
+	            }
+	        }
+	    }
+
 		return formatInquiryDates(list);
 	}
 
@@ -53,12 +63,18 @@ public class InquiryServiceImpl implements IInquiryService{
 	// ========== 공통 ==========
 
 	//문의 상세 조회-(사용자가 게시글 제목을 클릭했을 때 실행)
+	//화면용 메서드
 	@Override
 	public InquiryVO getInquiryDetail(int inqryNo) {
 		log.info("문의 상세 조회-inqryNo:",inqryNo);
 
 		// [1] DB에서 글 번호(inqryNo)로 한 건의 데이터를 가져옴.
 		InquiryVO inquiry = inquiryMapper.selectInquiryDetail(inqryNo);
+
+		//첨부파일 합치기
+		List<Map<String, Object>> attachFiles = inquiryMapper.selectAttachFileList(inqryNo);
+
+		inquiry.setAttachFiles(attachFiles);
 
 		// [2] 데이터가 있을 때만 날짜를 예쁘게 바꿈 (NPE 방지)
 		if (inquiry !=null) {
@@ -75,19 +91,18 @@ public class InquiryServiceImpl implements IInquiryService{
 		}
 		return inquiry;
 	}
-
-	//문의 등록 -(사용자가 새로운 문의글을 작성해서 "저장" 버튼을 눌렀을 때 실행)
+	//재사용 / API용 메서드 -Ajax,관리자 화면,다른 화면에서 첨부파일만 필요할 때
 	@Override
-	public int insertInquiry(InquiryVO inquiry) {
-		log.info("문의 등록 - inquiry:", inquiry);
-
-		// [1] 초기값 세팅: 사용자가 입력 안 해도 기본으로 들어가야 하는 값들
-		inquiry.setDelYn("N"); //삭제 여부는 일단 '아니오(N)'
-		inquiry.setInqryStatus("waiting"); //방금 썼으니 상태는 '답변대기'
-
-		// [2] DB에 저장
-		return inquiryMapper.insertInquiry(inquiry);
+	public List<Map<String, Object>> getAttachFileList(int inqryNo) {
+		log.info("첨부파일 목록 조회 - inqryNo:{}", inqryNo);
+		return inquiryMapper.selectAttachFileList(inqryNo);
 	}
+	//다운로드 전용
+	@Override
+	public Map<String, Object> getAttachFile(int fileNo) {
+		return inquiryMapper.selectAttachFile(fileNo);
+	}
+
 
 	//카테고리 목록 조회-(글 쓸 때 선택하는 드롭다운 메뉴에 뿌려줄 데이터 가져옴)
 	@Override
@@ -123,85 +138,82 @@ public class InquiryServiceImpl implements IInquiryService{
 			return list;
 
 	}
+
+
+
 	@Override
 	@Transactional
-	public int saveInquiryAttachments(int inqryNo, List<MultipartFile> files) {
-	    if (files == null || files.isEmpty()) {
-	        return 0;
+	public int insertInquiryWithFiles(InquiryVO inquiry, List<MultipartFile> files) {
+		// [1] 초기값 세팅: 사용자가 입력 안 해도 기본으로 들어가야 하는 값들
+		inquiry.setDelYn("N"); //삭제 여부는 일단 '아니오(N)'
+		inquiry.setInqryStatus("waiting"); //방금 썼으니 상태는 '답변대기'
+
+		Integer attachNo = null;
+
+		// 1️ 첨부파일이 있으면 ATTACH_FILE 먼저 생성
+		if (files != null && !files.isEmpty()) {
+			 // 1. 먼저 ATTACH_FILE 테이블에 레코드 생성
+		    Map<String, Object> attachFileMap = new HashMap<>();
+		    attachFileMap.put("regId",inquiry.getMemNo()); 		   //REG_ID
+
+		    inquiryMapper.insertAttachFile(attachFileMap);
+		    attachNo = (int) attachFileMap.get("attachNo");  // 생성된 ATTACH_NO
+
+		    // 날짜별 폴더 생성
+		    String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
+		    String fullPath = uploadPath + "inquiry/" + datePath;
+		    File uploadDir = new File(fullPath);
+		    if (!uploadDir.exists()) {
+		        uploadDir.mkdirs();
+		    }
+
+		 // 2. 각 파일을 ATTACH_FILE_DETAIL에 저장
+		    for (MultipartFile file : files) {
+		        if (file.isEmpty()) continue;
+
+		        try {
+		            String originalFilename = file.getOriginalFilename();
+		            String mimyType = file.getContentType();
+
+		            String extension = "";
+		            if (originalFilename != null && originalFilename.contains(".")) {
+		                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+		            }
+		            String savedFilename = UUID.randomUUID().toString() + extension;
+
+		            // 파일 저장
+		            File destFile = new File(uploadDir, savedFilename);
+		            file.transferTo(destFile);
+
+		            // DB에 파일 정보 저장
+		            Map<String, Object> fileDetailMap = new HashMap<>();
+		            fileDetailMap.put("attachNo", attachNo);  // 부모 테이블의 PK
+		            fileDetailMap.put("fileName", savedFilename);
+		            fileDetailMap.put("fileOriginalName", originalFilename);
+		            fileDetailMap.put("fileExt", extension.replace(".", ""));
+		            fileDetailMap.put("fileSize", file.getSize());
+		            fileDetailMap.put("filePath", "/inquiry/"+datePath+"/" + savedFilename);
+		            fileDetailMap.put("fileGbCd", "ATTACH");
+		            fileDetailMap.put("mimyType", mimyType); // MIME 타입
+		            fileDetailMap.put("useYn", "Y"); // 사용 여부
+		            fileDetailMap.put("regId", inquiry.getMemNo()); // REG_ID 추가
+
+		            inquiryMapper.insertAttachFileDetail(fileDetailMap);
+
+
+		        } catch (IOException e) {
+		            e.printStackTrace();
+		            throw new RuntimeException("파일 저장 중 오류가 발생했습니다: " + e.getMessage(), e);
+		        }
+		    }
+
 	    }
 
-	    //INQUIRY에서 MEM_NO 조회
-	    InquiryVO inquiry = inquiryMapper.selectInquiryDetail(inqryNo);
-	    int memNo = inquiry.getMemNo(); //회원번호 가져오기
+		// 3️ inquiry에 attachNo 세팅 (파일 없으면 null)
+		 inquiry.setAttachNo(attachNo);
 
-	    // 1. 먼저 ATTACH_FILE 테이블에 레코드 생성
-	    Map<String, Object> attachFileMap = new HashMap<>();
-	    attachFileMap.put("regId", memNo); 		   //REG_ID
-
-	    inquiryMapper.insertAttachFile(attachFileMap);
-	    int attachNo = (int) attachFileMap.get("attachNo");  // 생성된 ATTACH_NO
-
-	    int savedCount = 0;
-
-	    // 날짜별 폴더 생성
-	    String datePath = new SimpleDateFormat("yyyy/MM/dd").format(new Date());
-	    String fullPath = uploadPath + "inquiry/" + datePath;
-	    File uploadDir = new File(fullPath);
-	    if (!uploadDir.exists()) {
-	        uploadDir.mkdirs();
-	    }
-
-	    // 2. 각 파일을 ATTACH_FILE_DETAIL에 저장
-	    for (MultipartFile file : files) {
-	        if (file.isEmpty()) continue;
-
-	        try {
-	            String originalFilename = file.getOriginalFilename();
-	            String mimeType = file.getContentType();
-
-	            String extension = "";
-	            if (originalFilename != null && originalFilename.contains(".")) {
-	                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
-	            }
-	            String savedFilename = UUID.randomUUID().toString() + extension;
-
-	            // 파일 저장
-	            File destFile = new File(uploadDir, savedFilename);
-	            file.transferTo(destFile);
-
-	            // DB에 파일 정보 저장
-	            Map<String, Object> fileDetailMap = new HashMap<>();
-	            fileDetailMap.put("attachNo", attachNo);  // 부모 테이블의 PK
-	            fileDetailMap.put("fileName", savedFilename);
-	            fileDetailMap.put("fileOriginalName", originalFilename);
-	            fileDetailMap.put("fileExt", extension.replace(".", ""));
-	            fileDetailMap.put("fileSize", file.getSize());
-	            fileDetailMap.put("filePath", "/inquiry/" + savedFilename);
-	            fileDetailMap.put("fileGbCd", "ATTACH");
-	            fileDetailMap.put("mimeType", mimeType); // MIME 타입
-	            fileDetailMap.put("useYn", "Y"); // 사용 여부
-	            fileDetailMap.put("regId", memNo); // REG_ID 추가
-
-	            inquiryMapper.insertAttachFileDetail(fileDetailMap);
-	            savedCount++;
-
-	        } catch (IOException e) {
-	            e.printStackTrace();
-	            throw new RuntimeException("파일 저장 중 오류가 발생했습니다: " + e.getMessage(), e);
-	        }
-	    }
-
-	    // 3. INQUIRY 테이블의 ATTACH_NO 업데이트
-	    if (savedCount > 0) {
-	        inquiryMapper.updateInquiryAttachCount(inqryNo, attachNo);
-	    }
-
-	    return savedCount;
+		// DB에 저장
+		return inquiryMapper.insertInquiry(inquiry);
 	}
 
-	@Override
-	public List<Map<String, Object>> getAttachFileList(int inqryNo) {
-		log.info("첨부파일 목록 조회 - inqryNo:{}", inqryNo);
-		return inquiryMapper.selectAttachFileList(inqryNo);
-	}
 }

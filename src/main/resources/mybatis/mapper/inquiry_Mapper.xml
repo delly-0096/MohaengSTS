@@ -219,7 +219,7 @@
 	        ,FILE_SIZE
 	        ,FILE_PATH
 	        ,FILE_GB_CD
-			,MIME_TYPE
+			,MIMY_TYPE
 			,USE_YN
 			,REG_ID
 	        ,REG_DT
@@ -232,7 +232,7 @@
 	        ,#{fileSize}
 	        ,#{filePath}
 	        ,#{fileGbCd}
-	        ,#{mimeType}
+	        ,#{mimyType}
 	        ,#{useYn}
 	        ,#{regId}
 	        ,SYSDATE
@@ -256,10 +256,21 @@
 			,afd.FILE_SIZE
 			,afd.FILE_PATH
 		from INQUIRY i
-		inner join ATTACH_FILE_DETAIL afd on i.ATTACH_NO = agd.ATTACH_NO
+		inner join ATTACH_FILE_DETAIL afd on i.ATTACH_NO = afd.ATTACH_NO
 		where i.INQRY_NO = #{inqryNo}
 		  and afd.USE_YN = 'Y'
-		order by agd.REG_DT
+		order by afd.REG_DT
 
+	</select>
+
+	<!-- 첨부파일 단건 조회 (다운로드용) -->
+	<select id="selectAttachFile" parameterType="int" resultType="map">
+		select
+			FILE_NO
+			,FILE_ORIGINAL_NAME
+			,FILE_PATH
+		from ATTACH_FILE_DETAIL
+		where FILE_NO=#{fileNo}
+		and USE_YN='Y'
 	</select>
 </mapper>

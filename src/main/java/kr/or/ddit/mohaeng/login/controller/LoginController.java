@@ -12,6 +12,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.authentication.RememberMeServices;
+import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
+import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -41,6 +44,9 @@ import lombok.extern.slf4j.Slf4j;
 public class LoginController {
 
 	private static int CAPTCHA_THRESHOLD = 3;
+
+	@Autowired
+	private RememberMeServices rememberMeServices;
 
 	@Autowired
 	private IMemberService memberService;
@@ -136,39 +142,53 @@ public class LoginController {
 		    ra.addFlashAttribute("memberType", memberType);
 		    return "redirect:/member/login";
 		}
-		MemberVO member = memberMapper.selectById(username);
 
+		MemberVO member = memberMapper.selectById(username);
 		Map<String, Object> loginMember = new HashMap<>();
 	    loginMember.put("memId", username);
 	    loginMember.put("memType", memType);
 	    loginMember.put("memName", username);
 	    loginMember.put("memNo", member.getMemNo());
-	    loginMember.put("memEmail", member.getMemEmail());
+
+	    String profilePath = member.getMemProfilePath();
+	    if (profilePath != null) {
+	        // 텍스트에서 /resources 부분을 제거하여 /upload/... 만 남김
+	        profilePath = profilePath.replace("/resources", "");
+	    }
+	    loginMember.put("memProfile", profilePath);
 
 
 		session.setAttribute("loginMember", loginMember);
-//		session.setAttribute("memberInfo", member);
 		session.removeAttribute("LOGIN_FAIL_CNT");
 
-		var authorities = java.util.List.of(new SimpleGrantedAuthority("ROLE_" + memType));
 		CustomUserDetails userDetails = new CustomUserDetails(member);
-		Authentication auth =
-			    new UsernamePasswordAuthenticationToken(
-			        userDetails,
-			        null,
-			        userDetails.getAuthorities()
-			    );
 
-	    SecurityContext context = SecurityContextHolder.createEmptyContext();
-	    context.setAuthentication(auth);
-	    SecurityContextHolder.setContext(context);
+		// ⚠️ 권한은 CustomUserDetails 기준으로만 사용
+		Authentication auth =
+		    new UsernamePasswordAuthenticationToken(
+		        userDetails,
+		        null,
+		        userDetails.getAuthorities()
+		    );
+
+		SecurityContext context = SecurityContextHolder.createEmptyContext();
+		context.setAuthentication(auth);
+		SecurityContextHolder.setContext(context);
 
 	    new HttpSessionSecurityContextRepository().saveContext(context, request, response);
+
+	    String rememberMe = request.getParameter("remember-me");
+
+	    if ("on".equals(rememberMe)) {
+	        // 시큐리티의 Remember-Me 서비스를 수동으로 호출하여 토큰을 생성하고 DB에 저장
+	        rememberMeServices.loginSuccess(request, response, auth);
+	        log.info("Remember-Me 토큰 생성 및 DB 저장 완료");
+	    }
 
 		return "redirect:/";
 	}
 
-	// 회원가입 화면
+	/* 회원가입 화면 */
 	@GetMapping("/register")
 	public String registerPage(Model model) {
 		log.info("registerPage() 실행...!");
@@ -198,13 +218,13 @@ public class LoginController {
 		return goPage;
 	}
 
-	// 일반 회원가입 기능
+	// 기업 회원가입 기능
 	@PostMapping("/register/company")
 	public String registerCompany(MemberVO memberVO, CompanyVO companyVO, MultipartFile bizFile,
 							Model model, RedirectAttributes ra) {
 		log.info("registerBusiness() 실행...!");
 
-		// 일반회원 가입
+		// 기업회원 가입
 		String goPage = "";
 		ServiceResult result = memberService.registerCompany(memberVO, companyVO, bizFile);
 
@@ -243,10 +263,15 @@ public class LoginController {
 
 	/* 로그아웃 기능 */
 	@GetMapping("/logout")
-	public String logout(HttpSession session) {
-		session.invalidate();
+	public String logout(HttpServletRequest request, HttpServletResponse response, Authentication auth) {
+		if (auth != null) {
+	        // 시큐리티 로그아웃 핸들러 실행 (세션 삭제 등)
+	        new SecurityContextLogoutHandler().logout(request, response, auth);
 
-		return "redirect:/";
+	        // 자동 로그인 토큰 삭제 (DB 및 쿠키)
+	        rememberMeServices.loginFail(request, response);
+	        log.info("로그아웃 완료: 자동 로그인 토큰 및 쿠키 삭제");
+	    }
+	    return "redirect:/";
 	}
 }
-

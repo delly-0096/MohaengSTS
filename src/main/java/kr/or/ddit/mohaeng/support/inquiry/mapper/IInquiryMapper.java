@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import kr.or.ddit.mohaeng.vo.CodeVO;
 import kr.or.ddit.mohaeng.vo.InquiryVO;
@@ -54,13 +55,16 @@ public interface IInquiryMapper {
 		public void insertAttachFile(Map<String, Object> attachFileMap);
 
 		//문의 첨부파일 개수 업데이트
-		public void updateInquiryAttachCount(int inqryNo, int savedCount);
+		public void updateInquiryAttachCount( @Param("attachNo") int inqryNo, @Param("inqryNo")int savedCount);
 
 		// 첨부파일 상세 정보 저장 (ATTACH_FILE_DETAIL 테이블)
 		public void insertAttachFileDetail(Map<String, Object> fileDetailMap);
 
 		//첨부파일 목록 조회
 		public List<Map<String, Object>> selectAttachFileList(int inqryNo);
+
+		//다운로드용
+		public Map<String, Object> selectAttachFile(int fileNo);
 
 
 

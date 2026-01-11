@@ -1,16 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
 <c:set var="pageTitle" value="여행기록 작성" />
 <c:set var="pageCss" value="community" />
-<sec:authorize access="hasAnyRole('ROLE_ADMIN', 'ROLE_BUSINESS')">
-    <script>
-        alert('일반회원만 여행기록을 작성할 수 있습니다.');
-        location.href = '${pageContext.request.contextPath}/member/login';
-    </script>
-</sec:authorize>
-
 
 <%@ include file="../common/header.jsp" %>
 
@@ -22,7 +14,7 @@
                     <i class="bi bi-arrow-left"></i>
                 </button>
                 <h2>새 여행기록</h2>
-                <button type="button" class="btn-submit" id="submitBtn" onclick="submitTravellog()">등록</button>
+                <button type="button" class="btn-submit" id="submitBtn" onclick="submitTravellog()">공유</button>
             </div>
 
             <div class="travellog-write-body-new">
@@ -120,7 +112,7 @@
                 <!-- 오른쪽: 설정 패널 -->
                 <div class="settings-panel">
                     <!-- 작성자 정보 -->
-                    <%-- <div class="writer-info-card">
+                    <div class="writer-info-card">
                         <div class="writer-avatar">
                             <i class="bi bi-person-fill"></i>
                         </div>
@@ -128,7 +120,7 @@
                             <span class="writer-name">${sessionScope.loginUser.userName}</span>
                             <span class="writer-status">여행기록 작성 중</span>
                         </div>
-                    </div> --%>
+                    </div>
 
                     <!-- 여행 정보 설정 -->
                     <div class="settings-section">
@@ -233,9 +225,9 @@
                         <button type="button" class="btn btn-outline w-100 mb-2" onclick="previewTravellog()">
                             <i class="bi bi-eye me-2"></i>미리보기
                         </button>
-                       <!--  <button type="button" class="btn btn-secondary w-100 mb-2" onclick="saveDraft()">
+                        <button type="button" class="btn btn-secondary w-100 mb-2" onclick="saveDraft()">
                             <i class="bi bi-file-earmark me-2"></i>임시저장
-                        </button> -->
+                        </button>
                     </div>
                 </div>
             </div>
@@ -403,23 +395,15 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" data-bs-dismiss="modal">닫기</button>
-               <!--  <button type="button" class="btn btn-primary" onclick="submitTravellog()">
+                <button type="button" class="btn btn-primary" onclick="submitTravellog()">
                     <i class="bi bi-send me-1"></i>공유하기
-                </button> -->
+                </button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-let travelStartDate = null; // Date 객체
-let travelEndDate = null;   // Date 객체
-
-
-window.__CTX__ = window.__CTX__ || (typeof contextPath !== 'undefined'
-    ? contextPath
-    : '${pageContext.request.contextPath}');
-  window.showToast = window.showToast || function (msg, type) { alert(msg); };
 // 블록 ID 카운터
 let blockIdCounter = 1;
 
@@ -428,13 +412,12 @@ let coverImageData = null;
 let linkedSchedule = null;
 let tags = [];
 let selectedLocation = '';
-let bodyImageFiles = [];
 
 // 모달 인스턴스
 let scheduleModal, placeBlockModal, previewModal;
 
 // 컨텍스트 경로
-// const contextPath = '${pageContext.request.contextPath}';
+const contextPath = '${pageContext.request.contextPath}';
 
 document.addEventListener('DOMContentLoaded', function() {
     // 모달 초기화
@@ -442,35 +425,21 @@ document.addEventListener('DOMContentLoaded', function() {
     placeBlockModal = new bootstrap.Modal(document.getElementById('placeBlockModal'));
     previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
 
-    // Flatpickr 초기화   
+    // Flatpickr 초기화
     const dateInput = document.getElementById('travelDateRange');
-if (dateInput && typeof flatpickr !== 'undefined') {
-
-  // ✅ 이미 다른 곳에서 flatpickr가 붙어있다면 제거
-  if (dateInput._flatpickr) {
-    dateInput._flatpickr.destroy();
-  }
-
-  flatpickr(dateInput, {
-    locale: 'ko',
-    dateFormat: 'Y-m-d',
-    mode: 'range',
-    allowInput: true,
-
-    // ✅ 혹시 다른 곳에서 min/max 걸려도 여기서 "해제" 강제
-    minDate: null,
-    maxDate: null,
-
-    onChange: function(selectedDates, dateStr) {
-      if (selectedDates.length === 2) {
-        travelStartDate = selectedDates[0];
-        travelEndDate = selectedDates[1];
-        document.getElementById('dateValue').textContent = dateStr;
-      }
+    if (dateInput && typeof flatpickr !== 'undefined') {
+        flatpickr(dateInput, {
+            locale: 'ko',
+            dateFormat: 'Y-m-d',
+            mode: 'range',
+            maxDate: 'today',
+            onChange: function(selectedDates, dateStr) {
+                if (selectedDates.length === 2) {
+                    document.getElementById('dateValue').textContent = dateStr;
+                }
+            }
+        });
     }
-  });
-}
-
 
     // URL 파라미터 체크 (일정에서 넘어온 경우)
     const urlParams = new URLSearchParams(window.location.search);
@@ -540,9 +509,6 @@ function addImageBlocks(event) {
             return;
         }
 
-        // ✅ 여기 추가 (파일을 전역 배열에 보관)
-        bodyImageFiles.push(file);
-
         const reader = new FileReader();
         reader.onload = function(e) {
             blockIdCounter++;
@@ -566,10 +532,8 @@ function addImageBlocks(event) {
         reader.readAsDataURL(file);
     });
 
-    // ❗ 이건 유지해도 됨 (input 초기화)
     event.target.value = '';
 }
-
 
 // 구분선 블록 추가
 function addDividerBlock() {
@@ -910,39 +874,9 @@ function selectSchedule(schedule) {
     placesContainer.innerHTML = placesHtml;
 
     // 위치 및 날짜 자동 설정
-    // 위치 및 날짜 자동 설정
-// 위치 및 날짜 자동 설정
-// 위치
-document.getElementById('locationValue').textContent = schedule.location;
-selectedLocation = schedule.location;
-
-// 날짜 (schedule.dates: "2024.03.15 - 2024.03.18")
-if (schedule.dates && schedule.dates.includes(' - ')) {
-
-  const parts = schedule.dates.split(' - ');
-  const startStr = parts[0].trim().replace(/\./g, '-'); // 2024-03-15
-  const endStr   = parts[1].trim().replace(/\./g, '-'); // 2024-03-18
-
-  travelStartDate = new Date(startStr);
-  travelEndDate   = new Date(endStr);
-
-  console.log('schedule parsed dates =>', travelStartDate, travelEndDate);
-
-  document.getElementById('dateValue').textContent =
-    `${startStr} ~ ${endStr}`;
-
-  // flatpickr 동기화
-  const fp = document.getElementById('travelDateRange')?._flatpickr;
-  if (fp) {
-    fp.setDate([travelStartDate, travelEndDate], true);
-  }
-}
-
-// =================================================
-
-
-    
-//     document.getElementById('dateValue').textContent = schedule.dates;
+    document.getElementById('locationValue').textContent = schedule.location;
+    selectedLocation = schedule.location;
+    document.getElementById('dateValue').textContent = schedule.dates;
 
     // 제목 자동 설정 (비어있는 경우)
     const titleInput = document.getElementById('blogTitle');
@@ -1109,7 +1043,6 @@ function searchLocation(event) {
         { name: '제주도', sub: '대한민국' },
         { name: '서울', sub: '대한민국' },
         { name: '부산', sub: '대한민국' },
-        { name: '해남', sub: '대한민국' },
         { name: '오사카', sub: '일본' },
         { name: '도쿄', sub: '일본' },
         { name: '방콕', sub: '태국' },
@@ -1287,11 +1220,11 @@ function previewTravellog() {
 }
 
 // 임시저장
-/* function saveDraft() {
+function saveDraft() {
     const data = collectFormData();
     localStorage.setItem('travellog_draft', JSON.stringify(data));
     showToast('임시저장되었습니다.', 'success');
-} */
+}
 
 // 폼 데이터 수집
 function collectFormData() {
@@ -1356,232 +1289,52 @@ function goBack() {
     window.history.back();
 }
 
-function getMainStoryText() {
-	  // ✅ "여행 이야기를 작성하세요..."가 들어있는 첫 text-block textarea만 사용
-	  const firstTextArea = document.querySelector('#blogEditor .text-block textarea');
-	  return firstTextArea ? firstTextArea.value.trim() : '';
-	}
-
-	function formatDateToYMD(dateObj) {
-	  if (!dateObj) return null;
-	  const y = dateObj.getFullYear();
-	  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
-	  const d = String(dateObj.getDate()).padStart(2, '0');
-	  return `\${y}-\${m}-\${d}`;
-	}
-
-	function isValidDate(d) {
-		  return d instanceof Date && !isNaN(d.getTime());
-		}
-
 // 제출
 function submitTravellog() {
-	
-// 	console.log("submitTravellog VERSION:", submitTravellog.toString().slice(0, 120));
-// 	console.trace("submitTravellog called");
+    const title = document.getElementById('blogTitle').value.trim();
+    const blocks = document.querySelectorAll('.editor-block');
+    let hasContent = false;
 
-	
-// 	// fp에서 최신값 다시 동기화
-// 	const fp = document.getElementById('travelDateRange')?._flatpickr;
-// 	if (fp?.selectedDates?.length === 2) {
-// 	  travelStartDate = fp.selectedDates[0];
-// 	  travelEndDate = fp.selectedDates[1];
-// 	}
+    blocks.forEach(function(block) {
+        if (block.classList.contains('text-block')) {
+            if (block.querySelector('textarea').value.trim()) hasContent = true;
+        } else if (block.classList.contains('image-block') || block.classList.contains('place-block')) {
+            hasContent = true;
+        }
+    });
 
-// 	  // ✅ Date 객체만 허용 (문자열 "--" 같은거면 여기서 걸러짐)
-// 	  if (!isValidDate(travelStartDate) || !isValidDate(travelEndDate)) {
-// 	    showToast('여행 기간을 선택해주세요.', 'error');
-// 	    console.log('travelStartDate/endDate invalid =>', travelStartDate, travelEndDate);
-// 	    return;
-// 	  }
+    if (!title) {
+        showToast('제목을 입력해주세요.', 'error');
+        document.getElementById('blogTitle').focus();
+        return;
+    }
 
-	
-// 	  const title = document.getElementById('blogTitle').value.trim();
-// 	  const mainContent = getMainStoryText();
+    if (!hasContent) {
+        showToast('내용을 입력해주세요.', 'error');
+        return;
+    }
 
-// 	  if (!title) {
-// 	    showToast('제목을 입력해주세요.', 'error');
-// 	    document.getElementById('blogTitle').focus();
-// 	    return;
-// 	  }
+    // 로딩 표시
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = '공유 중...';
 
-// 	  // 내용 필수로 하고 싶으면 주석 해제
-// 	  if (!mainContent) {
-// 	    showToast('여행 이야기를 입력해주세요.', 'error');
-// 	    const firstTextArea = document.querySelector('#blogEditor .text-block textarea');
-// 	    if (firstTextArea) firstTextArea.focus();
-// 	    return;
-// 	  }
+    // 데이터 수집
+    const formData = collectFormData();
+    console.log('Submitting:', formData);
 
-// 	  // 날짜 range 필수로 하고 싶으면 주석 해제
-// 	  if (!travelStartDate || !travelEndDate) {
-// 	    showToast('여행 기간을 선택해주세요.', 'error');
-// 	    return;
-// 	  }
-
-	// fp에서 최신값 다시 동기화
-  const fp = document.getElementById('travelDateRange')?._flatpickr;
-  if (fp?.selectedDates?.length === 2) {
-    travelStartDate = fp.selectedDates[0];
-    travelEndDate = fp.selectedDates[1];
-  }
-
-  // ✅ Date 객체만 허용
-  if (!isValidDate(travelStartDate) || !isValidDate(travelEndDate)) {
-    showToast('여행 기간을 선택해주세요.', 'error');
-    return;
-  }
-
-  // ✅ 제목(이미 있던 필수)
-  const titleEl = document.getElementById('blogTitle');
-  const title = titleEl.value.trim();
-  if (!title) {
-    showToast('여행 제목을 입력해주세요.', 'error');
-    titleEl.focus();
-    return;
-  }
-
-  // ✅ 커버 이미지 필수
-  // 1) 직접 업로드한 파일이 있는지
-  const coverInput = document.getElementById('coverImageInput');
-  const hasCoverFile = coverInput?.files?.length > 0;
-
-  // 2) 일정에서 자동 세팅된 coverImageData(이미지 URL)도 인정할지 여부
-  //    -> "진짜 업로드만 허용"이면 hasCoverFile만 체크하면 됨
-  const hasCoverData = !!(coverImageData && coverImageData.dataUrl);
-
-  if (!hasCoverFile && !hasCoverData) {
-    showToast('커버 이미지를 추가해주세요.', 'error');
-    // 커버 선택창 열어주기(UX)
-    document.getElementById('coverPlaceholder')?.click();
-    return;
-  }
-
-  // ✅ 위치 필수
-  if (!selectedLocation || !selectedLocation.trim()) {
-    showToast('위치를 선택해주세요.', 'error');
-    // 위치 입력 영역 열어주기(UX)
-    toggleSettingInput('location');
-    document.getElementById('locationInput')?.focus();
-    return;
-  }
-
-  // ✅ 본문(원하면 유지)
-  const mainContent = getMainStoryText();
-  if (!mainContent) {
-    showToast('여행 이야기를 입력해주세요.', 'error');
-    const firstTextArea = document.querySelector('#blogEditor .text-block textarea');
-    if (firstTextArea) firstTextArea.focus();
-    return;
-  }
-
-	  const submitBtn = document.getElementById('submitBtn');
-	  submitBtn.disabled = true;
-	  submitBtn.textContent = '등록 중...';
-
-	  const base = window.__CTX__;
-	  
-	  const req = {
-	    schdlNo: null,                 // ✅ 일정 연결 지금 안함
-	    rcdTitle: title,               // ✅ RCD_TITLE
-	    rcdContent: mainContent,       // ✅ RCD_CONTENT (첫 텍스트만)
-	    tripDaysCd: null,
-	    locCd: selectedLocation || null, // ✅ LOC_CD
-
-	    // ✅ 날짜는 YYYY-MM-DD 문자열로 보내기 (서버에서 DATE로 변환/매핑)
-	    startDt: formatDateToYMD(travelStartDate),
-	    endDt: formatDateToYMD(travelEndDate),
-
-	    openScopeCd: document.getElementById('visibility').value === 'public' ? 'PUBLIC' : 'PRIVATE', // ✅ OPEN_SCOPE_CD
-	    mapDispYn: document.getElementById('showOnMap').checked ? 'Y' : 'N',      // ✅ MAP_DISP_YN
-	    replyEnblYn: document.getElementById('allowComments').checked ? 'Y' : 'N', // ✅ REPLY_ENBL_YN
-	    // attachNo는 ✅ 서버가 coverFile 저장 후 생성해서 TRIP_RECORD.ATTACH_NO에 넣는 구조 권장
-	    
-	    tags: tags
-	  };
-
-	  console.log('REQ JSON =>', req);
-	  
-	  const formData = new FormData();
-
-	  // 1) JSON req
-	  formData.append(
-	    "req",
-	    new Blob([JSON.stringify(req)], { type: "application/json" })
-	  );
-
-	  // 2) 커버 파일 1개
-	  const coverFileInput = document.getElementById("coverImageInput");
-	  if (coverFileInput && coverFileInput.files && coverFileInput.files.length > 0) {
-	    formData.append("coverFile", coverFileInput.files[0]);
-	  }
-
-	  fetch(base + '/api/travel-log/records', {
-	    method: 'POST',
-	    body: formData,
-	    credentials: 'include'
-	  })
-	    .then(res => {
-	      if (!res.ok) return res.text().then(t => { throw new Error(t || '등록 실패'); });
-	      return res.json(); // rcdNo 받는다고 가정
-	    })
-	    .then(rcdNo => {
-	      showToast('여행기록이 등록되었습니다!', 'success');
-	      window.location.href = base + '/community/travel-log/detail?rcdNo=' + rcdNo;
-	    })
-	    .catch(err => {
-	      console.error(err);
-	      showToast('여행기록 등록 중 오류가 발생했습니다.', 'error');
-	    })
-	    .finally(() => {
-	      submitBtn.disabled = false;
-	      submitBtn.textContent = '등록';
-	    });
-	}
-
-function initTravelDatePickerForce() {
-	  const dateInput = document.getElementById('travelDateRange');
-	  if (!dateInput || typeof flatpickr === 'undefined') return;
-
-	  // 이미 걸려있는 flatpickr(공통 포함) 제거
-	  if (dateInput._flatpickr) {
-	    dateInput._flatpickr.destroy();
-	  }
-
-	  flatpickr(dateInput, {
-	    locale: 'ko',
-	    dateFormat: 'Y-m-d',
-	    mode: 'range',
-	    allowInput: true,
-
-	    // ✅ 과거/미래 모두 허용
-	    minDate: null,
-	    maxDate: null,
-	    disable: [],
-
-	    onChange: function(selectedDates, dateStr) {
-	      if (selectedDates.length === 2) {
-	        travelStartDate = selectedDates[0];
-	        travelEndDate = selectedDates[1];
-	        document.getElementById('dateValue').textContent = dateStr;
-	      } else {
-	        travelStartDate = null;
-	        travelEndDate = null;
-	        document.getElementById('dateValue').textContent = '날짜를 선택하세요';
-	      }
-	    }
-	  });
-	}
-
-	document.addEventListener('DOMContentLoaded', function() {
-	  initTravelDatePickerForce();
-
-	  // ✅ 공통 스크립트가 뒤에서 덮어써도, 마지막에 내가 다시 덮어쓰기
-	  setTimeout(initTravelDatePickerForce, 0);
-	  setTimeout(initTravelDatePickerForce, 300); // 혹시 공통에서 setTimeout으로 초기화하는 경우까지 커버
-	});
-
-
+    // 실제 구현 시 FormData로 서버 전송
+    setTimeout(function() {
+        showToast('여행기록이 공유되었습니다!', 'success');
+        // 미리보기 모달 닫기
+        if (previewModal._isShown) {
+            previewModal.hide();
+        }
+        setTimeout(function() {
+            window.location.href = contextPath + '/community/travel-log';
+        }, 1000);
+    }, 1500);
+}
 </script>
 
 <%@ include file="../common/footer.jsp" %>

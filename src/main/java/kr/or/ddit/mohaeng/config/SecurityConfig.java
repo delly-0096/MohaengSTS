@@ -32,6 +32,8 @@ import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
 import kr.or.ddit.mohaeng.util.TokenProvider;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.http.HttpMethod;
+
 @Slf4j
 @Configuration
 @EnableWebSecurity
@@ -57,7 +59,8 @@ public class SecurityConfig {
 			"/idCheck",
 			"/error",
 			"/mohaeng",
-			"/.well-known/**"		// 크롬 개발자 도구로의 요청
+			"/.well-known/**",		// 크롬 개발자 도구로의 요청
+			"/accessError"
 	};
 	
 	// 일반회원 허용 url test
@@ -138,7 +141,22 @@ public class SecurityConfig {
                     DispatcherType.FORWARD,
                     DispatcherType.ASYNC
                 ).permitAll()
+                
+                .requestMatchers("/files/**").permitAll() 
+                .requestMatchers("/community/travel-log/write").hasRole("MEMBER")
+                
                 .requestMatchers(PASS_URL).permitAll()
+                
+                // 조회(GET)는 허용
+                .requestMatchers(HttpMethod.GET, "/community/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/travel-log/records/**").permitAll()
+
+                // 등록/수정/삭제는 MEMBER만
+                .requestMatchers(HttpMethod.POST, "/api/travel-log/records/**").hasRole("MEMBER")
+                .requestMatchers(HttpMethod.PUT, "/api/travel-log/records/**").hasRole("MEMBER")
+                .requestMatchers(HttpMethod.DELETE, "/api/travel-log/records/**").hasRole("MEMBER")
+
+
 //                .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
 //                .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
                 .requestMatchers("/member/login").permitAll()
@@ -167,7 +185,7 @@ public class SecurityConfig {
 	@Bean
 	protected CorsConfigurationSource corsConfigurationSource() {
 	    CorsConfiguration config = new CorsConfiguration();
-	    config.setAllowedOrigins(List.of("http://localhost:7272"));
+	    config.setAllowedOrigins(List.of("http://localhost:8272"));
 	    config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
 	    config.setAllowedHeaders(List.of("*"));
 	    config.setAllowCredentials(true);

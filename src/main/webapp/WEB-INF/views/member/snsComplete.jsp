@@ -15,65 +15,11 @@
             <!-- 메인 콘텐츠 -->
             <div class="mypage-content full-width">
                 <div class="mypage-header">
-                    <h1>회원 정보 수정</h1>
-                    <p>개인정보를 안전하게 관리하세요</p>
+                    <h1>추가 정보 입력</h1>
+					<p>회원가입을 완료하려면 아래 정보를 입력해주세요.</p>
                 </div>
 
                 <form class="profile-edit-form" id="profileForm" action="${pageContext.request.contextPath}/member/sns/complete" method="POST" enctype="multipart/form-data">
-                	<input type="hidden" name="profileImageDeleted" id="profileImageDeleted" value="false">
-                    <!-- 프로필 이미지 섹션 -->
-                    <div class="content-section">
-					    <div class="profile-top-layout">
-					        <div class="profile-left-part">
-					            <h5 class="form-section-title"><i class="bi bi-image me-2 text-brand"></i>프로필 이미지</h5>
-					            <div class="profile-image-upload">
-					                <div id="profileContainer" class="profile-image-preview-container">
-					                    <i class="bi bi-person profile-default-icon" style="${not empty profileImgUrl ? 'display:none;' : ''}"></i>
-					                    <img id="profilePreview" class="profile-image-preview" src="<c:url value='/upload${profileImgUrl}' />" 
-					                         style="${not empty profileImgUrl ? '' : 'display:none;'}" alt="프로필 이미지">
-					                </div>
-					                <div class="profile-image-actions">
-					                    <input type="file" name="profileImage" id="profileImage" accept="image/*" hidden>
-					                    <button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('profileImage').click()">
-					                        <i class="bi bi-camera me-2"></i>프로필 변경
-					                    </button>
-					                    <button type="button" class="btn btn-outline btn-sm" onclick="resetProfileImage()">
-					                        <i class="bi bi-trash me-2"></i>프로필 삭제
-					                    </button>
-					                    <p class="form-hint mt-2 mb-0">JPG, PNG 파일 (최대 5MB)</p>
-					                </div>
-					            </div>
-					        </div>
-					        
-					<!-- 알림 설정 섹션 -->
-					        <div class="profile-right-part">
-					            <h5 class="form-section-title"><i class="bi bi-bell me-2 text-brand"></i>알림 설정</h5>
-					            <div class="notification-list compact-grid">
-					                <div class="notification-item">
-					                    <label for="notifyReservation">예약 확정/취소</label>
-					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyReservation" id="notifyReservation" checked></div>
-					                </div>
-					                <div class="notification-item">
-					                    <label for="notifySchedule">여행 일정 리마인드</label>
-					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifySchedule" id="notifySchedule" checked></div>
-					                </div>
-					                <div class="notification-item">
-					                    <label for="notifyCommunity">커뮤니티 댓글/답글</label>
-					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyCommunity" id="notifyCommunity" checked></div>
-					                </div>
-					                <div class="notification-item">
-					                    <label for="notifyPoint">포인트 적립/사용</label>
-					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyPoint" id="notifyPoint"></div>
-					                </div>
-					                <div class="notification-item">
-					                    <label for="notifyInquiry">1:1 문의 답변</label>
-					                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notifyInquiry" id="notifyInquiry" checked></div>
-					                </div>
-					            </div>
-					        </div>
-					    </div>
-					</div>
-	                    
                     <!-- 기본 정보 섹션 -->
                     <div class="content-section">
                         <h5 class="form-section-title"><i class="bi bi-person me-2 text-brand"></i>기본 정보</h5>
@@ -213,16 +159,17 @@
                     
                      <!-- 비밀번호 확인 섹션 -->
                     <div class="content-section">
-                        <h5 class="form-section-title"><i class="bi bi-lock me-2 text-brand"></i>비밀번호 확인</h5>
-                        <p class="text-muted mb-3">비밀번호를 설정하면 일반 로그인도 사용할 수 있습니다.</p>
+                        <h5 class="form-section-title"><i class="bi bi-lock me-2 text-brand"></i>비밀번호 설정</h5>
+                        <p class="text-muted mb-3">비밀번호는 내 정보 수정 시 확인용 비밀번호로 사용 됩니다.</p>
 
+                        <div class="row">
                             <!-- 새 비밀번호 -->
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label class="form-label">새 비밀번호 <span class="text-muted">(선택)</span></label>
+                                    <label class="form-label">새 비밀번호</label>
                                     <div class="password-toggle">
                                         <input type="password" class="form-control" name="newPassword" id="newPassword"
-                                               placeholder="변경 시에만 입력하세요">
+                                               placeholder="변경할 비밀번호를 입력하세요">
                                         <span class="toggle-btn" onclick="togglePassword('newPassword')">
                                             <i class="bi bi-eye"></i>
                                         </span>
@@ -263,7 +210,7 @@
                             </div>
                         </div>
                     </div>
-                    </div>
+                    
 
                     <!-- 마케팅 수신 동의 섹션 -->
                     <div class="content-section">
@@ -300,7 +247,7 @@
                             </div>
                         </div>
                     </div>
-
+				
                     <!-- 버튼 영역 -->
                     <div class="form-actions">
                         <button type="submit" class="btn btn-primary btn-lg">
@@ -313,63 +260,12 @@
                 </form>
 			</div>
 		</div>
+	</div>
+</div>
 <!-- 다음 주소 검색 API -->
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 <script>
-// 프로필 이미지 미리보기
-document.getElementById('profileImage').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    document.getElementById('profileImageDeleted').value = 'false';
-
-    if (file) {
-        // 파일 크기 체크 (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            showToast('이미지 크기는 5MB 이하만 가능합니다.', 'error');
-            this.value = '';
-            return;
-        }
-
-        // 파일 형식 체크
-        if (!file.type.startsWith('image/')) {
-            showToast('이미지 파일만 업로드 가능합니다.', 'error');
-            this.value = '';
-            return;
-        }
-
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-        	const img = document.getElementById('profilePreview');
-            const icon = document.querySelector('.profile-default-icon');
-            img.src = evt.target.result;
-            img.style.display = 'block';
-            icon.style.display = 'none';
-        };
-        reader.readAsDataURL(file);
-
-        showToast('이미지가 선택되었습니다.', 'success');
-    }
-});
-
-function resetProfileImage() {
-    const img = document.getElementById('profilePreview');
-    const icon = document.querySelector('.profile-default-icon');
-    const fileInput = document.getElementById('profileImage');
-    const deletedFlag = document.getElementById('profileImageDeleted');
-
-    img.src = '';
-    img.style.display = 'none';
-
-    icon.style.display = 'block';
-
-    if (fileInput) fileInput.value = '';
-    if (deletedFlag) deletedFlag.value = 'true';
-
-    showToast('기본 아이콘으로 변경되었습니다.', 'info');
-}
-
 // 비밀번호 로직 선언
 const newPw = document.getElementById('newPassword');
 const confirmPw = document.getElementById('confirmPassword');
@@ -623,85 +519,6 @@ document.querySelectorAll('.form-control').forEach(input => {
         this.classList.remove('is-invalid');
     });
 });
-// 회원 탈퇴 모달 열기
-function openWithdrawModal() {
-    // 모달 초기화
-    document.getElementById('withdrawReason').value = '';
-    document.getElementById('withdrawPassword').value = '';
-    document.getElementById('withdrawAgree').checked = false;
-
-    const modal = new bootstrap.Modal(document.getElementById('withdrawModal'));
-    modal.show();
-}
-
-// 회원 탈퇴 확인
-function confirmWithdraw() {
-    const reason = document.getElementById('withdrawReason').value.trim();
-    const password = document.getElementById('withdrawPassword').value;
-    const agree = document.getElementById('withdrawAgree').checked;
-
-    if (!reason) {
-        showToast('탈퇴 사유를 입력해주세요.', 'error');
-        document.getElementById('withdrawReason').focus();
-        return;
-    }
-
-    if (!password) {
-        showToast('비밀번호를 입력해주세요.', 'error');
-        document.getElementById('withdrawPassword').focus();
-        return;
-    }
-
-    if (!agree) {
-        showToast('탈퇴 동의에 체크해주세요.', 'error');
-        return;
-    }
-
-    // 탈퇴 데이터 수집
-    const withdrawData = {
-        reason: reason,
-        password: password
-    };
-
-    console.log('탈퇴 데이터:', withdrawData);
-
-	// 실제 서버 전송 로직
-    if (confirm('정말로 탈퇴하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
-        
-        const formData = new URLSearchParams();
-        formData.append('currentPassword', password); // 서버 파라미터명과 일치시켜야 함
-        formData.append('withdrawReason', reason);   // 사유를 기록한다면 추가
-
-        fetch('${pageContext.request.contextPath}/mypage/profile/withdraw', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                // Spring Security 사용 시 CSRF 토큰은 필수입니다!
-                'X-CSRF-TOKEN': document.querySelector('meta[name="_csrf"]').content 
-            },
-            body: formData
-        })
-        .then(response => {
-            if (response.redirected) {
-                // 성공 시 서버에서 보낸 리다이렉트 경로(메인 등)로 이동
-                showToast('회원 탈퇴가 완료되었습니다.', 'success');
-                setTimeout(() => {
-                    window.location.href = response.url;
-                }, 1500);
-            } else {
-                return response.text().then(text => { throw new Error(text) });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showToast('비밀번호가 틀렸거나 탈퇴 처리 중 오류가 발생했습니다.', 'error');
-        });
-    }
-        
-    setTimeout(() => {
-        window.location.href = '${pageContext.request.contextPath}/';
-    }, 2000);
-    
 }
 </script>
 <c:if test="${not empty successMessage}">

@@ -38,16 +38,35 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 		String provider = userRequest
 				.getClientRegistration()
 				.getRegistrationId()
-				.toUpperCase();			// GOOGLE
+				.toUpperCase();			// GOOGLE / NAVER
 		
 		Map<String, Object> attributes = oAuth2User.getAttributes();
 		
-		String email = (String) attributes.get("email");
-		String snsId = (String) attributes.get("sub");	//Google 고유 ID
+//		String email = (String) attributes.get("email");
+//		String snsId = (String) attributes.get("sub");	//Google 고유 ID
 		
-		if (email == null) {
-			throw new RuntimeException("Google OAuth 응답에 email이 없습니다.");
-		}
+	    String email = null;
+	    String snsId = null;
+	    
+	    // provider 분기
+	    if ("GOOGLE".equals(provider)) {
+	        email = (String) attributes.get("email");
+	        snsId = (String) attributes.get("sub");
+
+	    } else if ("NAVER".equals(provider)) {
+	        // ⚠️ 네이버는 response 안에 있음
+	        Map<String, Object> response =
+	                (Map<String, Object>) attributes.get("response");
+
+	        if (response != null) {
+	            email = (String) response.get("email");
+	            snsId = (String) response.get("id");
+	        }
+	    }
+		
+	    if (email == null || snsId == null) {
+	        throw new RuntimeException(provider + " OAuth 응답에 필수 값이 없습니다.");
+	    }
 		
 		// 이메일 기준 회원 조회
 		MemberVO member = memberMapper.findByEmail(email);

@@ -101,11 +101,11 @@
                                     <span class="passenger-type-desc">만 12세 이상</span>
                                 </div>
                                 <div class="passenger-count-control">
-                                    <button type="button" class="count-btn minus" onclick="changePassengerCount('adult', -1)">
+                                    <button type="button" class="count-btn minus" onclick="changepassengerType('adult', -1)">
                                         <i class="bi bi-dash"></i>
                                     </button>
                                     <span class="count-value" id="adultCount">1</span>
-                                    <button type="button" class="count-btn plus" onclick="changePassengerCount('adult', 1)">
+                                    <button type="button" class="count-btn plus" onclick="changepassengerType('adult', 1)">
                                         <i class="bi bi-plus"></i>
                                     </button>
                                 </div>
@@ -116,11 +116,11 @@
                                     <span class="passenger-type-desc">만 2세 ~ 11세</span>
                                 </div>
                                 <div class="passenger-count-control">
-                                    <button type="button" class="count-btn minus" onclick="changePassengerCount('child', -1)">
+                                    <button type="button" class="count-btn minus" onclick="changepassengerType('child', -1)">
                                         <i class="bi bi-dash"></i>
                                     </button>
                                     <span class="count-value" id="childCount">0</span>
-                                    <button type="button" class="count-btn plus" onclick="changePassengerCount('child', 1)">
+                                    <button type="button" class="count-btn plus" onclick="changepassengerType('child', 1)">
                                         <i class="bi bi-plus"></i>
                                     </button>
                                 </div>
@@ -131,11 +131,11 @@
                                     <span class="passenger-type-desc">만 2세 미만 (좌석 없음)</span>
                                 </div>
                                 <div class="passenger-count-control">
-                                    <button type="button" class="count-btn minus" onclick="changePassengerCount('infant', -1)">
+                                    <button type="button" class="count-btn minus" onclick="changepassengerType('infant', -1)">
                                         <i class="bi bi-dash"></i>
                                     </button>
                                     <span class="count-value" id="infantCount">0</span>
-                                    <button type="button" class="count-btn plus" onclick="changePassengerCount('infant', 1)">
+                                    <button type="button" class="count-btn plus" onclick="changepassengerType('infant', 1)">
                                         <i class="bi bi-plus"></i>
                                     </button>
                                 </div>
@@ -331,7 +331,8 @@
 </div>
 
 <script>
-let passengerCount = { adult: 1, child: 0, infant: 0 };
+let passengerType = { adult: 1, child: 0, infant: 0 };
+let totalPassengerCount = 0;
 let basePrice = 0;
 let fuelSurcharge = 28000;
 let taxAndFees = 24000;
@@ -420,8 +421,6 @@ async function main() {
 	            // 무게 계산해서 가격 계산
 	        };
 	    });
-	    
-	    
 	    
 		console.log("passengers : ", passengerData);
 		
@@ -600,21 +599,29 @@ function createSummarySegmentHtml(flight, labelClass) {
 // 탑승객 정보 초기화 - 탑승객 줄거나 늘어날 때는 기존거 남기고 했으면 좋겠다. 예약자랑 탑승객이랑 정보 같을수도 있잖슴
 function initPassengers() {
     var container = document.getElementById('passengersContainer');
+    totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
     container.innerHTML = '';
+    // passengerType = { adult: 1, child: 0, infant: 0 };
+    // passengerType.adult = bookingData.flights.forEach((adult) => 
+    
 	// bookingData.flights[1].adult // 가져오면 적용됨
 	
+	for(let i = 1; i <= totalPassengerCount; i++){
+		console.log("수정");
+	}
+	
     // 성인 탑승객
-    for (var i = 1; i <= passengerCount.adult; i++) {
+    for (var i = 1; i <= passengerType.adult; i++) {
         addPassengerCard(container, 'adult', i);
     }
 
     // 소아 탑승객
-    for (var j = 1; j <= passengerCount.child; j++) {
+    for (var j = 1; j <= passengerType.child; j++) {
         addPassengerCard(container, 'child', j);
     }
 
     // 유아 탑승객
-    for (var k = 1; k <= passengerCount.infant; k++) {
+    for (var k = 1; k <= passengerType.infant; k++) {
         addPassengerCard(container, 'infant', k);
     }
 }
@@ -632,24 +639,24 @@ function addPassengerCard(container, type, num) {
             '<h6><i class="bi bi-person-fill me-2"></i>탑승객 ' + num + '</div><span class="passenger-type-badge">' + typeLabel + '</span></h6>' +
         '</div>' +
         '<input type="hidden" name="passengerId" value="' + num +'"/>' +
-        '<input type="hidden" name="passengersType" value="' + num +'"/>' +
+        '<input type="hidden" name="passengersType" value="' + typeLabel +'"/>' +
         '<div class="row">' +
             '<div class="col-md-4">' +
                 '<div class="form-group">' +
                     '<label class="form-label">성 <span class="text-danger">*</span></label>' +
-                    '<input type="text" class="form-control" name="lastName' + type + num + '" placeholder="홍" required>' +
+                    '<input type="text" class="form-control" name="lastName" placeholder="홍" required>' +
                 '</div>' +
             '</div>' +
             '<div class="col-md-4">' +
                 '<div class="form-group">' +
                     '<label class="form-label">이름 <span class="text-danger">*</span></label>' +
-                    '<input type="text" class="form-control" name="firstName' + type + num + '" placeholder="길동" required>' +
+                    '<input type="text" class="form-control" name="firstName" placeholder="길동" required>' +
                 '</div>' +
             '</div>' +
             '<div class="col-md-4">' +
                 '<div class="form-group">' +
                     '<label class="form-label">성별 <span class="text-danger">*</span></label>' +
-                    '<select class="form-control form-select" name="gender' + type + num + '" required>' +
+                    '<select class="form-control form-select" name="gender" required>' +
                         '<option value="">선택</option>' +
                         '<option value="M">남성</option>' +
                         '<option value="F">여성</option>' +
@@ -674,9 +681,9 @@ function addPassengerCard(container, type, num) {
 }
 
 // 탑승인원 변경
-function changePassengerCount(type, delta) {
-    var newCount = passengerCount[type] + delta;
-    var totalPassengers = passengerCount.adult + passengerCount.child + passengerCount.infant;
+function changepassengerType(type, delta) {
+    var newCount = passengerType[type] + delta;
+    var totalPassengers = passengerType.adult + passengerType.child + passengerType.infant;
 
     // 유효성 검사
     if (type === 'adult') {
@@ -689,7 +696,7 @@ function changePassengerCount(type, delta) {
             return;
         }
         // 유아는 성인 수보다 많을 수 없음
-        if (newCount < passengerCount.infant) {
+        if (newCount < passengerType.infant) {
             showToast('유아 수가 성인 수보다 많을 수 없습니다.', 'warning');
             return;
         }
@@ -701,7 +708,7 @@ function changePassengerCount(type, delta) {
         }
     } else if (type === 'infant') {
         if (newCount < 0) return;
-        if (newCount > passengerCount.adult) {
+        if (newCount > passengerType.adult) {
             showToast('유아는 성인 수를 초과할 수 없습니다.', 'warning');
             return;
         }
@@ -715,7 +722,7 @@ function changePassengerCount(type, delta) {
     }
 
     // 인원 변경
-    passengerCount[type] = newCount;
+    passengerType[type] = newCount;
 
     // UI 업데이트
     document.getElementById(type + 'Count').textContent = newCount;
@@ -746,18 +753,18 @@ function changePassengerCount(type, delta) {
 function updateCountButtons() {
     // 성인 마이너스 버튼
     var adultMinus = document.querySelector('.passenger-count-row:nth-child(1) .count-btn.minus');
-    adultMinus.disabled = passengerCount.adult <= 1;
+    adultMinus.disabled = passengerType.adult <= 1;
 
     // 소아 마이너스 버튼
     var childMinus = document.querySelector('.passenger-count-row:nth-child(2) .count-btn.minus');
-    childMinus.disabled = passengerCount.child <= 0;
+    childMinus.disabled = passengerType.child <= 0;
 
     // 유아 마이너스 버튼
     var infantMinus = document.querySelector('.passenger-count-row:nth-child(3) .count-btn.minus');
-    infantMinus.disabled = passengerCount.infant <= 0;
+    infantMinus.disabled = passengerType.infant <= 0;
 
     // 총 인원 9명 제한
-    var totalPassengers = passengerCount.adult + passengerCount.child + passengerCount.infant;
+    var totalPassengers = passengerType.adult + passengerType.child + passengerType.infant;
     var plusButtons = document.querySelectorAll('.count-btn.plus');
     plusButtons.forEach(function(btn) {
         btn.disabled = totalPassengers >= 9;
@@ -765,7 +772,7 @@ function updateCountButtons() {
 
     // 유아 플러스 버튼 (성인 수 제한)
     var infantPlus = document.querySelector('.passenger-count-row:nth-child(3) .count-btn.plus');
-    if (passengerCount.infant >= passengerCount.adult) {
+    if (passengerType.infant >= passengerType.adult) {
         infantPlus.disabled = true;
     }
 }
@@ -773,7 +780,7 @@ function updateCountButtons() {
 // 총 금액 계산 - 짐 까지 정해야됨
 function calculateTotal() {
 	// 이거 고쳐야됨
-    var totalPassengers = passengerCount.adult + passengerCount.child;
+    var totalPassengers = passengerType.adult + passengerType.child;
     var segmentCount = bookingData ? bookingData.flights.length : 1;
 
     // 항공 운임은 이미 모든 구간 합계 (basePrice = totalFlightPrice)
@@ -786,14 +793,14 @@ function calculateTotal() {
     document.getElementById('summaryFare').textContent = totalFlightPrice + '원 x ' + totalPassengers + '명';
     document.getElementById('summaryFuel').textContent = (fuelSurcharge * segmentCount).toLocaleString() + '원 x ' + totalPassengers + '명';
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPassengers + '명';
-    document.getElementById('totalAmount').textContent = totalFlightPrice * passengerCount.adult + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
-    document.getElementById('payBtnText').textContent = totalFlightPrice * passengerCount.adult;
+    document.getElementById('totalAmount').textContent = totalFlightPrice * passengerType.adult + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
+    document.getElementById('payBtnText').textContent = totalFlightPrice * passengerType.adult;
 
     // 탑승객 정보 업데이트 - 이것 또한
     var passengerText = [];
-    if (passengerCount.adult > 0) passengerText.push('성인 ' + passengerCount.adult + '명');
-    if (passengerCount.child > 0) passengerText.push('소아 ' + passengerCount.child + '명');
-    if (passengerCount.infant > 0) passengerText.push('유아 ' + passengerCount.infant + '명');
+    if (passengerType.adult > 0) passengerText.push('성인 ' + passengerType.adult + '명');
+    if (passengerType.child > 0) passengerText.push('소아 ' + passengerType.child + '명');
+    if (passengerType.infant > 0) passengerText.push('유아 ' + passengerType.infant + '명');
     document.getElementById('summaryPassengers').textContent = passengerText.join(', ');
 }
 
@@ -859,7 +866,7 @@ function toggleSeat(btn) {
         btn.classList.add('available');
         selectedSeats = selectedSeats.filter(function(s) { return s !== seatId; });
     } else {
-        if (selectedSeats.length >= (passengerCount.adult + passengerCount.child)) {
+        if (selectedSeats.length >= (passengerType.adult + passengerType.child)) {
             showToast('탑승객 수만큼만 좌석을 선택할 수 있습니다.', 'warning');
             return;
         }

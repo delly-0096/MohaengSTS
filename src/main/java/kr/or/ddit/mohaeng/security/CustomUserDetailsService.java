@@ -8,7 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import kr.or.ddit.mohaeng.adminLogin.mapper.IAdminMapper;
+import kr.or.ddit.mohaeng.admin.login.mapper.IAdminMapper;
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
 import kr.or.ddit.mohaeng.vo.CustomUser;
 import kr.or.ddit.mohaeng.vo.MemberVO;

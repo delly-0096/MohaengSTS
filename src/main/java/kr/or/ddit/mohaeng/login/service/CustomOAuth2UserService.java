@@ -1,6 +1,8 @@
 package kr.or.ddit.mohaeng.login.service;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,11 +12,16 @@ import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserServ
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.vo.MemUserVO;
+import kr.or.ddit.mohaeng.vo.MemberAuthVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 	
@@ -59,27 +66,39 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 		
 	}
 
+	@Transactional
 	private MemberVO createSocialMember(String email, String snsId, String provider) {
 		
 		MemberVO member = new MemberVO();
-		member.setMemEmail(email);
-		member.setMemId(provider.toLowerCase() + "_" + System.currentTimeMillis());
-		member.setMemPassword(
-				encoder.encode("SOCIAL_LOGIN_" + snsId)
-				);
-		member.setMemName("SNS회원");
-		member.setMemSnsYn("Y");
-		member.setSnsType(provider);
-		member.setSnsId(snsId);
-		member.setTempPwYn("N");
-		member.setEnabled(1);
-		member.setDelYn("N");
-		
-		memberMapper.insertSocialMember(member);
-		
-		return memberMapper.findByEmail(email);
+	    member.setMemEmail(email);
+	    member.setMemId(provider.toLowerCase() + "_" + System.currentTimeMillis());
+	    member.setMemPassword(encoder.encode("SOCIAL_LOGIN_" + snsId));
+	    member.setMemName("SNS회원_" + snsId.substring(0,5));
+	    member.setJoinCompleteYn("N");           
+	    member.setTempPwYn("N");
+	    member.setMemSnsYn("Y");
+	    member.setSnsType(provider);   // GOOGLE
+	    member.setSnsId(snsId);        // sub 값
+	    member.setEnabled(1);
+	    member.setDelYn("N");
+	    
+	    // 1. MEMBER 테이블 저장
+	    memberMapper.insertSocialMember(member);
+	    
+	    log.info("생성된 번호 체크: {}", member.getMemNo());
+	    
+	    // 2. 권한 테이블(MEMBER_AUTH) 저장 (여기서 미리 넣어버리기!)
+	    // memberVO에 memNo가 selectKey로 담겨온다면 바로 사용
+	    memberMapper.insertAuth(member); 
+	    
+	    List<MemberAuthVO> authList = new ArrayList<>();
+	    MemberAuthVO authVO = new MemberAuthVO();
+	    authVO.setAuth("ROLE_MEMBER");
+	    authList.add(authVO);
+	    member.setAuthList(authList);
+
+	    return member;
 	}
-	
 	
 	
 	

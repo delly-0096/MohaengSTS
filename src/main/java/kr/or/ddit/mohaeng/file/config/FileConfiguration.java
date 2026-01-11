@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.config;
+package kr.or.ddit.mohaeng.file.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;

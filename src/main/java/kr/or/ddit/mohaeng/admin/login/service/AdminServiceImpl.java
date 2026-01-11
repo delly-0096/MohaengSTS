@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.adminLogin.service;
+package kr.or.ddit.mohaeng.admin.login.service;
 
 import java.time.Duration;
 
@@ -6,8 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
-import kr.or.ddit.mohaeng.adminLogin.mapper.IAdminMapper;
+import kr.or.ddit.mohaeng.admin.login.mapper.IAdminMapper;
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
 import kr.or.ddit.mohaeng.util.TokenProvider;
 import kr.or.ddit.mohaeng.vo.AdminLoginVO;

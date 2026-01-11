@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.adminLogin.service;
+package kr.or.ddit.mohaeng.admin.login.service;
 
 
 import kr.or.ddit.mohaeng.vo.AdminLoginVO;

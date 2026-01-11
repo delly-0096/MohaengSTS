@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.adminLogin.config;
+package kr.or.ddit.mohaeng.admin.login.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;

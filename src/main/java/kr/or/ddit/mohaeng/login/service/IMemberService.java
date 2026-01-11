@@ -8,6 +8,7 @@ import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
+import kr.or.ddit.mohaeng.vo.MemUserVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
 public interface IMemberService {
@@ -37,7 +38,7 @@ public interface IMemberService {
 	 *	@param memberVO 회원가입을 위한 회원정보
 	 *	@return ServiceResult 회원가입 후 결과(OK, FAILED)
 	 */
-	public ServiceResult register(MemberVO memberVO);
+	public ServiceResult register(MemberVO memberVO, MemUserVO memUserVO);
 
 	/**
 	 *	<p> 회원가입시 아이디 중복체크 </p>
@@ -142,6 +143,13 @@ public interface IMemberService {
 	 * @param tempPwYn 임시 비밀번호 사용 여부 ('Y' / 'N')
 	 */
 	public void updateTempPwYn(int memNo, String string);
+
+	public void setPasswordForSnsUser(int memNo, String newPassword);
+
+	public void updateSnsMemberProfile(MemberUpdateDTO updateDTO);
+
+	public void updateJoinCompleteYn(int memNo, String string);
+
 
 
 

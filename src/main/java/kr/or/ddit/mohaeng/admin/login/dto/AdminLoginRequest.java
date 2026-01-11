@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.adminLogin.dto;
+package kr.or.ddit.mohaeng.admin.login.dto;
 
 import lombok.Getter;
 import lombok.Setter;

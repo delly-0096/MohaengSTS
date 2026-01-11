@@ -39,6 +39,7 @@ import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
 import kr.or.ddit.mohaeng.login.service.IMemberService;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
+import kr.or.ddit.mohaeng.vo.MemUserVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -172,11 +173,6 @@ public class LoginController {
 		// 회원 타입에 따라 권한 생성
 		List<GrantedAuthority> authorities = new ArrayList<>();
 
-		/*
-		 * if ("BUSINESS".equals(memType)) { authorities.add(new
-		 * SimpleGrantedAuthority("BUSINESS")); } else { authorities.add(new
-		 * SimpleGrantedAuthority("MEMBER")); }
-		 */
 		CustomUserDetails userDetails =
 		        new CustomUserDetails(member);
 
@@ -225,24 +221,33 @@ public class LoginController {
 	// 일반 회원가입 기능
 	@PostMapping("/register/member")
 	public String registerMember(MemberVO memberVO, Model model, RedirectAttributes ra) {
-		log.info("register() 실행...!");
+		
+		log.info("register() 실행...! joinMode={}", memberVO.getJoinMode());
 
-		// 일반회원 가입
-		String goPage = "";
-		ServiceResult result = memberService.register(memberVO);
+	    if (memberVO.getJoinMode() == null) {
+	        memberVO.setJoinMode("NORMAL");
+	    }
+	    
+	    MemUserVO memUserVO = memberVO.getMemUser();
 
-		if (result == ServiceResult.OK) {
-		    ra.addFlashAttribute("successMessage", "회원가입이 완료되었습니다. 로그인 해주세요!");
-		    ra.addFlashAttribute("memId", memberVO.getMemId());
-		    goPage = "redirect:/member/login";
-		} else {
-		    model.addAttribute("errorMessage", "회원가입 중 오류가 발생했습니다.");
-		    model.addAttribute("member", memberVO);
-		    goPage = "member/register";
-		}
+	    if (memUserVO == null) {
+	        ra.addFlashAttribute("errorMessage", "회원 정보가 올바르지 않습니다.");
+	        return "redirect:/register";
+	    }
 
+	    // 서비스 호출 
+	    ServiceResult result = memberService.register(memberVO, memUserVO);
 
-		return goPage;
+	    if (result == ServiceResult.OK) {
+	        ra.addFlashAttribute("successMessage", "회원가입이 완료되었습니다. 로그인 해주세요!");
+	        ra.addFlashAttribute("memId", memberVO.getMemId());
+	        return "redirect:/member/login";
+	    } else {
+	        model.addAttribute("errorMessage", "회원가입 중 오류가 발생했습니다.");
+	        model.addAttribute("member", memberVO);
+	        return "redirect:/register";
+	    }
+
 	}
   
 	/* 기업 회원가입 기능*/

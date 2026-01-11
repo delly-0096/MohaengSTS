@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.adminLogin.mapper;
+package kr.or.ddit.mohaeng.admin.login.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 

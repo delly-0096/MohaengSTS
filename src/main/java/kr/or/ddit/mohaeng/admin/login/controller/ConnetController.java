@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.adminLogin.controller.conn;
+package kr.or.ddit.mohaeng.admin.login.controller;
 
 import java.time.Duration;
 import java.util.Date;
@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.servlet.http.HttpSession;
-import kr.or.ddit.mohaeng.adminLogin.dto.AdminLoginRequest;
-import kr.or.ddit.mohaeng.adminLogin.service.IAdminService;
+import kr.or.ddit.mohaeng.admin.login.dto.AdminLoginRequest;
+import kr.or.ddit.mohaeng.admin.login.service.IAdminService;
 import kr.or.ddit.mohaeng.captchaApi.service.ICaptchaAPIService;
 import kr.or.ddit.mohaeng.util.TokenProvider;
 import kr.or.ddit.mohaeng.vo.AdminLoginVO;

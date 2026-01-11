@@ -91,7 +91,7 @@
     </insert>
 
     <!-- 일반회원 권한 저장 -->
-	<insert id="insertAuth" parameterType="kr.or.ddit.mohaeng.vo.MemberAuthVO">
+	<insert id="insertAuth" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
 
 	    INSERT INTO MEMBER_AUTH (
 	        MEM_AUTH_NO, MEM_NO, AUTH, REG_DT
@@ -103,9 +103,23 @@
 	<!-- 일반회원 정보 저장 -->
 	<insert id="insertUser" parameterType="kr.or.ddit.mohaeng.vo.MemUserVO">
     INSERT INTO MEM_USER (
-        MEM_NO, NICKNAME, BIRTH_DATE, GENDER, ZIP, ADDR1, ADDR2, TEL
+        MEM_NO
+        , NICKNAME
+        , BIRTH_DATE
+        , GENDER
+        , ZIP
+        , ADDR1
+        , ADDR2
+        , TEL
     ) VALUES (
-        #{memNo}, #{memUser.nickname}, #{memUser.birthDate}, #{memUser.gender}, #{memUser.zip}, #{memUser.addr1}, #{memUser.addr2}, #{memUser.tel}
+        #{memNo}
+        , #{nickname}
+        , #{birthDate}
+        , #{gender}
+        , #{zip}
+        , #{addr1}
+        , #{addr2}
+        , #{tel}
     )
 	</insert>
 
@@ -254,6 +268,15 @@
 	    WHERE MEM_NO = #{memNo}
 	</update>
 	
+	<!-- SNS 회원 가입 완료 처리 -->
+	<update id="updateJoinCompleteYn">
+	    UPDATE MEMBER
+	    SET
+	        JOIN_COMPLETE_YN = #{joinCompleteYn},
+	        UDT_DT = SYSDATE
+	    WHERE MEM_NO = #{memNo}
+	</update>
+	
 	<!-- 비밀번호 재설정을 위한 회원 조회 -->
 	<select id="selectForPwReset" parameterType="kr.or.ddit.mohaeng.vo.MemberVO" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
 	    SELECT
@@ -277,6 +300,9 @@
 	</select>
 	
 	<insert id="insertSocialMember" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+		<selectKey keyProperty="memNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_MEMBER_NO.NEXTVAL FROM DUAL
+	    </selectKey>
 	    INSERT INTO MEMBER (
 	        MEM_NO
 	        , MEM_ID
@@ -292,7 +318,7 @@
 	        , REG_DT
 	        , TEMP_PW_YN
 	    ) VALUES (
-	        SEQ_MEMBER_NO.NEXTVAL
+	        #{memNo}
 	        , #{memId}
 	        , #{memPassword}
 	        , #{memEmail}
@@ -307,5 +333,33 @@
 	        , 'N'
 	    )
 	</insert>
+	
+	<!-- sns 회원 select -->
+	<select id="selectMemUserByMemNo"
+        resultType="kr.or.ddit.mohaeng.vo.MemUserVO">
+	    SELECT *
+	    FROM MEM_USER
+	    WHERE MEM_NO = #{memNo}
+	</select>
+	
+	<!-- sns 회원 mem_user insert -->
+	<insert id="insertMemUser" parameterType="kr.or.ddit.mohaeng.vo.MemUserVO">
+	    INSERT INTO MEM_USER (
+	        MEM_NO, NICKNAME, TEL, BIRTH_DATE, GENDER, ZIP, ADDR1, ADDR2
+	    ) VALUES (
+	        #{memNo}, #{nickname}, #{tel}, #{birthDate},
+	        #{gender}, #{zip}, #{addr1}, #{addr2}
+	    )
+	</insert>
+	
+	 <update id="updateSnsProfile" parameterType="kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO">
+        UPDATE MEMBER
+        SET
+            MEM_NAME = #{memName},
+            MEM_EMAIL = #{memEmail},
+            UDT_DT = SYSDATE
+        WHERE MEM_NO = #{memNo}
+    </update>
+	
 	
 </mapper>

@@ -21,21 +21,6 @@
 		)
 	</insert>
 
-	<select id="selectAirportList" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.AirportVO">
-		select
-			airport_no, airport_nm, iata_code, city_name, airport_id
-		from airport
-		<where>
-			<if test="keyword != null and keyword != ''">
-				(airport_nm LIKE '%' || #{keyword} || '%')
-	            OR (city_name LIKE '%' || #{keyword} || '%')
-	            OR (UPPER(iata_code) LIKE '%' || UPPER(#{keyword}) || '%')
-			</if>
-		</where>
-		order by airport_no
-	</select>
-
-
 	<select id="getAirportList" resultType="kr.or.ddit.mohaeng.vo.AirportVO">
 		select
 			airport_no, airport_nm, iata_code, city_name, airport_id

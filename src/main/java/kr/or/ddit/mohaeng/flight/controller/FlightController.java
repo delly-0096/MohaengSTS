@@ -12,6 +12,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import kr.or.ddit.mohaeng.flight.service.IFlightService;
 import kr.or.ddit.mohaeng.vo.AirportVO;
 import kr.or.ddit.mohaeng.vo.FlightProductVO;
@@ -20,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller
-@RequestMapping("/product/flight")
 public class FlightController {
 
 	@Autowired
@@ -31,29 +33,21 @@ public class FlightController {
 	 * @author sdg
 	 * @return 항공권 조회 페이지
 	 */
-	@GetMapping("")
-	public String flightPage() {
+	@GetMapping("/product/flight")
+	public String flightPage(Model model) {
+		// 이 데이터 json으로 보낼지, 그냥 객체로 보낼지
+		List<AirportVO> airportList = service.getAirportList();
+		ObjectMapper objectMapper = new ObjectMapper();
+		String airportListJson;
 		
-//		List<FlightProductVO> flightList = service.getFlightList();
-//		for(FlightProductVO flight : flightList) {
-//			System.out.println(flight.getEconomyCharge());
-//			log.info("금액");
-//		}
-//		model.addAttribute("flightList", flightList);
+		try {
+			airportListJson = objectMapper.writeValueAsString(airportList);
+			model.addAttribute("airportList", airportListJson);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		
 		return "product/flight";
-	}
-	
-	
-	/**
-	 * <p>공항 찾기</p>
-	 * @param keyword	공항 검색어
-	 * @return 검색어의 맞는 공항 정보
-	 */
-	@ResponseBody
-	@GetMapping("/search")
-	public List<AirportVO> searchAirport(@RequestParam(required = false) String keyword){
-//		log.info("searchAirport 실행", keyword);
-		return service.selectAirportList(keyword);
 	}
 	
 	/**
@@ -62,7 +56,7 @@ public class FlightController {
 	 * @return 조건에 맞는 항공권 정보
 	 */
 	@ResponseBody
-	@PostMapping("/searchFlight")
+	@PostMapping("/product/flight/searchFlight")
 	public List<FlightProductVO> searchFlight(@RequestBody FlightProductVO flightProduct){
 		log.info("flightController.searchFlight => {}", flightProduct);
 		return service.getFlightList(flightProduct);
@@ -75,7 +69,7 @@ public class FlightController {
 	 * @return memNo, memName, memEmail, tel
 	 */
 	@ResponseBody
-	@PostMapping("/user")
+	@PostMapping("/product/flight/user")
 	public MemberVO flighterInfo(@RequestBody MemberVO memberVO) {
 		log.info("결제할 정보 가져오기 {}", memberVO.getMemId());
 		MemberVO member = service.getPayPerson(memberVO.getMemId());
@@ -89,7 +83,7 @@ public class FlightController {
 	 * @author sdg
 	 * @return 예약페이지
 	 */
-	@GetMapping("/booking")
+	@GetMapping("/product/flight/booking")
 	public String flightBooking() {
 		return "product/flightBooking";
 	}

@@ -35,17 +35,6 @@ public class FlightServiceImpl implements IFlightService {
 	public static final String serviceKey = "a7bc76e60824b232ff8273a1191a079f36c11cee6fdbe0be73f54b73d5c510f9";
 	
 	/**
-	 * <p>공항 조회</p>
-	 * @author sdg
-	 * @param keyword	공항 검색어
-	 * @return 검색어에 맞는 공항 정보
-	 */
-	@Override
-	public List<AirportVO> selectAirportList(String keyword) {
-		return mapper.selectAirportList(keyword);
-	}
-	
-	/**
 	 * <p>전체 공항 조회</p>
 	 * @author sdg
 	 * @return 전체 공항 목록

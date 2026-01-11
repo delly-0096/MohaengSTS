@@ -12,7 +12,6 @@ import kr.or.ddit.mohaeng.vo.MemberVO;
 @Mapper
 public interface IFlightMapper {
 	public int registerAirport(AirportVO vo);					// 공항 등록
-	public List<AirportVO> selectAirportList(String keyword);	// 공항 목록 검색
 	public int registerAirline(AirlineVO vo);					// 항공 등록
 	
 	public AirlineVO selectAirline(String airlineNm);			// 항공사 id 가져오기 위한 것

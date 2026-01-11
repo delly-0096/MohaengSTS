@@ -346,7 +346,7 @@ let amount = 0;
 
 let widgets = null;
 
-let cabin = null;
+let cabin = null;	// 좌석 등급
 
 
 async function main() {
@@ -512,6 +512,8 @@ function initFlightDisplay() {
     var tripTypeBadge = document.getElementById('tripTypeBadge');
     var summaryTripType = document.getElementById('summaryTripType');
     var tripTypeText = getTripTypeText(bookingData.tripType);
+    // var tripTypeText = bookingData.tripType === 'round' ? : '왕복' : '편도';
+    
     tripTypeBadge.textContent = tripTypeText;
     summaryTripType.textContent = tripTypeText;
 

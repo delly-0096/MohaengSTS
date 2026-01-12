@@ -260,7 +260,6 @@
 		where i.INQRY_NO = #{inqryNo}
 		  and afd.USE_YN = 'Y'
 		order by afd.REG_DT
-
 	</select>
 
 	<!-- 첨부파일 단건 조회 (다운로드용) -->
@@ -273,4 +272,14 @@
 		where FILE_NO=#{fileNo}
 		and USE_YN='Y'
 	</select>
+
+	<!-- 나중에 alaram관련 xml로 옮기면 good~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  -->
+	<!--알람 읽음 처리-->
+	<update id="updateAlaramRead" parameterType="int">
+		UPDATE ALARM
+		   SET READ_YN = 'Y'
+			  ,READ_DT = SYSDATE <!--관리자가 확인할 수 있게 읽은 시간 기록  -->
+		 WHERE ALARM_NO = #{alarmNo}
+		   AND READ_YN = 'N'
+	</update>
 </mapper>

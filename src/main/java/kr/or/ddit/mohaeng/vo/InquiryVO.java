@@ -26,7 +26,7 @@ public class InquiryVO {
     private String inqryCn;             // 문의내용
     private Integer inquiryTargetNo;    // 관련예약번호
     private String inqryEmail;          // 회원가입시이메일
-    private Integer attachNo;          // 첨부파일번호
+    private Integer attachNo;          	// 첨부파일번호
     private Date regDt;                 // 등록일자
     private Date modDt;                 // 수정일자
     private String delYn;               // 삭제여부

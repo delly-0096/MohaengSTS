@@ -80,7 +80,7 @@
                         <div class="passenger-count-setting">
                             <div class="passenger-count-row">
                                 <div class="passenger-count-info">
-                                    <span class="passenger-type-label" >성인</span>
+                                    <span class="passenger-type-label">성인</span>
                                     <span class="passenger-type-desc">만 12세 이상</span>
                                 </div>
                                 <div class="passenger-count-control">
@@ -247,10 +247,6 @@
                             <span class="summary-label">선택 좌석</span>
                             <span class="summary-value" id="summarySeats">-</span>
                         </div>
-                        <!-- <div class="summary-row" id="summarySeatFeeRow" style="display: none;">
-                            <span class="summary-label">좌석 추가요금</span>
-                            <span class="summary-value" id="summarySeatFee"> 원</span>
-                        </div> -->
                         <div class="summary-divider"></div>
                         <div class="summary-row">
                             <span class="summary-label">항공 운임 합계</span>
@@ -264,7 +260,7 @@
                             <span class="summary-label">세금 및 수수료</span>
                             <span class="summary-value" id="summaryTax">4000원 고정</span>
                         </div>
-                        <div class="summary-row detail" style="margin-left:15px; display: none;">
+                        <div class="summary-row extra" style="margin-left:15px; display: none;">
                             <span class="summary-label">추가 요금</span>
                             <span class="summary-value" id="summaryExtra"></span>
                         </div>
@@ -352,8 +348,7 @@ async function main() {
 	  customerKey,
 	});
 	
-	// 비회원 결제
-	// const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
+	// 비회원 결제 const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
 	
 	// ------ 주문의 결제 금액 설정 ------
 	await widgets.setAmount({
@@ -383,20 +378,23 @@ async function main() {
 	
 	console.log("userData : ", userData);
 	
-	let customData = await userData.json();
+	customData = await userData.json();
 	console.log("customData : ", customData);		// 이 정보로 입력, session에도 저장?
 	
 	
-	let bookerName = document.querySelector("#bookerName");
-	let bookerPhone = document.querySelector("#bookerPhone");
-	let bookerEmail = document.querySelector("#bookerEmail");
-	availablePoints = document.querySelector("#availablePoints");
+	const bookerName = document.querySelector("#bookerName");
+	const bookerPhone = document.querySelector("#bookerPhone");
+	const bookerEmail = document.querySelector("#bookerEmail");
+	const availablePoints = document.querySelector("#availablePoints");
 	
 	bookerName.value = customData.memName;
 	bookerPhone.value = customData.tel.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 	bookerEmail.value = customData.memEmail;
 	availablePoints.innerHTML = customData.point;
 	
+	if(customData.point >= 1000){
+		document.querySelector("#usePointInput").disabled = false;
+	}
 	
 	// 결제 form
 	const bookingForm = document.querySelector("#flightBookingForm");
@@ -415,9 +413,8 @@ async function main() {
 	            firstName: card.querySelector('input[name^="firstName"]').value,
 	            gender: card.querySelector('select[name^="gender"]').value,
 	            birthDate: card.querySelector('input[name^="birthDate"]').value,
-	            extraBaggage: card.querySelector('input[name^="extraBaggage"]').value
+	            extraBaggage: card.querySelector('select[name^="extraBaggage"]').value
 	            // 좌석 - 
-	            // 무게 계산해서 가격 계산
 	        };
 	    });
 	    
@@ -598,55 +595,54 @@ function addPassengerCard(container, type, num) {
     div.className = 'passenger-card';
     // type num은 빼기
     div.innerHTML =
-	        '<div class="passenger-card-header">' +
-	            '<h6><i class="bi bi-person-fill me-2"></i>탑승객 ' + num + '</div><span class="passenger-type-badge" style="color: #ffffff;">' + typeLabel + '</span></h6>' +
-	        '</div>' +
-	        '<input type="hidden" name="passengerId" value="' + num +'"/>' +
-	        '<input type="hidden" name="passengersType" value="' + typeLabel +'"/>' +
-	        '<div class="row">' +
-	            '<div class="col-md-4">' +
-	                '<div class="form-group">' +
-	                    '<label class="form-label">성 <span class="text-danger">*</span></label>' +
-	                    '<input type="text" class="form-control" name="lastName" placeholder="홍" required>' +
-	                '</div>' +
-	            '</div>' +
-	            '<div class="col-md-4">' +
-	                '<div class="form-group">' +
-	                    '<label class="form-label">이름 <span class="text-danger">*</span></label>' +
-	                    '<input type="text" class="form-control" name="firstName" placeholder="길동" required>' +
-	                '</div>' +
-	            '</div>' +
-	            '<div class="col-md-4">' +
-	                '<div class="form-group">' +
-	                    '<label class="form-label">성별 <span class="text-danger">*</span></label>' +
-	                    '<select class="form-control form-select" name="gender" required>' +
-	                        '<option value="">선택</option>' +
-	                        '<option value="M">남성</option>' +
-	                        '<option value="F">여성</option>' +
-	                    '</select>' +
-	                '</div>' +
-	            '</div>' +
-	            '<div class="col-md-4">' +
-	                '<div class="form-group mb-0">' +
-	                    '<label class="form-label">생년월일 <span class="text-danger">*</span></label>' +
-	                    '<input type="date" class="form-control" name="birthDate" required>' +
-	                '</div>' +
-	            '</div>' +
-	            '<div class="col-md-4">' +
-	            '<div class="form-group mb-0">' +
-	                '<label class="form-label">추가 수하물 <span class="text-danger">*</span></label>' +
-	                '<select class="form-control form-select" name="extraBaggage" onchange="calculateTotal()" required>' +
-		                '<option value="0">추가없음</option>' +
-		                '<option value="5">5kg (10,000원)</option>' +
-		                '<option value="10">10kg (20,000원)</option>' +
-		            '</select>' +
-	            '</div>' +
-	        '</div>' +
-        '</div>';
-        
+	        `<div class="passenger-card-header">
+	            <h6><i class="bi bi-person-fill me-2"></i>탑승객 \${num}</div><span class="passenger-type-badge" style="color: #ffffff;">\${typeLabel}</span></h6>
+	        </div>
+	        <input type="hidden" name="passengerId" value="\${num}"/>
+	        <input type="hidden" name="passengersType" value="\${typeLabel}"/>
+	        <div class="row">
+	            <div class="col-md-4">
+	                <div class="form-group">
+	                    <label class="form-label">성 <span class="text-danger">*</span></label>
+	                    <input type="text" class="form-control" name="lastName" placeholder="홍" required>
+	                </div>
+	            </div>
+	            <div class="col-md-4">
+	                <div class="form-group">
+	                    <label class="form-label">이름 <span class="text-danger">*</span></label>
+	                    <input type="text" class="form-control" name="firstName" placeholder="길동" required>
+	                </div>
+	            </div>
+	            <div class="col-md-4">
+	                <div class="form-group">
+	                    <label class="form-label">성별 <span class="text-danger">*</span></label>
+	                    <select class="form-control form-select" name="gender" required>
+	                        <option value="">선택</option>
+	                        <option value="M">남성</option>
+	                        <option value="F">여성</option>
+	                    </select>
+	                </div>
+	            </div>
+	            <div class="col-md-4">
+	                <div class="form-group mb-0">
+	                    <label class="form-label">생년월일 <span class="text-danger">*</span></label>
+	                    <input type="date" class="form-control" name="birthDate" required>
+	                </div>
+	            </div>
+	            <div class="col-md-4">
+	            <div class="form-group mb-0">
+	                <label class="form-label">추가 수하물 <span class="text-danger">*</span></label>
+	                <select class="form-control form-select" name="extraBaggage" onchange="calculateTotal()" required>
+		                <option value="0">추가없음</option>
+		                <option value="5">5kg (10,000원)</option>
+		                <option value="10">10kg (20,000원)</option>
+		            </select>
+	            </div>
+	        </div>
+        </div>`;
+        // calculateTotal 말고 다른거 실행 -> calculateTotal 전달하기 
     container.appendChild(div);
 }
-
 
 
 // 탑승인원 변경
@@ -698,18 +694,17 @@ function changepassengerType(type, delta) {
     updateCountButtons();
 
     // 탑승객 카드 재생성
-    initPassengers();
+    initPassengers();	// 초기화 x
 
     // 좌석 선택 초기화 (인원 변경 시)
     if (selectedSeatsBySegment.length > 0) {
     	selectedSeatsBySegment = [[], []];
         document.getElementById('summarySeatsRow').style.display = 'none';
-        document.getElementById('summarySeatFeeRow').style.display = 'none';
         document.querySelector('.seat-selection-info').innerHTML =
-            '<p>좌석 선택은 선택사항입니다. 미선택 시 자동 배정됩니다.</p>' +
-            '<button type="button" class="btn btn-outline" onclick="openSeatSelection()">' +
-                '<i class="bi bi-grid-3x3 me-1"></i>좌석 선택하기' +
-            '</button>';
+            `<p>좌석 선택은 선택사항입니다. 미선택 시 자동 배정됩니다.</p>
+            <button type="button" class="btn btn-outline" onclick="openSeatSelection()">
+                <i class="bi bi-grid-3x3 me-1"></i>좌석 선택하기
+            </button>`;
         initSeatMap();
     }
 
@@ -762,7 +757,12 @@ function calculateTotal() {
 //     var totalPassengers = passengerType.adult + passengerType.child;
     segmentCount = bookingData ? bookingData.flights.length : 1;
 
+    // Math.floor(basePrice * 0.75); = 아이 요금 적용하기
+    
+    
    	// 2. 수하물 추가 요금 합산 (DOM에서 현재 선택된 값들 수집)
+   	let extraFeeView = document.querySelector(".summary-row.extra");
+    let summaryExtra = document.querySelector("#summaryExtra");
     let extraBaggageFee = 0;
     document.querySelectorAll('select[name="extraBaggage"]').forEach(select => {
         const weight = parseInt(select.value);
@@ -770,31 +770,36 @@ function calculateTotal() {
         	extraBaggageFee += 10000;
         }
         else if (weight === 10){
-        	 extraBaggageFee += 2000;
+        	extraBaggageFee += 20000;
         }
     });
-    	
+    if(extraBaggageFee !== 0) extraFeeView.style.display = 'flex';
+    summaryExtra.innerHTML = extraBaggageFee;
     
+						// 처음에 받은 토탈
+    totalFlightPrice = (basePrice + extraBaggageFee) * passengerType.adult;	
+    // basePrice
+
     // 요금 표시 업데이트
-    document.getElementById('summaryFare').textContent = (totalFlightPrice).toLocaleString() + '원 x ' + totalPeople + '명';
+    document.getElementById('summaryFare').textContent = (basePrice).toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryFuel').textContent = (fuelSurcharge * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     
-    document.getElementById('totalAmount').textContent = (totalFlightPrice * passengerType.adult).toLocaleString()  + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
-    document.getElementById('payBtnText').textContent = (totalFlightPrice * passengerType.adult).toLocaleString();
+    document.getElementById('totalAmount').textContent = (totalFlightPrice).toLocaleString()  + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
+    document.getElementById('payBtnText').textContent = (totalFlightPrice).toLocaleString();
 
     
-/*     if (widgets) {
-        try {
-            await widgets.setAmount({
-                currency: "KRW",
-                value: finalAmount,
-            });
-        } catch (error) {
-            console.error("결제 금액 업데이트 실패:", error);
-        }
+    if (widgets) {
+        widgets.setAmount({
+            currency: "KRW",
+            value: totalFlightPrice,
+        }).then(() => {
+            console.log("위젯 금액 업데이트 완료: ", totalFlightPrice);
+        }).catch(err => {
+            console.error("위젯 금액 업데이트 실패: ", err);
+        });
     }
-     */
+     
     // 탑승객 정보 업데이트 - 이것 또한
     var passengerText = [];
     if (passengerType.adult > 0) passengerText.push('성인 ' + passengerType.adult + '명');
@@ -841,7 +846,7 @@ function initSeatMap() {
     html += `<div class="seat-row-number"></div>`;
     columns.forEach(function(col) {
         if (col === '') {
-            html += '<div class="seat-aisle"></div>';
+            html += `<div class="seat-aisle"></div>`;
         } else {
             html += `<div class="seat" style="background: none; cursor: default; color: var(--gray-medium);">\${col}</div>`;
         }
@@ -900,26 +905,26 @@ function confirmSeatSelection() {
     // 결제 요약에 좌석 정보 반영
     
     var seatsRow = document.getElementById('summarySeatsRow');
-    var seatFeeRow = document.getElementById('summarySeatFeeRow');
+//     var seatFeeRow = document.getElementById('summarySeatFeeRow');
     var summarySeats = document.getElementById('summarySeats');
     var summarySeatFee = document.getElementById('summarySeatFee');
     var seatSelectionInfo = document.querySelector('.seat-selection-info');
 
     if (selectedSeats.length === 0) {
         seatsRow.style.display = 'none';
-        seatFeeRow.style.display = 'none';
+//         seatFeeRow.style.display = 'none';
         seatSelectionInfo.innerHTML =
-            '<p>좌석 선택은 선택사항입니다. 미선택 시 자동 배정됩니다.</p>' +
-            '<button type="button" class="btn btn-outline" onclick="openSeatSelection()">' +
-                '<i class="bi bi-grid-3x3 me-1"></i>좌석 선택하기' +
-            '</button>';
+            `<p>좌석 선택은 선택사항입니다. 미선택 시 자동 배정됩니다.</p>
+            <button type="button" class="btn btn-outline" onclick="openSeatSelection()">
+                <i class="bi bi-grid-3x3 me-1"></i>좌석 선택하기
+            </button>`;
     } else {
         // 추가요금 좌석 개수 계산 (1~3열)
-        var extraSeatCount = 0;
-        selectedSeats.forEach(function(seat) {
-            var rowNum = parseInt(seat);
-            if (rowNum <= 3) extraSeatCount++;
-        });
+//         var extraSeatCount = 0;
+//         selectedSeats.forEach(function(seat) {
+//             var rowNum = parseInt(seat);
+//             if (rowNum <= 3) extraSeatCount++;
+//         });
 
         // 좌석 정보 표시
         seatsRow.style.display = 'flex';

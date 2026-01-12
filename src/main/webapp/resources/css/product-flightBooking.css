@@ -572,6 +572,41 @@
     color: var(--primary-color);
 }
 
+.vixore0 {
+	display: none;
+}
+
+.agreement-divider {
+	margin-left: 5px;
+}
+
+.summary-row.detail .summary-label,
+.summary-row.detail .summary-value {
+	font-size: 0.8rem;     /* 0.85보다 조금 더 줄여서 확실히 보조 정보처럼 보이게 함 */
+    color: #a0a0a0;        /* 기존 #777보다 훨씬 연한 회색 */
+    font-weight: 300;      /* 글자 두께를 더 얇게 설정 (폰트가 지원할 경우) */
+    letter-spacing: -0.5px; /* 글자 간격을 좁혀서 더 세련되게 처리 */
+    
+}
+
+.payment-container {
+    width: 100%;
+    overflow: hidden;    /* 이 안에서 위로 밀려난 부분은 모두 잘려 나갑니다 */
+    position: relative;
+    /* 상단 여백을 조금 주어 '결제 수단' 제목과 너무 붙지 않게 조절 */
+    padding-top: 5px; 
+}
+
+#payment-method {
+    /* 수치를 -145px 정도로 높여보세요. */
+    /* 글자가 아예 안 보일 때까지 -5px씩 조절하는 것이 팁입니다. */
+    margin-top: -145px !important; 
+    
+    /* 혹시 모를 레이아웃 깨짐 방지 */
+    display: block;
+}
+
+
 /* 반응형 */
 @media (max-width: 768px) {
     .login-required-box {

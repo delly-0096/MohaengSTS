@@ -5,6 +5,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO;
 import kr.or.ddit.mohaeng.vo.MemUserVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
@@ -51,10 +52,10 @@ public interface IMemberMapper {
 	 *	<p> 일반회원 정보 저장 </p>
 	 *	@date 2025.12.31
 	 *	@author kdrs
-	 *	@param memberVO 회원가입 정보
+	 *	@param memUserVO 회원가입 정보
 	 *	@return ServiceResult 회원가입 후 결과(OK, FAILED)
 	 */
-	public int insertUser(MemberVO memberVO);
+	public int insertUser(MemUserVO memUserVO);
 
 	/**
 	 *	<p> 회원가입시 아이디 중복 체크 </p>
@@ -178,8 +179,24 @@ public interface IMemberMapper {
 	 */
 	public MemberVO selectForPwReset(MemberVO memberVO);
 
-	public MemberVO findByEmail(String email);
+	// sns 회원가입시 해당 email이 있는지 체크
+	public MemberVO findByEmail(@Param("memEmail") String email);
 
+	// sns 회원가입시 insert
 	public int insertSocialMember(MemberVO member);
+	
+	// sns 회원가입시 회원 정보 업데이트
+	public void updateSnsProfile(MemberUpdateDTO updateDTO);
+
+	// sns 회원 가입 완료 여부 업데이트
+	public int updateJoinCompleteYn(
+			@Param("memNo") int memNo,
+		    @Param("joinCompleteYn") String joinCompleteYn);
+
+	// Mem_User 테이블에서 mem_no 존재 여부
+	public MemUserVO selectMemUserByMemNo(int memNo);
+
+	// memUser테이블에 insert
+	public void insertMemUser(MemUserVO memUser);
 
 }

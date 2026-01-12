@@ -103,7 +103,7 @@ public class MemberServiceImpl implements IMemberService {
 	 */
 	@Override
 	@Transactional
-	public ServiceResult register(MemberVO memberVO) {
+	public ServiceResult register(MemberVO memberVO, MemUserVO memUserVO) {
 		
 		//아이디 최종 중복 체크
 		if (idCheck(memberVO.getMemId()) == ServiceResult.EXIST) {
@@ -118,13 +118,15 @@ public class MemberServiceImpl implements IMemberService {
 		// 회원가입 로직
         memberMapper.insertMember(memberVO);
         
+        memUserVO.setMemNo(memberVO.getMemNo());
+        
         int cnt = memberMapper.insertAuth(memberVO);
         
         if (cnt == 0) {
             throw new RuntimeException("권한 저장 실패");
         }
         
-        memberMapper.insertUser(memberVO);
+        memberMapper.insertUser(memUserVO);
 		
 		return ServiceResult.OK;
 	}
@@ -607,6 +609,59 @@ public class MemberServiceImpl implements IMemberService {
 		
 	}
 
+	@Override
+	public void setPasswordForSnsUser(int memNo, String newPassword) {
+	    String encoded = passwordEncoder.encode(newPassword);
+	    memberMapper.updatePassword(memNo, encoded);
+	    memberMapper.updateTempPwYn(memNo, "N"); // 안전
+		
+	}
 
+	@Override
+	@Transactional
+	public void updateSnsMemberProfile(MemberUpdateDTO updateDTO) {
+		if (updateDTO.getMemName() == null || updateDTO.getMemName().isBlank()) {
+	        throw new IllegalArgumentException("SNS 회원은 이름 필수");
+	    }
+
+	    int memNo = updateDTO.getMemNo();
+
+	    // 2️⃣ MEMBER 업데이트 (이름, 이메일 등)
+	    memberMapper.updateSnsProfile(updateDTO);
+
+	    // 3️⃣ MEM_USER 존재 여부 확인
+	    MemUserVO existing = memberMapper.selectMemUserByMemNo(memNo);
+
+	    if (existing == null) {
+	        // 🔥 최초 SNS Complete → INSERT
+	        MemUserVO memUser = new MemUserVO();
+	        memUser.setMemNo(memNo);
+	        memUser.setNickname(updateDTO.getNickname());
+	        memUser.setTel(updateDTO.getTel());
+	        memUser.setBirthDate(updateDTO.getBirthDate());
+	        memUser.setGender(updateDTO.getGender());
+	        memUser.setZip(updateDTO.getZip());
+	        memUser.setAddr1(updateDTO.getAddr1());
+	        memUser.setAddr2(updateDTO.getAddr2());
+
+	        log.error("🔥🔥🔥 SNS MEM_USER INSERT 진입 memNo={}", memNo);
+	        memberMapper.insertMemUser(memUser);
+	    } else {
+	        // 🔁 재진입 → UPDATE
+	        memberMapper.updateMemUser(existing);
+	    }
+		
+	}
+
+	@Override
+	public void updateJoinCompleteYn(int memNo, String joinCompleteYn) {
+		int updated = memberMapper.updateJoinCompleteYn(memNo, "Y");
+
+	    if (updated != 1) {
+	        throw new RuntimeException("SNS 가입 완료 처리 실패");
+	    }
+		
+	}
 
 }
+

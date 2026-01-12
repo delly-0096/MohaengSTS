@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <c:set var="pageTitle" value="투어/체험/티켓" />
 <c:set var="pageCss" value="product" />
@@ -28,12 +30,15 @@
                                autocomplete="off">
                     </div>
                     <div class="popular-keyword-area" onmouseenter="showMoreKeywords()" onmouseleave="hideMoreKeywords()">
-                        <span class="popular-label"><i class="bi bi-fire"></i> 인기</span>
-                        <span class="popular-keyword" id="rotatingKeyword" onclick="selectKeywordByText(this.textContent)">스쿠버다이빙</span>
-                        <div class="more-keywords" id="moreKeywords">
-                            <!-- 동적으로 추가됨 -->
-                        </div>
-                    </div>
+					    <span class="popular-label"><i class="bi bi-fire"></i> 인기</span>
+					    <span class="popular-keyword" id="rotatingKeyword" onclick="selectKeywordByText(this.textContent.trim())">
+					        <c:choose>
+					            <c:when test="${not empty keywords}">${keywords[0].keyword}</c:when>
+					            <c:otherwise>스쿠버다이빙</c:otherwise>
+					        </c:choose>
+					    </span>
+					    <div class="more-keywords" id="moreKeywords"></div>
+					</div>
                 </div>
 
                 <div class="search-form-row">
@@ -81,23 +86,23 @@
         <div class="tour-filters mt-4">
             <div class="filter-row">
                 <div class="filter-group">
-                    <label>가격대</label>
-                    <select class="form-select">
-                        <option value="">전체</option>
-                        <option value="0-30000">3만원 이하</option>
-                        <option value="30000-50000">3~5만원</option>
-                        <option value="50000-100000">5~10만원</option>
-                        <option value="100000-">10만원 이상</option>
-                    </select>
-                </div>
+				    <label>가격대</label>
+				    <select class="form-select" id="priceFilter">
+				        <option value="">전체</option>
+				        <option value="0">3만원 이하</option>
+				        <option value="3">3~5만원</option>
+				        <option value="5">5~10만원</option>
+				        <option value="10">10만원 이상</option>
+				    </select>
+				</div>
                 <div class="filter-group">
                     <label>소요시간</label>
-                    <select class="form-select">
+                    <select class="form-select" id="leadTimeFilter">
                         <option value="">전체</option>
                         <option value="1">1시간 이내</option>
                         <option value="3">1~3시간</option>
                         <option value="6">3~6시간</option>
-                        <option value="day">하루 이상</option>
+                        <option value="24">하루 이상</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -116,275 +121,88 @@
         <!-- 검색 결과 -->
         <div class="flight-results">
             <div class="results-header">
-                <p class="results-count">
-                    <strong>제주도</strong> 투어/체험 <strong>86</strong>개
-                </p>
+                <p class="results-count" id="resultsCount">
+				    <strong>전체</strong> 투어/체험/티켓 <strong id="totalCountDisplay">${totalCount}</strong>개
+				</p>
             </div>
 
             <div class="tour-grid">
-                <!-- 투어 카드 1 -->
-                <div class="tour-card" data-id="1" data-name="제주 스쿠버다이빙 체험 (초보자 가능)" data-price="68000" data-image="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80">
-                    <a href="${pageContext.request.contextPath}/product/tour/1" class="tour-link">
-                        <div class="tour-image">
-                            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80" alt="스쿠버다이빙">
-                            <span class="tour-category">액티비티</span>
-                        </div>
-                        <div class="tour-body">
-                            <p class="tour-location"><i class="bi bi-geo-alt"></i> 제주 서귀포시</p>
-                            <h4 class="tour-name">제주 스쿠버다이빙 체험 (초보자 가능)</h4>
-                            <div class="tour-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.9</span>
-                                <span class="text-muted">(328)</span>
-                            </div>
-                            <div class="tour-price">
-                                <span class="original">85,000원</span>
-                                <span class="price">68,000원</span>
-                            </div>
-                            <div class="tour-stock">
-                                <i class="bi bi-box-seam"></i> 남은 수량: <span class="stock-count">45개</span>
-                            </div>
-                        </div>
-                    </a>
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                    </c:if>
-                </div>
+			    <c:choose>
+			        <c:when test="${empty tpList}">
+			            <div class="no-results">
+			                <i class="bi bi-search"></i>
+			                <p>등록된 상품이 없습니다.</p>
+			            </div>
+			        </c:when>
+			        <c:otherwise>
+		            	<c:forEach items="${tpList}" var="tp">
+			                <!-- 투어 카드 1 -->
+			                <div class="tour-card" data-id="${tp.tripProdNo}" data-name="${tp.tripProdTitle}" data-price="${tp.price}" data-image="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80">
+			                    <a href="${pageContext.request.contextPath}/tour/${tp.tripProdNo}" class="tour-link">
+			                        <div class="tour-image">
+			                            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80" alt="스쿠버다이빙">
+			                            <span class="tour-category">
+										    <c:choose>
+										        <c:when test="${tp.prodCtgryType eq 'tour'}">투어</c:when>
+										        <c:when test="${tp.prodCtgryType eq 'activity'}">액티비티</c:when>
+										        <c:when test="${tp.prodCtgryType eq 'ticket'}">입장권/티켓</c:when>
+										        <c:when test="${tp.prodCtgryType eq 'class'}">클래스/체험</c:when>
+										        <c:when test="${tp.prodCtgryType eq 'transfer'}">교통/이동</c:when>
+										        <c:otherwise>${tp.prodCtgryType}</c:otherwise>
+										    </c:choose>
+										</span>
+			                        </div>
+			                        <div class="tour-body">
+			                            <p class="tour-location"><i class="bi bi-geo-alt"></i> ${tp.ctyNm}</p>
+			                            <h4 class="tour-name">${tp.tripProdTitle}</h4>
+			                            <div class="tour-rating">
+			                                <i class="bi bi-star-fill"></i>
+			                                <span>${tp.avgRating > 0 ? tp.avgRating : '-'}</span>
+			                                <span class="text-muted">(${tp.reviewCount})</span>
+			                            </div>
+			                         	<!-- 정가가 없거나 할인이 없으면 정가 표시 안 함 -->
+										<div class="tour-price">
+										    <c:if test="${tp.netprc != null && tp.netprc > tp.price}">
+										        <span class="original"><fmt:formatNumber value="${tp.netprc}" pattern="#,###"/>원</span>
+										    </c:if>
+										    <span class="price"><fmt:formatNumber value="${tp.price}" pattern="#,###"/>원</span>
+										</div>
+			                            <!-- 개선: 재고 10개 이하일 때 경고 스타일 -->
+										<div class="tour-stock ${tp.curStock <= 10 ? 'stock-warning' : ''}">
+										    <i class="bi ${tp.curStock <= 10 ? 'bi-exclamation-triangle' : 'bi-box-seam'}"></i> 
+										    ${tp.curStock <= 10 ? '품절 임박:' : '남은 수량:'} 
+										    <span class="stock-count">${tp.curStock}개</span>
+										</div>
+			                        </div>
+			                    </a>
+			                    <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
+			                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
+			                        <i class="bi bi-cart-plus"></i>
+			                    </button>
+			                    </c:if>
+			                </div>
+		                </c:forEach>
+			        </c:otherwise>
+			    </c:choose>
 
-                <!-- 투어 카드 2 -->
-                <div class="tour-card" data-id="2" data-name="제주 투명카약 체험 (협재해변)" data-price="35000" data-image="https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=400&h=300&fit=crop&q=80">
-                    <a href="${pageContext.request.contextPath}/product/tour/2" class="tour-link">
-                        <div class="tour-image">
-                            <img src="https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=400&h=300&fit=crop&q=80" alt="카약">
-                            <span class="tour-category">액티비티</span>
-                        </div>
-                        <div class="tour-body">
-                            <p class="tour-location"><i class="bi bi-geo-alt"></i> 제주 제주시</p>
-                            <h4 class="tour-name">제주 투명카약 체험 (협재해변)</h4>
-                            <div class="tour-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.8</span>
-                                <span class="text-muted">(215)</span>
-                            </div>
-                            <div class="tour-price">
-                                <span class="price">35,000원</span>
-                            </div>
-                            <div class="tour-stock">
-                                <i class="bi bi-box-seam"></i> 남은 수량: <span class="stock-count">32개</span>
-                            </div>
-                        </div>
-                    </a>
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                    </c:if>
-                </div>
+	            <!-- 로딩 인디케이터 -->
+	            <div class="infinite-scroll-loader" id="tourScrollLoader">
+	                <div class="loader-spinner">
+	                    <div class="spinner-border text-primary" role="status">
+	                        <span class="visually-hidden">Loading...</span>
+	                    </div>
+	                </div>
+	            </div>
 
-                <!-- 투어 카드 3 -->
-                <div class="tour-card" data-id="3" data-name="아쿠아플라넷 제주 입장권" data-price="37000" data-image="https://images.unsplash.com/photo-1559825481-12a05cc00344?w=400&h=300&fit=crop&q=80">
-                    <a href="${pageContext.request.contextPath}/product/tour/3" class="tour-link">
-                        <div class="tour-image">
-                            <img src="https://images.unsplash.com/photo-1559825481-12a05cc00344?w=400&h=300&fit=crop&q=80" alt="아쿠아리움">
-                            <span class="tour-category">입장권</span>
-                        </div>
-                        <div class="tour-body">
-                            <p class="tour-location"><i class="bi bi-geo-alt"></i> 제주 서귀포시</p>
-                            <h4 class="tour-name">아쿠아플라넷 제주 입장권</h4>
-                            <div class="tour-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.6</span>
-                                <span class="text-muted">(1,234)</span>
-                            </div>
-                            <div class="tour-price">
-                                <span class="original">41,900원</span>
-                                <span class="price">37,000원</span>
-                            </div>
-                            <div class="tour-stock stock-warning">
-                                <i class="bi bi-exclamation-triangle"></i> 품절 임박: <span class="stock-count">5개</span>
-                            </div>
-                        </div>
-                    </a>
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                    </c:if>
-                </div>
-
-                <!-- 투어 카드 4 -->
-                <div class="tour-card" data-id="4" data-name="제주 흑돼지 요리 클래스" data-price="55000" data-image="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&h=300&fit=crop&q=80">
-                    <a href="${pageContext.request.contextPath}/product/tour/4" class="tour-link">
-                        <div class="tour-image">
-                            <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&h=300&fit=crop&q=80" alt="요리클래스">
-                            <span class="tour-category">클래스</span>
-                        </div>
-                        <div class="tour-body">
-                            <p class="tour-location"><i class="bi bi-geo-alt"></i> 제주 제주시</p>
-                            <h4 class="tour-name">제주 흑돼지 요리 클래스</h4>
-                            <div class="tour-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.9</span>
-                                <span class="text-muted">(89)</span>
-                            </div>
-                            <div class="tour-price">
-                                <span class="price">55,000원</span>
-                            </div>
-                            <div class="tour-stock">
-                                <i class="bi bi-box-seam"></i> 남은 수량: <span class="stock-count">18개</span>
-                            </div>
-                        </div>
-                    </a>
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                    </c:if>
-                </div>
-
-                <!-- 투어 카드 5 -->
-                <div class="tour-card" data-id="5" data-name="제주 승마 체험 (초원 코스)" data-price="42000" data-image="https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=400&h=300&fit=crop&q=80">
-                    <a href="${pageContext.request.contextPath}/product/tour/5" class="tour-link">
-                        <div class="tour-image">
-                            <img src="https://images.unsplash.com/photo-1553284965-83fd3e82fa5a?w=400&h=300&fit=crop&q=80" alt="승마">
-                            <span class="tour-category">체험</span>
-                        </div>
-                        <div class="tour-body">
-                            <p class="tour-location"><i class="bi bi-geo-alt"></i> 제주 제주시</p>
-                            <h4 class="tour-name">제주 승마 체험 (초원 코스)</h4>
-                            <div class="tour-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.7</span>
-                                <span class="text-muted">(456)</span>
-                            </div>
-                            <div class="tour-price">
-                                <span class="original">50,000원</span>
-                                <span class="price">42,000원</span>
-                            </div>
-                            <div class="tour-stock">
-                                <i class="bi bi-box-seam"></i> 남은 수량: <span class="stock-count">60개</span>
-                            </div>
-                        </div>
-                    </a>
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                    </c:if>
-                </div>
-
-                <!-- 투어 카드 6 -->
-                <div class="tour-card" data-id="6" data-name="제주 동부 일주 버스투어" data-price="49000" data-image="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=300&fit=crop&q=80">
-                    <a href="${pageContext.request.contextPath}/product/tour/6" class="tour-link">
-                        <div class="tour-image">
-                            <img src="https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=400&h=300&fit=crop&q=80" alt="버스투어">
-                            <span class="tour-category">투어</span>
-                        </div>
-                        <div class="tour-body">
-                            <p class="tour-location"><i class="bi bi-geo-alt"></i> 제주 전역</p>
-                            <h4 class="tour-name">제주 동부 일주 버스투어</h4>
-                            <div class="tour-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.5</span>
-                                <span class="text-muted">(678)</span>
-                            </div>
-                            <div class="tour-price">
-                                <span class="price">49,000원</span>
-                            </div>
-                            <div class="tour-stock">
-                                <i class="bi bi-box-seam"></i> 남은 수량: <span class="stock-count">25개</span>
-                            </div>
-                        </div>
-                    </a>
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                    </c:if>
-                </div>
-
-                <!-- 투어 카드 7 -->
-                <div class="tour-card" data-id="7" data-name="제주 ATV 오프로드 체험" data-price="45000" data-image="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop&q=80">
-                    <a href="${pageContext.request.contextPath}/product/tour/7" class="tour-link">
-                        <div class="tour-image">
-                            <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop&q=80" alt="ATV">
-                            <span class="tour-category">액티비티</span>
-                        </div>
-                        <div class="tour-body">
-                            <p class="tour-location"><i class="bi bi-geo-alt"></i> 제주 서귀포시</p>
-                            <h4 class="tour-name">제주 ATV 오프로드 체험</h4>
-                            <div class="tour-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.8</span>
-                                <span class="text-muted">(234)</span>
-                            </div>
-                            <div class="tour-price">
-                                <span class="price">45,000원</span>
-                            </div>
-                            <div class="tour-stock stock-warning">
-                                <i class="bi bi-exclamation-triangle"></i> 품절 임박: <span class="stock-count">3개</span>
-                            </div>
-                        </div>
-                    </a>
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                    </c:if>
-                </div>
-
-                <!-- 투어 카드 8 -->
-                <div class="tour-card" data-id="8" data-name="테디베어 뮤지엄 입장권" data-price="12000" data-image="https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=400&h=300&fit=crop&q=80">
-                    <a href="${pageContext.request.contextPath}/product/tour/8" class="tour-link">
-                        <div class="tour-image">
-                            <img src="https://images.unsplash.com/photo-1554907984-15263bfd63bd?w=400&h=300&fit=crop&q=80" alt="박물관">
-                            <span class="tour-category">입장권</span>
-                        </div>
-                        <div class="tour-body">
-                            <p class="tour-location"><i class="bi bi-geo-alt"></i> 제주 서귀포시</p>
-                            <h4 class="tour-name">테디베어 뮤지엄 입장권</h4>
-                            <div class="tour-rating">
-                                <i class="bi bi-star-fill"></i>
-                                <span>4.4</span>
-                                <span class="text-muted">(567)</span>
-                            </div>
-                            <div class="tour-price">
-                                <span class="original">15,000원</span>
-                                <span class="price">12,000원</span>
-                            </div>
-                            <div class="tour-stock">
-                                <i class="bi bi-box-seam"></i> 남은 수량: <span class="stock-count">100개</span>
-                            </div>
-                        </div>
-                    </a>
-                    <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">
-                        <i class="bi bi-cart-plus"></i>
-                    </button>
-                    </c:if>
-                </div>
-            </div>
-
-            <!-- 로딩 인디케이터 -->
-            <div class="infinite-scroll-loader" id="tourScrollLoader">
-                <div class="loader-spinner">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Loading...</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 더 이상 데이터 없음 -->
-            <div class="infinite-scroll-end" id="tourScrollEnd" style="display: none;">
-                <p>모든 상품을 불러왔습니다</p>
-            </div>
+	            <!-- 더 이상 데이터 없음 -->
+	            <div class="infinite-scroll-end" id="tourScrollEnd" style="display: none;">
+	                <p>모든 상품을 불러왔습니다</p>
+	            </div>
         </div>
     </div>
 </div>
 
-<c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
+<c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
 <!-- 플로팅 장바구니 버튼 -->
 <button class="floating-cart-btn" onclick="openCart()" id="floatingCartBtn">
     <i class="bi bi-cart3"></i>
@@ -394,37 +212,37 @@
 <!-- 장바구니 사이드바 -->
 <div class="cart-overlay" id="cartOverlay" onclick="closeCart()"></div>
 <div class="cart-sidebar" id="cartSidebar">
-    <div class="cart-header">
-        <h3><i class="bi bi-cart3"></i> 장바구니</h3>
-        <button class="cart-close-btn" onclick="closeCart()">
-            <i class="bi bi-x-lg"></i>
-        </button>
-    </div>
-    <div class="cart-body" id="cartBody">
-        <div class="cart-empty" id="cartEmpty">
-            <i class="bi bi-cart-x"></i>
-            <p>장바구니가 비어있습니다</p>
-            <span>마음에 드는 상품을 담아보세요</span>
-        </div>
-        <div class="cart-items" id="cartItems">
-            <!-- 장바구니 아이템들이 여기에 추가됨 -->
-        </div>
-    </div>
-    <div class="cart-footer" id="cartFooter">
-        <div class="cart-summary">
-            <div class="summary-row">
-                <span>상품 수</span>
-                <span id="cartItemCount">0개</span>
-            </div>
-            <div class="summary-row total">
-                <span>총 금액</span>
-                <span id="cartTotalPrice">0원</span>
-            </div>
-        </div>
-        <button class="btn btn-primary btn-lg cart-checkout-btn" onclick="checkout()">
-            <i class="bi bi-credit-card me-2"></i>결제하기
-        </button>
-    </div>
+	<div class="cart-header">
+	    <h3><i class="bi bi-cart3"></i> 장바구니</h3>
+	    <button class="cart-close-btn" onclick="closeCart()">
+	        <i class="bi bi-x-lg"></i>
+	    </button>
+	</div>
+	<div class="cart-body" id="cartBody">
+	    <div class="cart-empty" id="cartEmpty">
+	        <i class="bi bi-cart-x"></i>
+	        <p>장바구니가 비어있습니다</p>
+	        <span>마음에 드는 상품을 담아보세요</span>
+	    </div>
+	    <div class="cart-items" id="cartItems">
+	        <!-- 장바구니 아이템들이 여기에 추가됨 -->
+	    </div>
+	</div>
+	<div class="cart-footer" id="cartFooter">
+	    <div class="cart-summary">
+	        <div class="summary-row">
+	            <span>상품 수</span>
+	            <span id="cartItemCount">0개</span>
+	        </div>
+	        <div class="summary-row total">
+	            <span>총 금액</span>
+	            <span id="cartTotalPrice">0원</span>
+	        </div>
+	    </div>
+	    <button class="btn btn-primary btn-lg cart-checkout-btn" onclick="checkout()">
+	        <i class="bi bi-credit-card me-2"></i>결제하기
+	    </button>
+	</div>
 </div>
 </c:if>
 
@@ -834,11 +652,65 @@
         height: 56px;
     }
 }
+
+/* 검색 결과 없음 스타일 */
+.no-results {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #999;
+}
+
+.no-results i {
+    font-size: 48px;
+    margin-bottom: 16px;
+    display: block;
+    opacity: 0.5;
+}
+
+.no-results p {
+    font-size: 18px;
+    margin: 0;
+}
 </style>
 
 <script>
+
+//==================== 검색어 변수 ====================
+var currentKeyword = '';		// 검색어
+var currentDestination = '';  	// 여행지
+var currentCategory = '';     	// 카테고리
+var currentTourDate = '';     	// 날짜
+var currentPeople = 2;        	// 인원 (기본값 2)
+
+//==================== 검색 폼 제출 =======================
+document.getElementById('tourSearchForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  currentKeyword = document.getElementById('keyword').value.trim();
+  currentDestination = document.getElementById('destination').value.trim();
+  currentCategory = document.getElementById('category').value;
+  currentTourDate = document.getElementById('tourDate').value;
+  currentPeople = parseInt(document.getElementById('people').value) || 2;
+  
+  showToast('검색 결과를 불러오는 중...', 'info');
+  
+  applyFilter();
+});
+
 // 인기 검색어 목록
-var popularKeywords = ['스쿠버다이빙', '카약', '승마', '아쿠아리움', '요리 클래스', 'ATV', '버스투어', '스노클링'];
+var popularKeywords = [
+    <c:choose>
+        <c:when test="${not empty keywords}">
+            <c:forEach items="${keywords}" var="kw" varStatus="status">
+                '${kw.keyword}'<c:if test="${!status.last}">,</c:if>
+            </c:forEach>
+        </c:when>
+        <c:otherwise>
+            '스쿠버다이빙', '카약', '승마', 'ATV', '스노클링', '한복', '야경', '에버랜드'
+        </c:otherwise>
+    </c:choose>
+];
 var currentKeywordIndex = 0;
 var rotateInterval;
 var isHovering = false;
@@ -870,7 +742,6 @@ rotateInterval = setInterval(rotateKeyword, 3000);
 function showMoreKeywords() {
     isHovering = true;
     var moreKeywordsEl = document.getElementById('moreKeywords');
-    if (!moreKeywordsEl) return;
 
     // 현재 인덱스 다음부터 4개 표시
     var html = '';
@@ -895,64 +766,88 @@ function hideMoreKeywords() {
 function selectKeywordByText(keyword) {
     document.getElementById('keyword').value = keyword;
     hideMoreKeywords();
+    currentKeyword = keyword;
     showToast('"' + keyword + '" 검색 결과를 불러오는 중...', 'info');
+    applyFilter();
 }
 
-// ==================== 인피니티 스크롤 ====================
+//카테고리 라벨 변환 함수
+function getCategoryLabel(value) {
+    var labels = {
+        'tour': '투어',
+        'activity': '액티비티',
+        'ticket': '입장권/티켓',
+        'class': '클래스/체험',
+        'transfer': '교통/이동'
+    };
+    return labels[value] || value;
+}
+
+//==================== 필터 URL 생성 함수 (공통) ====================
+function buildFilterUrl(page) {
+    var url = '${pageContext.request.contextPath}/tour/more?page=' + page + '&pageSize=' + tourPageSize;
+    
+    // 검색어
+    if (currentKeyword) {
+        url += '&keyword=' + encodeURIComponent(currentKeyword);
+    }
+    // 여행지 (도시명)
+    if (currentDestination) {
+        url += '&destination=' + encodeURIComponent(currentDestination);
+    }
+    // 카테고리
+    if (currentCategory) {
+        url += '&category=' + encodeURIComponent(currentCategory);
+    }
+    // 날짜
+    if (currentTourDate) {
+        url += '&tourDate=' + encodeURIComponent(currentTourDate);
+    }
+    // 인원
+    if (currentPeople) {
+        url += '&people=' + currentPeople;
+    }
+    // 가격대
+    if (currentPriceMin !== null) {
+        url += '&priceMin=' + currentPriceMin;
+    }
+    if (currentPriceMax !== null) {
+        url += '&priceMax=' + currentPriceMax;
+    }
+    // 소요시간
+    if (currentLeadTime !== null) {
+        url += '&leadTime=' + currentLeadTime;
+    }
+    // 정렬
+    url += '&sortBy=' + currentSortBy;
+    
+    return url;
+}
+
+//==================== 인피니티 스크롤 ====================
 var tourCurrentPage = 1;
 var tourIsLoading = false;
 var tourHasMore = true;
-var tourTotalPages = 4;
-var isBusiness = ${sessionScope.loginUser.userType eq 'BUSINESS'};
+var tourPageSize = 12;
+var tourTotalCount = ${totalCount};
+var isBusiness = ${not empty sessionScope.loginMember && sessionScope.loginMember.memType eq 'BUSINESS'};
 
-// 추가 투어 데모 데이터
-var additionalTours = [
-    {
-        id: 9,
-        name: '제주 패러글라이딩 체험',
-        category: '액티비티',
-        location: '제주 서귀포시',
-        image: 'https://images.unsplash.com/photo-1503220317375-aaad61436b1b?w=400&h=300&fit=crop&q=80',
-        rating: 4.8,
-        reviews: 189,
-        price: 95000,
-        originalPrice: 120000,
-        stock: 28
-    },
-    {
-        id: 10,
-        name: '제주 올레길 트레킹 가이드 투어',
-        category: '투어',
-        location: '제주 전역',
-        image: 'https://images.unsplash.com/photo-1551632811-561732d1e306?w=400&h=300&fit=crop&q=80',
-        rating: 4.7,
-        reviews: 234,
-        price: 55000,
-        originalPrice: null,
-        stock: 4
-    },
-    {
-        id: 11,
-        name: '제주 감귤 농장 체험',
-        category: '체험',
-        location: '제주 서귀포시',
-        image: 'https://images.unsplash.com/photo-1557800636-894a64c1696f?w=400&h=300&fit=crop&q=80',
-        rating: 4.6,
-        reviews: 156,
-        price: 25000,
-        originalPrice: 30000,
-        stock: 55
-    }
-];
-
-// 페이지 로드시 인피니티 스크롤 초기화
+// 페이지 로드시 초기화
 document.addEventListener('DOMContentLoaded', function() {
-    initTourInfiniteScroll();
+    // 첫 페이지 데이터가 pageSize보다 적으면 더 이상 데이터 없음
+    if (${fn:length(tpList)} < tourPageSize) {
+        tourHasMore = false;
+        document.getElementById('tourScrollLoader').style.display = 'none';
+        if (${fn:length(tpList)} > 0) {
+            document.getElementById('tourScrollEnd').style.display = 'block';
+        }
+    } else {
+        initTourInfiniteScroll();
+    }
 });
 
 function initTourInfiniteScroll() {
     var loader = document.getElementById('tourScrollLoader');
-    if (!loader) return;
 
     var observer = new IntersectionObserver(function(entries) {
         entries.forEach(function(entry) {
@@ -973,84 +868,108 @@ function loadMore() {
     if (tourIsLoading || !tourHasMore) return;
 
     tourIsLoading = true;
+    tourCurrentPage++;
+    
     document.getElementById('tourScrollLoader').style.display = 'flex';
 
-    setTimeout(function() {
-        tourCurrentPage++;
+ 	// 공통 함수로 URL 생성
+    var url = buildFilterUrl(tourCurrentPage);
 
-        if (tourCurrentPage > tourTotalPages) {
-            tourHasMore = false;
-            document.getElementById('tourScrollLoader').style.display = 'none';
-            document.getElementById('tourScrollEnd').style.display = 'block';
+    // Ajax 호출
+    fetch(url)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            var grid = document.querySelector('.tour-grid');
+            var loader = document.getElementById('tourScrollLoader');
+            
+            grid.removeChild(loader);
+            var endDiv = document.getElementById('tourScrollEnd');
+            grid.removeChild(endDiv);
+            
+            data.tpList.forEach(function(tour, index) {
+                var tourHtml = createTourCard(tour);
+                var tempDiv = document.createElement('div');
+                tempDiv.innerHTML = tourHtml;
+                var newCard = tempDiv.firstElementChild;
+
+                newCard.style.opacity = '0';
+                newCard.style.transform = 'translateY(20px)';
+                grid.appendChild(newCard);
+
+                setTimeout(function() {
+                    newCard.style.transition = 'all 0.4s ease';
+                    newCard.style.opacity = '1';
+                    newCard.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+            
+            grid.appendChild(loader);
+            grid.appendChild(endDiv);
+
+            if (!data.hasMore) {
+                tourHasMore = false;
+                loader.style.display = 'none';
+                endDiv.style.display = 'block';
+            }
+
             tourIsLoading = false;
-            return;
-        }
-
-        var grid = document.querySelector('.tour-grid');
-        var toursToAdd = getToursForPage(tourCurrentPage);
-
-        toursToAdd.forEach(function(tour, index) {
-            var tourHtml = createTourCard(tour);
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = tourHtml;
-            var newCard = tempDiv.firstElementChild;
-
-            newCard.style.opacity = '0';
-            newCard.style.transform = 'translateY(20px)';
-            grid.appendChild(newCard);
-
-            setTimeout(function() {
-                newCard.style.transition = 'all 0.4s ease';
-                newCard.style.opacity = '1';
-                newCard.style.transform = 'translateY(0)';
-            }, index * 100);
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            tourIsLoading = false;
         });
-
-        tourIsLoading = false;
-    }, 800);
-}
-
-function getToursForPage(page) {
-    var tours = [];
-    for (var i = 0; i < 3; i++) {
-        var dataIndex = ((page - 2) * 3 + i) % additionalTours.length;
-        var tour = Object.assign({}, additionalTours[dataIndex]);
-        tour.id = 8 + (page - 2) * 3 + i + 1;
-        tours.push(tour);
-    }
-    return tours;
 }
 
 function createTourCard(data) {
-    var originalPriceHtml = data.originalPrice ?
-        '<span class="original">' + data.originalPrice.toLocaleString() + '원</span>' : '';
+    // 카테고리 변환
+    var categoryMap = {
+        'tour': '투어',
+        'activity': '액티비티',
+        'ticket': '입장권/티켓',
+        'class': '클래스/체험',
+        'transfer': '교통/이동'
+    };
+    var categoryText = categoryMap[data.prodCtgryType];
+    
+	// 평점 표시
+    var ratingText = data.avgRating > 0 ? data.avgRating.toFixed(1) : '-';
+    var reviewCountText = data.reviewCount || 0;
 
+    // 정가 표시
+    var originalPriceHtml = '';
+    if (data.netprc && data.netprc > data.price) {
+        originalPriceHtml = '<span class="original">' + data.netprc.toLocaleString() + '원</span>';
+    }
+
+    // 장바구니 버튼
     var cartBtnHtml = !isBusiness ?
         '<button class="tour-cart-btn" onclick="addToCart(this)" title="장바구니 담기">' +
             '<i class="bi bi-cart-plus"></i>' +
         '</button>' : '';
 
-    // 재고 표시 HTML 생성
-    var stockClass = data.stock <= 10 ? 'tour-stock stock-warning' : 'tour-stock';
-    var stockIcon = data.stock <= 10 ? 'bi-exclamation-triangle' : 'bi-box-seam';
-    var stockLabel = data.stock <= 10 ? '품절 임박:' : '남은 수량:';
+    // 재고 표시
+    var stockClass = data.curStock <= 10 ? 'tour-stock stock-warning' : 'tour-stock';
+    var stockIcon = data.curStock <= 10 ? 'bi-exclamation-triangle' : 'bi-box-seam';
+    var stockLabel = data.curStock <= 10 ? '품절 임박:' : '남은 수량:';
     var stockHtml = '<div class="' + stockClass + '">' +
-        '<i class="bi ' + stockIcon + '"></i> ' + stockLabel + ' <span class="stock-count">' + data.stock + '개</span>' +
+        '<i class="bi ' + stockIcon + '"></i> ' + stockLabel + ' <span class="stock-count">' + data.curStock + '개</span>' +
     '</div>';
 
-    return '<div class="tour-card" data-id="' + data.id + '" data-name="' + data.name + '" data-price="' + data.price + '" data-image="' + data.image + '">' +
-        '<a href="${pageContext.request.contextPath}/product/tour/' + data.id + '" class="tour-link">' +
+    return '<div class="tour-card" data-id="' + data.tripProdNo + '" data-name="' + data.tripProdTitle + '" data-price="' + data.price + '" data-image="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80">' +
+        '<a href="${pageContext.request.contextPath}/tour/' + data.tripProdNo + '" class="tour-link">' +
             '<div class="tour-image">' +
-                '<img src="' + data.image + '" alt="' + data.name + '">' +
-                '<span class="tour-category">' + data.category + '</span>' +
+                '<img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80" alt="' + data.tripProdTitle + '">' +
+                '<span class="tour-category">' + categoryText + '</span>' +
             '</div>' +
             '<div class="tour-body">' +
-                '<p class="tour-location"><i class="bi bi-geo-alt"></i> ' + data.location + '</p>' +
-                '<h4 class="tour-name">' + data.name + '</h4>' +
+                '<p class="tour-location"><i class="bi bi-geo-alt"></i> ' + data.ctyNm + '</p>' +
+                '<h4 class="tour-name">' + data.tripProdTitle + '</h4>' +
                 '<div class="tour-rating">' +
                     '<i class="bi bi-star-fill"></i>' +
-                    '<span>' + data.rating + '</span>' +
-                    '<span class="text-muted">(' + data.reviews + ')</span>' +
+                    '<span>' + ratingText + '</span>' +
+                    '<span class="text-muted">(' + reviewCountText + ')</span>' +
                 '</div>' +
                 '<div class="tour-price">' +
                     originalPriceHtml +
@@ -1063,16 +982,173 @@ function createTourCard(data) {
     '</div>';
 }
 
-// 검색 폼 제출
-document.getElementById('tourSearchForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    var keyword = document.getElementById('keyword').value;
-    if (keyword) {
-        showToast('"' + keyword + '" 검색 결과를 불러오는 중...', 'info');
-    } else {
-        showToast('상품을 검색하고 있습니다...', 'info');
+//==================== 가격 필터 변수 ====================
+var currentPriceMin = null;
+var currentPriceMax = null;
+
+//==================== 가격 필터 이벤트 ====================
+document.getElementById('priceFilter').addEventListener('change', function() {
+    var value = this.value;
+    
+    if (value === '') {
+        currentPriceMin = null;
+        currentPriceMax = null;
+    } else if (value === '0') {
+        currentPriceMin = 0;
+        currentPriceMax = 30000;
+    } else if (value === '3') {
+        currentPriceMin = 30000;
+        currentPriceMax = 50000;
+    } else if (value === '5') {
+        currentPriceMin = 50000;
+        currentPriceMax = 100000;
+    } else if (value === '10') {
+        currentPriceMin = 100000;
+        currentPriceMax = null;
     }
+    
+    applyFilter();
 });
+
+//==================== 소요시간 필터 변수 ====================
+var currentLeadTime = null;
+
+//==================== 소요시간 필터 이벤트 ====================
+document.getElementById('leadTimeFilter').addEventListener('change', function() {
+  var value = this.value;
+  
+  if (value === '') {
+      currentLeadTime = null;
+  } else {
+      currentLeadTime = parseInt(value);
+  }
+  
+  applyFilter();
+});
+
+//==================== 정렬 변수 ====================
+var currentSortBy = 'recommend';
+
+//==================== 정렬 이벤트 ====================
+document.getElementById('sortBy').addEventListener('change', function() {
+    currentSortBy = this.value;
+    applyFilter();
+});
+
+//==================== 필터 적용 ====================
+function applyFilter() {
+    // 페이지 초기화
+    tourCurrentPage = 1;
+    tourHasMore = true;
+    tourIsLoading = true;
+    
+    var grid = document.querySelector('.tour-grid');
+    var loader = document.getElementById('tourScrollLoader');
+    var endDiv = document.getElementById('tourScrollEnd');
+    
+    // 기존 카드 모두 제거
+    var cards = grid.querySelectorAll('.tour-card');
+    cards.forEach(function(card) {
+        grid.removeChild(card);
+    });
+    
+    // 검색 결과 없음 메시지도 제거
+    var noResults = grid.querySelector('.no-results');
+    if (noResults) {
+        grid.removeChild(noResults);
+    }
+    
+    // 완료 메시지 숨기고 로더 표시
+    endDiv.style.display = 'none';
+    loader.style.display = 'flex';
+    
+ 	// 공통 함수로 URL 생성
+    var url = buildFilterUrl(tourCurrentPage);
+    
+    // Ajax 호출
+    fetch(url)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+        	// 검색 결과 헤더 업데이트
+        	updateResultsHeader(data.totalCount);
+        	
+            // 로더 임시 제거
+            grid.removeChild(loader);
+            grid.removeChild(endDiv);
+            
+            // 결과 없음 처리
+            if (data.tpList.length === 0) {
+                var noResultsDiv = document.createElement('div');
+                noResultsDiv.className = 'no-results';
+                noResultsDiv.innerHTML = '<i class="bi bi-search"></i><p>검색 결과가 없습니다.</p>';
+                grid.appendChild(noResultsDiv);
+                
+                tourHasMore = false;
+                grid.appendChild(loader);
+                grid.appendChild(endDiv);
+                loader.style.display = 'none';
+                tourIsLoading = false;
+                return;
+            }
+            
+            // 새 카드 추가
+            data.tpList.forEach(function(tour, index) {
+                var tourHtml = createTourCard(tour);
+                var tempDiv = document.createElement('div');
+                tempDiv.innerHTML = tourHtml;
+                var newCard = tempDiv.firstElementChild;
+                
+                newCard.style.opacity = '0';
+                newCard.style.transform = 'translateY(20px)';
+                grid.appendChild(newCard);
+                
+                setTimeout(function() {
+                    newCard.style.transition = 'all 0.4s ease';
+                    newCard.style.opacity = '1';
+                    newCard.style.transform = 'translateY(0)';
+                }, index * 50);
+            });
+            
+            // 로더 다시 추가
+            grid.appendChild(loader);
+            grid.appendChild(endDiv);
+            
+            // 더 이상 데이터 없으면
+            if (!data.hasMore) {
+                tourHasMore = false;
+                loader.style.display = 'none';
+                endDiv.style.display = 'block';
+            } else {
+                loader.style.display = 'flex';
+            }
+            
+            tourIsLoading = false;
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            tourIsLoading = false;
+        });
+}
+
+//검색 결과 헤더 업데이트 함수
+function updateResultsHeader(totalCount) {
+    var hasFilter = currentKeyword || currentDestination || currentCategory || currentTourDate;
+    
+    if (currentKeyword) {
+        document.getElementById('resultsCount').innerHTML =
+            '"<strong>' + currentKeyword + '</strong>" 검색 결과 <strong>' + totalCount + '</strong>개';
+    } else if (hasFilter) {
+        // 키워드는 없지만 다른 필터가 있을 때
+        document.getElementById('resultsCount').innerHTML =
+            '<strong>검색된</strong> 투어/체험/티켓 <strong>' + totalCount + '</strong>개';
+    } else {
+        // 아무 필터도 없을 때
+        document.getElementById('resultsCount').innerHTML =
+            '<strong>전체</strong> 투어/체험/티켓 <strong>' + totalCount + '</strong>개';
+    }
+}
 
 // ==================== 장바구니 기능 ====================
 var cart = [];
@@ -1085,7 +1161,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 로컬스토리지에서 장바구니 불러오기
 function loadCart() {
-    var savedCart = localStorage.getItem('tourCart');
+    var savedCart = sessionStorage.getItem('tourCart');
     if (savedCart) {
         try {
             cart = JSON.parse(savedCart);
@@ -1097,7 +1173,7 @@ function loadCart() {
 
 // 로컬스토리지에 장바구니 저장
 function saveCart() {
-    localStorage.setItem('tourCart', JSON.stringify(cart));
+	sessionStorage.setItem('tourCart', JSON.stringify(cart));
 }
 
 // 장바구니에 상품 추가
@@ -1285,7 +1361,7 @@ function checkout() {
     }
 
     // 로그인 체크
-    var isLoggedIn = ${not empty sessionScope.loginUser};
+    var isLoggedIn = ${not empty sessionScope.loginMember};
     if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
             sessionStorage.setItem('returnUrl', window.location.href);

@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller
-@RequestMapping("/mypage")
+@RequestMapping("/")
 public class ProfileController {
 
 	@Autowired
@@ -54,51 +54,41 @@ public class ProfileController {
     private IMemberMapper memberMapper;
 	
     /* 일반회원 내 정보 조회 */
-    @GetMapping("/profile")
-    public String myProfile(HttpSession session, Model model) {
-
-    	// 세션 체크
-        Object authMember = session.getAttribute("loginMember");
-        if (authMember == null) return "redirect:/member/login";
-
-        String memId = "";
-        if (authMember instanceof MemberVO) {
-            memId = ((MemberVO) authMember).getMemId();
-        } else if (authMember instanceof Map) {
-            memId = String.valueOf(((Map<?, ?>) authMember).get("memId"));
-        }
-
-        if (memId == null || memId.isBlank()) {
-            session.invalidate();
+    @GetMapping("/mypage/profile")
+    public String myProfile(
+            @AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model
+    ) {
+        if (userDetails == null) {
             return "redirect:/member/login";
         }
+        
+        MemberVO sessionMember = userDetails.getMember();
 
-        // DB 최신 정보 조회 (조인 쿼리 findById 사용)
+        // ✅ SNS 회원 + 가입 미완료 → 강제 complete
+        if ("Y".equals(sessionMember.getMemSnsYn())
+            && "N".equals(sessionMember.getJoinCompleteYn())) {
+            return "redirect:/member/sns/complete";
+        }
+
+//        String memId = userDetails.getUsername();
+
+        String memId = sessionMember.getMemId();
         MemberVO memberDetail = memberService.findById(memId);
         if (memberDetail == null) {
-            session.invalidate();
             return "redirect:/member/login";
         }
 
-        // 경로 가공 및 세션 동기화 
         String processedPath = memberDetail.getMemProfilePath();
 
-        // 세션 Map 업데이트 (헤더/사이드바 즉시 반영용)
-     // 세션 Map 업데이트 (헤더/사이드바에서 바로 사용)
-        if (authMember instanceof Map) {
-            Map<String, Object> loginMember = (Map<String, Object>) authMember;
-            // 이제 loginMember에는 "/profile/uuid.png"만 들어갑니다.
-            loginMember.put("memProfile", processedPath); 
-        }
-
         model.addAttribute("member", memberDetail);
-        model.addAttribute("profileImgUrl", processedPath); // "/profile/파일명.png"
+        model.addAttribute("profileImgUrl", processedPath);
 
         return "mypage/profile";
     }
     
     /* 기업회원 내 정보 조회 */
-    @GetMapping("/business/profile")
+    @GetMapping("/mypage/business/profile")
     public String myProfileBusiness(HttpSession session, Model model) {
     	  	
     	
@@ -142,7 +132,7 @@ public class ProfileController {
 
 	
 	/* 정보 수정 기능 */
-	@PostMapping("/profile/update")
+	@PostMapping("/mypage/profile/update")
 	public String updateProfile(@ModelAttribute MemberUpdateDTO updateDTO, 
 								HttpSession session,
 						        HttpServletRequest request,
@@ -168,11 +158,13 @@ public class ProfileController {
 	 
 	    // 현재 비밀번호 검증 (DB 조회)
 	    MemberVO memberDetail = memberService.findById(memId);
-	    if (memberDetail == null || !passwordEncoder.matches(updateDTO.getCurrentPassword(), memberDetail.getMemPassword())) {
-	        rttr.addFlashAttribute("errorMessage", "현재 비밀번호가 일치하지 않습니다.");
-	        return "redirect:" + redirectUrl;
+	    if (!"Y".equals(userDetails.getMember().getMemSnsYn())) {
+	        // 일반 회원일 때만 비번 검사!
+	        if (memberDetail == null || !passwordEncoder.matches(updateDTO.getCurrentPassword(), memberDetail.getMemPassword())) {
+	            rttr.addFlashAttribute("errorMessage", "현재 비밀번호가 일치하지 않습니다.");
+	            return "redirect:" + redirectUrl;
+	        }
 	    }
-	    
 	   
         if (updateDTO.getNewPassword() != null && !updateDTO.getNewPassword().isBlank()) {
             if (!updateDTO.getNewPassword().equals(updateDTO.getConfirmPassword())) {
@@ -230,8 +222,107 @@ public class ProfileController {
 		
 	}
 	
+    /* sns 회원 내 정보 조회 */
+    @GetMapping("/member/sns/complete")
+    public String snsCompleteForm(
+    		@AuthenticationPrincipal CustomUserDetails userDetails,
+            Model model
+    ) {
+        // 로그인 안 했으면 컷
+        if (userDetails == null) {
+            return "redirect:/member/login";
+        }
+
+        MemberVO member = userDetails.getMember();
+
+        // SNS 회원만 접근 가능
+        if (!"Y".equals(member.getMemSnsYn())) {
+            return "redirect:/";
+        }
+
+        // 🔥 이미 가입 완료면 마이페이지
+        if ("Y".equals(member.getJoinCompleteYn())) {
+            return "redirect:/mypage/profile";
+        }
+        
+        // JSP에서 쓰일 데이터 세팅
+        model.addAttribute("member", member);
+        model.addAttribute("profileImgUrl", member.getMemProfilePath());
+
+        return "member/snsComplete";
+    }
+	
+	/* sns 전용 내 정보 수정 기능*/
+	@PostMapping("/member/sns/complete")
+	public String completeSnsProfile(
+	        @ModelAttribute MemberUpdateDTO updateDTO,
+	        @AuthenticationPrincipal CustomUserDetails userDetails,
+	        HttpServletRequest request,
+	        HttpServletResponse response,
+	        RedirectAttributes rttr
+	) {
+		if (userDetails == null) {
+	        return "redirect:/member/login";
+	    }
+
+	    MemberVO member = userDetails.getMember();
+
+	    // SNS 회원만 허용
+	    if (!"Y".equals(member.getMemSnsYn())) {
+	        return "redirect:/";
+	    }
+
+	    int memNo = member.getMemNo();
+
+	    // 필수값 검증
+	    if (updateDTO.getMemName() == null || updateDTO.getMemName().isBlank()) {
+	        rttr.addFlashAttribute("errorMessage", "이름은 필수 입력 항목입니다.");
+	        return "redirect:/member/sns/complete";
+	    }
+
+	    // 비밀번호 설정 (선택)
+	    if (updateDTO.getNewPassword() != null && !updateDTO.getNewPassword().isBlank()) {
+	        if (!updateDTO.getNewPassword().equals(updateDTO.getConfirmPassword())) {
+	            rttr.addFlashAttribute("errorMessage", "비밀번호 확인이 일치하지 않습니다.");
+	            return "redirect:/member/sns/complete";
+	        }
+	        memberService.setPasswordForSnsUser(memNo, updateDTO.getNewPassword());
+	    }
+
+	    try {
+	        updateDTO.setMemNo(memNo);
+
+	        // MEMBER + MEM_USER
+	        memberService.updateSnsMemberProfile(updateDTO);
+
+	        // 가입 완료 처리
+	        memberService.updateJoinCompleteYn(memNo, "Y");
+
+	        // SecurityContext 갱신
+	        MemberVO updatedMember = memberService.findById(member.getMemId());
+	        CustomUserDetails newDetails = new CustomUserDetails(updatedMember);
+
+	        Authentication newAuth =
+	                new UsernamePasswordAuthenticationToken(
+	                        newDetails,
+	                        null,
+	                        userDetails.getAuthorities()
+	                );
+
+	        SecurityContextHolder.getContext().setAuthentication(newAuth);
+
+	        rttr.addFlashAttribute("successMessage", "회원 정보 설정이 완료되었습니다.");
+	        return "redirect:/mypage/profile";
+
+	    } catch (Exception e) {
+	        log.error("SNS 회원 가입 완료 처리 실패", e);
+	        rttr.addFlashAttribute("errorMessage", "정보 저장 중 오류가 발생했습니다.");
+	        return "redirect:/member/sns/complete";
+	    }
+	}
+	
 	// 비밀번호 확인 시 체크
-	@PostMapping("/profile/checkPassword")
+	@PostMapping("/mypage/profile/checkPassword")
 	@ResponseBody
 	public boolean checkPassword(@RequestParam String currentPassword) {
 		
@@ -246,7 +337,8 @@ public class ProfileController {
 		
 	}
 	
-	@PostMapping("/profile/withdraw")
+	/* 탈퇴하기 기능 */
+	@PostMapping("/mypage/profile/withdraw")
 	public String withdraw(@RequestParam String currentPassword,
 						   @RequestParam String withdrawReason,
 							Authentication auth,

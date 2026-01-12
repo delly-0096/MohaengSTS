@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.tour.mapper.ITripProdInfoMapper">
+
+    <!-- 이용안내 조회 -->
+    <select id="getInfo" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO">
+        SELECT
+            TRIP_PROD_NO,
+            PROD_RUNTIME,
+            PROD_DURATION,
+            PROD_MIN_PEOPLE,
+            PROD_MAX_PEOPLE,
+            PROD_LIM_AGE,
+            PROD_INCLUDE,
+            PROD_EXCLUDE,
+            PROD_NOTICE
+        FROM TRIP_PROD_INFO
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+    </select>
+
+</mapper>

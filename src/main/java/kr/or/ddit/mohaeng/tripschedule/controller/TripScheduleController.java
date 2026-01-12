@@ -32,7 +32,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
-import kr.or.ddit.mohaeng.adminLogin.controller.conn.ConnetController;
+import kr.or.ddit.mohaeng.admin.login.controller.ConnetController;
 import kr.or.ddit.mohaeng.login.controller.LoginController;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;

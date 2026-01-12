@@ -1,11 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:set var="pageTitle" value="여행톡" />
 <c:set var="pageCss" value="community" />
 
 <%@ include file="../common/header.jsp" %>
-
+<body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize><sec:authorize access='isAnonymous()'>false</sec:authorize>">
 <div class="community-page">
     <div class="container">
         <!-- 헤더 -->
@@ -13,7 +14,6 @@
             <h1><i class="bi bi-chat-dots me-3"></i>여행톡</h1>
             <p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
         </div>
-
         <!-- 게시판 -->
         <div class="board-container">
             <!-- 카테고리 탭 -->
@@ -41,7 +41,7 @@
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
-                <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
+                <sec:authorize access="hasRole('MEMBER')">
                 <div class="board-actions">
                     <button class="btn btn-outline-primary" onclick="openChatRoomList()">
                         <i class="bi bi-chat-heart me-2"></i>지금모행
@@ -50,14 +50,14 @@
                         <i class="bi bi-pencil me-2"></i>글쓰기
                     </button>
                 </div>
-                </c:if>
-                <c:if test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
+                </sec:authorize>
+                <sec:authorize access="hasRole('BUSINESS')">
                 <div class="board-actions">
                     <span class="business-notice">
                         <i class="bi bi-info-circle me-1"></i>기업회원은 여행톡 작성이 제한됩니다
                     </span>
                 </div>
-                </c:if>
+                </sec:authorize>
             </div>
 
             <!-- 게시글 리스트 -->
@@ -313,12 +313,12 @@
                     <i class="bi bi-share"></i>
                     <span>공유</span>
                 </button>
-                <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
+                <sec:authorize access="hasRole('MEMBER')">
                 <button class="post-action-btn report" onclick="reportCurrentPost()">
                     <i class="bi bi-flag"></i>
                     <span>신고</span>
                 </button>
-                </c:if>
+                </sec:authorize>
             </div>
         </div>
         <div class="post-comments-section">
@@ -326,7 +326,7 @@
             <div class="comments-list" id="commentsList">
                 <!-- 댓글 목록 -->
             </div>
-            <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
+            <sec:authorize access="isAuthenticated()">
             <div class="comment-write">
                 <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80" alt="내 프로필" class="comment-avatar">
                 <div class="comment-input-wrapper">
@@ -336,12 +336,12 @@
                     </button>
                 </div>
             </div>
-            </c:if>
-            <c:if test="${empty sessionScope.loginUser}">
+            </sec:authorize>
+            <sec:authorize access="isAnonymous()">
             <div class="comment-login-notice">
                 <p><i class="bi bi-info-circle me-2"></i>댓글을 작성하려면 <a href="${pageContext.request.contextPath}/member/login">로그인</a>이 필요합니다.</p>
             </div>
-            </c:if>
+            </sec:authorize>
         </div>
     </div>
 </div>
@@ -364,10 +364,10 @@
                 <div class="create-room-form" id="createRoomForm" style="display: none;">
                     <input type="text" class="form-control" id="newRoomName" placeholder="채팅방 이름을 입력하세요" maxlength="30">
                     <select class="form-control form-select" id="newRoomCategory">
-                        <option value="free">자유 채팅</option>
-                        <option value="companion">동행 모집</option>
-                        <option value="local">지역별 채팅</option>
-                        <option value="theme">테마별 채팅</option>
+                        <option value="FREE">자유 채팅</option>
+                        <option value="COMPANION">동행 모집</option>
+                        <option value="REGION">지역별 채팅</option>
+                        <option value="THEME">테마별 채팅</option>
                     </select>
                     <input type="number" class="form-control" id="newRoomMaxUsers" placeholder="최대 인원 (기본 50명)" min="2" max="100" value="50">
                     <div class="create-room-actions">
@@ -406,11 +406,11 @@
             <button class="chat-action-btn" onclick="toggleChatUserList()" title="참여자 목록">
                 <i class="bi bi-people"></i>
             </button>
-            <c:if test="${not empty sessionScope.loginUser}">
+            <sec:authorize access="hasRole('MEMBER')">
             <button class="chat-action-btn" onclick="reportCurrentChatroom()" title="채팅방 신고">
                 <i class="bi bi-flag"></i>
             </button>
-            </c:if>
+            </sec:authorize>
             <button class="chat-action-btn" onclick="minimizeChat()" title="최소화">
                 <i class="bi bi-dash-lg"></i>
             </button>
@@ -1914,7 +1914,8 @@ function updateResultMessage(keyword, count) {
 
 // 글쓰기
 function writePost() {
-    const isLoggedIn = ${not empty sessionScope.loginUser};
+    const isLoggedIn = <sec:authorize access="isAuthenticated()">true</sec:authorize>
+    					<sec:authorize access="isAnonymous()">false</sec:authorize>;
 
     if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
@@ -1931,11 +1932,20 @@ function writePost() {
 
 // 현재 사용자 정보
 const currentUser = {
-    id: '${sessionScope.loginUser.memberId}' || null,
-    name: '${sessionScope.loginUser.userName}' || '게스트',
-    isLoggedIn: ${not empty sessionScope.loginUser}
+    isLoggedIn: ${pageContext.request.userPrincipal != null},
+    id: <sec:authorize access="isAuthenticated()">
+            '${principal.member.memId}'
+        </sec:authorize>
+        <sec:authorize access="isAnonymous()">
+            null
+        </sec:authorize>,
+    name: <sec:authorize access="isAuthenticated()">
+              '${principal.member.memName}'
+          </sec:authorize>
+          <sec:authorize access="isAnonymous()">
+              '게스트'
+          </sec:authorize>
 };
-
 // 채팅방 데이터 (실제로는 서버에서 가져옴)
 let chatRooms = [
     {
@@ -1999,10 +2009,10 @@ let chatSimulationInterval = null;
 
 // 카테고리 아이콘 매핑
 const categoryIcons = {
-    'free': 'bi-chat-dots',
-    'companion': 'bi-people',
-    'local': 'bi-geo-alt',
-    'theme': 'bi-palette'
+    'FREE': 'bi-chat-dots',
+    'COMPANION': 'bi-people',
+    'REGION': 'bi-geo-alt',
+    'THEME': 'bi-palette'
 };
 
 // ==================== 채팅방 목록 모달 ====================
@@ -2010,8 +2020,18 @@ const categoryIcons = {
 // 채팅방 목록 열기
 function openChatRoomList() {
     document.getElementById('chatRoomModal').classList.add('active');
-    renderChatRoomList('all');
+    loadChatRooms();
     document.body.style.overflow = 'hidden';
+}
+
+function  loadChatRooms(category) {
+	let url = '/chat/rooms';
+	if(category) {
+		url += '?category=' + category;
+	}
+	fetch(url)
+	.then(res => res.json())
+	.then(data => renderChatRoomListFromServer(data));
 }
 
 // 채팅방 목록 닫기
@@ -2028,45 +2048,34 @@ function closeChatRoomModal(event) {
 }
 
 // 채팅방 목록 렌더링
-function renderChatRoomList(filter) {
-    const listEl = document.getElementById('chatRoomList');
-    let filteredRooms = chatRooms;
+function renderChatRoomList(rooms) {
+	const listEl = document.getElementById('chatRoomList');
 
-    if (filter !== 'all') {
-        filteredRooms = chatRooms.filter(room => room.category === filter);
-    }
-
-    if (filteredRooms.length === 0) {
-        listEl.innerHTML = '<div class="no-chat-rooms">' +
-            '<i class="bi bi-chat-square-dots"></i>' +
-            '<p>현재 열린 채팅방이 없습니다</p>' +
-            '<span>새 채팅방을 만들어보세요!</span>' +
-            '</div>';
+    if (!rooms || rooms.length === 0) {
+        listEl.innerHTML = '<div class="no-chat-rooms">현재 열린 채팅방이 없습니다</div>';
         return;
     }
 
     let html = '';
-    filteredRooms.forEach(room => {
-        const isFull = room.currentUsers >= room.maxUsers;
-        html += '<div class="chat-room-item' + (isFull ? ' full' : '') + '" onclick="joinChatRoom(\'' + room.id + '\')">' +
-            '<div class="chat-room-icon ' + room.category + '">' +
-                '<i class="bi ' + categoryIcons[room.category] + '"></i>' +
-            '</div>' +
-            '<div class="chat-room-details">' +
-                '<div class="chat-room-name">' +
-                    room.name +
-                    (isFull ? '<span class="badge bg-danger">만석</span>' : '') +
-                '</div>' +
-                '<div class="chat-room-meta">' +
-                    '<span><i class="bi bi-tag"></i> ' + room.categoryLabel + '</span>' +
-                    '<span><i class="bi bi-person"></i> ' + room.createdBy + '</span>' +
-                '</div>' +
-            '</div>' +
-            '<div class="chat-room-users-count">' +
-                '<i class="bi bi-people-fill"></i>' +
-                '<span>' + room.currentUsers + '/' + room.maxUsers + '</span>' +
-            '</div>' +
-        '</div>';
+    rooms.forEach(room => {
+        html += `
+        <div class="chat-room-item ${room.full ? 'full' : ''}"
+             onclick="joinChatRoom(${room.chatId})">
+            <div class="chat-room-details">
+                <div class="chat-room-name">
+                    ${room.chatName}
+                    ${room.full ? '<span class="badge bg-danger">만석</span>' : ''}
+                </div>
+                <div class="chat-room-meta">
+                    <span>${room.chatCtgryName}</span>
+                    <span>${room.createdBy}</span>
+                </div>
+            </div>
+            <div class="chat-room-users-count">
+                ${room.currentUsers}/${room.maxUsers}
+            </div>
+        </div>
+        `;
     });
 
     listEl.innerHTML = html;
@@ -2119,36 +2128,41 @@ function createChatRoom() {
         return;
     }
 
-    // 카테고리 라벨
-    const categoryLabels = {
-        'free': '자유',
-        'companion': '동행',
-        'local': '지역',
-        'theme': '테마'
-    };
+	const formData = new FormData();
+	formData.append('chatName', name);
+	formData.append('chatCtgry', category);
+	formData.append('chatMax', maxUsers);
+	
+	fetch(`${contextPath}/chat/room`, {
+		method : 'POST',
+		body : formData
+	})
+	.then(res => res.json())
+	.then(data => {
+		if(!data.success) {
+			showToast(data.message, 'warning');
+			return;
+		}
+		
+		showToast(data.message, 'success');
 
-    // 새 채팅방 생성
-    const newRoom = {
-        id: 'room_' + Date.now(),
-        name: name,
-        category: category,
-        categoryLabel: categoryLabels[category],
-        currentUsers: 1,
-        maxUsers: maxUsers,
-        createdBy: currentUser.name,
-        createdAt: new Date().toISOString().split('T')[0]
-    };
+		// 생성 폼 닫기
+		cancelCreateRoom();
+		
+		// 서버 기준으로 채팅방 목록 다시 불러오기
+		loadChatRooms();
+		
+		if(data.chatId){
+			joinChatRoom(data.chatId);
+		}
+	})
+	.catch(err => {
+		console.error(err);
+		showToast('채팅방 생성 중 오류가 발생했습니다.', 'error');
+	});
 
-    chatRooms.unshift(newRoom);
-    renderChatRoomList('all');
-    cancelCreateRoom();
 
     showToast('채팅방이 생성되었습니다!', 'success');
-
-    // 생성한 방에 바로 입장
-    setTimeout(() => {
-        joinChatRoom(newRoom.id);
-    }, 500);
 }
 
 // ==================== 채팅 참여 ====================
@@ -2162,39 +2176,46 @@ function joinChatRoom(roomId) {
         }
         return;
     }
+    
+    fetch(`${contextPath}/chat/room/${roomId}/join`, {
+    	method : 'POST'
+    })
+    .then(res => res.json())
+    .then(data => {
+    	if(!data.success) {
+    		showToast(data.message, 'warning');
+    		return;
+    	}
+    	
+    	// 서버 승인 후 UI 세팅
+    	const room = chatRooms.find(r => r.id === roomId);
+    	if(!room) {
+    		showToast('채팅방 정보를 찾을 수 없습니다.', 'error');
+    		return;
+    	}
+    	
+    	currentChatRoom = room;
+	
+	    // 채팅 UI 설정
+	    setupChatWindow(room);
+	
+	    // 채팅 윈도우 열기
+	    openChatWindow();
+    	
+	    // 시스템 메시지 추가
+	    addSystemMessage(currentUser.name + '님이 입장하셨습니다.');
 
-    const room = chatRooms.find(r => r.id === roomId);
-    if (!room) {
-        showToast('채팅방을 찾을 수 없습니다.', 'error');
-        return;
-    }
-
-    if (room.currentUsers >= room.maxUsers) {
-        showToast('채팅방이 가득 찼습니다.', 'warning');
-        return;
-    }
-
-    // 현재 채팅방 설정
-    currentChatRoom = room;
-    room.currentUsers++;
-
-    // 모달 닫기
-    closeChatRoomList();
-
-    // 채팅 UI 설정
-    setupChatWindow(room);
-
-    // 채팅 윈도우 열기
-    openChatWindow();
-
-    // 시스템 메시지 추가
-    addSystemMessage(currentUser.name + '님이 입장하셨습니다.');
-
-    // 가상의 기존 메시지 로드
-    loadPreviousMessages();
-
-    // 가상 채팅 시뮬레이션 시작
-    startChatSimulation();
+	    // 가상의 기존 메시지 로드
+	    loadPreviousMessages();
+	
+	    // 가상 채팅 시뮬레이션 시작
+	    startChatSimulation();
+	    
+    })
+    .catch(err => {
+    	console.error(err);
+    	showToast('채팅방 입장 중 오류가 발생했습니다.', 'error');
+    });
 }
 
 // 채팅 윈도우 설정

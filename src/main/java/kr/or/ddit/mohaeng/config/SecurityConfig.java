@@ -12,11 +12,13 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.authorization.AuthorizationDecision;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -34,8 +36,10 @@ import jakarta.servlet.DispatcherType;
 import kr.or.ddit.mohaeng.filter.TokenAuthenticationFilter;
 import kr.or.ddit.mohaeng.login.service.CustomOAuth2UserService;
 import kr.or.ddit.mohaeng.security.CustomAccessDeniedHandler;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
 import kr.or.ddit.mohaeng.util.TokenProvider;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -73,8 +77,12 @@ public class SecurityConfig {
 			"/mypage/profile/withdraw",
 			"/member/find/id",
 			"/member/find/password",
+			"/member/sns/**",
 			"/idCheck",
 			"/error",
+			"/api/chatbot",
+			"/tour",
+			"/tour/**",
 			"/schedule/search",
 			"/schedule/planner",
 			"/schedule/common/**",
@@ -173,8 +181,29 @@ public class SecurityConfig {
 //              .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
 //              .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
                 .requestMatchers("/member/login").permitAll()
+                .requestMatchers("/member/sns/**").authenticated() 
+                
+                // 마이페이지 접근 제어 (SNS 미완성 차단)
+                .requestMatchers("/mypage/**").access((authentication, context) -> {
+                    Authentication auth = authentication.get();
+
+                    if (auth == null || !(auth.getPrincipal() instanceof CustomUserDetails)) {
+                    	return new AuthorizationDecision(false);
+                    }
+
+                    CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
+                    MemberVO member = user.getMember();
+
+                    if ("Y".equals(member.getMemSnsYn())
+                    		 && "N".equals(member.getJoinCompleteYn())) {
+                    	return new AuthorizationDecision(false);
+                    }
+
+                    return new AuthorizationDecision(true);
+                })
                 .anyRequest().authenticated()
-        )
+
+         )
         .formLogin(form -> form.disable())
         .httpBasic(hbasic -> hbasic.disable());
 
@@ -191,7 +220,9 @@ public class SecurityConfig {
     .oauth2Login(oauth2 -> oauth2
         .loginPage("/member/login")
         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
-        .defaultSuccessUrl("/", true)
+        .successHandler((request, response, authentication) -> {
+            response.sendRedirect("/"); 
+        })
     );
 
     // 로그인 상태 유지

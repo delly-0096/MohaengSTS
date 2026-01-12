@@ -10,7 +10,7 @@ import lombok.Data;
 public class FlightProductVO {
 	// 운항 일정
 	
-	private String fltProdId;     	 // 항공권 키 - 일자 + 순서 (db변경해야됨)
+	private int fltProdId;     	 // 항공권 키 - 일자 + 순서 (db변경해야됨)
 	
 	private String airlineId;        // 항공사 ID
 	private String flightSymbol;  	 // 항공편번호
@@ -40,8 +40,6 @@ public class FlightProductVO {
 	// 공항 iata코드 (필요없을수도?)
 	private String depIata;			// 출발지 iata코드 ?? 사용여부는 알아서
 	private String arrIata;			// 도착지 iata코드
-
-
 	
 	// api에 있는 것들
 	private String airlineNm;        // 항공사
@@ -53,5 +51,5 @@ public class FlightProductVO {
 	// 페이징용
 	private int pageNo = 1;
 	private int numOfRows = 100;
-	private String sorting = "";	// 정렬 - 최저가순, 최단시간순, 출발시간순
+//	private String sorting = "";	// 정렬 - 최저가순, 최단시간순, 출발시간순
 }

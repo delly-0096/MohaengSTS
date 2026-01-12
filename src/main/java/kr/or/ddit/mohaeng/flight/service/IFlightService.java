@@ -9,7 +9,6 @@ import kr.or.ddit.mohaeng.vo.MemberVO;
 
 public interface IFlightService {
 	public int registerAirport();
-	public List<AirportVO> selectAirportList(String keyword);
 	public int registerAirline();
 	public List<AirportVO> getAirportList();
 	public List<AirlineVO> getAirlineList();

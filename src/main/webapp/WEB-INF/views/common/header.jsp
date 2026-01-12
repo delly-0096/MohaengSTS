@@ -13,6 +13,9 @@
 	<!-- axios -->
 	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
+	<!-- 토스페이먼츠 cdn -->
+	<script src="https://js.tosspayments.com/v2/standard"></script>
+
     <!-- Context Path Meta Tag -->
     <meta name="context-path" content="${pageContext.request.contextPath}">
 

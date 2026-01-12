@@ -2,12 +2,15 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.payment.mapper.IPaymentMapper">
 	
-	<insert id="insertPayment" parameterType="kr.or.ddit.mohaeng.vo.PaymentVO">
+	<insert id="insertPayment" parameterType="kr.or.ddit.mohaeng.vo.PaymentVO" useGeneratedKeys="true">
+		<selectKey keyProperty="paySequence" resultType="int" order="BEFORE">
+			select seq_payment.nextval from dual
+		</selectKey>
 		INSERT INTO payment (
 		    pay_no, mem_no, pay_total_amt, use_point, pay_method_cd
 		    , pay_dt, pay_status, payment_key
 		) VALUES (
-			#{payNo}, #{memNo}, #{payTotalAmt}, #{usePoint}, #{payMethodCd}
+			#{payNo} || #{paySequence}, #{memNo}, #{payTotalAmt}, #{usePoint}, #{payMethodCd}
 			, #{payDt}, #{payStatus}, #{paymentKey}
 		)
 	</insert>

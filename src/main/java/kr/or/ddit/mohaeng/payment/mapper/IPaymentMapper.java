@@ -6,6 +6,6 @@ import kr.or.ddit.mohaeng.vo.PaymentVO;
 
 @Mapper
 public interface IPaymentMapper {
-	public int insertPayment(PaymentVO paymentVO);
+	public int insertPayment(PaymentVO paymentVO);	// 결제 정보 입력
 
 }

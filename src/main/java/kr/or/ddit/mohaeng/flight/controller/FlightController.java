@@ -8,8 +8,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -66,7 +64,7 @@ public class FlightController {
 	 * <p>결제자 정보 가져오기</p>
 	 * @author sdg
 	 * @param memberVO 회원 id
-	 * @return memNo, memName, memEmail, tel
+	 * @return memNo, memName, memEmail, tel, point
 	 */
 	@ResponseBody
 	@PostMapping("/product/flight/user")
@@ -75,8 +73,6 @@ public class FlightController {
 		MemberVO member = service.getPayPerson(memberVO.getMemId());
 		return member;
 	}
-	
-	
 	
 	/**
 	 * <p>예약페이지 이동 컨트롤러

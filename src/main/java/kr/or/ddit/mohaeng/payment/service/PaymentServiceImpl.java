@@ -29,17 +29,12 @@ import lombok.extern.slf4j.Slf4j;
 public class PaymentServiceImpl implements IPaymentService {
 
 	@Autowired
-	private IPaymentMapper  payMapper;
+	private IPaymentMapper payMapper;
 	
 	@Autowired
 	private IFlightMapper flightMapper;
 
-	/**
-	 * <p>결제</p>
-	 * @author sdg
-	 * @param paymentVO 결제데이터
-	 * @return api 응답 객체
-	 */
+
 	@Override
 	@Transactional
 	public Map<String, Object> confirmPayment(PaymentVO paymentVO) {
@@ -67,13 +62,10 @@ public class PaymentServiceImpl implements IPaymentService {
 
         try {
             // 5. API 요청 (POST)
-            // 응답 결과를 Map으로 받으면 편리합니다. 필요시 전용 VO를 만드셔도 됩니다.
             ResponseEntity<Map> response = restTemplate.postForEntity(url, entity, Map.class);
 
             if (response.getStatusCode() == HttpStatus.OK) {	// server 연결 성공
             	Map<String, Object> responseBody = response.getBody();
-
-            	
                 log.info("결제 승인 API 성공: {}", response.getBody());
                 
 //                int paySequence = payMapper.get
@@ -115,6 +107,7 @@ public class PaymentServiceImpl implements IPaymentService {
                 	productResult = flightMapper.insertFlight(flightProductVO);	// 항공권 없으면 insert 있으면 안하기
                 }
                 
+                
                 int reservationResult = 0;
                 
                 // 예약 정보 담기 - 
@@ -135,16 +128,15 @@ public class PaymentServiceImpl implements IPaymentService {
                 
                 // 탑승객 정보 담기
                 for(FlightPassengersVO flightPassengersVO : paymentVO.getFlightPassengersList()) {
-                	// 한번에 가는편, 오는편 insert
+                	// 가는편 insert
                 	flightPassengersVO.setReserveNo(depReservationNo);
                 	passengersResult = flightMapper.insertPassengers(flightPassengersVO);	// 출발 탑승객 정보 
                 	log.info("flightPassengers dep insert {}", passengersResult);
                 	
+                	// 오는편 insert
                 	flightPassengersVO.setReserveNo(arrReservationNo);
                 	passengersResult = flightMapper.insertPassengers(flightPassengersVO);	// 도착 탑승객 정보
-                	log.info("flightPassengers dep insert {}", passengersResult);
-                	
-                	
+                	log.info("flightPassengers arr insert {}", passengersResult);
                 }
                 // 탑승객 수 만큼 response에 set하기
                 

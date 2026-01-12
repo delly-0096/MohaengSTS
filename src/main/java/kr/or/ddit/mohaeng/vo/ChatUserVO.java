@@ -1,6 +1,6 @@
 package kr.or.ddit.mohaeng.vo;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 
 import lombok.Data;
 
@@ -18,9 +18,14 @@ public class ChatUserVO {
 	/**
 	 * 채팅방 참여 시점
 	 */
-	private Date joinedAt;
+	private LocalDateTime joinedAt;
 	/**
 	 * 최종 조회 채팅 전문
 	 */
 	private int lastMsgId;
+	
+	/**
+	 * 채팅방 참여자 유형
+	 */
+	private String role;
 }

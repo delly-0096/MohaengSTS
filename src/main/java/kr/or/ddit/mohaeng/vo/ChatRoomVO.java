@@ -14,6 +14,10 @@ public class ChatRoomVO {
 	 * 채팅방 명
 	 */
 	private String chatName;
+	private String chatCtgryName;
+	private int currentUsers;
+	private String createdBy;
+	
 	/**
 	 * 등록자
 	 */

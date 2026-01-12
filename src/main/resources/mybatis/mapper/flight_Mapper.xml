@@ -44,7 +44,7 @@
 	
 	<select id="getPayPerson" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
 		select
-			m.mem_no, m.mem_name, m.mem_email, mu.tel
+			m.mem_no, m.mem_name, m.mem_email, m.point, mu.tel
 		from member m left outer join mem_user mu on(m.mem_no = mu.mem_no)
 		where mem_id = #{memId}
 	</select>
@@ -62,4 +62,24 @@
 		)
 	</insert>
 	
+	
+	<insert id="insertFlightReservation" parameterType="kr.or.ddit.mohaeng.vo.FlightReservationVO">
+		INSERT INTO flight_reservation (
+		    reserve_no, mem_no, pay_no, flt_prod_id, total_price
+		) VALUES (
+		    #{reserveNo}, #{memNo}, #{payNo}, #{fltProdId}, #{totalPrice}
+		)
+	</insert>
+	
+	<insert id="insertPassengers" parameterType="kr.or.ddit.mohaeng.vo.FlightPassengersVO">
+		INSERT INTO flight_passengers (
+		    passenger_id, last_name, first_name, birth_date
+		    , gender, passengers_type, baggage_price
+		    , extra_baggage, flight_seat, reserve_no
+		) VALUES (
+			#{passengerId}, #{lastName}, #{firstName}, #{birthDate}
+		    , #{gender}, #{passengersType}, #{baggagePrice}
+		    , #{extraBaggage}, #{flightSeat}, #{reserveNo}
+		)
+	</insert>
 </mapper>

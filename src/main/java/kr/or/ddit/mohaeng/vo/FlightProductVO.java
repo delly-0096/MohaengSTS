@@ -51,5 +51,5 @@ public class FlightProductVO {
 	// 페이징용
 	private int pageNo = 1;
 	private int numOfRows = 100;
-	private String sorting = "";	// 정렬 - 최저가순, 최단시간순, 출발시간순
+//	private String sorting = "";	// 정렬 - 최저가순, 최단시간순, 출발시간순
 }

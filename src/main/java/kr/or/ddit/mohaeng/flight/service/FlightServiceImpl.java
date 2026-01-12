@@ -107,6 +107,8 @@ public class FlightServiceImpl implements IFlightService {
 			        vo.setDepAirportNm(flightProduct.getDepAirportNm());
 			        
 			        if(vo.getAirlineNm().indexOf("대한") != -1 || vo.getAirlineNm().indexOf("아시아나") != -1) {
+			        	int prestige = (int) (vo.getEconomyCharge() * 1.5);
+			        	vo.setPrestigeCharge(prestige);
 			        	vo.setCheckedBaggage(20);
 			        }else {
 			        	vo.setCheckedBaggage(15);
@@ -158,9 +160,6 @@ public class FlightServiceImpl implements IFlightService {
 			e.printStackTrace();
 		}
 		
-		if(flightProduct.getSorting() == "") {	// 기본 sort = 최저가
-			return flightProductList;
-		}
 		return flightProductList;
 	}
 	

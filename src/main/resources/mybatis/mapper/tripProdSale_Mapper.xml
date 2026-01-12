@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.tour.mapper.ITripProdSaleMapper">
+
+    <!-- 단일 조회 -->
+    <select id="getSale" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO">
+        SELECT
+            TRIP_PROD_NO,
+            PRICE,
+            NETPRC,
+            DISCOUNT,
+            LEAD_TIME,
+            TOTAL_STOCK,
+            CUR_STOCK
+        FROM TRIP_PROD_SALE
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+    </select>
+
+    <!-- 여러 상품 조회 (목록용) -->
+    <select id="getSaleList" parameterType="list" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO">
+        SELECT
+            TRIP_PROD_NO,
+            PRICE,
+            NETPRC,
+            DISCOUNT,
+            LEAD_TIME,
+            TOTAL_STOCK,
+            CUR_STOCK
+        FROM TRIP_PROD_SALE
+        WHERE TRIP_PROD_NO IN
+        <foreach collection="list" item="prodNo" open="(" separator="," close=")">
+            #{prodNo}
+        </foreach>
+    </select>
+
+</mapper>

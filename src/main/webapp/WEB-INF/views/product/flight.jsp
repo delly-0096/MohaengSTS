@@ -839,7 +839,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // 1. 글자를 입력할 때 실행
         input.addEventListener('input', function() {
-            const query = this.value.trim();
+            const query = this.value.trim(); 
             showSegmentAutocomplete(dropdown, query);
         });
 

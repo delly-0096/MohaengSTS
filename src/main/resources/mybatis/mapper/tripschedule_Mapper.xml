@@ -364,6 +364,7 @@
 		     , AI_RECOM_YN
 		     , PUBLIC_YN
 		     , REG_DT
+		     , MOD_DT
 		     , DEL_YN
 			 ) VALUES (
 			   #{schdlNo}
@@ -381,6 +382,7 @@
 			 , #{totalBudget}
 			 , #{aiRecomYn}
 			 , #{publicYn}
+			 , sysdate
 			 , sysdate
 			 , 'N'
 			 )

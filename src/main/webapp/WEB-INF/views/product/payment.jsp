@@ -125,13 +125,12 @@
 
 <script>
 
-let loading;
+let loading = null;
 
-let paymentKey;
-let orderId;
-let amount;
-let paymentType;
-
+let paymentKey = null;
+let orderId = null;
+let amount = 0;
+let paymentType = null;
 
 // 예약 세션 스토리지 가져올 객체 
 let storedData = null;
@@ -154,7 +153,6 @@ document.addEventListener("DOMContentLoaded", async function(){
 	console.log("flightProduct : ", flightProduct);
 	console.log("passengers : ", passengers);
 	
-	// payNo, orderName, totalAmount, method
 	let payNo = document.querySelector("#payNo");
 	let orderName = document.querySelector("#orderName");
 	let totalAmount = document.querySelector("#totalAmount");
@@ -208,7 +206,7 @@ document.addEventListener("DOMContentLoaded", async function(){
 		    
 			payNo.innerHTML = resultData.orderId;
 			orderName.innerHTML = resultData.orderName;
-			totalAmount.innerHTML = resultData.totalAmount;
+			totalAmount.innerHTML = (resultData.totalAmount).toLocaleString();
 			if (resultData.method == '간편결제'){
 				method.innerHTML = resultData.easyPay.provider;
 			} else{

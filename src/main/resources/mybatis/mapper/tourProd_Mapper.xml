@@ -1,0 +1,214 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.tour.mapper.ITripProdMapper">
+
+    <!-- 목록 조회 -->
+    <select id="list" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+        SELECT *
+        FROM (
+            SELECT ROWNUM AS rn, a.*
+            FROM (
+                SELECT
+                    t.TRIP_PROD_NO,
+                    t.COMP_NO,
+                    t.MEM_NO,
+                    t.PROD_CTGRY_TYPE,
+                    t.APPROVE_STATUS,
+                    t.TRIP_PROD_TITLE,
+                    t.TRIP_PROD_CONTENT,
+                    t.SALE_START_DT,
+                    t.SALE_END_DT,
+                    t.ATTACH_NO,
+                    t.VIEW_CNT,
+                    t.REG_DT,
+                    t.MOD_DT,
+                    t.APRV_YN,
+                    t.DEL_YN,
+                    t.CTY_NM,
+                    s.PRICE,
+                    s.NETPRC,
+                    s.DISCOUNT,
+                    s.LEAD_TIME,
+                    s.TOTAL_STOCK,
+                    s.CUR_STOCK,
+                    r.AVG_RATING,
+                    r.REVIEW_COUNT,
+                    r.RECOMMEND_COUNT
+                FROM TRIP_PROD t
+                LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
+                LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
+                LEFT JOIN (
+                    SELECT 
+                        TRIP_PROD_NO,
+                        ROUND(AVG(RATING), 1) AS AVG_RATING,
+                        COUNT(*) AS REVIEW_COUNT,
+                        COUNT(CASE WHEN RCMDTN_YN = 'Y' THEN 1 END) AS RECOMMEND_COUNT
+                    FROM PROD_REVIEW
+                    GROUP BY TRIP_PROD_NO
+                ) r ON t.TRIP_PROD_NO = r.TRIP_PROD_NO
+                WHERE (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
+                  AND t.APPROVE_STATUS = '판매중'
+                <!-- 검색어 -->
+                <if test="keyword != null and keyword != ''">
+                    AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%'
+                         OR t.TRIP_PROD_CONTENT LIKE '%' || #{keyword} || '%')
+                </if>
+                <!-- 여행지 -->
+                <if test="destination != null and destination != ''">
+                    AND UPPER(t.CTY_NM) LIKE '%' || UPPER(#{destination}) || '%'
+                </if>
+                <!-- 카테고리 -->
+                <if test="category != null and category != ''">
+                    AND t.PROD_CTGRY_TYPE = #{category}
+                </if>
+                <!-- 날짜 -->
+                <if test="tourDate != null and tourDate != ''">
+                    AND TO_DATE(#{tourDate}, 'YYYY-MM-DD') BETWEEN t.SALE_START_DT AND t.SALE_END_DT
+                </if>
+                <!-- 인원수 -->
+                <if test="people != null">
+                    AND #{people} BETWEEN NVL(i.PROD_MIN_PEOPLE, 1) AND NVL(i.PROD_MAX_PEOPLE, 99)
+                </if>
+                <!-- 가격대 -->
+                <if test="priceMin != null">
+                    <![CDATA[
+                    AND s.PRICE >= #{priceMin}
+                    ]]>
+                </if>
+                <if test="priceMax != null">
+                    <![CDATA[
+                    AND s.PRICE <= #{priceMax}
+                    ]]>
+                </if>
+                <!-- 소요시간 -->
+                <if test="leadTime != null">
+                    <choose>
+                        <when test="leadTime == 1">
+                        <![CDATA[
+                        AND s.LEAD_TIME <= 1
+                        ]]>
+                        </when>
+                        <when test="leadTime == 3">
+                        <![CDATA[
+                        AND s.LEAD_TIME > 1 AND s.LEAD_TIME <= 3
+                        ]]>
+                        </when>
+                        <when test="leadTime == 6">
+                        <![CDATA[
+                        AND s.LEAD_TIME > 3 AND s.LEAD_TIME <= 6
+                        ]]>
+                        </when>
+                        <when test="leadTime == 24">
+                        <![CDATA[
+                        AND s.LEAD_TIME > 6
+                        ]]>
+                        </when>
+                    </choose>
+                </if>
+                <!-- 정렬 -->
+                <choose>
+                    <when test="sortBy == 'popular'">
+                        ORDER BY t.VIEW_CNT DESC NULLS LAST, t.REG_DT DESC
+                    </when>
+                    <when test="sortBy == 'price_low'">
+                        ORDER BY s.PRICE ASC NULLS LAST, t.REG_DT DESC
+                    </when>
+                    <when test="sortBy == 'price_high'">
+                        ORDER BY s.PRICE DESC NULLS LAST, t.REG_DT DESC
+                    </when>
+                    <when test="sortBy == 'rating'">
+                        ORDER BY r.AVG_RATING DESC NULLS LAST, r.REVIEW_COUNT DESC NULLS LAST
+                    </when>
+                    <otherwise>
+                        ORDER BY r.RECOMMEND_COUNT DESC NULLS LAST, t.REG_DT DESC
+                    </otherwise>
+                </choose>
+            ) a
+            <![CDATA[
+            WHERE ROWNUM <= #{page} * #{pageSize}
+            ]]>
+        )
+        <![CDATA[
+        WHERE rn > (#{page} - 1) * #{pageSize}
+        ]]>
+    </select>
+
+    <!-- 전체 개수 조회 -->
+    <select id="getTotalCount" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TRIP_PROD t
+        LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
+        LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
+        WHERE (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
+          AND t.APPROVE_STATUS = '판매중'
+        <if test="keyword != null and keyword != ''">
+            AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%'
+                 OR t.TRIP_PROD_CONTENT LIKE '%' || #{keyword} || '%')
+        </if>
+        <if test="destination != null and destination != ''">
+            AND UPPER(t.CTY_NM) LIKE '%' || UPPER(#{destination}) || '%'
+        </if>
+        <if test="category != null and category != ''">
+            AND t.PROD_CTGRY_TYPE = #{category}
+        </if>
+        <if test="tourDate != null and tourDate != ''">
+            AND TO_DATE(#{tourDate}, 'YYYY-MM-DD') BETWEEN t.SALE_START_DT AND t.SALE_END_DT
+        </if>
+        <if test="people != null">
+            AND #{people} BETWEEN NVL(i.PROD_MIN_PEOPLE, 1) AND NVL(i.PROD_MAX_PEOPLE, 99)
+        </if>
+        <if test="priceMin != null">
+            <![CDATA[
+            AND s.PRICE >= #{priceMin}
+            ]]>
+        </if>
+        <if test="priceMax != null">
+            <![CDATA[
+            AND s.PRICE <= #{priceMax}
+            ]]>
+        </if>
+        <if test="leadTime != null">
+            <choose>
+                <when test="leadTime == 1">
+                <![CDATA[
+                AND s.LEAD_TIME <= 1
+                ]]>
+                </when>
+                <when test="leadTime == 3">
+                <![CDATA[
+                AND s.LEAD_TIME > 1 AND s.LEAD_TIME <= 3
+                ]]>
+                </when>
+                <when test="leadTime == 6">
+                <![CDATA[
+                AND s.LEAD_TIME > 3 AND s.LEAD_TIME <= 6
+                ]]>
+                </when>
+                <when test="leadTime == 24">
+                <![CDATA[
+                AND s.LEAD_TIME > 6
+                ]]>
+                </when>
+            </choose>
+        </if>
+    </select>
+
+    <!-- 조회수 증가 -->
+    <update id="increase" parameterType="int">
+        UPDATE TRIP_PROD
+        SET VIEW_CNT = NVL(VIEW_CNT, 0) + 1
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+    </update>
+
+    <!-- 상세 조회 -->
+    <select id="detail" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+        SELECT
+            TRIP_PROD_NO, COMP_NO, MEM_NO, PROD_CTGRY_TYPE, APPROVE_STATUS,
+            TRIP_PROD_TITLE, TRIP_PROD_CONTENT, SALE_START_DT, SALE_END_DT,
+            ATTACH_NO, VIEW_CNT, REG_DT, MOD_DT, CTY_NM
+        FROM TRIP_PROD
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+          AND (DEL_YN = 'N' OR DEL_YN IS NULL)
+    </select>
+
+</mapper>

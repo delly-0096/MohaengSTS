@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.chatbot.mapper.ChatbotMapper">
+
+	<!-- 키워드로 챗봇 설정 검색 (공통 응답만) -->
+    <select id="selectByKeyword" resultType="kr.or.ddit.mohaeng.chatbot.vo.ChatbotConfigVO">
+        SELECT
+		    bot_config_no
+		  , keyword
+		  , resp_content
+		  , resp_type
+		  , target_user_type
+		  , disp_seq
+		  , reg_id
+		  , link_url
+		FROM
+		    chatbot_config
+		WHERE
+		    keyword LIKE '%' || #{keyword} | | '%'
+		ORDER BY DISP_SEQ ASC
+    </select>
+
+    <!-- 대화 로그 저장 -->
+	<insert id="insertChatLog">	    
+	    INSERT
+		    INTO chatbot_log (
+		        chat_log_no
+		        , bot_config_no
+		        , mem_no
+		        , user_msg
+		        , bot_resp
+		        , intent_tag
+		        , chat_dt
+		    ) VALUES (
+		        SEQ_CHATBOT_LOG.NEXTVAL
+		        , <choose>
+		            <when test="botConfigNo != null">#{botConfigNo}</when>
+		            <otherwise>0</otherwise>  <!-- AI 응답은 0으로 표시 -->
+		        </choose>
+			    , #{memNo}
+				, #{userMsg}
+				, #{botResp}
+				, #{intentTag}
+				, sysdate
+			)
+	</insert>
+
+</mapper>

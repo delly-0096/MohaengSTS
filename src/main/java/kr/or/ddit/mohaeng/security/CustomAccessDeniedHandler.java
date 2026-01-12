@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.security.Principal;
 
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
 import jakarta.servlet.ServletException;
@@ -14,24 +16,43 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 	
-	// 사용자가 정의한 접근 거부 처리자
-	
 	@Override
 	public void handle(HttpServletRequest request, HttpServletResponse response,
 			AccessDeniedException accessDeniedException) throws IOException, ServletException {
-		log.info("## CustomAccessDeniedHandler.handle() 실행...!");
-		log.info("## AccessDeniedException info -----------------");
 		
-		// 
-		Principal principal = request.getUserPrincipal();
-		if(request.isUserInRole("ROLE_MEMBER")) {
-			log.info("## 회원 권한을 가진 사용자 id : {}", principal.getName());
-		}else {
-			log.info("## 관리자 권한을 가진 사용자 id : {}", principal.getName());
-		}
-		
-		log.info(accessDeniedException.getMessage());
-		response.sendRedirect("/accessError");
+		 Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+	        // 인증 자체가 없으면 로그인으로
+	        if (auth == null || !auth.isAuthenticated()) {
+	            response.sendRedirect("/member/login");
+	            return;
+	        }
+
+	        Object principal = auth.getPrincipal();
+
+	        // CustomUserDetails가 아닐 경우 (익명 등)
+	        if (!(principal instanceof CustomUserDetails)) {
+	            response.sendRedirect("/accessError");
+	            return;
+	        }
+
+	        CustomUserDetails userDetails = (CustomUserDetails) principal;
+	        var member = userDetails.getMember();
+
+	        log.warn("⛔ AccessDenied 발생 - memId={}, uri={}",
+	                member.getMemId(), request.getRequestURI());
+
+	        // 🔥 SNS 회원 + 가입 미완성 → SNS 완료 페이지로 강제 이동
+	        if ("Y".equals(member.getMemSnsYn())
+	                && "N".equals(member.getJoinCompleteYn())) {
+
+	            log.info("➡ SNS 미완성 회원 접근 차단 → /member/sns/complete");
+	            response.sendRedirect("/member/sns/complete");
+	            return;
+	        }
+
+	        // 그 외 권한 문제
+	        response.sendRedirect("/accessError");
 	}
 
 }

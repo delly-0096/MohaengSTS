@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.tour.mapper.ISearchLogMapper">
+
+    <!-- 검색 로그 저장 -->
+    <insert id="insertSearchLog" parameterType="kr.or.ddit.mohaeng.tour.vo.SearchLogVO">
+        INSERT INTO search_log (search_log_no, keyword, reg_dt)
+        VALUES (SEQ_SEARCH_LOG.NEXTVAL, #{keyword}, SYSDATE)
+    </insert>
+
+    <!-- 인기 키워드 조회 -->
+    <select id="getKeywords" resultType="kr.or.ddit.mohaeng.tour.vo.SearchLogVO">
+	    SELECT * FROM (
+	        SELECT keyword, COUNT(*) AS search_count
+	        FROM search_log
+	        <![CDATA[
+	        WHERE reg_dt >= SYSDATE - #{days}
+	        ]]>
+	        GROUP BY keyword
+	        ORDER BY search_count DESC
+	    )
+	    <![CDATA[
+	    WHERE ROWNUM <= #{limit}
+	    ]]>
+	</select>
+    
+</mapper>

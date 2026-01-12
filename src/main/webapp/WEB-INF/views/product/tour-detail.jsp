@@ -1,8 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
-<c:set var="pageTitle" value="제주 스쿠버다이빙 체험" />
+<c:set var="pageTitle" value="${tp.tripProdTitle}" />
 <c:set var="pageCss" value="product" />
+<%-- 줄바꿈 문자 정의 --%>
+<% pageContext.setAttribute("newline", "\n"); %>
 
 <%@ include file="../common/header.jsp" %>
 
@@ -12,9 +16,9 @@
         <nav class="breadcrumb">
             <a href="${pageContext.request.contextPath}/">홈</a>
             <span class="mx-2">/</span>
-            <a href="${pageContext.request.contextPath}/product/tour">투어/체험/티켓</a>
+            <a href="${pageContext.request.contextPath}/tour">투어/체험/티켓</a>
             <span class="mx-2">/</span>
-            <span>제주 스쿠버다이빙 체험</span>
+            <span>${tp.tripProdTitle}</span>
         </nav>
 
         <!-- 갤러리 -->
@@ -35,74 +39,131 @@
             <!-- 상품 정보 -->
             <div class="product-info">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="badge bg-primary">액티비티</span>
-                    <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
-                    <button class="report-btn" onclick="openReportModal('product', '1', '제주 스쿠버다이빙 체험 (초보자 가능)')">
+                    <span class="badge bg-primary">
+                    	<c:choose>
+					        <c:when test="${tp.prodCtgryType eq 'tour'}">투어</c:when>
+					        <c:when test="${tp.prodCtgryType eq 'activity'}">액티비티</c:when>
+					        <c:when test="${tp.prodCtgryType eq 'ticket'}">입장권/티켓</c:when>
+					        <c:when test="${tp.prodCtgryType eq 'class'}">클래스/체험</c:when>
+					        <c:when test="${tp.prodCtgryType eq 'transfer'}">교통/이동</c:when>
+					        <c:otherwise>${tp.prodCtgryType}</c:otherwise>
+					    </c:choose>
+                    </span>
+                    <c:if test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS'}">
+                    <button class="report-btn" onclick="openReportModal('product', '${tp.tripProdNo}', '${tp.tripProdTitle}')">
                         <i class="bi bi-flag"></i> 신고
                     </button>
                     </c:if>
                 </div>
-                <h1>제주 스쿠버다이빙 체험 (초보자 가능)</h1>
+                <h1>${tp.tripProdTitle}</h1>
 
                 <div class="product-meta">
-                    <span><i class="bi bi-geo-alt"></i> 제주 서귀포시 중문</span>
-                    <span><i class="bi bi-clock"></i> 약 2시간</span>
-                    <span><i class="bi bi-star-fill text-warning"></i> 4.9 (328 리뷰)</span>
+                    <span><i class="bi bi-geo-alt"></i> ${tp.ctyNm}</span>
+                    <span><i class="bi bi-clock"></i> 
+						<c:choose>
+					        <c:when test="${sale.leadTime eq 1}">1시간 이내</c:when>
+					        <c:when test="${sale.leadTime eq 3}">1~3시간</c:when>
+					        <c:when test="${sale.leadTime eq 6}">3~6시간</c:when>
+					        <c:when test="${sale.leadTime eq 24}">하루 이상</c:when>
+					        <c:otherwise>${sale.leadTime}</c:otherwise>
+					    </c:choose>
+					</span>
+                    <span><i class="bi bi-star-fill text-warning"></i> ${reviewStat.avgRating > 0 ? reviewStat.avgRating : '-'} (${reviewStat.reviewCount} 리뷰)</span>
                 </div>
 
                 <!-- 상품 설명 -->
                 <div class="product-description">
                     <h3>상품 소개</h3>
-                    <p>
-                        제주도의 맑고 깨끗한 바다에서 스쿠버다이빙을 체험해보세요!
-                        수영을 못하셔도, 스쿠버다이빙이 처음이셔도 괜찮습니다.
-                        전문 강사가 1:1로 안전하게 안내해드립니다.
-                    </p>
-                    <p>
-                        제주 바다 속 아름다운 산호초와 열대어들을 직접 눈으로 확인하실 수 있으며,
-                        수중 사진 촬영 서비스도 함께 제공됩니다.
+                    <p class="preserve-line">
+                        ${tp.tripProdContent}
                     </p>
                 </div>
 
                 <!-- 포함/불포함 -->
-                <div class="product-description">
-                    <h3>포함 사항</h3>
-                    <ul class="mb-4">
-                        <li><i class="bi bi-check-circle text-success me-2"></i>전문 강사 1:1 지도</li>
-                        <li><i class="bi bi-check-circle text-success me-2"></i>스쿠버다이빙 장비 대여</li>
-                        <li><i class="bi bi-check-circle text-success me-2"></i>수중 사진 촬영</li>
-                        <li><i class="bi bi-check-circle text-success me-2"></i>샤워 시설 이용</li>
-                    </ul>
-
-                    <h3>불포함 사항</h3>
-                    <ul>
-                        <li><i class="bi bi-x-circle text-danger me-2"></i>픽업/샌딩 서비스</li>
-                        <li><i class="bi bi-x-circle text-danger me-2"></i>개인 물품 (수영복, 타월 등)</li>
-                    </ul>
-                </div>
+				<div class="product-description">
+				    <h3>포함 사항</h3>
+				    <c:choose>
+				        <c:when test="${not empty info.prodInclude}">
+				            <ul class="include-list mb-4">
+				                <c:forTokens items="${info.prodInclude}" delims="${newline}" var="item">
+				                    <c:if test="${not empty fn:trim(item)}">
+				                        <li><i class="bi bi-check-circle text-success me-2"></i>${fn:trim(item)}</li>
+				                    </c:if>
+				                </c:forTokens>
+				            </ul>
+				        </c:when>
+				        <c:otherwise>
+				            <p class="text-muted">포함 사항 정보가 없습니다.</p>
+				        </c:otherwise>
+				    </c:choose>
+				
+				    <h3>불포함 사항</h3>
+				    <c:choose>
+				        <c:when test="${not empty info.prodExclude}">
+				            <ul class="exclude-list">
+				                <c:forTokens items="${info.prodExclude}" delims="${newline}" var="item">
+				                    <c:if test="${not empty fn:trim(item)}">
+				                        <li><i class="bi bi-x-circle text-danger me-2"></i>${fn:trim(item)}</li>
+				                    </c:if>
+				                </c:forTokens>
+				            </ul>
+				        </c:when>
+				        <c:otherwise>
+				            <p class="text-muted">불포함 사항 정보가 없습니다.</p>
+				        </c:otherwise>
+				    </c:choose>
+				</div>
 
                 <!-- 이용 안내 -->
-                <div class="product-description">
-                    <h3>이용 안내</h3>
-                    <div class="row">
-                        <div class="col-md-6">
-                            <p><strong>운영 시간</strong></p>
-                            <p class="text-muted">매일 09:00 - 18:00 (1시간 단위 예약)</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>소요 시간</strong></p>
-                            <p class="text-muted">약 2시간 (실제 다이빙 40분)</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>최소 인원</strong></p>
-                            <p class="text-muted">1명</p>
-                        </div>
-                        <div class="col-md-6">
-                            <p><strong>연령 제한</strong></p>
-                            <p class="text-muted">만 10세 이상</p>
-                        </div>
-                    </div>
-                </div>
+				<div class="product-description">
+				    <h3>이용 안내</h3>
+				    <div class="row">
+				        <c:if test="${not empty info.prodRuntime}">
+				        <div class="col-md-6">
+				            <p><strong>운영 시간</strong></p>
+				            <p class="text-muted">${info.prodRuntime}</p>
+				        </div>
+				        </c:if>
+				        <c:if test="${not empty info.prodDuration}">
+				        <div class="col-md-6">
+				            <p><strong>소요 시간</strong></p>
+				            <p class="text-muted">${info.prodDuration}</p>
+				        </div>
+				        </c:if>
+				        <c:if test="${not empty info.prodMinPeople}">
+				        <div class="col-md-6">
+				            <p><strong>최소 인원</strong></p>
+				            <p class="text-muted">${info.prodMinPeople}명</p>
+				        </div>
+				        </c:if>
+				        <c:if test="${not empty info.prodMaxPeople}">
+				        <div class="col-md-6">
+				            <p><strong>최대 인원</strong></p>
+				            <p class="text-muted">${info.prodMaxPeople}명</p>
+				        </div>
+				        </c:if>
+				        <c:if test="${not empty info.prodLimAge}">
+				        <div class="col-md-6">
+				            <p><strong>연령 제한</strong></p>
+				            <p class="text-muted">${info.prodLimAge}</p>
+				        </div>
+				        </c:if>
+				    </div>
+				</div>
+				
+				<!-- 유의사항 -->
+				<c:if test="${not empty info.prodNotice}">
+				<div class="product-description notice-section">
+				    <h3><i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>유의사항</h3>
+				    <ul class="notice-list">
+				        <c:forTokens items="${info.prodNotice}" delims="${newline}" var="item">
+				            <c:if test="${not empty fn:trim(item)}">
+				                <li><i class="bi bi-dot"></i>${fn:trim(item)}</li>
+				            </c:if>
+				        </c:forTokens>
+				    </ul>
+				</div>
+				</c:if>
 
                 <!-- 위치 -->
                 <div class="product-description" style="border-bottom: none;">
@@ -119,10 +180,12 @@
             <aside class="booking-sidebar">
                 <div class="booking-card">
                     <div class="booking-price">
-                        <span class="original">85,000원</span>
+                        <c:if test="${sale.netprc != null && sale.netprc > sale.price}">
+					        <span class="original"><fmt:formatNumber value="${sale.netprc}" pattern="#,###"/>원</span>
+					    </c:if>
                         <div>
-                            <span class="price">68,000</span>
-                            <span class="per-person">원 / 1인</span>
+                            <span class="price"><fmt:formatNumber value="${sale.price}" pattern="#,###"/></span>
+        					<span class="per-person">원 / 1인</span>
                         </div>
                     </div>
 
@@ -158,11 +221,11 @@
 
                         <div class="booking-total">
                             <span class="booking-total-label">총 금액</span>
-                            <span class="booking-total-price" id="totalPrice">136,000원</span>
+                            <span class="booking-total-price" id="totalPrice">0원</span>
                         </div>
 
                         <div class="booking-actions">
-                            <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
+                            <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
                             <button type="button" class="btn btn-outline w-100" onclick="addToBookmark()">
                                 <i class="bi bi-bookmark me-2"></i>북마크
                             </button>
@@ -173,7 +236,7 @@
                                 <i class="bi bi-credit-card me-2"></i>바로 결제
                             </button>
                             </c:if>
-                            <c:if test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
+                            <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
                             <div class="business-notice mt-2">
                                 <small class="text-muted"><i class="bi bi-info-circle me-1"></i>기업회원은 구매가 불가합니다.</small>
                             </div>
@@ -184,38 +247,114 @@
             </aside>
         </div>
 
-        <!-- 리뷰 섹션 -->
-        <div class="mt-5">
-            <h3 class="mb-4">리뷰 (328)</h3>
-            <div class="card mb-3">
-                <div class="card-body">
-                    <div class="d-flex gap-3">
-                        <div class="user-avatar" style="width: 48px; height: 48px;">
-                            <i class="bi bi-person"></i>
-                        </div>
-                        <div class="flex-grow-1">
-                            <div class="d-flex justify-content-between align-items-start">
-                                <div>
-                                    <strong>travel_lover</strong>
-                                    <div class="text-warning">
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                        <i class="bi bi-star-fill"></i>
-                                    </div>
-                                </div>
-                                <small class="text-muted">2024.03.10</small>
-                            </div>
-                            <p class="mt-2 mb-0">
-                                수영을 못해서 걱정했는데 강사님이 정말 친절하게 알려주셔서 안전하게 잘 체험했어요!
-                                제주 바다가 이렇게 예쁜 줄 몰랐네요. 사진도 잘 찍어주셔서 추억 남기기 딱이에요!
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+		<!-- 리뷰 섹션 -->
+		<div class="review-section mt-5">
+		    <div class="review-header">
+		        <h3><i class="bi bi-star me-2"></i>리뷰 (${reviewStat.reviewCount})</h3>
+		        <div class="review-summary">
+		            <div class="review-score">
+		                <span class="score">${reviewStat.avgRating > 0 ? reviewStat.avgRating : '-'}</span>
+		                <div class="stars">
+		                    <c:set var="rating" value="${reviewStat.avgRating != null ? reviewStat.avgRating : 0}" />
+		                    <fmt:parseNumber var="fullStars" value="${rating}" integerOnly="true" />
+		                    <c:set var="decimal" value="${rating - fullStars}" />
+		                    
+		                    <c:forEach begin="1" end="5" var="i">
+		                        <c:choose>
+		                            <c:when test="${i <= fullStars}">
+		                                <i class="bi bi-star-fill"></i>
+		                            </c:when>
+		                            <c:when test="${i == fullStars + 1 && decimal >= 0.5}">
+		                                <i class="bi bi-star-half"></i>
+		                            </c:when>
+		                            <c:otherwise>
+		                                <i class="bi bi-star"></i>
+		                            </c:otherwise>
+		                        </c:choose>
+		                    </c:forEach>
+		                </div>
+		            </div>
+		        </div>
+		    </div>
+		
+		    <div class="review-list" id="reviewList">
+		        <c:choose>
+		            <c:when test="${empty review}">
+		                <div class="no-review">
+		                    <i class="bi bi-chat-square-text"></i>
+		                    <p>아직 리뷰가 없습니다.</p>
+		                </div>
+		            </c:when>
+		            <c:otherwise>
+		                <c:forEach items="${review}" var="rv">
+						    <div class="review-item" data-review-id="${rv.prodRvNo}">
+						        <div class="review-item-header">
+						            <div class="reviewer-info">
+						                <div class="reviewer-avatar">
+						                    <i class="bi bi-person"></i>
+						                </div>
+						                <div>
+						                    <span class="reviewer-name">${rv.nickname}</span>
+						                    <span class="review-date">
+						                        <fmt:formatDate value="${rv.prodRegdate}" pattern="yyyy.MM.dd"/>
+						                    </span>
+						                </div>
+						            </div>
+						            <div class="d-flex align-items-center gap-2">
+						                <div class="review-rating">
+						                    <c:forEach begin="1" end="5" var="i">
+						                        <c:choose>
+						                            <c:when test="${i <= rv.rating}">
+						                                <i class="bi bi-star-fill"></i>
+						                            </c:when>
+						                            <c:otherwise>
+						                                <i class="bi bi-star"></i>
+						                            </c:otherwise>
+						                        </c:choose>
+						                    </c:forEach>
+						                </div>
+						                <c:if test="${not empty sessionScope.loginMember && sessionScope.loginMember.memNo == rv.memNo}">
+						                    <div class="dropdown">
+						                        <button class="btn-more" type="button" data-bs-toggle="dropdown">
+						                            <i class="bi bi-three-dots-vertical"></i>
+						                        </button>
+						                        <ul class="dropdown-menu dropdown-menu-end">
+						                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReviewModal(${rv.prodRvNo}, ${rv.rating}, '${fn:escapeXml(rv.prodReview)}')">
+						                                <i class="bi bi-pencil me-2"></i>수정</a></li>
+						                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReview(${rv.prodRvNo})">
+						                                <i class="bi bi-trash me-2"></i>삭제</a></li>
+						                        </ul>
+						                    </div>
+						                </c:if>
+						            </div>
+						        </div>
+						        <div class="review-content">
+						            <p>${rv.prodReview}</p>
+						        </div>
+						        <!-- 리뷰 이미지 (이미지가 있는 경우만 표시) -->
+								<c:if test="${not empty rv.reviewImages}">
+								    <div class="review-images">
+								        <c:forEach items="${rv.reviewImages}" var="img">
+								            <img src="${pageContext.request.contextPath}/upload/review/${img}" 
+								                 alt="리뷰 이미지" onclick="openReviewImage(this.src)">
+								        </c:forEach>
+								    </div>
+								</c:if>
+						    </div>
+						</c:forEach>
+		            </c:otherwise>
+		        </c:choose>
+		    </div>
+		
+		    <!-- 더보기 버튼: 6개 이상일 때만 표시 -->
+		    <c:if test="${reviewStat.reviewCount > 5}">
+		        <div class="review-more" id="reviewMoreBtn">
+		            <button class="btn btn-outline" onclick="loadMoreReviews()">
+		                더 많은 리뷰 보기 <i class="bi bi-chevron-down ms-1"></i>
+		            </button>
+		        </div>
+		    </c:if>
+		</div>
 
         <!-- 판매자 문의 섹션 -->
         <div class="inquiry-section mt-5">
@@ -277,119 +416,297 @@
             </div>
 
             <!-- 문의 목록 -->
-            <div class="inquiry-list-card">
-                <div class="inquiry-list-header">
-                    <h4><i class="bi bi-list-ul me-2"></i>문의 내역 <span class="inquiry-count">(12)</span></h4>
-                </div>
-                <div class="inquiry-list">
-                    <!-- 문의 아이템 1 -->
-                    <div class="inquiry-item">
-                        <div class="inquiry-item-header">
-                            <div class="inquiry-item-info">
-                                <span class="inquiry-type-badge product">상품 문의</span>
-                                <span class="inquiry-author">jeju_trip**</span>
-                                <span class="inquiry-date">2024.03.15</span>
-                            </div>
-                            <span class="inquiry-status answered">답변완료</span>
+			<div class="inquiry-list-card">
+			    <div class="inquiry-list-header">
+			        <h4><i class="bi bi-list-ul me-2"></i>문의 내역 <span class="inquiry-count">(${inquiryCount})</span></h4>
+			    </div>
+			    <div class="inquiry-list" id="inquiryList">
+			        <c:choose>
+			            <c:when test="${empty inquiry}">
+			                <div class="no-inquiry" style="text-align: center; padding: 40px; color: #999;">
+			                    <i class="bi bi-chat-square-text" style="font-size: 48px; opacity: 0.5;"></i>
+			                    <p style="margin-top: 16px;">아직 문의가 없습니다.</p>
+			                </div>
+			            </c:when>
+			            <c:otherwise>
+			                <c:forEach items="${inquiry}" var="inq" varStatus="status">
+			                    <div class="inquiry-item" data-inquiry-id="${inq.prodInqryNo}">
+			                        <div class="inquiry-item-header">
+			                            <div class="inquiry-item-info">
+			                                <!-- 문의 유형 뱃지 -->
+			                                <c:choose>
+			                                    <c:when test="${inq.inquiryCtgry eq 'product'}">
+			                                        <span class="inquiry-type-badge product">상품 문의</span>
+			                                    </c:when>
+			                                    <c:when test="${inq.inquiryCtgry eq 'booking'}">
+			                                        <span class="inquiry-type-badge booking">예약/일정</span>
+			                                    </c:when>
+			                                    <c:when test="${inq.inquiryCtgry eq 'price'}">
+			                                        <span class="inquiry-type-badge price">가격/결제</span>
+			                                    </c:when>
+			                                    <c:when test="${inq.inquiryCtgry eq 'cancel'}">
+			                                        <span class="inquiry-type-badge cancel">취소/환불</span>
+			                                    </c:when>
+			                                    <c:otherwise>
+			                                        <span class="inquiry-type-badge other">기타</span>
+			                                    </c:otherwise>
+			                                </c:choose>
+			                                
+			                                <!-- 작성자 닉네임 마스킹 -->
+			                                <span class="inquiry-author">${inq.inquiryNickname}</span>
+			                                <span class="inquiry-date">
+			                                    <fmt:formatDate value="${inq.regDt}" pattern="yyyy.MM.dd"/>
+			                                </span>
+			                                
+			                                <!-- 비밀글 표시 -->
+			                                <c:if test="${inq.secretYn eq 'Y'}">
+			                                    <span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>
+			                                </c:if>
+			                            </div>
+			                            
+			                            <!-- 답변 상태 -->
+			                            <div class="d-flex align-items-center gap-2">
+										    <!-- 답변 상태 -->
+										    <c:choose>
+										        <c:when test="${inq.inqryStatus eq 'DONE'}">
+										            <span class="inquiry-status answered">답변완료</span>
+										        </c:when>
+										        <c:otherwise>
+										            <span class="inquiry-status waiting">답변대기</span>
+										        </c:otherwise>
+										    </c:choose>
+										    
+										    <c:if test="${not empty sessionScope.loginMember && sessionScope.loginMember.memNo == inq.inquiryMemNo && inq.inqryStatus ne 'DONE'}">
+										        <div class="dropdown">
+										            <button class="btn-more" type="button" data-bs-toggle="dropdown">
+										                <i class="bi bi-three-dots-vertical"></i>
+										            </button>
+										            <ul class="dropdown-menu dropdown-menu-end">
+										                <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditInquiryModal(${inq.prodInqryNo}, '${inq.inquiryCtgry}', '${fn:escapeXml(inq.prodInqryCn)}', '${inq.secretYn}')">
+										                    <i class="bi bi-pencil me-2"></i>수정</a></li>
+										                <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteInquiry(${inq.prodInqryNo})">
+										                    <i class="bi bi-trash me-2"></i>삭제</a></li>
+										            </ul>
+										        </div>
+										    </c:if>
+										</div>
+			                        </div>
+			                        
+			                        <!-- 문의 내용 -->
+			                        <div class="inquiry-item-question">
+			                            <c:choose>
+			                                <c:when test="${inq.secretYn eq 'Y' && (empty sessionScope.loginMember || (sessionScope.loginMember.memNo != inq.inquiryMemNo && sessionScope.loginMember.memType ne 'BUSINESS'))}">
+			                                    <p class="secret-content"><i class="bi bi-lock me-1"></i>비밀글로 작성된 문의입니다.</p>
+			                                </c:when>
+			                                <c:otherwise>
+			                                    <p><strong>Q.</strong> ${inq.prodInqryCn}</p>
+			                                </c:otherwise>
+			                            </c:choose>
+			                        </div>
+			                        
+			                        <!-- 답변 내용 (답변완료 시) -->
+									<c:if test="${inq.inqryStatus eq 'DONE' && not empty inq.replyCn}">
+									    <!-- 비밀글이 아니거나 본인인 경우만 답변 표시 -->
+									    <c:if test="${inq.secretYn ne 'Y' || (not empty sessionScope.loginMember && (sessionScope.loginMember.memNo == inq.inquiryMemNo || sessionScope.loginMember.memType eq 'BUSINESS'))}">
+									    <div class="inquiry-item-answer" id="answer_${inq.prodInqryNo}">
+									        <div class="answer-header">
+									            <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
+									            <div class="d-flex align-items-center gap-2">
+									                <span class="answer-date">
+									                    <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
+									                </span>
+									                <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && sessionScope.loginMember.memNo == inq.replyMemNo}">
+									                    <div class="dropdown">
+									                        <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
+									                            <i class="bi bi-three-dots-vertical"></i>
+									                        </button>
+									                        <ul class="dropdown-menu dropdown-menu-end">
+									                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
+									                                <i class="bi bi-pencil me-2"></i>수정</a></li>
+									                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
+									                                <i class="bi bi-trash me-2"></i>삭제</a></li>
+									                        </ul>
+									                    </div>
+									                </c:if>
+									            </div>
+									        </div>
+									        <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
+									    </div>
+									    </c:if>
+									</c:if>
+			                        
+			                        <!-- 기업회원 답변 영역 (답변대기 상태일 때만) -->
+			                        <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && inq.inqryStatus eq 'WAIT'}">
+			                        <div class="business-reply-section">
+			                            <button class="btn btn-sm btn-primary" onclick="toggleReplyForm(${inq.prodInqryNo})">
+			                                <i class="bi bi-reply me-1"></i>답변하기
+			                            </button>
+			                            <div class="reply-form" id="replyForm_${inq.prodInqryNo}" style="display: none;">
+			                                <textarea class="form-control" id="replyContent_${inq.prodInqryNo}" rows="3"
+			                                          placeholder="답변 내용을 입력하세요..."></textarea>
+			                                <div class="reply-form-actions">
+			                                    <button class="btn btn-sm btn-outline" onclick="toggleReplyForm(${inq.prodInqryNo})">취소</button>
+			                                    <button class="btn btn-sm btn-primary" onclick="submitReply(${inq.prodInqryNo})">답변 등록</button>
+			                                </div>
+			                            </div>
+			                        </div>
+			                        </c:if>
+			                    </div>
+			                </c:forEach>
+			            </c:otherwise>
+			        </c:choose>
+			    </div>
+			
+			    <!-- 더보기 버튼: 6개 이상일 때만 표시 -->
+			    <c:if test="${inquiryCount > 5}">
+			        <div class="inquiry-more" id="inquiryMoreBtn">
+			            <button class="btn btn-outline" onclick="loadMoreInquiries()">
+			                더 많은 문의 보기 <i class="bi bi-chevron-down ms-1"></i>
+			            </button>
+			        </div>
+			    </c:if>
+			</div>
+        </div>
+    </div>
+</div>
+
+<!-- 리뷰 수정 모달 -->
+<div class="modal fade" id="editReviewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-star me-2"></i>리뷰 수정
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editReviewForm">
+                    <input type="hidden" id="editReviewId">
+                    
+                    <!-- 별점 -->
+                    <div class="review-section">
+                        <label class="review-label">별점 <span class="text-danger">*</span></label>
+                        <div class="star-rating" id="editStarRating">
+                            <i class="bi bi-star" data-rating="1"></i>
+                            <i class="bi bi-star" data-rating="2"></i>
+                            <i class="bi bi-star" data-rating="3"></i>
+                            <i class="bi bi-star" data-rating="4"></i>
+                            <i class="bi bi-star" data-rating="5"></i>
                         </div>
-                        <div class="inquiry-item-question">
-                            <p><strong>Q.</strong> 수영을 전혀 못해도 체험이 가능한가요? 물에 대한 공포가 조금 있어서요.</p>
-                        </div>
-                        <div class="inquiry-item-answer">
-                            <div class="answer-header">
-                                <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
-                                <span class="answer-date">2024.03.15</span>
-                            </div>
-                            <p><strong>A.</strong> 안녕하세요, 제주다이브센터입니다. 수영을 못하셔도 전혀 문제없습니다!
-                            전문 강사가 1:1로 안전하게 안내해드리며, 물에 대한 공포가 있으신 분들도 많이 체험하시고
-                            즐거운 시간 보내셨습니다. 체험 전 충분한 교육과 적응 시간을 드리니 안심하고 오세요!</p>
-                        </div>
+                        <span class="rating-text" id="editRatingText">별점을 선택해주세요</span>
+                        <input type="hidden" id="editReviewRating" value="0">
                     </div>
 
-                    <!-- 문의 아이템 2 -->
-                    <div class="inquiry-item">
-                        <div class="inquiry-item-header">
-                            <div class="inquiry-item-info">
-                                <span class="inquiry-type-badge booking">예약/일정</span>
-                                <span class="inquiry-author">happy_d**</span>
-                                <span class="inquiry-date">2024.03.12</span>
-                            </div>
-                            <span class="inquiry-status answered">답변완료</span>
-                        </div>
-                        <div class="inquiry-item-question">
-                            <p><strong>Q.</strong> 당일 예약도 가능한가요? 제주도 여행 중인데 갑자기 하고 싶어져서요.</p>
-                        </div>
-                        <div class="inquiry-item-answer">
-                            <div class="answer-header">
-                                <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
-                                <span class="answer-date">2024.03.12</span>
-                            </div>
-                            <p><strong>A.</strong> 네, 당일 예약도 가능합니다! 다만 예약 상황에 따라 원하시는 시간대가
-                            마감될 수 있으니, 가능하면 하루 전 예약을 권장드립니다. 급하신 경우 064-XXX-XXXX로
-                            전화주시면 빠르게 확인해드리겠습니다.</p>
+                    <!-- 후기 내용 -->
+                    <div class="review-section">
+                        <label class="review-label">후기 내용 <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="editReviewContent" rows="5"
+                                  placeholder="상품 이용 경험을 자세히 작성해주세요. (최소 20자 이상)"
+                                  minlength="20" maxlength="1000"></textarea>
+                        <div class="char-counter">
+                            <span id="editReviewCharCount">0</span> / 1000자
                         </div>
                     </div>
-
-                    <!-- 문의 아이템 3 (비밀글) -->
-                    <div class="inquiry-item secret">
-                        <div class="inquiry-item-header">
-                            <div class="inquiry-item-info">
-                                <span class="inquiry-type-badge cancel">취소/환불</span>
-                                <span class="inquiry-author">user12**</span>
-                                <span class="inquiry-date">2024.03.10</span>
-                                <span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>
-                            </div>
-                            <span class="inquiry-status answered">답변완료</span>
-                        </div>
-                        <div class="inquiry-item-question">
-                            <p class="secret-content"><i class="bi bi-lock me-1"></i>비밀글로 작성된 문의입니다.</p>
-                        </div>
-                    </div>
-
-                    <!-- 문의 아이템 4 (대기중) -->
-                    <div class="inquiry-item" data-inquiry-id="4">
-                        <div class="inquiry-item-header">
-                            <div class="inquiry-item-info">
-                                <span class="inquiry-type-badge price">가격/결제</span>
-                                <span class="inquiry-author">travel_**</span>
-                                <span class="inquiry-date">2024.03.18</span>
-                            </div>
-                            <span class="inquiry-status waiting">답변대기</span>
-                        </div>
-                        <div class="inquiry-item-question">
-                            <p><strong>Q.</strong> 4명이 같이 가면 단체 할인이 있나요?</p>
-                        </div>
-                        <!-- 기업회원 답변 영역 -->
-                        <c:if test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
-                        <div class="business-reply-section">
-                            <button class="btn btn-sm btn-primary" onclick="toggleReplyForm(4)">
-                                <i class="bi bi-reply me-1"></i>답변하기
-                            </button>
-                            <div class="reply-form" id="replyForm_4" style="display: none;">
-                                <textarea class="form-control" id="replyContent_4" rows="3"
-                                          placeholder="답변 내용을 입력하세요..."></textarea>
-                                <div class="reply-form-actions">
-                                    <button class="btn btn-sm btn-outline" onclick="toggleReplyForm(4)">취소</button>
-                                    <button class="btn btn-sm btn-primary" onclick="submitReply(4)">답변 등록</button>
-                                </div>
-                            </div>
-                        </div>
-                        </c:if>
-                    </div>
-                </div>
-
-                <!-- 더보기 버튼 -->
-                <div class="inquiry-more">
-                    <button class="btn btn-outline" onclick="loadMoreInquiries()">
-                        더 많은 문의 보기 <i class="bi bi-chevron-down ms-1"></i>
-                    </button>
-                </div>
+                    
+                    <!-- 사진 첨부 -->
+					<div class="review-section">
+					    <label class="review-label">사진 첨부 <span class="text-muted">(선택, 최대 5장)</span></label>
+					    <div class="review-image-upload">
+					        <input type="file" id="editReviewImages" accept="image/*" multiple style="display: none;">
+					        <div class="image-upload-area" onclick="document.getElementById('editReviewImages').click()">
+					            <i class="bi bi-camera"></i>
+					            <span>사진 추가</span>
+					        </div>
+					        <div class="image-preview-list" id="editImagePreviewList"></div>
+					    </div>
+					</div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="updateReview()">
+                    <i class="bi bi-check-lg me-1"></i>수정 완료
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
+<!-- 문의 수정 모달 -->
+<div class="modal fade" id="editInquiryModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-pencil-square me-2"></i>문의 수정
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editInquiryForm">
+                    <input type="hidden" id="editInquiryId">
+                    
+                    <div class="form-group mb-3">
+                        <label class="form-label">문의 유형</label>
+                        <select class="form-control form-select" id="editInquiryType">
+                            <option value="product">상품 문의</option>
+                            <option value="booking">예약/일정 문의</option>
+                            <option value="price">가격/결제 문의</option>
+                            <option value="cancel">취소/환불 문의</option>
+                            <option value="other">기타 문의</option>
+                        </select>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">문의 내용</label>
+                        <textarea class="form-control" id="editInquiryContent" rows="4"
+                                  placeholder="문의 내용을 입력해주세요."></textarea>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="editInquirySecret">
+                        <label class="form-check-label" for="editInquirySecret">비밀글로 문의하기</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="updateInquiry()">
+                    <i class="bi bi-check-lg me-1"></i>수정 완료
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 답변 수정 모달 -->
+<div class="modal fade" id="editReplyModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-reply me-2"></i>답변 수정
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editReplyInquiryId">
+                <div class="form-group">
+                    <label class="form-label">답변 내용</label>
+                    <textarea class="form-control" id="editReplyContent" rows="4"
+                              placeholder="답변 내용을 입력해주세요."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="updateReply()">
+                    <i class="bi bi-check-lg me-1"></i>수정 완료
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
 <!-- 플로팅 장바구니 버튼 -->
 <button class="floating-cart-btn" onclick="openCart()" id="floatingCartBtn">
     <i class="bi bi-cart3"></i>
@@ -434,6 +751,11 @@
 </c:if>
 
 <style>
+/* 줄바꿈 유지 */
+.preserve-line {
+    white-space: pre-line;
+    line-height: 1.8;
+}
 /* 플로팅 장바구니 버튼 */
 .floating-cart-btn {
     position: fixed;
@@ -767,6 +1089,53 @@
     }
 }
 
+/* 유의사항 섹션 */
+.notice-section {
+    background: #fffbeb;
+    border: 1px solid #fcd34d;
+    border-radius: 12px;
+    padding: 20px 24px !important;
+}
+
+.notice-section h3 {
+    color: #b45309;
+    display: flex;
+    align-items: center;
+}
+
+.notice-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.notice-list li {
+    padding: 8px 0;
+    color: #92400e;
+    display: flex;
+    align-items: flex-start;
+    line-height: 1.6;
+}
+
+.notice-list li i {
+    margin-right: 8px;
+    margin-top: 2px;
+    font-size: 20px;
+}
+
+/* 포함/불포함 리스트 */
+.include-list, .exclude-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.include-list li, .exclude-list li {
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+}
+
 /* ==================== 판매자 문의 섹션 ==================== */
 .inquiry-section {
     margin-bottom: 60px;
@@ -854,6 +1223,132 @@
 
 .seller-contact i {
     margin-right: 4px;
+}
+
+/* 리뷰 섹션 */
+.review-section {
+    background: white;
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 32px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.review-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #eee;
+}
+
+.review-header h3 {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+
+.review-score {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.review-score .score {
+    font-size: 32px;
+    font-weight: 700;
+    color: #333;
+}
+
+.review-score .stars {
+    color: #fbbf24;
+}
+
+.review-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.review-item {
+    padding: 20px;
+    background: #f8fafc;
+    border-radius: 12px;
+}
+
+.review-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.reviewer-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.reviewer-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+}
+
+.reviewer-name {
+    font-weight: 600;
+    display: block;
+}
+
+.review-date {
+    font-size: 12px;
+    color: #999;
+}
+
+.review-rating {
+    color: #fbbf24;
+}
+
+.review-content p {
+    margin: 0;
+    line-height: 1.6;
+    color: #333;
+}
+
+.review-images {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.review-images img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.review-more {
+    text-align: center;
+    margin-top: 24px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 문의 작성 카드 */
@@ -1161,16 +1656,278 @@
     padding: 6px 16px;
     font-size: 13px;
 }
+/* 더보기 버튼 */
+.btn-more {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    transition: all 0.2s ease;
+}
+
+.btn-more:hover {
+    background: #f1f5f9;
+    color: #333;
+}
+
+/* 드롭다운 메뉴 */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    min-width: 120px;
+}
+
+.dropdown-item {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+.dropdown-item:hover {
+    background: #f8fafc;
+}
+
+.dropdown-item.text-danger:hover {
+    background: #fef2f2;
+}
+
+/* 리뷰 수정 모달 */
+.review-section {
+    margin-bottom: 25px;
+}
+
+.review-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 10px;
+}
+
+.star-rating {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.star-rating i {
+    font-size: 32px;
+    color: #e2e8f0;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.star-rating i:hover,
+.star-rating i.bi-star-fill {
+    color: #fbbf24;
+}
+
+.rating-text {
+    font-size: 14px;
+    color: #64748b;
+}
+
+.char-counter {
+    text-align: right;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 5px;
+}
+/* 답변 영역 작은 더보기 버튼 */
+.btn-more-sm {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+}
+
+/* fadeOut 애니메이션 */
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* 이미지 업로드 스타일 */
+.review-image-upload {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.image-upload-area {
+    width: 80px;
+    height: 80px;
+    border: 2px dashed #e2e8f0;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.image-upload-area:hover {
+    border-color: var(--primary-color);
+    background: #f0f7ff;
+}
+
+.image-upload-area i {
+    font-size: 24px;
+    color: #94a3b8;
+}
+
+.image-upload-area span {
+    font-size: 11px;
+    color: #94a3b8;
+    margin-top: 5px;
+}
+
+.image-preview-list {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.image-preview-item {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.image-preview-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.image-preview-item .remove-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #ef4444;
+    color: white;
+    border: none;
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.image-preview-item .remove-btn:hover {
+    background: #dc2626;
+}
+
+/* 리뷰 이미지 */
+.review-images {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.review-images img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+}
+
+.review-images img:hover {
+    transform: scale(1.05);
+    opacity: 0.9;
+}
+
+/* 이미지 확대 모달 */
+.review-image-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.review-image-modal-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+}
+
+.review-image-modal-content img {
+    max-width: 100%;
+    max-height: 90vh;
+    object-fit: contain;
+    border-radius: 8px;
+}
+
+.review-image-close {
+    position: absolute;
+    top: -40px;
+    right: 0;
+    width: 36px;
+    height: 36px;
+    border: none;
+    background: white;
+    color: #333;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.review-image-close:hover {
+    background: #f0f0f0;
+}
+
+/* 커스텀 확인 모달 */
+@keyframes confirmSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
 </style>
 
 <script>
-const pricePerPerson = 68000;
+const pricePerPerson = ${sale != null ? sale.price : 0};
+var loginMemNo = ${not empty sessionScope.loginMember ? sessionScope.loginMember.memNo : 'null'};
+var loginMemType = '${sessionScope.loginMember.memType}';
 
 // 현재 상품 정보
 const currentProduct = {
-    id: '1',
-    name: '제주 스쿠버다이빙 체험 (초보자 가능)',
-    price: 68000,
+    id: '${tp.tripProdNo}',
+    name: '${tp.tripProdTitle}',
+    price: ${sale != null ? sale.price : 0},
     image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80'
 };
 
@@ -1188,7 +1945,7 @@ function updateTotal() {
 }
 
 function addToBookmark() {
-    const isLoggedIn = ${not empty sessionScope.loginUser};
+    const isLoggedIn = ${not empty sessionScope.loginMember};
 
     if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
@@ -1204,7 +1961,7 @@ function addToBookmark() {
 document.getElementById('bookingForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    const isLoggedIn = ${not empty sessionScope.loginUser};
+    const isLoggedIn = ${not empty sessionScope.loginMember};
 
     if (!isLoggedIn) {
         sessionStorage.setItem('returnUrl', window.location.href);
@@ -1223,7 +1980,7 @@ document.getElementById('bookingForm').addEventListener('submit', function(e) {
     }
 
     // 결제 페이지로 이동
-    window.location.href = '${pageContext.request.contextPath}/product/tour/1/booking?date=' + date + '&time=' + time +
+    window.location.href = '${pageContext.request.contextPath}/tour/${tp.tripProdNo}/booking?date=' + date + '&time=' + time +
                            '&people=' + document.getElementById('bookingPeople').value;
 });
 
@@ -1233,11 +1990,12 @@ document.getElementById('bookingForm').addEventListener('submit', function(e) {
 document.addEventListener('DOMContentLoaded', function() {
     loadCart();
     updateCartUI();
+    updateTotal()
 });
 
-// 로컬스토리지에서 장바구니 불러오기
+// 세션스토리지에서 장바구니 불러오기
 function loadCart() {
-    var savedCart = localStorage.getItem('tourCart');
+    var savedCart = sessionStorage.getItem('tourCart');
     if (savedCart) {
         try {
             cart = JSON.parse(savedCart);
@@ -1247,9 +2005,9 @@ function loadCart() {
     }
 }
 
-// 로컬스토리지에 장바구니 저장
+// 세션스토리지에 장바구니 저장
 function saveCart() {
-    localStorage.setItem('tourCart', JSON.stringify(cart));
+	sessionStorage.setItem('tourCart', JSON.stringify(cart));
 }
 
 // 상세페이지에서 장바구니에 추가
@@ -1426,7 +2184,7 @@ function checkout() {
     }
 
     // 로그인 체크
-    var isLoggedIn = ${not empty sessionScope.loginUser};
+    var isLoggedIn = ${not empty sessionScope.loginMember};
     if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
             sessionStorage.setItem('returnUrl', window.location.href);
@@ -1449,6 +2207,326 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+//==================== 리뷰 더보기 기능 ====================
+var reviewPage = 1;
+var totalReviewCount = ${reviewStat.reviewCount != null ? reviewStat.reviewCount : 0};
+var isLoadingReview = false;
+
+function loadMoreReviews() {
+    if (isLoadingReview) return;
+    
+    isLoadingReview = true;
+    reviewPage++;
+    
+    var btn = document.querySelector('#reviewMoreBtn button');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>불러오는 중...';
+    
+    fetch('${pageContext.request.contextPath}/tour/${tp.tripProdNo}/reviews?page=' + reviewPage)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            // 리뷰 추가
+            data.reviews.forEach(function(rv) {
+                appendReview(rv);
+            });
+            
+            // 더보기 버튼 상태
+            if (!data.hasMore) {
+                document.getElementById('reviewMoreBtn').style.display = 'none';
+                showToast('모든 리뷰를 불러왔습니다.', 'info');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '더 많은 리뷰 보기 <i class="bi bi-chevron-down ms-1"></i>';
+            }
+            
+            isLoadingReview = false;
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            showToast('리뷰를 불러오는데 실패했습니다.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '더 많은 리뷰 보기 <i class="bi bi-chevron-down ms-1"></i>';
+            isLoadingReview = false;
+            reviewPage--;
+        });
+}
+
+function appendReview(rv) {
+    var reviewList = document.getElementById('reviewList');
+    
+    // 별점 HTML 생성
+    var starsHtml = '';
+    for (var i = 1; i <= 5; i++) {
+        if (i <= rv.rating) {
+            starsHtml += '<i class="bi bi-star-fill"></i> ';
+        } else {
+            starsHtml += '<i class="bi bi-star"></i> ';
+        }
+    }
+    
+    // 날짜 포맷
+    var date = new Date(rv.prodRegdate);
+    var dateStr = date.getFullYear() + '.' + 
+                  String(date.getMonth() + 1).padStart(2, '0') + '.' + 
+                  String(date.getDate()).padStart(2, '0');
+    
+    // 본인 리뷰인 경우 수정/삭제 드롭다운 추가
+    var dropdownHtml = '';
+    if (loginMemNo && loginMemNo === rv.memNo) {
+        dropdownHtml = 
+            '<div class="dropdown">' +
+                '<button class="btn-more" type="button" data-bs-toggle="dropdown">' +
+                    '<i class="bi bi-three-dots-vertical"></i>' +
+                '</button>' +
+                '<ul class="dropdown-menu dropdown-menu-end">' +
+                    '<li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReviewModal(' + rv.prodRvNo + ', ' + rv.rating + ', \'' + escapeHtml(rv.prodReview).replace(/'/g, "\\'") + '\')">' +
+                        '<i class="bi bi-pencil me-2"></i>수정</a></li>' +
+                    '<li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReview(' + rv.prodRvNo + ')">' +
+                        '<i class="bi bi-trash me-2"></i>삭제</a></li>' +
+                '</ul>' +
+            '</div>';
+    }
+    
+    // 리뷰 이미지 HTML 생성
+    var imagesHtml = '';
+    if (rv.reviewImages && rv.reviewImages.length > 0) {
+        imagesHtml = '<div class="review-images">';
+        rv.reviewImages.forEach(function(img) {
+            imagesHtml += '<img src="${pageContext.request.contextPath}/upload/review/' + img + '" alt="리뷰 이미지" onclick="openReviewImage(this.src)">';
+        });
+        imagesHtml += '</div>';
+    }
+    
+    var html = 
+        '<div class="review-item" data-review-id="' + rv.prodRvNo + '" style="animation: fadeIn 0.3s ease;">' +
+            '<div class="review-item-header">' +
+                '<div class="reviewer-info">' +
+                    '<div class="reviewer-avatar">' +
+                        '<i class="bi bi-person"></i>' +
+                    '</div>' +
+                    '<div>' +
+                        '<span class="reviewer-name">' + escapeHtml(rv.nickname) + '</span>' +
+                        '<span class="review-date">' + dateStr + '</span>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="d-flex align-items-center gap-2">' +
+                    '<div class="review-rating">' + starsHtml + '</div>' +
+                    dropdownHtml +
+                '</div>' +
+            '</div>' +
+            '<div class="review-content">' +
+                '<p>' + escapeHtml(rv.prodReview) + '</p>' +
+            '</div>' +
+            imagesHtml +
+        '</div>';
+    
+    reviewList.insertAdjacentHTML('beforeend', html);
+}
+
+//리뷰 이미지 확대 보기
+function openReviewImage(src) {
+    // 간단한 이미지 모달
+    var modal = document.createElement('div');
+    modal.className = 'review-image-modal';
+    modal.innerHTML = 
+        '<div class="review-image-modal-content">' +
+            '<button class="review-image-close" onclick="this.parentElement.parentElement.remove()">&times;</button>' +
+            '<img src="' + src + '" alt="리뷰 이미지">' +
+        '</div>';
+    modal.onclick = function(e) {
+        if (e.target === modal) modal.remove();
+    };
+    document.body.appendChild(modal);
+}
+
+//==================== 리뷰 수정/삭제 ====================
+var editSelectedRating = 0;
+
+function openEditReviewModal(reviewId, rating, content) {
+    document.getElementById('editReviewId').value = reviewId;
+    document.getElementById('editReviewRating').value = rating;
+    document.getElementById('editReviewContent').value = content;
+    document.getElementById('editReviewCharCount').textContent = content.length;
+    
+    editSelectedRating = rating;
+    updateEditStars(rating);
+    updateEditRatingText(rating);
+    
+    // 이미지 초기화
+    editUploadedImages = [];
+    renderEditImagePreviews();
+    
+    var modal = new bootstrap.Modal(document.getElementById('editReviewModal'));
+    modal.show();
+}
+
+function updateEditStars(rating) {
+    var stars = document.querySelectorAll('#editStarRating i');
+    stars.forEach(function(star, index) {
+        if (index < rating) {
+            star.classList.remove('bi-star');
+            star.classList.add('bi-star-fill');
+        } else {
+            star.classList.remove('bi-star-fill');
+            star.classList.add('bi-star');
+        }
+    });
+}
+
+function updateEditRatingText(rating) {
+    var texts = ['별점을 선택해주세요', '별로예요', '그저 그래요', '보통이에요', '좋아요', '최고예요!'];
+    document.getElementById('editRatingText').textContent = texts[rating];
+}
+
+// 별점 클릭 이벤트
+document.addEventListener('DOMContentLoaded', function() {
+    var editStarRating = document.getElementById('editStarRating');
+    if (editStarRating) {
+        editStarRating.addEventListener('click', function(e) {
+            if (e.target.tagName === 'I') {
+                editSelectedRating = parseInt(e.target.dataset.rating);
+                document.getElementById('editReviewRating').value = editSelectedRating;
+                updateEditStars(editSelectedRating);
+                updateEditRatingText(editSelectedRating);
+            }
+        });
+        
+        editStarRating.addEventListener('mouseover', function(e) {
+            if (e.target.tagName === 'I') {
+                var rating = parseInt(e.target.dataset.rating);
+                updateEditStars(rating);
+            }
+        });
+        
+        editStarRating.addEventListener('mouseout', function() {
+            updateEditStars(editSelectedRating);
+        });
+    }
+    
+    // 글자수 카운터
+    var editReviewContent = document.getElementById('editReviewContent');
+    if (editReviewContent) {
+        editReviewContent.addEventListener('input', function() {
+            document.getElementById('editReviewCharCount').textContent = this.value.length;
+        });
+    }
+});
+
+function updateReview() {
+    var reviewId = document.getElementById('editReviewId').value;
+    var rating = document.getElementById('editReviewRating').value;
+    var content = document.getElementById('editReviewContent').value.trim();
+    
+    if (rating == 0) {
+        showToast('별점을 선택해주세요.', 'warning');
+        return;
+    }
+    
+    if (content.length < 20) {
+        showToast('리뷰 내용을 20자 이상 입력해주세요.', 'warning');
+        document.getElementById('editReviewContent').focus();
+        return;
+    }
+    
+    // 이미지 데이터도 함께 전송
+    console.log('리뷰 수정:', { 
+        reviewId: reviewId, 
+        rating: rating, 
+        content: content,
+        images: editUploadedImages.length + '장'
+    });
+    
+    // var formData = new FormData();
+    // formData.append('reviewId', reviewId);
+    // formData.append('rating', rating);
+    // formData.append('content', content);
+    // editUploadedImages.forEach(function(img, index) {
+    //     formData.append('images', img.file);
+    // });
+    
+    // UI 업데이트
+    var reviewItem = document.querySelector('[data-review-id="' + reviewId + '"]');
+    if (reviewItem) {
+        reviewItem.querySelector('.review-content p').textContent = content;
+        
+        var starsHtml = '';
+        for (var i = 1; i <= 5; i++) {
+            starsHtml += i <= rating ? '<i class="bi bi-star-fill"></i>' : '<i class="bi bi-star"></i>';
+        }
+        reviewItem.querySelector('.review-rating').innerHTML = starsHtml;
+    }
+    
+    bootstrap.Modal.getInstance(document.getElementById('editReviewModal')).hide();
+    showToast('리뷰가 수정되었습니다.', 'success');
+}
+
+function deleteReview(reviewId) {
+    showCustomConfirm('리뷰 삭제', '삭제된 리뷰는 복구할 수 없습니다.<br>정말 삭제하시겠습니까?', function() {
+        console.log('리뷰 삭제:', reviewId);
+        
+        var reviewItem = document.querySelector('[data-review-id="' + reviewId + '"]');
+        if (reviewItem) {
+            reviewItem.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(function() {
+                reviewItem.remove();
+            }, 300);
+        }
+        
+        showToast('리뷰가 삭제되었습니다.', 'success');
+    });
+}
+
+//==================== 리뷰 이미지 업로드 ====================
+var editUploadedImages = [];
+
+// 이미지 업로드 이벤트
+document.getElementById('editReviewImages').addEventListener('change', function(e) {
+    var files = Array.from(e.target.files);
+    
+    if (editUploadedImages.length + files.length > 5) {
+        showToast('이미지는 최대 5장까지 첨부 가능합니다.', 'warning');
+        return;
+    }
+    
+    files.forEach(function(file) {
+        if (file.type.startsWith('image/')) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                editUploadedImages.push({
+                    data: e.target.result,
+                    file: file
+                });
+                renderEditImagePreviews();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    e.target.value = '';
+});
+
+function renderEditImagePreviews() {
+    var container = document.getElementById('editImagePreviewList');
+    var html = '';
+    
+    editUploadedImages.forEach(function(img, index) {
+        html += 
+            '<div class="image-preview-item">' +
+                '<img src="' + img.data + '" alt="이미지">' +
+                '<button type="button" class="remove-btn" onclick="removeEditImage(' + index + ')">&times;</button>' +
+            '</div>';
+    });
+    
+    container.innerHTML = html;
+}
+
+function removeEditImage(index) {
+    editUploadedImages.splice(index, 1);
+    renderEditImagePreviews();
+}
+
 // ==================== 판매자 문의 기능 ====================
 
 // 문의 폼 제출
@@ -1456,7 +2534,7 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
     // 로그인 체크
-    var isLoggedIn = ${not empty sessionScope.loginUser};
+    var isLoggedIn = ${not empty sessionScope.loginMember};
     if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
             sessionStorage.setItem('returnUrl', window.location.href);
@@ -1491,29 +2569,67 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
 
     // 문의 데이터 객체
     var inquiryData = {
-        productId: currentProduct.id,
-        type: inquiryType,
-        content: inquiryContent.trim(),
-        isSecret: isSecret
+        inquiryCtgry: inquiryType,
+        prodInqryCn: inquiryContent.trim(),
+        secretYn: isSecret ? 'Y' : 'N'
     };
 
-    console.log('문의 등록 데이터:', inquiryData);
+    // 버튼 비활성화
+    var submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>등록 중...';
 
-    // TODO: 실제 API 호출로 변경
-    // 성공 시뮬레이션
-    showToast('문의가 등록되었습니다. 판매자 답변을 기다려주세요.', 'success');
-
-    // 폼 초기화
-    document.getElementById('inquiryForm').reset();
-
-    // 새 문의를 목록 맨 앞에 추가 (미리보기)
-    addNewInquiryToList(inquiryData);
+    // Ajax 요청
+    fetch('${pageContext.request.contextPath}/tour/${tp.tripProdNo}/inquiry', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(inquiryData)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            showToast(data.message, 'success');
+            
+            // 폼 초기화
+            document.getElementById('inquiryForm').reset();
+            
+            // 새 문의를 목록에 추가
+            addNewInquiryToList(data.inquiry);
+            
+            // 문의 개수 업데이트
+            var countEl = document.querySelector('.inquiry-count');
+            if (countEl) {
+                var currentCount = parseInt(countEl.textContent.replace(/[()]/g, '')) || 0;
+                countEl.textContent = '(' + (currentCount + 1) + ')';
+            }
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showToast('문의 등록에 실패했습니다.', 'error');
+    })
+    .finally(function() {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-send me-2"></i>문의 등록';
+    });
 });
 
 // 새 문의를 목록에 추가
-function addNewInquiryToList(data) {
-    var inquiryList = document.querySelector('.inquiry-list');
+function addNewInquiryToList(inq) {
+	var inquiryList = document.getElementById('inquiryList');
     if (!inquiryList) return;
+    
+    // 빈 문의 메시지 제거
+    var noInquiry = inquiryList.querySelector('.no-inquiry');
+    if (noInquiry) {
+        noInquiry.remove();
+    }
 
     // 문의 유형 라벨
     var typeLabels = {
@@ -1524,46 +2640,51 @@ function addNewInquiryToList(data) {
         'other': '기타'
     };
 
-    // 현재 날짜
+    // 날짜 포맷
     var today = new Date();
     var dateStr = today.getFullYear() + '.' +
                   String(today.getMonth() + 1).padStart(2, '0') + '.' +
                   String(today.getDate()).padStart(2, '0');
 
-    // 사용자 이름 마스킹 (실제로는 서버에서 처리)
-    var userName = '${sessionScope.loginUser.userName}' || '회원';
-    var maskedName = userName.length > 2 ?
-                     userName.substring(0, 2) + '**' :
-                     userName + '**';
+    var typeLabel = typeLabels[inq.inquiryCtgry] || '기타';
+    var typeClass = inq.inquiryCtgry || 'other';
+    var isSecret = inq.secretYn === 'Y';
+    
+    // 닉네임: 서버 응답값 또는 세션값 사용
+    var nickname = inq.inquiryNickname || '${sessionScope.loginMember.memUser.nickname}' || '회원';
 
     // 새 문의 HTML 생성
     var newInquiryHtml =
-        '<div class="inquiry-item new-inquiry" style="animation: slideIn 0.3s ease-out;">' +
+        '<div class="inquiry-item new-inquiry" data-inquiry-id="' + inq.prodInqryNo + '" style="animation: slideIn 0.3s ease-out;">' +
             '<div class="inquiry-item-header">' +
                 '<div class="inquiry-item-info">' +
-                    '<span class="inquiry-type-badge ' + data.type + '">' + typeLabels[data.type] + '</span>' +
-                    '<span class="inquiry-author">' + maskedName + '</span>' +
+                    '<span class="inquiry-type-badge ' + typeClass + '">' + typeLabel + '</span>' +
+                    '<span class="inquiry-author">' + escapeHtml(nickname) + '</span>' +
                     '<span class="inquiry-date">' + dateStr + '</span>' +
-                    (data.isSecret ? '<span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>' : '') +
+                    (isSecret ? '<span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>' : '') +
                 '</div>' +
-                '<span class="inquiry-status waiting">답변대기</span>' +
+                '<div class="d-flex align-items-center gap-2">' +
+                    '<span class="inquiry-status waiting">답변대기</span>' +
+                    '<div class="dropdown">' +
+                        '<button class="btn-more" type="button" data-bs-toggle="dropdown">' +
+                            '<i class="bi bi-three-dots-vertical"></i>' +
+                        '</button>' +
+                        '<ul class="dropdown-menu dropdown-menu-end">' +
+                            '<li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditInquiryModal(' + inq.prodInqryNo + ', \'' + inq.inquiryCtgry + '\', \'' + escapeHtml(inq.prodInqryCn).replace(/'/g, "\\'") + '\', \'' + inq.secretYn + '\')">' +
+                                '<i class="bi bi-pencil me-2"></i>수정</a></li>' +
+                            '<li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteInquiry(' + inq.prodInqryNo + ')">' +
+                                '<i class="bi bi-trash me-2"></i>삭제</a></li>' +
+                        '</ul>' +
+                    '</div>' +
+                '</div>' +
             '</div>' +
             '<div class="inquiry-item-question">' +
-                (data.isSecret ?
-                    '<p class="secret-content"><i class="bi bi-lock me-1"></i>비밀글로 작성된 문의입니다.</p>' :
-                    '<p><strong>Q.</strong> ' + escapeHtml(data.content) + '</p>') +
+                '<p><strong>Q.</strong> ' + escapeHtml(inq.prodInqryCn) + '</p>' +
             '</div>' +
         '</div>';
 
     // 목록 맨 앞에 추가
     inquiryList.insertAdjacentHTML('afterbegin', newInquiryHtml);
-
-    // 문의 개수 업데이트
-    var countEl = document.querySelector('.inquiry-count');
-    if (countEl) {
-        var currentCount = parseInt(countEl.textContent.replace(/[()]/g, '')) || 0;
-        countEl.textContent = '(' + (currentCount + 1) + ')';
-    }
 }
 
 // HTML 이스케이프 함수
@@ -1573,71 +2694,257 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// 더 많은 문의 불러오기
+//==================== 문의 더보기 기능 ====================
 var inquiryPage = 1;
+var totalInquiryCount = ${inquiryCount != null ? inquiryCount : 0};
+var isLoadingInquiry = false;
+var loginMemNo = ${sessionScope.loginMember != null ? sessionScope.loginMember.memNo : 'null'};
+
 function loadMoreInquiries() {
+    if (isLoadingInquiry) return;
+    
+    isLoadingInquiry = true;
     inquiryPage++;
+    
+    var btn = document.querySelector('#inquiryMoreBtn button');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>불러오는 중...';
+    
+    fetch('${pageContext.request.contextPath}/tour/${tp.tripProdNo}/inquiries?page=' + inquiryPage)
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            // 문의 추가
+            data.inquiries.forEach(function(inq) {
+                appendInquiry(inq, data.loginMemNo);
+            });
+            
+            // 더보기 버튼 상태
+            if (!data.hasMore) {
+                document.getElementById('inquiryMoreBtn').style.display = 'none';
+                showToast('모든 문의를 불러왔습니다.', 'info');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = '더 많은 문의 보기 <i class="bi bi-chevron-down ms-1"></i>';
+            }
+            
+            isLoadingInquiry = false;
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            showToast('문의를 불러오는데 실패했습니다.', 'error');
+            btn.disabled = false;
+            btn.innerHTML = '더 많은 문의 보기 <i class="bi bi-chevron-down ms-1"></i>';
+            isLoadingInquiry = false;
+            inquiryPage--;
+        });
+}
 
-    // TODO: 실제 API 호출로 변경
-    // 예시 데이터 추가
-    var moreInquiries = [
-        {
-            type: 'other',
-            typeLabel: '기타',
-            author: 'summer**',
-            date: '2024.03.08',
-            status: 'answered',
-            question: '주차장이 있나요? 렌터카로 방문하려고 합니다.',
-            answer: '네, 무료 주차장이 마련되어 있습니다. 약 20대 정도 주차 가능하며, 성수기에는 일찍 오시는 것을 권장드립니다.',
-            answerDate: '2024.03.08'
-        },
-        {
-            type: 'product',
-            typeLabel: '상품 문의',
-            author: 'ocean_l**',
-            date: '2024.03.05',
-            status: 'answered',
-            question: '사진 촬영한 것은 어떻게 받을 수 있나요?',
-            answer: '체험 종료 후 카카오톡으로 보내드립니다. 보통 당일 저녁까지 전송해드리며, 원본 파일로 제공됩니다.',
-            answerDate: '2024.03.05'
-        }
-    ];
-
-    var inquiryList = document.querySelector('.inquiry-list');
-
-    moreInquiries.forEach(function(item) {
-        var html =
-            '<div class="inquiry-item" style="animation: slideIn 0.3s ease-out;">' +
-                '<div class="inquiry-item-header">' +
-                    '<div class="inquiry-item-info">' +
-                        '<span class="inquiry-type-badge ' + item.type + '">' + item.typeLabel + '</span>' +
-                        '<span class="inquiry-author">' + item.author + '</span>' +
-                        '<span class="inquiry-date">' + item.date + '</span>' +
-                    '</div>' +
-                    '<span class="inquiry-status ' + item.status + '">' +
-                        (item.status === 'answered' ? '답변완료' : '답변대기') + '</span>' +
-                '</div>' +
-                '<div class="inquiry-item-question">' +
-                    '<p><strong>Q.</strong> ' + item.question + '</p>' +
-                '</div>' +
-                (item.answer ?
-                    '<div class="inquiry-item-answer">' +
-                        '<div class="answer-header">' +
-                            '<span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>' +
-                            '<span class="answer-date">' + item.answerDate + '</span>' +
-                        '</div>' +
-                        '<p><strong>A.</strong> ' + item.answer + '</p>' +
-                    '</div>' : '') +
-            '</div>';
-
-        inquiryList.insertAdjacentHTML('beforeend', html);
-    });
-
-    // 3페이지 이상이면 더보기 버튼 숨기기 (예시)
-    if (inquiryPage >= 3) {
-        document.querySelector('.inquiry-more').style.display = 'none';
-        showToast('모든 문의를 불러왔습니다.', 'info');
+function appendInquiry(inq, loginMemNo) {
+    var inquiryList = document.getElementById('inquiryList');
+    
+    // 문의 유형 뱃지
+    var typeLabels = {
+        'product': '상품 문의',
+        'booking': '예약/일정',
+        'price': '가격/결제',
+        'cancel': '취소/환불',
+        'other': '기타'
+    };
+    var typeLabel = typeLabels[inq.inquiryCtgry] || '기타';
+    var typeClass = inq.inquiryCtgry || 'other';
+    
+    // 날짜 포맷
+    var regDate = new Date(inq.regDt);
+    var regDateStr = regDate.getFullYear() + '.' + 
+                     String(regDate.getMonth() + 1).padStart(2, '0') + '.' + 
+                     String(regDate.getDate()).padStart(2, '0');
+    
+    // 닉네임
+    var nickname = inq.inquiryNickname || '회원';
+    
+    // 비밀글 여부 및 본인 확인
+    var isSecret = inq.secretYn === 'Y';
+    var isOwner = loginMemNo && loginMemNo === inq.inquiryMemNo;
+    var isBusiness = loginMemType === 'BUSINESS';
+    
+    // 답변 상태
+    var isAnswered = inq.inqryStatus === 'DONE';
+    var statusClass = isAnswered ? 'answered' : 'waiting';
+    var statusText = isAnswered ? '답변완료' : '답변대기';
+    
+    // 문의 내용 (비밀글 처리)
+    var questionHtml = '';
+    if (isSecret && !isOwner && !isBusiness) {
+        questionHtml = '<p class="secret-content"><i class="bi bi-lock me-1"></i>비밀글로 작성된 문의입니다.</p>';
+    } else {
+        questionHtml = '<p><strong>Q.</strong> ' + escapeHtml(inq.prodInqryCn) + '</p>';
     }
+    
+    // 답변 내용
+    var answerHtml = '';
+    if (isAnswered && inq.replyCn && (!isSecret || isOwner || isBusiness)) {
+        var replyDate = new Date(inq.replyDt);
+        var replyDateStr = replyDate.getFullYear() + '.' + 
+                           String(replyDate.getMonth() + 1).padStart(2, '0') + '.' + 
+                           String(replyDate.getDate()).padStart(2, '0');
+        
+        answerHtml = 
+            '<div class="inquiry-item-answer">' +
+                '<div class="answer-header">' +
+                    '<span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>' +
+                    '<span class="answer-date">' + replyDateStr + '</span>' +
+                '</div>' +
+                '<p><strong>A.</strong> ' + escapeHtml(inq.replyCn) + '</p>' +
+            '</div>';
+    }
+    
+    var html = 
+        '<div class="inquiry-item" data-inquiry-id="' + inq.prodInqryNo + '" style="animation: slideIn 0.3s ease-out;">' +
+            '<div class="inquiry-item-header">' +
+                '<div class="inquiry-item-info">' +
+                    '<span class="inquiry-type-badge ' + typeClass + '">' + typeLabel + '</span>' +
+                    '<span class="inquiry-author">' + escapeHtml(nickname) + '</span>' +
+                    '<span class="inquiry-date">' + regDateStr + '</span>' +
+                    (isSecret ? '<span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>' : '') +
+                '</div>' +
+                '<span class="inquiry-status ' + statusClass + '">' + statusText + '</span>' +
+            '</div>' +
+            '<div class="inquiry-item-question">' + questionHtml + '</div>' +
+            answerHtml +
+        '</div>';
+    
+    inquiryList.insertAdjacentHTML('beforeend', html);
+}
+
+//==================== 문의 수정/삭제 ====================
+
+function openEditInquiryModal(inquiryId, type, content, secretYn) {
+    document.getElementById('editInquiryId').value = inquiryId;
+    document.getElementById('editInquiryType').value = type;
+    document.getElementById('editInquiryContent').value = content;
+    document.getElementById('editInquirySecret').checked = (secretYn === 'Y');
+    
+    var modal = new bootstrap.Modal(document.getElementById('editInquiryModal'));
+    modal.show();
+}
+
+function updateInquiry() {
+    var inquiryId = document.getElementById('editInquiryId').value;
+    var type = document.getElementById('editInquiryType').value;
+    var content = document.getElementById('editInquiryContent').value.trim();
+    var isSecret = document.getElementById('editInquirySecret').checked;
+    
+    if (!content) {
+        showToast('문의 내용을 입력해주세요.', 'warning');
+        return;
+    }
+    
+    if (content.length < 10) {
+        showToast('문의 내용을 10자 이상 입력해주세요.', 'warning');
+        return;
+    }
+    
+    var inquiryData = {
+        prodInqryNo: inquiryId,
+        inquiryCtgry: type,
+        prodInqryCn: content,
+        secretYn: isSecret ? 'Y' : 'N'
+    };
+    
+    fetch('${pageContext.request.contextPath}/tour/${tp.tripProdNo}/inquiry/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(inquiryData)
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            var inquiryItem = document.querySelector('[data-inquiry-id="' + inquiryId + '"]');
+            if (inquiryItem) {
+                var typeLabels = {
+                    'product': '상품 문의',
+                    'booking': '예약/일정',
+                    'price': '가격/결제',
+                    'cancel': '취소/환불',
+                    'other': '기타'
+                };
+                
+                var badge = inquiryItem.querySelector('.inquiry-type-badge');
+                badge.className = 'inquiry-type-badge ' + type;
+                badge.textContent = typeLabels[type];
+                
+                var questionP = inquiryItem.querySelector('.inquiry-item-question p');
+                questionP.className = '';
+                questionP.innerHTML = '<strong>Q.</strong> ' + escapeHtml(content);
+                
+                // 비밀글 뱃지 처리
+                var secretBadge = inquiryItem.querySelector('.secret-badge');
+                if (isSecret) {
+                    if (!secretBadge) {
+                        var infoDiv = inquiryItem.querySelector('.inquiry-item-info');
+                        infoDiv.insertAdjacentHTML('beforeend', '<span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>');
+                    }
+                } else {
+                    if (secretBadge) secretBadge.remove();
+                }
+            }
+            
+            bootstrap.Modal.getInstance(document.getElementById('editInquiryModal')).hide();
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showToast('문의 수정에 실패했습니다.', 'error');
+    });
+}
+
+function deleteInquiry(inquiryId) {
+    showCustomConfirm('문의 삭제', '삭제된 문의는 복구할 수 없습니다.<br>정말 삭제하시겠습니까?', function() {
+        fetch('${pageContext.request.contextPath}/tour/${tp.tripProdNo}/inquiry/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ prodInqryNo: inquiryId })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                var inquiryItem = document.querySelector('[data-inquiry-id="' + inquiryId + '"]');
+                if (inquiryItem) {
+                    inquiryItem.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(function() {
+                        inquiryItem.remove();
+                    }, 300);
+                }
+                
+                var countEl = document.querySelector('.inquiry-count');
+                if (countEl) {
+                    var currentCount = parseInt(countEl.textContent.replace(/[()]/g, '')) || 0;
+                    countEl.textContent = '(' + (currentCount - 1) + ')';
+                }
+                
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            showToast('문의 삭제에 실패했습니다.', 'error');
+        });
+    });
 }
 
 // ==================== 기업회원 답변 기능 ====================
@@ -1671,44 +2978,281 @@ function submitReply(inquiryId) {
         return;
     }
 
-    // TODO: 실제 API 호출로 변경
-    console.log('답변 등록:', { inquiryId: inquiryId, content: content });
+    // 서버에 답변 등록 요청
+    fetch('${pageContext.request.contextPath}/tour/${tp.tripProdNo}/inquiry/reply', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            prodInqryNo: inquiryId,
+            replyCn: content
+        })
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            // 성공 시 UI 업데이트
+            var inquiryItem = document.querySelector('[data-inquiry-id="' + inquiryId + '"]');
+            if (inquiryItem) {
+                // 상태 변경
+                var statusBadge = inquiryItem.querySelector('.inquiry-status');
+                statusBadge.className = 'inquiry-status answered';
+                statusBadge.textContent = '답변완료';
 
-    // 성공 시 UI 업데이트
-    var inquiryItem = document.querySelector('[data-inquiry-id="' + inquiryId + '"]');
-    if (inquiryItem) {
-        // 상태 변경
-        var statusBadge = inquiryItem.querySelector('.inquiry-status');
-        statusBadge.className = 'inquiry-status answered';
-        statusBadge.textContent = '답변완료';
+                // 답변 영역 추가
+                var questionDiv = inquiryItem.querySelector('.inquiry-item-question');
+                var today = new Date();
+                var dateStr = today.getFullYear() + '.' +
+                              String(today.getMonth() + 1).padStart(2, '0') + '.' +
+                              String(today.getDate()).padStart(2, '0');
 
-        // 답변 영역 추가
-        var questionDiv = inquiryItem.querySelector('.inquiry-item-question');
-        var today = new Date();
-        var dateStr = today.getFullYear() + '.' +
-                      String(today.getMonth() + 1).padStart(2, '0') + '.' +
-                      String(today.getDate()).padStart(2, '0');
+                var answerHtml =
+                    '<div class="inquiry-item-answer" id="answer_' + inquiryId + '" style="animation: slideIn 0.3s ease-out;">' +
+                        '<div class="answer-header">' +
+                            '<span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>' +
+                            '<div class="d-flex align-items-center gap-2">' +
+                                '<span class="answer-date">' + dateStr + '</span>' +
+                                '<div class="dropdown">' +
+                                    '<button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">' +
+                                        '<i class="bi bi-three-dots-vertical"></i>' +
+                                    '</button>' +
+                                    '<ul class="dropdown-menu dropdown-menu-end">' +
+                                        '<li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(' + inquiryId + ', \'' + escapeHtml(content).replace(/'/g, "\\'") + '\')">' +
+                                            '<i class="bi bi-pencil me-2"></i>수정</a></li>' +
+                                        '<li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(' + inquiryId + ')">' +
+                                            '<i class="bi bi-trash me-2"></i>삭제</a></li>' +
+                                    '</ul>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<p class="answer-content"><strong>A.</strong> ' + escapeHtml(content) + '</p>' +
+                    '</div>';
 
-        var answerHtml =
-            '<div class="inquiry-item-answer" style="animation: slideIn 0.3s ease-out;">' +
-                '<div class="answer-header">' +
-                    '<span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>' +
-                    '<span class="answer-date">' + dateStr + '</span>' +
+                questionDiv.insertAdjacentHTML('afterend', answerHtml);
+
+                // 답변 폼 영역 제거
+                var replySection = inquiryItem.querySelector('.business-reply-section');
+                if (replySection) {
+                    replySection.remove();
+                }
+            }
+
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showToast('답변 등록에 실패했습니다.', 'error');
+    });
+}
+
+//==================== 답변 수정/삭제 ====================
+
+function openEditReplyModal(inquiryId, content) {
+    document.getElementById('editReplyInquiryId').value = inquiryId;
+    document.getElementById('editReplyContent').value = content;
+    
+    var modal = new bootstrap.Modal(document.getElementById('editReplyModal'));
+    modal.show();
+}
+
+function updateReply() {
+    var inquiryId = document.getElementById('editReplyInquiryId').value;
+    var content = document.getElementById('editReplyContent').value.trim();
+    
+    if (!content) {
+        showToast('답변 내용을 입력해주세요.', 'warning');
+        return;
+    }
+    
+    if (content.length < 10) {
+        showToast('답변은 10자 이상 입력해주세요.', 'warning');
+        return;
+    }
+    
+    fetch('${pageContext.request.contextPath}/tour/${tp.tripProdNo}/inquiry/reply/update', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            prodInqryNo: inquiryId,
+            replyCn: content
+        })
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            // UI 업데이트
+            var answerDiv = document.getElementById('answer_' + inquiryId);
+            if (answerDiv) {
+                var contentP = answerDiv.querySelector('.answer-content');
+                if (contentP) {
+                    contentP.innerHTML = '<strong>A.</strong> ' + escapeHtml(content);
+                }
+            }
+            
+            bootstrap.Modal.getInstance(document.getElementById('editReplyModal')).hide();
+            showToast(data.message, 'success');
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showToast('답변 수정에 실패했습니다.', 'error');
+    });
+}
+
+function deleteReply(inquiryId) {
+    showCustomConfirm('답변 삭제', '답변을 삭제하시겠습니까?<br><small class="text-muted">삭제 시 문의 상태가 답변대기로 변경됩니다.</small>', function() {
+        fetch('${pageContext.request.contextPath}/tour/${tp.tripProdNo}/inquiry/reply/delete', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                prodInqryNo: inquiryId
+            })
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(data) {
+            if (data.success) {
+                var inquiryItem = document.querySelector('[data-inquiry-id="' + inquiryId + '"]');
+                if (inquiryItem) {
+                    var answerDiv = document.getElementById('answer_' + inquiryId);
+                    if (answerDiv) {
+                        answerDiv.remove();
+                    }
+                    
+                    var statusBadge = inquiryItem.querySelector('.inquiry-status');
+                    statusBadge.className = 'inquiry-status waiting';
+                    statusBadge.textContent = '답변대기';
+                    
+                    var questionDiv = inquiryItem.querySelector('.inquiry-item-question');
+                    var replySection = 
+                        '<div class="business-reply-section">' +
+                            '<button class="btn btn-sm btn-primary" onclick="toggleReplyForm(' + inquiryId + ')">' +
+                                '<i class="bi bi-reply me-1"></i>답변하기' +
+                            '</button>' +
+                            '<div class="reply-form" id="replyForm_' + inquiryId + '" style="display: none;">' +
+                                '<textarea class="form-control" id="replyContent_' + inquiryId + '" rows="3" placeholder="답변 내용을 입력하세요..."></textarea>' +
+                                '<div class="reply-form-actions">' +
+                                    '<button class="btn btn-sm btn-outline" onclick="toggleReplyForm(' + inquiryId + ')">취소</button>' +
+                                    '<button class="btn btn-sm btn-primary" onclick="submitReply(' + inquiryId + ')">답변 등록</button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+                    questionDiv.insertAdjacentHTML('afterend', replySection);
+                }
+                
+                showToast(data.message, 'success');
+            } else {
+                showToast(data.message, 'error');
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            showToast('답변 삭제에 실패했습니다.', 'error');
+        });
+    });
+}
+
+//==================== 커스텀 확인 모달 (동적 생성) ====================
+var confirmCallback = null;
+
+function showCustomConfirm(title, message, callback) {
+    // 기존 모달 제거
+    var existing = document.getElementById('customConfirmOverlay');
+    if (existing) existing.remove();
+    
+    // 콜백 저장
+    confirmCallback = callback;
+    
+    // 모달 HTML 동적 생성
+    var modalHtml = 
+        '<div class="custom-confirm-overlay" id="customConfirmOverlay" style="' +
+            'display: flex; position: fixed; top: 0; left: 0; right: 0; bottom: 0; ' +
+            'width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); ' +
+            'z-index: 2147483647; justify-content: center; align-items: center;">' +
+            '<div class="custom-confirm-modal" style="' +
+                'background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); ' +
+                'width: 320px; max-width: 90%; animation: confirmSlideIn 0.2s ease-out;">' +
+                '<div style="padding: 30px 24px 20px; text-align: center;">' +
+                    '<div style="width: 70px; height: 70px; margin: 0 auto 16px; background: #fef3c7; ' +
+                        'border-radius: 50%; display: flex; align-items: center; justify-content: center;">' +
+                        '<i class="bi bi-exclamation-triangle text-warning" style="font-size: 36px;"></i>' +
+                    '</div>' +
+                    '<h5 style="font-size: 18px; font-weight: 600; color: #333; margin-bottom: 8px;">' + title + '</h5>' +
+                    '<p style="font-size: 14px; color: #666; margin: 0; line-height: 1.5;">' + message + '</p>' +
                 '</div>' +
-                '<p><strong>A.</strong> ' + escapeHtml(content) + '</p>' +
-            '</div>';
+                '<div style="display: flex; gap: 10px; padding: 16px 24px 24px; justify-content: center;">' +
+                    '<button type="button" class="btn btn-outline" id="confirmCancelBtn" ' +
+                        'style="min-width: 80px; padding: 10px 20px; border-radius: 8px;">취소</button>' +
+                    '<button type="button" class="btn btn-danger" id="confirmOkBtn" ' +
+                        'style="min-width: 80px; padding: 10px 20px; border-radius: 8px;">삭제</button>' +
+                '</div>' +
+            '</div>' +
+        '</div>';
+    
+    // body 맨 끝에 추가
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    document.body.style.overflow = 'hidden';
+    
+    // 이벤트 바인딩
+    var overlay = document.getElementById('customConfirmOverlay');
+    
+    // 확인 버튼
+    document.getElementById('confirmOkBtn').onclick = function() {
+        hideConfirm();
+        if (confirmCallback) {
+            confirmCallback();
+        }
+        confirmCallback = null;
+    };
+    
+    // 취소 버튼
+    document.getElementById('confirmCancelBtn').onclick = function() {
+        hideConfirm();
+        confirmCallback = null;
+    };
+    
+    // 오버레이 클릭
+    overlay.onclick = function(e) {
+        if (e.target === overlay) {
+            hideConfirm();
+            confirmCallback = null;
+        }
+    };
+}
 
-        questionDiv.insertAdjacentHTML('afterend', answerHtml);
+function hideConfirm() {
+    var overlay = document.getElementById('customConfirmOverlay');
+    if (overlay) {
+        overlay.remove();
+    }
+    document.body.style.overflow = '';
+}
 
-        // 답변 폼 영역 제거
-        var replySection = inquiryItem.querySelector('.business-reply-section');
-        if (replySection) {
-            replySection.remove();
+// ESC 키로 닫기
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        var overlay = document.getElementById('customConfirmOverlay');
+        if (overlay) {
+            hideConfirm();
+            confirmCallback = null;
         }
     }
-
-    showToast('답변이 등록되었습니다.', 'success');
-}
+});
 </script>
 
 <%@ include file="../common/footer.jsp" %>

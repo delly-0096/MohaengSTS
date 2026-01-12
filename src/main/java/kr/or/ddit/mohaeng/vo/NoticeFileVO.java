@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.vo;
+ package kr.or.ddit.mohaeng.vo;
 
 import org.apache.commons.io.FileUtils;
 import org.springframework.web.multipart.MultipartFile;

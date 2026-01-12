@@ -45,6 +45,7 @@
             <!-- 회원가입 폼 -->
             <form class="auth-form" id="registerForm" action="${pageContext.request.contextPath}/member/register/member" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="memType" id="memType" value="MEMBER">
+                <input type="hidden" name="joinMode" value="NORMAL">
 
                 <!-- 아이디 -->
                 <div class="form-group">
@@ -1048,5 +1049,20 @@ document.querySelectorAll('.form-control').forEach(input => {
 });
 
 </script>
+
+<!-- 에러 메시지 -->
+<c:if test="${not empty errorMessage}">
+    <div class="alert alert-danger mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>${errorMessage}
+    </div>
+</c:if>
+
+<!-- 성공 메시지 -->
+<c:if test="${not empty successMessage}">
+<div class="alert alert-success mb-3" role="alert">
+    <i class="bi bi-check-circle me-2"></i>
+    ${successMessage}
+</div>
+</c:if>
 <%-- <c:set var="pageJs" value="member" /> --%>
 <%@ include file="../common/footer.jsp" %>

@@ -27,6 +27,10 @@ public class MemberVO {
 	private Date wdrwDt; 			/* 탈퇴일 */
 	private String TempPwYn;		/* 임시 비밀번호 상태 Y, N */
 	
+	// sns 로그인 관련
+	private String joinMode;
+	private String joinCompleteYn;	/* 회원정보 완성도 */
+	
 	private List<MemberAuthVO> authList;	// 권한 정보
 	
 	private CompanyVO company;		/* 기업 정보 */

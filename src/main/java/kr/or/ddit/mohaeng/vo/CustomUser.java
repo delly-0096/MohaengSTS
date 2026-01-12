@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.User;
 
 import lombok.Getter;
 
+@SuppressWarnings("serial")
 @Getter
 public class CustomUser extends User {
 

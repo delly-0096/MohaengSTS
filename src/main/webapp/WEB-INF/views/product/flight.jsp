@@ -190,11 +190,9 @@
 </div>
 
 <script>
-// 승객 정보 - 2번제 결제하기 누르면 이동하기
 let passengers = { adult: 1, child: 0, infant: 0 };
-// session 저장을 여기서도 하고 받을지
 // ==================== 항공편 선택 상태 관리 ====================
-let currentSearchType = 'round'; // round - 왕복, oneway - 편도, multi
+let currentSearchType = 'round'; // round - 왕복, oneway - 편도
 let currentSelectionStep = 0; // 현재 선택 단계 (0: 가는편, 1: 오는편)
 let selectedFlights = []; // 선택된 항공편 목록
 let totalSegments = 2; // 총 선택해야 할 구간 수 (왕복: 2, 편도: 1)
@@ -317,7 +315,6 @@ function updateSelectedFlightsDisplay() {
     	const label = 
     		(currentSearchType === 'round') ? (index === 0 ? '가는편' : '오는편') : '편도';
     		
-		// 날짜 넣기??
         totalPrice += parseInt(flight.price);
         html += '<div class="selected-flight-item">' +
             '<div class="selected-flight-info">' +
@@ -328,21 +325,21 @@ function updateSelectedFlightsDisplay() {
                 '</div>' +
                 '<span class="selected-flight-airline">' + flight.airlineNm + ' (' + flight.flightSymbol + ')</span>' +
             '</div>' +
-            '<span class="selected-flight-price">' + flight.price + '원</span>' +
+            '<span class="selected-flight-price">' + flight.price.toLocaleString() + '원</span>' +
         '</div>';
     });
 
     // 모든 구간 선택 완료 시 총 금액 및 결제 버튼 표시
     if (currentSelectionStep >= totalSegments) {
-        html += '<div class="selected-flights-total">' +
-            '<div>' +
-                '<span class="total-price-label">총 금액</span>' +
-                '<span class="total-price-value ms-3">' + totalPrice + '원</span>' +
-            '</div>' +
-            '<div class="btn btn-primary btn-lg" onclick="goToBooking()">' +
-                '<i class="bi bi-credit-card me-2"></i>결제하기' +
-            '</div>' +
-        '</div>';
+        html += `<div class="selected-flights-total">
+            <div>
+                <span class="total-price-label">총 금액</span>
+                <span class="total-price-value ms-3">\${totalPrice}원</span>
+            </div>
+            <div class="btn btn-primary btn-lg" onclick="goToBooking()">
+                <i class="bi bi-credit-card me-2"></i>결제하기
+            </div>
+        </div>`;
     }
     list.innerHTML = html;
 }
@@ -558,6 +555,7 @@ function createFlightCard(data, searchData, cabin, id) {
 	let duration = parseInt(timeSet / 60) + "시간 " + (timeSet % 60) + "분"; 
 	
 	let price = cabin === "economy" ? data.economyCharge : data.prestigeCharge;
+	let pirceFormat = price.toLocaleString(); 
 	
 	const sendData = {
 		...data,
@@ -604,7 +602,7 @@ function createFlightCard(data, searchData, cabin, id) {
 				<i class="bi bi-luggage-fill"></i><span>\${data.checkedBaggage} kg</span>
 			</div>
             <div class="flight-price">
-                <div class="price">\${price}<span class="price-unit">원</span></div>
+                <div class="price">\${pirceFormat}<span class="price-unit">원</span></div>
                 <button type="button" class="btn btn-primary btn-sm flight-action-btn" 
                     onclick="selectFlight('\${jsonSendData}')">
                     \${buttonText}
@@ -698,7 +696,6 @@ function searchFlights() {
     	arrAirportNm : (currentSelectionStep === 0) ? destination : departure, 		// 도착지  
     	arrAirportId : (currentSelectionStep === 0) ? arrAirportId : depAirportId,	// 도착지 코드
     	arrIata : (currentSelectionStep === 0) ? arrIata : depIata					// 도착지 3글자 코드
-    	// 탑승자 정보 - 성인, 유아
     }
     
     // 왕복/편도 검색
@@ -808,10 +805,13 @@ function selectAirportItem(item, dropdown) {
 function createAutocompleteItemHtml(location, query) {
     const highlightedName = query ? location.airportNm.replace(new RegExp('(' + query + ')', 'gi'), '<mark>$1</mark>') : location.airportNm;
     
-    return '<div class="autocomplete-item" data-name="' + location.airportNm + '" data-code="' + location.iataCode + '" data-id="' + location.airportId + '">' +
-				'<div class="autocomplete-item-icon"><i class="bi-geo-alt"></i></div>' +
-		  		'<div class="autocomplete-item-info"><div class="autocomplete-item-name">' + highlightedName + '</div>' +
-		   '<div class="autocomplete-item-sub">' + location.cityName + '</div></div></div>';
+    return `<div class="autocomplete-item" data-name="\${location.airportNm}" data-code="\${location.iataCode}" data-id="\${location.airportId}">
+				<div class="autocomplete-item-icon"><i class="bi-geo-alt"></i></div>
+		  		<div class="autocomplete-item-info">
+			  		<div class="autocomplete-item-name">\${highlightedName}</div>
+			    	<div class="autocomplete-item-sub">\${location.cityName}</div>
+		    	</div>
+	    	</div>`;
 }
 
 function renderStoredData(storedData) {

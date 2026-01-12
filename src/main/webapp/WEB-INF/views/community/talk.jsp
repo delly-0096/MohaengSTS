@@ -1,11 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:set var="pageTitle" value="여행톡" />
 <c:set var="pageCss" value="community" />
 
 <%@ include file="../common/header.jsp" %>
-
+<body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize><sec:authorize access='isAnonymous()'>false</sec:authorize>">
 <div class="community-page">
     <div class="container">
         <!-- 헤더 -->
@@ -13,7 +14,6 @@
             <h1><i class="bi bi-chat-dots me-3"></i>여행톡</h1>
             <p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
         </div>
-
         <!-- 게시판 -->
         <div class="board-container">
             <!-- 카테고리 탭 -->
@@ -41,7 +41,7 @@
                         <i class="bi bi-search"></i>
                     </button>
                 </div>
-                <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
+                <sec:authorize access="hasRole('MEMBER')">
                 <div class="board-actions">
                     <button class="btn btn-outline-primary" onclick="openChatRoomList()">
                         <i class="bi bi-chat-heart me-2"></i>지금모행
@@ -50,14 +50,14 @@
                         <i class="bi bi-pencil me-2"></i>글쓰기
                     </button>
                 </div>
-                </c:if>
-                <c:if test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
+                </sec:authorize>
+                <sec:authorize access="hasRole('BUSINESS')">
                 <div class="board-actions">
                     <span class="business-notice">
                         <i class="bi bi-info-circle me-1"></i>기업회원은 여행톡 작성이 제한됩니다
                     </span>
                 </div>
-                </c:if>
+                </sec:authorize>
             </div>
 
             <!-- 게시글 리스트 -->
@@ -313,12 +313,12 @@
                     <i class="bi bi-share"></i>
                     <span>공유</span>
                 </button>
-                <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
+                <sec:authorize access="hasRole('MEMBER')">
                 <button class="post-action-btn report" onclick="reportCurrentPost()">
                     <i class="bi bi-flag"></i>
                     <span>신고</span>
                 </button>
-                </c:if>
+                </sec:authorize>
             </div>
         </div>
         <div class="post-comments-section">
@@ -326,7 +326,7 @@
             <div class="comments-list" id="commentsList">
                 <!-- 댓글 목록 -->
             </div>
-            <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
+            <sec:authorize access="isAuthenticated()">
             <div class="comment-write">
                 <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80" alt="내 프로필" class="comment-avatar">
                 <div class="comment-input-wrapper">
@@ -336,12 +336,12 @@
                     </button>
                 </div>
             </div>
-            </c:if>
-            <c:if test="${empty sessionScope.loginUser}">
+            </sec:authorize>
+            <sec:authorize access="isAnonymous()">
             <div class="comment-login-notice">
                 <p><i class="bi bi-info-circle me-2"></i>댓글을 작성하려면 <a href="${pageContext.request.contextPath}/member/login">로그인</a>이 필요합니다.</p>
             </div>
-            </c:if>
+            </sec:authorize>
         </div>
     </div>
 </div>
@@ -406,11 +406,11 @@
             <button class="chat-action-btn" onclick="toggleChatUserList()" title="참여자 목록">
                 <i class="bi bi-people"></i>
             </button>
-            <c:if test="${not empty sessionScope.loginUser}">
+            <sec:authorize access="hasRole('MEMBER')">
             <button class="chat-action-btn" onclick="reportCurrentChatroom()" title="채팅방 신고">
                 <i class="bi bi-flag"></i>
             </button>
-            </c:if>
+            </sec:authorize>
             <button class="chat-action-btn" onclick="minimizeChat()" title="최소화">
                 <i class="bi bi-dash-lg"></i>
             </button>
@@ -1914,7 +1914,8 @@ function updateResultMessage(keyword, count) {
 
 // 글쓰기
 function writePost() {
-    const isLoggedIn = ${not empty sessionScope.loginUser};
+    const isLoggedIn = <sec:authorize access="isAuthenticated()">true</sec:authorize>
+    					<sec:authorize access="isAnonymous()">false</sec:authorize>;
 
     if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
@@ -1931,11 +1932,20 @@ function writePost() {
 
 // 현재 사용자 정보
 const currentUser = {
-    id: '${sessionScope.loginUser.memberId}' || null,
-    name: '${sessionScope.loginUser.userName}' || '게스트',
-    isLoggedIn: ${not empty sessionScope.loginUser}
+    isLoggedIn: ${pageContext.request.userPrincipal != null},
+    id: <sec:authorize access="isAuthenticated()">
+            '${principal.member.memId}'
+        </sec:authorize>
+        <sec:authorize access="isAnonymous()">
+            null
+        </sec:authorize>,
+    name: <sec:authorize access="isAuthenticated()">
+              '${principal.member.memName}'
+          </sec:authorize>
+          <sec:authorize access="isAnonymous()">
+              '게스트'
+          </sec:authorize>
 };
-
 // 채팅방 데이터 (실제로는 서버에서 가져옴)
 let chatRooms = [
     {

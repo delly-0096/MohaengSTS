@@ -33,7 +33,7 @@ public class PaymentServiceImpl implements IPaymentService {
 	
 	@Autowired
 	private IFlightMapper flightMapper;
-	
+
 	/**
 	 * <p>결제</p>
 	 * @author sdg
@@ -76,6 +76,8 @@ public class PaymentServiceImpl implements IPaymentService {
             	
                 log.info("결제 승인 API 성공: {}", response.getBody());
                 
+//                int paySequence = payMapper.get
+                
                 // api 에서 가져올 정보
                 // memNo이미 존재
                 paymentVO.setPayNo(responseBody.get("orderId").toString());
@@ -104,9 +106,8 @@ public class PaymentServiceImpl implements IPaymentService {
                 
                 
                 int productResult = 0;
-                int depProductNo = paymentVO.getFlightProductList().get(0).getFltProdId();
-                int arrProductNo = paymentVO.getFlightProductList().get(1).getFltProdId();
-                
+                int depProductNo = paymentVO.getFlightProductList().get(0).getFltProdId();	// 출발 항공권 키
+                int arrProductNo = paymentVO.getFlightProductList().get(1).getFltProdId();	// 도착 항공권 키
                 
                 // 항공권 담기
                 for(FlightProductVO flightProductVO : paymentVO.getFlightProductList()) {
@@ -114,20 +115,36 @@ public class PaymentServiceImpl implements IPaymentService {
                 	productResult = flightMapper.insertFlight(flightProductVO);	// 항공권 없으면 insert 있으면 안하기
                 }
                 
+                int reservationResult = 0;
                 
                 // 예약 정보 담기 - 
                 for(FlightReservationVO flightReservationVO : paymentVO.getFlightReservationList()) {
+                	
                 	// 항공권 + 
                 	// orderId가 결제번호!
-                	 flightReservationVO.setPayNo(paymentVO.getPayNo());
-                	 //를 flightReservation에 setting
-                	 
+                	flightReservationVO.setPayNo(paymentVO.getPayNo());
+                	flightReservationVO.setMemNo(paymentVO.getMemNo());
+                	//를 flightReservation에 setting
+                	reservationResult = flightMapper.insertFlightReservation(flightReservationVO);
+                	log.info("flightReservation insert {}", reservationResult);
                 }
+                
+                int passengersResult = 0;
+                int depReservationNo = paymentVO.getFlightReservationList().get(0).getReserveNo();
+                int arrReservationNo = paymentVO.getFlightReservationList().get(1).getReserveNo();
                 
                 // 탑승객 정보 담기
                 for(FlightPassengersVO flightPassengersVO : paymentVO.getFlightPassengersList()) {
                 	// 한번에 가는편, 오는편 insert
-                	// flightPassengersVO.setReserveNo("첫번째 그거");
+                	flightPassengersVO.setReserveNo(depReservationNo);
+                	passengersResult = flightMapper.insertPassengers(flightPassengersVO);	// 출발 탑승객 정보 
+                	log.info("flightPassengers dep insert {}", passengersResult);
+                	
+                	flightPassengersVO.setReserveNo(arrReservationNo);
+                	passengersResult = flightMapper.insertPassengers(flightPassengersVO);	// 도착 탑승객 정보
+                	log.info("flightPassengers dep insert {}", passengersResult);
+                	
+                	
                 }
                 // 탑승객 수 만큼 response에 set하기
                 

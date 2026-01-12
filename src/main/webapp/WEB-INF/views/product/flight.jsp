@@ -41,7 +41,7 @@
 									id="departure" placeholder="도시 또는 공항" autocomplete="off"/>
 								<div class="autocomplete-dropdown" id="departureDropdown"></div>
 							</div>
-							<input type="hidden" name="depAirportId" id="depAirportId" />
+							<input type="hidden" name="depAirportId" id="depAirportId"/>
 							<input type="hidden" name="depIataCode" id="depIataCode"/> 
 						</div>
 						
@@ -262,10 +262,9 @@ function updateSelectionStepIndicator() {
 
 // 항공편 선택 처리 - id, data, searchData, startDate, duration, 
 function selectFlight(jsonSendData) {
-	cabinClass = document.querySelector("#cabinClass");
 	
 	const flightData = JSON.parse(jsonSendData); 
-    
+    console.log("flightData : ", flightData)
     selectedFlights.push(flightData);
     currentSelectionStep++;
     
@@ -528,8 +527,7 @@ function getFlightsForPage(page) {
     return flights;
 }
 
-function createFlightCard(data, searchData, id) {
-	cabinClass = document.querySelector("#cabinClass");
+function createFlightCard(data, searchData, cabin, id) {
 	
 	let fltProdId = searchData.startDt + "" + id;	// 일단 항공권 id = 일자 + id
 	
@@ -537,8 +535,8 @@ function createFlightCard(data, searchData, id) {
     let isLastStep = (currentSelectionStep >= totalSegments - 1);
     let buttonText = (currentSearchType === 'oneway' || isLastStep) ? '결제하기' : '선택';
     
-    if(data.economyCharge === 0 || (data.airlineNm == '/' || data.airlineNm === null)) return '';
 	
+    // 시간
     let startDate = searchData.startDt.substring(0, 4) + "년 " + searchData.startDt.substring(4, 6) + "월 " + searchData.startDt.substring(6, 8) + "일 "; 
 	
 	let depTimeSet = data.depTime.split(" ");	// 날짜 시간 분리
@@ -554,15 +552,12 @@ function createFlightCard(data, searchData, id) {
 			"오후 " + (parseInt(arrAp[0]) - 12) + ":" + arrAp[1] :
 			"오전 " + arrTimeSet[1];
 			
-	
 	let timeSet = (parseInt(arrAp[0] * 60) + parseInt(arrAp[1]))
 	- (parseInt(depAp[0] * 60) + parseInt(depAp[1]));
 	
 	let duration = parseInt(timeSet / 60) + "시간 " + (timeSet % 60) + "분"; 
 	
-	let cabin = cabinClass.value == "economy" ? "일반석" : "비즈니스";
-	
-	let price = cabin == "일반석" ? data.economyCharge : data.prestigeCharge;
+	let price = cabin === "economy" ? data.economyCharge : data.prestigeCharge;
 	
 	const sendData = {
 		...data,
@@ -574,7 +569,7 @@ function createFlightCard(data, searchData, id) {
 	    adult : passengers.adult,		
 	    child : passengers.child,
 	    infant : passengers.infant,
-	    cabinClass : cabin,
+	    cabinClass : cabin === "economy" ? "일반석" : "비즈니스",
 	    price : price,					// 가격 세팅
 	    depTimeFormmater : depTimeFormmater,
 	    arrTimeFormmater : arrTimeFormmater
@@ -582,9 +577,7 @@ function createFlightCard(data, searchData, id) {
 	
 	const jsonSendData = JSON.stringify(sendData).replace(/"/g, '&quot;');
 	
-	
 	// id에 돌아오는것, 가는것 알파벳 추가?
-	// 선택한 클래스에 따라 요금을 economey, prestige로 변경하기
 			
     return `<div class="flight-card" data-flight-id="\${fltProdId}">
         <div class="flight-card-content">
@@ -647,7 +640,6 @@ document.getElementById('flightSearchForm').addEventListener('submit', function(
     e.preventDefault();
     
     // 초기화
-	console.log("submit reset 전 currentSelectionStep : ", currentSelectionStep);
 //    	selectedFlights = [];
 //    	currentSelectionStep = 1;
 //    	list.innerHTML = "";
@@ -674,6 +666,8 @@ function searchFlights() {
 	const startDt = document.querySelector('#departDate').value;
     const endDt = document.querySelector('#returnDate').value;
 	
+    const cabin = document.querySelector("#cabinClass").value;	// 좌석 등급
+    
     if (!departure) {
         showToast('출발지를 입력해주세요.', 'error');
         return;
@@ -719,14 +713,22 @@ function searchFlights() {
     	let html = '';
     	let validCount = 0;
     	
-	    let searchSize = flight.length;
-    	let noMoney = 0;  // 금액 안나올때
-    	if(flight != null && searchSize > 0){
+    	if(flight != null && flight.length > 0){
+    		
     		flight.forEach((item, i) => {
                 // 유효성 검사 (금액이 있고 항공사 이름이 제대로 된 경우만)
-                if (item.economyCharge > 0 && item.airlineNm && item.airlineNm !== '/') {
-                    html += createFlightCard(item, searchData, i);
-                    validCount++;
+                if (item.airlineNm && item.airlineNm !== '/') {
+					let isPriceValid = false;
+					if (cabin === "economy") {
+	                    isPriceValid = item.economyCharge > 0;
+	                } else if (cabin === "business" || cabin === "prestige") {
+	                    isPriceValid = item.prestigeCharge > 0;
+	                }
+
+	                if (isPriceValid) {
+	                    html += createFlightCard(item, searchData, cabin, i);
+	                    validCount++;
+	                }
                 }
             });
     	} 
@@ -769,7 +771,7 @@ function showSegmentAutocomplete(dropdown, query) {
             return createAutocompleteItemHtml(airport, query);
         }).join('');
     }else{
-   		html = html = '<div class="autocomplete-empty"><i class="bi bi-search"></i>"' + query + '"에 대한 검색 결과가 없습니다.</div>';
+   		html = `<div class="autocomplete-empty"><i class="bi bi-search"></i>\${query}에 대한 검색 결과가 없습니다.</div>`;
     }
 
     dropdown.innerHTML = html;
@@ -858,20 +860,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
 });
-
-// async function getMember(){
-// 	console.log("user.username : ", "${user.username}");
-// 	const userData = await fetch("/product/flight/user", {
-// 		method : "post",
-// 		headers : {"Content-Type" : "application/json"},
-// 		body : JSON.stringify({memId : "${user.username}"})
-// 	});
-	
-// 	console.log("userData : ", userData);
-	
-// 	const customData = await userData.json();
-// 	console.log("customData : ", customData);
-// }
 
 // //페이지 로드시 초기화
 // document.addEventListener('DOMContentLoaded', function() {

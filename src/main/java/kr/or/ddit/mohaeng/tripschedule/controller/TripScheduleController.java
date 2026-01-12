@@ -111,9 +111,9 @@ public class TripScheduleController {
 		Params params = Params.of(req);
 		RestClient restClient = RestClient.create();
 
-		String urlString = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2?MobileOS=WEB&MobileApp=mohaeng&_type=json&arrange=O"
+		String urlString = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2?MobileOS=WEB&MobileApp=mohaeng&_type=json"
+				+ "&arrange=Q"
 				+ "&pageNo=1&numOfRows=15"
-				+ "&contentTypeId=14"
 				+ "&areaCode=" + params.get("areaCode")
 				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
 

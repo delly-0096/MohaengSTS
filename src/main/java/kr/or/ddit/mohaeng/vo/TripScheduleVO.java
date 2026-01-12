@@ -36,6 +36,13 @@ public class TripScheduleVO {
 	private List<TripScheduleDetailsVO> tripScheduleDetailsList;
 	private List<String> displayPlaceNames;
 	private String thumbnail;
+	
+	/***
+	 * 관리자에서 사용됨
+	 */
+	private String memId;
+	private String memName;
+	private String schdlStsNm;
 
 	public TripScheduleVO() {}
 	

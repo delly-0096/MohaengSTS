@@ -9,6 +9,7 @@ public class TourPlaceVO {
 	private int plcNo;
 	private int rgnNo;
 	private String placeType;
+	private String placeTypeName;
 	private String placeName;
 	private String plcNm;
 	private String plcDesc;

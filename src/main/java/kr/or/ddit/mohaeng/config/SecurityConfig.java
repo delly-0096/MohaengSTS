@@ -108,6 +108,7 @@ public class SecurityConfig {
 	private static final String[] REACT_PASS_URL = {
 			"/api/admin/login",
 			"/api/schedule/**",
+			"/api/admin/schedule/**",
 			"/api/admin/notices/thumbnail/**"
 		};
 

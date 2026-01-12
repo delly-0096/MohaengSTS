@@ -50,7 +50,7 @@ public class AdminFaqController {
 	    // regId에 memNo를 String으로 세팅
 		faqVO.setRegId(String.valueOf(userDetails.getMember().getMemNo()));
 
-		System.out.println(faqVO);
+		log.debug(" faq 인자값 :  {}", faqVO);
 		return ResponseEntity.ok(faqService.insertAFaq(faqVO));
 	}
 
@@ -66,7 +66,7 @@ public class AdminFaqController {
 	public ResponseEntity<Void> updateAFaqUseYn(@PathVariable int faqNo, @RequestParam String useYn){
 		faqService.updateAFaqUseYn(faqNo,useYn);
 		return ResponseEntity.ok().build();
-	};
+	}
 
 	// 순서 변경 (swap)
 	@PatchMapping("/order")

@@ -57,7 +57,7 @@ public interface IInquiryMapper {
 		//문의 첨부파일 개수 업데이트
 		public void updateInquiryAttachCount( @Param("attachNo") int inqryNo, @Param("inqryNo")int savedCount);
 
-		// 첨부파일 상세 정보 저장 (ATTACH_FILE_DETAIL 테이블)
+		//첨부파일 상세 정보 저장 (ATTACH_FILE_DETAIL 테이블)
 		public void insertAttachFileDetail(Map<String, Object> fileDetailMap);
 
 		//첨부파일 목록 조회

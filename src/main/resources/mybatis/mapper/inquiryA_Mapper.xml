@@ -1,6 +1,214 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="kr.or.ddit.mohaeng.support.faq.mapper.IFaqMapper">
+<mapper namespace="kr.or.ddit.mohaeng.admin.inquiry.mapper.IQnaMapper">
 
-	
+	<select id="aInquiryList" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		SELECT
+	         i.INQRY_NO
+	        ,i.INQRY_CTGRY_CD
+	        ,i.INQRY_STATUS
+	        ,i.INQRY_TITLE
+	        ,i.INQRY_EMAIL
+	        ,i.REG_DT
+	        ,i.DEL_YN
+	        ,c.CD_NAME     AS categoryName
+	        ,m.MEM_NAME    AS memberName
+	        ,m.MEM_ID
+
+	    FROM INQUIRY i
+	    LEFT JOIN CODE c
+	           ON i.INQRY_CTGRY_CD = c.CD
+	          AND c.CDGR = 'INQRY_CAT'
+	          AND c.USE_YN = 'Y'
+	    LEFT JOIN MEMBER m
+	           ON i.MEM_NO = m.MEM_NO
+
+	    WHERE i.DEL_YN = 'N'
+
+		<!--키워드 검색  -->
+		<if test="searchKeyword != null and searchKeyword != ''">
+			 AND (
+	               i.INQRY_TITLE LIKE '%' || #{searchKeyword} || '%'
+	            OR m.MEM_NAME    LIKE '%' || #{searchKeyword} || '%'
+	            OR m.MEM_ID      LIKE '%' || #{searchKeyword} || '%'
+	            OR i.INQRY_EMAIL LIKE '%' || #{searchKeyword} || '%'
+	        )
+		</if>
+
+		<!--상태 필터 -->
+		<if test="status !=null and status != 'all'">
+			AND i.INQRY_STATUS = #{status}
+		</if>
+
+		<!--카테고리 필터-->
+		<if test="category !=null and category !='all'">
+			AND i.INQRY_CTGRY_CD = #{category}
+		</if>
+
+		ORDER BY i.REG_DT DESC
+		OFFSET #{offset} ROWS
+		FETCH NEXT #{pageSize} ROWS ONLY
+	</select>
+
+	<!--관리자 문의 총 개수 조회 (목록용 카운트)  -->
+	<select id="aInquiryCount" resultType="int">
+		select
+			count(*)
+		from INQUIRY i
+		LEFT JOIN MEMBER m
+			   ON i.MEM_NO=m.MEM_NO
+		where i.DEL_YN = 'N'
+		<!--키워드 검색 -->
+		<if test="searchKeyword != null and searchKeyword != ''">
+			 AND (
+	               i.INQRY_TITLE LIKE '%' || #{searchKeyword} || '%'
+	            OR m.MEM_NAME    LIKE '%' || #{searchKeyword} || '%'
+	            OR m.MEM_ID      LIKE '%' || #{searchKeyword} || '%'
+	            OR i.INQRY_EMAIL LIKE '%' || #{searchKeyword} || '%'
+	        )
+		</if>
+
+		<!--상태 필터 -->
+		<if test="status != null and status != 'all'">
+			AND i.INQRY_STATUS = #{status}
+		</if>
+
+		<!--카테고리 필터  -->
+		<if test="category != null and category != 'all'">
+			AND i.INQRY_CTGRY_CD = #{category}
+		</if>
+	</select>
+
+	<!--관리자 문의 상세 조회 -->
+	<select id="aInquiryDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		select
+			i.INQRY_NO
+	        ,i.INQRY_CTGRY_CD
+	        ,i.MEM_NO
+	        ,i.INQRY_STATUS
+	        ,i.INQRY_TITLE
+	        ,i.INQRY_CN
+	        ,i.INQUIRY_TARGET_NO
+	        ,i.INQRY_EMAIL
+	        ,i.ATTACH_NO
+	        ,i.REG_DT
+	        ,i.MOD_DT
+	        ,i.DEL_YN
+	        ,i.DEL_DT
+	        ,i.REPLY_CN
+	        ,i.REPLY_MEM_NO
+	        ,i.REPLY_DT
+	        ,i.REPLY_MOD_DT
+	        ,c.CD_NAME     AS categoryName
+	        ,m.MEM_NAME    AS memberName
+	        ,m.MEM_ID
+		from INQUIRY i
+		left join CODE c
+		 		ON i.INQRY_CTGRY_CD = c.CD
+		 	   AND c.CDGR = 'INQRY_CAT'
+		 	   AND c.USE_YN='Y'
+		left join MEMBER m
+			    ON i.MEM_NO = m.MEM_NO
+		where i.INQRY_NO = #{inqryNo}
+		  and i.DEL_YN='N'
+	</select>
+
+	<!--첨부파일은 inquiry_Mapper.xml과 동일함  -->
+
+	<!-- 첨부파일 목록 조회  -->
+	<select id="aAttachFileList" parameterType="int" resultType="map">
+		select
+			afd.FILE_NO
+			,afd.FILE_ORIGINAL_NAME
+			,afd.FILE_EXT
+			,afd.FILE_SIZE
+			,afd.FILE_PATH
+		from INQUIRY i
+		inner join ATTACH_FILE_DETAIL afd on i.ATTACH_NO = afd.ATTACH_NO
+		where i.INQRY_NO = #{inqryNo}
+		  and afd.USE_YN = 'Y'
+		order by afd.REG_DT
+	</select>
+
+	<!-- 첨부파일 단건 조회 (다운로드용) -->
+	<select id="aAttachFileDetail" parameterType="int" resultType="map">
+		select
+			FILE_NO
+			,FILE_ORIGINAL_NAME
+			,FILE_PATH
+		from ATTACH_FILE_DETAIL
+		where FILE_NO=#{fileNo}
+		and USE_YN='Y'
+	</select>
+
+	<!-- 1:1문의 삭제  -->
+	<update id="inquiryDelete" parameterType="int">
+		update INQUIRY
+		   set DEL_YN='Y'
+		   	   ,DEL_DT = SYSDATE
+		 where INQRY_NO = #{inqryNo}
+	</update>
+
+	<!--문의 삭제 알림 등록 -->
+	<insert id="insertAlarmInquiryDelete" parameterType="kr.or.ddit.mohaeng.vo.AlarmVO">
+		<selectKey keyProperty="alarmNo" resultType="int" order="BEFORE">
+			SELECT SEQ_ALARM_NO.NEXTVAL FROM DUAL
+		</selectKey>
+
+		insert into ALARM(
+			ALARM_NO
+			,MEM_NO
+			,SENDER
+			,ALARM_TYPE
+			,ALARM_CONT
+			,MOVE_URL
+			,READ_YN
+			,REG_DT
+		)VALUES(
+			#{alarmNo}
+			,#{memNo}
+			,'INQRY_ADMIN'
+			,'INQRY_DELETE'
+			,#{alarmCont}
+			,#{moveUrl}
+			,'N'
+			,SYSDATE
+		)
+	</insert>
+
+	<!--문의 답변 등록 -->
+	<update id="inqryReply" parameterType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		update INQUIRY
+		   set
+	     	REPLY_CN = #{replyCn}
+	        ,REPLY_MEM_NO = #{replyMemNo}
+	        ,REPLY_DT = SYSDATE
+	        ,INQRY_STATUS = 'ANSWERED'
+		 where INQRY_NO = #{inqryNo}
+	</update>
+
+	<!--문의 답변 알림 등록 -->
+	<insert id="alarmInqryReply">
+	 	insert into ALARM(
+			ALARM_NO
+			,MEM_NO
+			,SENDER
+			,ALARM_TYPE
+			,ALARM_CONT
+			,MOVE_URL
+			,READ_YN
+			,REG_DT
+		)VALUES(
+			#{alarmNo}
+			,#{memNo}
+			,'INQRY_ADMIN'
+			,'INQRY_REPLY'
+			,#{alarmCont}
+			,#{moveUrl}
+			,'N'
+			,SYSDATE
+		)
+	</insert>
+
+
 </mapper>

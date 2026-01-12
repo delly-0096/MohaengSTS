@@ -3,6 +3,8 @@ package kr.or.ddit.mohaeng.vo;
 import java.sql.Date;
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import lombok.Data;
 
 @Data
@@ -26,8 +28,13 @@ public class BoardVO {
 	
 	private Date regDt;
 	private Date modDt;
+	private String regId;
+	private String modId;
+
 	
 	private List<BoardFileVO> boardFileList;
+	private List<MultipartFile> boardFile;
+
 	
 	
 }

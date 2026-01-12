@@ -191,9 +191,9 @@
     <script src="${pageContext.request.contextPath}/resources/js/common.js"></script>
 
     <!-- 페이지별 추가 JS -->
-    <c:if test="${not empty pageJs}">
-        <script src="${pageContext.request.contextPath}/resources/js/${pageJs}.js"></script>
-    </c:if>
+<%--     <c:if test="${not empty pageJs}"> --%>
+<%--         <script src="${pageContext.request.contextPath}/resources/js/${pageJs}.js"></script> --%>
+<%--     </c:if> --%>
 
 <c:if test="${empty hasInlineScript}">
 </body>

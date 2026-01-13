@@ -243,9 +243,13 @@
                             <span class="summary-label">좌석 등급</span>
                             <span class="summary-value" id="summaryCabin">좌석</span>
                         </div>
-                        <div class="summary-row" id="summarySeatsRow" style="display: none;">
-                            <span class="summary-label">선택 좌석</span>
-                            <span class="summary-value" id="summarySeats">-</span>
+                        <div class="summary-row" id="summarySeatsRowOut" style="display: none;">
+                            <span class="summary-label">가는편 선택 좌석</span>
+                            <span class="summary-value" id="summarySeatsOut">-</span>
+                        </div>
+                        <div class="summary-row" id="summarySeatsRowIn" style="display: none;">
+                            <span class="summary-label">오는편 선택 좌석</span>
+                            <span class="summary-value" id="summarySeatsIn">-</span>
                         </div>
                         <div class="summary-divider"></div>
                         <div class="summary-row">
@@ -337,9 +341,8 @@ let availablePoints = null; // 포인트
 
 async function main() {
 	const button = document.getElementById("payment-button");
-//   const coupon = document.getElementById("coupon-box");
 
-  // ------  결제위젯 초기화 ------
+  	// ------  결제위젯 초기화 ------
 	const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
 	const customerKey = "MyKgi0HwDJKFeRDGmc_wM";
 
@@ -377,10 +380,8 @@ async function main() {
 	});
 	
 	console.log("userData : ", userData);
-	
 	customData = await userData.json();
 	console.log("customData : ", customData);		// 이 정보로 입력, session에도 저장?
-	
 	
 	const bookerName = document.querySelector("#bookerName");
 	const bookerPhone = document.querySelector("#bookerPhone");
@@ -396,28 +397,33 @@ async function main() {
 		document.querySelector("#usePointInput").disabled = false;
 	}
 	
+	
 	// 결제 form
 	const bookingForm = document.querySelector("#flightBookingForm");
 	bookingForm.addEventListener("submit", async function(e){
 		e.preventDefault();
 
-		// 결제 하기전에 탑승객 데이터좀 넣자
+		// 탑승객 card
 		const passengerInputs = document.querySelectorAll('.passenger-card');
 		
-// 		selectedSeats // 좌석 정보가 담긴 list
-		
-	    const passengerData = Array.from(passengerInputs).map(card => {
+		// 탑승객 정보
+	    const passengerData = Array.from(passengerInputs).map((card, index) => {
 	        return {
 	            type: card.querySelector('.passenger-type-badge').textContent,
 	            lastName: card.querySelector('input[name^="lastName"]').value,
 	            firstName: card.querySelector('input[name^="firstName"]').value,
 	            gender: card.querySelector('select[name^="gender"]').value,
 	            birthDate: card.querySelector('input[name^="birthDate"]').value,
-	            extraBaggage: card.querySelector('select[name^="extraBaggage"]').value
-	            // 좌석 - 
+	            extraBaggageOutbound: card.querySelector('select[name="extraBaggageOutbound"]').value,
+	            extraBaggageInbound: (bookingData.tripType === 'round') ? 
+	            		card.querySelector('select[name="extraBaggageInbound"]').value : "0",
+	            outboundSeat: selectedSeatsBySegment[0][index],
+	            inboundSeat: (bookingData.tripType === 'round') ? selectedSeatsBySegment[1][index] : "NONE"
 	        };
 	    });
 	    
+		// const reservationData = 
+		
 		console.log("passengers : ", passengerData);
 		sessionStorage.setItem("passengers", JSON.stringify(passengerData));
 		
@@ -431,20 +437,27 @@ async function main() {
 	        showToast('필수 약관에 동의해주세요.', 'error');
 	        return;
 	    }
-		
-		// "flt" + bookingData.flights[0].startDt + "11"
-		console.log("bookingData : ", bookingData.flights[0].startDate )
+	    
+	    const reserveAgree = {
+	    	mktRecvAgreeYn : (document.getElementById('agreeMarketing').checked) ? 'Y' : 'N' 
+	    }
+	    
+	    console.log("reserveAgree : ", reserveAgree);
+		sessionStorage.setItem("reserveAgree", JSON.stringify(reserveAgree));
+	    
+	    
+	    
+		const timeStamp = Date.now();
 		await widgets.requestPayment({
-			orderId: "test" + bookingData.flights[0].startDt + "1",			// 결제번호 - 일단 임의
-			orderName: "1",													// 상품명
+			orderId: "FLT-" + bookingData.flights[0].startDt + "-" + customData.memNo + "-" + timeStamp,			// 예약번호
+			orderName: bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm,
 			// paymentKey, paymentType, amount는 기본적으로 포함되어 있음
 			successUrl: window.location.origin + "/product/payment/flight",	// 성공 위치 - 리다이렉트로 이동
 			failUrl: window.location.origin + "/product/payment/error",		// 실패 위치 - 같은곳으로 보내자
 			customerEmail: customData.memEmail,								// 결제자 이메일
 			customerName: customData.memName,								// 결제자 이름
-			customerMobilePhone: customData.tel,							// 결제자 전화번호
+			customerMobilePhone: customData.tel								// 결제자 전화번호
 		});
-		
 	});
 }
 
@@ -593,7 +606,6 @@ function addPassengerCard(container, type, num) {
 
     var div = document.createElement('div');
     div.className = 'passenger-card';
-    // type num은 빼기
     div.innerHTML =
 	        `<div class="passenger-card-header">
 	            <h6><i class="bi bi-person-fill me-2"></i>탑승객 \${num}</div><span class="passenger-type-badge" style="color: #ffffff;">\${typeLabel}</span></h6>
@@ -631,8 +643,16 @@ function addPassengerCard(container, type, num) {
 	            </div>
 	            <div class="col-md-4">
 	            <div class="form-group mb-0">
-	                <label class="form-label">추가 수하물 <span class="text-danger">*</span></label>
-	                <select class="form-control form-select" name="extraBaggage" onchange="calculateTotal()" required>
+	                <label class="form-label">가는편 추가 수하물 <span class="text-danger">*</span></label>
+	                <select class="form-control form-select" name="extraBaggageOutbound" onchange="calculateTotal()" required>
+		                <option value="0">추가없음</option>
+		                <option value="5">5kg (10,000원)</option>
+		                <option value="10">10kg (20,000원)</option>
+		            </select>
+	            </div>
+	            <div class="form-group mb-0">
+	                <label class="form-label">오는편 추가 수하물 <span class="text-danger">*</span></label>
+	                <select class="form-control form-select" name="extraBaggageInbound" onchange="calculateTotal()" required>
 		                <option value="0">추가없음</option>
 		                <option value="5">5kg (10,000원)</option>
 		                <option value="10">10kg (20,000원)</option>
@@ -698,7 +718,7 @@ function changepassengerType(type, delta) {
 
     // 좌석 선택 초기화 (인원 변경 시)
     if (selectedSeatsBySegment.length > 0) {
-    	selectedSeatsBySegment = [[], []];
+    	selectedSeatsBySegment = [[], []];	// 첫번째는 그대로 담기, 늘어나면 기존 인원의 좌석은 그대로
         document.getElementById('summarySeatsRow').style.display = 'none';
         document.querySelector('.seat-selection-info').innerHTML =
             `<p>좌석 선택은 선택사항입니다. 미선택 시 자동 배정됩니다.</p>
@@ -708,7 +728,6 @@ function changepassengerType(type, delta) {
         initSeatMap();
     }
 
-    // 총 금액 재계산
     calculateTotal();
 }
 
@@ -740,7 +759,7 @@ function updateCountButtons() {
     }
 }
 
-// 총 금액 계산 - 짐 까지 정해야됨
+// 총 금액 계산 - 아이 요금제
 function calculateTotal() {
 	// 이거 고쳐야됨
 	
@@ -764,7 +783,7 @@ function calculateTotal() {
    	let extraFeeView = document.querySelector(".summary-row.extra");
     let summaryExtra = document.querySelector("#summaryExtra");
     let extraBaggageFee = 0;
-    document.querySelectorAll('select[name="extraBaggage"]').forEach(select => {
+    document.querySelectorAll('select[name^="extraBaggage"]').forEach(select => {
         const weight = parseInt(select.value);
         if (weight === 5) {
         	extraBaggageFee += 10000;
@@ -774,11 +793,10 @@ function calculateTotal() {
         }
     });
     if(extraBaggageFee !== 0) extraFeeView.style.display = 'flex';
-    summaryExtra.innerHTML = extraBaggageFee;
+    summaryExtra.innerHTML = extraBaggageFee.toLocaleString() + '원';
     
 						// 처음에 받은 토탈
-    totalFlightPrice = (basePrice + extraBaggageFee) * passengerType.adult;	
-    // basePrice
+    totalFlightPrice = (basePrice + extraBaggageFee) * totalPeople;
 
     // 요금 표시 업데이트
     document.getElementById('summaryFare').textContent = (basePrice).toLocaleString() + '원 x ' + totalPeople + '명';
@@ -904,51 +922,49 @@ function toggleSeat(btn) {
 function confirmSeatSelection() {
     // 결제 요약에 좌석 정보 반영
     
-    var seatsRow = document.getElementById('summarySeatsRow');
-//     var seatFeeRow = document.getElementById('summarySeatFeeRow');
-    var summarySeats = document.getElementById('summarySeats');
-    var summarySeatFee = document.getElementById('summarySeatFee');
-    var seatSelectionInfo = document.querySelector('.seat-selection-info');
-
-    if (selectedSeats.length === 0) {
-        seatsRow.style.display = 'none';
-//         seatFeeRow.style.display = 'none';
-        seatSelectionInfo.innerHTML =
-            `<p>좌석 선택은 선택사항입니다. 미선택 시 자동 배정됩니다.</p>
-            <button type="button" class="btn btn-outline" onclick="openSeatSelection()">
-                <i class="bi bi-grid-3x3 me-1"></i>좌석 선택하기
-            </button>`;
-    } else {
-        // 추가요금 좌석 개수 계산 (1~3열)
-//         var extraSeatCount = 0;
-//         selectedSeats.forEach(function(seat) {
-//             var rowNum = parseInt(seat);
-//             if (rowNum <= 3) extraSeatCount++;
-//         });
-
-        // 좌석 정보 표시
-        seatsRow.style.display = 'flex';
-        summarySeats.textContent = selectedSeats.join(', ');
-
-        // 좌석 선택 영역 업데이트 - 가는 편, 오는 편 두개가 있어야 됨. 1명이면 1개만 선택되도록, 이전 좌석은 사라지도록 설정하기
-		seatSelectionInfo.innerHTML = `
-            <div class="selected-seats-display">
-                <div class="selected-seats-info">
-                    <i class="bi bi-check-circle-fill text-success me-2"></i>
-                    <span>선택된 좌석 : <strong>\${selectedSeats.join(', ')}</strong></span>
-                </div>
-                <button type="button" class="btn btn-outline btn-sm" onclick="openSeatSelection()">
-                    <i class="bi bi-pencil me-1"></i>변경
-                </button>
-            </div>`;
-        showToast('좌석 ' + selectedSeats.join(', ') + '이(가) 선택되었습니다.', 'success');
-    }
-
-    // 총 금액 재계산
-    calculateTotal();
     
-    // modal close, 왕복일때는 한번더 열기
+    const rowOut = document.getElementById('summarySeatsRowOut');	// 가는편 div
+    const rowIn = document.getElementById('summarySeatsRowIn');		// 오는편 div
+    const seatSelectionInfo = document.querySelector('.seat-selection-info');
+
+    
+    // 가는 편
+    if (selectedSeatsBySegment[0].length > 0) {
+        rowOut.style.display = 'flex';
+        document.getElementById('summarySeatsOut').textContent = selectedSeatsBySegment[0].join(', ');
+        showToast('좌석 ' + selectedSeatsBySegment[0].join(', ') + '이(가) 선택되었습니다.', 'success');
+    } else {
+        rowOut.style.display = 'none';
+    }
+    
+    // 오는 편
+    if (bookingData.tripType === 'round' && selectedSeatsBySegment[1].length > 0) {
+        rowIn.style.display = 'flex';
+        document.getElementById('summarySeatsIn').textContent = selectedSeatsBySegment[1].join(', ');
+        showToast('좌석 ' + selectedSeatsBySegment[1].join(', ') + '이(가) 선택되었습니다.', 'success');
+    } else {
+        rowIn.style.display = 'none';
+    }
+    
+	seatSelectionInfo.innerHTML = `
+	    <div class="selected-seats-display">
+	        <div class="selected-seats-info">
+	            <div>가는편: <strong>\${selectedSeatsBySegment[0].join(', ') || '자동배정'}</strong></div>
+	            \${bookingData.tripType === 'round' ? `<div>오는편: <strong>\${selectedSeatsBySegment[1].join(', ') || '자동배정'}</strong></div>` : ''}
+	        </div>
+	        <button type="button" class="btn btn-outline btn-sm" onclick="openSeatSelection()">
+	            <i class="bi bi-pencil me-1"></i>변경
+	        </button>
+	    </div>`;
+    
+//     console.log("가는편 : ", selectedSeatsBySegment[0]);
+//     console.log("오는편 : ", selectedSeatsBySegment[1]);
+
+    // 좌석 랜덤 설정 하는 함수 호출
+    
+    calculateTotal();
     seatSelectionModal.hide();
+    
 }
 
 // 전체 동의

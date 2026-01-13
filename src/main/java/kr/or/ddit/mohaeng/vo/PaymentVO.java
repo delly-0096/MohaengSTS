@@ -1,7 +1,6 @@
 package kr.or.ddit.mohaeng.vo;
 
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Data;
@@ -31,7 +30,7 @@ public class PaymentVO {
 	private List<FlightProductVO> flightProductList;			// 항공 상품 목록
 	private List<FlightPassengersVO> flightPassengersList;		// 항공 탑승객 목록
 	private List<FlightReservationVO> flightReservationList;	// 항공 예약 목록
-	private List<FlightResvAgreeVO> flightResvAgreeList ;		// 항공 예약 동의 목록
+	private FlightResvAgreeVO flightResvAgree;		// 항공 예약 동의 목록
 	
 	
 	// 토스 api용 변수

@@ -43,8 +43,9 @@
             </div>
 
             <!-- 회원가입 폼 -->
-            <form class="auth-form" id="registerForm" action="${pageContext.request.contextPath}/member/register" method="POST" enctype="multipart/form-data">
+            <form class="auth-form" id="registerForm" action="${pageContext.request.contextPath}/member/register/member" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="memType" id="memType" value="MEMBER">
+                <input type="hidden" name="joinMode" value="NORMAL">
 
                 <!-- 아이디 -->
                 <div class="form-group">
@@ -354,7 +355,7 @@
                     <!-- 담당자명 -->
                     <div class="form-group">
                         <label class="form-label">담당자명 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="memName" id="managerName"
+                        <input type="text" class="form-control" name="managerName" id="managerName"
                                placeholder="담당자 이름을 입력하세요">
                         <div class="form-error">
                             <i class="bi bi-exclamation-circle"></i>
@@ -376,7 +377,7 @@
                     <!-- 담당자 이메일 -->
                     <div class="form-group">
                         <label class="form-label">담당자 이메일 <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" name="memEmail" id="managerEmail"
+                        <input type="email" class="form-control" name="managerEmail" id="managerEmail"
                                placeholder="이메일 주소를 입력하세요">
                         <div class="form-error">
                             <i class="bi bi-exclamation-circle"></i>
@@ -1048,5 +1049,20 @@ document.querySelectorAll('.form-control').forEach(input => {
 });
 
 </script>
+
+<!-- 에러 메시지 -->
+<c:if test="${not empty errorMessage}">
+    <div class="alert alert-danger mb-3" role="alert">
+        <i class="bi bi-exclamation-triangle me-2"></i>${errorMessage}
+    </div>
+</c:if>
+
+<!-- 성공 메시지 -->
+<c:if test="${not empty successMessage}">
+<div class="alert alert-success mb-3" role="alert">
+    <i class="bi bi-check-circle me-2"></i>
+    ${successMessage}
+</div>
+</c:if>
 <%-- <c:set var="pageJs" value="member" /> --%>
 <%@ include file="../common/footer.jsp" %>

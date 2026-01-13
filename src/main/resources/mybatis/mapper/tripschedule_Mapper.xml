@@ -1,0 +1,478 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.tripschedule.mapper.ITripScheduleMapper">
+	
+	<resultMap id="tripScheduleResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleVO">
+        <id property="schdlNo" column="SCHDL_NO" />
+        
+        <result property="memNo"            column="MEM_NO" />
+        <result property="prefNo"           column="PREF_NO" />
+        <result property="startPlaceType"   column="START_PLACE_TYPE" />
+        <result property="startPlaceId"     column="START_PLACE_ID" />
+        <result property="startPlaceId"     column="START_PLACE_ID" />
+        <result property="targetPlaceType"  column="TARGET_PLACE_TYPE" />
+        <result property="targetPlaceId"    column="TARGET_PLACE_ID" />
+        <result property="targetPlaceId"    column="TARGET_PLACE_ID" />
+        <result property="schdlNm"   	    column="SCHDL_NM" />
+        <result property="schdlStatus"      column="SCHDL_STATUS" />
+        <result property="schdlStartDt"     column="SCHDL_START_DT" />
+        <result property="schdlEndDt"       column="SCHDL_END_DT" />
+        <result property="travelerCnt"      column="TRAVELER_CNT" />
+        <result property="totalBudget"      column="TOTAL_BUDGET" />
+        <result property="aiRecomYn"        column="AI_RECOM_YN" />
+        <result property="publicYn"         column="PUBLIC_YN" />
+        <result property="regDt"            column="TS_REG_DT" />
+        <result property="modDt"            column="TS_MOD_DT" />
+        <result property="bkmkYn"            column="BKMK_YN" />
+
+        <collection property="tripScheduleDetailsList" 
+                    resultMap="tripScheduleDetailsResultMap" 
+                    notNullColumn="SCHDL_DETAILS_NO" />
+    </resultMap>
+
+    <resultMap id="tripScheduleDetailsResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO">
+        <id property="schdlDetailsNo" column="SCHDL_DETAILS_NO" />
+        <result property="schdlNo"      column="SCHDL_NO" />
+        <result property="schdlTitle"   column="SCHDL_TITLE" />
+        <result property="schdlStartDt" column="DETAILS_START_DT" />
+        <result property="schdlEndDt"   column="DETAILS_END_DT" />
+        <result property="schdlDt"      column="SCHDL_DT" />
+        <result property="bgColor"      column="BG_COLOR" />
+                            
+        <collection property="tripSchedulePlaceList" 
+                    resultMap="tripSchedulePlaceResultMap" 
+                    notNullColumn="SCHDL_PLC_NO" />
+    </resultMap>
+
+    <resultMap id="tripSchedulePlaceResultMap" type="kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO">
+        <id property="schdlPlcNo" column="SCHDL_PLC_NO" />
+        <result property="schdlDetailsNo" column="SCHDL_DETAILS_NO" />
+        <result property="placeType"      column="PLACE_TYPE" />
+        <result property="placeId"        column="PLACE_ID" />
+        <result property="planCost"       column="PLAN_COST" />
+        <result property="placeOrder"     column="PLACE_ORDER" />
+        <result property="placeStartTime" column="PLACE_START_TIME" />
+        <result property="placeEndTime"   column="PLACE_END_TIME" />
+        <result property="allDayYn"       column="ALL_DAY_YN" />
+        <result property="destType"       column="DEST_TYPE" />
+        <result property="destId"         column="DEST_ID" />
+        <result property="moveType"       column="MOVE_TYPE" />
+        <result property="plcNm"       	  column="PLC_NM" />
+        
+        <association property="tourPlace" resultMap="tourPlaceResultMap" />
+    </resultMap>
+    
+    <resultMap id="tourPlaceResultMap" type="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+    	<id property="plcNo" column="PLC_NO" />
+	    <result property="placeType" column="PLACE_TYPE" />
+        <result property="placeName"      column="PLACE_NAME" />
+	    <result property="plcNm" column="PLC_NM" />
+	    <result property="plcDesc" column="PLC_DESC" />
+	    <result property="plcZip" column="PLC_ZIP" />
+	    <result property="attachNo" column="IMG_ATTACH_NO" />
+	    <result property="latitude" column="LATITUDE" />
+	    <result property="longitude" column="LONGITUDE" />
+	    <result property="operationHours" column="OPERATION_HOURS" />
+	    <result property="plcPrice" column="PLC_PRICE" />
+	    <result property="regId" column="REG_ID" />
+	    <result property="regDt" column="REG_DT" />
+	    <result property="modId" column="MOD_ID" />
+	    <result property="modDt" column="MOD_DT" />
+	    <result property="pclStatusCd" column="PCL_STATUS_CD" />
+	    <result property="popTrvlYn" column="POP_TRVL_YN" />
+	    <result property="defaultImg" column="DEFAULT_IMG" />
+	    <result property="plcAddr1" column="PLC_ADDR1" />
+	    <result property="plcAddr2" column="PLC_ADDR2" />
+	</resultMap>
+    
+    <sql id="tripScheduleColumns">
+    	 	  TS.SCHDL_NO
+		    , TS.MEM_NO
+		    , TS.PREF_NO
+		    , TS.START_PLACE_TYPE
+		    , TS.START_PLACE_ID
+		    , TS.TARGET_PLACE_TYPE
+		    , TS.TARGET_PLACE_ID
+		    , TS.SCHDL_NM
+		    , TS.SCHDL_STATUS
+		    , TS.SCHDL_START_DT
+		    , TS.SCHDL_END_DT
+		    , TS.TRAVELER_CNT
+		    , TS.TOTAL_BUDGET
+		    , TS.AI_RECOM_YN
+		    , TS.PUBLIC_YN
+		    , TS.REG_DT           AS TS_REG_DT
+		    , TS.MOD_DT           AS TS_MOD_DT
+		    
+		    , TSD.SCHDL_DETAILS_NO
+		    , TSD.SCHDL_TITLE
+		    , TSD.SCHDL_START_DT  AS DETAILS_START_DT
+		    , TSD.SCHDL_END_DT    AS DETAILS_END_DT
+		    , TSD.SCHDL_DT
+		    , TSD.BG_COLOR
+		    
+		    , TSP.SCHDL_PLC_NO
+		    , TSP.PLACE_TYPE
+		    , TSP.PLACE_ID
+		    , TSP.PLAN_COST
+		    , TSP.PLACE_ORDER
+		    , TSP.PLACE_START_TIME
+		    , TSP.PLACE_END_TIME
+		    , TSP.ALL_DAY_YN
+		    , TSP.DEST_TYPE
+		    , TSP.DEST_ID
+		    , TSP.MOVE_TYPE
+		    , (SELECT TP.PLC_NM FROM TOUR_PLACE TP WHERE TP.PLC_NO = TSP.DEST_ID) AS PLC_NM
+		    , (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END 
+	             FROM TRIP_SCHEDULE_BOOKMARK B 
+	            WHERE B.SCHDL_NO = TS.SCHDL_NO 
+	              AND B.MEM_NO = #{memNo}
+	           ) AS BKMK_YN
+    </sql>
+
+    <select id="selectTripScheduleList" parameterType="int" resultMap="tripScheduleResultMap">
+        SELECT <include refid="tripScheduleColumns"/>
+		  FROM TRIP_SCHEDULE TS
+		  LEFT JOIN TRIP_SCHEDULE_DETAILS TSD
+		    ON TS.SCHDL_NO = TSD.SCHDL_NO
+		  LEFT JOIN TRIP_SCHEDULE_PLACE TSP
+		    ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
+		 WHERE TS.MEM_NO = #{memNo}
+		   AND TS.DEL_YN != 'Y'
+		 ORDER BY TSD.SCHDL_DT ASC
+		     	, TSP.PLACE_ORDER ASC
+    </select>
+    
+    <select id="selectTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO" resultMap="tripScheduleResultMap">
+        SELECT <include refid="tripScheduleColumns"/>
+        	 , TP.PLC_NO
+        	 , TP.RGN_NO
+        	 , TP.PLACE_TYPE
+			 , (SELECT CONTENT_TYPE_NAME FROM TOUR_CONTENT_TYPE CT WHERE CT.CONTENT_TYPE_ID = TP.PLACE_TYPE) AS PLACE_NAME
+        	 , TP.PLC_NM
+        	 , TP.PLC_DESC
+        	 , TP.PLC_ZIP
+        	 , TP.ATTACH_NO AS IMG_ATTACH_NO
+        	 , TP.LATITUDE
+        	 , TP.LONGITUDE
+        	 , TP.OPERATION_HOURS
+        	 , TP.PLC_PRICE
+        	 , TP.REG_ID
+        	 , TP.REG_DT
+        	 , TP.MOD_ID
+        	 , TP.MOD_DT
+        	 , TP.PCL_STATUS_CD
+        	 , TP.POP_TRVL_YN
+        	 , TP.DEFAULT_IMG
+        	 , TP.PLC_ADDR1
+        	 , TP.PLC_ADDR2
+		  FROM TRIP_SCHEDULE TS
+		  LEFT JOIN TRIP_SCHEDULE_DETAILS TSD
+		    ON TS.SCHDL_NO = TSD.SCHDL_NO
+		  LEFT JOIN TRIP_SCHEDULE_PLACE TSP
+		    ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
+		  LEFT JOIN TOUR_PLACE TP
+		    ON TSP.PLACE_ID = TP.PLC_NO
+		 WHERE TS.MEM_NO = #{memNo}
+		   AND TS.SCHDL_NO = #{schdlNo}
+		 ORDER BY TSD.SCHDL_DT ASC
+		     	, TSP.PLACE_ORDER ASC
+    </select>
+
+	<select id="selectRegionList" resultType="kr.or.ddit.util.Params">
+		SELECT RGN_NO
+			 , RGN_NO AS CODE
+			 , RGN_NM
+			 , RGN_NM AS NAME
+			 , RGN_DETAIL
+			 , RGN_DETAIL AS SUB
+			 , RGN_DESC
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , POP_RGN_YN
+		  FROM REGION
+	</select>
+	
+	<select id="selectPopRegionList" resultType="kr.or.ddit.util.Params">
+		SELECT RGN_NO
+			 , RGN_NO AS CODE
+			 , RGN_NM
+			 , RGN_NM AS NAME
+			 , RGN_DETAIL
+			 , RGN_DETAIL AS SUB
+			 , RGN_DESC
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , POP_RGN_YN
+		  FROM REGION
+		 WHERE POP_RGN_YN = 'Y'
+	</select>
+	
+	<select id="selectTourPlaceList" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+		  FROM TOUR_PLACE
+	</select>
+	
+	<select id="searchRegion" resultType="kr.or.ddit.util.Params" parameterType="kr.or.ddit.util.Params">
+		SELECT RGN_NO
+			 , RGN_NO AS CODE
+			 , RGN_NM
+			 , RGN_NM AS NAME
+			 , RGN_DETAIL
+			 , RGN_DETAIL AS SUB
+			 , RGN_DESC
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , POP_RGN_YN
+		  FROM REGION
+		 WHERE RGN_NO = #{rgnNo}
+	</select>
+	
+	<update id="mergeSearchTourPlace" parameterType="java.util.List">
+	MERGE INTO TOUR_PLACE T
+	      USING (
+	          <foreach collection="list" item="item" separator="UNION ALL">
+	              SELECT #{item.plcNo}     AS PLC_NO
+	                   , #{item.rgnNo}     AS RGN_NO
+	                   , #{item.placeType} AS PLACE_TYPE
+	                   , #{item.plcNm}     AS PLC_NM
+	                   , #{item.plcZip}    AS PLC_ZIP
+	                   , #{item.plcAddr1}  AS PLC_ADDR1
+	                   , #{item.plcAddr2}  AS PLC_ADDR2
+	                   , #{item.latitude}  AS LATITUDE
+	                   , #{item.longitude} AS LONGITUDE
+	                   , #{item.regId}     AS REG_ID
+	                   , #{item.defaultImg} AS DEFAULT_IMG
+	              FROM DUAL
+	          </foreach>
+	      ) S
+	      ON (T.PLC_NO = S.PLC_NO)
+	      WHEN MATCHED THEN
+	          UPDATE SET 
+	                T.RGN_NO      = S.RGN_NO
+	              , T.PLACE_TYPE  = S.PLACE_TYPE
+	              , T.PLC_NM      = S.PLC_NM
+	              , T.PLC_ZIP     = S.PLC_ZIP
+	              , T.PLC_ADDR1   = S.PLC_ADDR1
+	              , T.PLC_ADDR2   = S.PLC_ADDR2
+	              , T.LATITUDE    = S.LATITUDE
+	              , T.LONGITUDE   = S.LONGITUDE
+	              , T.DEFAULT_IMG = S.DEFAULT_IMG
+	              , T.MOD_ID	  = S.REG_ID  
+	              , T.MOD_DT      = SYSDATE  
+	            WHEN NOT MATCHED THEN
+	          INSERT (
+	                PLC_NO
+	              , RGN_NO
+	              , PLACE_TYPE
+	              , PLC_NM
+	              , PLC_ZIP
+	              , PLC_ADDR1
+	              , PLC_ADDR2
+	              , LATITUDE
+	              , LONGITUDE
+	              , REG_ID
+	              , DEFAULT_IMG
+	              , REG_DT  
+	          ) VALUES (
+	                S.PLC_NO
+	              , S.RGN_NO
+	              , S.PLACE_TYPE
+	              , S.PLC_NM
+	              , S.PLC_ZIP
+	              , S.PLC_ADDR1
+	              , S.PLC_ADDR2
+	              , S.LATITUDE
+	              , S.LONGITUDE
+	              , S.REG_ID
+	              , S.DEFAULT_IMG
+	              , SYSDATE
+	          )
+	</update>
+	
+	<select id="searchPlaceDetail" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+		  FROM TOUR_PLACE
+		 WHERE PLC_NO = #{plcNo}
+	</select>
+	
+	<update id="saveTourPlacInfo" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		UPDATE TOUR_PLACE
+		   SET PLC_DESC = #{plcDesc}
+			 , OPERATION_HOURS = #{operationHours}
+			 , PLC_PRICE = #{plcPrice}
+		 WHERE PLC_NO = #{plcNo}
+	</update>
+	
+	<insert id="insertTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO">
+		<selectKey keyProperty="schdlNo" resultType="int" order="BEFORE">
+	        SELECT NVL(MAX(SCHDL_NO)+1, 1) FROM TRIP_SCHEDULE
+	    </selectKey>
+		INSERT INTO TRIP_SCHEDULE (
+		       SCHDL_NO
+		     , MEM_NO
+		     , PREF_NO
+		     , START_PLACE_TYPE
+		     , START_PLACE_ID
+		     , TARGET_PLACE_TYPE
+		     , TARGET_PLACE_ID
+		     , SCHDL_NM
+		     , SCHDL_STATUS
+		     , SCHDL_START_DT
+		     , SCHDL_END_DT
+		     , TRAVELER_CNT
+		     , TOTAL_BUDGET
+		     , AI_RECOM_YN
+		     , PUBLIC_YN
+		     , REG_DT
+		     , MOD_DT
+		     , DEL_YN
+			 ) VALUES (
+			   #{schdlNo}
+			 , #{memNo}
+			 , #{prefNo, jdbcType=INTEGER}
+			 , #{startPlaceType}
+			 , #{startPlaceId}
+			 , #{targetPlaceType}
+			 , #{targetPlaceId}
+			 , #{schdlNm}
+			 , #{schdlStatus}
+			 , #{schdlStartDt}
+			 , #{schdlEndDt}
+			 , #{travelerCnt}
+			 , #{totalBudget}
+			 , #{aiRecomYn}
+			 , #{publicYn}
+			 , sysdate
+			 , sysdate
+			 , 'N'
+			 )
+	</insert>
+	
+	<insert id="insertTripScheduleDetails" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO">
+		<selectKey keyProperty="schdlDetailsNo" resultType="int" order="BEFORE">
+	        SELECT NVL(MAX(SCHDL_DETAILS_NO) + 1, 1) FROM TRIP_SCHEDULE_DETAILS
+	    </selectKey>
+		INSERT INTO TRIP_SCHEDULE_DETAILS (
+			   SCHDL_DETAILS_NO
+			 , SCHDL_NO
+			 , SCHDL_TITLE
+			 , SCHDL_START_DT
+			 , SCHDL_END_DT
+			 , SCHDL_DT
+			 ) VALUES (
+			   #{schdlDetailsNo}
+			 , #{schdlNo}
+			 , #{schdlTitle}
+			 , TO_CHAR(TO_DATE(#{schdlStartDt}, 'YYYY-MM-DD') + (#{schdlDt}-1), 'YYYY-MM-DD')
+			 , TO_CHAR(TO_DATE(#{schdlStartDt}, 'YYYY-MM-DD') + (#{schdlDt}), 'YYYY-MM-DD')
+			 , #{schdlDt}
+			 )
+	</insert>
+	
+	<insert id="insertTripSchedulePlace" parameterType="kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO">
+		<selectKey keyProperty="schdlPlcNo" resultType="int" order="BEFORE">
+	        SELECT NVL(MAX(SCHDL_PLC_NO) + 1, 1) FROM TRIP_SCHEDULE_PLACE
+	    </selectKey>
+		INSERT INTO TRIP_SCHEDULE_PLACE (
+			   SCHDL_PLC_NO
+			 , SCHDL_DETAILS_NO
+			 , PLACE_TYPE
+			 , PLACE_ID
+			 , PLACE_ORDER
+			 , PLACE_START_TIME
+			 , PLACE_END_TIME
+			 , ALL_DAY_YN
+			 , DEST_TYPE
+			 , DEST_ID
+<!-- 			 , MOVE_TYPE -->
+			 , PLAN_COST
+			 ) VALUES (
+			   #{schdlPlcNo}
+			 , #{schdlDetailsNo}
+			 , #{placeType}
+			 , #{placeId}
+			 , #{placeOrder}
+			 , #{placeStartTime}
+			 , #{placeEndTime}
+			 , #{allDayYn}
+			 , #{placeType}
+			 , #{placeId}
+<!-- 			 , :v10 -->
+			 , #{planCost}
+			 )
+	</insert>
+	
+	<update id="deleteTripSchedule" parameterType="int">
+		UPDATE TRIP_SCHEDULE
+		   SET DEL_YN = 'Y'
+			 , DEL_DT = SYSDATE
+		 WHERE SCHDL_NO = #{schdlNo}
+	</update>
+	
+	<select id="checkBookmarkExists" parameterType="kr.or.ddit.util.Params" resultType="int">
+		SELECT COUNT(*)
+	     FROM TRIP_SCHEDULE_BOOKMARK
+	    WHERE MEM_NO = #{memNo}
+      	  AND SCHDL_NO = #{schdlNo}
+	</select>
+	
+	<insert id="insertBookmark" parameterType="kr.or.ddit.util.Params">
+	    INSERT INTO TRIP_SCHEDULE_BOOKMARK (
+	        MEM_NO
+	        , SCHDL_NO
+	        , REG_DT
+	    ) VALUES (
+	        #{memNo}
+	        , #{schdlNo}
+	        , SYSDATE
+	    )
+	</insert>
+	
+	<delete id="deleteBookmark" parameterType="kr.or.ddit.util.Params">
+	    DELETE FROM TRIP_SCHEDULE_BOOKMARK
+	    WHERE MEM_NO = #{memNo}
+	      AND SCHDL_NO = #{schdlNo}
+	</delete>
+</mapper>

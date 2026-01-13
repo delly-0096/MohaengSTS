@@ -8,6 +8,8 @@ const contextPath = document.querySelector('meta[name="context-path"]')?.content
 
 // ===== 문서 로드 완료 시 실행 =====
 document.addEventListener('DOMContentLoaded', function() {
+	initReturnRedirect();
+	initLocationData();
     initHeader();
     initFlatpickr();
     initAnimations();
@@ -79,117 +81,156 @@ function toggleMenuSection(element) {
     section?.classList.toggle('open');
 }
 
-// ===== 챗봇 관련 기능 (선택지 기반) =====
+// ===== 챗봇 관련 기능 =====
 let isChatbotOpen = false;
 
-// 챗봇 대화 데이터
-const floatingChatData = {
-    start: {
-        message: '안녕하세요! 모행 AI 챗봇입니다.<br>무엇을 도와드릴까요?',
-        options: [
-            { id: 'destination', icon: 'bi-geo-alt', text: '여행지 추천' },
-            { id: 'booking', icon: 'bi-credit-card', text: '예약/결제 안내' },
-            { id: 'service', icon: 'bi-headset', text: '서비스 이용' },
-            { id: 'inquiry', icon: 'bi-envelope', text: '1:1 문의하기' }
-        ]
-    },
-    destination: {
-        message: '어떤 여행지를 찾고 계신가요?',
-        options: [
-            { id: 'dest_jeju', icon: 'bi-water', text: '제주도' },
-            { id: 'dest_busan', icon: 'bi-building', text: '부산' },
-            { id: 'dest_gangwon', icon: 'bi-snow', text: '강원도' },
-            { id: 'start', icon: 'bi-arrow-left', text: '처음으로', isBack: true }
-        ]
-    },
-    dest_jeju: {
-        message: '<strong>제주도 추천!</strong><br><br>• 성산일출봉<br>• 우도<br>• 협재해수욕장<br>• 한라산<br><br><a href="' + contextPath + '/product/tour?region=jeju">제주도 상품 보기 →</a>',
-        options: [
-            { id: 'destination', icon: 'bi-arrow-left', text: '다른 지역', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    dest_busan: {
-        message: '<strong>부산 추천!</strong><br><br>• 해운대해수욕장<br>• 광안리<br>• 감천문화마을<br>• 자갈치시장<br><br><a href="' + contextPath + '/product/tour?region=busan">부산 상품 보기 →</a>',
-        options: [
-            { id: 'destination', icon: 'bi-arrow-left', text: '다른 지역', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    dest_gangwon: {
-        message: '<strong>강원도 추천!</strong><br><br>• 강릉 경포대<br>• 속초 설악산<br>• 양양 서피비치<br>• 평창 대관령<br><br><a href="' + contextPath + '/product/tour?region=gangwon">강원도 상품 보기 →</a>',
-        options: [
-            { id: 'destination', icon: 'bi-arrow-left', text: '다른 지역', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    booking: {
-        message: '예약/결제 관련 안내입니다.',
-        options: [
-            { id: 'booking_how', icon: 'bi-cart-check', text: '예약 방법' },
-            { id: 'booking_cancel', icon: 'bi-x-circle', text: '취소/환불' },
-            { id: 'booking_point', icon: 'bi-coin', text: '포인트 안내' },
-            { id: 'start', icon: 'bi-arrow-left', text: '처음으로', isBack: true }
-        ]
-    },
-    booking_how: {
-        message: '<strong>예약 방법</strong><br><br>1. 상품 선택<br>2. 날짜/인원 선택<br>3. 결제자 정보 입력<br>4. 결제 완료!<br><br><a href="' + contextPath + '/product/tour">상품 보러가기 →</a>',
-        options: [
-            { id: 'booking', icon: 'bi-arrow-left', text: '이전으로', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    booking_cancel: {
-        message: '<strong>취소/환불 안내</strong><br><br>• 7일 전: 100% 환불<br>• 3~6일 전: 70% 환불<br>• 1~2일 전: 50% 환불<br>• 당일: 환불 불가<br><br>마이페이지 → 결제 내역에서 취소 가능',
-        options: [
-            { id: 'booking', icon: 'bi-arrow-left', text: '이전으로', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    booking_point: {
-        message: '<strong>포인트 안내</strong><br><br>• 결제 금액의 1% 적립<br>• 최소 1,000P부터 사용<br>• 유효기간: 1년<br><br><a href="' + contextPath + '/mypage/points">내 포인트 확인 →</a>',
-        options: [
-            { id: 'booking', icon: 'bi-arrow-left', text: '이전으로', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    service: {
-        message: '서비스 이용 안내입니다.',
-        options: [
-            { id: 'service_schedule', icon: 'bi-calendar', text: 'AI 일정 만들기' },
-            { id: 'service_mypage', icon: 'bi-person', text: '마이페이지' },
-            { id: 'service_faq', icon: 'bi-question-circle', text: 'FAQ' },
-            { id: 'start', icon: 'bi-arrow-left', text: '처음으로', isBack: true }
-        ]
-    },
-    service_schedule: {
-        message: '<strong>AI 일정 서비스</strong><br><br>AI가 맞춤 여행 일정을 만들어드립니다!<br><br>여행지, 기간, 스타일을 선택하면 자동으로 일정이 생성됩니다.<br><br><a href="' + contextPath + '/schedule/search">AI 일정 만들기 →</a>',
-        options: [
-            { id: 'service', icon: 'bi-arrow-left', text: '이전으로', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    service_mypage: {
-        message: '<strong>마이페이지</strong><br><br>• 내 일정 관리<br>• 결제 내역<br>• 포인트 내역<br>• 찜 목록<br>• 1:1 문의<br><br><a href="' + contextPath + '/mypage">마이페이지 가기 →</a>',
-        options: [
-            { id: 'service', icon: 'bi-arrow-left', text: '이전으로', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    service_faq: {
-        message: '<strong>자주 묻는 질문</strong><br><br>FAQ 페이지에서 자주 묻는 질문과 답변을 확인하세요!<br><br><a href="' + contextPath + '/support/faq">FAQ 보기 →</a>',
-        options: [
-            { id: 'service', icon: 'bi-arrow-left', text: '이전으로', isBack: true },
-            { id: 'start', icon: 'bi-house', text: '처음으로', isBack: true }
-        ]
-    },
-    inquiry: {
-        message: '<strong>1:1 문의</strong><br><br>챗봇으로 해결되지 않는 문의는 1:1 문의를 이용해주세요.<br><br>평균 답변 시간: 24시간 이내<br><br><a href="' + contextPath + '/support/inquiry" class="chatbot-link-btn">1:1 문의하기 →</a>',
-        options: [
-            { id: 'start', icon: 'bi-arrow-left', text: '처음으로', isBack: true }
-        ]
+// 대화 내용 저장
+function saveChatHistory() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    if (messagesContainer) {
+        const key = 'chatbotHistory_' + (typeof chatbotUserKey !== 'undefined' ? chatbotUserKey : 'guest');
+        sessionStorage.setItem(key, messagesContainer.innerHTML);
     }
-};
+}
+
+// 대화 내용 불러오기
+function loadChatHistory() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const key = 'chatbotHistory_' + (typeof chatbotUserKey !== 'undefined' ? chatbotUserKey : 'guest');
+    const savedHistory = sessionStorage.getItem(key);
+    
+    if (messagesContainer && savedHistory) {
+        messagesContainer.innerHTML = savedHistory;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        return true;
+    }
+    return false;
+}
+
+// 대화 내용 삭제
+function clearChatHistory() {
+    const key = 'chatbotHistory_' + (typeof chatbotUserKey !== 'undefined' ? chatbotUserKey : 'guest');
+    sessionStorage.removeItem(key);
+    const messagesContainer = document.getElementById('chatbotMessages');
+    if (messagesContainer) {
+        messagesContainer.innerHTML = '';
+    }
+    addBotMessage('안녕하세요! 모행 AI 챗봇입니다. 🤖<br>여행에 관해 무엇이든 물어보세요!');
+}
+
+// ===== AI 챗봇 기능 =====
+function initFloatingChatbot() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    if (!messagesContainer) return;
+
+	// 저장된 대화가 있으면 불러오기, 없으면 환영 메시지
+	const hasHistory = loadChatHistory();
+
+	if (!hasHistory) {
+	    messagesContainer.innerHTML = '';
+	    addBotMessage('안녕하세요! 모행 AI 챗봇입니다. 🤖<br>여행에 관해 무엇이든 물어보세요!');
+	}
+}
+
+async function sendChatMessage() {
+    const input = document.getElementById('chatbotInput');
+    const message = input.value.trim();
+    
+    if (!message) return;
+    
+    // 사용자 메시지 표시
+    addUserMessage(message);
+    input.value = '';
+    
+    // 로딩 표시
+    showTypingIndicator();
+    
+    try {
+        const response = await fetch(contextPath + '/api/chatbot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: message })
+        });
+        
+        const data = await response.json();
+        
+        // 로딩 제거
+        hideTypingIndicator();
+        
+        // 봇 응답 표시
+        addBotMessage(data.message);
+        
+        // 페이지 이동이 필요한 경우
+        if (data.redirectUrl) {
+            addNavigateButton(data.redirectUrl);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        hideTypingIndicator();
+        addBotMessage('죄송해요, 오류가 발생했어요. 다시 시도해 주세요.');
+    }
+}
+
+function addUserMessage(message) {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message user';
+    messageDiv.textContent = message;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+
+	// 대화 내용 저장
+	saveChatHistory();
+}
+
+function addBotMessage(message) {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'chat-message bot';
+    messageDiv.innerHTML = message;
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+
+	// 대화 내용 저장
+	saveChatHistory();
+}
+
+function addNavigateButton(url) {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const btnDiv = document.createElement('div');
+    btnDiv.className = 'chat-navigate-btn';
+    btnDiv.innerHTML = `
+        <button onclick="window.location.href='${contextPath}${url}'">
+            <i class="bi bi-arrow-right-circle"></i> 페이지로 이동
+        </button>
+    `;
+    messagesContainer.appendChild(btnDiv);
+    scrollToBottom();
+
+	// 대화 내용 저장
+	saveChatHistory();
+}
+
+function showTypingIndicator() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typingIndicator';
+    typingDiv.className = 'chat-message bot typing-indicator';
+    typingDiv.innerHTML = '<span></span><span></span><span></span>';
+    messagesContainer.appendChild(typingDiv);
+    scrollToBottom();
+}
+
+function hideTypingIndicator() {
+    const typing = document.getElementById('typingIndicator');
+    if (typing) typing.remove();
+}
+
+function scrollToBottom() {
+    const messagesContainer = document.getElementById('chatbotMessages');
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+}
 
 function toggleChatbot() {
     const chatbotWindow = document.getElementById('chatbotWindow');
@@ -207,76 +248,6 @@ function toggleChatbot() {
         chatbotBtn?.classList.remove('active');
         chatbotBtn.innerHTML = '<i class="bi bi-chat-dots-fill"></i>';
     }
-}
-
-function initFloatingChatbot() {
-    const messagesContainer = document.getElementById('chatbotMessages');
-    if (!messagesContainer) return;
-
-    messagesContainer.innerHTML = '';
-    const startData = floatingChatData.start;
-    addFloatingBotMessage(startData.message);
-    addFloatingOptions(startData.options);
-}
-
-function addFloatingBotMessage(message) {
-    const messagesContainer = document.getElementById('chatbotMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'chat-message bot';
-    messageDiv.innerHTML = message;
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-function addFloatingUserMessage(message) {
-    const messagesContainer = document.getElementById('chatbotMessages');
-    const messageDiv = document.createElement('div');
-    messageDiv.className = 'chat-message user';
-    messageDiv.textContent = message;
-    messagesContainer.appendChild(messageDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-function addFloatingOptions(options) {
-    const messagesContainer = document.getElementById('chatbotMessages');
-    const optionsDiv = document.createElement('div');
-    optionsDiv.className = 'chat-options';
-
-    options.forEach(option => {
-        const btn = document.createElement('button');
-        btn.className = 'chat-option-btn' + (option.isBack ? ' back-btn' : '');
-        btn.innerHTML = '<i class="bi ' + option.icon + '"></i> ' + option.text;
-        btn.onclick = function() { handleFloatingOptionClick(option); };
-        optionsDiv.appendChild(btn);
-    });
-
-    messagesContainer.appendChild(optionsDiv);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-}
-
-function handleFloatingOptionClick(option) {
-    // 이전 선택지 비활성화
-    document.querySelectorAll('#chatbotMessages .chat-options').forEach(optDiv => {
-        optDiv.querySelectorAll('.chat-option-btn').forEach(btn => {
-            btn.disabled = true;
-            btn.style.opacity = '0.5';
-            btn.style.pointerEvents = 'none';
-        });
-    });
-
-    // 사용자 선택 표시
-    addFloatingUserMessage(option.text);
-
-    // 봇 응답
-    setTimeout(() => {
-        const data = floatingChatData[option.id];
-        if (data) {
-            addFloatingBotMessage(data.message);
-            if (data.options) {
-                addFloatingOptions(data.options);
-            }
-        }
-    }, 300);
 }
 
 // ===== 여행 유형 탭 초기화 =====
@@ -398,7 +369,18 @@ function getCurrentTravelType() {
 function showAutocomplete(dropdown, query, travelType) {
     // 국내 여행지만 필터링
     const results = filterLocations(locationData.domestic, query, false);
+	
     renderAutocomplete(dropdown, results, query, 'domestic');
+}
+
+async function initLocationData() {
+	const response = await fetch("/schedule/common/regionList")
+	
+	const dataList = await response.json();
+	console.log(dataList);
+	locationData.domestic = dataList;
+	
+	return dataList;
 }
 
 function filterLocations(locations, query, isOverseas) {
@@ -434,6 +416,8 @@ function renderAutocomplete(dropdown, results, query, travelType) {
         item.addEventListener('click', function() {
             const input = dropdown.previousElementSibling;
             input.value = this.dataset.name;
+            input.dataset.code = this.dataset.code;
+			
             hideAutocomplete(dropdown);
         });
     });
@@ -577,7 +561,6 @@ function initFlatpickr() {
             maxDate: 'today',
             disableMobile: true,
             position: 'below',
-            defaultDate: '1990-01-01'
         });
     });
 }
@@ -638,6 +621,17 @@ function requireLogin(returnUrl) {
         return false;
     }
     return true;
+}
+
+function initReturnRedirect() {
+	const isLoggedIn = document.body.dataset.loggedIn === 'true';
+	let returnUrl = sessionStorage.getItem('returnUrl');
+	console.log(isLoggedIn)
+	console.log(returnUrl)
+	if(isLoggedIn && returnUrl){
+		sessionStorage.removeItem('returnUrl');
+		location.href=returnUrl;
+	}
 }
 
 // 로그인 필요 알림

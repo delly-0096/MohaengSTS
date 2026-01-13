@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+
 
 <c:set var="pageTitle" value="1:1 문의" />
 <c:set var="pageCss" value="support" />
@@ -42,7 +44,7 @@
                 <div class="inquiry-form">
                     <h3><i class="bi bi-pencil me-2"></i>문의하기</h3>
 
-                    <form id="inquiryForm">
+                    <form id="inquiryForm" enctype="multipart/form-data">
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-group">
@@ -76,12 +78,14 @@
                         <div class="form-group">
                             <label class="form-label">첨부파일 (선택)</label>
                             <input type="file" class="form-control" id="attachFile" multiple accept="image/*,.pdf,.doc,.docx">
+                            <!--div 추가함  -->
+                            <div id="filePreviewContainer" class="mt-3 d-flex flex-wrap gap-2"></div>
                             <small class="text-muted">최대 5개, 각 10MB 이하 (이미지, PDF, DOC 파일)</small>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">답변 받을 이메일 <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control" id="inqryEmail" value="" required>
+                            <input type="email" class="form-control" id="inqryEmail" value="${loginEmail}" placeholder="이메일을 입력해주세요" required>
                             <small class="text-muted">답변 알림이 발송됩니다.</small>
                         </div>
 
@@ -157,6 +161,9 @@
                                                     <div class="inquiry-content-label">문의 내용</div>
                                                     <p>${fn:replace(inquiry.inqryCn, newLine, '<br>')}</p>
                                                 </div>
+                                                <!--첨부파일  -->
+												<div class="attachArea" data-inqry-no="${inquiry.inqryNo}"></div>
+
                                                 <c:if test="${inquiry.inqryStatus == 'answered' && not empty inquiry.replyCn}">
                                                     <div class="inquiry-answer">
                                                         <div class="inquiry-content-label">답변 (${inquiry.replyDtStr})</div>
@@ -217,6 +224,7 @@
 </div>
 
 <script>
+
 // 탭 전환 함수
 function switchTab(tabName) {
     const url = '${pageContext.request.contextPath}/support/inquiry';
@@ -278,6 +286,7 @@ function goToPage(page) {
 }
 
 // 문의 등록 폼
+// 수정된 코드
 document.getElementById('inquiryForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
@@ -291,34 +300,41 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
         return;
     }
 
-    // 폼 데이터 수집
-    const formData = {
-        inqryCtgryCd: document.getElementById('inqryCtgryCd').value,
-        inqryTitle: document.getElementById('inqryTitle').value,
-        inqryCn: document.getElementById('inqryCn').value,
-        inquiryTargetNo: document.getElementById('inquiryTargetNo').value || null,
-        inqryEmail: document.getElementById('inqryEmail').value
-    };
+    // FormData 사용 (파일 포함)
+    const formData = new FormData();
+    formData.append('inqryCtgryCd', document.getElementById('inqryCtgryCd').value);
+    formData.append('inqryTitle', document.getElementById('inqryTitle').value);
+    formData.append('inqryCn', document.getElementById('inqryCn').value);
+    formData.append('inqryEmail', document.getElementById('inqryEmail').value);
+
+    const targetNo = document.getElementById('inquiryTargetNo').value;
+    if (targetNo) {
+        formData.append('inquiryTargetNo', targetNo);
+    }
+
+    // ✅ selectedFiles 배열에서 파일 추가
+    if (selectedFiles.length > 0) {
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
+    }
 
     // AJAX 요청
     fetch('${pageContext.request.contextPath}/support/inquiry', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(formData)
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
+        console.log('detail response:', data);
         if (data.success) {
             alert(data.message);
-            // 문의 내역 탭으로 이동
+            // ✅ 폼 제출 성공 후 selectedFiles 초기화
+            selectedFiles = [];
+            document.getElementById('filePreviewContainer').innerHTML = '';
             window.location.href = '${pageContext.request.contextPath}/support/inquiry?tab=history';
         } else {
             alert(data.message);
-            if (data.redirect) {
-                window.location.href = data.redirect;
-            }
         }
     })
     .catch(error => {
@@ -326,6 +342,154 @@ document.getElementById('inquiryForm').addEventListener('submit', function(e) {
         alert('문의 등록 중 오류가 발생했습니다.');
     });
 });
+/*추가함  */
+let selectedFiles = [];
+
+document.getElementById('attachFile').addEventListener('change', function(e) {
+    const container = document.getElementById('filePreviewContainer');
+    const newFiles = Array.from(e.target.files);
+
+    if (selectedFiles.length + newFiles.length > 5) {
+        alert("파일은 최대 5개까지만 업로드 가능합니다.");
+        e.target.value = "";
+        return;
+    }
+
+    newFiles.forEach(file => {
+        selectedFiles.push(file);
+    });
+
+    renderFilePreview();
+    e.target.value = "";
+});
+
+// ✅ 파일 미리보기 렌더링 함수
+function renderFilePreview() {
+    const container = document.getElementById('filePreviewContainer');
+    container.innerHTML = '';
+
+    selectedFiles.forEach((file, index) => {
+        const fileItem = document.createElement('div');
+        fileItem.style.cssText = "width: 100px; position: relative; border: 1px solid #ddd; padding: 5px; border-radius: 5px; text-align: center;";
+
+        // 삭제 버튼 추가
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '×';
+        removeBtn.type = 'button';
+        removeBtn.style.cssText = "position: absolute; top: 0; right: 0; background: red; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer;";
+        removeBtn.onclick = function() {
+            selectedFiles.splice(index, 1);
+            renderFilePreview();
+        };
+        fileItem.appendChild(removeBtn);
+
+        // 이미지 미리보기
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.style.cssText = "width: 100%; height: 80px; object-fit: cover; border-radius: 3px;";
+                fileItem.prepend(img);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            const icon = document.createElement('div');
+            icon.innerHTML = '<i class="bi bi-file-earmark-text" style="font-size: 2rem; color: #666;"></i>';
+            fileItem.appendChild(icon);
+        }
+
+        const fileName = document.createElement('div');
+        fileName.innerText = file.name;
+        fileName.style.cssText = "font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 5px;";
+        fileItem.appendChild(fileName);
+
+        container.appendChild(fileItem);
+    });
+}
+ /*카피본  */
+/*
+document.getElementById('attachFile').addEventListener('change', function(e) {
+    const container = document.getElementById('filePreviewContainer');
+    container.innerHTML = ''; // 기존 미리보기 초기화
+
+    const files = e.target.files;
+
+    if (files.length > 5) {
+        alert("파일은 최대 5개까지만 업로드 가능합니다.");
+        this.value = ""; // 선택 초기화
+        return;
+    }
+
+    Array.from(files).forEach((file, index) => {
+        const reader = new FileReader();
+
+        // 파일 아이템을 담을 div 생성
+        const fileItem = document.createElement('div');
+        fileItem.style.cssText = "width: 100px; position: relative; border: 1px solid #ddd; padding: 5px; border-radius: 5px; text-align: center;";
+
+        // 이미지 파일인 경우 미리보기 생성
+        if (file.type.startsWith('image/')) {
+            reader.onload = function(event) {
+                const img = document.createElement('img');
+                img.src = event.target.result;
+                img.style.cssText = "width: 100%; height: 80px; object-fit: cover; border-radius: 3px;";
+                fileItem.prepend(img);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // 이미지가 아닌 경우 아이콘과 파일명 표시
+            const icon = document.createElement('div');
+            icon.innerHTML = '<i class="bi bi-file-earmark-text" style="font-size: 2rem; color: #666;"></i>';
+            fileItem.appendChild(icon);
+        }
+
+        // 파일 이름 표시 (글씨)
+        const fileName = document.createElement('div');
+        fileName.innerText = file.name;
+        fileName.style.cssText = "font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 5px;";
+        fileItem.appendChild(fileName);
+
+        container.appendChild(fileItem);
+    });
+}); */
+
+/*다운로드용  */
+function loadAttachFiles(inqryNo, targetDiv) {
+
+//    fetch(`${pageContext.request.contextPath}/support/inquiry/detail/${inqryNo}`)
+      fetch(contextPath + '/support/inquiry/detail/' + inqryNo)
+         .then(res => res.json())
+         .then(data => {
+        	 console.log('attachFiles:', data.inquiry.attachFiles);
+        	 console.log(data.inquiry.attachFiles[0]);
+             if (!data.success || !data.inquiry.attachFiles) return;
+
+             let html = '<ul class="attachment-list">';
+
+             data.inquiry.attachFiles.forEach((file) => {
+            	 html += `
+            		    <li>
+            		        <span>\${file.FILE_ORIGINAL_NAME}</span>
+            		        <a href="${contextPath}/support/inquiry/download?fileNo=\${file.FILE_NO}">
+            		            [다운로드]
+            		        </a>
+            		    </li>
+            		`;
+             });
+             html +='</ul>';
+             targetDiv.innerHTML = html;
+         });
+}
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.attachArea').forEach(div => {
+        const inqryNo = div.dataset.inqryNo;
+        if (inqryNo) {
+            loadAttachFiles(inqryNo, div);
+        }
+    });
+});
+
 </script>
 
 <c:set var="pageJs" value="support" />

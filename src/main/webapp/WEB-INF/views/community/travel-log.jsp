@@ -1,5 +1,14 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec" %>
+
+<!-- 현재 로그인/권한 상태를 JS가 읽어가게 심어둠 -->
+<span id="authRole" style="display:none;">
+  <sec:authorize access="hasAuthority('ROLE_MEMBER')">ROLE_MEMBER</sec:authorize>
+  <sec:authorize access="hasAuthority('ROLE_BUSINESS')">ROLE_BUSINESS</sec:authorize>
+  <sec:authorize access="!isAuthenticated()">ANON</sec:authorize>
+</span>
 
 <c:set var="pageTitle" value="여행기록" />
 <c:set var="pageCss" value="community" />
@@ -11,16 +20,24 @@
         <!-- 헤더 -->
         <div class="travellog-header">
             <h1><i class="bi bi-journal-richtext me-3"></i>여행기록</h1>
-            <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
-                <a href="${pageContext.request.contextPath}/community/travel-log/write" class="btn btn-primary">
-                    <i class="bi bi-plus-lg me-2"></i>기록 작성
-                </a>
-            </c:if>
-            <c:if test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
-                <span class="business-notice">
-                    <i class="bi bi-info-circle me-1"></i>기업회원은 기록 작성이 제한됩니다
-                </span>
-            </c:if>
+            
+<%--     <c:if test="${not empty sessionScope.loginUser and sessionScope.loginUser.userType eq 'MEMBER'}"> --%>
+<%--     <sec:authentication property="principal.member" var="member"/> --%>
+    <sec:authorize access="hasAuthority('ROLE_MEMBER')" >
+    <a href="${pageContext.request.contextPath}/community/travel-log/write"
+       class="btn btn-primary">
+        <i class="bi bi-plus-lg me-2"></i>기록 작성
+    </a>
+    </sec:authorize>
+<%-- 	</c:if> --%>
+
+           
+<sec:authorize access="hasAuthority('ROLE_BUSINESS')">
+    <span class="business-notice">
+        <i class="bi bi-info-circle me-1"></i>
+        기업회원은 기록 작성이 제한됩니다
+    </span>
+</sec:authorize>
         </div>
 
         <!-- 필터 -->
@@ -28,278 +45,162 @@
             <span class="travellog-filter active" data-filter="all">전체</span>
             <span class="travellog-filter" data-filter="popular-bookmark">인기 북마크</span>
             <span class="travellog-filter" data-filter="popular-spot">인기 관광지</span>
+            <sec:authorize access="hasAuthority('ROLE_MEMBER')" >
+            	<span class="travellog-filter" data-filter="my-spot">내 관광지</span>
+            </sec:authorize>
         </div>
 
         <!-- 여행기록 그리드 -->
         <div class="travellog-grid" id="travellogGrid">
-            <!-- 카드 1 -->
-            <div class="travellog-card" data-id="1">
-                <div class="travellog-card-header">
-                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
-                         alt="프로필" class="travellog-avatar">
-                    <div class="travellog-user-info">
-                        <span class="travellog-username">travel_lover</span>
-                        <span class="travellog-location">제주도, 대한민국</span>
-                    </div>
-                    <div class="travellog-more-wrapper">
-                        <button class="travellog-more-btn" onclick="toggleCardMenu(this)"><i class="bi bi-three-dots"></i></button>
-                        <div class="travellog-card-menu">
-                            <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
-                            <button onclick="reportTravellog(1, '제주도 3박4일, 혼자여도 괜찮아...')"><i class="bi bi-flag"></i> 신고하기</button>
-                            </c:if>
-                        </div>
-                    </div>
-                </div>
-                <div class="travellog-card-image" onclick="openTravellogModal(1)">
-                    <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=600&fit=crop&q=80" alt="여행사진">
-                    <span class="travellog-image-count"><i class="bi bi-images"></i> 5</span>
-                </div>
-                <div class="travellog-card-actions">
-                    <button class="travellog-action-btn liked" onclick="toggleLike(this, 1)">
-                        <i class="bi bi-heart-fill"></i>
-                        <span>328</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="openTravellogModal(1)">
-                        <i class="bi bi-chat"></i>
-                        <span>24</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="shareTravellog(1)">
-                        <i class="bi bi-send"></i>
-                    </button>
-                    <button class="travellog-action-btn bookmarked" onclick="toggleBookmark(this, 1)" style="margin-left: auto;">
-                        <i class="bi bi-bookmark-fill"></i>
-                    </button>
-                </div>
-                <div class="travellog-card-content">
-                    <p class="travellog-likes">좋아요 328개</p>
-                    <p class="travellog-text">
-                        <span class="username">travel_lover</span>
-                        제주도 3박4일, 혼자여도 괜찮아. 성산일출봉에서 맞이한 일출이 정말 장관이었어요. 혼자 여행하시는 분들께 강력 추천!
-                    </p>
-                    <p class="travellog-date">3일 전</p>
-                </div>
-            </div>
 
-            <!-- 카드 2 -->
-            <div class="travellog-card" data-id="2">
-                <div class="travellog-card-header">
-                    <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&q=80"
-                         alt="프로필" class="travellog-avatar">
-                    <div class="travellog-user-info">
-                        <span class="travellog-username">foodie_kim</span>
-                        <span class="travellog-location">부산, 대한민국</span>
-                    </div>
-                    <div class="travellog-more-wrapper">
-                        <button class="travellog-more-btn" onclick="toggleCardMenu(this)"><i class="bi bi-three-dots"></i></button>
-                        <div class="travellog-card-menu">
-                            <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
-                            <button onclick="reportTravellog(2, '부산 맛집 투어 완전 정복!...')"><i class="bi bi-flag"></i> 신고하기</button>
-                            </c:if>
-                        </div>
-                    </div>
-                </div>
-                <div class="travellog-card-image" onclick="openTravellogModal(2)">
-                    <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=600&h=600&fit=crop&q=80" alt="여행사진">
-                    <span class="travellog-image-count"><i class="bi bi-images"></i> 8</span>
-                </div>
-                <div class="travellog-card-actions">
-                    <button class="travellog-action-btn" onclick="toggleLike(this, 2)">
-                        <i class="bi bi-heart"></i>
-                        <span>512</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="openTravellogModal(2)">
-                        <i class="bi bi-chat"></i>
-                        <span>45</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="shareTravellog(2)">
-                        <i class="bi bi-send"></i>
-                    </button>
-                    <button class="travellog-action-btn" onclick="toggleBookmark(this, 2)" style="margin-left: auto;">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="travellog-card-content">
-                    <p class="travellog-likes">좋아요 512개</p>
-                    <p class="travellog-text">
-                        <span class="username">foodie_kim</span>
-                        부산 맛집 투어 완전 정복! 자갈치시장에서 먹은 회는 정말 인생 회였어요. 맛집 리스트 저장해두세요!
-                    </p>
-                    <p class="travellog-date">5일 전</p>
-                </div>
-            </div>
+	    <c:if test="${empty paged.content}">
+	        <div style="grid-column: 1 / -1; text-align:center; padding:40px 0;">
+	            등록된 여행기가 없습니다.
+	        </div>
+	    </c:if>
 
-            <!-- 카드 3 -->
-            <div class="travellog-card" data-id="3">
-                <div class="travellog-card-header">
-                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80"
-                         alt="프로필" class="travellog-avatar">
-                    <div class="travellog-user-info">
-                        <span class="travellog-username">adventure_park</span>
-                        <span class="travellog-location">강릉, 대한민국</span>
-                    </div>
-                    <button class="travellog-more-btn"><i class="bi bi-three-dots"></i></button>
-                </div>
-                <div class="travellog-card-image" onclick="openTravellogModal(3)">
-                    <img src="https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=600&h=600&fit=crop&q=80" alt="여행사진">
-                    <span class="travellog-image-count"><i class="bi bi-images"></i> 12</span>
-                </div>
-                <div class="travellog-card-actions">
-                    <button class="travellog-action-btn" onclick="toggleLike(this, 3)">
-                        <i class="bi bi-heart"></i>
-                        <span>287</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="openTravellogModal(3)">
-                        <i class="bi bi-chat"></i>
-                        <span>31</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="shareTravellog(3)">
-                        <i class="bi bi-send"></i>
-                    </button>
-                    <button class="travellog-action-btn" onclick="toggleBookmark(this, 3)" style="margin-left: auto;">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="travellog-card-content">
-                    <p class="travellog-likes">좋아요 287개</p>
-                    <p class="travellog-text">
-                        <span class="username">adventure_park</span>
-                        강릉 & 속초 3일, 완벽 휴양 여행! 정동진의 일출은 정말 환상적이었어요.
-                    </p>
-                    <p class="travellog-date">1주 전</p>
-                </div>
-            </div>
+			<c:forEach var="row" items="${paged.content}">
+				<div class="travellog-card" data-id="${row.rcdNo}"
+					data-writer="${row.memId}" data-like="${row.likeCount}"
+					data-bookmark="${row.bookmarkCount}"
+					onclick="goDetail(${row.rcdNo})">
+					
+					<div class="travellog-card-header">
+						<!-- 프로필 이미지: 지금 VO에 없으니 임시 고정(나중에 memProfile 등 컬럼/조인으로 교체) -->
+						<img
+							src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+							alt="프로필" class="travellog-avatar">
 
-            <!-- 카드 4 -->
-            <div class="travellog-card" data-id="4">
-                <div class="travellog-card-header">
-                    <img src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&q=80"
-                         alt="프로필" class="travellog-avatar">
-                    <div class="travellog-user-info">
-                        <span class="travellog-username">photo_jenny</span>
-                        <span class="travellog-location">경주, 대한민국</span>
-                    </div>
-                    <button class="travellog-more-btn"><i class="bi bi-three-dots"></i></button>
-                </div>
-                <div class="travellog-card-image" onclick="openTravellogModal(4)">
-                    <img src="https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=600&h=600&fit=crop&q=80" alt="여행사진">
-                    <span class="travellog-image-count"><i class="bi bi-images"></i> 15</span>
-                </div>
-                <div class="travellog-card-actions">
-                    <button class="travellog-action-btn" onclick="toggleLike(this, 4)">
-                        <i class="bi bi-heart"></i>
-                        <span>892</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="openTravellogModal(4)">
-                        <i class="bi bi-chat"></i>
-                        <span>67</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="shareTravellog(4)">
-                        <i class="bi bi-send"></i>
-                    </button>
-                    <button class="travellog-action-btn" onclick="toggleBookmark(this, 4)" style="margin-left: auto;">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="travellog-card-content">
-                    <p class="travellog-likes">좋아요 892개</p>
-                    <p class="travellog-text">
-                        <span class="username">photo_jenny</span>
-                        경주의 봄은 정말 아름다웠어요. 불국사 앞에서 찍은 사진들이 너무 마음에 들어요!
-                    </p>
-                    <p class="travellog-date">1주 전</p>
-                </div>
-            </div>
+						<div class="travellog-user-info">
+							<!-- 작성자 아이디 -->
+							<%-- 	                    <span class="travellog-username">${row.memId}</span> --%>
+							<span class="travellog-username"> <c:choose>
+									<c:when test="${not empty row.nickname}">${row.nickname}(${row.memId })</c:when>
+									<c:otherwise>${row.memId}</c:otherwise>
+								</c:choose>
+							</span>
 
-            <!-- 카드 5 -->
-            <div class="travellog-card" data-id="5">
-                <div class="travellog-card-header">
-                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&q=80"
-                         alt="프로필" class="travellog-avatar">
-                    <div class="travellog-user-info">
-                        <span class="travellog-username">hiking_master</span>
-                        <span class="travellog-location">부산, 대한민국</span>
-                    </div>
-                    <button class="travellog-more-btn"><i class="bi bi-three-dots"></i></button>
-                </div>
-                <div class="travellog-card-image" onclick="openTravellogModal(5)">
-                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=600&fit=crop&q=80" alt="여행사진">
-                </div>
-                <div class="travellog-card-actions">
-                    <button class="travellog-action-btn" onclick="toggleLike(this, 5)">
-                        <i class="bi bi-heart"></i>
-                        <span>156</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="openTravellogModal(5)">
-                        <i class="bi bi-chat"></i>
-                        <span>12</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="shareTravellog(5)">
-                        <i class="bi bi-send"></i>
-                    </button>
-                    <button class="travellog-action-btn" onclick="toggleBookmark(this, 5)" style="margin-left: auto;">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="travellog-card-content">
-                    <p class="travellog-likes">좋아요 156개</p>
-                    <p class="travellog-text">
-                        <span class="username">hiking_master</span>
-                        해운대 일출, 오랜만에 부산 왔는데 역시 좋네요!
-                    </p>
-                    <p class="travellog-date">2주 전</p>
-                </div>
-            </div>
 
-            <!-- 카드 6 -->
-            <div class="travellog-card" data-id="6">
-                <div class="travellog-card-header">
-                    <img src="https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?w=100&h=100&fit=crop&q=80"
-                         alt="프로필" class="travellog-avatar">
-                    <div class="travellog-user-info">
-                        <span class="travellog-username">couple_trip</span>
-                        <span class="travellog-location">여수, 대한민국</span>
-                    </div>
-                    <button class="travellog-more-btn"><i class="bi bi-three-dots"></i></button>
-                </div>
-                <div class="travellog-card-image" onclick="openTravellogModal(6)">
-                    <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=600&fit=crop&q=80" alt="여행사진">
-                    <span class="travellog-image-count"><i class="bi bi-images"></i> 20</span>
-                </div>
-                <div class="travellog-card-actions">
-                    <button class="travellog-action-btn" onclick="toggleLike(this, 6)">
-                        <i class="bi bi-heart"></i>
-                        <span>743</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="openTravellogModal(6)">
-                        <i class="bi bi-chat"></i>
-                        <span>54</span>
-                    </button>
-                    <button class="travellog-action-btn" onclick="shareTravellog(6)">
-                        <i class="bi bi-send"></i>
-                    </button>
-                    <button class="travellog-action-btn" onclick="toggleBookmark(this, 6)" style="margin-left: auto;">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="travellog-card-content">
-                    <p class="travellog-likes">좋아요 743개</p>
-                    <p class="travellog-text">
-                        <span class="username">couple_trip</span>
-                        여수 신혼여행 기록. 평생 잊지 못할 추억이 되었어요.
-                    </p>
-                    <p class="travellog-date">2주 전</p>
-                </div>
-            </div>
-        </div>
+							<!-- 지역코드(locCd)로 표시 (지금 리스트VO에 없으면 이 줄은 지우거나, ListVO에 locCd 추가 필요) -->
+							<span class="travellog-location">${row.locCd}</span>
+						</div>
+
+						<div class="travellog-more-wrapper">
+							<!-- 	                    <button class="travellog-more-btn" -->
+							<!--     onclick="event.stopPropagation(); toggleCardMenu(this)"> -->
+
+							<!-- 	                        <i class="bi bi-three-dots"></i> -->
+							<!-- 	                    </button> -->
+
+							<div class="travellog-card-menu">
+								<c:if
+									test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
+									<!-- 신고하기: id/title을 실제 데이터로 -->
+									<button
+										onclick="reportTravellog(${row.rcdNo}, '${row.rcdTitle}')">
+										<i class="bi bi-flag"></i> 신고하기
+									</button>
+								</c:if>
+							</div>
+						</div>
+					</div>
+
+					<!-- 대표 이미지: 지금 attachNo만 있어서 실제 이미지 경로가 없으니 임시 고정 -->
+					<div class="travellog-card-image"
+						onclick="location.href='${pageContext.request.contextPath}/community/travel-log/detail?rcdNo=${row.rcdNo}'">
+						<c:choose>
+							<c:when test="${not empty row.coverPath}">
+								<img
+									src="${pageContext.request.contextPath}/files${row.coverPath}"
+									alt="여행사진">
+							</c:when>
+							<c:otherwise>
+								<img
+									src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=600&fit=crop&q=80"
+									alt="여행사진">
+							</c:otherwise>
+						</c:choose>
+
+						<!-- 이미지 수: DB에 없으니 일단 숨기거나 임시 -->
+						<!-- 	                <span class="travellog-image-count"><i class="bi bi-images"></i> 1</span> -->
+					</div>
+
+					<div class="travellog-card-actions">
+						<!-- 좋아요 -->
+						<button class="travellog-action-btn"
+							onclick="event.stopPropagation(); toggleLike(this, ${row.rcdNo})">
+
+
+							<i class="bi bi-heart"></i> <span>${row.likeCount}</span>
+						</button>
+
+						<!-- 댓글 -->
+						<%-- 	                <button class="travellog-action-btn" onclick="location.href='${pageContext.request.contextPath}/community/travel-log/detail?rcdNo=${row.rcdNo}'"> --%>
+						<button class="travellog-action-btn"
+							onclick="event.stopPropagation(); goComment(${row.rcdNo});">
+							<i class="bi bi-chat"></i> <span>${row.commentCount}</span>
+						</button>
+
+						<!-- 	                    <i class="bi bi-chat"></i> -->
+						<%-- 	                    <span>${row.commentCount}</span> --%>
+						<!-- 	                </button> -->
+
+
+
+						<!-- 북마크 -->
+						<button class="travellog-action-btn"
+							onclick="event.stopPropagation(); toggleBookmark(this, ${row.rcdNo})">
+
+
+
+							<i class="bi bi-bookmark"></i> <span>${row.bookmarkCount}</span>
+						</button>
+
+						<!-- <button class="travellog-action-btn" -->
+						<!--         style="margin-left:auto;" -->
+						<%--         onclick="event.stopPropagation(); if(!guardShare(event)) return; shareTravellog(${row.rcdNo});"> --%>
+						<!--   <i class="bi bi-send"></i> -->
+						<!-- </button> -->
+
+						<button class="travellog-action-btn btn-share"
+							style="margin-left: auto;"
+							onclick="handleShare(event, ${row.rcdNo});">
+							<i class="bi bi-send"></i>
+						</button>
+
+
+
+					</div>
+
+					<div class="travellog-card-content">
+						<%-- 	                <p class="travellog-likes">좋아요 ${row.likeCount}개</p> --%>
+
+						<p class="travellog-text">
+							<%-- 	                    <span class="username">${row.memId}</span> --%>
+							<!-- 목록에서는 content가 없으니 title을 보여주거나,
+	                         ListVO에 excerpt(요약) 추가해서 치환 -->
+							${row.rcdTitle}
+						</p>
+
+						<p class="travellog-date">
+							<fmt:formatDate value="${row.regDt}" pattern="yyyy-MM-dd" />
+						</p>
+					</div>
+
+				</div>
+			</c:forEach>
+
+		</div>
+	        
 
         <!-- 로딩 인디케이터 -->
-        <div class="infinite-scroll-loader" id="scrollLoader">
+        <!-- <div class="infinite-scroll-loader" id="scrollLoader">
             <div class="loader-spinner">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
-        </div>
+        </div> -->
 
         <!-- 더 이상 데이터 없음 -->
         <div class="infinite-scroll-end" id="scrollEnd" style="display: none;">
@@ -421,6 +322,12 @@
     max-height: 85vh;
     overflow-y: auto;
 }
+
+.travellog-action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
 
 /* 커버 이미지 */
 .detail-cover {
@@ -848,6 +755,16 @@
     color: var(--primary-color);
 }
 
+.action-disabled {
+  pointer-events: none;
+}
+
+.travellog-action-btn.is-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+
 /* 반응형 */
 @media (max-width: 768px) {
     .detail-container {
@@ -879,8 +796,33 @@
 
 <script>
 var viewCount = 0;
-var isLoggedIn = ${not empty sessionScope.loginUser};
-var userType = '${sessionScope.loginUser.userType}';
+
+/* //===== 권한(ROLE) 판별: authRole 기준으로 통일 =====
+var ROLE = (document.getElementById('authRole')?.textContent || '').trim() || 'ANON';
+var isLoggedIn = (ROLE !== 'ANON');
+var isMember = (ROLE === 'MEMBER');
+var isBusiness = (ROLE === 'BUSINESS');
+
+var contextPath = '${pageContext.request.contextPath}'; */
+
+//var contextPath = '${pageContext.request.contextPath}';
+var cp = '${pageContext.request.contextPath}';
+
+//authRole 기준(앞에서 말한대로)
+var ROLE = (document.getElementById('authRole')?.textContent || '').trim() || 'ANON';
+
+var isLoggedIn = (ROLE !== 'ANON');
+var isMember   = (ROLE === 'ROLE_MEMBER');
+var isBusiness = (ROLE === 'ROLE_BUSINESS');
+
+
+function goComment(rcdNo){
+if (isBusiness) return;
+if (!isMember) { showLoginOverlay(); return; }
+location.href = cp + '/community/travel-log/detail?rcdNo=' + rcdNo + '#commentSection';
+}
+
+
 
 // HTML 이스케이프 함수
 function escapeHtml(text) {
@@ -895,12 +837,54 @@ function escapeHtml(text) {
 var travellogModal = null;
 
 // 페이지 로드 시 모달 인스턴스 생성
-document.addEventListener('DOMContentLoaded', function() {
+/* document.addEventListener('DOMContentLoaded', function() {
     var modalElement = document.getElementById('travellogModal');
     if (modalElement) {
         travellogModal = new bootstrap.Modal(modalElement);
     }
-});
+}); */
+// document.addEventListener('DOMContentLoaded', function () {
+// 	  // 기업회원이면 액션버튼 비활성 + 클릭 막기
+// 	  if (isBusiness) {
+// 	    document.querySelectorAll('.travellog-card-actions .travellog-action-btn').forEach(btn => {
+// 	      // 공유 버튼(맨 오른쪽)은 제외하고 싶으면 아래 조건 추가 가능
+// 	      // if (btn.querySelector('.bi-send')) return;
+
+// 	      if (btn.querySelector('.bi-send')) return;
+	      
+// 	      btn.disabled = true;
+// 	      btn.classList.add('action-disabled');
+// 	      btn.setAttribute('aria-disabled', 'true');
+// 	    });
+// 	  }
+
+// 	  // 오버레이 안쪽 클릭은 닫히지 않게(배경 클릭만 닫히도록)
+// 	  const overlayContent = document.querySelector('#loginOverlay .login-overlay-content');
+// 	  overlayContent?.addEventListener('click', function(e){ e.stopPropagation(); });
+// 	});
+
+document.addEventListener('DOMContentLoaded', function () {
+	  if (isBusiness) {
+	    // 공유 버튼도 통일감 있게 "비활성 UI" 처리
+	    document.querySelectorAll('.travellog-card-actions .btn-share').forEach(btn => {
+	      btn.classList.add('is-disabled');        // 비활성처럼 보이게
+	      btn.setAttribute('aria-disabled', 'true');
+	    });
+
+	    // 나머지 버튼도 동일하게
+	    document.querySelectorAll('.travellog-card-actions .travellog-action-btn:not(.btn-share)').forEach(btn => {
+	      btn.classList.add('is-disabled');
+	      btn.setAttribute('aria-disabled', 'true');
+	    });
+	  }
+	  
+	// 오버레이 안쪽 클릭은 닫히지 않게(배경 클릭만 닫히도록)
+	  const overlayContent = document.querySelector('#loginOverlay .login-overlay-content');
+	  overlayContent?.addEventListener('click', function(e){ e.stopPropagation(); });
+	});
+
+
+
 
 // 필터 전환
 document.querySelectorAll('.travellog-filter').forEach(filter => {
@@ -912,29 +896,42 @@ document.querySelectorAll('.travellog-filter').forEach(filter => {
 });
 
 // 좋아요 토글
-function toggleLike(btn, id) {
-    if (!isLoggedIn) {
-        showLoginOverlay();
-        return;
-    }
+function toggleLike(btn, rcdNo) {
+  if (isBusiness) return;
+  if (!isMember) {
+    showLoginOverlay();
+    return;
+  }
 
-    btn.classList.toggle('liked');
+  fetch(cp + '/api/community/travel-log/likes/toggle', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ rcdNo: rcdNo })
+  })
+  .then(res => res.json())
+  .then(data => {
     const icon = btn.querySelector('i');
     const count = btn.querySelector('span');
-    let num = parseInt(count.textContent);
 
-    if (btn.classList.contains('liked')) {
-        icon.className = 'bi bi-heart-fill';
-        count.textContent = num + 1;
+    if (data.liked) {
+      icon.className = 'bi bi-heart-fill';
     } else {
-        icon.className = 'bi bi-heart';
-        count.textContent = num - 1;
+      icon.className = 'bi bi-heart';
     }
+
+    count.textContent = data.likeCount;
+  })
+  .catch(err => {
+    console.error(err);
+    alert('좋아요 처리 중 오류 발생');
+  });
 }
+
 
 // 북마크 토글
 function toggleBookmark(btn, id) {
-    if (!isLoggedIn) {
+	if (isBusiness) return;
+    if (!isMember) {
         showLoginOverlay();
         return;
     }
@@ -953,287 +950,48 @@ function toggleBookmark(btn, id) {
 
 // 공유
 function shareTravellog(id) {
-    // 실제 구현 시 공유 기능
-    showToast('링크가 복사되었습니다.', 'success');
-}
+  const url = cp + '/community/travel-log/detail?rcdNo=' + id;
 
-// 데모 여행기록 데이터
-var travellogData = {
-    1: {
-        id: 1,
-        title: '제주도 3박4일, 혼자여도 괜찮아',
-        author: 'travel_lover',
-        authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80',
-        location: '제주도, 대한민국',
-        dateRange: '2024.03.15 - 2024.03.18',
-        coverImage: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80',
-        likes: 328,
-        comments: 24,
-        createdAt: '3일 전',
-        tags: ['제주도', '혼자여행', '힐링', '일출'],
-        intro: '처음으로 혼자 떠난 제주도 여행! 혼자여도 괜찮다, 오히려 좋다라는 걸 깨달았던 특별한 시간이었어요.',
-        days: [
-            {
-                day: 1,
-                date: '3월 15일 (금)',
-                places: [
-                    {
-                        name: '성산일출봉',
-                        address: '제주 서귀포시 성산읍',
-                        image: 'https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=600&h=400&fit=crop&q=80',
-                        rating: 5,
-                        time: '06:00 ~ 08:00',
-                        review: '새벽 5시에 일어나 일출을 보러 갔어요. 정상까지 올라가는 길이 조금 힘들었지만, 정상에서 바라본 일출은 정말 장관이었습니다. 혼자 온 것이 오히려 좋았어요. 나만의 시간을 가질 수 있었거든요.'
-                    },
-                    {
-                        name: '해녀의집',
-                        address: '제주 서귀포시 성산읍',
-                        image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=600&h=400&fit=crop&q=80',
-                        rating: 4,
-                        time: '12:00 ~ 13:30',
-                        review: '성산일출봉 근처에서 점심으로 해녀분들이 직접 잡아온 해산물을 맛봤어요. 전복죽과 물회가 정말 신선하고 맛있었습니다!'
-                    }
-                ]
-            },
-            {
-                day: 2,
-                date: '3월 16일 (토)',
-                places: [
-                    {
-                        name: '협재해수욕장',
-                        address: '제주 제주시 한림읍',
-                        image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=600&h=400&fit=crop&q=80',
-                        rating: 5,
-                        time: '09:00 ~ 12:00',
-                        review: '에메랄드빛 바다가 정말 예뻤어요. 3월이라 물에 들어가진 않았지만, 백사장을 걸으며 힐링했습니다. 혼자 책도 읽고 커피도 마시며 여유로운 시간을 보냈어요.'
-                    }
-                ]
-            }
-        ],
-        outro: '이번 제주도 여행은 혼자서도 충분히 행복할 수 있다는 걸 알게 해준 소중한 시간이었어요. 다음엔 더 긴 시간을 보내고 싶습니다.',
-        commentsList: [
-            { author: 'foodie_kim', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&q=80', text: '와 너무 예뻐요! 저도 가고 싶어지네요', time: '3일 전', likes: 12 },
-            { author: 'adventure_park', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80', text: '성산일출봉 일출 정말 최고죠!', time: '2일 전', likes: 8 },
-            { author: 'photo_jenny', avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&q=80', text: '혼자여행 저도 도전해보고 싶어요! 용기가 생기네요 ㅎㅎ', time: '1일 전', likes: 5 }
-        ]
-    },
-    2: {
-        id: 2,
-        title: '부산 맛집 투어 완전 정복!',
-        author: 'foodie_kim',
-        authorAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&q=80',
-        location: '부산, 대한민국',
-        dateRange: '2024.03.01 - 2024.03.03',
-        coverImage: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=1200&h=600&fit=crop&q=80',
-        likes: 512,
-        comments: 45,
-        createdAt: '5일 전',
-        tags: ['부산', '맛집투어', '해운대', '먹방'],
-        intro: '부산 하면 역시 먹방이죠! 2박 3일 동안 부산의 유명 맛집들을 돌아다녔어요.',
-        days: [
-            {
-                day: 1,
-                date: '3월 1일 (금)',
-                places: [
-                    {
-                        name: '자갈치시장',
-                        address: '부산 중구 자갈치해안로',
-                        image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&h=400&fit=crop&q=80',
-                        rating: 5,
-                        time: '11:00 ~ 14:00',
-                        review: '자갈치시장에서 먹은 회는 정말 인생 회였어요. 싱싱한 회와 매운탕, 그리고 시장 특유의 분위기까지 모든 게 완벽했습니다.'
-                    }
-                ]
-            }
-        ],
-        outro: '다음에 부산 오면 또 먹방 투어 해야겠어요. 부산 음식은 정말 최고!',
-        commentsList: [
-            { author: 'travel_lover', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80', text: '맛집 리스트 공유 부탁드려요!', time: '4일 전', likes: 15 }
-        ]
-    }
-};
-
-// 모달 열기
-function openTravellogModal(id) {
-    viewCount++;
-
-    // 비회원은 일정 개수 이상 보면 로그인 유도
-    if (!isLoggedIn && viewCount > 3) {
-        showLoginOverlay();
-        return;
-    }
-
-    if (!travellogModal) {
-        var modalElement = document.getElementById('travellogModal');
-        if (modalElement) {
-            travellogModal = new bootstrap.Modal(modalElement);
-        } else {
-            console.error('Modal element not found');
-            return;
-        }
-    }
-
-    // 데이터 가져오기 (없으면 기본 데이터 사용)
-    var data = travellogData[id] || travellogData[1];
-    var disabledAttr = !isLoggedIn ? 'disabled' : '';
-
-    // 별점 HTML 생성 함수
-    function generateStars(rating) {
-        var stars = '';
-        for (var i = 1; i <= 5; i++) {
-            stars += '<i class="bi bi-star' + (i <= rating ? '-fill' : '') + '"></i>';
-        }
-        return stars;
-    }
-
-    // 일차별 콘텐츠 생성
-    var daysHtml = '';
-    data.days.forEach(function(day) {
-        daysHtml += '<div class="detail-day-section">' +
-            '<div class="detail-day-header">' +
-                '<span class="detail-day-badge">DAY ' + day.day + '</span>' +
-                '<span class="detail-day-date">' + day.date + '</span>' +
-            '</div>';
-
-        day.places.forEach(function(place) {
-            daysHtml += '<div class="detail-place-card">' +
-                '<div class="detail-place-image">' +
-                    '<img src="' + place.image + '" alt="' + place.name + '">' +
-                '</div>' +
-                '<div class="detail-place-info">' +
-                    '<div class="detail-place-header">' +
-                        '<h4><i class="bi bi-geo-alt-fill"></i> ' + place.name + '</h4>' +
-                        '<div class="detail-place-rating">' + generateStars(place.rating) + '</div>' +
-                    '</div>' +
-                    '<p class="detail-place-address">' + place.address + '</p>' +
-                    '<p class="detail-place-time"><i class="bi bi-clock"></i> ' + place.time + '</p>' +
-                    '<p class="detail-place-review">' + place.review + '</p>' +
-                '</div>' +
-            '</div>';
-        });
-
-        daysHtml += '</div>';
+  // HTTPS/localhost면 clipboard API 동작
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url).then(() => {
+      if (typeof showToast === 'function') showToast('링크가 복사되었습니다.', 'success');
+      else alert('링크가 복사되었습니다.');
+    }).catch(() => {
+      prompt('복사해서 사용하세요:', url);
     });
+    return;
+  }
 
-    // 태그 HTML
-    var tagsHtml = data.tags.map(function(tag) {
-        return '<span class="detail-tag">#' + tag + '</span>';
-    }).join('');
-
-    // 댓글 HTML
-    var commentsHtml = data.commentsList.map(function(comment) {
-        var reportBtn = (isLoggedIn && userType !== 'BUSINESS') ?
-            '<button onclick="reportTravellogComment(\'' + comment.id + '\', \'' + escapeHtml(comment.text) + '\')"><i class="bi bi-flag"></i> 신고</button>' : '';
-        return '<div class="detail-comment">' +
-            '<img src="' + comment.avatar + '" alt="' + comment.author + '" class="detail-comment-avatar">' +
-            '<div class="detail-comment-content">' +
-                '<div class="detail-comment-header">' +
-                    '<span class="detail-comment-author">' + comment.author + '</span>' +
-                    '<span class="detail-comment-time">' + comment.time + '</span>' +
-                '</div>' +
-                '<p class="detail-comment-text">' + comment.text + '</p>' +
-                '<div class="detail-comment-actions">' +
-                    '<button><i class="bi bi-heart"></i> ' + comment.likes + '</button>' +
-                    '<button><i class="bi bi-reply"></i> 답글</button>' +
-                    reportBtn +
-                '</div>' +
-            '</div>' +
-        '</div>';
-    }).join('');
-
-    var modalHtml =
-        '<div class="travellog-detail">' +
-            // 커버 이미지
-            '<div class="detail-cover">' +
-                '<img src="' + data.coverImage + '" alt="커버">' +
-                '<div class="detail-cover-overlay"></div>' +
-            '</div>' +
-
-            // 본문 컨테이너
-            '<div class="detail-container">' +
-                // 작성자 정보
-                '<div class="detail-author-card">' +
-                    '<img src="' + data.authorAvatar + '" alt="' + data.author + '" class="detail-author-avatar">' +
-                    '<div class="detail-author-info">' +
-                        '<span class="detail-author-name">' + data.author + '</span>' +
-                        '<span class="detail-author-meta">' + data.createdAt + ' · ' + data.location + '</span>' +
-                    '</div>' +
-                '</div>' +
-
-                // 제목
-                '<h1 class="detail-title">' + data.title + '</h1>' +
-
-                // 여행 정보
-                '<div class="detail-trip-info">' +
-                    '<span><i class="bi bi-geo-alt"></i> ' + data.location + '</span>' +
-                    '<span><i class="bi bi-calendar3"></i> ' + data.dateRange + '</span>' +
-                '</div>' +
-
-                // 인트로
-                '<p class="detail-intro">' + data.intro + '</p>' +
-
-                // 구분선
-                '<hr class="detail-divider">' +
-
-                // 일차별 콘텐츠
-                daysHtml +
-
-                // 아웃트로
-                '<div class="detail-outro">' +
-                    '<p>' + data.outro + '</p>' +
-                '</div>' +
-
-                // 태그
-                '<div class="detail-tags">' + tagsHtml + '</div>' +
-
-                // 액션 바
-                '<div class="detail-actions">' +
-                    '<button class="detail-action-btn" onclick="toggleDetailLike(this)">' +
-                        '<i class="bi bi-heart"></i>' +
-                        '<span>' + data.likes + '</span>' +
-                    '</button>' +
-                    '<button class="detail-action-btn">' +
-                        '<i class="bi bi-chat"></i>' +
-                        '<span>' + data.comments + '</span>' +
-                    '</button>' +
-                    '<button class="detail-action-btn" onclick="shareDetail()">' +
-                        '<i class="bi bi-send"></i>' +
-                        '<span>공유</span>' +
-                    '</button>' +
-                    '<button class="detail-action-btn" onclick="toggleDetailBookmark(this)">' +
-                        '<i class="bi bi-bookmark"></i>' +
-                        '<span>저장</span>' +
-                    '</button>' +
-                    (isLoggedIn && userType !== 'BUSINESS' ?
-                    '<button class="detail-action-btn report" onclick="reportCurrentTravellog()">' +
-                        '<i class="bi bi-flag"></i>' +
-                        '<span>신고</span>' +
-                    '</button>' : '') +
-                '</div>' +
-
-                // 댓글 섹션
-                '<div class="detail-comments-section">' +
-                    '<h3 class="detail-comments-title"><i class="bi bi-chat-dots me-2"></i>댓글 ' + data.comments + '개</h3>' +
-
-                    // 댓글 입력
-                    '<div class="detail-comment-input">' +
-                        '<input type="text" placeholder="댓글을 입력하세요..." ' + disabledAttr + '>' +
-                        '<button ' + disabledAttr + '>게시</button>' +
-                    '</div>' +
-
-                    // 댓글 목록
-                    '<div class="detail-comments-list">' + commentsHtml + '</div>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
-
-    document.getElementById('travellogModalBody').innerHTML = modalHtml;
-    travellogModal.show();
+  // http 환경(또는 권한 문제) fallback
+  prompt('복사해서 사용하세요:', url);
 }
+
+
+
+/* // 모달 열기
+function openTravellogModal(id) {
+    if (!travellogModal) {
+        travellogModal = new bootstrap.Modal(
+            document.getElementById('travellogModal')
+        );
+    }
+
+    document.getElementById('travellogModalBody').innerHTML =
+        '<div style="padding:40px;text-align:center;">불러오는 중...</div>';
+
+    fetch(contextPath + '/community/travel-log/detail-frag?rcdNo=' + id)
+        .then(res => res.text())
+        .then(html => {
+            document.getElementById('travellogModalBody').innerHTML = html;
+            travellogModal.show();
+        });
+} */
+
 
 // 상세 좋아요 토글
 function toggleDetailLike(btn) {
-    if (!isLoggedIn) {
+    if (!isMember) {
         showLoginOverlay();
         travellogModal.hide();
         return;
@@ -1254,7 +1012,7 @@ function toggleDetailLike(btn) {
 
 // 상세 북마크 토글
 function toggleDetailBookmark(btn) {
-    if (!isLoggedIn) {
+    if (!isMember) {
         showLoginOverlay();
         travellogModal.hide();
         return;
@@ -1410,7 +1168,7 @@ function loadMoreTravellogs() {
 }
 
 // 페이지별 카드 데이터 반환
-function getCardsForPage(page) {
+/* function getCardsForPage(page) {
     var baseIndex = (page - 2) * 3;
     var cards = [];
 
@@ -1422,51 +1180,124 @@ function getCardsForPage(page) {
     }
 
     return cards;
-}
+} */
 
 // 카드 HTML 생성
-function createTravellogCard(data) {
-    var imageCountHtml = data.imageCount ? '<span class="travellog-image-count"><i class="bi bi-images"></i> ' + data.imageCount + '</span>' : '';
+// function createTravellogCard(data) {
+//     var imageCountHtml = data.imageCount ? '<span class="travellog-image-count"><i class="bi bi-images"></i> ' + data.imageCount + '</span>' : '';
 
-    return '<div class="travellog-card" data-id="' + data.id + '">' +
-        '<div class="travellog-card-header">' +
-            '<img src="' + data.avatar + '" alt="프로필" class="travellog-avatar">' +
-            '<div class="travellog-user-info">' +
-                '<span class="travellog-username">' + data.username + '</span>' +
-                '<span class="travellog-location">' + data.location + '</span>' +
-            '</div>' +
-            '<button class="travellog-more-btn"><i class="bi bi-three-dots"></i></button>' +
-        '</div>' +
-        '<div class="travellog-card-image" onclick="openTravellogModal(' + data.id + ')">' +
-            '<img src="' + data.image + '" alt="여행사진">' +
-            imageCountHtml +
-        '</div>' +
-        '<div class="travellog-card-actions">' +
-            '<button class="travellog-action-btn" onclick="toggleLike(this, ' + data.id + ')">' +
-                '<i class="bi bi-heart"></i>' +
-                '<span>' + data.likes + '</span>' +
-            '</button>' +
-            '<button class="travellog-action-btn" onclick="openTravellogModal(' + data.id + ')">' +
-                '<i class="bi bi-chat"></i>' +
-                '<span>' + data.comments + '</span>' +
-            '</button>' +
-            '<button class="travellog-action-btn" onclick="shareTravellog(' + data.id + ')">' +
-                '<i class="bi bi-send"></i>' +
-            '</button>' +
-            '<button class="travellog-action-btn" onclick="toggleBookmark(this, ' + data.id + ')" style="margin-left: auto;">' +
-                '<i class="bi bi-bookmark"></i>' +
-            '</button>' +
-        '</div>' +
-        '<div class="travellog-card-content">' +
-            '<p class="travellog-likes">좋아요 ' + data.likes + '개</p>' +
-            '<p class="travellog-text">' +
-                '<span class="username">' + data.username + '</span>' +
-                data.text +
-            '</p>' +
-            '<p class="travellog-date">' + data.date + '</p>' +
-        '</div>' +
-    '</div>';
+//     return '<div class="travellog-card" data-id="' + data.id + '">' +
+//         '<div class="travellog-card-header">' +
+//             '<img src="' + data.avatar + '" alt="프로필" class="travellog-avatar">' +
+//             '<div class="travellog-user-info">' +
+//                 '<span class="travellog-username">' + data.username + '</span>' +
+//                 '<span class="travellog-location">' + data.location + '</span>' +
+//             '</div>' +
+//             '<button class="travellog-more-btn"><i class="bi bi-three-dots"></i></button>' +
+//         '</div>' +
+//         '<div class="travellog-card-image" onclick="openTravellogModal(' + data.id + ')">' +
+//             '<img src="' + data.image + '" alt="여행사진">' +
+//             imageCountHtml +
+//         '</div>' +
+//         '<div class="travellog-card-actions">' +
+//             '<button class="travellog-action-btn" onclick="toggleLike(this, ' + data.id + ')">' +
+//                 '<i class="bi bi-heart"></i>' +
+//                 '<span>' + data.likes + '</span>' +
+//             '</button>' +
+//             '<button class="travellog-action-btn" onclick="openTravellogModal(' + data.id + ')">' +
+//                 '<i class="bi bi-chat"></i>' +
+//                 '<span>' + data.comments + '</span>' +
+//             '</button>' +
+//             /* '<button class="travellog-action-btn" onclick="shareTravellog(' + data.id + ')">' +
+//                 '<i class="bi bi-send"></i>' +
+//             '</button>' + */
+//             '<button class="travellog-action-btn" onclick="toggleBookmark(this, ' + data.id + ')">' +
+//                 '<i class="bi bi-bookmark"></i>' +
+//             '</button>' +
+//             '<button class="travellog-action-btn" onclick="shareTravellog(' + data.id + ')" style="margin-left: auto;">' +
+//             '<i class="bi bi-send"></i>' +
+//         '</button>' +
+//         '</div>' +
+//         '<div class="travellog-card-content">' +
+// //             '<p class="travellog-likes">좋아요 ' + data.likes + '개</p>' +
+//             '<p class="travellog-text">' +
+//                 '<span class="username">' + data.username + '</span>' +
+//                 data.text +
+//             '</p>' +
+//             '<p class="travellog-date">' + data.date + '</p>' +
+//         '</div>' +
+//     '</div>';
+// }
+
+//카드 HTML 생성 (인피니티로 추가되는 카드에도 동일 정책 적용)
+function createTravellogCard(data) {
+  var imageCountHtml = data.imageCount
+    ? '<span class="travellog-image-count"><i class="bi bi-images"></i> ' + data.imageCount + '</span>'
+    : '';
+
+  // 기업회원: 액션버튼 비활성
+  var disabledAttr = isBusiness ? ' disabled aria-disabled="true" ' : '';
+  var disabledClass = isBusiness ? ' action-disabled' : '';
+
+  return ''
+  + '<div class="travellog-card" data-id="' + data.id + '" onclick="goDetail(' + data.id + ')">' 
+    + '<div class="travellog-card-header">'
+      + '<img src="' + data.avatar + '" alt="프로필" class="travellog-avatar">'
+      + '<div class="travellog-user-info">'
+        + '<span class="travellog-username">' + data.username + '</span>'
+        + '<span class="travellog-location">' + data.location + '</span>'
+      + '</div>'
+      + '<button class="travellog-more-btn" onclick="event.stopPropagation();"><i class="bi bi-three-dots"></i></button>'
+    + '</div>'
+
+    + '<div class="travellog-card-image" onclick="event.stopPropagation(); goDetail(' + data.id + ')">'
+      + '<img src="' + data.image + '" alt="여행사진">'
+      + imageCountHtml
+    + '</div>'
+
+    + '<div class="travellog-card-actions">'
+
+      // 좋아요
+      + '<button class="travellog-action-btn' + disabledClass + '"'
+        + disabledAttr
+        + ' onclick="event.stopPropagation(); toggleLike(this, ' + data.id + ')">'
+        + '<i class="bi bi-heart"></i>'
+        + '<span>' + data.likes + '</span>'
+      + '</button>'
+
+      // 댓글(비회원이면 오버레이, 일반회원이면 상세#commentSection)
+      + '<button class="travellog-action-btn' + disabledClass + '"'
+        + disabledAttr
+        + ' onclick="event.stopPropagation(); goComment(' + data.id + ')">'
+        + '<i class="bi bi-chat"></i>'
+        + '<span>' + data.comments + '</span>'
+      + '</button>'
+
+      // 북마크
+      + '<button class="travellog-action-btn' + disabledClass + '"'
+        + disabledAttr
+        + ' onclick="event.stopPropagation(); toggleBookmark(this, ' + data.id + ')">'
+        + '<i class="bi bi-bookmark"></i>'
+      + '</button>'
+
+      // 공유(기업회원도 가능하게 둘 거면 disabled 처리 제외 가능)
+      + '<button class="travellog-action-btn" style="margin-left:auto;" onclick="event.stopPropagation(); shareTravellog(' + data.id + ')">'
+        + '<i class="bi bi-send"></i>'
+      + '</button>'
+
+    + '</div>'
+
+    + '<div class="travellog-card-content">'
+      + '<p class="travellog-text">'
+        + '<span class="username">' + data.username + '</span> '
+        + data.text
+      + '</p>'
+      + '<p class="travellog-date">' + data.date + '</p>'
+    + '</div>'
+
+  + '</div>';
 }
+
 
 // ==================== 신고 기능 ====================
 
@@ -1514,15 +1345,166 @@ function reportTravellogComment(commentId, commentText) {
 }
 
 // openTravellogModal 함수 수정 - 현재 ID 저장
-var originalOpenTravellogModal = openTravellogModal;
+// var originalOpenTravellogModal = openTravellogModal;
 openTravellogModal = function(id) {
     currentTravellogId = id;
-    var data = travellogData[id];
+//     var data = travellogData[id];
     if (data) {
         currentTravellogTitle = data.text ? data.text.substring(0, 50) + '...' : '';
     }
     originalOpenTravellogModal(id);
 };
+
+function goDetail(rcdNo) {
+  location.href = '${pageContext.request.contextPath}/community/travel-log/detail?rcdNo=' + rcdNo;
+}
+
+
+function showLoginOverlay() {
+	  const el = document.getElementById('loginOverlay');
+	  if (!el) return;
+	  el.classList.add('active');
+	  document.body.style.overflow = 'hidden';
+	}
+
+	function hideLoginOverlay() {
+	  const el = document.getElementById('loginOverlay');
+	  if (!el) return;
+	  el.classList.remove('active');
+	  document.body.style.overflow = '';
+	}
+
+	// 배경 클릭하면 닫히게(원하면 유지)
+	document.addEventListener('click', function(e){
+	  const overlay = document.getElementById('loginOverlay');
+	  if (!overlay) return;
+	  if (overlay.classList.contains('active') && e.target === overlay) {
+	    hideLoginOverlay();
+	  }
+	});
+
+	// ESC로 닫기(원하면 유지)
+	document.addEventListener('keydown', function(e){
+	  if (e.key === 'Escape') hideLoginOverlay();
+	});
+
+/* 	function goComment(rcdNo) {
+		  // 기업회원: 아예 동작 안 함(이미 disabled 걸지만 안전하게)
+		  if (isBusiness) return;
+
+		  // 비회원: 오버레이
+		  if (!isMember) {
+		    showLoginOverlay();
+		    return;
+		  }
+
+		  // 일반회원: 상세로 이동 + 댓글 위치로(원하면 #commentSection)
+		  location.href = contextPath + '/community/travel-log/detail?rcdNo=' + rcdNo + '#commentSection';
+		} */
+
+		function guardShare(e){
+			  if (e) e.preventDefault();
+
+			  // 기업회원: 공유 불가
+			  if (isBusiness) {
+			    // 조용히 막고 싶으면 return false만
+			    if (typeof showToast === 'function') showToast('기업회원은 공유할 수 없습니다.', 'info');
+			    return false;
+			  }
+
+			  // 비회원/일반회원: 공유 가능
+			  return true;
+			}
+
+		function handleShare(e, rcdNo){
+			  // 카드 클릭(goDetail)로 이벤트 전파되는 거 확실히 차단
+			  e.preventDefault();
+			  e.stopPropagation();
+			  if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+
+			  // 기업회원이면 안내만
+			  if (isBusiness) {
+			    if (typeof showToast === 'function') showToast('기업회원은 공유할 수 없습니다.', 'info');
+			    else alert('기업회원은 공유할 수 없습니다.');
+			    return;
+			  }
+
+			  // 비회원/일반회원: 링크 복사 실행
+			  shareTravellog(rcdNo);
+			}
+
+		console.log('showToast =', typeof window.showToast, window.showToast);
+		
+		<sec:authorize access="isAuthenticated()">
+		  <sec:authentication property="name" var="loginName"/>
+		</sec:authorize>
+		
+		document.addEventListener('DOMContentLoaded', function () {
+
+			  // 로그인 아이디(ROLE_MEMBER일 때만 의미 있음)
+			   const LOGIN_MEM_ID = '${loginName != null ? loginName : ""}';
+
+			  // ✅ 탭 클릭 이벤트 (여기서 한 번만!)
+			  document.querySelectorAll('.travellog-filter').forEach(tab => {
+			    tab.addEventListener('click', function () {
+			      document.querySelectorAll('.travellog-filter').forEach(t => t.classList.remove('active'));
+			      this.classList.add('active');
+
+			      const filter = this.dataset.filter;
+			      applyFilter(filter, LOGIN_MEM_ID);
+			    });
+			  });
+
+			  // 페이지 첫 진입 시 기본 all 적용(선택사항)
+			  applyFilter('all', LOGIN_MEM_ID);
+			});
+
+			function applyFilter(filter, LOGIN_MEM_ID) {
+			  const grid = document.getElementById('travellogGrid');
+			  if (!grid) return;
+
+			  const cards = Array.from(grid.querySelectorAll('.travellog-card'));
+
+			  // 전부 보이게 초기화
+			  cards.forEach(c => c.style.display = 'block');
+
+			  if (filter === 'my-spot') {
+			    cards.forEach(card => {
+			      if ((card.dataset.writer || '').trim() !== LOGIN_MEM_ID) {
+			        card.style.display = 'none';
+			      }
+			    });
+			    return;
+			  }
+
+			  if (filter === 'popular-bookmark') {
+			    sortCards(grid, cards, 'bookmark');
+			    return;
+			  }
+
+			  if (filter === 'popular-spot') {
+			    sortCards(grid, cards, 'like');
+			    return;
+			  }
+
+			  // all → 그대로
+			}
+
+			function sortCards(grid, cards, type) {
+			  const key = (type === 'like') ? 'like' : 'bookmark';
+
+			  cards.sort((a, b) => {
+			    const aVal = parseInt(a.dataset[key] || 0, 10);
+			    const bVal = parseInt(b.dataset[key] || 0, 10);
+			    return bVal - aVal;
+			  }).forEach(card => grid.appendChild(card));
+			}
+			
+			console.log('LOGIN_MEM_ID', LOGIN_MEM_ID);
+			console.log('first writer', document.querySelector('.travellog-card')?.dataset.writer);
+
+
+
 </script>
 
 <c:set var="pageJs" value="community" />

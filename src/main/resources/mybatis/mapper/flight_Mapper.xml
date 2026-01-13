@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.flight.mapper.IFlightMapper">
+
+	<!-- 공항 정보 등록 -->
+	<insert id="registerAirport" parameterType="kr.or.ddit.mohaeng.vo.AirportVO" useGeneratedKeys="true">
+		<selectKey keyProperty="airportNo" resultType="int" order="BEFORE">
+			select seq_airport.nextval from dual
+		</selectKey>
+		insert into airport(
+			airport_no, airport_nm, airport_id, city_name
+		)values(
+			#{airportNo}, #{airportNm}, #{airportId}, #{airportNm}
+		)
+	</insert>
+
+	<!-- 항공사 정보 등록 -->
+	<insert id="registerAirline" parameterType="kr.or.ddit.mohaeng.vo.AirlineVO">
+		insert into airline(
+			airline_id, airline_nm
+		)values(
+			#{airlineId}, #{airlineNm}
+		)
+	</insert>
+
+	<!-- 공항 목록 불러오기 -->
+	<select id="getAirportList" resultType="kr.or.ddit.mohaeng.vo.AirportVO">
+		select
+			airport_no, airport_nm, iata_code, city_name, airport_id
+		from airport
+		order by airport_no
+	</select>
+	
+	<!-- 항공사 목록 불러오기 -->
+	<select id="getAirlineList" resultType="kr.or.ddit.mohaeng.vo.AirlineVO">
+		select
+			airline_id, airline_nm, iata_code
+		from airline
+	</select>
+
+	<!-- 공항 정보 불러오기 -->
+	<select id="selectAirline" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.AirlineVO">
+		select
+			airline_id, airline_nm, iata_code
+		from airline
+		where airline_nm = #{airlineNm}
+	</select>
+	
+	<!-- 결제자 정보 불러오기 -->
+	<select id="getPayPerson" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.MemberVO">
+		select
+			m.mem_no, m.mem_name, m.mem_email, m.point, mu.tel
+		from member m left outer join mem_user mu on(m.mem_no = mu.mem_no)
+		where mem_id = #{memId}
+	</select>
+	
+	<!-- 항공권 추가 -->
+	<insert id="insertFlight" parameterType="kr.or.ddit.mohaeng.vo.FlightProductVO" useGeneratedKeys="true">
+		<selectKey keyProperty="fltProdId" resultType="int" order="BEFORE">
+			select seq_flight_product.nextval from dual
+		</selectKey>
+		INSERT INTO flight_product (
+		    flt_prod_id, flight_symbol, dep_airport_id, arr_airport_id
+		    , dep_time, arr_time, domestic_days, start_dt, end_dt
+		    , checked_baggage, carry_on_baggage, extra_baggage_price, airline_id
+		) VALUES (
+		    #{fltProdId}, #{flightSymbol}, #{depAirportId}, #{arrAirportId},
+	        #{depTime}, #{arrTime}, #{domesticDays}, #{startDt}, #{endDt},
+	        #{checkedBaggage}, #{carryOnBaggage}, #{extraBaggagePrice}, #{airlineId}
+		)
+	</insert>
+	
+	<!-- 예약번호 사용 -->
+	<select id="getReserveNo" resultType="long">
+		SELECT TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD') || LPAD(seq_flight_reservation.NEXTVAL, 8, '0')) 
+    	FROM DUAL
+	</select>
+	
+	<!-- 예약 정보 추가 -->
+	<insert id="insertFlightReservation" parameterType="kr.or.ddit.mohaeng.vo.FlightReservationVO" useGeneratedKeys="true">
+		<selectKey keyProperty="reserveNo" resultType="long" order="BEFORE">
+			SELECT TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD') || LPAD(seq_flight_reservation.NEXTVAL, 8, '0')) 
+    		FROM DUAL
+		</selectKey>
+		INSERT INTO flight_reservation (
+		    reserve_no, mem_no, pay_no, flt_prod_id, total_price
+		) VALUES (
+		    #{reserveNo}, #{memNo}, #{payNo}, #{fltProdId}, #{totalPrice}
+		)
+	</insert>
+	
+	<!-- 항공 이용약관 동의 추가 -->
+	<insert id="insertFlightAgree">
+		INSERT INTO flight_resv_agree (
+		    reserve_no, ticket_purch_agree_yn, privacy_coll_agree_yn
+		    , cancel_refund_agree_yn , mkt_recv_agree_yn , reg_dt
+		) VALUES (
+			#{reserveNo}, 'Y', 'Y'
+			, 'Y', #{mktRecvAgreeYn}, sysdate
+		)
+	</insert>
+	
+	<!-- 탑승객 정보 추가 -->
+	<insert id="insertPassengers" parameterType="kr.or.ddit.mohaeng.vo.FlightPassengersVO" useGeneratedKeys="true">
+		<selectKey keyProperty="passengerId" resultType="int" order="BEFORE">
+			select seq_flight_passengers from dual
+		</selectKey>
+		INSERT INTO flight_passengers (
+		    passenger_id, last_name, first_name, birth_date
+		    , gender, passengers_type, baggage_price
+		    , extra_baggage, flight_seat, reserve_no
+		) VALUES (
+			#{passengerId}, #{lastName}, #{firstName}, #{birthDate}
+		    , #{gender}, #{passengersType}, #{baggagePrice}
+		    , #{extraBaggage}, #{flightSeat}, #{reserveNo}
+		)
+	</insert>
+	
+	
+	
+</mapper>

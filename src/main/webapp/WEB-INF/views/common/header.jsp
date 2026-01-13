@@ -10,6 +10,12 @@
     <meta name="description" content="모행 - AI 기반 개인 맞춤형 관광 서비스 플랫폼">
     <title>모행 - ${pageTitle != null ? pageTitle : '나만의 여행을 계획하세요'}</title>
 
+	<!-- axios -->
+	<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+	<!-- 토스페이먼츠 cdn -->
+	<script src="https://js.tosspayments.com/v2/standard"></script>
+
     <!-- Context Path Meta Tag -->
     <meta name="context-path" content="${pageContext.request.contextPath}">
 
@@ -35,8 +41,9 @@
     <c:if test="${not empty pageCss}">
         <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/${pageCss}.css">
     </c:if>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 </head>
-<body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize> <sec:authorize access='isAnonymous()'>false</sec:authorize>">
+<body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize><sec:authorize access='isAnonymous()'>false</sec:authorize>">
     <!-- 헤더 -->
     <header class="header" id="header">
         <div class="header-container">
@@ -48,24 +55,55 @@
             <!-- 헤더 우측 영역 -->
             <div class="header-right">
                     <sec:authorize access="isAuthenticated()">
+					    <sec:authentication property="principal.memProfilePath" var="profileImgUrl"/>
                         <!-- 로그인 상태 - 알림 버튼 -->
                         <button class="header-notification-btn" onclick="toggleNotificationPanel()" title="알림">
                             <i class="bi bi-bell"></i>
                             <span class="notification-badge" id="notificationBadge">3</span>
                         </button>
                         <!-- 로그인 상태 - 마이페이지 링크 -->
-                        <a href="${pageContext.request.contextPath}/mypage/profile" class="header-user-link">
-                            <span class="user-avatar">
-                                    <sec:authorize access="hasAuthority('BUSINESS')">
-                                        <i class="bi bi-building"></i>
-                                    </sec:authorize>
-                                    <sec:authorize access="hasAuthority('MEMBER')">
-                                        <i class="bi bi-person"></i>
-                                    </sec:authorize>
-                            </span>
-                            <span class="user-name"><sec:authentication property="principal.username"/>님</span>
-                        </a>
-                    </sec:authorize>
+							<sec:authorize access="hasRole('BUSINESS')">
+							    <a href="${pageContext.request.contextPath}/mypage/business/profile"
+							       class="header-user-link">
+							        <span class="user-avatar">
+							            <c:choose>
+							                <c:when test="${not empty profileImgUrl}">
+							                    <img src="<c:url value='/upload${profileImgUrl}' />"
+							                         class="profile-img-render"
+							                         alt="프로필 이미지">
+							                </c:when>
+							                <c:otherwise>
+							                    <i class="bi bi-building"></i>
+							                </c:otherwise>
+							            </c:choose>
+							        </span>
+							        <span class="user-name">
+							            <sec:authentication property="principal.username"/>님
+							        </span>
+							    </a>
+							</sec:authorize>
+							
+							<sec:authorize access="hasRole('MEMBER')">
+							    <a href="${pageContext.request.contextPath}/mypage/profile"
+							       class="header-user-link">
+							        <span class="user-avatar">
+							            <c:choose>
+							                <c:when test="${not empty profileImgUrl}">
+							                    <img src="<c:url value='/upload${profileImgUrl}' />"
+							                         class="profile-img-render"
+							                         alt="프로필 이미지">
+							                </c:when>
+							                <c:otherwise>
+							                    <i class="bi bi-person"></i>
+							                </c:otherwise>
+							            </c:choose>
+							        </span>
+							        <span class="user-name">
+							            <sec:authentication property="principal.username"/>님
+							        </span>
+							    </a>
+							</sec:authorize>
+						</sec:authorize>
                     <sec:authorize access="isAnonymous()">
                         <!-- 비로그인 상태 -->
                         <a href="${pageContext.request.contextPath}/member/login" class="btn btn-text btn-sm">
@@ -102,21 +140,31 @@
                 <div class="side-menu-user">
                     <div class="side-menu-user-info">
                         <span class="side-menu-avatar">
-                                <sec:authorize access="hasAuthority('BUSINESS')">
-                                    <i class="bi bi-building"></i>
-                                </sec:authorize>
-                                <sec:authorize access="hasAuthority('MEMBER')">
-                                    <i class="bi bi-person"></i>
-                                </sec:authorize>
+							    <c:choose>
+							        <c:when test="${not empty profileImgUrl}">
+							            <img src="<c:url value='/upload${profileImgUrl}' />"
+							                 class="profile-img-render"
+							                 alt="프로필 이미지">
+							        </c:when>
+							        <c:otherwise>
+							            <sec:authorize access="hasRole('BUSINESS')">
+							                <i class="bi bi-building"></i>
+							            </sec:authorize>
+							            <sec:authorize access="hasRole('MEMBER')">
+							                <i class="bi bi-person"></i>
+							            </sec:authorize>
+							        </c:otherwise>
+							    </c:choose>
                         </span>
                         <div class="side-menu-user-detail">
                             <span class="side-menu-user-name"><sec:authentication property="principal.username"/>님</span>
                             <span class="side-menu-user-type">
-                                    <sec:authorize access="hasAuthority('BUSINESS')">기업회원</sec:authorize>
-                                    <sec:authorize access="hasAuthority('MEMBER')">일반회원</sec:authorize>
+                                    <sec:authorize access="hasRole('BUSINESS')">기업회원</sec:authorize>
+                                    <sec:authorize access="hasRole('MEMBER')">일반회원</sec:authorize>
                             </span>
                         </div>
                     </div>
+                    
                     <a href="${pageContext.request.contextPath}/member/logout" class="side-menu-logout">
                         <i class="bi bi-box-arrow-right"></i>
                     </a>
@@ -133,6 +181,7 @@
         <div class="side-menu-body">
             <!-- 일정 계획 (기업회원은 표시하지 않음) -->
                 <div class="side-menu-section">
+                	<sec:authorize access="!isAuthenticated() or hasRole('MEMBER')">
                     <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
                         <span><i class="bi bi-calendar3 me-2"></i>일정 계획</span>
                         <i class="bi bi-chevron-down"></i>
@@ -141,7 +190,7 @@
                         <a href="${pageContext.request.contextPath}/schedule/search" class="side-menu-item">
                             <i class="bi bi-calendar-plus me-2"></i>일정 계획
                         </a>
-	            <sec:authorize access="hasAuthority('MEMBER')">
+	            <sec:authorize access="hasRole('MEMBER')">
                             <a href="${pageContext.request.contextPath}/schedule/my" class="side-menu-item">
                                 <i class="bi bi-calendar-check me-2"></i>내 일정
                             </a>
@@ -150,6 +199,7 @@
                             </a>
                         </sec:authorize>
                     </div>
+                    </sec:authorize>
                 </div>
 
 
@@ -160,7 +210,7 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="side-menu-section-content">
-                    <sec:authorize access="hasAuthority('BUSINESS')">
+                    <sec:authorize access="hasRole('BUSINESS')">
                         <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item">
                             <i class="bi bi-gear me-2"></i>상품 관리
                         </a>
@@ -171,7 +221,7 @@
                     <a href="${pageContext.request.contextPath}/product/accommodation" class="side-menu-item">
                         <i class="bi bi-building me-2"></i>숙박
                     </a>
-                    <a href="${pageContext.request.contextPath}/product/tour" class="side-menu-item">
+                    <a href="${pageContext.request.contextPath}/tour" class="side-menu-item">
                         <i class="bi bi-ticket-perforated me-2"></i>투어/체험/티켓
                     </a>
                 </div>
@@ -184,7 +234,7 @@
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="side-menu-section-content">
-                     <sec:authorize access="hasAuthority('MEMBER')">
+                     <sec:authorize access="hasRole('MEMBER')">
                         <a href="${pageContext.request.contextPath}/community/talk" class="side-menu-item">
                             <i class="bi bi-chat-dots me-2"></i>여행톡
                         </a>
@@ -203,7 +253,7 @@
                         <i class="bi bi-chevron-down"></i>
                     </div>
                     <div class="side-menu-section-content">
-                            <sec:authorize access="hasAuthority('BUSINESS')">
+                            <sec:authorize access="hasRole('BUSINESS')">
                                 <a href="${pageContext.request.contextPath}/mypage/business/dashboard" class="side-menu-item">
                                     <i class="bi bi-speedometer2 me-2"></i>대시보드
                                 </a>
@@ -226,7 +276,7 @@
                                     <i class="bi bi-chat-dots me-2"></i>운영자 문의
                                 </a>
                             </sec:authorize>
-                            <sec:authorize access="hasAuthority('MEMBER')">
+                            <sec:authorize access="hasRole('MEMBER')">
                                 <a href="${pageContext.request.contextPath}/mypage/profile" class="side-menu-item">
                                     <i class="bi bi-person me-2"></i>회원 정보 수정
                                 </a>

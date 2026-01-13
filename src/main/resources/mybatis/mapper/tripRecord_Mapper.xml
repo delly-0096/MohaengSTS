@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.ddit.mohaeng.community.travellog.record.mapper.ITripRecordMapper">
+
+    <!-- 목록 COUNT -->
+    <select id="selectTripRecordListCount" parameterType="map" resultType="long">
+        SELECT COUNT(*)
+        FROM TRIP_RECORD tr
+        WHERE 1=1
+          <if test="keyword != null and keyword != ''">
+            AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%' OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
+          </if>
+
+          <!-- 비로그인: PUBLIC만 / 로그인: PUBLIC + 내 글(PRIVATE 허용) -->
+          <if test="loginMemNo == null">
+            AND tr.OPEN_SCOPE_CD = 'PUBLIC'
+          </if>
+          <if test="loginMemNo != null">
+            AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
+          </if>
+
+          <if test="openScopeCd != null and openScopeCd != ''">
+            AND tr.OPEN_SCOPE_CD = #{openScopeCd}
+          </if>
+    </select>
+
+    <!-- 목록 -->
+    <!-- 목록 -->
+<select id="selectTripRecordList"
+        parameterType="map"
+        resultType="kr.or.ddit.mohaeng.vo.TripRecordListVO">
+
+    SELECT
+        tr.RCD_NO        AS rcdNo,
+        tr.RCD_TITLE     AS rcdTitle,
+        tr.REG_DT        AS regDt,
+        tr.MEM_NO        AS memNo,
+        m.MEM_ID         AS memId,
+        tr.VIEW_CNT      AS viewCnt,
+        tr.OPEN_SCOPE_CD AS openScopeCd,
+        tr.LOC_CD        AS locCd,
+        mu.NICKNAME      AS nickname,   
+
+        tr.ATTACH_NO     AS attachNo,
+        afd.FILE_PATH    AS coverPath,
+
+        NVL(lk.like_cnt, 0)   AS likeCount,
+        NVL(cm.cmnt_cnt, 0)   AS commentCount,
+        NVL(bm.bmk_cnt, 0)    AS bookmarkCount
+
+    FROM TRIP_RECORD tr
+    JOIN MEMBER m
+      ON m.MEM_NO = tr.MEM_NO
+	LEFT JOIN MEM_USER mu            -- ✅ 추가 (일반회원만 존재할 수 있으니 LEFT JOIN)
+  ON mu.MEM_NO = m.MEM_NO
+  
+    <!-- 1) 커버파일 1개(file_no 최소값) 뽑기: ATTACH + 사용중 -->
+    LEFT JOIN (
+        SELECT attach_no,
+               MIN(file_no) AS file_no
+        FROM ATTACH_FILE_DETAIL
+        WHERE use_yn = 'Y'
+          AND file_gb_cd = 'ATTACH'
+        GROUP BY attach_no
+    ) afd_pick
+      ON afd_pick.attach_no = tr.ATTACH_NO
+
+    <!-- 2) 실제 파일 경로(FILE_PATH) 가져오기 위해 afd 조인(이게 없어서 ORA-00904 났던 것) -->
+    LEFT JOIN ATTACH_FILE_DETAIL afd
+      ON afd.ATTACH_NO = afd_pick.ATTACH_NO
+     AND afd.FILE_NO   = afd_pick.FILE_NO
+     AND afd.USE_YN    = 'Y'
+
+    LEFT JOIN (
+        SELECT LIKES_KEY, COUNT(*) AS like_cnt
+        FROM LIKES
+        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
+        GROUP BY LIKES_KEY
+    ) lk
+      ON lk.LIKES_KEY = tr.RCD_NO
+
+    LEFT JOIN (
+        SELECT TARGET_NO, COUNT(*) AS cmnt_cnt
+        FROM COMMENTS
+        WHERE TARGET_TYPE = 'TRIP_RECORD'
+        GROUP BY TARGET_NO
+    ) cm
+      ON cm.TARGET_NO = tr.RCD_NO
+
+    LEFT JOIN (
+        SELECT PRDT_NO, COUNT(*) AS bmk_cnt
+        FROM BOOKMARK
+        WHERE BMK_TYPE = 'TRIP_RECORD'
+          AND DEL_YN = 'N'
+        GROUP BY PRDT_NO
+    ) bm
+      ON bm.PRDT_NO = tr.RCD_NO
+
+    WHERE 1=1
+      <if test="keyword != null and keyword != ''">
+        AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
+             OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
+      </if>
+
+      <!-- 비로그인: PUBLIC만 / 로그인: PUBLIC + 내 글(PRIVATE 허용) -->
+      <if test="loginMemNo == null">
+        AND tr.OPEN_SCOPE_CD = 'PUBLIC'
+      </if>
+      <if test="loginMemNo != null">
+        AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
+      </if>
+
+      <if test="openScopeCd != null and openScopeCd != ''">
+        AND tr.OPEN_SCOPE_CD = #{openScopeCd}
+      </if>
+
+    ORDER BY tr.RCD_NO DESC
+    OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
+</select>
+
+
+    <!-- 상세 -->
+    <select id="selectTripRecordDetail" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.TripRecordDetailVO">
+        SELECT
+            tr.RCD_NO        AS rcdNo,
+            tr.SCHDL_NO      AS schdlNo,
+            tr.MEM_NO        AS memNo,
+            m.MEM_ID         AS memId,
+            tr.RCD_TITLE     AS rcdTitle,
+            tr.RCD_CONTENT   AS rcdContent,
+            tr.VIEW_CNT      AS viewCnt,
+            tr.TRIP_DAYS_CD  AS tripDaysCd,
+            tr.LOC_CD        AS locCd,
+            tr.ATTACH_NO     AS attachNo,
+            tr.REG_DT        AS regDt,
+            tr.START_DT      AS startDt,
+            tr.END_DT        AS endDt,
+            tr.OPEN_SCOPE_CD AS openScopeCd,
+            tr.MAP_DISP_YN   AS mapDispYn,
+            tr.REPLY_ENBL_YN AS replyEnblYn,
+            tr.ATTACH_NO     AS attachNo,
+        	afd.FILE_PATH    AS coverPath,
+        	 mu.NICKNAME      AS nickname,  
+
+            -- counts
+            (SELECT COUNT(*) FROM LIKES
+              WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO) AS likeCount,
+
+            (SELECT COUNT(*) FROM COMMENTS
+              WHERE TARGET_TYPE='TRIP_RECORD' AND TARGET_NO=tr.RCD_NO) AS commentCount,
+
+            (SELECT COUNT(*) FROM BOOKMARK
+              WHERE BMK_TYPE='TRIP_RECORD' AND PRDT_NO=tr.RCD_NO AND DEL_YN='N') AS bookmarkCount,
+
+            -- 상태 (비로그인 null이면 0으로)
+            CASE
+              WHEN #{loginMemNo} IS NULL THEN 0
+              WHEN EXISTS (
+                  SELECT 1 FROM LIKES
+                  WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO AND MEM_NO=#{loginMemNo}
+              ) THEN 1 ELSE 0
+            END AS liked,
+
+            CASE
+              WHEN #{loginMemNo} IS NULL THEN 0
+              WHEN EXISTS (
+                  SELECT 1 FROM BOOKMARK
+                  WHERE BMK_TYPE='TRIP_RECORD' AND PRDT_NO=tr.RCD_NO AND MEM_NO=#{loginMemNo} AND DEL_YN='N'
+              ) THEN 1 ELSE 0
+            END AS bookmarked
+
+        FROM TRIP_RECORD tr
+        JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
+        LEFT JOIN MEM_USER mu            -- ✅ 추가 (일반회원만 존재할 수 있으니 LEFT JOIN)
+  ON mu.MEM_NO = m.MEM_NO
+        
+        LEFT JOIN (
+        SELECT attach_no,
+               MIN(file_no) AS file_no
+        FROM ATTACH_FILE_DETAIL
+        WHERE use_yn = 'Y'
+        GROUP BY attach_no
+    ) afd_pick ON afd_pick.attach_no = tr.attach_no
+
+    LEFT JOIN ATTACH_FILE_DETAIL afd
+           ON afd.attach_no = afd_pick.attach_no
+          AND afd.file_no   = afd_pick.file_no
+        
+        WHERE tr.RCD_NO = #{rcdNo}
+
+          <!-- 비공개: 작성자만 -->
+          <if test="loginMemNo == null">
+            AND tr.OPEN_SCOPE_CD = 'PUBLIC'
+          </if>
+          <if test="loginMemNo != null">
+            AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
+          </if>
+    </select>
+
+    <update id="increaseViewCnt" parameterType="long">
+        UPDATE TRIP_RECORD
+        SET VIEW_CNT = NVL(VIEW_CNT, 0) + 1
+        WHERE RCD_NO = #{rcdNo}
+    </update>
+
+    <select id="selectWriterMemNo" parameterType="long" resultType="long">
+        SELECT MEM_NO FROM TRIP_RECORD WHERE RCD_NO = #{rcdNo}
+    </select>
+
+    <!-- INSERT: 시퀀스는 팀 규칙상 SEQ_TRIP_RECORD 필요 -->
+<!--     <insert id="insertTripRecord" parameterType="kr.or.ddit.mohaeng.vo.TripRecordVO">
+        <selectKey keyProperty="rcdNo" resultType="long" order="BEFORE">
+            SELECT SEQ_TRIP_RECORD.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO TRIP_RECORD (
+            RCD_NO, SCHDL_NO, MEM_NO, RCD_TITLE, RCD_CONTENT,
+            VIEW_CNT, TRIP_DAYS_CD, LOC_CD, ATTACH_NO,
+            REG_DT, START_DT, END_DT,
+            OPEN_SCOPE_CD, MAP_DISP_YN, REPLY_ENBL_YN
+        ) VALUES (
+            #{rcdNo}, #{schdlNo}, #{memNo}, #{rcdTitle}, #{rcdContent},
+            0, #{tripDaysCd}, #{locCd}, #{attachNo},
+            SYSDATE, #{startDt}, #{endDt},
+            #{openScopeCd}, #{mapDispYn}, #{replyEnblYn}
+        )
+    </insert> -->
+
+    <update id="updateTripRecord" parameterType="kr.or.ddit.mohaeng.vo.TripRecordVO">
+        UPDATE TRIP_RECORD
+        SET
+            SCHDL_NO      = #{schdlNo},
+            RCD_TITLE     = #{rcdTitle},
+            RCD_CONTENT   = #{rcdContent},
+            TRIP_DAYS_CD  = #{tripDaysCd},
+            LOC_CD        = #{locCd},
+            ATTACH_NO     = #{attachNo},
+            START_DT      = #{startDt},
+            END_DT        = #{endDt},
+            OPEN_SCOPE_CD = #{openScopeCd},
+            MAP_DISP_YN   = #{mapDispYn},
+            REPLY_ENBL_YN = #{replyEnblYn},
+            REG_DT        = REG_DT
+        WHERE RCD_NO = #{rcdNo}
+    </update>
+
+    <delete id="deleteTripRecord" parameterType="long">
+        DELETE FROM TRIP_RECORD WHERE RCD_NO = #{rcdNo}
+    </delete>
+    
+	<!-- TripRecordMapper.xml -->
+<insert id="insertTripRecord" parameterType="map">
+  <selectKey keyProperty="req.rcdNo" resultType="long" order="BEFORE">
+    SELECT SEQ_TRIP_RECORD.NEXTVAL FROM DUAL
+  </selectKey>
+
+  INSERT INTO TRIP_RECORD (
+    RCD_NO, SCHDL_NO, MEM_NO,
+    RCD_TITLE, RCD_CONTENT,
+    TRIP_DAYS_CD, LOC_CD, ATTACH_NO,
+    REG_DT, START_DT, END_DT,
+    OPEN_SCOPE_CD, MAP_DISP_YN, REPLY_ENBL_YN,
+    VIEW_CNT
+  ) VALUES (
+    #{req.rcdNo}, #{req.schdlNo}, #{memNo},
+    #{req.rcdTitle}, #{req.rcdContent},
+    #{req.tripDaysCd}, #{req.locCd}, #{req.attachNo},
+    SYSDATE, #{req.startDt}, #{req.endDt},
+    #{req.openScopeCd}, #{req.mapDispYn}, #{req.replyEnblYn},
+    0
+  )
+</insert>
+
+	
+<!-- nextConnNo -->
+<select id="nextConnNo" resultType="long">
+  SELECT SEQ_TRIP_RECORD_CONN.NEXTVAL FROM DUAL
+</select>
+
+<!-- TRIP_RECORD_SEQ -->
+<insert id="insertTripRecordSeq">
+  INSERT INTO TRIP_RECORD_SEQ (RCD_CONN_NO, RCD_NO, RCD_ORDER)
+  VALUES (#{connNo}, #{rcdNo}, #{order})
+</insert>
+
+<!-- TRIP_RECORD_TXT : PK는 SYS_GUID() -->
+<insert id="insertTripRecordTxt">
+  INSERT INTO TRIP_RECORD_TXT (RCT_TXT_NO, RCD_CONN_NO, TXT_CONN)
+  VALUES (RAWTOHEX(SYS_GUID()), #{connNo}, #{text})
+</insert>
+
+<!-- TRIP_RECORD_IMG : PK는 SYS_GUID(), attachNo는 RCD_IMG 컬럼 -->
+<insert id="insertTripRecordImg">
+  INSERT INTO TRIP_RECORD_IMG (RCD_IMG_NO, RCD_CONN_NO, RCD_IMG, RCD_IMG_DESC)
+  VALUES (RAWTOHEX(SYS_GUID()), #{connNo}, #{attachNo}, #{desc})
+</insert>
+
+<!-- 커버 attachNo -->
+<update id="updateCoverAttachNo">
+  UPDATE TRIP_RECORD
+     SET ATTACH_NO = #{attachNo}
+   WHERE RCD_NO = #{rcdNo}
+</update>
+
+<!-- ===== 첨부 저장 ===== -->
+<select id="nextAttachNo" resultType="long">
+  SELECT SEQ_ATTACH_FILE.NEXTVAL FROM DUAL
+</select>
+
+<select id="nextFileNo" resultType="long">
+  SELECT SEQ_ATTACH_FILE_DETAIL.NEXTVAL FROM DUAL
+</select>
+
+<insert id="insertAttachFile">
+  INSERT INTO ATTACH_FILE (ATTACH_NO, REG_ID, REG_DT)
+  VALUES (#{attachNo}, #{regId}, TO_CHAR(SYSDATE,'RR/MM/DD'))
+</insert>
+
+<insert id="insertAttachFileDetail">
+  INSERT INTO ATTACH_FILE_DETAIL
+  (FILE_NO, ATTACH_NO, FILE_NAME, FILE_ORIGINAL_NAME, FILE_EXT, FILE_SIZE,
+   FILE_PATH, FILE_GB_CD, MIMY_TYPE, USE_YN, REG_ID, REG_DT)
+  VALUES
+  (#{fileNo}, #{attachNo}, #{fileName}, #{originalName}, #{ext}, #{size},
+   #{path}, #{fileGbCd}, #{mimyType}, #{useYn}, #{regId}, SYSDATE)
+</insert>
+
+<insert id="insertHashtags">
+  INSERT ALL
+  <foreach collection="tags" item="tag">
+    INTO HASHTAG (HSTG_NO, RCD_NO, TAG_NAME, REG_DT)
+    VALUES (SEQ_HASHTAG.NEXTVAL, #{rcdNo}, #{tag}, SYSDATE)
+  </foreach>
+  SELECT 1 FROM DUAL
+</insert>
+
+
+
+
+
+    
+
+</mapper>

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.community.chat.mapper.IChatMapper">
+
+	<!-- 채팅방 생성 -->
+	<insert id="insertChatRoom" parameterType="kr.or.ddit.mohaeng.vo.ChatRoomVO">
+	    <selectKey keyProperty="chatId" resultType="int" order="BEFORE">
+        SELECT SEQ_CHAT_ROOM.NEXTVAL FROM DUAL
+    	</selectKey>
+		INSERT INTO CHAT_ROOM (
+				  CHAT_ID
+				  , CHAT_NAME
+				  , CHAT_CTGRY
+				  , CHAT_MAX
+				  , REG_ID
+				  , REG_DT
+		) VALUES (
+					#{chatId}
+				  , #{chatName}
+				  , #{chatCtgry}
+				  , #{chatMax}
+				  , #{regId}
+				  , SYSDATE	
+		)
+	</insert>
+	
+	<!-- 채팅방 HOST 생성 -->
+	<insert id="insertChatHost" parameterType="kr.or.ddit.mohaeng.vo.ChatUserVO">
+		INSERT INTO CHAT_USER (
+				  CHAT_ID
+				  , CHAT_USER_NO
+				  , JOINED_AT
+				  , ROLE
+		) VALUES (
+				 #{chatId}
+				  , #{chatUserNo}
+				  , SYSDATE
+				  , 'HOST'
+		)
+	</insert>
+
+	<!-- 채팅방 목록 조회 -->
+	<select id="selectChatRooms">
+		 SELECT
+		        R.CHAT_ID        AS chatId
+		      , R.CHAT_NAME      AS chatName
+		      , R.CHAT_CTGRY     AS chatCtgry
+		      , C.CD_NAME        AS chatCtgryName
+		      , R.CHAT_MAX       AS chatMax
+		      , NVL(CNT.USER_CNT, 0) AS currentUsers
+		      , R.REG_ID         AS createdById
+		      , U.NICKNAME       AS createdByNickname
+		    FROM CHAT_ROOM R
+		    LEFT JOIN CODE C
+		      ON R.CHAT_CTGRY = C.CD
+		     AND C.CDGR = 'CHAT_CATEGORY'
+		    LEFT JOIN (
+		        SELECT CHAT_ID, COUNT(*) AS USER_CNT
+		        FROM CHAT_USER
+		        GROUP BY CHAT_ID
+		    ) CNT
+		      ON R.CHAT_ID = CNT.CHAT_ID
+		    LEFT JOIN MEMBER M
+		      ON R.REG_ID = M.MEM_ID
+		    LEFT JOIN MEM_USER U
+		      ON M.MEM_NO = U.MEM_NO
+		<where>
+			<if test="category != null and category != ''">
+				R.CHAT_CTGRY = #{category}
+			</if>
+		</where> 
+		ORDER BY R.REG_DT DESC
+		
+	</select>
+	
+	<!--  채팅방 중복 입장 체크 -->
+	<select id="existsChatUser">
+		SELECT COUNT(*)
+		FROM CHAT_USER
+		WHERE CHAT_ID = #{chatId}
+		  AND CHAT_USER_NO = #{memNo}
+	</select>
+	
+	<!-- 채팅방 입장 시 현재 인원 수 체크 -->
+	<select id="countChatUsers">
+		SELECT COUNT(*)
+		FROM CHAT_USER
+		WHERE CHAT_ID = #{chatId}
+	</select>
+	
+	<!--  채팅방 입장 시 최대 인원 수 체크 -->
+	<select id="selectChatMax">
+		SELECT CHAT_MAX
+		FROM CHAT_ROOM
+		WHERE CHAT_ID = #{chatId}
+	</select>
+	
+	<!--  채팅방 입장 시 insert -->
+	<insert id="insertChatUser">
+		INSERT INTO CHAT_USER (
+			  CHAT_ID
+			  , CHAT_USER_NO
+			  , JOINED_AT
+			  , STATUS
+			) VALUES (
+			  #{chatId}
+			  , #{memNo}
+			  , SYSDATE
+			  , 'ONLINE'
+			)
+	</insert>
+</mapper>

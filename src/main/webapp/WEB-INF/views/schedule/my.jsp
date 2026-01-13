@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <c:set var="pageTitle" value="내 일정" />
 <c:set var="pageCss" value="schedule" />
@@ -64,6 +66,51 @@
         <!-- 일정 그리드 -->
         <div class="schedule-grid" id="scheduleGrid">
             <!-- 다가오는 여행 -->
+            <c:forEach var="schedule" items="${scheduleList}">
+                <div class="schedule-card" data-status="upcoming" data-schdl-no="${schedule.schdlNo}">
+
+                    <div class="schedule-card-image">
+                        <img src="${schedule.thumbnail}" alt="썸네일">
+                        <span class="schedule-card-status upcoming">D-8</span>
+                        <button class="schedule-card-bookmark ${schedule.bkmkYn eq 'Y' ? 'active' : ''}" onclick="toggleScheduleBookmark(this)">
+                            <i class="bi ${schedule.bkmkYn eq 'Y' ? 'bi-bookmark-fill' : 'bi-bookmark'}"></i>
+                        </button>
+                    </div>
+                    <div class="schedule-card-body">
+                        <h3 class="schedule-card-title">${schedule.schdlNm}</h3>
+                        <div class="schedule-card-dates">
+                            <i class="bi bi-calendar3"></i>
+                            <span>
+                                ${fn:replace(schedule.schdlStartDt, '-', '.')} - 
+                                ${fn:replace(schedule.schdlEndDt, '-', '.')}
+                            </span>
+                            <span class="text-muted">
+                                (${schedule.tripDuration }박 ${schedule.tripDuration + 1}일)
+                            </span>
+                        </div>
+                        <div class="schedule-card-places">
+                            <c:forEach var="name" items="${schedule.displayPlaceNames}">
+                                <span class="place-tag">${name}</span>
+                            </c:forEach>
+                            <c:if test="${schedule.placeCnt > 2}">
+                                <span class="place-tag">+${schedule.placeCnt -2}</span>
+                            </c:if>
+                        </div>
+                    </div>
+                    <div class="schedule-card-footer">
+                        <a href="${pageContext.request.contextPath}/schedule/view/${schedule.schdlNo}" class="btn btn-outline btn-sm">
+                            상세보기
+                        </a>
+                        <a href="${pageContext.request.contextPath}/schedule/planner/${schedule.schdlNo}" class="btn btn-primary btn-sm">
+                            수정하기
+                        </a>
+                    </div>
+                </div>
+            </c:forEach>
+
+
+
+
             <div class="schedule-card" data-status="upcoming">
                 <div class="schedule-card-image">
                     <img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=300&fit=crop&q=80" alt="제주도">
@@ -476,52 +523,71 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 일정 데이터 직접 정의 (오늘: 2025-12-24 기준)
     var contextPath = '${pageContext.request.contextPath}';
+    
     var calendarEvents = [
+        <c:forEach var="schedule" items="${scheduleList}" varStatus="s">
         {
-            id: '1',
-            title: '제주도 힐링 여행',
-            start: '2026-01-01',
-            end: '2026-01-05',
-            backgroundColor: '#4A90D9',
-            borderColor: '#357ABD',
-            textColor: '#ffffff',
+            id: '${schedule.schdlNo}',
+            title: '${schedule.schdlNm}',
+            start: '${schedule.schdlStartDt}',
+            end: '${schedule.calendarEndDt}',
+            allDay: true,
+            // backgroundColor: '$schedule.backgroundColor',
+            // borderColor: '$schedule.borderColor',
+            // textColor: '$schedule.textColor',
             extendedProps: {
-                status: 'upcoming',
-                location: '제주도',
-                people: 2,
+                status: '${schedule.schdlStatus}',
+                location: '${schedule.rgnNm}',
+                people: ${schedule.travelerCnt},
                 url: contextPath + '/schedule/view/1'
             }
-        },
-        {
-            id: '2',
-            title: '오사카 맛집 투어',
-            start: '2026-01-15',
-            end: '2026-01-19',
-            backgroundColor: '#4A90D9',
-            borderColor: '#357ABD',
-            textColor: '#ffffff',
-            extendedProps: {
-                status: 'upcoming',
-                location: '일본 오사카',
-                people: 2,
-                url: contextPath + '/schedule/view/2'
-            }
-        },
-        {
-            id: '3',
-            title: '방콕 휴양 여행',
-            start: '2025-12-10',
-            end: '2025-12-15',
-            backgroundColor: '#9ca3af',
-            borderColor: '#6b7280',
-            textColor: '#ffffff',
-            extendedProps: {
-                status: 'completed',
-                location: '태국 방콕',
-                people: 3,
-                url: contextPath + '/schedule/view/3'
-            }
-        }
+        }<c:if test="${!s.last}">,</c:if>
+        </c:forEach>
+        // {
+        //     id: '1',
+        //     title: '제주도 힐링 여행',
+        //     start: '2026-01-01',
+        //     end: '2026-01-05',
+        //     backgroundColor: '#4A90D9',
+        //     borderColor: '#357ABD',
+        //     textColor: '#ffffff',
+        //     extendedProps: {
+        //         status: 'upcoming',
+        //         location: '제주도',
+        //         people: 2,
+        //         url: contextPath + '/schedule/view/1'
+        //     }
+        // },
+        // {
+        //     id: '2',
+        //     title: '오사카 맛집 투어',
+        //     start: '2026-01-15',
+        //     end: '2026-01-19',
+        //     backgroundColor: '#4A90D9',
+        //     borderColor: '#357ABD',
+        //     textColor: '#ffffff',
+        //     extendedProps: {
+        //         status: 'upcoming',
+        //         location: '일본 오사카',
+        //         people: 2,
+        //         url: contextPath + '/schedule/view/2'
+        //     }
+        // },
+        // {
+        //     id: '3',
+        //     title: '방콕 휴양 여행',
+        //     start: '2025-12-10',
+        //     end: '2025-12-15',
+        //     backgroundColor: '#9ca3af',
+        //     borderColor: '#6b7280',
+        //     textColor: '#ffffff',
+        //     extendedProps: {
+        //         status: 'completed',
+        //         location: '태국 방콕',
+        //         people: 3,
+        //         url: contextPath + '/schedule/view/3'
+        //     }
+        // }
     ];
 
     console.log('캘린더 이벤트 개수:', calendarEvents.length);
@@ -583,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<div class="schedule-tooltip-actions">' +
                     '<a href="' + props.url + '" class="btn btn-outline btn-sm">상세보기</a>' +
                     (props.status !== 'completed' ?
-                        '<a href="' + contextPath + '/schedule/planner?id=' + event.id + '" class="btn btn-primary btn-sm">수정하기</a>' :
+                        '<a href="' + contextPath + '/schedule/planner/' + event.id + '" class="btn btn-primary btn-sm">수정하기</a>' :
                         '<a href="' + contextPath + '/community/travel-log/write?schedule=' + event.id + '" class="btn btn-secondary btn-sm">여행기록</a>') +
                 '</div>';
 
@@ -664,17 +730,32 @@ function filterSchedules(filter) {
     document.getElementById('scheduleGrid').style.display = visibleCount === 0 ? 'none' : 'grid';
 }
 
-function toggleScheduleBookmark(button) {
+async function toggleScheduleBookmark(button) {
     button.classList.toggle('active');
     const icon = button.querySelector('i');
+
+    let bkmkYn = 'N';
 
     if (button.classList.contains('active')) {
         icon.className = 'bi bi-bookmark-fill';
         showToast('북마크에 추가되었습니다.', 'success');
+        bkmkYn = 'Y';
     } else {
         icon.className = 'bi bi-bookmark';
         showToast('북마크가 해제되었습니다.', 'info');
+        bkmkYn = 'N';
     }
+    
+    await fetch('${pageContext.request.contextPath}/schedule/schbookmark/modify', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            schdlNo: button.closest('.schedule-card').dataset.schdlNo,
+            bkmkYn: bkmkYn
+        })
+    });
 }
 </script>
 

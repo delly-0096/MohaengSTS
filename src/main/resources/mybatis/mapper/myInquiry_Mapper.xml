@@ -183,4 +183,33 @@
 		ORDER BY c.CD
 	</select>
 
+<!-- 01/06 여기부터 추가함  -->
+
+	<!-- 첨부파일 목록 조회  -->
+	<select id="selectAttachFileList" parameterType="int" resultType="map">
+		select
+			afd.FILE_NO
+			,afd.FILE_ORIGINAL_NAME
+			,afd.FILE_EXT
+			,afd.FILE_SIZE
+			,afd.FILE_PATH
+		from INQUIRY i
+		inner join ATTACH_FILE_DETAIL afd on i.ATTACH_NO = afd.ATTACH_NO
+		where i.INQRY_NO = #{inqryNo}
+		  and afd.USE_YN = 'Y'
+		order by afd.REG_DT
+
+	</select>
+
+	<!-- 첨부파일 단건 조회 (다운로드용) -->
+	<select id="selectAttachFile" parameterType="int" resultType="map">
+		select
+			FILE_NO
+			,FILE_ORIGINAL_NAME
+			,FILE_PATH
+		from ATTACH_FILE_DETAIL
+		where FILE_NO=#{fileNo}
+		and USE_YN='Y'
+	</select>
+
 </mapper>

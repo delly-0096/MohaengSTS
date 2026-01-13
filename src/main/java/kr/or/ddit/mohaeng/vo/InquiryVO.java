@@ -1,6 +1,12 @@
 package kr.or.ddit.mohaeng.vo;
 
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.web.multipart.MultipartFile;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -20,7 +26,7 @@ public class InquiryVO {
     private String inqryCn;             // 문의내용
     private Integer inquiryTargetNo;    // 관련예약번호
     private String inqryEmail;          // 회원가입시이메일
-    private Integer attach1No;          // 첨부파일번호
+    private Integer attachNo;          	// 첨부파일번호
     private Date regDt;                 // 등록일자
     private Date modDt;                 // 수정일자
     private String delYn;               // 삭제여부
@@ -33,9 +39,15 @@ public class InquiryVO {
     // 조인으로 가져올 필드
     private String categoryName;        // 문의 유형명 (CODE.CD_NAME)
     private String memberName;          // 회원명 (MEMBER.MEM_NAME)
+    private String memId;
 
     // 화면 표시용
     private String regDtStr;            // 등록일 문자열
     private String replyDtStr;          // 답변일 문자열
+
+    private String filePath; // 추가: 파일 경로를 담을 변수 (DB의 FILE_PATH와 매핑)
+
+    private List<Map<String, Object>> attachFiles; // DB 조인 결과를 담을 리스트
+    private List<MultipartFile> files;
 
 }

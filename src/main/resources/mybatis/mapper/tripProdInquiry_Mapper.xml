@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.product.inquiry.mapper.ITripProdInquiryMapper">
+
+	<!-- 문의 페이징 조회 -->
+	<select id="getInquiryPaging" parameterType="map" resultType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+	    SELECT * FROM (
+	        SELECT ROWNUM AS RN, A.* FROM (
+	            SELECT i.PROD_INQRY_NO, i.TRIP_PROD_NO, i.INQUIRY_MEM_NO, i.INQUIRY_CTGRY,
+	                   i.PROD_INQRY_CN, i.INQRY_STATUS, i.SECRET_YN,
+	                   i.REG_DT, i.MOD_DT, i.DEL_YN, i.REPLY_CN, i.REPLY_MEM_NO, i.REPLY_DT,
+	                   u.NICKNAME AS INQUIRY_NICKNAME
+	            FROM TRIP_PROD_INQUIRY i
+	            LEFT JOIN MEM_USER u ON i.INQUIRY_MEM_NO = u.MEM_NO
+	            WHERE i.TRIP_PROD_NO = #{tripProdNo}
+	              AND i.DEL_YN = 'N'
+	            ORDER BY i.REG_DT DESC
+	        ) A
+	        <![CDATA[
+	        WHERE ROWNUM <= #{endRow}
+	    	]]>
+	    )
+        <![CDATA[
+	    WHERE RN > #{startRow}
+	    ]]>
+	</select>
+
+	<!-- 문의 총 개수 -->
+	<select id="getInquiryCount" parameterType="int" resultType="int">
+	    SELECT COUNT(*) FROM TRIP_PROD_INQUIRY
+	    WHERE TRIP_PROD_NO = #{tripProdNo} AND DEL_YN = 'N'
+	</select>
+	
+	<!-- 문의 단건 조회 (닉네임 포함) -->
+	<select id="getInquiryById" parameterType="int" resultType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+	    SELECT i.PROD_INQRY_NO, i.TRIP_PROD_NO, i.INQUIRY_MEM_NO, i.INQUIRY_CTGRY,
+	           i.PROD_INQRY_CN, i.INQRY_STATUS, i.SECRET_YN,
+	           i.REG_DT, i.MOD_DT, i.DEL_YN, i.REPLY_CN, i.REPLY_MEM_NO, i.REPLY_DT,
+	           u.NICKNAME AS INQUIRY_NICKNAME
+	    FROM TRIP_PROD_INQUIRY i
+	    LEFT JOIN MEM_USER u ON i.INQUIRY_MEM_NO = u.MEM_NO
+	    WHERE i.PROD_INQRY_NO = #{prodInqryNo}
+	</select>
+
+	<!-- 문의 등록 -->
+    <insert id="insertInquiry" parameterType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+        <selectKey keyProperty="prodInqryNo" resultType="int" order="BEFORE">
+            SELECT NVL(MAX(PROD_INQRY_NO), 0) + 1 FROM TRIP_PROD_INQUIRY
+        </selectKey>
+        INSERT INTO TRIP_PROD_INQUIRY (
+            PROD_INQRY_NO,
+            TRIP_PROD_NO,
+            INQUIRY_MEM_NO,
+            INQUIRY_CTGRY,
+            PROD_INQRY_CN,
+            INQRY_STATUS,
+            SECRET_YN,
+            REG_DT,
+            DEL_YN
+        ) VALUES (
+            #{prodInqryNo},
+            #{tripProdNo},
+            #{inquiryMemNo},
+            #{inquiryCtgry},
+            #{prodInqryCn},
+            'WAIT',
+            #{secretYn},
+            SYSDATE,
+            'N'
+        )
+    </insert>
+    
+    <!-- 문의 수정 -->
+	<update id="updateInquiry" parameterType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+	    UPDATE TRIP_PROD_INQUIRY
+	    SET INQUIRY_CTGRY = #{inquiryCtgry},
+	        PROD_INQRY_CN = #{prodInqryCn},
+	        SECRET_YN = #{secretYn},
+	        MOD_DT = SYSDATE
+	    WHERE PROD_INQRY_NO = #{prodInqryNo}
+	      AND INQUIRY_MEM_NO = #{inquiryMemNo}
+	      AND INQRY_STATUS = 'WAIT'
+	</update>
+	
+	<!-- 문의 삭제 (소프트 삭제) -->
+	<update id="deleteInquiry" parameterType="map">
+	    UPDATE TRIP_PROD_INQUIRY
+	    SET DEL_YN = 'Y',
+	        MOD_DT = SYSDATE
+	    WHERE PROD_INQRY_NO = #{prodInqryNo}
+	      AND INQUIRY_MEM_NO = #{inquiryMemNo}
+	      AND INQRY_STATUS = 'WAIT'
+	</update>
+	
+	<!-- 답변 등록 -->
+	<update id="insertReply" parameterType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+	    UPDATE TRIP_PROD_INQUIRY
+	    SET REPLY_CN = #{replyCn},
+	        REPLY_MEM_NO = #{replyMemNo},
+	        REPLY_DT = SYSDATE,
+	        INQRY_STATUS = 'DONE'
+	    WHERE PROD_INQRY_NO = #{prodInqryNo}
+	</update>
+	
+	<!-- 답변 수정 -->
+	<update id="updateReply" parameterType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+	    UPDATE TRIP_PROD_INQUIRY
+	    SET REPLY_CN = #{replyCn},
+	        REPLY_MOD_DT = SYSDATE
+	    WHERE PROD_INQRY_NO = #{prodInqryNo}
+	      AND REPLY_MEM_NO = #{replyMemNo}
+	</update>
+	
+	<!-- 답변 삭제 (답변 내용 초기화, 상태 변경) -->
+	<update id="deleteReply" parameterType="map">
+	    UPDATE TRIP_PROD_INQUIRY
+	    SET REPLY_CN = NULL,
+	        REPLY_MEM_NO = NULL,
+	        REPLY_DT = NULL,
+	        REPLY_MOD_DT = NULL,
+	        INQRY_STATUS = 'WAIT'
+	    WHERE PROD_INQRY_NO = #{prodInqryNo}
+	      AND REPLY_MEM_NO = #{replyMemNo}
+	</update>
+
+</mapper>

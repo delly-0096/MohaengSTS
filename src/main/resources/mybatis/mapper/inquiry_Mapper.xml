@@ -79,7 +79,7 @@
 	 <!-- 문의 목록 조회 (카테고리별) -->
 	<select id="selectInquiryListByCategory" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
 		select
-			i.INQRY_NO as inquryNo,
+			i.INQRY_NO as inqryNo,
 			i.INQRY_CTGRY_CD as inqryCtgryCd,
 			i.MEM_NO as memNo,
 			i.INQRY_STATUS as inqryStatus,
@@ -117,7 +117,7 @@
 
 	<!-- 문의 상세 조회 -->
 	<select id="selectInquiryDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
-		selct
+		select
 			i.INQRY_NO as inqryNo,
 			i.INQRY_CTGRY_CD as inqryCtgryCd,
 			i.MEM_NO as memNo,
@@ -144,7 +144,11 @@
 
 	<!-- 문의 등록 -->
 	<insert id="insertInquiry" parameterType="kr.or.ddit.mohaeng.vo.InquiryVO" useGeneratedKeys="true" keyProperty="inqryNo">
+	<selectKey keyProperty="inqryNo" resultType="int" order="BEFORE">
+		SELECT SEQ_INQUIRY.NEXTVAL FROM DUAL
+	</selectKey>
 		insert into INQUIRY(
+			INQRY_NO,
 			INQRY_CTGRY_CD,
 			MEM_NO,
 			INQRY_STATUS,
@@ -156,6 +160,7 @@
 			REG_DT,
 			DEL_YN
 		)values(
+			#{inqryNo},
 			#{inqryCtgryCd},
 			#{memNo},
 			#{inqryStatus},
@@ -164,22 +169,117 @@
 			#{inquiryTargetNo},
 			#{inqryEmail},
 			#{attachNo},
-			NOW(),
+			SYSDATE,
 			#{delYn}
 		)
 	</insert>
 
 	<!-- 문의 카테고리 목록 조회 -->
-	<select id="selectInquiryCategoryList" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+	<select id="selectInquiryCategoryList" resultType="kr.or.ddit.mohaeng.vo.CodeVO">
 		select
-			c.CD as cd,
-			c.CDGR as cdgr,
-			c.CD_NAME as cdName,
-			c.CD_DESC as cdDesc,
-			c.USE_YN as useYn
-		from CODE c
-		WHERE c.CDGR='INQUIRY_TYPE'
-		AND c.USE_YN = 'Y'
-		ORDER BY c.CD
+			CD,
+			CDGR,
+			CD_NAME,
+			CD_DESC,
+			USE_YN
+		from CODE
+		WHERE CDGR='INQRY_CAT'
+		AND USE_YN = 'Y'
+		ORDER BY CD
 	</select>
+
+	<!-- 첨부파일 정보 저장 -->
+	<insert id="insertAttachFile" parameterType="map">
+    <selectKey keyProperty="attachNo" resultType="int" order="BEFORE">
+        SELECT SEQ_ATTACH_FILE.NEXTVAL FROM DUAL
+    </selectKey>
+	    INSERT INTO ATTACH_FILE(
+	    	ATTACH_NO
+	    	,REG_ID
+			,REG_DT
+	    )VALUES(
+	    	#{attachNo}
+	    	,#{regId}
+	    	, SYSDATE
+	    )
+	</insert>
+
+	<!-- ATTACH_FILE_DETAIL 테이블에 파일 정보 저장 -->
+	<insert id="insertAttachFileDetail" parameterType="map" >
+		<selectKey keyProperty="fileNo" resultType="int" order="BEFORE">
+			SELECT SEQ_ATTACH_FILE_DETAIL.NEXTVAL FROM DUAL
+		</selectKey>
+
+		 INSERT INTO ATTACH_FILE_DETAIL (
+	        FILE_NO
+	        ,ATTACH_NO
+	        ,FILE_NAME
+	        ,FILE_ORIGINAL_NAME
+	        ,FILE_EXT
+	        ,FILE_SIZE
+	        ,FILE_PATH
+	        ,FILE_GB_CD
+			,MIMY_TYPE
+			,USE_YN
+			,REG_ID
+	        ,REG_DT
+	    ) VALUES (
+	        #{fileNo}
+	        ,#{attachNo}
+	        ,#{fileName}
+	        ,#{fileOriginalName}
+	        ,#{fileExt}
+	        ,#{fileSize}
+	        ,#{filePath}
+	        ,#{fileGbCd}
+	        ,#{mimyType}
+	        ,#{useYn}
+	        ,#{regId}
+	        ,SYSDATE
+	    )
+	</insert>
+
+
+	<!-- 문의 첨부파일 개수 업데이트 -->
+	<update id="updateInquiryAttachCount">
+	    UPDATE INQUIRY
+	    SET ATTACH_NO = #{attachNo}
+	    WHERE INQRY_NO = #{inqryNo}
+	</update>
+
+	<!-- 첨부파일 목록 조회  -->
+	<select id="selectAttachFileList" parameterType="int" resultType="map">
+		select
+			afd.FILE_NO
+			,afd.FILE_ORIGINAL_NAME
+			,afd.FILE_EXT
+			,afd.FILE_SIZE
+			,afd.FILE_PATH
+		from INQUIRY i
+		inner join ATTACH_FILE_DETAIL afd on i.ATTACH_NO = afd.ATTACH_NO
+		where i.INQRY_NO = #{inqryNo}
+		  and afd.USE_YN = 'Y'
+		order by afd.REG_DT
+	</select>
+
+	<!-- 첨부파일 단건 조회 (다운로드용) -->
+	<select id="selectAttachFile" parameterType="int" resultType="map">
+		select
+			FILE_NO
+			,FILE_ORIGINAL_NAME
+			,FILE_PATH
+		from ATTACH_FILE_DETAIL
+		where FILE_NO=#{fileNo}
+		and USE_YN='Y'
+	</select>
+
+	<!-- 나중에 alaram관련 xml로 옮기면 good~~~~~!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!  -->
+	<!--알람 읽음 처리-->
+	<update id="updateAlaramRead" parameterType="int">
+		UPDATE ALARM
+		   SET READ_YN = 'Y'
+			  ,READ_DT = SYSDATE <!--관리자가 확인할 수 있게 읽은 시간 기록  -->
+		 WHERE ALARM_NO = #{alarmNo}
+		   AND READ_YN = 'N'
+	</update>
 </mapper>

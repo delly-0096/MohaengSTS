@@ -1,0 +1,166 @@
+@charset "UTF-8";
+
+
+/* 항공편 카드 스타일 */
+.flight-card {
+    position: relative;
+}
+
+.flight-card-content {
+    transition: background var(--transition-fast);
+}
+
+.flight-card-content:hover {
+    background: var(--light-color);
+}
+
+.flight-airline {
+    font-size: 13px;
+    color: var(--gray-dark);
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* 선택한 항공편 표시 영역 */
+.selected-flights-container {
+    background: linear-gradient(135deg, #e8f4fd 0%, #f0f7ff 100%);
+    border: 2px solid var(--primary-color);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.selected-flights-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.selected-flights-header h5 {
+    margin: 0;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.selected-flights-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.selected-flight-item {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.selected-flight-info {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.selected-flight-label {
+    background: var(--primary-color);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    min-width: 60px;
+    text-align: center;
+}
+
+.selected-flight-detail {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.selected-flight-time {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.selected-flight-route {
+    color: var(--gray-medium);
+    font-size: 14px;
+}
+
+.selected-flight-airline {
+    color: var(--gray-dark);
+    font-size: 13px;
+}
+
+.selected-flight-price {
+    font-weight: 700;
+    font-size: 18px;
+    color: var(--primary-color);
+}
+
+/* 선택 단계 표시 */
+.selection-step-indicator {
+    margin-bottom: 16px;
+}
+
+.step-badge {
+    display: inline-flex;
+    align-items: center;
+    background: var(--primary-color);
+    color: white;
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-weight: 600;
+    font-size: 14px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+/* 총 금액 및 결제 버튼 */
+.selected-flights-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 2px dashed var(--gray-lighter);
+}
+
+.total-price-label {
+    font-size: 14px;
+    color: var(--gray-dark);
+}
+
+.total-price-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+    .selected-flight-item {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+    }
+
+    .selected-flight-info {
+        flex-wrap: wrap;
+    }
+
+    .selected-flights-total {
+        flex-direction: column;
+        gap: 12px;
+        text-align: center;
+    }
+}

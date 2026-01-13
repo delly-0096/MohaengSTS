@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import lombok.Data;
@@ -9,7 +10,7 @@ import lombok.Data;
 public class PaymentVO {
 	// 결제
 	
-	private String payNo; 		// 결제키 (결제번호 || 주문번호) -> 각 결제 항목 약자 + 일자로 구현 예정
+	private int payNo; 			// 결제키 (결제번호 || 주문번호) -> 각 결제 항목 약자 + 일자로 구현 예정
 	private int memNo; 			// 회원키
 	private String paymentKey;	// payment 키 - API에서도 사용
 	private int payTotalAmt; 	// 결제금액
@@ -18,22 +19,23 @@ public class PaymentVO {
 	
 	
 	private OffsetDateTime payDt; 		// 결제일시 - json에서 제공하는 형태
-	private String payStatus; 	// 결제상태(Y,N,WAIT)
-	private OffsetDateTime cancelDt; 		// 취소일시
-	private String cancelReason;// 취소사유
+	private String payStatus; 			// 결제상태(Y,N,WAIT)
+	private OffsetDateTime cancelDt; 	// 취소일시
+	private String cancelReason;		// 취소사유
+	
+	// 결제 세부 사항
+//	private PaymentInfoVO paymentInfo;
 	
 	
 	// 결제할 때 insert할 값들
 	private List<FlightProductVO> flightProductList;			// 항공 상품 목록
 	private List<FlightPassengersVO> flightPassengersList;		// 항공 탑승객 목록
 	private List<FlightReservationVO> flightReservationList;	// 항공 예약 목록
-	// 동의한 것들은 어떻게??
+	private List<FlightResvAgreeVO> flightResvAgreeList ;		// 항공 예약 동의 목록
 	
 	
 	// 토스 api용 변수
-	private String paymentType;	// 결제 타입 키
+	private String paymentType;	// 결제 타입
 	private long amount; 		// 가격
 	private String orderId;		// 주문 - 결제키로 사용됨
-
-	//, cancel_dt, cancel_reason
 }

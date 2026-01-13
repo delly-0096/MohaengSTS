@@ -23,7 +23,7 @@ public interface ITalkService {
 
 	public BoardVO selectBoard(int boardNo);
 	
-	public ServiceResult insertTalk(BoardVO vo) throws Exception;
+	public ServiceResult insertTalk(BoardVO vo);
 
 	public int updateTalk(BoardVO vo);
 

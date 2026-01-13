@@ -87,9 +87,12 @@
   </update>
 
   <!-- =========================
-       2) 등록
+       2) 등록 
        ========================= -->
-  <insert id="insertTalk" parameterType="kr.or.ddit.mohaeng.vo.BoardVO">
+  <insert id="insertTalk" parameterType="kr.or.ddit.mohaeng.vo.BoardVO" useGeneratedKeys="true">
+ 	<selectKey keyProperty="boardNo" resultType="int" order="BEFORE">
+		select seq_talk.NEXTVAL from dual
+	</selectKey>
     INSERT INTO BOARD (
       BOARD_NO,
       BOARD_CTGRY_CD,
@@ -102,10 +105,9 @@
       NOTICE_YN,
       PIN_YN,
       DEL_YN,
-      REG_DT,
-      MOD_DT
+      REG_DT
     ) VALUES (
-      SEQ_BOARD.NEXTVAL,
+      #{boardNo},
       #{boardCtgryCd},
       #{writerNo},
       #{attachNo},
@@ -116,8 +118,7 @@
       NVL(#{noticeYn}, 'N'),
       NVL(#{pinYn}, 'N'),
       'N',
-      SYSDATE,
-      NULL
+      SYSDATE
     )
   </insert>
 
@@ -160,32 +161,85 @@
     <include refid="searchBoard"/>
   </select>
 
-  <select id="selectTalkList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.BoardVO">
-    SELECT b.*
-    FROM (
-      SELECT a.*, ROW_NUMBER() OVER(
-        ORDER BY
-          CASE WHEN a.PIN_YN = 'Y' THEN 0 ELSE 1 END,
-          CASE WHEN a.NOTICE_YN = 'Y' THEN 0 ELSE 1 END,
-          a.BOARD_NO DESC
-      ) rnum
-      FROM (
-        SELECT
-          BOARD_NO, BOARD_CTGRY_CD, WRITER_NO, ATTACH_NO,
-          BOARD_TITLE, BOARD_CONTENT,
-          VIEW_CNT, LIKE_CNT,
-          NOTICE_YN, PIN_YN,
-          DEL_YN, DEL_DT,
-          REG_DT, MOD_DT
-        FROM BOARD
-        WHERE 1=1
-        <include refid="searchBoard"/>
-      ) a
-    ) b
-    <![CDATA[
-      WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
-    ]]>
-  </select>
+  <select id="selectTalkList"
+        parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO"
+        resultType="kr.or.ddit.mohaeng.vo.BoardVO">
+
+	  SELECT
+	    b.BOARD_NO,
+	    b.BOARD_CTGRY_CD,
+	    b.WRITER_NO,
+	    b.ATTACH_NO,
+	    b.BOARD_TITLE,
+	    b.BOARD_CONTENT,
+	    b.VIEW_CNT,
+	    b.LIKE_CNT,
+	    b.NOTICE_YN,
+	    b.PIN_YN,
+	    b.DEL_YN,
+	    b.DEL_DT,
+	    b.REG_DT,
+	    b.MOD_DT,
+	    b.WRITER_ID,
+	    b.WRITER_NICKNAME
+	  FROM (
+	    SELECT
+	      a.BOARD_NO,
+	      a.BOARD_CTGRY_CD,
+	      a.WRITER_NO,
+	      a.ATTACH_NO,
+	      a.BOARD_TITLE,
+	      a.BOARD_CONTENT,
+	      a.VIEW_CNT,
+	      a.LIKE_CNT,
+	      a.NOTICE_YN,
+	      a.PIN_YN,
+	      a.DEL_YN,
+	      a.DEL_DT,
+	      a.REG_DT,
+	      a.MOD_DT,
+	      a.WRITER_ID,
+	      a.WRITER_NICKNAME,
+	      ROW_NUMBER() OVER(
+	        ORDER BY
+	          CASE WHEN a.PIN_YN = 'Y' THEN 0 ELSE 1 END,
+	          CASE WHEN a.NOTICE_YN = 'Y' THEN 0 ELSE 1 END,
+	          a.BOARD_NO DESC
+	      ) AS RNUM
+	    FROM (
+	      SELECT
+	        bo.BOARD_NO,
+	        bo.BOARD_CTGRY_CD,
+	        bo.WRITER_NO,
+	        bo.ATTACH_NO,
+	        bo.BOARD_TITLE,
+	        bo.BOARD_CONTENT,
+	        bo.VIEW_CNT,
+	        bo.LIKE_CNT,
+	        bo.NOTICE_YN,
+	        bo.PIN_YN,
+	        bo.DEL_YN,
+	        bo.DEL_DT,
+	        bo.REG_DT,
+	        bo.MOD_DT,
+	        m.MEM_ID      AS WRITER_ID,
+	        mu.NICKNAME   AS WRITER_NICKNAME
+	      FROM BOARD bo
+	      JOIN MEMBER m
+	        ON bo.WRITER_NO = m.MEM_NO
+	      JOIN MEM_USER mu
+	        ON m.MEM_NO = mu.MEM_NO
+	      WHERE 1=1
+	        AND bo.DEL_YN = 'N'
+	      <include refid="searchBoard"/>
+	    ) a
+	  ) b
+	  <![CDATA[
+	    WHERE b.RNUM >= #{startRow}
+	      AND b.RNUM <= #{endRow}
+	  ]]>
+	</select>
+
 
   <!-- =========================
        6) 좋아요 증감(임시)

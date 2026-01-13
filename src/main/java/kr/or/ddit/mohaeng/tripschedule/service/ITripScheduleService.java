@@ -40,4 +40,5 @@ public interface ITripScheduleService {
 
 	public int deleteTripSchedule(int schdlNo);
 	
+	public void refreshScheduleStates();
 }

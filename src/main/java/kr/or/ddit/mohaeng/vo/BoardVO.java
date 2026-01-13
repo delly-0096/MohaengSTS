@@ -1,6 +1,6 @@
 package kr.or.ddit.mohaeng.vo;
 
-import java.sql.Date;
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.web.multipart.MultipartFile;
@@ -10,16 +10,16 @@ import lombok.Data;
 @Data
 public class BoardVO {
 	
-	private Integer boardNo;
+	private int boardNo;
 	private String boardCtgryCd;
-	private Integer writerNo;
-	private Integer attachNo;
+	private int writerNo;
+	private int attachNo;
 	
 	private String boardTitle;
 	private String boardContent;
 	
-	private Integer viewCnt;
-	private Integer likeCnt;
+	private int viewCnt;
+	private int likeCnt;
 	
 	private String noticeYn;
 	private String pinYn;
@@ -32,9 +32,11 @@ public class BoardVO {
 	private String modId;
 
 	
+	private List<BoardTagVO> boardTagList;
 	private List<BoardFileVO> boardFileList;
 	private List<MultipartFile> boardFile;
-
 	
-	
+	// 작성자 정보
+	private String writerId;        // MEM_USER.MEM_ID
+	private String writerNickname; // MEMBER.NICKNAME
 }

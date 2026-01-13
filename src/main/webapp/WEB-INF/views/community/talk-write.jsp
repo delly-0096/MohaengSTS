@@ -16,7 +16,7 @@
 
         <!-- 글쓰기 폼 -->
         <div class="write-container">
-            <form id="writeForm" class="write-form">
+            <form id="writeForm" class="write-form" action="${pageContext.request.contextPath}/community/talk/insert" method="post" enctype="multipart/form-data">
                 <!-- 말머리 선택 -->
                 <div class="form-group">
                     <label class="form-label">말머리 <span class="text-danger">*</span></label>
@@ -253,6 +253,10 @@ document.getElementById('writeForm').addEventListener('submit', function(e) {
     const title = document.getElementById('title').value.trim();
     const content = document.getElementById('content').value.trim();
 
+    console.log("category : ", category);
+    console.log("title : ", title);
+    console.log("content : ", content);
+    
     if (!category) {
         showToast('말머리를 선택해주세요.', 'error');
         return;
@@ -269,11 +273,59 @@ document.getElementById('writeForm').addEventListener('submit', function(e) {
     }
 
     // 실제 구현 시 FormData로 서버 전송
-    showToast('게시글이 등록되었습니다.', 'success');
 
-    setTimeout(() => {
-        window.location.href = '${pageContext.request.contextPath}/community/talk';
-    }, 1000);
+    // 비동기 ->
+   	const formData = {
+		boardCtgryCd: category,
+		boardTitle: title,
+		boardContent: content,
+		boardTagList: tagList.map(t => ({ boardTagName: t }))
+		/* writerNo: memNo,// writeNO : 작성자id */
+		/* attachNo: attachNo// attachNo */
+		// file
+		// 태그
+   	};
+   	
+    
+    fetch('${pageContext.request.contextPath}/community/talk/insert', {
+		method : 'POST',
+		headers: {
+		'Content-Type': 'application/json',
+		},
+		body : JSON.stringify(formData)
+	})
+	.then(async (data) => { // async만 추가
+  		console.log("data : ", data);
+	
+  		const msg = await data.text();
+  		
+  	  if (!data.ok) {
+  	    console.log("data.message : ", msg);
+  	    showToast(msg || '요청 실패', 'warning');
+  	    return;
+  	  	}
+		
+		/* showToast(data.message, 'success'); */
+		showToast(msg || '등록 완료', 'success')
+		
+ 	      setTimeout(() => {
+		    window.location.href = '${pageContext.request.contextPath}/community/talk';
+		  }, 1000);
+		
+/* 		// 생성 폼 닫기
+		cancelCreateRoom();
+		
+		// 서버 기준으로 채팅방 목록 다시 불러오기
+		loadChatRooms();
+		
+		if(data.chatId){
+			joinChatRoom(data.chatId);
+		} */
+	})
+	.catch(err => {
+		console.error(err);
+		showToast('채팅방 생성 중 오류가 발생했습니다.', 'error');
+	});
 });
 
 // 취소

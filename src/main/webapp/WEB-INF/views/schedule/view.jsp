@@ -191,7 +191,7 @@
             <a href="${pageContext.request.contextPath}/schedule/my" class="btn btn-outline btn-lg">
                 <i class="bi bi-list me-2"></i>목록으로
             </a>
-            <a href="${pageContext.request.contextPath}/schedule/planner?id=${scheduleId}" class="btn btn-primary btn-lg">
+            <a href="${pageContext.request.contextPath}/schedule/planner?id=${schedule.schdlNo}" class="btn btn-primary btn-lg">
                 <i class="bi bi-pencil me-2"></i>일정 수정하기
             </a>
         </div>
@@ -1019,7 +1019,7 @@ function selectViewDay(day) {
 }
 
 function editSchedule() {
-    window.location.href = '${pageContext.request.contextPath}/schedule/planner?id=${scheduleId}';
+    window.location.href = '${pageContext.request.contextPath}/schedule/planner?id=${schedule.schdlNo}';
 }
 
 function shareSchedule() {
@@ -1081,7 +1081,7 @@ async function toggleScheduleViewBookmark(button) {
         bkmkYn = 'N';
     }
     
-    await fetch('${pageContext.request.contextPath}/schedule/bookmark/modify', {
+    await fetch('${pageContext.request.contextPath}/schedule/schbookmark/modify', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

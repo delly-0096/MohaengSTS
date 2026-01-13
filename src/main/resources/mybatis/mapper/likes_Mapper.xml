@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.ddit.mohaeng.community.travellog.likes.mapper.ILikesMapper">
+
+    <!-- 존재 여부 -->
+    <select id="existsTripRecordLike" resultType="int">
+        SELECT COUNT(1)
+        FROM LIKES
+        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
+          AND LIKES_KEY = #{rcdNo}
+          AND MEM_NO = #{memNo}
+    </select>
+
+    <!-- 등록 -->
+    <insert id="insertTripRecordLike">
+        INSERT INTO LIKES (LIKES_KEY, LIKES_CAT_CD, MEM_NO)
+        VALUES (#{rcdNo}, 'TRIP_RECORD', #{memNo})
+    </insert>
+
+    <!-- 삭제 -->
+    <delete id="deleteTripRecordLike">
+        DELETE FROM LIKES
+        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
+          AND LIKES_KEY = #{rcdNo}
+          AND MEM_NO = #{memNo}
+    </delete>
+
+    <!-- 카운트 -->
+    <select id="countTripRecordLikes" resultType="long">
+        SELECT COUNT(1)
+        FROM LIKES
+        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
+          AND LIKES_KEY = #{rcdNo}
+    </select>
+
+</mapper>

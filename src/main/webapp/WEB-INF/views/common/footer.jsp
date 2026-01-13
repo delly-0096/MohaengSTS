@@ -44,7 +44,7 @@
                         </sec:authorize>
                         <a href="${pageContext.request.contextPath}/product/flight" class="footer-link">항공</a>
                         <a href="${pageContext.request.contextPath}/product/accommodation" class="footer-link">숙박</a>
-                        <a href="${pageContext.request.contextPath}/product/tour" class="footer-link">투어/체험/티켓</a>
+                        <a href="${pageContext.request.contextPath}/tour" class="footer-link">투어/체험/티켓</a>
                         <sec:authorize access="hasAuthority('MEMBER')">
                             <a href="${pageContext.request.contextPath}/community/talk" class="footer-link">여행톡</a>
                         </sec:authorize>
@@ -92,23 +92,42 @@
         <button class="chatbot-btn" id="chatbotBtn" onclick="toggleChatbot()" title="AI 챗봇">
             <i class="bi bi-chat-dots-fill"></i>
         </button>
+        <!-- 숨김 버튼 미리 추가 -->
+	    <button class="chatbot-hide-btn" onclick="event.stopPropagation(); hideChatbot();" title="챗봇 숨기기">
+	        <i class="bi bi-x"></i>
+	    </button>
     </div>
-
-    <!-- 챗봇 창 (선택지 기반) -->
-    <div class="chatbot-window" id="chatbotWindow">
-        <div class="chatbot-header">
-            <div class="chatbot-title">
-                <i class="bi bi-robot me-2"></i>모행 AI 챗봇
-            </div>
-            <button class="chatbot-close" onclick="toggleChatbot()">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div class="chatbot-messages" id="chatbotMessages">
-            <!-- JavaScript로 동적 생성 -->
-        </div>
-    </div>
-
+    
+    <!-- 챗봇 창 (AI 기반) -->
+	<div class="chatbot-window" id="chatbotWindow">
+	    <div class="chatbot-header">
+	        <div class="chatbot-title">
+	            <i class="bi bi-robot me-2"></i>모행 AI 챗봇
+	        </div>
+	        <div class="chatbot-header-btns">
+		        <!-- 대화 초기화 버튼 추가 -->
+		        <button class="chatbot-clear" onclick="clearChatHistory()" title="대화 초기화">
+		            <i class="bi bi-arrow-counterclockwise"></i>
+		        </button>
+		        <button class="chatbot-close" onclick="toggleChatbot()">
+		            <i class="bi bi-x-lg"></i>
+		        </button>
+		    </div>
+	    </div>
+	    <div class="chatbot-messages" id="chatbotMessages">
+	        <!-- JavaScript로 동적 생성 -->
+	    </div>
+	    <!-- 텍스트 입력 영역 추가 -->
+	    <div class="chatbot-input-area">
+	        <input type="text" id="chatbotInput" 
+	               placeholder="메시지를 입력하세요..." 
+	               onkeypress="if(event.keyCode===13) sendChatMessage()">
+	        <button class="chatbot-send-btn" onclick="sendChatMessage()">
+	            <i class="bi bi-send-fill"></i>
+	        </button>
+	    </div>
+	</div>
+	
     <!-- 신고 모달 -->
     <div class="report-modal-overlay" id="reportModalOverlay">
         <div class="report-modal" onclick="event.stopPropagation()">
@@ -186,6 +205,11 @@
     <!-- Flatpickr (날짜 선택) -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
+
+	<script>
+	    // 챗봇 사용자 키 (회원별로 다른 대화 유지)
+	    const chatbotUserKey = '${not empty sessionScope.loginMember ? sessionScope.loginMember.memId : "guest"}';
+	</script>
 
     <!-- Custom JS -->
     <script src="${pageContext.request.contextPath}/resources/js/common.js"></script>

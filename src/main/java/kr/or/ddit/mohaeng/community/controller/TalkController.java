@@ -12,6 +12,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -22,9 +23,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.community.service.ITalkService;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.BoardFileVO;
 import kr.or.ddit.mohaeng.vo.BoardVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
@@ -59,7 +62,7 @@ public class TalkController {
     	  pagingVO.setSearchWord(searchWord);
     	  pagingVO.setSearchType(ntcType);
     	  model.addAttribute("searchWord", searchWord);
-    	  
+    	  model.addAttribute("ntcType", ntcType);
       }
       
       pagingVO.setCurrentPage(currentPage);
@@ -72,6 +75,8 @@ public class TalkController {
       model.addAttribute("pagingVO", pagingVO); 
       return "community/talk";
     }
+ 
+    
 	// 게시판 상세화면
     public String talkDetail(@RequestParam int boardNo,Model model) {
     	log.info("talkDetail");
@@ -81,34 +86,45 @@ public class TalkController {
     	return "community/talk";
     }
     
-    //talk상세조회
-    @GetMapping("/{boardNo}")
-    public BoardVO detail(@PathVariable int boardNo) {
+    // talk상세조회
+    @GetMapping("/detail")
+    public String detail(@RequestParam int boardNo) {
     	BoardVO boardVO = talkService.selectTalk(boardNo);
-    	return boardVO;
+    	return "community/talk";
+    }
+    
+    // 글 작성폼 페이지 이동
+    @GetMapping("/write")
+    public String talkWrite() {
+    	return "community/talk-write";
     }
     
     //talk 등록
-    @PostMapping
-    public int insert(BoardVO vo) throws Exception{
-    	log.info("insert문 실행()...",vo);
-    	vo.setRegId("boardNo");
-    	ServiceResult result = talkService.insertTalk(vo);
-    	int status =0;
-    	if(result == ServiceResult.OK) {
-    		status = 1;
-    		
-    	}else {
-    		status = -1;
-    		
-    	}
-    	return status;
-    	
+    @ResponseBody
+    @PostMapping("/insert")
+    public ResponseEntity<String> insert(
+    		@RequestBody BoardVO vo,
+    		@AuthenticationPrincipal CustomUserDetails user
+    		) {
+        log.info("insert 실행: {}", vo);
+        
+        vo.setWriterNo(user.getMemNo());
+        ServiceResult result = talkService.insertTalk(vo);
+        if (result == ServiceResult.OK) {
+        	return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
+        }else {
+        	return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+        }
     }
+
+    	
+    	
+ 
     // talk 수정
     @PutMapping("/{boardNo}")
     public int update(@PathVariable int boarNo, @RequestBody BoardVO vo) {
     	vo.setBoardNo(boardNo);
+    	int cnt = talkService.updateTalk(vo);
     	log.info("check:{}",vo);
     	return talkService.updateTalk(vo);
     }

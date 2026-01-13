@@ -103,12 +103,39 @@
 	    <result property="publicYn" column="PUBLIC_YN" />
 	    <result property="regDt" column="TS_REG_DT" />
 	    <result property="modDt" column="TS_MOD_DT" />
-        <result property="memId" column="MEM_ID" />
-        <result property="memName" column="MEM_NAME" />
+<!--         <result property="memId" column="MEM_ID" /> -->
+<!--         <result property="memName" column="MEM_NAME" /> -->
+        
+        <association property="member" resultMap="memberMap" />
         
         <collection property="tripScheduleDetailsList"
             resultMap="tripScheduleDetailsResultMap" 
             notNullColumn="SCHDL_DETAILS_NO" />
+	</resultMap>
+	
+	<resultMap type="kr.or.ddit.mohaeng.vo.MemberVO" id="memberMap">
+		<id property="memNo" column="MEM_NO"/>
+		<result property="memNo" column="MEM_NO"/>
+		<result property="memId" column="MEM_ID"/>
+		<result property="memPassword" column="MEM_PASSWORD"/>
+		<result property="memName" column="MEM_NAME"/>
+		<result property="memEmail" column="MEM_EMAIL"/>
+		<result property="memProfile" column="MEM_PROFILE"/>
+		<result property="memProfilePath" column="MEM_PROFILE_PATH"/>
+		<result property="point" column="POINT"/>
+		<result property="memStatus" column="MEM_STATUS"/>
+		<result property="delYn" column="DEL_YN"/>
+		<result property="wdrwResn" column="WDRW_RESN"/>
+		<result property="enabled" column="ENABLED"/>
+		<result property="memSnsYn" column="MEM_SNS_YN"/>
+		<result property="snsType" column="SNS_TYPE"/>
+		<result property="snsId" column="SNS_ID"/>
+		<result property="regDt" column="REG_DT"/>
+		<result property="udtDt" column="UDT_DT"/>
+		<result property="wdrwDt" column="WDRW_DT"/>
+		
+	        <result property="tel" column="TEL"/>
+	        
 	</resultMap>
     
     <select id="selectAdminScheduleList" resultMap="TripSchedule">
@@ -132,8 +159,6 @@
 		     , TS.PUBLIC_YN
 		     , TO_CHAR(TS.REG_DT, 'yyyy-MM-dd')           AS TS_REG_DT
 		     , TO_CHAR(TS.MOD_DT, 'yyyy-MM-dd')           AS TS_MOD_DT
-		     , M.MEM_ID
-		     , M.MEM_NAME
 		     , R.RGN_NM
 		     
 		     , TSD.SCHDL_DETAILS_NO
@@ -157,8 +182,13 @@
 		     , (SELECT TP.PLC_NM FROM TOUR_PLACE TP WHERE TP.PLC_NO = TSP.DEST_ID) AS PLC_NM
 		     , (SELECT TCT.CONTENT_TYPE_NAME FROM TOUR_CONTENT_TYPE TCT WHERE TCT.CONTENT_TYPE_ID = TSP.PLACE_TYPE) AS PLACE_TYPE_NAME
 		      
+		     , M.MEM_ID
+		     , M.MEM_NAME
+		     , M.MEM_EMAIL
+		     , (SELECT MU.TEL FROM MEM_USER MU WHERE MU.MEM_NO = TS.MEM_NO) AS TEL
+		      
 		  FROM TRIP_SCHEDULE TS
-		 INNER join MEMBER M
+		 INNER JOIN MEMBER M
 		    ON (TS.MEM_NO = M.MEM_NO)
 		 INNER JOIN REGION R
 		    ON TS.TARGET_PLACE_ID = R.RGN_NO

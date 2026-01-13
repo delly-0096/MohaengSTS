@@ -1,0 +1,913 @@
+/* ===================================
+   모행(MOHAENG) - 마이페이지 스타일
+=================================== */
+
+/* ===== 공통 마이페이지 레이아웃 ===== */
+.mypage {
+    padding: 40px 0 80px;
+    min-height: calc(100vh - var(--header-height));
+    background: var(--light-color);
+}
+
+.mypage-container {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+}
+
+/* ===== 사이드바 ===== */
+.mypage-sidebar {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    height: fit-content;
+    position: sticky;
+    top: calc(var(--header-height) + 24px);
+}
+
+.profile-summary {
+    text-align: center;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--gray-lighter);
+    margin-bottom: 24px;
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    margin-bottom: 16px;
+    border: 3px solid var(--primary-color);
+}
+
+.profile-name {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.profile-email {
+    font-size: 14px;
+    color: var(--gray-medium);
+    margin-bottom: 12px;
+}
+
+.profile-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.profile-badge.business {
+    background: linear-gradient(135deg, var(--warning-color), #FF8C00);
+}
+
+/* 사이드바 메뉴 */
+.sidebar-menu {
+    list-style: none;
+}
+
+.sidebar-menu-item {
+    margin-bottom: 4px;
+}
+
+.sidebar-menu-item a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    color: var(--dark-color);
+    font-size: 15px;
+    transition: all var(--transition-fast);
+}
+
+.sidebar-menu-item a:hover {
+    background: var(--light-color);
+    color: var(--primary-color);
+}
+
+.sidebar-menu-item.active a {
+    background: var(--primary-color);
+    color: white;
+}
+
+.sidebar-menu-item i {
+    width: 20px;
+    font-size: 18px;
+}
+
+/* ===== 메인 콘텐츠 영역 ===== */
+.mypage-content {
+    min-width: 0;
+}
+
+.mypage-header {
+    margin-bottom: 24px;
+}
+
+.mypage-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.mypage-header p {
+    color: var(--gray-dark);
+}
+
+/* ===== 통계 카드 ===== */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.stat-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+}
+
+.stat-card.primary {
+    background: linear-gradient(135deg, var(--primary-color), #6BA3E0);
+    color: white;
+}
+
+.stat-card.secondary {
+    background: linear-gradient(135deg, var(--secondary-color), #4DD8CC);
+    color: white;
+}
+
+.stat-card.accent {
+    background: linear-gradient(135deg, var(--accent-color), #FF8B8B);
+    color: white;
+}
+
+.stat-card.warning {
+    background: linear-gradient(135deg, var(--warning-color), #FFD93D);
+    color: white;
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 12px;
+    font-size: 24px;
+}
+
+.stat-card:not(.primary):not(.secondary):not(.accent):not(.warning) .stat-icon {
+    background: var(--light-color);
+    color: var(--primary-color);
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.stat-card:not(.primary):not(.secondary):not(.accent):not(.warning) .stat-label {
+    color: var(--gray-dark);
+}
+
+/* ===== 콘텐츠 섹션 ===== */
+.content-section {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: 24px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 24px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.section-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.section-header .view-all {
+    font-size: 14px;
+    color: var(--primary-color);
+}
+
+/* ===== 회원 정보 수정 폼 ===== */
+.profile-form {
+    max-width: 600px;
+}
+
+.profile-image-upload {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    margin-bottom: 32px;
+}
+
+.profile-image-preview {
+    width: 120px;
+    height: 120px;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+    border: 3px solid var(--gray-light);
+}
+
+.profile-image-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-section-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+/* ===== 결제 내역 ===== */
+.payment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.payment-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: var(--light-color);
+    border-radius: var(--radius-lg);
+    gap: 20px;
+}
+
+.payment-product {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.payment-product img {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.payment-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.payment-product-info h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.payment-product-info p {
+    font-size: 13px;
+    color: var(--gray-medium);
+    margin-bottom: 8px;
+}
+
+.payment-status {
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.payment-status.completed {
+    background: var(--success-color);
+    color: white;
+}
+
+.payment-status.pending {
+    background: var(--warning-color);
+    color: white;
+}
+
+.payment-status.cancelled {
+    background: var(--gray-medium);
+    color: white;
+}
+
+.payment-amount {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.payment-amount .amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.payment-amount .date {
+    font-size: 13px;
+    color: var(--gray-medium);
+}
+
+.payment-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ===== 포인트 내역 ===== */
+.points-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 24px;
+    border-radius: var(--radius-lg);
+    margin-bottom: 24px;
+}
+
+.points-current {
+    text-align: center;
+}
+
+.points-current .label {
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 4px;
+}
+
+.points-current .value {
+    font-size: 32px;
+    font-weight: 700;
+}
+
+.points-current .unit {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.points-info {
+    display: flex;
+    gap: 32px;
+}
+
+.points-info-item {
+    text-align: center;
+}
+
+.points-info-item .label {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.points-info-item .value {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.point-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.point-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+.point-item:last-child {
+    border-bottom: none;
+}
+
+.point-info h4 {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.point-info p {
+    font-size: 13px;
+    color: var(--gray-medium);
+}
+
+.point-amount {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.point-amount.plus {
+    color: var(--primary-color);
+}
+
+.point-amount.minus {
+    color: var(--accent-color);
+}
+
+/* ===== 북마크 그리드 ===== */
+.bookmark-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.bookmark-card {
+    background: white;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    border: 1px solid var(--gray-lighter);
+    transition: all var(--transition-normal);
+}
+
+.bookmark-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-4px);
+}
+
+.bookmark-card-image {
+    position: relative;
+    aspect-ratio: 16/10;
+}
+
+.bookmark-card-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.bookmark-remove {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--transition-fast);
+}
+
+.bookmark-card:hover .bookmark-remove {
+    opacity: 1;
+}
+
+.bookmark-card-content {
+    padding: 16px;
+}
+
+.bookmark-card-content h4 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bookmark-card-content p {
+    font-size: 13px;
+    color: var(--gray-medium);
+    margin-bottom: 8px;
+}
+
+.bookmark-card-content .price {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* ===== 기업회원 - 매출 집계 ===== */
+.sales-chart-container {
+    height: 300px;
+    margin-bottom: 24px;
+}
+
+.sales-table {
+    width: 100%;
+}
+
+.sales-table th,
+.sales-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+.sales-table th {
+    background: var(--light-color);
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.sales-table td {
+    font-size: 14px;
+}
+
+.sales-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* ===== 기업회원 - 상품 현황 ===== */
+.product-manage-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.product-manage-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: var(--light-color);
+    border-radius: var(--radius-lg);
+    gap: 20px;
+}
+
+.product-manage-info {
+    display: flex;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.product-manage-info img {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-md);
+    object-fit: cover;
+}
+
+.product-manage-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.product-manage-details h4 {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.product-manage-details .category {
+    font-size: 13px;
+    color: var(--gray-medium);
+    margin-bottom: 8px;
+}
+
+.product-manage-details .price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.product-stats {
+    display: flex;
+    gap: 24px;
+    text-align: center;
+}
+
+.product-stat {
+    min-width: 60px;
+}
+
+.product-stat .value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--dark-color);
+}
+
+.product-stat .label {
+    font-size: 12px;
+    color: var(--gray-medium);
+}
+
+.product-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.product-status.active {
+    background: var(--success-color);
+    color: white;
+}
+
+.product-status.pending {
+    background: var(--warning-color);
+    color: white;
+}
+
+.product-status.inactive {
+    background: var(--gray-medium);
+    color: white;
+}
+
+.product-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ===== 기업회원 - 알림 내역 ===== */
+.notification-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.notification-item {
+    display: flex;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--gray-lighter);
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-item.unread {
+    background: var(--light-color);
+    margin: 0 -24px;
+    padding: 16px 24px;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.notification-icon.order {
+    background: rgba(74, 144, 217, 0.1);
+    color: var(--primary-color);
+}
+
+.notification-icon.review {
+    background: rgba(255, 107, 107, 0.1);
+    color: var(--accent-color);
+}
+
+.notification-icon.inquiry {
+    background: rgba(38, 206, 194, 0.1);
+    color: var(--secondary-color);
+}
+
+.notification-icon.system {
+    background: rgba(108, 117, 125, 0.1);
+    color: var(--gray-dark);
+}
+
+.notification-content {
+    flex: 1;
+}
+
+.notification-content h4 {
+    font-size: 15px;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.notification-content p {
+    font-size: 13px;
+    color: var(--gray-medium);
+}
+
+.notification-time {
+    font-size: 12px;
+    color: var(--gray-medium);
+    white-space: nowrap;
+}
+
+/* ===== 기업회원 - 통계 ===== */
+.chart-container {
+    height: 250px;
+    margin-bottom: 24px;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    margin-top: 16px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+}
+
+.legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+/* ===== 탭 네비게이션 ===== */
+.mypage-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    border-bottom: 1px solid var(--gray-lighter);
+    padding-bottom: 16px;
+}
+
+.mypage-tab {
+    padding: 10px 20px;
+    border-radius: var(--radius-md);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--gray-dark);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.mypage-tab:hover {
+    background: var(--light-color);
+}
+
+.mypage-tab.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* ===== 빈 상태 ===== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.empty-state i {
+    font-size: 64px;
+    color: var(--gray-light);
+    margin-bottom: 16px;
+}
+
+.empty-state h4 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--gray-dark);
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: var(--gray-medium);
+    margin-bottom: 24px;
+}
+
+/* ===== 반응형 ===== */
+@media (max-width: 1200px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .bookmark-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 992px) {
+    .mypage-container {
+        grid-template-columns: 1fr;
+    }
+
+    .mypage-sidebar {
+        position: static;
+    }
+
+    .profile-summary {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        text-align: left;
+        padding-bottom: 16px;
+        margin-bottom: 16px;
+    }
+
+    .profile-avatar {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 0;
+    }
+
+    .sidebar-menu {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .sidebar-menu-item {
+        margin-bottom: 0;
+    }
+
+    .sidebar-menu-item a {
+        padding: 8px 16px;
+        border: 1px solid var(--gray-light);
+    }
+
+    .product-manage-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .product-stats {
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 768px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 16px;
+    }
+
+    .stat-value {
+        font-size: 22px;
+    }
+
+    .bookmark-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-item {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .payment-amount {
+        text-align: left;
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 1px solid var(--gray-lighter);
+    }
+
+    .points-summary {
+        flex-direction: column;
+        gap: 24px;
+    }
+
+    .mypage-tabs {
+        overflow-x: auto;
+        padding-bottom: 8px;
+    }
+
+    .mypage-tab {
+        white-space: nowrap;
+    }
+}

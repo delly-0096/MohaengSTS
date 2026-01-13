@@ -42,6 +42,8 @@ import kr.or.ddit.mohaeng.util.TokenProvider;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.http.HttpMethod;
+
 @Slf4j
 @Configuration
 @EnableWebSecurity
@@ -179,9 +181,26 @@ public class SecurityConfig {
                     DispatcherType.ASYNC
                 ).permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
+                
+                .requestMatchers("/files/**").permitAll() 
+                .requestMatchers("/community/travel-log/write").hasRole("MEMBER")
+                
                 .requestMatchers(PASS_URL).permitAll()
-//              .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
-//              .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
+
+                
+                // 조회(GET)는 허용
+                .requestMatchers(HttpMethod.GET, "/community/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/travel-log/records/**").permitAll()
+
+                // 등록/수정/삭제는 MEMBER만
+                .requestMatchers(HttpMethod.POST, "/api/travel-log/records/**").hasRole("MEMBER")
+                .requestMatchers(HttpMethod.PUT, "/api/travel-log/records/**").hasRole("MEMBER")
+                .requestMatchers(HttpMethod.DELETE, "/api/travel-log/records/**").hasRole("MEMBER")
+
+
+//                .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
+//                .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
+
                 .requestMatchers("/member/login").permitAll()
                 .requestMatchers("/member/sns/**").authenticated()
 

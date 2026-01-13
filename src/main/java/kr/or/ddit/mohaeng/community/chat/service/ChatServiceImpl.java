@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomCreateRequestDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomResponseDTO;
 import kr.or.ddit.mohaeng.community.chat.mapper.IChatMapper;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.ChatRoomVO;
 import kr.or.ddit.mohaeng.vo.ChatUserVO;
 
@@ -41,7 +42,8 @@ public class ChatServiceImpl implements IChatService{
 			res.setChatCtgryName(room.getChatCtgryName());
 			res.setCurrentUsers(room.getCurrentUsers());
 	        res.setMaxUsers(room.getChatMax());
-	        res.setCreatedBy(room.getCreatedBy());
+	        res.setCreatedByNickname(room.getCreatedByNickname());
+	        res.setCreatedById(room.getCreatedById());
 	        res.setFull(room.getCurrentUsers() >= room.getChatMax());
 	        
 	        return res;
@@ -57,7 +59,8 @@ public class ChatServiceImpl implements IChatService{
 	 *	@return 
 	 */
 	@Override
-	public void creatChatRoom(ChatRoomCreateRequestDTO request, int memNo) {
+	@Transactional
+	public void creatChatRoom(ChatRoomCreateRequestDTO request, CustomUserDetails user) {
 		
 //		boolean valid = chatMapper.existsCode("CHAT_CATEGORY", request.getChatCtgry());
 //		if(!valid) {
@@ -69,13 +72,14 @@ public class ChatServiceImpl implements IChatService{
 		room.setChatName(request.getChatName());
 		room.setChatCtgry(request.getChatCtgry());
 		room.setChatMax(request.getChatMax());
+		room.setRegId(user.getMember().getMemId());
 		
 		chatMapper.insertChatRoom(room);
 		
 		// 방장 자동 입장
 		ChatUserVO host = new ChatUserVO();
 		host.setChatId(room.getChatId());
-		host.setChatUserNo(memNo);
+		host.setChatUserNo(user.getMember().getMemNo());
 		host.setRole("HOST");
 		host.setJoinedAt(LocalDateTime.now());
 		

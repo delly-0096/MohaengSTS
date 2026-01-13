@@ -426,6 +426,8 @@
 </div>
 
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9976009a2fb2e0385884b79eca12dd63&libraries=services,clusterer"></script>
+<script src="${pageContext.request.contextPath}/resources/js/schedule.js"></script>
+
 <script>
 //map
 
@@ -444,6 +446,7 @@ let totalBudget = 0; // 총 예산
 
 let travelDates = "";
 let preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
+
 let myMap = "";
 
 let startDt = "";
@@ -473,11 +476,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 	
     // 선호도 데이터 로드
     preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
+    
     travelDates = preferenceData.travelDates;
     
     initTemplate();
-    
     let destinationcode = preferenceData.destinationcode
+    console.log(destinationcode)
     let destinationData = await initDestinationData(destinationcode)
     let tourPlace = initTourPlaceList(destinationcode)
     
@@ -1441,7 +1445,6 @@ function initReturn() {
 	let tempPlanDataList = sessionStorage.getItem("tempPlanDataList");
 	let tempSchdlNm = sessionStorage.getItem("tempSchdlNm");
 	
-	
 	let planDataList = JSON.parse(tempPlanDataList);
     console.log(planDataList);
 	
@@ -1501,5 +1504,4 @@ function initReturn() {
 }
 </script>
 
-<c:set var="pageJs" value="schedule" />
 <%@ include file="../common/footer.jsp" %>

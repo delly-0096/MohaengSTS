@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomCreateRequestDTO;
@@ -53,8 +52,7 @@ public class ChatController {
 			result.put("message", "입력값이 올바르지 않습니다.");
 			return result;
 		}
-
-		chatService.creatChatRoom(request, user.getMember().getMemNo());
+		chatService.creatChatRoom(request, user);
 
 		result.put("success", true);
 		result.put("message", "채팅방이 생성되었습니다");

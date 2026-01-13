@@ -39,6 +39,7 @@ public class InquiryVO {
     // 조인으로 가져올 필드
     private String categoryName;        // 문의 유형명 (CODE.CD_NAME)
     private String memberName;          // 회원명 (MEMBER.MEM_NAME)
+    private String memId;
 
     // 화면 표시용
     private String regDtStr;            // 등록일 문자열

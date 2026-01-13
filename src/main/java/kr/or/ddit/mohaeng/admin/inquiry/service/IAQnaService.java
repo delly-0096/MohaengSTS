@@ -19,6 +19,9 @@ public interface IAQnaService {
 	// 4. 관리자 문의 삭제 + 삭제 사유 알림 생성
 	int aInquiryDelete(int inqryNo, String reason);
 
+	//다운로드용
+	Map<String, Object> getAttachFile(int fileNo);
+
 
 
 }

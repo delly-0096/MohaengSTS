@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
-import kr.or.ddit.mohaeng.admin.tripschedule.controller.AdminTripscheduleController;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomCreateRequestDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomResponseDTO;
 import kr.or.ddit.mohaeng.community.chat.service.IChatService;
@@ -28,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 @Controller
 @RequestMapping("/")
 public class ChatController {
-	
+
 	@Autowired
 	private IChatService chatService;
 
@@ -38,7 +37,7 @@ public class ChatController {
 	public List<ChatRoomResponseDTO> getChatRooms(@RequestParam(required = false) String category){
 		return chatService.getChatRooms(category);
 	}
-	
+
 	/* 채팅방 만들기 */
 	@PostMapping("/chat/room")
 	@ResponseBody
@@ -48,15 +47,15 @@ public class ChatController {
 			@AuthenticationPrincipal CustomUserDetails user
 			) {
 		Map<String, Object> result = new HashMap<>();
-		
+
 		if(br.hasErrors()) {
 			result.put("success", false);
 			result.put("message", "입력값이 올바르지 않습니다.");
 			return result;
 		}
-		
+
 		chatService.creatChatRoom(request, user.getMember().getMemNo());
-		
+
 		result.put("success", true);
 		result.put("message", "채팅방이 생성되었습니다");
 		return result;
@@ -71,5 +70,5 @@ public class ChatController {
 			){
 		return chatService.joinChatRoom(chatId, user.getMember().getMemNo());
 	}
-	
+
 }

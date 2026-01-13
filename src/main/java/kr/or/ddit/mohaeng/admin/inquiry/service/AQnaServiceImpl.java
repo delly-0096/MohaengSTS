@@ -9,15 +9,21 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import kr.or.ddit.mohaeng.admin.inquiry.mapper.IQnaMapper;
+import kr.or.ddit.mohaeng.mailapi.service.MailService;
 import kr.or.ddit.mohaeng.vo.AlarmVO;
 import kr.or.ddit.mohaeng.vo.InquiryVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class AQnaServiceImpl implements IAQnaService {
 
 	@Autowired
 	private IQnaMapper qnaMapper;
+
+	@Autowired
+	private MailService mailService;
 
 	@Override
 	public PaginationInfoVO<InquiryVO> aInquiryList(PaginationInfoVO<InquiryVO> pagingVO, InquiryVO inquiryVO) {
@@ -33,7 +39,6 @@ public class AQnaServiceImpl implements IAQnaService {
 
 		return pagingVO;
 	}
-
 
 
 	@Override
@@ -55,32 +60,105 @@ public class AQnaServiceImpl implements IAQnaService {
 	/**
 	 * 관리자 답변 등록
 	 * - REPLY_CN, REPLY_MEM_NO, REPLY_DT 업데이트
-     * - INQRY_STATUS 자동으로 'DONE'
+     * - INQRY_STATUS 자동으로 'ANSWERED'
      * - 알람 생성
+     * - 답변 DB 저장, 내부 알림 생성, 외부 이메일 발송까지 한 번에!
 	 */
 	@Override
-	@Transactional // 답변 등록과 알람 생성은 하나의 트랜잭션으로 처리
+	@Transactional // 저장, 알람, 메일(선택)을 하나의 흐름으로!
 	public int aInquiryReply(InquiryVO inquiryVO) { //답변 먼저 달기
 
-		// 1. 진짜 정보가 들어있는 박스를 DB에서 새로 꺼낸다!
+		// 1.[검증] 진짜 정보가 들어있는 박스를 DB에서 새로 꺼낸다!(이메일,이름 정보 확보)
 	    InquiryVO detail = qnaMapper.aInquiryDetail(inquiryVO.getInqryNo());
 	    if (detail == null) return 0;
 
+	    // 2.[저장] 답변 등록 실행
 		int cnt = qnaMapper.aInquiryReply(inquiryVO);
-		//실패 시 리턴
-		if(cnt == 0) return 0;
+		if(cnt == 0) return 0; 	//실패 시 리턴
 
-		//성공 시 알림보내기
+		// 3.[알림] 성공 시 웹 내부 알람 생성
 		AlarmVO alarm = new AlarmVO();
-		alarm.setMemNo(inquiryVO.getMemNo()); // 문의 작성자
+		alarm.setMemNo(detail.getMemNo()); // 문의 작성자에게
 		alarm.setAlarmCont("문의하신 '"+inquiryVO.getInqryTitle()+"'답변이 완료되었습니다.");
 		alarm.setMoveUrl("/mypage/inquiry/"+inquiryVO.getInqryNo());
 		alarm.setReadYn("N");
 
-		//실제 DB저장
-		qnaMapper.insertAlarm(alarm);
+		qnaMapper.insertAlarm(alarm);//실제 DB저장
+
+		// 4.[이메일] 이메일 발송 추가! (조원의 MailService 활용)
+		try {
+			// 조원의 양식을 빌려온 HTML 생성
+			String htmlBody = buildReplyHtml(detail.getMemberName(), detail.getInqryTitle(), inquiryVO.getReplyCn());
+
+			//메일발송(MailService.sendEmail호출)
+			mailService.sendEmail(
+					detail.getInqryEmail(),  // [번역 1] 네 VO의 이메일을 -> MailService의 'to' 자리로!
+					"[Mohaeng] 문의하신 내용에 대한 답변이 등록되었습니다.",  // [번역 2]  MailService의 'subject' 자리로!
+					inquiryVO.getReplyCn(),  // [번역 3] 네가 쓴 답변을   -> MailService의 'textContent' 자리로!
+					htmlBody);				 // [번역 4] 생성한 HTML을   -> MailService의 'htmlContent' 자리로!
+			log.info("문의 답변 메일 발송 성공 : {}",detail.getInqryEmail());
+
+		} catch (Exception e) {
+			log.error("❌ 메일 발송 실패! 모든 작업을 취소합니다.");
+			throw new RuntimeException("메일 발송에 실패하여 답변 등록이 취소되었습니다. 잠시 후 다시 시도해주세요.", e);
+
+			// [다른 선택]메일 발송 실패가 전체 로직(DB 저장)을 취소시키면 안 된다면 여기서 예외 처리!
+            // log.error("❌ 메일 발송 중 오류 발생했지만 답변 저장은 유지됨: {}", e.getMessage());
+		}
 
 		return cnt;
+	}
+
+	private String buildReplyHtml(String memName, String title, String content) {
+		String safeName = (memName == null || memName.isBlank()) ? "고객" :memName;
+
+		return """
+				<!doctype html>
+		        <html lang="ko">
+		        <head><meta charset="utf-8"></head>
+		        <body style="margin:0;padding:0;background:#f6f7fb;">
+		          <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;padding:24px 0;">
+		            <tr>
+		              <td align="center">
+		                <table role="presentation" width="600" style="width:600px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+		                  <tr>
+		                    <td style="padding:22px 28px;background:#111827;color:#ffffff;">
+		                      <div style="font-size:18px;font-weight:700;">Mohaeng</div>
+		                      <div style="margin-top:6px;font-size:13px;opacity:0.85;">문의 답변 완료 안내</div>
+		                    </td>
+		                  </tr>
+		                  <tr>
+		                    <td style="padding:26px 28px;color:#111827;">
+		                      <div style="font-size:16px;line-height:1.6;">
+		                        안녕하세요, <b>%s</b>님.<br>
+		                        문의하신 사항에 대해 답변이 등록되었습니다.
+		                      </div>
+		                      <div style="margin-top:18px;padding:16px 18px;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb;">
+		                        <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">문의 제목</div>
+		                        <div style="font-size:15px;font-weight:700;margin-bottom:12px;">%s</div>
+		                        <div style="font-size:12px;color:#6b7280;margin-bottom:4px;">답변 내용</div>
+		                        <div style="font-size:14px;line-height:1.6;color:#374151;white-space:pre-wrap;">%s</div>
+		                      </div>
+		                      <div style="margin-top:20px;">
+		                        <a href="http://localhost:8272/inquiry/list"
+		                           style="display:inline-block;padding:12px 16px;border-radius:10px;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;">
+		                          나의 문의 내역 확인하기
+		                        </a>
+		                      </div>
+		                    </td>
+		                  </tr>
+		                  <tr>
+		                    <td style="padding:16px 28px;background:#f9fafb;color:#6b7280;font-size:11px;">
+		                      © Mohaeng. All rights reserved. 본 메일은 발신 전용입니다.
+		                    </td>
+		                  </tr>
+		                </table>
+		              </td>
+		            </tr>
+		          </table>
+		        </body>
+		        </html>
+				""".formatted(safeName, title, content);
 	}
 
 	/**
@@ -105,10 +183,17 @@ public class AQnaServiceImpl implements IAQnaService {
 
 		alarm.setAlarmCont("문의하신'"+detail.getInqryTitle()+"'글이 삭제되었습니다. (사유: " + alarmCont + ")");
 	    alarm.setMoveUrl("/mypage/inquiry");
+	    alarm.setReadYn("N");
 
 	    qnaMapper.insertAlarm(alarm);
 
 		return cnt;
+	}
+
+	//다운로드 전용
+	@Override
+	public Map<String, Object> getAttachFile(int fileNo) {
+		return qnaMapper.selectAttachFile(fileNo);
 	}
 
 

@@ -117,7 +117,8 @@ public class SecurityConfig {
 			"/api/admin/login",
 			"/api/schedule/**",
 			"/api/admin/schedule/**",
-			"/api/admin/notices/thumbnail/**"
+			"/api/admin/notices/thumbnail/**",
+			"/api/admin/inquiry/**"
 		};
 
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {
@@ -182,8 +183,8 @@ public class SecurityConfig {
 //              .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
 //              .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
                 .requestMatchers("/member/login").permitAll()
-                .requestMatchers("/member/sns/**").authenticated() 
-                
+                .requestMatchers("/member/sns/**").authenticated()
+
                 // 마이페이지 접근 제어 (SNS 미완성 차단)
                 .requestMatchers("/mypage/**").access((authentication, context) -> {
                     Authentication auth = authentication.get();
@@ -215,14 +216,14 @@ public class SecurityConfig {
     http.sessionManagement(session ->
         session.maximumSessions(1)
     );
-    
+
     // google 로그인
     http
     .oauth2Login(oauth2 -> oauth2
         .loginPage("/member/login")
         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
         .successHandler((request, response, authentication) -> {
-            response.sendRedirect("/"); 
+            response.sendRedirect("/");
         })
     );
 

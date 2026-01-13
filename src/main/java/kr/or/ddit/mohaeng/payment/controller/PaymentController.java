@@ -93,6 +93,7 @@ public class PaymentController {
 	@ResponseBody
 	@PostMapping("/flight/confirm")
     public ResponseEntity<Map<String, Object>> confirmFlightPayment(@RequestBody PaymentVO paymentVO) {
+		log.info("confirmFlightPayment reservationList : {}", paymentVO.getFlightReservationList());
 		log.info("confirmFlightPayment productList : {}", paymentVO.getFlightProductList());
 		log.info("confirmFlightPayment passengersList : {}", paymentVO.getFlightPassengersList());
 		Map<String, Object> result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨 - serviceResult타입은 아님

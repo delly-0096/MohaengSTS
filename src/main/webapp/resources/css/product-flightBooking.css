@@ -581,7 +581,9 @@
 }
 
 .summary-row.detail .summary-label,
-.summary-row.detail .summary-value {
+.summary-row.detail .summary-value,
+.summary-row.extra .summary-label,
+.summary-row.extra .summary-value {
 	font-size: 0.8rem;     /* 0.85보다 조금 더 줄여서 확실히 보조 정보처럼 보이게 함 */
     color: #a0a0a0;        /* 기존 #777보다 훨씬 연한 회색 */
     font-weight: 300;      /* 글자 두께를 더 얇게 설정 (폰트가 지원할 경우) */

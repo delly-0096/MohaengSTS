@@ -149,10 +149,12 @@ document.addEventListener("DOMContentLoaded", async function(){
 	// db에 넣을 정보
 	flightProduct = sessionStorage.getItem("flightProduct");
 	passengers = sessionStorage.getItem("passengers");
+	reservationList = sessionStorage.getItem("reservationList");
 	reserveAgree = sessionStorage.getItem("reserveAgree");
 	
 	console.log("flightProduct : ", flightProduct);
 	console.log("passengers : ", passengers);
+	console.log("reservationList : ", reservationList);
 	console.log("reserveAgree : ", reserveAgree);
 	
 	
@@ -186,6 +188,10 @@ document.addEventListener("DOMContentLoaded", async function(){
 			passengers = JSON.parse(passengers);
 		}
 		
+		if(reservationList){
+			reservationList = JSON.parse(reservationList);
+		}
+		
 		if(reserveAgree){
 			reserveAgree = JSON.parse(reserveAgree);
 		}
@@ -198,7 +204,8 @@ document.addEventListener("DOMContentLoaded", async function(){
 	        memNo : customData.memNo,
 	        flightProductList : flightProduct != null ? flightProduct.flights : null,
 	        flightPassengersList : passengers != null ? passengers : null,
-       		reserveAgreeList : reserveAgree != null ? reserveAgree : null
+       		flightReservationList : reservationList != null ? reservationList : null,
+       		flightResvAgree : reserveAgree != null ? reserveAgree : null
 	    };
 		
 		console.log("requestData ", requestData);

@@ -18,4 +18,5 @@ public interface ITripProdInquiryMapper {
 	public int insertReply(TripProdInquiryVO vo);
 	public int updateReply(TripProdInquiryVO vo);
 	public int deleteReply(@Param("prodInqryNo") int prodInqryNo, @Param("replyMemNo") int replyMemNo);
+	public TripProdInquiryVO getInquiryById(int prodInqryNo);
 }

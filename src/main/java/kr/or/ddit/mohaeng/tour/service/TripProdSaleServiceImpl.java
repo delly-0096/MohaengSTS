@@ -17,19 +17,6 @@ public class TripProdSaleServiceImpl implements ITripProdSaleService {
     private ITripProdSaleMapper mapper;
 
 	@Override
-	public Map<Integer, TripProdSaleVO> getSaleList(List<Integer> prodNos) {
-		Map<Integer, TripProdSaleVO> result = new HashMap<>();
-        if (prodNos == null || prodNos.isEmpty()) {
-            return result;
-        }
-        List<TripProdSaleVO> list = mapper.getSaleList(prodNos);
-        for (TripProdSaleVO sale : list) {
-            result.put(sale.getTripProdNo(), sale);
-        }
-        return result;
-	}
-
-	@Override
 	public TripProdSaleVO getSale(int tripProdNo) {
 		return mapper.getSale(tripProdNo);
 	}

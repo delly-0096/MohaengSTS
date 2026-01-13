@@ -14,10 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.validation.Valid;
-import kr.or.ddit.mohaeng.admin.tripschedule.controller.AdminTripscheduleController;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomCreateRequestDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomResponseDTO;
 import kr.or.ddit.mohaeng.community.chat.service.IChatService;

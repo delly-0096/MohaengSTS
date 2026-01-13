@@ -30,4 +30,24 @@ public class ProdReviewServiceImpl implements IProdReviewService {
 		return mapper.getStat(tripProdNo);
 	}
 
+	@Override
+	public int updateReview(ProdReviewVO vo) {
+		return mapper.updateReview(vo);
+	}
+
+	@Override
+	public int deleteReview(int prodRvNo, int memNo) {
+		return mapper.deleteReview(prodRvNo, memNo);
+	}
+
+	@Override
+	public Integer getReviewAttachNo(int prodRvNo) {
+		return mapper.getReviewAttachNo(prodRvNo);
+	}
+
+	@Override
+	public int updateReviewAttachNo(int prodRvNo, int attachNo) {
+		return mapper.updateReviewAttachNo(prodRvNo, attachNo);
+	}
+
 }

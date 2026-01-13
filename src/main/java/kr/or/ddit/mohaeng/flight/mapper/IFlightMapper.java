@@ -28,4 +28,6 @@ public interface IFlightMapper {
 	public int insertFlightReservation(FlightReservationVO flightReservationVO);	// 예약정보 추가
 	public int insertFlightAgree(FlightResvAgreeVO flightResvAgreeVO);				// 항공이용약관 동의
 	public int insertPassengers(FlightPassengersVO flightPassengersVO);				// 탑승객 정보 추가
+	
+	public Integer getFlightKey(FlightProductVO flightProductVO);					// 항공권 키 확인 - null일 경우를 대비하여 Integer로 변경
 }

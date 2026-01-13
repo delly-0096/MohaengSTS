@@ -54,10 +54,10 @@ public class AdminTripscheduleController {
 		int cnt = tripscheduleService.deleteTripSchedule(schdlNo);
 		
 		if(cnt > 0) {
-			resultMap.put("result", "success");
+			resultMap.put("result", "SUCCESS");
 			entity = new ResponseEntity<>(resultMap, HttpStatus.OK);
 		} else {
-			resultMap.put("result", "fail");
+			resultMap.put("result", "FAIL");
 			entity = new ResponseEntity<>(resultMap, HttpStatus.BAD_REQUEST);
 		}
 		

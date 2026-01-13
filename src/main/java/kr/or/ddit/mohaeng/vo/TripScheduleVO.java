@@ -65,6 +65,10 @@ public class TripScheduleVO {
 		this.totalBudget = totalBudget;
 	}
 
+	public String getStartRgnNm() {
+		return RegionCode.getNameByNo(startPlaceId);
+	}
+	
 	public String getRgnNm() {
         return RegionCode.getNameByNo(targetPlaceId);
     }

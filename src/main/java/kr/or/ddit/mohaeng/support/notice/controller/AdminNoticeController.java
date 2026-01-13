@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.support.notice.controller;
+ package kr.or.ddit.mohaeng.support.notice.controller;
 
 import java.io.File;
 import java.io.FileInputStream;

@@ -2,400 +2,517 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
 <c:set var="pageTitle" value="내 북마크" />
-<c:set var="pageCss" value="schedule" />
+<c:set var="pageCss" value="mypage" />
 
 <%@ include file="../common/header.jsp" %>
 
-<div class="bookmark-page">
+<div class="mypage">
     <div class="container">
-        <!-- 페이지 헤더 -->
-        <div class="section-header" style="text-align: left; margin-bottom: 32px;">
-            <div>
-                <h1 class="section-title" style="margin-bottom: 8px;">
-                    <i class="bi bi-bookmark-heart me-2"></i>내 북마크
-                </h1>
-                <p class="section-subtitle" style="margin: 0;">관심있는 일정과 장소, 상품을 모아보세요</p>
-            </div>
-        </div>
+        <div class="mypage-container no-sidebar">
+            <!-- 메인 콘텐츠 -->
+            <div class="mypage-content full-width">
+                <div class="mypage-header">
+                    <h1>내 북마크</h1>
+                    <p>저장한 일정과 상품을 확인하세요</p>
+                </div>
 
-        <!-- 탭 메뉴 -->
-        <div class="bookmark-tabs mb-4">
-            <ul class="nav nav-pills gap-2">
-                <li class="nav-item">
-                    <a class="nav-link active" href="#" data-tab="schedules">
-                        <i class="bi bi-calendar3 me-2"></i>일정 <span class="badge bg-primary ms-1">3</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-tab="places">
-                        <i class="bi bi-geo-alt me-2"></i>장소 <span class="badge bg-primary ms-1">12</span>
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#" data-tab="products">
-                        <i class="bi bi-bag me-2"></i>상품 <span class="badge bg-primary ms-1">5</span>
-                    </a>
-                </li>
-            </ul>
-        </div>
-
-        <!-- 선택 삭제 툴바 -->
-        <div class="selection-toolbar" id="selectionToolbar">
-            <div class="selection-toolbar-left">
-                <label class="select-all-checkbox">
-                    <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
-                    <span>전체 선택</span>
-                </label>
-                <span class="selected-count" id="selectedCount">0개 선택됨</span>
-            </div>
-            <div class="selection-toolbar-right">
-                <button class="btn btn-outline btn-sm" onclick="cancelSelection()">
-                    <i class="bi bi-x-lg me-1"></i>선택 취소
-                </button>
-                <button class="btn btn-danger btn-sm" id="deleteSelectedBtn" onclick="deleteSelectedBookmarks()" disabled>
-                    <i class="bi bi-trash me-1"></i>선택 삭제
-                </button>
-            </div>
-        </div>
-
-        <!-- 일정 북마크 -->
-        <div class="bookmark-content" id="bookmarkSchedules">
-            <div class="schedule-grid">
-                <!-- 일정 1 -->
-                <div class="schedule-card" data-id="schedule-1">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="schedule-card-image">
-                        <img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=300&fit=crop&q=80" alt="제주도">
-                        <button class="schedule-card-bookmark active" onclick="removeBookmark(this, 'schedule', 1)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
+                <!-- 통계 카드 -->
+<!--                 <div class="stats-grid">
+                    <div class="stat-card primary">
+                        <div class="stat-icon"><i class="bi bi-bookmark-fill"></i></div>
+                        <div class="stat-value">15</div>
+                        <div class="stat-label">전체 북마크</div>
                     </div>
-                    <div class="schedule-card-body">
-                        <h3 class="schedule-card-title">제주도 3박4일 힐링 코스</h3>
-                        <div class="schedule-card-dates">
-                            <i class="bi bi-calendar3"></i>
-                            <span>3박 4일 코스</span>
+                    <div class="stat-card secondary">
+                        <div class="stat-icon"><i class="bi bi-calendar3"></i></div>
+                        <div class="stat-value">5</div>
+                        <div class="stat-label">일정</div>
+                    </div>
+                    <div class="stat-card accent">
+                        <div class="stat-icon"><i class="bi bi-building"></i></div>
+                        <div class="stat-value">4</div>
+                        <div class="stat-label">숙소</div>
+                    </div>
+                    <div class="stat-card warning">
+                        <div class="stat-icon"><i class="bi bi-ticket-perforated"></i></div>
+                        <div class="stat-value">6</div>
+                        <div class="stat-label">투어/체험/티켓</div>
+                    </div>
+                </div> -->
+
+                <!-- 탭 -->
+                <div class="mypage-tabs">
+                    <button class="mypage-tab active" data-category="all">전체</button>
+                    <button class="mypage-tab" data-category="schedule">일정</button>
+<!--                     <button class="mypage-tab" data-category="destination">여행지</button> -->
+                    <button class="mypage-tab" data-category="accommodation">숙소</button>
+                    <button class="mypage-tab" data-category="tour">투어/체험/티켓</button>
+                </div>
+
+                <!-- 북마크 그리드 -->
+                <div class="content-section">
+                    <!-- 선택 삭제 툴바 -->
+                    <div class="selection-toolbar" id="selectionToolbar">
+                        <div class="selection-toolbar-left">
+                            <label class="select-all-checkbox">
+                                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll()">
+                                <span>전체 선택</span>
+                            </label>
+                            <span class="selected-count" id="selectedCount">0개 선택됨</span>
                         </div>
-                        <div class="schedule-card-places">
-                            <span class="place-tag">성산일출봉</span>
-                            <span class="place-tag">우도</span>
-                            <span class="place-tag">+5</span>
-                        </div>
-                        <div class="schedule-card-meta">
-                            <span><i class="bi bi-heart-fill text-danger"></i> 1.2K</span>
-                            <span><i class="bi bi-eye"></i> 5.4K</span>
+                        <div class="selection-toolbar-right">
+                            <button class="btn btn-outline btn-sm" onclick="cancelSelection()">
+                                <i class="bi bi-x-lg me-1"></i>선택 취소
+                            </button>
+                            <button class="btn btn-danger btn-sm" id="deleteSelectedBtn" onclick="deleteSelectedBookmarks()" disabled>
+                                <i class="bi bi-trash me-1"></i>선택 삭제
+                            </button>
                         </div>
                     </div>
-                    <div class="schedule-card-footer">
-                        <a href="${pageContext.request.contextPath}/schedule/view/1" class="btn btn-outline btn-sm">
-                            상세보기
-                        </a>
-                        <a href="${pageContext.request.contextPath}/schedule/planner?copy=1" class="btn btn-primary btn-sm">
-                            내 일정으로 복사
-                        </a>
+
+					<div class="bookmark-grid">
+						<!-- 일정 1 -->
+							<div class="bookmark-card" data-link="${pageContext.request.contextPath}/schedule/view/1" data-category="schedule"
+								data-id="schedule-1">
+								<label class="card-checkbox"> <input type="checkbox"
+									onchange="updateSelection()"> <span class="checkmark"><i
+										class="bi bi-check-lg"></i></span>
+								</label>
+
+								<div class="bookmark-card-image">
+									<img
+										src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=300&fit=crop&q=80"
+										alt="제주도">
+									<button class="bookmark-remove active"
+										onclick="removeScheduleBookmark(this)">
+										<i class="bi bi-bookmark-fill"></i>
+									</button>
+								</div>
+
+								<div class="bookmark-card-content">
+									<span class="badge bg-success mb-2">일정</span>
+									<h4>제주도 3박4일 힐링 코스</h4>
+									<p>
+										<i class="bi bi-calendar3"></i> 3박 4일 코스
+									</p>
+<!-- 									<div class="price">❤️ 1.2K · 👁 5.4K</div> -->
+								</div>
+							</div>
+                        <!-- 여행지 -->
+<!--                         <div class="bookmark-card" data-category="destination" data-id="bookmark-1"> -->
+<!--                             <label class="card-checkbox"> -->
+<!--                                 <input type="checkbox" onchange="updateSelection()"> -->
+<!--                                 <span class="checkmark"><i class="bi bi-check-lg"></i></span> -->
+<!--                             </label> -->
+<!--                             <div class="bookmark-card-image"> -->
+<!--                                 <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop&q=80" alt="제주도"> -->
+<!--                                 <button class="bookmark-remove active" onclick="removeBookmark(this)"> -->
+<!--                                     <i class="bi bi-bookmark-fill"></i> -->
+<!--                                 </button> -->
+<!--                             </div> -->
+<!--                             <div class="bookmark-card-content"> -->
+<!--                                 <span class="badge bg-primary mb-2">여행지</span> -->
+<!--                                 <h4>제주도</h4> -->
+<!--                                 <p><i class="bi bi-geo-alt"></i> 대한민국 제주특별자치도</p> -->
+<!--                             </div> -->
+<!--                         </div> -->
+
+                        <!-- 숙소 -->
+                        <div class="bookmark-card" data-category="accommodation" data-link="${pageContext.request.contextPath}/product/accommodation/1" data-id="bookmark-2">
+                            <label class="card-checkbox">
+                                <input type="checkbox" onchange="updateSelection()">
+                                <span class="checkmark"><i class="bi bi-check-lg"></i></span>
+                            </label>
+                            <div class="bookmark-card-image">
+                                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop&q=80" alt="숙소">
+                                <button class="bookmark-remove active" onclick="removeBookmark(this)">
+                                    <i class="bi bi-bookmark-fill"></i>
+                                </button>
+                            </div>
+                            <div class="bookmark-card-content">
+                                <span class="badge bg-info mb-2">숙소</span>
+                                <h4>제주 신라 호텔</h4>
+                                <p><i class="bi bi-geo-alt"></i> 제주시 중문관광로</p>
+                                <div class="price">160,000원~</div>
+                            </div>
+                        </div>
+
+                        <!-- 투어 -->
+                        <div class="bookmark-card" data-category="tour" data-link="${pageContext.request.contextPath}/product/tour/1" data-id="bookmark-3">
+                            <label class="card-checkbox">
+                                <input type="checkbox" onchange="updateSelection()">
+                                <span class="checkmark"><i class="bi bi-check-lg"></i></span>
+                            </label>
+                            <div class="bookmark-card-image">
+                                <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80" alt="스쿠버다이빙">
+                                <button class="bookmark-remove active" onclick="removeBookmark(this)">
+                                    <i class="bi bi-bookmark-fill"></i>
+                                </button>
+                            </div>
+                            <div class="bookmark-card-content">
+                                <span class="badge bg-warning mb-2">투어</span>
+                                <h4>제주 스쿠버다이빙 체험</h4>
+                                <p><i class="bi bi-geo-alt"></i> 서귀포시 중문</p>
+                                <div class="price">68,000원</div>
+                            </div>
+                        </div>
+
+                        <!-- 여행지 -->
+<!--                         <div class="bookmark-card" data-category="destination" data-id="bookmark-4"> -->
+<!--                             <label class="card-checkbox"> -->
+<!--                                 <input type="checkbox" onchange="updateSelection()"> -->
+<!--                                 <span class="checkmark"><i class="bi bi-check-lg"></i></span> -->
+<!--                             </label> -->
+<!--                             <div class="bookmark-card-image"> -->
+<!--                                 <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&h=300&fit=crop&q=80" alt="부산"> -->
+<!--                                 <button class="bookmark-remove active" onclick="removeBookmark(this)"> -->
+<!--                                     <i class="bi bi-bookmark-fill"></i> -->
+<!--                                 </button> -->
+<!--                             </div> -->
+<!--                             <div class="bookmark-card-content"> -->
+<!--                                 <span class="badge bg-primary mb-2">여행지</span> -->
+<!--                                 <h4>부산 해운대</h4> -->
+<!--                                 <p><i class="bi bi-geo-alt"></i> 부산광역시 해운대구</p> -->
+<!--                             </div> -->
+<!--                         </div> -->
+
+                        <!-- 숙소 -->
+                        <div class="bookmark-card" data-category="accommodation" data-id="bookmark-5">
+                            <label class="card-checkbox">
+                                <input type="checkbox" onchange="updateSelection()">
+                                <span class="checkmark"><i class="bi bi-check-lg"></i></span>
+                            </label>
+                            <div class="bookmark-card-image">
+                                <img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop&q=80" alt="숙소">
+                                <button class="bookmark-remove active" onclick="removeBookmark(this)">
+                                    <i class="bi bi-bookmark-fill"></i>
+                                </button>
+                            </div>
+                            <div class="bookmark-card-content">
+                                <span class="badge bg-info mb-2">숙소</span>
+                                <h4>부산 파크하얏트</h4>
+                                <p><i class="bi bi-geo-alt"></i> 부산 해운대구</p>
+                                <div class="price">280,000원~</div>
+                            </div>
+                        </div>
+
+                        <!-- 투어 -->
+                        <div class="bookmark-card" data-category="tour" data-id="bookmark-6">
+                            <label class="card-checkbox">
+                                <input type="checkbox" onchange="updateSelection()">
+                                <span class="checkmark"><i class="bi bi-check-lg"></i></span>
+                            </label>
+                            <div class="bookmark-card-image">
+                                <img src="https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=400&h=300&fit=crop&q=80" alt="카약">
+                                <button class="bookmark-remove active" onclick="removeBookmark(this)">
+                                    <i class="bi bi-bookmark-fill"></i>
+                                </button>
+                            </div>
+                            <div class="bookmark-card-content">
+                                <span class="badge bg-warning mb-2">투어</span>
+                                <h4>부산 해운대 카약 체험</h4>
+                                <p><i class="bi bi-geo-alt"></i> 부산 해운대해수욕장</p>
+                                <div class="price">15,000원</div>
+                            </div>
+                        </div>
+
+                        <!-- 여행지 -->
+<!--                         <div class="bookmark-card" data-category="destination" data-id="bookmark-7"> -->
+<!--                             <label class="card-checkbox"> -->
+<!--                                 <input type="checkbox" onchange="updateSelection()"> -->
+<!--                                 <span class="checkmark"><i class="bi bi-check-lg"></i></span> -->
+<!--                             </label> -->
+<!--                             <div class="bookmark-card-image"> -->
+<!--                                 <img src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&q=80" alt="강릉"> -->
+<!--                                 <button class="bookmark-remove active" onclick="removeBookmark(this)"> -->
+<!--                                     <i class="bi bi-bookmark-fill"></i> -->
+<!--                                 </button> -->
+<!--                             </div> -->
+<!--                             <div class="bookmark-card-content"> -->
+<!--                                 <span class="badge bg-primary mb-2">여행지</span> -->
+<!--                                 <h4>강릉 경포대</h4> -->
+<!--                                 <p><i class="bi bi-geo-alt"></i> 강원도 강릉시</p> -->
+<!--                             </div> -->
+<!--                         </div> -->
+
+                        <!-- 투어 -->
+                        <div class="bookmark-card" data-category="tour" data-id="bookmark-8">
+                            <label class="card-checkbox">
+                                <input type="checkbox" onchange="updateSelection()">
+                                <span class="checkmark"><i class="bi bi-check-lg"></i></span>
+                            </label>
+                            <div class="bookmark-card-image">
+                                <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=400&h=300&fit=crop&q=80" alt="요리체험">
+                                <button class="bookmark-remove active" onclick="removeBookmark(this)">
+                                    <i class="bi bi-bookmark-fill"></i>
+                                </button>
+                            </div>
+                            <div class="bookmark-card-content">
+                                <span class="badge bg-warning mb-2">투어</span>
+                                <h4>경주 한과 만들기</h4>
+                                <p><i class="bi bi-geo-alt"></i> 경주시 황남동</p>
+                                <div class="price">24,000원</div>
+                            </div>
+                        </div>
+
+                        <!-- 숙소 -->
+                        <div class="bookmark-card" data-category="accommodation" data-id="bookmark-9">
+                            <label class="card-checkbox">
+                                <input type="checkbox" onchange="updateSelection()">
+                                <span class="checkmark"><i class="bi bi-check-lg"></i></span>
+                            </label>
+                            <div class="bookmark-card-image">
+                                <img src="https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=400&h=300&fit=crop&q=80" alt="펜션">
+                                <button class="bookmark-remove active" onclick="removeBookmark(this)">
+                                    <i class="bi bi-bookmark-fill"></i>
+                                </button>
+                            </div>
+                            <div class="bookmark-card-content">
+                                <span class="badge bg-info mb-2">숙소</span>
+                                <h4>강릉 바다뷰 펜션</h4>
+                                <p><i class="bi bi-geo-alt"></i> 강릉시 주문진읍</p>
+                                <div class="price">120,000원~</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- 일정 2 -->
-                <div class="schedule-card" data-id="schedule-2">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="schedule-card-image">
-                        <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop&q=80" alt="오사카">
-                        <button class="schedule-card-bookmark active" onclick="removeBookmark(this, 'schedule', 2)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="schedule-card-body">
-                        <h3 class="schedule-card-title">오사카 먹방 여행 4일</h3>
-                        <div class="schedule-card-dates">
-                            <i class="bi bi-calendar3"></i>
-                            <span>3박 4일 코스</span>
-                        </div>
-                        <div class="schedule-card-places">
-                            <span class="place-tag">도톤보리</span>
-                            <span class="place-tag">구로몬시장</span>
-                            <span class="place-tag">+8</span>
-                        </div>
-                        <div class="schedule-card-meta">
-                            <span><i class="bi bi-heart-fill text-danger"></i> 892</span>
-                            <span><i class="bi bi-eye"></i> 3.1K</span>
-                        </div>
-                    </div>
-                    <div class="schedule-card-footer">
-                        <a href="${pageContext.request.contextPath}/schedule/view/2" class="btn btn-outline btn-sm">
-                            상세보기
-                        </a>
-                        <a href="${pageContext.request.contextPath}/schedule/planner?copy=2" class="btn btn-primary btn-sm">
-                            내 일정으로 복사
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 일정 3 -->
-                <div class="schedule-card" data-id="schedule-3">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="schedule-card-image">
-                        <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&h=300&fit=crop&q=80" alt="파리">
-                        <button class="schedule-card-bookmark active" onclick="removeBookmark(this, 'schedule', 3)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="schedule-card-body">
-                        <h3 class="schedule-card-title">파리 로맨틱 여행 5일</h3>
-                        <div class="schedule-card-dates">
-                            <i class="bi bi-calendar3"></i>
-                            <span>4박 5일 코스</span>
-                        </div>
-                        <div class="schedule-card-places">
-                            <span class="place-tag">에펠탑</span>
-                            <span class="place-tag">루브르 박물관</span>
-                            <span class="place-tag">+10</span>
-                        </div>
-                        <div class="schedule-card-meta">
-                            <span><i class="bi bi-heart-fill text-danger"></i> 2.3K</span>
-                            <span><i class="bi bi-eye"></i> 8.7K</span>
-                        </div>
-                    </div>
-                    <div class="schedule-card-footer">
-                        <a href="${pageContext.request.contextPath}/schedule/view/3" class="btn btn-outline btn-sm">
-                            상세보기
-                        </a>
-                        <a href="${pageContext.request.contextPath}/schedule/planner?copy=3" class="btn btn-primary btn-sm">
-                            내 일정으로 복사
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 장소 북마크 -->
-        <div class="bookmark-content" id="bookmarkPlaces" style="display: none;">
-            <div class="places-grid">
-                <!-- 장소 1 -->
-                <div class="place-card" data-id="place-1">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="place-card-image">
-                        <img src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=300&fit=crop&q=80" alt="성산일출봉">
-                        <button class="place-card-bookmark active" onclick="removeBookmark(this, 'place', 1)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="place-card-body">
-                        <span class="place-card-category">자연/경관</span>
-                        <h4 class="place-card-title">성산일출봉</h4>
-                        <p class="place-card-location"><i class="bi bi-geo-alt"></i> 제주 서귀포시</p>
-                        <div class="place-card-rating">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <span>4.8</span>
-                            <span class="text-muted">(2,341)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 장소 2 -->
-                <div class="place-card" data-id="place-2">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="place-card-image">
-                        <img src="https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=400&h=300&fit=crop&q=80" alt="후시미이나리">
-                        <button class="place-card-bookmark active" onclick="removeBookmark(this, 'place', 2)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="place-card-body">
-                        <span class="place-card-category">명소/관광</span>
-                        <h4 class="place-card-title">후시미이나리 신사</h4>
-                        <p class="place-card-location"><i class="bi bi-geo-alt"></i> 교토, 일본</p>
-                        <div class="place-card-rating">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <span>4.9</span>
-                            <span class="text-muted">(5,672)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 장소 3 -->
-                <div class="place-card" data-id="place-3">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="place-card-image">
-                        <img src="https://images.unsplash.com/photo-1552465011-b4e21bf6e79a?w=400&h=300&fit=crop&q=80" alt="도톤보리">
-                        <button class="place-card-bookmark active" onclick="removeBookmark(this, 'place', 3)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="place-card-body">
-                        <span class="place-card-category">맛집/거리</span>
-                        <h4 class="place-card-title">도톤보리</h4>
-                        <p class="place-card-location"><i class="bi bi-geo-alt"></i> 오사카, 일본</p>
-                        <div class="place-card-rating">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <span>4.7</span>
-                            <span class="text-muted">(8,923)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 장소 4 -->
-                <div class="place-card" data-id="place-4">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="place-card-image">
-                        <img src="https://images.unsplash.com/photo-1499856871958-5b9627545d1a?w=400&h=300&fit=crop&q=80" alt="에펠탑">
-                        <button class="place-card-bookmark active" onclick="removeBookmark(this, 'place', 4)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="place-card-body">
-                        <span class="place-card-category">랜드마크</span>
-                        <h4 class="place-card-title">에펠탑</h4>
-                        <p class="place-card-location"><i class="bi bi-geo-alt"></i> 파리, 프랑스</p>
-                        <div class="place-card-rating">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <span>4.9</span>
-                            <span class="text-muted">(15,234)</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 상품 북마크 -->
-        <div class="bookmark-content" id="bookmarkProducts" style="display: none;">
-            <div class="products-grid">
-                <!-- 상품 1 -->
-                <div class="product-card" data-id="product-1">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="product-card-image">
-                        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80" alt="스쿠버다이빙">
-                        <button class="product-card-bookmark active" onclick="removeBookmark(this, 'product', 1)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="product-card-body">
-                        <span class="product-card-category">액티비티</span>
-                        <h4 class="product-card-title">제주 스쿠버다이빙 체험</h4>
-                        <p class="product-card-location"><i class="bi bi-geo-alt"></i> 제주 서귀포시</p>
-                        <div class="product-card-rating">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <span>4.9</span>
-                            <span class="text-muted">(328)</span>
-                        </div>
-                        <div class="product-card-price">
-                            <span class="original-price">85,000원</span>
-                            <span class="sale-price">68,000원</span>
-                        </div>
-                    </div>
-                    <div class="product-card-footer">
-                        <a href="${pageContext.request.contextPath}/product/tour/1" class="btn btn-primary btn-sm w-100">
-                            상세보기
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 상품 2 -->
-                <div class="product-card" data-id="product-2">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="product-card-image">
-                        <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400&h=300&fit=crop&q=80" alt="도쿄타워">
-                        <button class="product-card-bookmark active" onclick="removeBookmark(this, 'product', 2)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="product-card-body">
-                        <span class="product-card-category">티켓</span>
-                        <h4 class="product-card-title">도쿄타워 전망대 입장권</h4>
-                        <p class="product-card-location"><i class="bi bi-geo-alt"></i> 도쿄, 일본</p>
-                        <div class="product-card-rating">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <span>4.7</span>
-                            <span class="text-muted">(1,234)</span>
-                        </div>
-                        <div class="product-card-price">
-                            <span class="sale-price">15,000원</span>
-                        </div>
-                    </div>
-                    <div class="product-card-footer">
-                        <a href="${pageContext.request.contextPath}/product/tour/2" class="btn btn-primary btn-sm w-100">
-                            상세보기
-                        </a>
-                    </div>
-                </div>
-
-                <!-- 상품 3 -->
-                <div class="product-card" data-id="product-3">
-                    <label class="card-checkbox">
-                        <input type="checkbox" onchange="updateSelection()">
-                        <span class="checkmark"><i class="bi bi-check-lg"></i></span>
-                    </label>
-                    <div class="product-card-image">
-                        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop&q=80" alt="호텔">
-                        <button class="product-card-bookmark active" onclick="removeBookmark(this, 'product', 3)">
-                            <i class="bi bi-bookmark-fill"></i>
-                        </button>
-                    </div>
-                    <div class="product-card-body">
-                        <span class="product-card-category">숙박</span>
-                        <h4 class="product-card-title">제주 신라호텔</h4>
-                        <p class="product-card-location"><i class="bi bi-geo-alt"></i> 제주 서귀포시</p>
-                        <div class="product-card-rating">
-                            <i class="bi bi-star-fill text-warning"></i>
-                            <span>4.8</span>
-                            <span class="text-muted">(892)</span>
-                        </div>
-                        <div class="product-card-price">
-                            <span class="sale-price">280,000원</span>
-                            <span class="text-muted">/박</span>
-                        </div>
-                    </div>
-                    <div class="product-card-footer">
-                        <a href="${pageContext.request.contextPath}/product/accommodation/1" class="btn btn-primary btn-sm w-100">
-                            상세보기
-                        </a>
-                    </div>
+                <!-- 페이지네이션 -->
+                <div class="pagination-container">
+                    <nav>
+                        <ul class="pagination">
+                            <li class="page-item">
+                                <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
-        </div>
-
-        <!-- 빈 상태 -->
-        <div class="empty-state" id="emptyState" style="display: none;">
-            <div class="empty-state-icon">
-                <i class="bi bi-bookmark-x"></i>
-            </div>
-            <h3 class="empty-state-title">북마크가 없습니다</h3>
-            <p class="empty-state-desc">마음에 드는 일정, 장소, 상품을 북마크해보세요!</p>
-            <a href="${pageContext.request.contextPath}/schedule/search" class="btn btn-primary">
-                <i class="bi bi-search me-2"></i>일정 검색하기
-            </a>
         </div>
     </div>
 </div>
 
+<!-- 북마크 상세 모달 -->
+<div class="modal fade bookmark-detail-modal" id="bookmarkDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookmarkDetailTitle">상세 정보</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="bookmarkDetailBody">
+                <!-- 동적 콘텐츠 -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">닫기</button>
+                <button type="button" class="btn btn-danger" onclick="removeCurrentBookmark()">
+                    <i class="bi bi-trash me-1"></i>북마크 삭제
+                </button>
+                <button type="button" class="btn btn-primary" onclick="addToSchedule()">
+                    <i class="bi bi-calendar-plus me-1"></i>일정에 추가
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+//✅ helper: 현재 탭 기준으로 "화면에 보이는 카드들"만 가져오기
+function getVisibleCardsByActiveTab() {
+    var activeTab = document.querySelector('.mypage-tab.active');
+    var activeCategory = activeTab ? activeTab.dataset.category : 'all';
+
+    var cards = [];
+
+    // schedule 섹션
+    var scheduleSection = document.getElementById('scheduleSection');
+    var scheduleCards = document.querySelectorAll('.schedule-card');
+
+    // bookmark 섹션(기존)
+    var bookmarkCards = document.querySelectorAll('.bookmark-card');
+
+    if (activeCategory === 'all') {
+        // 전체: 일정 + 북마크 전부(보이는 것 기준)
+        scheduleCards.forEach(function(c) {
+            if (scheduleSection && scheduleSection.style.display !== 'none') cards.push(c);
+        });
+        bookmarkCards.forEach(function(c) {
+            if (c.style.display !== 'none') cards.push(c);
+        });
+        return cards;
+    }
+
+    if (activeCategory === 'schedule') {
+        scheduleCards.forEach(function(c) {
+            if (scheduleSection && scheduleSection.style.display !== 'none') cards.push(c);
+        });
+        return cards;
+    }
+
+    // destination / accommodation / tour
+    bookmarkCards.forEach(function(c) {
+        if (c.style.display !== 'none' && c.dataset.category === activeCategory) {
+            cards.push(c);
+        }
+    });
+
+    return cards;
+}
+
+// ✅ 탭 필터링 (기존 로직 교체)
+document.querySelectorAll('.mypage-tab').forEach(function(tab) {
+  tab.addEventListener('click', function() {
+    document.querySelectorAll('.mypage-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+
+    var category = this.dataset.category;
+
+    // schedule 섹션 표시/숨김
+    var scheduleSection = document.getElementById('scheduleSection');
+    if (scheduleSection) scheduleSection.style.display = (category === 'all' || category === 'schedule') ? 'block' : 'none';
+
+    // 북마크 카드(여행지/숙소/투어) 필터
+    document.querySelectorAll('.bookmark-grid .bookmark-card').forEach(function(card) {
+      var cat = card.dataset.category;
+      card.style.display = (category === 'all' || cat === category) ? 'block' : 'none';
+    });
+
+    cancelSelection();
+  });
+});
+
+//카드 클릭하면 상세로 이동
+document.querySelectorAll('.bookmark-card').forEach(function(card) {
+  card.addEventListener('click', function(e) {
+    // 체크박스/북마크버튼 눌렀을 땐 이동 막기
+    if (e.target.closest('.card-checkbox') || e.target.closest('.bookmark-remove')) return;
+
+    var link = card.dataset.link;
+    if (link) location.href = link;   // ✅ replace 쓰지 말 것!
+  });
+});
+
+
+// ✅ 전체 선택 토글 (기존 교체)
+function toggleSelectAll() {
+    var selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    var isChecked = selectAllCheckbox.checked;
+
+    var visibleCards = getVisibleCardsByActiveTab();
+    visibleCards.forEach(function(card) {
+        var checkbox = card.querySelector('.card-checkbox input[type="checkbox"]');
+        if (checkbox) {
+            checkbox.checked = isChecked;
+            card.classList.toggle('selected', isChecked);
+        }
+    });
+
+    updateSelection();
+}
+
+// ✅ 선택 상태 업데이트 (기존 교체)
+function updateSelection() {
+    var visibleCards = getVisibleCardsByActiveTab();
+    var selectedCount = 0;
+    var totalCount = visibleCards.length;
+
+    visibleCards.forEach(function(card) {
+        var checkbox = card.querySelector('.card-checkbox input[type="checkbox"]');
+        if (checkbox && checkbox.checked) {
+            selectedCount++;
+            card.classList.add('selected');
+        } else {
+            card.classList.remove('selected');
+        }
+    });
+
+    document.getElementById('selectedCount').textContent = selectedCount + '개 선택됨';
+
+    var selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    if (totalCount > 0 && selectedCount === totalCount) {
+        selectAllCheckbox.checked = true;
+        selectAllCheckbox.indeterminate = false;
+    } else if (selectedCount > 0) {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = true;
+    } else {
+        selectAllCheckbox.checked = false;
+        selectAllCheckbox.indeterminate = false;
+    }
+
+    document.getElementById('deleteSelectedBtn').disabled = (selectedCount === 0);
+}
+
+// ✅ 선택 취소 (기존 교체)
+function cancelSelection() {
+    document.querySelectorAll('.card-checkbox input[type="checkbox"]').forEach(function(checkbox) {
+        checkbox.checked = false;
+        var card = checkbox.closest('.bookmark-card, .schedule-card');
+        if (card) card.classList.remove('selected');
+    });
+
+    var all = document.getElementById('selectAllCheckbox');
+    all.checked = false;
+    all.indeterminate = false;
+
+    updateSelection();
+}
+
+// ✅ 선택 삭제 (기존 교체)
+function deleteSelectedBookmarks() {
+    var selectedCards = document.querySelectorAll('.bookmark-card.selected, .schedule-card.selected');
+
+    if (selectedCards.length === 0) {
+        showToast('선택된 북마크가 없습니다.', 'warning');
+        return;
+    }
+
+    if (!confirm(selectedCards.length + '개의 북마크를 삭제하시겠습니까?')) return;
+
+    selectedCards.forEach(function(card, index) {
+        setTimeout(function() {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.8)';
+            setTimeout(function() { card.remove(); }, 300);
+        }, index * 100);
+    });
+
+    setTimeout(function() {
+        cancelSelection();
+        showToast(selectedCards.length + '개의 북마크가 삭제되었습니다.', 'success');
+    }, selectedCards.length * 100 + 350);
+}
+
+// ✅ 일정 전용 북마크 해제(새로 추가)
+function removeScheduleBookmark(btn) {
+    event.stopPropagation();
+    if (!confirm('일정 북마크를 삭제하시겠습니까?')) return;
+
+    var card = btn.closest('.schedule-card');
+    card.style.animation = 'fadeOut 0.3s ease';
+    setTimeout(function() { card.remove(); }, 300);
+
+    if (typeof showToast === 'function') showToast('일정 북마크가 삭제되었습니다.', 'info');
+
+    updateSelection();
+}
+
+
+
+</script>
+
 <style>
+@keyframes fadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.8); }
+}
+
 /* 선택 삭제 툴바 */
 .selection-toolbar {
     display: flex;
@@ -484,18 +601,16 @@
     border-color: var(--primary-color);
 }
 
-/* 선택된 카드 스타일 */
-.schedule-card.selected,
-.place-card.selected,
-.product-card.selected {
+/* ✅ 선택된 카드 스타일 */
+.bookmark-card.selected,
+.schedule-card.selected {
     outline: 3px solid var(--primary-color);
     outline-offset: -3px;
 }
 
-/* 카드 상대 위치 설정 */
-.schedule-card,
-.place-card,
-.product-card {
+/* ✅ 카드 상대 위치 설정 */
+.bookmark-card,
+.schedule-card {
     position: relative;
 }
 
@@ -513,213 +628,5 @@
 }
 </style>
 
-<script>
-// 탭 전환
-document.querySelectorAll('.bookmark-tabs .nav-link').forEach(tab => {
-    tab.addEventListener('click', function(e) {
-        e.preventDefault();
-
-        // 활성화 상태 변경
-        document.querySelectorAll('.bookmark-tabs .nav-link').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-
-        // 콘텐츠 표시
-        const tabName = this.dataset.tab;
-        showBookmarkContent(tabName);
-
-        // 탭 전환 시 선택 초기화
-        cancelSelection();
-    });
-});
-
-function showBookmarkContent(tabName) {
-    // 모든 콘텐츠 숨기기
-    document.querySelectorAll('.bookmark-content').forEach(content => {
-        content.style.display = 'none';
-    });
-
-    // 선택된 콘텐츠 표시
-    const targetId = 'bookmark' + tabName.charAt(0).toUpperCase() + tabName.slice(1);
-    const targetContent = document.getElementById(targetId);
-    if (targetContent) {
-        targetContent.style.display = 'block';
-    }
-}
-
-// 전체 선택 토글
-function toggleSelectAll() {
-    var selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    var isChecked = selectAllCheckbox.checked;
-
-    // 현재 보이는 탭의 카드들만 선택
-    var visibleContent = document.querySelector('.bookmark-content:not([style*="display: none"])');
-    if (visibleContent) {
-        var checkboxes = visibleContent.querySelectorAll('.card-checkbox input[type="checkbox"]');
-        checkboxes.forEach(function(checkbox) {
-            checkbox.checked = isChecked;
-            var card = checkbox.closest('.schedule-card, .place-card, .product-card');
-            if (card) {
-                if (isChecked) {
-                    card.classList.add('selected');
-                } else {
-                    card.classList.remove('selected');
-                }
-            }
-        });
-    }
-
-    updateSelection();
-}
-
-// 선택 상태 업데이트
-function updateSelection() {
-    var visibleContent = document.querySelector('.bookmark-content:not([style*="display: none"])');
-    var selectedCount = 0;
-    var totalCount = 0;
-
-    if (visibleContent) {
-        var checkboxes = visibleContent.querySelectorAll('.card-checkbox input[type="checkbox"]');
-        totalCount = checkboxes.length;
-
-        checkboxes.forEach(function(checkbox) {
-            var card = checkbox.closest('.schedule-card, .place-card, .product-card');
-            if (checkbox.checked) {
-                selectedCount++;
-                if (card) card.classList.add('selected');
-            } else {
-                if (card) card.classList.remove('selected');
-            }
-        });
-    }
-
-    // 선택 개수 표시
-    document.getElementById('selectedCount').textContent = selectedCount + '개 선택됨';
-
-    // 전체 선택 체크박스 상태 업데이트
-    var selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    if (totalCount > 0 && selectedCount === totalCount) {
-        selectAllCheckbox.checked = true;
-        selectAllCheckbox.indeterminate = false;
-    } else if (selectedCount > 0) {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = true;
-    } else {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false;
-    }
-
-    // 삭제 버튼 활성화/비활성화
-    var deleteBtn = document.getElementById('deleteSelectedBtn');
-    deleteBtn.disabled = selectedCount === 0;
-}
-
-// 선택 취소
-function cancelSelection() {
-    var checkboxes = document.querySelectorAll('.card-checkbox input[type="checkbox"]');
-    checkboxes.forEach(function(checkbox) {
-        checkbox.checked = false;
-        var card = checkbox.closest('.schedule-card, .place-card, .product-card');
-        if (card) card.classList.remove('selected');
-    });
-
-    document.getElementById('selectAllCheckbox').checked = false;
-    document.getElementById('selectAllCheckbox').indeterminate = false;
-    updateSelection();
-}
-
-// 선택된 북마크 삭제
-function deleteSelectedBookmarks() {
-    var visibleContent = document.querySelector('.bookmark-content:not([style*="display: none"])');
-    if (!visibleContent) return;
-
-    var selectedCards = visibleContent.querySelectorAll('.schedule-card.selected, .place-card.selected, .product-card.selected');
-
-    if (selectedCards.length === 0) {
-        showToast('선택된 북마크가 없습니다.', 'warning');
-        return;
-    }
-
-    if (!confirm(selectedCards.length + '개의 북마크를 삭제하시겠습니까?')) {
-        return;
-    }
-
-    selectedCards.forEach(function(card, index) {
-        setTimeout(function() {
-            card.style.transition = 'all 0.3s ease';
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.8)';
-
-            setTimeout(function() {
-                // 카드 타입 확인
-                var type = 'schedule';
-                if (card.classList.contains('place-card')) type = 'place';
-                if (card.classList.contains('product-card')) type = 'product';
-
-                card.remove();
-                updateBookmarkCount(type);
-            }, 300);
-        }, index * 100);
-    });
-
-    setTimeout(function() {
-        cancelSelection();
-        showToast(selectedCards.length + '개의 북마크가 삭제되었습니다.', 'success');
-    }, selectedCards.length * 100 + 300);
-}
-
-// 북마크 제거
-function removeBookmark(button, type, id) {
-    if (!confirm('북마크를 해제하시겠습니까?')) {
-        return;
-    }
-
-    const card = button.closest('.schedule-card, .place-card, .product-card');
-    card.style.opacity = '0.5';
-    card.style.transform = 'scale(0.95)';
-
-    setTimeout(() => {
-        card.remove();
-        showToast('북마크가 해제되었습니다.', 'info');
-
-        // 해당 탭의 아이템 수 업데이트
-        updateBookmarkCount(type);
-        updateSelection();
-    }, 300);
-}
-
-// 북마크 카운트 업데이트
-function updateBookmarkCount(type) {
-    let selector, tabSelector;
-
-    switch(type) {
-        case 'schedule':
-            selector = '#bookmarkSchedules .schedule-card';
-            tabSelector = '[data-tab="schedules"] .badge';
-            break;
-        case 'place':
-            selector = '#bookmarkPlaces .place-card';
-            tabSelector = '[data-tab="places"] .badge';
-            break;
-        case 'product':
-            selector = '#bookmarkProducts .product-card';
-            tabSelector = '[data-tab="products"] .badge';
-            break;
-    }
-
-    const count = document.querySelectorAll(selector).length;
-    const badge = document.querySelector(tabSelector);
-    if (badge) {
-        badge.textContent = count;
-    }
-
-    // 모든 북마크가 비었는지 확인
-    const totalCount = document.querySelectorAll('.schedule-card, .place-card, .product-card').length;
-    if (totalCount === 0) {
-        document.querySelectorAll('.bookmark-content').forEach(c => c.style.display = 'none');
-        document.getElementById('emptyState').style.display = 'block';
-        document.getElementById('selectionToolbar').style.display = 'none';
-    }
-}
-</script>
-
+<c:set var="pageJs" value="mypage" />
 <%@ include file="../common/footer.jsp" %>

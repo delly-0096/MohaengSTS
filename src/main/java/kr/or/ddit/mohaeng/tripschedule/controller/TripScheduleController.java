@@ -262,11 +262,7 @@ public class TripScheduleController {
 		return "schedule/my";
 	}
 	
-	@GetMapping("/bookmark")
-	public String bookmark() {
-		
-		return "schedule/bookmark";
-	}
+
 	
 	@ResponseBody
 	@PostMapping("/bookmark/modify")

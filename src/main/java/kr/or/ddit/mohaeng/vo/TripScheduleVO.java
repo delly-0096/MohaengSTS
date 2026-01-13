@@ -40,9 +40,9 @@ public class TripScheduleVO {
 	/***
 	 * 관리자에서 사용됨
 	 */
-	private String memId;
-	private String memName;
 	private String schdlStsNm;
+	
+	MemberVO member;
 
 	public TripScheduleVO() {}
 	

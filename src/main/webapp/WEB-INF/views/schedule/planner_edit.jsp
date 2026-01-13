@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <c:set var="pageTitle" value="일정 계획하기" />
 <c:set var="pageCss" value="schedule" />
@@ -11,10 +12,14 @@
     <aside class="planner-sidebar">
         <div class="planner-sidebar-header">
             <h1 class="planner-trip-title" id="tripTitle" onclick="openEditSchdlNmModal()">
-            	<span class="" id="schdlNm">제주도 여행</span>
+            	<span class="" id="schdlNm">${ schedule.schdlNm }</span>
             	<span class="budget-edit-icon"><i class="bi bi-pencil"></i></span>
             </h1>
-            <p class="planner-trip-dates" id="tripDates">2024.03.15 - 2024.03.18 (3박 4일)</p>
+            <p class="planner-trip-dates" id="tripDates">
+                ${fn:replace(schedule.schdlStartDt, '-', '.')} - 
+                ${fn:replace(schedule.schdlEndDt, '-', '.')} 
+                (${schedule.tripDuration }박 ${schedule.tripDuration + 1}일)
+            </p>
 
             <!-- 예산 요약 -->
             <div class="budget-summary" onclick="openBudgetModal()">
@@ -52,8 +57,6 @@
         <!-- 일정 탭 콘텐츠 -->
         <div class="planner-content" id="itineraryContent">
             
-
-            
         </div>
 
         <!-- 검색 탭 콘텐츠 -->
@@ -76,55 +79,7 @@
                                     <span class="place-autocomplete-category">관광지 · 자연</span>
                                 </div>
                             </div>
-                            <div class="place-autocomplete-item" onclick="selectPlace(6, '봄날카페', '카페', 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=80&h=80&fit=crop&q=80')">
-                                <div class="place-autocomplete-icon cafe"><i class="bi bi-cup-hot"></i></div>
-                                <div class="place-autocomplete-info">
-                                    <span class="place-autocomplete-name">봄날카페</span>
-                                    <span class="place-autocomplete-category">카페 · 오션뷰</span>
-                                </div>
-                            </div>
-                            <div class="place-autocomplete-item" onclick="selectPlace(7, '제주갈치조림', '맛집', 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=80&h=80&fit=crop&q=80')">
-                                <div class="place-autocomplete-icon restaurant"><i class="bi bi-shop"></i></div>
-                                <div class="place-autocomplete-info">
-                                    <span class="place-autocomplete-name">제주갈치조림</span>
-                                    <span class="place-autocomplete-category">맛집 · 해산물</span>
-                                </div>
-                            </div>
-                            <div class="place-autocomplete-item" onclick="selectPlace(8, '금능해수욕장', '관광지', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=80&fit=crop&q=80')">
-                                <div class="place-autocomplete-icon"><i class="bi bi-water"></i></div>
-                                <div class="place-autocomplete-info">
-                                    <span class="place-autocomplete-name">금능해수욕장</span>
-                                    <span class="place-autocomplete-category">관광지 · 해변</span>
-                                </div>
-                            </div>
-                            <div class="place-autocomplete-item" onclick="selectPlace(9, '성산일출봉', '관광지', 'https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=80&h=80&fit=crop&q=80')">
-                                <div class="place-autocomplete-icon"><i class="bi bi-sunrise"></i></div>
-                                <div class="place-autocomplete-info">
-                                    <span class="place-autocomplete-name">성산일출봉</span>
-                                    <span class="place-autocomplete-category">관광지 · 유네스코</span>
-                                </div>
-                            </div>
-                            <div class="place-autocomplete-item" onclick="selectPlace(10, '협재해수욕장', '관광지', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=80&fit=crop&q=80')">
-                                <div class="place-autocomplete-icon"><i class="bi bi-water"></i></div>
-                                <div class="place-autocomplete-info">
-                                    <span class="place-autocomplete-name">협재해수욕장</span>
-                                    <span class="place-autocomplete-category">관광지 · 해변</span>
-                                </div>
-                            </div>
-                            <div class="place-autocomplete-item" onclick="selectPlace(11, '우도', '관광지', 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=80&h=80&fit=crop&q=80')">
-                                <div class="place-autocomplete-icon"><i class="bi bi-geo-alt"></i></div>
-                                <div class="place-autocomplete-info">
-                                    <span class="place-autocomplete-name">우도</span>
-                                    <span class="place-autocomplete-category">관광지 · 섬</span>
-                                </div>
-                            </div>
-                            <div class="place-autocomplete-item" onclick="selectPlace(12, '흑돼지거리', '맛집', 'https://images.unsplash.com/photo-1544025162-d76694265947?w=80&h=80&fit=crop&q=80')">
-                                <div class="place-autocomplete-icon restaurant"><i class="bi bi-shop"></i></div>
-                                <div class="place-autocomplete-info">
-                                    <span class="place-autocomplete-name">흑돼지거리</span>
-                                    <span class="place-autocomplete-category">맛집 · 흑돼지</span>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -476,7 +431,21 @@ document.addEventListener('DOMContentLoaded', async function() {
 	
     // 선호도 데이터 로드
     preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
-    
+
+
+    <c:if test="${ !empty schedule }">
+        preferenceData = {
+            departure : "${schedule.getStartRgnNm()}",
+            departurecode : "${schedule.startPlaceId}",
+            destination : "${schedule.getRgnNm()}",
+            destinationcode : "${schedule.targetPlaceId}",
+            planMethod : ${aiRecomYn eq 'Y' ? "recommend" : "self"},
+            travelDates : "${schedule.schdlStartDt} ~ ${schedule.schdlEndDt}",
+            travelerCount : ${ schedule.travelerCnt },
+            travelers : ${ schedule.travelerCnt }
+        }
+    </c:if>
+
     travelDates = preferenceData.travelDates;
     
     initTemplate();
@@ -1429,15 +1398,10 @@ function initTemplate() {
     
     initDragAndDrop();
     
-    //제목 작성
-    if (preferenceData.destination) {
-        document.getElementById('schdlNm').textContent = preferenceData.destination + ' 여행';
-        schdlNm = preferenceData.destination + ' 여행';
-    }
     //여행기간 작성
-    if (preferenceData.travelDates) {
-        document.getElementById('tripDates').textContent = preferenceData.travelDates;
-    }
+//     if (preferenceData.travelDates) {
+//         document.getElementById('tripDates').textContent = preferenceData.travelDates;
+//     }
     
 }
 

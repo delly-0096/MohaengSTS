@@ -390,6 +390,11 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	public int deleteTripSchedule(int schdlNo) {
 		return iTripScheduleMapper.deleteTripSchedule(schdlNo);
 	}
+
+	@Override
+	public void refreshScheduleStates() {
+		
+	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)
 //	private String cleanText(String input) {

@@ -40,9 +40,9 @@ public class TripScheduleVO {
 	/***
 	 * 관리자에서 사용됨
 	 */
-	private String memId;
-	private String memName;
 	private String schdlStsNm;
+	
+	MemberVO member;
 
 	public TripScheduleVO() {}
 	
@@ -65,6 +65,10 @@ public class TripScheduleVO {
 		this.totalBudget = totalBudget;
 	}
 
+	public String getStartRgnNm() {
+		return RegionCode.getNameByNo(startPlaceId);
+	}
+	
 	public String getRgnNm() {
         return RegionCode.getNameByNo(targetPlaceId);
     }

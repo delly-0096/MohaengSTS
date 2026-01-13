@@ -85,7 +85,7 @@
                                 ${fn:replace(schedule.schdlEndDt, '-', '.')}
                             </span>
                             <span class="text-muted">
-                                (${schedule.tripDuration - 1}박 ${schedule.tripDuration}일)
+                                (${schedule.tripDuration }박 ${schedule.tripDuration + 1}일)
                             </span>
                         </div>
                         <div class="schedule-card-places">
@@ -101,7 +101,7 @@
                         <a href="${pageContext.request.contextPath}/schedule/view/${schedule.schdlNo}" class="btn btn-outline btn-sm">
                             상세보기
                         </a>
-                        <a href="${pageContext.request.contextPath}/schedule/planner?id=${schedule.schdlNo}" class="btn btn-primary btn-sm">
+                        <a href="${pageContext.request.contextPath}/schedule/planner/${schedule.schdlNo}" class="btn btn-primary btn-sm">
                             수정하기
                         </a>
                     </div>
@@ -649,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '<div class="schedule-tooltip-actions">' +
                     '<a href="' + props.url + '" class="btn btn-outline btn-sm">상세보기</a>' +
                     (props.status !== 'completed' ?
-                        '<a href="' + contextPath + '/schedule/planner?id=' + event.id + '" class="btn btn-primary btn-sm">수정하기</a>' :
+                        '<a href="' + contextPath + '/schedule/planner/' + event.id + '" class="btn btn-primary btn-sm">수정하기</a>' :
                         '<a href="' + contextPath + '/community/travel-log/write?schedule=' + event.id + '" class="btn btn-secondary btn-sm">여행기록</a>') +
                 '</div>';
 
@@ -746,7 +746,7 @@ async function toggleScheduleBookmark(button) {
         bkmkYn = 'N';
     }
     
-    await fetch('${pageContext.request.contextPath}/schedule/bookmark/modify', {
+    await fetch('${pageContext.request.contextPath}/schedule/schbookmark/modify', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

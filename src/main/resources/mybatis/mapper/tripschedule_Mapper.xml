@@ -9,7 +9,9 @@
         <result property="prefNo"           column="PREF_NO" />
         <result property="startPlaceType"   column="START_PLACE_TYPE" />
         <result property="startPlaceId"     column="START_PLACE_ID" />
+        <result property="startPlaceId"     column="START_PLACE_ID" />
         <result property="targetPlaceType"  column="TARGET_PLACE_TYPE" />
+        <result property="targetPlaceId"    column="TARGET_PLACE_ID" />
         <result property="targetPlaceId"    column="TARGET_PLACE_ID" />
         <result property="schdlNm"   	    column="SCHDL_NM" />
         <result property="schdlStatus"      column="SCHDL_STATUS" />

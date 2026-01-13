@@ -30,6 +30,17 @@
 	    SELECT COUNT(*) FROM TRIP_PROD_INQUIRY
 	    WHERE TRIP_PROD_NO = #{tripProdNo} AND DEL_YN = 'N'
 	</select>
+	
+	<!-- 문의 단건 조회 (닉네임 포함) -->
+	<select id="getInquiryById" parameterType="int" resultType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+	    SELECT i.PROD_INQRY_NO, i.TRIP_PROD_NO, i.INQUIRY_MEM_NO, i.INQUIRY_CTGRY,
+	           i.PROD_INQRY_CN, i.INQRY_STATUS, i.SECRET_YN,
+	           i.REG_DT, i.MOD_DT, i.DEL_YN, i.REPLY_CN, i.REPLY_MEM_NO, i.REPLY_DT,
+	           u.NICKNAME AS INQUIRY_NICKNAME
+	    FROM TRIP_PROD_INQUIRY i
+	    LEFT JOIN MEM_USER u ON i.INQUIRY_MEM_NO = u.MEM_NO
+	    WHERE i.PROD_INQRY_NO = #{prodInqryNo}
+	</select>
 
 	<!-- 문의 등록 -->
     <insert id="insertInquiry" parameterType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">

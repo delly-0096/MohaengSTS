@@ -221,7 +221,7 @@
                     <a href="${pageContext.request.contextPath}/product/accommodation" class="side-menu-item">
                         <i class="bi bi-building me-2"></i>숙박
                     </a>
-                    <a href="${pageContext.request.contextPath}/product/tour" class="side-menu-item">
+                    <a href="${pageContext.request.contextPath}/tour" class="side-menu-item">
                         <i class="bi bi-ticket-perforated me-2"></i>투어/체험/티켓
                     </a>
                 </div>

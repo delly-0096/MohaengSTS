@@ -14,6 +14,7 @@
         <result property="attachNo" column="ATTACH_NO"/>
         <result property="rcmdtnYn" column="RCMDTN_YN"/>
         <result property="nickname" column="NICKNAME"/>
+        <result property="profileImage" column="PROFILE_IMAGE"/>
         
         <!-- 리뷰 이미지 목록 (1:N) -->
         <collection property="reviewImages" column="ATTACH_NO" 
@@ -29,6 +30,18 @@
         ORDER BY FILE_NO
     </select>
 
+    <!-- 리뷰의 ATTACH_NO 조회 -->
+    <select id="getReviewAttachNo" parameterType="int" resultType="Integer">
+        SELECT ATTACH_NO FROM PROD_REVIEW WHERE PROD_RV_NO = #{prodRvNo}
+    </select>
+    
+    <!-- 리뷰에 ATTACH_NO 연결 -->
+    <update id="updateReviewAttachNo">
+        UPDATE PROD_REVIEW
+        SET ATTACH_NO = #{attachNo}
+        WHERE PROD_RV_NO = #{prodRvNo}
+    </update>
+
 	<!-- 리뷰 목록 (페이징) -->
 	<select id="getReviewPaging" parameterType="map" resultMap="reviewResultMap">
 	    SELECT * FROM (
@@ -43,10 +56,13 @@
 	                r.RATING,
 	                r.ATTACH_NO,
 	                r.RCMDTN_YN,
-	                u.NICKNAME
+	                u.NICKNAME,
+                    pf.FILE_PATH AS PROFILE_IMAGE
 	            FROM PROD_REVIEW r
 	            LEFT JOIN MEM_USER u ON r.MEM_NO = u.MEM_NO
-	            WHERE r.TRIP_PROD_NO = #{tripProdNo}
+                LEFT JOIN MEMBER m ON r.MEM_NO = m.MEM_NO
+	            LEFT JOIN ATTACH_FILE_DETAIL pf ON m.MEM_PROFILE = pf.ATTACH_NO AND pf.USE_YN = 'Y'
+                WHERE r.TRIP_PROD_NO = #{tripProdNo}
 	            ORDER BY r.PROD_REGDATE DESC
 	        ) A
 	        <![CDATA[
@@ -58,7 +74,7 @@
 	    ]]>
 	</select>
 
-    <!-- 리뷰 통계 (단일 상품) -->
+    <!-- 리뷰 통계 -->
     <select id="getStat" parameterType="int" resultType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
         SELECT
             TRIP_PROD_NO,
@@ -69,5 +85,22 @@
         WHERE TRIP_PROD_NO = #{tripProdNo}
         GROUP BY TRIP_PROD_NO
     </select>
+    
+    <!-- 리뷰 수정 -->
+	<update id="updateReview" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
+	    UPDATE PROD_REVIEW
+	    SET PROD_REVIEW = #{prodReview},
+	        RATING = #{rating},
+	        PROD_UDTDATE = SYSDATE
+	    WHERE PROD_RV_NO = #{prodRvNo}
+	      AND MEM_NO = #{memNo}
+	</update>
+	
+	<!-- 리뷰 삭제 -->
+	<delete id="deleteReview" parameterType="map">
+	    DELETE FROM PROD_REVIEW
+	    WHERE PROD_RV_NO = #{prodRvNo}
+	      AND MEM_NO = #{memNo}
+	</delete>
 
 </mapper>

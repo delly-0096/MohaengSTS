@@ -96,6 +96,7 @@ public class PaymentController {
 		log.info("confirmFlightPayment reservationList : {}", paymentVO.getFlightReservationList());
 		log.info("confirmFlightPayment productList : {}", paymentVO.getFlightProductList());
 		log.info("confirmFlightPayment passengersList : {}", paymentVO.getFlightPassengersList());
+		log.info("confirmFlightPayment resvAgree : {}", paymentVO.getFlightResvAgree());	// 느낌이 하나 객체 가져와서 resvno마다 하나씩 추가??
 		Map<String, Object> result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨 - serviceResult타입은 아님
 		// 그래서 타입이 뭐냐
 		

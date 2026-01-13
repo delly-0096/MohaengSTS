@@ -6,6 +6,7 @@ import java.util.Map;
 import jakarta.validation.Valid;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomCreateRequestDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomResponseDTO;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 
 public interface IChatService {
 
@@ -25,7 +26,7 @@ public interface IChatService {
 	 *	@param 
 	 *	@return 
 	 */
-	public void creatChatRoom(ChatRoomCreateRequestDTO request, int memNo);
+	public void creatChatRoom(ChatRoomCreateRequestDTO request, CustomUserDetails user);
 
 	
 	/**
@@ -36,6 +37,7 @@ public interface IChatService {
 	 *	@return 
 	 */
 	public Map<String, Object> joinChatRoom(Long chatId, int memNo);
+
 
 
 

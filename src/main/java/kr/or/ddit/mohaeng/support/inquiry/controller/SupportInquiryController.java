@@ -195,8 +195,6 @@ public class SupportInquiryController {
 
         Map<String, Object> file = inquiryService.getAttachFile(fileNo);
 
-
-
         Path path = Paths.get(uploadPath+(String) file.get("FILE_PATH"));
         Resource resource = new FileSystemResource(path);
 

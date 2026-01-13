@@ -1,8 +1,15 @@
 package kr.or.ddit.mohaeng.admin.inquiry.controller;
 
+import java.net.URLEncoder;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -28,6 +35,8 @@ public class AdminQnaController {
 	@Autowired
 	private IAQnaService qnaService;
 
+	@Value("${kr.or.ddit.upload.path}")
+	private String uploadPath; // "C:/upload/"
 
     /**
      * 관리자용 1:1 문의 목록 조회(검색/필터/페이징)
@@ -72,5 +81,32 @@ public class AdminQnaController {
 		int result = qnaService.aInquiryDelete(inqryNo,alarmCont);
 		return result > 0 ? ResponseEntity.ok("문의가 삭제되었습니다"): ResponseEntity.status(500).body("삭제 처리가 실패했습니다.");
 	}
+
+	//파일 다운로드
+	@GetMapping("/download")
+	public ResponseEntity<Resource> download (@RequestParam int fileNo) throws Exception {
+
+		log.info("파일 다운로드 요청 - 파일번호: {}", fileNo);
+
+		// 관리자 서비스(aqnaService)에서 파일 정보 가져오기
+		Map<String, Object> file = qnaService.getAttachFile(fileNo);
+
+		if (file == null) return ResponseEntity.notFound().build();
+
+		Path path = Paths.get(uploadPath + (String)file.get("FILE_PATH"));
+		Resource resource = new FileSystemResource(path);
+
+        String fileName = (String) file.get("FILE_ORIGINAL_NAME");
+
+        return ResponseEntity.ok()
+            .header(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" +
+                URLEncoder.encode(fileName, "UTF-8") + "\"")
+            .body(resource);
+
+	}
+
+
+
 
 }

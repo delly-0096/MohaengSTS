@@ -62,211 +62,74 @@
 
             <!-- 게시글 리스트 -->
             <ul class="post-list">
-                <!-- 공지사항 -->
-                <li class="post-item" data-post-id="1" onclick="openPostDetail(1)">
-                    <span class="post-category notice">공지</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>[필독] 여행톡 이용 규칙 안내</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>운영자</span>
-                            <span>2024.03.01</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 1,234</span>
-                        <span><i class="bi bi-chat"></i> 0</span>
-                    </div>
-                </li>
-
-                <!-- 동행 구하기 -->
-                <li class="post-item" data-post-id="2" onclick="openPostDetail(2)">
-                    <span class="post-category companion">동행</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>3월 말 제주도 2박3일 같이 가실 분~</span>
-                            <span class="comment-count">[12]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>travel_lover</span>
-                            <span>2024.03.15</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 328</span>
-                        <span><i class="bi bi-chat"></i> 12</span>
-                    </div>
-                </li>
-
-                <!-- 정보 공유 -->
-                <li class="post-item" data-post-id="3" onclick="openPostDetail(3)">
-                    <span class="post-category info">정보</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>오사카 맛집 리스트 총정리 (2024년 최신)</span>
-                            <span class="comment-count">[45]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>foodie_kim</span>
-                            <span>2024.03.14</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 2,156</span>
-                        <span><i class="bi bi-chat"></i> 45</span>
-                    </div>
-                </li>
-
-                <!-- 자유게시판 -->
-                <li class="post-item" data-post-id="4" onclick="openPostDetail(4)">
-                    <span class="post-category">자유</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>방콕 여행 다녀왔어요! 너무 좋았던 경험 공유합니다</span>
-                            <span class="comment-count">[8]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>adventure_park</span>
-                            <span>2024.03.14</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 567</span>
-                        <span><i class="bi bi-chat"></i> 8</span>
-                    </div>
-                </li>
-
-                <!-- Q&A -->
-                <li class="post-item" data-post-id="5" onclick="openPostDetail(5)">
-                    <span class="post-category">Q&A</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>일본 교통카드 뭘로 사야 할까요?</span>
-                            <span class="comment-count">[23]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>newbie_traveler</span>
-                            <span>2024.03.13</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 445</span>
-                        <span><i class="bi bi-chat"></i> 23</span>
-                    </div>
-                </li>
-
-                <li class="post-item" data-post-id="6" onclick="openPostDetail(6)">
-                    <span class="post-category companion">동행</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>4월 초 도쿄 디즈니 같이 가실 분 구해요!</span>
-                            <span class="comment-count">[5]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>disney_fan</span>
-                            <span>2024.03.13</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 234</span>
-                        <span><i class="bi bi-chat"></i> 5</span>
-                    </div>
-                </li>
-
-                <li class="post-item" data-post-id="7" onclick="openPostDetail(7)">
-                    <span class="post-category info">정보</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>제주도 렌트카 vs 대중교통, 뭐가 나을까요?</span>
-                            <span class="comment-count">[31]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>jeju_local</span>
-                            <span>2024.03.12</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 892</span>
-                        <span><i class="bi bi-chat"></i> 31</span>
-                    </div>
-                </li>
-
-                <li class="post-item" data-post-id="8" onclick="openPostDetail(8)">
-                    <span class="post-category">자유</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>혼자 여행하는 분들 어떻게 사진 찍으세요?</span>
-                            <span class="comment-count">[19]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>solo_traveler</span>
-                            <span>2024.03.12</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 678</span>
-                        <span><i class="bi bi-chat"></i> 19</span>
-                    </div>
-                </li>
-
-                <li class="post-item" data-post-id="9" onclick="openPostDetail(9)">
-                    <span class="post-category">후기</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>모행 AI 일정 추천 써봤는데 대박이에요!</span>
-                            <span class="comment-count">[7]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>happy_trip</span>
-                            <span>2024.03.11</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 345</span>
-                        <span><i class="bi bi-chat"></i> 7</span>
-                    </div>
-                </li>
-
-                <li class="post-item" data-post-id="10" onclick="openPostDetail(10)">
-                    <span class="post-category">Q&A</span>
-                    <div class="post-content">
-                        <h4 class="post-title">
-                            <span>동남아 여행 시 주의할 점 있을까요?</span>
-                            <span class="comment-count">[28]</span>
-                        </h4>
-                        <div class="post-meta">
-                            <span>first_trip</span>
-                            <span>2024.03.11</span>
-                        </div>
-                    </div>
-                    <div class="post-stats">
-                        <span><i class="bi bi-eye"></i> 567</span>
-                        <span><i class="bi bi-chat"></i> 28</span>
-                    </div>
-                </li>
+            	<c:set value="${pagingVO.dataList }" var="boardList"/>
+            	<c:choose>
+            		<c:when test="${empty boardList }">
+							<li class="post-item" data-post-id="1" onclick="openPostDetail(1)">
+								<div class="post-content">
+									조회하신 게시글이 존재하지 않습니다.
+								</div>
+							</li>
+						</c:when>
+						<c:otherwise>
+							<c:forEach items="${boardList }" var="board">
+								<c:set value="" var="type"/>
+								<c:set value="" var="style"/>
+								<c:choose>
+									<c:when test="${board.boardCtgryCd eq 'notice' }">
+										<c:set value="공지" var="type"/>
+										<c:set value="notice" var="style"/>	
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'talk' }">
+										<c:set value="자유" var="type"/>	
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'companion' }">
+										<c:set value="동행" var="type"/>
+										<c:set value="companion" var="style"/>
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'info' }">
+										<c:set value="정보" var="type"/>
+										<c:set value="info" var="style"/>	
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'qna' }">
+										<c:set value="Q&A" var="type"/>	
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'review' }">
+										<c:set value="후기" var="type"/>	
+									</c:when>
+								</c:choose>
+								<li class="post-item" data-post-id="1" onclick="openPostDetail(1)">
+				                    <span class="post-category ${style }">${type }</span>
+				                    <div class="post-content">
+				                        <h4 class="post-title">
+				                            <span>${board.boardTitle }</span>
+				                        </h4>
+				                        <div class="post-meta">
+				                            <span class="writer">
+												  ${board.writerNickname}
+												  <small>(${board.writerId})</small>
+											</span>
+				                            <span>${board.regDt }</span>
+				                        </div>
+				                    </div>
+				                    <div class="post-stats">
+				                        <span><i class="bi bi-eye"></i> ${board.viewCnt }</span>
+				                        <span><i class="bi bi-chat"></i> 0</span>
+				                    </div>
+				                </li>			
+							</c:forEach>
+						</c:otherwise>
+            	</c:choose>
             </ul>
 
             <!-- 페이지네이션 -->
             <div class="pagination-container">
                 <nav>
-                    <ul class="pagination">
-                        <li class="page-item">
-                            <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item"><a class="page-link" href="#">2</a></li>
-                        <li class="page-item"><a class="page-link" href="#">3</a></li>
-                        <li class="page-item"><a class="page-link" href="#">4</a></li>
-                        <li class="page-item"><a class="page-link" href="#">5</a></li>
-                        <li class="page-item">
-                            <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                        </li>
-                    </ul>
+                    ${pagingVO.pagingHTML }
                 </nav>
             </div>
         </div>
-    </div>
+    </div>     
 </div>
 
 <!-- 게시글 상세 모달 -->
@@ -1783,7 +1646,7 @@
 </style>
 
 <script>
-// 현재 선택된 카테고리
+// 현재 선택된 n  
 let currentCategory = 'all';
 
 // 카테고리별 표시 텍스트 매핑

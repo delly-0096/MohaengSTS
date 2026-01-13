@@ -92,9 +92,11 @@ public  class TalkServiceImpl implements ITalkService{
 		}
 
 
-
+		/**
+		 *글등록
+		 */
 		@Override
-		public ServiceResult insertTalk(BoardVO vo) throws Exception {
+		public ServiceResult insertTalk(BoardVO vo) {
 			ServiceResult result = null;
 			
 			if(vo.getBoardFile() != null) {

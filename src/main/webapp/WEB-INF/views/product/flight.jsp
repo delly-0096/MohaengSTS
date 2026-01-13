@@ -526,7 +526,7 @@ function getFlightsForPage(page) {
 
 function createFlightCard(data, searchData, cabin, id) {
 	
-	let fltProdId = searchData.startDt + "" + id;	// 일단 항공권 id = 일자 + id
+// 	let id = searchData.startDt + "" + id;	// 일단 항공권 id = 일자 + id
 	
 	// 버튼 텍스트 결정
     let isLastStep = (currentSelectionStep >= totalSegments - 1);
@@ -560,7 +560,7 @@ function createFlightCard(data, searchData, cabin, id) {
 	const sendData = {
 		...data,
 		...searchData,
-		fltProdId : parseInt(fltProdId),	
+		id : id,	
 		startDate : startDate,
 		duration : duration,
 		step: currentSelectionStep,		// 숫자 낮은것 부터 insert
@@ -577,7 +577,7 @@ function createFlightCard(data, searchData, cabin, id) {
 	
 	// id에 돌아오는것, 가는것 알파벳 추가?
 			
-    return `<div class="flight-card" data-flight-id="\${fltProdId}">
+    return `<div class="flight-card" data-flight-id="\${id}">
         <div class="flight-card-content">
             <div class="flight-info">
                 <div class="flight-time">

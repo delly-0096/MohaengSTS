@@ -66,11 +66,11 @@
                 </div>
                 <div class="detail-row">
                     <span class="label">이용일시</span>
-                    <span class="value"> </span>
+                    <span class="value" id="payDt"> </span>
                 </div>
                 <div class="detail-row">
                     <span class="label">인원</span>
-                    <span class="value"> 명</span>
+                    <span class="value" id="person"> 명</span>
                 </div>
                 <div class="detail-row">
                     <span class="label">결제금액</span>
@@ -149,14 +149,20 @@ document.addEventListener("DOMContentLoaded", async function(){
 	// db에 넣을 정보
 	flightProduct = sessionStorage.getItem("flightProduct");
 	passengers = sessionStorage.getItem("passengers");
+	reserveAgree = sessionStorage.getItem("reserveAgree");
 	
 	console.log("flightProduct : ", flightProduct);
 	console.log("passengers : ", passengers);
+	console.log("reserveAgree : ", reserveAgree);
+	
 	
 	let payNo = document.querySelector("#payNo");
 	let orderName = document.querySelector("#orderName");
+	let payDt = document.querySelector("#payDt");
+	let person = document.querySelector("#person");
 	let totalAmount = document.querySelector("#totalAmount");
 	let method = document.querySelector("#method");
+	
 	
 	if('${error}' != "error"){
 		console.log("user.username : ", "${user.username}");
@@ -180,6 +186,10 @@ document.addEventListener("DOMContentLoaded", async function(){
 			passengers = JSON.parse(passengers);
 		}
 		
+		if(reserveAgree){
+			reserveAgree = JSON.parse(reserveAgree);
+		}
+		
 		const requestData = {
 	        paymentKey: paymentKey.value,
 	        orderId: orderId.value,
@@ -187,7 +197,8 @@ document.addEventListener("DOMContentLoaded", async function(){
 	        paymentType : paymentType.value,
 	        memNo : customData.memNo,
 	        flightProductList : flightProduct != null ? flightProduct.flights : null,
-	        flightPassengersList : passengers != null ? passengers : null
+	        flightPassengersList : passengers != null ? passengers : null,
+       		reserveAgreeList : reserveAgree != null ? reserveAgree : null
 	    };
 		
 		console.log("requestData ", requestData);

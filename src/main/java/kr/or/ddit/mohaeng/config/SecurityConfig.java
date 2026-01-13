@@ -42,6 +42,8 @@ import kr.or.ddit.mohaeng.util.TokenProvider;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.http.HttpMethod;
+
 @Slf4j
 @Configuration
 @EnableWebSecurity
@@ -117,7 +119,8 @@ public class SecurityConfig {
 			"/api/admin/login",
 			"/api/schedule/**",
 			"/api/admin/schedule/**",
-			"/api/admin/notices/thumbnail/**"
+			"/api/admin/notices/thumbnail/**",
+			"/api/admin/inquiry/**"
 		};
 
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {
@@ -178,12 +181,29 @@ public class SecurityConfig {
                     DispatcherType.ASYNC
                 ).permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                .requestMatchers(PASS_URL).permitAll()
-//              .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
-//              .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
-                .requestMatchers("/member/login").permitAll()
-                .requestMatchers("/member/sns/**").authenticated() 
                 
+                .requestMatchers("/files/**").permitAll() 
+                .requestMatchers("/community/travel-log/write").hasRole("MEMBER")
+                
+                .requestMatchers(PASS_URL).permitAll()
+
+                
+                // 조회(GET)는 허용
+                .requestMatchers(HttpMethod.GET, "/community/**").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/travel-log/records/**").permitAll()
+
+                // 등록/수정/삭제는 MEMBER만
+                .requestMatchers(HttpMethod.POST, "/api/travel-log/records/**").hasRole("MEMBER")
+                .requestMatchers(HttpMethod.PUT, "/api/travel-log/records/**").hasRole("MEMBER")
+                .requestMatchers(HttpMethod.DELETE, "/api/travel-log/records/**").hasRole("MEMBER")
+
+
+//                .requestMatchers(MEMBER_PASS_URL).hasRole("MEMBER")
+//                .requestMatchers(BUSINESS_PASS_URL).hasRole("BUSINESS")
+
+                .requestMatchers("/member/login").permitAll()
+                .requestMatchers("/member/sns/**").authenticated()
+
                 // 마이페이지 접근 제어 (SNS 미완성 차단)
                 .requestMatchers("/mypage/**").access((authentication, context) -> {
                     Authentication auth = authentication.get();
@@ -215,14 +235,14 @@ public class SecurityConfig {
     http.sessionManagement(session ->
         session.maximumSessions(1)
     );
-    
+
     // google 로그인
     http
     .oauth2Login(oauth2 -> oauth2
         .loginPage("/member/login")
         .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
         .successHandler((request, response, authentication) -> {
-            response.sendRedirect("/"); 
+            response.sendRedirect("/");
         })
     );
 

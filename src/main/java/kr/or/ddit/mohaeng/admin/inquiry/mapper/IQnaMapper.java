@@ -14,10 +14,10 @@ import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 public interface IQnaMapper {
 
 	// 1. 목록 카운트 (멀티 파라미터 대응)
-    int aInquiryCount(@Param("paging") PaginationInfoVO<InquiryVO> pagingVO, @Param("search") InquiryVO inquiryVO);
+    int aInquiryCount(@Param("paging") PaginationInfoVO<InquiryVO> pagingVO, @Param("inquiry") InquiryVO inquiryVO);
 
     // 2. 목록 조회 (멀티 파라미터 대응)
-    List<InquiryVO> aInquiryList(@Param("paging") PaginationInfoVO<InquiryVO> pagingVO, @Param("search") InquiryVO inquiryVO);
+    List<InquiryVO> aInquiryList(@Param("paging") PaginationInfoVO<InquiryVO> pagingVO, @Param("inquiry") InquiryVO inquiryVO);
 
     // 3. 상세 조회
     InquiryVO aInquiryDetail(int inqryNo);
@@ -33,6 +33,9 @@ public interface IQnaMapper {
 
     // 7. 알람 통합 인서트
     void insertAlarm(AlarmVO alarm);
+
+    //다운로드용
+	Map<String, Object> selectAttachFile(int fileNo);
 
 
 }

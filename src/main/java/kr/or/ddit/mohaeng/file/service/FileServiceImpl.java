@@ -234,4 +234,70 @@ public class FileServiceImpl implements IFileService{
         return attachNo; // 생성된 마스터 번호 반환
 		
 	}
+
+	@Override
+	public List<AttachFileDetailVO> getAttachFileDetails(int attachNo) {
+		return fileMapper.selectAttachFileDetailList(attachNo);
+	}
+
+	@Override
+	public int softDeleteFile(int attachNo, int fileNo) {
+		return fileMapper.softDeleteAttachFileDetail(attachNo, fileNo);
+	}
+
+	@Override
+	@Transactional
+	public int addFilesToAttach(Integer attachNo, List<MultipartFile> files, String subPath, String fileGbCd,
+			int regId) {
+		if (files == null || files.isEmpty()) {
+	        return attachNo != null ? attachNo : 0;
+	    }
+	    
+	    // attachNo가 없으면 새로 생성
+	    if (attachNo == null) {
+	        AttachFileVO attachVO = new AttachFileVO();
+	        attachVO.setRegId(regId);
+	        fileMapper.insertAttachFile(attachVO);
+	        attachNo = attachVO.getAttachNo();
+	    }
+	    
+	    for (MultipartFile file : files) {
+	        if (file.isEmpty()) continue;
+	        
+	        try {
+	            String originalName = file.getOriginalFilename();
+	            String ext = originalName.substring(originalName.lastIndexOf(".") + 1);
+	            String saveName = UUID.randomUUID().toString() + "." + ext;
+	            
+	            // 저장 경로: C:/mohaeng/{subPath}/
+	            File targetDir = new File(uploadPath + subPath + "/");
+	            if (!targetDir.exists()) {
+	                targetDir.mkdirs();
+	            }
+	            
+	            File targetFile = new File(targetDir, saveName);
+	            file.transferTo(targetFile);
+	            
+	            // DB 저장
+	            AttachFileDetailVO detailVO = new AttachFileDetailVO();
+	            detailVO.setAttachNo(attachNo);
+	            detailVO.setFileName(saveName);
+	            detailVO.setFileOriginalName(originalName);
+	            detailVO.setFileExt(ext);
+	            detailVO.setFileSize(file.getSize());
+	            detailVO.setFilePath(saveName);
+	            detailVO.setFileGbCd(fileGbCd);
+	            detailVO.setMimyType(file.getContentType());
+	            detailVO.setRegId(regId);
+	            
+	            fileMapper.insertAttachFileDetailToExisting(detailVO);
+	            
+	        } catch (IOException e) {
+	            log.error("파일 저장 중 오류 발생: {}", e.getMessage());
+	            throw new RuntimeException("파일 저장 실패", e);
+	        }
+	    }
+	    
+	    return attachNo;
+	}
 }

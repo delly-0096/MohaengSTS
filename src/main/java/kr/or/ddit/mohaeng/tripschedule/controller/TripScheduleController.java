@@ -78,12 +78,26 @@ public class TripScheduleController {
 	}
 	
 	@GetMapping("/planner")
-	public String planner(Model model) {
-//		List<Map<String, Object>> tourPlaceList = tripScheduleService.selectTourPlaceList();
-//		System.out.println(tourPlaceList.get(1));
-//		model.addAttribute("tourPlaceList", tourPlaceList);
-		
+	public String planner() {
 		return "schedule/planner";
+	}
+	
+	@GetMapping("/planner/{schdlNo}")
+	public String planner(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@PathVariable int schdlNo,
+			Model model
+			) {
+		System.out.println("schdlNo : " + schdlNo);
+		int memNo = customUser.getMember().getMemNo();
+		TripScheduleVO scheduleVO = new TripScheduleVO();
+		scheduleVO.setSchdlNo(schdlNo);
+		scheduleVO.setMemNo(memNo);
+		TripScheduleVO schedule = tripScheduleService.selectTripSchedule(scheduleVO);
+		
+		model.addAttribute("schedule", schedule);
+		
+		return "schedule/planner_edit";
 	}
 	
 	@GetMapping("/view/{schdlNo}")
@@ -262,14 +276,8 @@ public class TripScheduleController {
 		return "schedule/my";
 	}
 	
-	@GetMapping("/bookmark")
-	public String bookmark() {
-		
-		return "schedule/bookmark";
-	}
-	
 	@ResponseBody
-	@PostMapping("/bookmark/modify")
+	@PostMapping("/schbookmark/modify")
 	public ResponseEntity<Map<String, Object>> bookmarkModify(
 			@AuthenticationPrincipal CustomUserDetails customUser,
 			@RequestBody Params params

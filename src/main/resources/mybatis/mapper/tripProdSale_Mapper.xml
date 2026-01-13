@@ -16,21 +16,4 @@
         WHERE TRIP_PROD_NO = #{tripProdNo}
     </select>
 
-    <!-- 여러 상품 조회 (목록용) -->
-    <select id="getSaleList" parameterType="list" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO">
-        SELECT
-            TRIP_PROD_NO,
-            PRICE,
-            NETPRC,
-            DISCOUNT,
-            LEAD_TIME,
-            TOTAL_STOCK,
-            CUR_STOCK
-        FROM TRIP_PROD_SALE
-        WHERE TRIP_PROD_NO IN
-        <foreach collection="list" item="prodNo" open="(" separator="," close=")">
-            #{prodNo}
-        </foreach>
-    </select>
-
 </mapper>

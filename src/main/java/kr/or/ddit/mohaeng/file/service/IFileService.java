@@ -1,17 +1,11 @@
 package kr.or.ddit.mohaeng.file.service;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import kr.or.ddit.mohaeng.file.mapper.IFileMapper;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
-import kr.or.ddit.mohaeng.vo.AttachFileVO;
 
 public interface IFileService {
 
@@ -46,5 +40,20 @@ public interface IFileService {
 	public AttachFileDetailVO getProfileFile(Integer attachNo);
 
 	int saveFileList(List<MultipartFile> files, Map<String, String> uploadInfo, int regId);
+
+	/**
+     * 첨부파일 상세 목록 조회
+     */
+	public List<AttachFileDetailVO> getAttachFileDetails(int attachNo);
+
+	/**
+     * 개별 파일 소프트 삭제
+     */
+	public int softDeleteFile(int attachNo, int fileNo);
+
+	/**
+     * 기존 ATTACH_NO에 파일 추가 (없으면 새로 생성)
+     */
+	public int addFilesToAttach(Integer attachNo, List<MultipartFile> files, String subPath, String fileGbCd, int regId);
 
 }

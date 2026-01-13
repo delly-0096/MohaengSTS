@@ -19,6 +19,7 @@ public class ProdReviewVO {
     
     // 조회용 (MEM_USER 조인)
     private String nickname;        // 작성자 닉네임
+    private String profileImage;    // 프로필 이미지 경로
     
     // 평균별점, 리뷰수, 추천수
     private Double avgRating;

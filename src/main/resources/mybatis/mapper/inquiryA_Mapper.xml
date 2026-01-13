@@ -2,52 +2,56 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.admin.inquiry.mapper.IQnaMapper">
 
-	<select id="aInquiryList" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
-		SELECT
-	         i.INQRY_NO
-	        ,i.INQRY_CTGRY_CD
-	        ,i.INQRY_STATUS
-	        ,i.INQRY_TITLE
-	        ,i.INQRY_EMAIL
-	        ,i.REG_DT
-	        ,i.DEL_YN
-	        ,c.CD_NAME     AS categoryName
-	        ,m.MEM_NAME    AS memberName
-	        ,m.MEM_ID
 
-	    FROM INQUIRY i
-	    LEFT JOIN CODE c
-	           ON i.INQRY_CTGRY_CD = c.CD
-	          AND c.CDGR = 'INQRY_CAT'
-	          AND c.USE_YN = 'Y'
-	    LEFT JOIN MEMBER m
-	           ON i.MEM_NO = m.MEM_NO
+	<select id="aInquiryList" resultType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		SELECT b.*
+		FROM (
+			SELECT a.*, ROW_NUMBER() OVER(ORDER BY a.REG_DT DESC) rnum
+			FROM (
+				SELECT
+					i.INQRY_NO
+					,i.INQRY_CTGRY_CD
+					,i.INQRY_STATUS
+					,i.INQRY_TITLE
+					,i.INQRY_EMAIL
+					,i.REG_DT
+					,i.DEL_YN
+					,c.CD_NAME     AS categoryName
+					,m.MEM_NAME    AS memberName
+					,m.MEM_ID      AS memId
+				FROM INQUIRY i
+				LEFT JOIN CODE c
+					   ON i.INQRY_CTGRY_CD = c.CD
+					  AND c.CDGR = 'INQRY_CAT'
+					  AND c.USE_YN = 'Y'
+				LEFT JOIN MEMBER m
+					   ON i.MEM_NO = m.MEM_NO
+				WHERE i.DEL_YN = 'N'
 
-	    WHERE i.DEL_YN = 'N'
+				<!-- 키워드 검색 -->
+				<if test="paging.searchWord != null and paging.searchWord != ''">
+					AND (
+						i.INQRY_TITLE LIKE '%' || #{paging.searchWord} || '%'
+						OR m.MEM_NAME    LIKE '%' || #{paging.searchWord} || '%'
+						OR m.MEM_ID      LIKE '%' || #{paging.searchWord} || '%'
+						OR i.INQRY_EMAIL LIKE '%' || #{paging.searchWord} || '%'
+					)
+				</if>
 
-		<!--키워드 검색  -->
-		<if test="searchKeyword != null and searchKeyword != ''">
-			 AND (
-	               i.INQRY_TITLE LIKE '%' || #{searchKeyword} || '%'
-	            OR m.MEM_NAME    LIKE '%' || #{searchKeyword} || '%'
-	            OR m.MEM_ID      LIKE '%' || #{searchKeyword} || '%'
-	            OR i.INQRY_EMAIL LIKE '%' || #{searchKeyword} || '%'
-	        )
-		</if>
+				<!-- 상태 필터 -->
+				<if test="inquiry.inqryStatus != null and inquiry.inqryStatus != 'all'">
+					AND i.INQRY_STATUS = #{inquiry.inqryStatus}
+				</if>
 
-		<!--상태 필터 -->
-		<if test="status !=null and status != 'all'">
-			AND i.INQRY_STATUS = #{status}
-		</if>
-
-		<!--카테고리 필터-->
-		<if test="category !=null and category !='all'">
-			AND i.INQRY_CTGRY_CD = #{category}
-		</if>
-
-		ORDER BY i.REG_DT DESC
-		OFFSET #{offset} ROWS
-		FETCH NEXT #{pageSize} ROWS ONLY
+				<!-- 카테고리 필터 -->
+				<if test="inquiry.inqryCtgryCd != null and inquiry.inqryCtgryCd != 'all'">
+					AND i.INQRY_CTGRY_CD = #{inquiry.inqryCtgryCd}
+				</if>
+			) a
+		) b
+		<![CDATA[
+			WHERE b.rnum >= #{paging.startRow} AND b.rnum <= #{paging.endRow}
+		]]>
 	</select>
 
 	<!--관리자 문의 총 개수 조회 (목록용 카운트)  -->
@@ -59,23 +63,23 @@
 			   ON i.MEM_NO=m.MEM_NO
 		where i.DEL_YN = 'N'
 		<!--키워드 검색 -->
-		<if test="searchKeyword != null and searchKeyword != ''">
+		<if test="paging.searchWord != null and paging.searchWord != ''">
 			 AND (
-	               i.INQRY_TITLE LIKE '%' || #{searchKeyword} || '%'
-	            OR m.MEM_NAME    LIKE '%' || #{searchKeyword} || '%'
-	            OR m.MEM_ID      LIKE '%' || #{searchKeyword} || '%'
-	            OR i.INQRY_EMAIL LIKE '%' || #{searchKeyword} || '%'
+	               i.INQRY_TITLE LIKE '%' || #{paging.searchWord} || '%'
+	            OR m.MEM_NAME    LIKE '%' || #{paging.searchWord} || '%'
+	            OR m.MEM_ID      LIKE '%' || #{paging.searchWord} || '%'
+	            OR i.INQRY_EMAIL LIKE '%' || #{paging.searchWord} || '%'
 	        )
 		</if>
 
 		<!--상태 필터 -->
-		<if test="status != null and status != 'all'">
-			AND i.INQRY_STATUS = #{status}
+		<if test="inquiry.inqryStatus != null and inquiry.inqryStatus != 'all'">
+			AND i.INQRY_STATUS = #{inquiry.inqryStatus}
 		</if>
 
 		<!--카테고리 필터  -->
-		<if test="category != null and category != 'all'">
-			AND i.INQRY_CTGRY_CD = #{category}
+		<if test="inquiry.inqryCtgryCd != null and inquiry.inqryCtgryCd != 'all'">
+			AND i.INQRY_CTGRY_CD = #{inquiry.inqryCtgryCd}
 		</if>
 	</select>
 
@@ -101,7 +105,7 @@
 	        ,i.REPLY_MOD_DT
 	        ,c.CD_NAME     AS categoryName
 	        ,m.MEM_NAME    AS memberName
-	        ,m.MEM_ID
+	        ,m.MEM_ID	   AS memId
 		from INQUIRY i
 		left join CODE c
 		 		ON i.INQRY_CTGRY_CD = c.CD
@@ -131,7 +135,7 @@
 	</select>
 
 	<!-- 첨부파일 단건 조회 (다운로드용) -->
-	<select id="aAttachFileDetail" parameterType="int" resultType="map">
+	<select id="selectAttachFile" parameterType="int" resultType="map">
 		select
 			FILE_NO
 			,FILE_ORIGINAL_NAME
@@ -149,8 +153,19 @@
 		 where INQRY_NO = #{inqryNo}
 	</update>
 
-	<!--문의 삭제 알림 등록 -->
-	<insert id="insertAlarmInquiryDelete" parameterType="kr.or.ddit.mohaeng.vo.AlarmVO">
+	<!--문의 답변 등록 -->
+	<update id="inqryReply" parameterType="kr.or.ddit.mohaeng.vo.InquiryVO">
+		update INQUIRY
+		   set
+	     	REPLY_CN = #{replyCn}
+	        ,REPLY_MEM_NO = #{replyMemNo}
+	        ,REPLY_DT = SYSDATE
+	        ,INQRY_STATUS = 'answered'
+		 where INQRY_NO = #{inqryNo}
+	</update>
+
+	<!--문의 답변/삭제 알림 등록 -->
+	<insert id="insertAlarm" parameterType="kr.or.ddit.mohaeng.vo.AlarmVO">
 		<selectKey keyProperty="alarmNo" resultType="int" order="BEFORE">
 			SELECT SEQ_ALARM_NO.NEXTVAL FROM DUAL
 		</selectKey>
@@ -168,47 +183,15 @@
 			#{alarmNo}
 			,#{memNo}
 			,'INQRY_ADMIN'
-			,'INQRY_DELETE'
+			,<choose>
+				<when test="moveUrl.contains('mypage/inquiry/')"> 'INQRY_REPLY' </when>
+				<otherwise> 'INQRY_DELETE' </otherwise>
+			 </choose>
 			,#{alarmCont}
 			,#{moveUrl}
 			,'N'
 			,SYSDATE
 		)
 	</insert>
-
-	<!--문의 답변 등록 -->
-	<update id="inqryReply" parameterType="kr.or.ddit.mohaeng.vo.InquiryVO">
-		update INQUIRY
-		   set
-	     	REPLY_CN = #{replyCn}
-	        ,REPLY_MEM_NO = #{replyMemNo}
-	        ,REPLY_DT = SYSDATE
-	        ,INQRY_STATUS = 'ANSWERED'
-		 where INQRY_NO = #{inqryNo}
-	</update>
-
-	<!--문의 답변 알림 등록 -->
-	<insert id="alarmInqryReply">
-	 	insert into ALARM(
-			ALARM_NO
-			,MEM_NO
-			,SENDER
-			,ALARM_TYPE
-			,ALARM_CONT
-			,MOVE_URL
-			,READ_YN
-			,REG_DT
-		)VALUES(
-			#{alarmNo}
-			,#{memNo}
-			,'INQRY_ADMIN'
-			,'INQRY_REPLY'
-			,#{alarmCont}
-			,#{moveUrl}
-			,'N'
-			,SYSDATE
-		)
-	</insert>
-
 
 </mapper>

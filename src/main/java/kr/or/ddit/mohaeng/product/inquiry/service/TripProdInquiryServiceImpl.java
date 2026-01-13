@@ -33,7 +33,7 @@ public class TripProdInquiryServiceImpl implements ITripProdInquiryService {
 	@Override
 	public TripProdInquiryVO insertInquiry(TripProdInquiryVO vo) {
 		mapper.insertInquiry(vo);
-		return vo;
+		return mapper.getInquiryById(vo.getProdInqryNo());
 	}
 
 	@Override

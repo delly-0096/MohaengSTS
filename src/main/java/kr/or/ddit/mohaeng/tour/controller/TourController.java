@@ -1,5 +1,6 @@
 package kr.or.ddit.mohaeng.tour.controller;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,9 +15,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
+import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
 import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
@@ -29,6 +32,7 @@ import kr.or.ddit.mohaeng.tour.vo.SearchLogVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
+import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
 @Controller
@@ -52,6 +56,9 @@ public class TourController {
     
     @Autowired
     private ISearchLogService searchLogService;
+    
+    @Autowired
+    private IFileService fileService;
 
     /**
      * 목록 페이지
@@ -134,6 +141,245 @@ public class TourController {
     }
     
     /**
+     * 리뷰 수정
+     */
+    @PostMapping("/{tripProdNo}/review/update")
+    @ResponseBody
+    public Map<String, Object> updateReview(
+            @PathVariable int tripProdNo,
+            @RequestBody ProdReviewVO vo,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            vo.setMemNo(memNo);
+            int updated = reviewService.updateReview(vo);
+            
+            if (updated > 0) {
+                result.put("success", true);
+                result.put("message", "리뷰가 수정되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "수정 권한이 없습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "리뷰 수정에 실패했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 리뷰 이미지 조회 (수정 모달용)
+     */
+    @GetMapping("/{tripProdNo}/review/{prodRvNo}/images")
+    @ResponseBody
+    public Map<String, Object> getReviewImages(
+            @PathVariable int tripProdNo,
+            @PathVariable int prodRvNo,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        Object loginMember = session.getAttribute("loginMember");
+        if (loginMember == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            Integer attachNo = reviewService.getReviewAttachNo(prodRvNo);
+            
+            if (attachNo == null) {
+                result.put("success", true);
+                result.put("images", new ArrayList<>());
+                return result;
+            }
+            
+            List<AttachFileDetailVO> details = fileService.getAttachFileDetails(attachNo);
+            
+            List<Map<String, Object>> images = new ArrayList<>();
+            for (AttachFileDetailVO d : details) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("FILE_NO", d.getFileNo());
+                map.put("FILE_PATH", d.getFilePath());
+                map.put("FILE_ORIGINAL_NAME", d.getFileOriginalName());
+                images.add(map);
+            }
+            
+            result.put("success", true);
+            result.put("images", images);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 조회에 실패했습니다.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * 리뷰 이미지 개별 삭제
+     */
+    @PostMapping("/{tripProdNo}/review/{prodRvNo}/image/delete")
+    @ResponseBody
+    public Map<String, Object> deleteReviewImage(
+            @PathVariable int tripProdNo,
+            @PathVariable int prodRvNo,
+            @RequestBody Map<String, Integer> params,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            Integer attachNo = reviewService.getReviewAttachNo(prodRvNo);
+            if (attachNo == null) {
+                result.put("success", false);
+                result.put("message", "이미지가 없습니다.");
+                return result;
+            }
+            
+            int fileNo = params.get("fileNo");
+            
+            // ★ FileService 직접 사용
+            int deleted = fileService.softDeleteFile(attachNo, fileNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "이미지가 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "이미지 삭제에 실패했습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 삭제 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * 리뷰 이미지 추가 - FileService 직접 사용
+     */
+    @PostMapping("/{tripProdNo}/review/{prodRvNo}/image/upload")
+    @ResponseBody
+    public Map<String, Object> uploadReviewImages(
+            @PathVariable int tripProdNo,
+            @PathVariable int prodRvNo,
+            @RequestParam("files") List<MultipartFile> files,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            Integer attachNo = reviewService.getReviewAttachNo(prodRvNo);
+            
+            // ★ FileService 직접 사용
+            int newAttachNo = fileService.addFilesToAttach(
+                attachNo,       // 기존 번호 (null 가능)
+                files,          // 업로드 파일들
+                "review",       // 폴더명: C:/mohaeng/review/
+                "REVIEW",       // 분류 코드
+                memNo           // 등록자
+            );
+            
+            // 새로 생성된 경우 리뷰에 연결
+            if (attachNo == null && newAttachNo > 0) {
+                reviewService.updateReviewAttachNo(prodRvNo, newAttachNo);
+            }
+            
+            // 업로드 후 이미지 목록 반환
+            List<AttachFileDetailVO> details = fileService.getAttachFileDetails(newAttachNo);
+            
+            List<Map<String, Object>> images = new ArrayList<>();
+            for (AttachFileDetailVO d : details) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("FILE_NO", d.getFileNo());
+                map.put("FILE_PATH", d.getFilePath());
+                map.put("FILE_ORIGINAL_NAME", d.getFileOriginalName());
+                images.add(map);
+            }
+            
+            result.put("success", true);
+            result.put("message", files.size() + "개의 이미지가 추가되었습니다.");
+            result.put("images", images);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 업로드 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * 리뷰 삭제
+     */
+    @PostMapping("/{tripProdNo}/review/delete")
+    @ResponseBody
+    public Map<String, Object> deleteReview(
+            @PathVariable int tripProdNo,
+            @RequestBody Map<String, Integer> params,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            int prodRvNo = params.get("prodRvNo");
+            int deleted = reviewService.deleteReview(prodRvNo, memNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "리뷰가 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "삭제 권한이 없습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "리뷰 삭제에 실패했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
      * 리뷰 더보기
      */
     @GetMapping("/{tripProdNo}/reviews")
@@ -150,19 +396,7 @@ public class TourController {
         int totalCount = stat != null ? stat.getReviewCount() : 0;
         int loadedCount = page * pageSize;
         
-        // 로그인 사용자 정보 추가
-        Integer loginMemNo = null;
-        Object loginMember = session.getAttribute("loginMember");
-        if (loginMember != null) {
-            if (loginMember instanceof Map) {
-                Object memNo = ((Map<?, ?>) loginMember).get("memNo");
-                if (memNo instanceof Number) {
-                    loginMemNo = ((Number) memNo).intValue();
-                }
-            } else if (loginMember instanceof MemberVO) {
-                loginMemNo = ((MemberVO) loginMember).getMemNo();
-            }
-        }
+        Integer loginMemNo = getMemNo(session);
         
         Map<String, Object> result = new HashMap<>();
         result.put("reviews", reviews);
@@ -184,38 +418,10 @@ public class TourController {
         
         Map<String, Object> result = new HashMap<>();
         
-        Object loginMember = session.getAttribute("loginMember");
-        if (loginMember == null) {
-            result.put("success", false);
-            result.put("message", "로그인이 필요합니다.");
-            return result;
-        }
-        
-        Integer memNo = null;
-        String nickname = null;
-        
-        if (loginMember instanceof Map) {
-            Object memNoObj = ((Map<?, ?>) loginMember).get("memNo");
-            if (memNoObj instanceof Number) {
-                memNo = ((Number) memNoObj).intValue();
-            }
-            Object nicknameObj = ((Map<?, ?>) loginMember).get("nickname");
-            if (nicknameObj != null) {
-                nickname = nicknameObj.toString();
-            }
-        } else if (loginMember instanceof MemberVO) {
-            MemberVO member = (MemberVO) loginMember;
-            memNo = member.getMemNo();
-            
-            // MemUserVO에서 닉네임 가져오기
-            if (member.getMemUser() != null) {
-                nickname = member.getMemUser().getNickname();
-            }
-        }
-        
+        Integer memNo = getMemNo(session);
         if (memNo == null) {
             result.put("success", false);
-            result.put("message", "회원 정보를 확인할 수 없습니다.");
+            result.put("message", "로그인이 필요합니다.");
             return result;
         }
         
@@ -223,12 +429,8 @@ public class TourController {
             vo.setTripProdNo(tripProdNo);
             vo.setInquiryMemNo(memNo);
             
+            // ★ Service에서 등록 후 닉네임 포함된 정보를 반환
             TripProdInquiryVO inserted = inquiryService.insertInquiry(vo);
-            
-            // 닉네임 설정
-            if (nickname != null) {
-                inserted.setInquiryNickname(nickname);
-            }
             
             result.put("success", true);
             result.put("message", "문의가 등록되었습니다.");
@@ -587,5 +789,26 @@ public class TourController {
     @GetMapping("/complete")
     public String completeBooking() {
         return "product/complete";
+    }
+    
+    /**
+     * 세션에서 memNo 추출
+     */
+    private Integer getMemNo(HttpSession session) {
+        Object loginMember = session.getAttribute("loginMember");
+        if (loginMember == null) {
+            return null;
+        }
+        
+        if (loginMember instanceof Map) {
+            Object memNoObj = ((Map<?, ?>) loginMember).get("memNo");
+            if (memNoObj instanceof Number) {
+                return ((Number) memNoObj).intValue();
+            }
+        } else if (loginMember instanceof MemberVO) {
+            return ((MemberVO) loginMember).getMemNo();
+        }
+        
+        return null;
     }
 }

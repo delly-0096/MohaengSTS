@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.or.ddit.mohaeng.community.travellog.comments.mapper.ICommentsMapper">
+
+    <!-- 여행기록 댓글 목록(댓글 + 대댓글) -->
+    <select id="selectTripRecordComments" parameterType="long"
+            resultType="kr.or.ddit.mohaeng.vo.CommentItemVO">
+        SELECT
+            c.CMNT_NO        AS cmntNo,
+            c.TARGET_TYPE    AS targetType,
+            c.TARGET_NO      AS targetNo,
+            c.WRITER_NO      AS writerNo,
+            m.MEM_ID         AS writerId,
+            c.PARENT_CMNT_NO AS parentCmntNo,
+            c.CMNT_CONTENT   AS cmntContent,
+            c.CMNT_STATUS    AS cmntStatus,
+            c.REG_DT         AS regDt,
+            c.MOD_DT         AS modDt,
+
+            CASE WHEN c.PARENT_CMNT_NO IS NULL THEN 0 ELSE 1 END AS depth,
+
+            (SELECT COUNT(*)
+               FROM COMMENTS cc
+              WHERE cc.PARENT_CMNT_NO = c.CMNT_NO
+                AND cc.TARGET_TYPE = 'TRIP_RECORD'
+                AND cc.TARGET_NO = #{rcdNo}
+            ) AS childCount
+
+        FROM COMMENTS c
+        JOIN MEMBER m ON m.MEM_NO = c.WRITER_NO
+        WHERE c.TARGET_TYPE = 'TRIP_RECORD'
+          AND c.TARGET_NO = #{rcdNo}
+
+        <!-- 정렬: 부모댓글 먼저, 그 다음 대댓글 -->
+        ORDER BY
+            NVL(c.PARENT_CMNT_NO, c.CMNT_NO) ASC,
+            CASE WHEN c.PARENT_CMNT_NO IS NULL THEN 0 ELSE 1 END ASC,
+            c.CMNT_NO ASC
+    </select>
+
+    <!-- 댓글/대댓글 등록 -->
+    <insert id="insertTripRecordComment">
+        INSERT INTO COMMENTS (
+            CMNT_NO, TARGET_TYPE, TARGET_NO,
+            WRITER_NO, PARENT_CMNT_NO,
+            CMNT_CONTENT, CMNT_STATUS,
+            REG_DT, MOD_DT
+        ) VALUES (
+            SEQ_COMMENTS.NEXTVAL,
+            'TRIP_RECORD',
+            #{rcdNo},
+            #{writerNo},
+            #{parentCmntNo},
+            #{content},
+            1,
+            TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'),
+            NULL
+        )
+    </insert>
+
+    <!-- 소프트 삭제(작성자만) -->
+    <update id="softDeleteTripRecordComment">
+        UPDATE COMMENTS
+        SET
+            CMNT_STATUS = 9,
+            CMNT_CONTENT = '삭제된 댓글입니다.',
+            MOD_DT = TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
+        WHERE CMNT_NO = #{cmntNo}
+          AND WRITER_NO = #{writerNo}
+          AND TARGET_TYPE = 'TRIP_RECORD'
+    </update>
+
+</mapper>

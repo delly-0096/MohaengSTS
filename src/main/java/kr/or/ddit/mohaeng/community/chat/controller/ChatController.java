@@ -53,7 +53,7 @@ public class ChatController {
 			return result;
 		}
 		
-		chatService.creatChatRoom(request, user.getMember().getMemNo());
+		chatService.creatChatRoom(request, user);
 		
 		result.put("success", true);
 		result.put("message", "채팅방이 생성되었습니다");
@@ -69,5 +69,5 @@ public class ChatController {
 			){
 		return chatService.joinChatRoom(chatId, user.getMember().getMemNo());
 	}
-	
+		
 }

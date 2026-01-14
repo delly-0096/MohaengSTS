@@ -95,6 +95,8 @@ public class TripScheduleController {
 		scheduleVO.setMemNo(memNo);
 		TripScheduleVO schedule = tripScheduleService.selectTripSchedule(scheduleVO);
 		
+		System.out.println("schedule : " + schedule);
+		
 		model.addAttribute("schedule", schedule);
 		
 		return "schedule/planner_edit";
@@ -248,6 +250,22 @@ public class TripScheduleController {
 	    int resultSchedule = tripScheduleService.insertTripSchedule(params);
 	    
 	    return ResponseEntity.ok(1);
+	}
+	
+	@PostMapping("/update")
+	@ResponseBody
+	public ResponseEntity<?> updateTourSchedule(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@RequestBody Params params
+			) {
+		System.out.println("params : " + params);
+		
+		int memNo = customUser.getMember().getMemNo();
+		params.put("memNo", memNo);
+		
+		int resultSchedule = tripScheduleService.updateTripSchedule(params);
+		
+		return ResponseEntity.ok(1);
 	}
 	
 	@PostMapping("/delete")

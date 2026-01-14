@@ -5,124 +5,57 @@
 
 <mapper namespace="kr.or.ddit.mohaeng.community.travellog.report.mapper.IReportMapper">
 
-    <resultMap id="ReportMap" type="kr.or.ddit.mohaeng.vo.ReportVO">
-        <id property="rptNo" column="RPT_NO"/>
-        <result property="mgmtType" column="MGMT_TYPE"/>
-        <result property="targetType" column="TARGET_TYPE"/>
-        <result property="targetNo" column="TARGET_NO"/>
-        <result property="reqMemNo" column="REQ_MEM_NO"/>
-        <result property="targetMemNo" column="TARGET_MEM_NO"/>
-        <result property="ctgryCd" column="CTGRY_CD"/>
-        <result property="content" column="CONTENT"/>
-        <result property="reqDt" column="REQ_DT"/>
+   <insert id="insertReport" parameterType="kr.or.ddit.mohaeng.vo.ReportVO">
+    <selectKey keyProperty="rptNo" resultType="long" order="BEFORE">
+      SELECT SEQ_REPORT.NEXTVAL FROM DUAL
+    </selectKey>
 
-        <result property="procStatus" column="PROC_STATUS"/>
-        <result property="procResult" column="PROC_RESULT"/>
-        <result property="procMemNo" column="PROC_MEM_NO"/>
-        <result property="prodDt" column="PROD_DT"/>
-        <result property="rejRsn" column="REJ_RSN"/>
-        <result property="adminMemo" column="ADMIN_MEMO"/>
+    INSERT INTO REPORT (
+      RPT_NO,
+      MGMT_TYPE,
+      TARGET_TYPE,
+      TARGET_NO,
+      REQ_MEM_NO,
+      TARGET_MEM_NO,
+      CTGRY_CD,
+      CONTENT,
+      REQ_DT,
+      PROC_STATUS,
+      PROC_RESULT,
+      PROC_MEM_NO,
+      PROD_DT,
+      REJ_RSN,
+      ADMIN_MEMO,
+      REG_DT,
+      MOD_DT
+    ) VALUES (
+      #{rptNo},
+      #{mgmtType},
+      #{targetType},
+      #{targetNo},
+      #{reqMemNo},
+      #{targetMemNo},
+      #{ctgryCd},
+      #{content},
+      SYSDATE,           <!-- ✅ 변경: #{reqDt} → SYSDATE -->
+      #{procStatus},
+      #{procResult},
+      #{procMemNo},
+      NULL,              <!-- ✅ 안전: 처리일시는 일단 NULL (나중에 처리 시 UPDATE) -->
+      #{rejRsn},
+      #{adminMemo},
+      SYSDATE,
+      NULL
+    )
+  </insert>
 
-        <result property="regDt" column="REG_DT"/>
-        <result property="modDt" column="MOD_DT"/>
-    </resultMap>
-
-    <!-- ===== 중복 신고 체크: WAIT 상태 중복 차단 ===== -->
-    <select id="existsWaitReport" resultType="int">
-        SELECT COUNT(1)
-        FROM REPORT
-        WHERE REQ_MEM_NO = #{reqMemNo}
-          AND TARGET_TYPE = #{targetType}
-          AND TARGET_NO = #{targetNo}
-          AND PROC_STATUS = 'WAIT'
-    </select>
-
-    <!-- ===== targetMemNo 자동 조회 ===== -->
-    <select id="selectTripRecordWriterMemNo" resultType="long">
-        SELECT MEM_NO
-        FROM TRIP_RECORD
-        WHERE RCD_NO = #{rcdNo}
-    </select>
-
-    <select id="selectCommentWriterMemNo" resultType="long">
-        SELECT WRITER_NO
-        FROM COMMENTS
-        WHERE CMNT_NO = #{cmntNo}
-    </select>
-
-    <!-- ===== 신고 등록 ===== -->
-    <insert id="insertReport" parameterType="kr.or.ddit.mohaeng.vo.ReportVO">
-        <selectKey keyProperty="rptNo" resultType="long" order="BEFORE">
-            SELECT SEQ_REPORT.NEXTVAL FROM DUAL
-        </selectKey>
-
-        INSERT INTO REPORT (
-            RPT_NO,
-            MGMT_TYPE,
-            TARGET_TYPE,
-            TARGET_NO,
-            REQ_MEM_NO,
-            TARGET_MEM_NO,
-            CTGRY_CD,
-            CONTENT,
-            REQ_DT,
-            PROC_STATUS,
-            REG_DT
-        ) VALUES (
-            #{rptNo},
-            #{mgmtType},
-            #{targetType},
-            #{targetNo},
-            #{reqMemNo},
-            #{targetMemNo},
-            #{ctgryCd},
-            #{content},
-            #{reqDt},
-            #{procStatus},
-            SYSDATE
-        )
-    </insert>
-
-    <!-- ===== 내 신고 목록 ===== -->
-    <select id="countMyReports" resultType="int">
-        SELECT COUNT(1)
-        FROM REPORT
-        WHERE REQ_MEM_NO = #{reqMemNo}
-    </select>
-
-    <select id="listMyReports" resultMap="ReportMap">
-        SELECT *
-        FROM (
-            SELECT R.*, ROW_NUMBER() OVER(ORDER BY RPT_NO DESC) RN
-            FROM REPORT R
-            WHERE REQ_MEM_NO = #{reqMemNo}
-        )
-        WHERE RN &gt; #{offset}
-          AND RN &lt;= (#{offset} + #{size})
-        ORDER BY RN
-    </select>
-
-    <!-- ===== 신고 상세(본인만) ===== -->
-    <select id="selectMyReportDetail" resultMap="ReportMap">
-        SELECT *
-        FROM REPORT
-        WHERE RPT_NO = #{rptNo}
-          AND REQ_MEM_NO = #{reqMemNo}
-    </select>
-
-    <!-- ===== 취소 가능 여부(상태 조회) ===== -->
-    <select id="selectProcStatusForOwner" resultType="string">
-        SELECT PROC_STATUS
-        FROM REPORT
-        WHERE RPT_NO = #{rptNo}
-          AND REQ_MEM_NO = #{reqMemNo}
-    </select>
-
-    <!-- ===== 신고 취소(삭제) : WAIT 상태는 서비스에서 체크 ===== -->
-    <delete id="deleteMyReport">
-        DELETE FROM REPORT
-        WHERE RPT_NO = #{rptNo}
-          AND REQ_MEM_NO = #{reqMemNo}
-    </delete>
-
+  <select id="existsDuplicateReport" parameterType="kr.or.ddit.mohaeng.vo.ReportVO" resultType="int">
+	  SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+	  FROM REPORT
+	  WHERE MGMT_TYPE = 'REPORT'
+	    AND REQ_MEM_NO = #{reqMemNo}
+	    AND TARGET_TYPE = #{targetType}
+	    AND TARGET_NO = #{targetNo}
+  </select>
+  
 </mapper>

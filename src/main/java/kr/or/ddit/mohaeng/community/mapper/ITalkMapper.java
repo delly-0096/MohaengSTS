@@ -3,8 +3,10 @@ package kr.or.ddit.mohaeng.community.mapper;
 import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import kr.or.ddit.mohaeng.vo.BoardFileVO;
+import kr.or.ddit.mohaeng.vo.BoardTagVO;
 import kr.or.ddit.mohaeng.vo.BoardVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 
@@ -31,7 +33,10 @@ public interface ITalkMapper {
 
 	/* public List<BoardVO> selectBoardList(PaginationInfoVO<BoardVO> pagingVO); */
 
+ public int insertTalkTags(@Param("list") List<BoardTagVO> tagList);
 
+ public int deleteTalkTags(int boardNo);
  
+
 
 }

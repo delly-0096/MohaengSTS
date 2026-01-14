@@ -119,8 +119,8 @@
 						</div>
 					</div>
 					<div class="form-group">
-						<label class="form-label">좌석 등급</label> <select
-							class="form-control form-select" id="cabinClass">
+						<label class="form-label">좌석 등급</label> 
+						<select class="form-control form-select" id="cabinClass">
 							<option value="economy">일반석</option>
 							<option value="business">비즈니스석</option>
 						</select>
@@ -192,17 +192,17 @@
 <script>
 let passengers = { adult: 1, child: 0, infant: 0 };
 // ==================== 항공편 선택 상태 관리 ====================
-let currentSearchType = 'round'; // round - 왕복, oneway - 편도
-let currentSelectionStep = 0; // 현재 선택 단계 (0: 가는편, 1: 오는편)
-let selectedFlights = []; // 선택된 항공편 목록
-let totalSegments = 2; // 총 선택해야 할 구간 수 (왕복: 2, 편도: 1)
+let currentSearchType = 'round'; 	// round - 왕복, oneway - 편도
+let currentSelectionStep = 0; 		// 현재 선택 단계 (0: 가는편, 1: 오는편)
+let selectedFlights = []; 			// 선택된 항공편 목록
+let totalSegments = 2; 				// 총 선택해야 할 구간 수 (왕복: 2, 편도: 1)
 
 let storedData = null;	// storage에 저장된 정보
 let airportList = [];	// 항공 목록
 
 const list = document.getElementById('selectedFlightsList');
 
-let selectedFlightList = [];	// 선택한 항공권 저장
+// let selectedFlightList = [];	// 선택한 항공권 저장
 
 // 검색 타입 탭 전환
 document.querySelectorAll('.search-tab').forEach(tab => {
@@ -568,7 +568,7 @@ function createFlightCard(data, searchData, cabin, id) {
 	    child : passengers.child,
 	    infant : passengers.infant,
 	    cabinClass : cabin === "economy" ? "일반석" : "비즈니스",
-	    price : price,					// 가격 세팅
+	    price : price,					// 가격 세팅 1개 가격
 	    depTimeFormmater : depTimeFormmater,
 	    arrTimeFormmater : arrTimeFormmater
 	};

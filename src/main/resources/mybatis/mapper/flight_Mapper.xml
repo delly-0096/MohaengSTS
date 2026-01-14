@@ -71,10 +71,10 @@
 	</insert>
 	
 	<!-- 예약번호 사용 -->
-	<select id="getReserveNo" resultType="long">
+<!-- 	<select id="getReserveNo" resultType="long">
 		SELECT TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD') || LPAD(seq_flight_reservation.NEXTVAL, 8, '0')) 
     	FROM DUAL
-	</select>
+	</select> -->
 	
 	<!-- 예약 정보 추가 -->
 	<insert id="insertFlightReservation" parameterType="kr.or.ddit.mohaeng.vo.FlightReservationVO" useGeneratedKeys="true">
@@ -90,7 +90,7 @@
 	</insert>
 	
 	<!-- 항공 이용약관 동의 추가 -->
-	<insert id="insertFlightAgree">
+	<insert id="insertFlightAgree" parameterType="kr.or.ddit.mohaeng.vo.FlightResvAgreeVO">
 		INSERT INTO flight_resv_agree (
 		    reserve_no, ticket_purch_agree_yn, privacy_coll_agree_yn
 		    , cancel_refund_agree_yn , mkt_recv_agree_yn , reg_dt
@@ -103,7 +103,7 @@
 	<!-- 탑승객 정보 추가 -->
 	<insert id="insertPassengers" parameterType="kr.or.ddit.mohaeng.vo.FlightPassengersVO" useGeneratedKeys="true">
 		<selectKey keyProperty="passengerId" resultType="int" order="BEFORE">
-			select seq_flight_passengers from dual
+			select seq_flight_passengers.nextval from dual
 		</selectKey>
 		INSERT INTO flight_passengers (
 		    passenger_id, last_name, first_name, birth_date
@@ -116,6 +116,25 @@
 		)
 	</insert>
 	
+	<!-- 항공권 키 존재여부 확인, 있으면 해당 키 반환 없으면 null반환 -->
+	<select id="getFlightKey" parameterType="kr.or.ddit.mohaeng.vo.FlightProductVO" resultType="Integer">
+		SELECT flt_prod_id
+		FROM flight_product
+	    WHERE airline_id = #{airlineId}
+	      AND flight_symbol = #{flightSymbol}
+	      AND dep_airport_id = #{depAirportId}
+	      AND arr_airport_id = #{arrAirportId}
+	      AND start_dt = #{startDt}      
+	      AND dep_time = #{depTime}
+	</select>
 	
+	<!-- 좌석정보 가져오기 -->
+	<select id="getSeatInfo" parameterType="Integer" resultType="string">
+		select
+			fp.flight_seat
+		from flight_reservation fr
+		INNER JOIN flight_passengers fp on(fr.reserve_no = fp.reserve_no)
+		where fr.flt_prod_id = #{fltProdId}
+	</select>
 	
 </mapper>

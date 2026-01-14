@@ -10,7 +10,8 @@ import lombok.Data;
 @Data
 public class BoardVO {
 	
-	private int boardNo;
+	private Integer boardNo;
+
 	private String boardCtgryCd;
 	private int writerNo;
 	private int attachNo;
@@ -28,7 +29,7 @@ public class BoardVO {
 	
 	private Date regDt;
 	private Date modDt;
-	private String regId;
+	private int regId;
 	private String modId;
 
 	

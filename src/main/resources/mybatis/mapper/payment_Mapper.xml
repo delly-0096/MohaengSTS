@@ -16,5 +16,18 @@
 		)
 	</insert>
 
-
+	<!-- 결제 상세 정보 -->
+	<insert id="insertPaymentInfo" parameterType="kr.or.ddit.mohaeng.vo.PaymentInfoVO">
+		INSERT INTO payment_info (
+	        pay_no, tid, pay_method_type
+	        , card_corp_code, auth_no, vbank_num
+	        , vbank_exp_dt,  res_code, res_msg
+	        , pay_raw_data
+	    ) VALUES (
+	        #{payNo}, #{tid}, #{payMethodType}
+	        , #{cardCorpCode}, #{authNo}, #{vbankNum}
+	        , #{vbankExpDt}, #{resCode}
+	        , #{resMsg}, #{payRawData, jdbcType=CLOB}
+	    )
+	</insert>
 </mapper>

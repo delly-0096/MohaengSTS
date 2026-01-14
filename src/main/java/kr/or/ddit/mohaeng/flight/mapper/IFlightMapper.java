@@ -19,7 +19,6 @@ public interface IFlightMapper {
 	
 	public AirlineVO selectAirline(String airlineNm);			// 항공사 id 가져오기 위한 것
 	
-	
 	public List<AirportVO> getAirportList();					// 전체 공항 목록 조회
 	public List<AirlineVO> getAirlineList();					// 전체 항공사 조회
 	public MemberVO getPayPerson(String memId);					// 결제자 정보 조회
@@ -28,4 +27,7 @@ public interface IFlightMapper {
 	public int insertFlightReservation(FlightReservationVO flightReservationVO);	// 예약정보 추가
 	public int insertFlightAgree(FlightResvAgreeVO flightResvAgreeVO);				// 항공이용약관 동의
 	public int insertPassengers(FlightPassengersVO flightPassengersVO);				// 탑승객 정보 추가
+	
+	public Integer getFlightKey(FlightProductVO flightProductVO);					// 항공권 키 확인 - null일 경우를 대비하여 Integer로 변경
+	public List<String> getSeatInfo(Integer fltProdId);								// 항공권 좌석 정보 조회
 }

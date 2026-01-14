@@ -14,9 +14,157 @@
             <h1><i class="bi bi-chat-dots me-3"></i>여행톡</h1>
             <p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
         </div>
-        <!-- boardVO있을때 상세출력 
+        <!-- 게시판 -->
+        <div class="board-container">
+            <!-- 카테고리 탭 -->
+            <div class="board-tabs">
+                <button class="board-tab active" data-category="all">전체</button>
+                <button class="board-tab" data-category="notice">공지사항</button>
+                <button class="board-tab" data-category="free">자유게시판</button>
+                <button class="board-tab" data-category="companion">동행 구하기</button>
+                <button class="board-tab" data-category="info">정보 공유</button>
+                <button class="board-tab" data-category="qna">여행 Q&A</button>
+                <button class="board-tab" data-category="review">후기</button>
+            </div>
+
+            <!-- 게시판 헤더 -->
+            <div class="board-header">
+                <div class="board-search">
+                    <select class="form-select search-type" id="searchType">
+                        <option value="all">전체</option>
+                        <option value="title">제목</option>
+                        <option value="content">내용</option>
+                        <option value="writer">작성자</option>
+                    </select>
+                    <input type="text" id="searchKeyword" placeholder="검색어를 입력하세요" onkeypress="handleSearchKeypress(event)">
+                    <button class="btn btn-primary btn-sm" onclick="searchPosts()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <sec:authorize access="hasRole('MEMBER')">
+                <div class="board-actions">
+                    <button class="btn btn-outline-primary" onclick="openChatRoomList()">
+                        <i class="bi bi-chat-heart me-2"></i>지금모행
+                    </button>
+                    <button class="btn btn-primary" onclick="writePost()">
+                        <i class="bi bi-pencil me-2"></i>글쓰기
+                    </button>
+                </div>
+                </sec:authorize>
+                <sec:authorize access="hasRole('BUSINESS')">
+                <div class="board-actions">
+                    <span class="business-notice">
+                        <i class="bi bi-info-circle me-1"></i>기업회원은 여행톡 작성이 제한됩니다
+                    </span>
+                </div>
+                </sec:authorize>
+            </div>
+
+            <!-- 게시글 리스트 -->
+            <ul class="post-list">
+            	<c:set value="${pagingVO.dataList }" var="boardList"/>
+            	<c:choose>
+            		<c:when test="${empty boardList }">
+            				
+							 <li class="post-item" style="cursor:default;">
+							    <div class="post-content">
+							      <h4 class="post-title">등록된 게시글이 없습니다.</h4>
+							    </div>
+							  </li>
+						      <a href="${pageContext.request.contextPath}/community/talk/detail?boardNo=${board.boardNo}">
+
+						        ${board.boardTitle}
+						      </a>
+
+						    </h4>
+						
+						    <div class="post-meta">
+						      <span class="writer">
+						        ${board.writerNickname}
+						        <small>(${board.writerId})</small>
+						      </span>
+						      <span>${board.regDt}</span>
+						    </div>
+						  </div>
+						
+						  <div class="post-stats">
+						    <span><i class="bi bi-eye"></i> ${board.viewCnt}</span>
+						    <span><i class="bi bi-chat"></i> 0</span>
+								</div>
+							</li>
+						</c:when>
+						<c:otherwise>
+							<c:forEach items="${boardList}" var="board">
+								<c:set value="" var="type"/>
+								<c:set value="" var="style"/>
+								<c:choose>
+									<c:when test="${board.boardCtgryCd eq 'notice' }">
+										<c:set value="공지" var="type"/>
+										<c:set value="notice" var="style"/>	
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'free' }">
+										<c:set value="자유" var="type"/>	
+										<c:set value="free" var="style"/>
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'companion' }">
+										<c:set value="동행" var="type"/>
+										<c:set value="companion" var="style"/>
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'info' }">
+										<c:set value="정보" var="type"/>
+										<c:set value="info" var="style"/>	
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'qna' }">
+										<c:set value="Q&A" var="type"/>	
+										<c:set value="qna" var="style"/>
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'review' }">
+										<c:set value="후기" var="type"/>	
+										<c:set value="review" var="style"/>
+									</c:when>
+								</c:choose>
+								<li class="post-item" >
+				                    <span class="post-category ${style }">${type }</span>
+				                    <div class="post-content">
+				                        <h4 class="post-title">
+											  <a href="${pageContext.request.contextPath}/community/talk/detail?boardNo=${board.boardNo}">
+											    ${board.boardTitle}
+											  </a>
+											  <small style="color:red;">[${board.boardNo}]</small>
+											</h4>
+
+				                        <div class="post-meta">
+				                            <span class="writer">
+												  ${board.writerNickname}
+												  <small>(${board.writerId})</small>
+											</span>
+				                            <span>${board.regDt }</span>
+				                        </div>
+				                    </div>
+				                    <div class="post-stats">
+				                        <span><i class="bi bi-eye"></i> ${board.viewCnt }</span>
+				                        <span><i class="bi bi-chat"></i> 0</span>
+				                    </div>
+				                </li>			
+							</c:forEach>
+						</c:otherwise>
+            	</c:choose>
+            </ul>
+
+            <!-- 페이지네이션 -->
+            <div class="pagination-container">
+                <nav>
+                    ${pagingVO.pagingHTML }
+                </nav>
+            </div>
+        </div>
+    </div>     
+</div>
+
+		<!-- boardVO있을때 상세출력 
 			model.addAttribute("boardVO",boardVO);
 		-->
+				<p>${boardVO}</p>
 				<c:if test="${not empty boardVO}">
 				  <div class="card mb-4">
 				    <div class="card-body">
@@ -30,14 +178,13 @@
 				          목록
 				        </a>
 				      </div>
-				      
 				
 				      <h3 class="mb-2">${boardVO.boardTitle}</h3>
 				
 				      <div class="text-muted mb-3">
-				          작성자: ${boardVO.writerNickname} <small>(${boardVO.writerId})</small>
-				          작성일: ${boardVO.regDt}
-				          조회수: ${boardVO.viewCnt}
+				        작성자: ${boardVO.writerNickname} <small>(${boardVO.writerId})</small>
+				        · 작성일: ${boardVO.regDt}
+				        · 조회수: ${boardVO.viewCnt}
 				      </div>
 				
 				      <hr/>
@@ -48,9 +195,6 @@
 				    </div>
 				  </div>
 				</c:if>
-    </div>     
-</div>
-		
 								
 <!-- 게시글 상세 모달 -->
 <div class="post-detail-overlay" id="postDetailOverlay" onclick="closePostDetail()">
@@ -1588,7 +1732,6 @@ const categoryMap = {
 
 // 카테고리 탭 전환
 document.querySelectorAll('.board-tab').forEach(tab => {
-	
     tab.addEventListener('click', function() {
         document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
@@ -1777,7 +1920,7 @@ function  loadChatRooms(category) {
 // 채팅방 목록 닫기
 function closeChatRoomList() {
     document.getElementById('chatRoomModal').classList.remove('active');
-    document.body.style.overflow = '';  
+    document.body.style.overflow = '';
 }
 
 // 오버레이 클릭 시 닫기

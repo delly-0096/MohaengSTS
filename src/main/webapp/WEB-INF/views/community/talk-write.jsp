@@ -79,19 +79,33 @@
                 </div>
 
                 <!-- 파일 첨부 -->
-                <div class="form-group">
-                    <label class="form-label">파일 첨부</label>
-                    <div class="file-upload-area" id="fileUploadArea">
-                        <input type="file" id="fileInput" name="files" multiple accept="image/*" style="display: none;">
-                        <div class="file-upload-placeholder" onclick="document.getElementById('fileInput').click()">
-                            <i class="bi bi-cloud-upload"></i>
-                            <p>클릭하여 이미지를 업로드하거나<br>이미지를 드래그하세요</p>
-                            <small>JPG, PNG, GIF (최대 10MB, 5개까지)</small>
-                        </div>
-                    </div>
-                    <div class="file-preview-list" id="filePreviewList"></div>
-                </div>
-
+			
+				  <!-- 파일 첨부 -->
+				  <div class="form-group">
+				    <label class="form-label">파일 첨부</label>
+				
+				    <div class="file-upload-area" id="fileUploadArea">
+				      <!-- ✅ name을 boardFile로 -->
+				      <input
+				        type="file"
+				        id="fileInput"
+				        name="boardFile"
+				        multiple
+				        accept="image/*"
+				        style="display:none;"
+				      >
+				
+				      <!-- 클릭으로 파일 선택 -->
+				      <div class="file-upload-placeholder" onclick="document.getElementById('fileInput').click()">
+				        <i class="bi bi-cloud-upload"></i>
+				        <p>클릭하여 이미지를 업로드하거나<br>이미지를 드래그하세요</p>
+				        <small>JPG, PNG, GIF (최대 10MB, 5개까지)</small>
+					  <div class="file-preview-list" id="filePreviewList"></div>
+				      </div>
+				    </div>
+				
+				  </div>
+               
                 <!-- 태그 -->
                 <div class="form-group">
                     <label class="form-label">태그</label>
@@ -124,7 +138,7 @@ document.getElementById('category').addEventListener('change', function() {
     }
 });
 
-// 제목 글자수 카운트
+// 제목 글자수 카운트 
 document.getElementById('title').addEventListener('input', function() {
     document.getElementById('titleCount').textContent = this.value.length;
 });
@@ -275,24 +289,42 @@ document.getElementById('writeForm').addEventListener('submit', function(e) {
     // 실제 구현 시 FormData로 서버 전송
 
     // 비동기 ->
-   	const formData = {
-		boardCtgryCd: category,
-		boardTitle: title,
-		boardContent: content,
-		boardTagList: tagList.map(t => ({ boardTagName: t }))
-		/* writerNo: memNo,// writeNO : 작성자id */
-		/* attachNo: attachNo// attachNo */
-		// file
-		// 태그
-   	};
+//    	const formData = {
+// 		boardCtgryCd: category,
+// 		boardTitle: title,
+// 		boardContent: content,
+// 		boardTagList: tagList.map(t => ({ boardTagName: t }))
+// 		/* writerNo: memNo,// writeNO : 작성자id */
+// 		/* attachNo: attachNo// attachNo */
+// 		// file
+// 		// 태그
+//    	};
    	
+   	const formData = new FormData();
+   	formData.append("boardCtgryCd" , category);
+   	formData.append("boardTitle" , title);
+   	formData.append("boardContent" , content);
+   	
+ 	// 태그 리스트 처리
+   	if (tagList && tagList.length > 0) {
+        tagList.forEach((t, i) => {
+            formData.append(`boardTagList[\${i}].boardTagName`, t);
+        });
+    };
     
+	 // 파일 처리 (.map 보다는 .forEach 권장)
+    if (selectedFiles && selectedFiles.length > 0) {
+        selectedFiles.forEach((file) => {
+            formData.append("boardFile", file);
+        });
+    }
+
+//    	selectedFiles.map(function(v,i){
+// 	   	formData.append("boardFile" , selectedFiles[i]);
+//    	});
     fetch('${pageContext.request.contextPath}/community/talk/insert', {
 		method : 'POST',
-		headers: {
-		'Content-Type': 'application/json',
-		},
-		body : JSON.stringify(formData)
+		body : formData
 	})
 	.then(async (data) => { // async만 추가
   		console.log("data : ", data);
@@ -324,7 +356,7 @@ document.getElementById('writeForm').addEventListener('submit', function(e) {
 	})
 	.catch(err => {
 		console.error(err);
-		showToast('채팅방 생성 중 오류가 발생했습니다.', 'error');
+		showToast('등록 중 오류가 발생했습니다.', 'error');
 	});
 });
 

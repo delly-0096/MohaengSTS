@@ -470,12 +470,12 @@
     transition: all 0.2s ease;
 }
 
-.seat.economey {
+.seat.economy {
     background: #e2e8f0;
     color: #64748b;
 }
 
-.seat.economey:hover {
+.seat.economy:hover {
     background: var(--primary-light);
     color: var(--primary-color);
 }

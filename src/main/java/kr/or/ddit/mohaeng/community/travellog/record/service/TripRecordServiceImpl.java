@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -58,66 +59,6 @@ public class TripRecordServiceImpl implements ITripRecordService {
 
         return mapper.selectTripRecordDetail(param);
     }
-
-    /**
-     * ✅ 2번 방식(권장): rcdContent는 JSON(에디터 blocks)로 받되,
-     * - TRIP_RECORD에는 요약(또는 null)만 저장
-     * - TRIP_RECORD_SEQ/TXT/IMG 테이블에 blocks를 분리 저장
-     *
-     * 프론트 image block 예:
-     * { "type":"image", "attachNo":1234, "desc":"..." }
-     */
-	/*
-	 * @Override
-	 * 
-	 * @Transactional public long create(TripRecordCreateReq req, long loginMemNo) {
-	 * 
-	 * // 기본값 if (req.getOpenScopeCd() == null) req.setOpenScopeCd("PUBLIC"); if
-	 * (req.getMapDispYn() == null) req.setMapDispYn("Y"); if (req.getReplyEnblYn()
-	 * == null) req.setReplyEnblYn("Y");
-	 * 
-	 * // 1) 본문 JSON 파싱 String rawJson = req.getRcdContent(); // 프론트가 JSON 문자열로 보내는
-	 * 상태 JsonNode root; try { root = objectMapper.readTree(rawJson); } catch
-	 * (Exception e) { throw new RuntimeException("본문 JSON 파싱 실패", e); }
-	 * 
-	 * // 2) 제목이 비어있으면 JSON title로 채우기 if (req.getRcdTitle() == null ||
-	 * req.getRcdTitle().isBlank()) { String title =
-	 * root.path("title").asText(null); req.setRcdTitle(title); }
-	 * 
-	 * // 3) TRIP_RECORD.RCD_CONTENT에는 요약만(또는 null) String summary = null; JsonNode
-	 * blocks = root.path("blocks"); if (blocks.isArray()) { for (JsonNode b :
-	 * blocks) { if ("text".equalsIgnoreCase(b.path("type").asText())) { summary =
-	 * b.path("content").asText(null); break; } } } req.setRcdContent(summary);
-	 * 
-	 * // 4) TRIP_RECORD insert (중요: insert가 req.rcdNo를 채워줘야 함) int cnt =
-	 * mapper.insertTripRecord(req, loginMemNo); if (cnt != 1) throw new
-	 * RuntimeException("여행기록 등록 실패");
-	 * 
-	 * long rcdNo = req.getRcdNo(); if (rcdNo <= 0) { // 여기 걸리면 MyBatis
-	 * insertTripRecord 쪽 selectKey 설정이 안 된 거야. throw new
-	 * RuntimeException("RCD_NO 생성 실패(Mapper selectKey 설정 확인 필요)"); }
-	 * 
-	 * // 5) blocks를 SEQ/TXT/IMG로 저장 int order = 1; if (blocks.isArray()) { for
-	 * (JsonNode b : blocks) { long connNo = mapper.nextConnNo(); //
-	 * SEQ_TRIP_RECORD_CONN.NEXTVAL 같은 시퀀스
-	 * 
-	 * // 순서 저장 mapper.insertTripRecordSeq(connNo, rcdNo, order++);
-	 * 
-	 * String type = b.path("type").asText();
-	 * 
-	 * if ("text".equalsIgnoreCase(type)) { String text =
-	 * b.path("content").asText(null); mapper.insertTripRecordTxt(connNo, text);
-	 * 
-	 * } else if ("image".equalsIgnoreCase(type)) { Long attachNo =
-	 * b.hasNonNull("attachNo") ? b.path("attachNo").asLong() : null; String desc =
-	 * b.path("desc").asText(null);
-	 * 
-	 * // attachNo는 "ATTACH_FILE.ATTACH_NO" 값이어야 함
-	 * mapper.insertTripRecordImg(connNo, attachNo, desc); } } }
-	 * 
-	 * return rcdNo; }
-	 
-	 */
     
     @Override
     @Transactional
@@ -137,20 +78,6 @@ public class TripRecordServiceImpl implements ITripRecordService {
         }
 
         long rcdNo = rcdNoObj; // long으로 변환
-
-		/*
-		 * // ✅ 여기! TRIP_RECORD 저장 성공 후 -> HASHTAG 저장 List<String> tags = req.getTags();
-		 * 
-		 * System.out.println("[DEBUG] rcdNo=" + rcdNo + ", tags=" + tags);
-		 * System.out.println("[DEBUG] cleaned=" + cleaned);
-		 * 
-		 * 
-		 * if (tags != null && !tags.isEmpty()) { List<String> cleaned = tags.stream()
-		 * .filter(t -> t != null && !t.trim().isEmpty()) .map(t ->
-		 * t.trim().replace("#", "")) // # 제거 .distinct() .toList();
-		 * 
-		 * if (!cleaned.isEmpty()) { mapper.insertHashtags(rcdNo, cleaned); } }
-		 */
         
         List<String> tags = req.getTags();
         System.out.println("[DEBUG] rcdNo=" + rcdNo + ", tags=" + tags);
@@ -224,5 +151,17 @@ public class TripRecordServiceImpl implements ITripRecordService {
         if (loginMemNo == null) return false;
         Long writer = mapper.selectWriterMemNo(rcdNo);
         return writer != null && writer.equals(loginMemNo);
+    }
+
+    @Override
+    public void updateWithCover(long rcdNo, TripRecordUpdateReq req, Long loginMemNo, MultipartFile coverFile) {
+        // 1) 내용 업데이트(기존 update 재사용)
+        update(rcdNo, req, loginMemNo);
+
+        // 2) coverFile이 있을 때만 커버 교체
+        if (coverFile != null && !coverFile.isEmpty()) {
+            // TODO: 기존 커버 삭제/교체 로직(attachNo 갱신 포함) 구현
+            // 예: fileService.replaceCover(rcdNo, coverFile, loginMemNo);
+        }
     }
 }

@@ -292,10 +292,16 @@ function createTourCard(data) {
         '<i class="bi ' + stockIcon + '"></i> ' + stockLabel + ' <span class="stock-count">' + data.curStock + '개</span>' +
     '</div>';
 
-    return '<div class="tour-card" data-id="' + data.tripProdNo + '" data-name="' + data.tripProdTitle + '" data-price="' + data.price + '" data-image="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80">' +
+    // 대표 이미지 처리
+    var defaultImage = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80';
+    var imageUrl = data.thumbImage 
+        ? contextPath + '/upload/product/' + data.thumbImage 
+        : defaultImage;
+
+    return '<div class="tour-card" data-id="' + data.tripProdNo + '" data-name="' + data.tripProdTitle + '" data-price="' + data.price + '" data-image="' + imageUrl + '">' +
         '<a href="' + contextPath + '/tour/' + data.tripProdNo + '" class="tour-link">' +
             '<div class="tour-image">' +
-                '<img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80" alt="' + data.tripProdTitle + '">' +
+                '<img src="' + imageUrl + '" alt="' + data.tripProdTitle + '">' +
                 '<span class="tour-category">' + categoryText + '</span>' +
             '</div>' +
             '<div class="tour-body">' +

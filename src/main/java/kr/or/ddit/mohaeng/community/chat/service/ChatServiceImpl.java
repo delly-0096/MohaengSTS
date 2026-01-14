@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomCreateRequestDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomResponseDTO;
 import kr.or.ddit.mohaeng.community.chat.mapper.IChatMapper;
@@ -60,7 +61,7 @@ public class ChatServiceImpl implements IChatService{
 	 */
 	@Override
 	@Transactional
-	public void creatChatRoom(ChatRoomCreateRequestDTO request, CustomUserDetails user) {
+	public int creatChatRoom(ChatRoomCreateRequestDTO request, CustomUserDetails user) {
 		
 //		boolean valid = chatMapper.existsCode("CHAT_CATEGORY", request.getChatCtgry());
 //		if(!valid) {
@@ -85,6 +86,7 @@ public class ChatServiceImpl implements IChatService{
 		
 		chatMapper.insertChatHost(host);
 		
+		return room.getChatId();
 	}
 
 	/**
@@ -125,5 +127,69 @@ public class ChatServiceImpl implements IChatService{
 		return result;
 	}
 
+	/**
+	 *	<p> 채팅방 정보 가져오기 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	@Override
+	public ChatRoomVO getChatRoomById(Long chatId) {
+		return chatMapper.getChatRoomById(chatId);
+	}
 
+	/**
+	 *	<p> 채팅방 유저 정보 가져오기 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	@Override
+	public List<ChatUserVO> getChatUsersByRoomId(Long chatId) {
+		return chatMapper.getChatUsersByRoomId(chatId);
+	}
+
+	/*
+	 * @Override public void enterChatUser(Long chatId, String memNo) { Map<String,
+	 * Object> params = new HashMap<>(); params.put("chatId", chatId);
+	 * params.put("memNo", memNo);
+	 * 
+	 * chatMapper.insertChatUser(params); }
+	 */
+	
+	/**
+	 *	<p> 채팅방 퇴장시 브로드 캐스팅</p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id, memNo 회원의 닉네임
+	 *	@return 
+	 */
+	@Override
+	public void exitChatUser(Long chatId, int memNo) {
+		Map<String, Object> params = new HashMap<>();
+	    params.put("chatId", chatId);
+	    params.put("memNo", memNo);
+	    
+	    // 작성해두신 exitChatUser 쿼리(UPDATE)를 실행합니다.
+	    chatMapper.exitChatUser(params);
+		
+	}
+
+	/**
+	 *	<p> 채팅 메시지 보내기</p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id, memNo 회원의 닉네임
+	 *	@return 
+	 */
+	@Override
+	public void insertMessage(ChatMessageDTO message) {
+		chatMapper.insertMessage(message);
+	}
+
+	
+	
+	
 }

@@ -199,6 +199,12 @@
 		    <artifactId>httpclient</artifactId>
 		    <version>4.5.14</version>
 		</dependency>
+		
+		<!-- Source: https://mvnrepository.com/artifact/org.springframework.boot/spring-boot-starter-websocket -->
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-websocket</artifactId>
+		</dependency>
 
 	</dependencies>
 

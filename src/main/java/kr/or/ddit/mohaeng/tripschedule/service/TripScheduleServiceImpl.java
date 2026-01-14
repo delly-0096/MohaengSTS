@@ -395,6 +395,38 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	public void refreshScheduleStates() {
 		
 	}
+
+	@Override
+	public int updateTripSchedule(Params params) {
+		TripScheduleVO tripScheduleVO = new TripScheduleVO(params.getInt("memNo"), null, "REGION", params.getInt("startPlaceId"), "REGION", params.getInt("targetPlaceId")
+	    		, "UPCOMING", params.getString("schdlNm"), params.getString("schdlStartDt"), params.getString("schdlEndDt")
+	    		, params.getInt("travelerCount"), params.getString("aiRecomYn"), params.getString("publicYn"), (long) params.getInt("totalBudget"));
+	    
+		int schdlNo = params.getInt("schdlNo");
+		
+		tripScheduleVO.setSchdlNo(params.getInt("schdlNo"));
+		
+	    int resultSchedule = iTripScheduleMapper.updateTripSchedule(tripScheduleVO);
+	    
+	    //이전 상세내용을 지우는 코드
+	    iTripScheduleMapper.deleteSchedulePlace(schdlNo);
+	    iTripScheduleMapper.deleteScheduleDetails(schdlNo);
+	    
+	    List<Map<String, Object>> plannerDayList = (List<Map<String, Object>>) params.get("details");
+	    String StartDt = tripScheduleVO.getSchdlStartDt();
+	    if(resultSchedule > 0) {
+	    	for(Map<String, Object> plannerDay : plannerDayList) {
+		    	System.out.println("plannerDay : " + plannerDay);
+		    	TripScheduleDetailsVO detailsVO = new TripScheduleDetailsVO(tripScheduleVO.getSchdlNo(), plannerDay.get("schdlTitle")+"", Integer.parseInt(plannerDay.get("schdlDt")+""));
+		    	detailsVO.setSchdlStartDt(StartDt);
+		    	
+		    	plannerDay.put("detailsVO", detailsVO);
+		    	int resultDetails = insertTripScheduleDetails(plannerDay);
+		    }
+	    }
+		
+		return resultSchedule;
+	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)
 //	private String cleanText(String input) {

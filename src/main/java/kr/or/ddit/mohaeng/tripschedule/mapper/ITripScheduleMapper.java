@@ -46,4 +46,10 @@ public interface ITripScheduleMapper {
 
 	public int deleteTripSchedule(int schdlNo);
 
+	public int updateTripSchedule(TripScheduleVO tripScheduleVO);
+
+	public void deleteScheduleDetails(int schdlNo);
+
+	public void deleteSchedulePlace(int schdlNo);
+
 }

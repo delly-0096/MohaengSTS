@@ -377,7 +377,6 @@ async function initLocationData() {
 	const response = await fetch("/schedule/common/regionList")
 	
 	const dataList = await response.json();
-	console.log(dataList);
 	locationData.domestic = dataList;
 	
 	return dataList;

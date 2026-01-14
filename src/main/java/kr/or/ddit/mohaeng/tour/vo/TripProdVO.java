@@ -60,4 +60,7 @@ public class TripProdVO {
     private Integer reviewCount;
     private Integer recommendCount;
     
+    // 대표 이미지
+    private String thumbImage;
+    
 }

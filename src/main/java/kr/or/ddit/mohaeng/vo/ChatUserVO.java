@@ -28,4 +28,7 @@ public class ChatUserVO {
 	 * 채팅방 참여자 유형
 	 */
 	private String role;
+	
+	private String memId;
+	private String memName;
 }

@@ -23,4 +23,12 @@ public class CompanyVO {
 	private int compBizFile; 		/* 사업자 등록증 파일 */
 	private String industryCd; 		/* 업종 */
 	private String compIntro; 		/* 기업 소개 */
+	
+	// 조회용 - 업체 통계 정보
+    private Double avgRating;       /* 평균 별점 */
+    private int totalReviewCount;   /* 총 리뷰 수 */
+    private int totalInquiryCount;  /* 총 문의 수 */
+    private int answeredCount;      /* 답변완료 수 */
+    private Double responseRate;    /* 응답률 (%) */
+    private Double avgResponseTime; /* 평균 응답시간 (시간) */
 }

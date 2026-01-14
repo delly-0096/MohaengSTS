@@ -36,6 +36,10 @@
 
     <result property="regDt" column="REG_DT"/>
     <result property="modDt" column="MOD_DT"/>
+    
+    <result property="writerNickname" column="WRITER_NICKNAME"/>
+	<result property="writerId" column="WRITER_ID"/>
+    
 
     <!-- 첨부파일 리스트 -->
     <collection property="boardFileList" resultMap="attachFileDetailMap"/>
@@ -161,84 +165,42 @@
     <include refid="searchBoard"/>
   </select>
 
-  <select id="selectTalkList"
-        parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO"
-        resultType="kr.or.ddit.mohaeng.vo.BoardVO">
-
-	  SELECT
-	    b.BOARD_NO,
-	    b.BOARD_CTGRY_CD,
-	    b.WRITER_NO,
-	    b.ATTACH_NO,
-	    b.BOARD_TITLE,
-	    b.BOARD_CONTENT,
-	    b.VIEW_CNT,
-	    b.LIKE_CNT,
-	    b.NOTICE_YN,
-	    b.PIN_YN,
-	    b.DEL_YN,
-	    b.DEL_DT,
-	    b.REG_DT,
-	    b.MOD_DT,
-	    b.WRITER_ID,
-	    b.WRITER_NICKNAME
-	  FROM (
-	    SELECT
-	      a.BOARD_NO,
-	      a.BOARD_CTGRY_CD,
-	      a.WRITER_NO,
-	      a.ATTACH_NO,
-	      a.BOARD_TITLE,
-	      a.BOARD_CONTENT,
-	      a.VIEW_CNT,
-	      a.LIKE_CNT,
-	      a.NOTICE_YN,
-	      a.PIN_YN,
-	      a.DEL_YN,
-	      a.DEL_DT,
-	      a.REG_DT,
-	      a.MOD_DT,
-	      a.WRITER_ID,
-	      a.WRITER_NICKNAME,
-	      ROW_NUMBER() OVER(
-	        ORDER BY
-	          CASE WHEN a.PIN_YN = 'Y' THEN 0 ELSE 1 END,
-	          CASE WHEN a.NOTICE_YN = 'Y' THEN 0 ELSE 1 END,
-	          a.BOARD_NO DESC
-	      ) AS RNUM
-	    FROM (
-	      SELECT
-	        bo.BOARD_NO,
-	        bo.BOARD_CTGRY_CD,
-	        bo.WRITER_NO,
-	        bo.ATTACH_NO,
-	        bo.BOARD_TITLE,
-	        bo.BOARD_CONTENT,
-	        bo.VIEW_CNT,
-	        bo.LIKE_CNT,
-	        bo.NOTICE_YN,
-	        bo.PIN_YN,
-	        bo.DEL_YN,
-	        bo.DEL_DT,
-	        bo.REG_DT,
-	        bo.MOD_DT,
-	        m.MEM_ID      AS WRITER_ID,
-	        mu.NICKNAME   AS WRITER_NICKNAME
-	      FROM BOARD bo
-	      JOIN MEMBER m
-	        ON bo.WRITER_NO = m.MEM_NO
-	      JOIN MEM_USER mu
-	        ON m.MEM_NO = mu.MEM_NO
-	      WHERE 1=1
-	        AND bo.DEL_YN = 'N'
-	      <include refid="searchBoard"/>
-	    ) a
-	  ) b
-	  <![CDATA[
-	    WHERE b.RNUM >= #{startRow}
-	      AND b.RNUM <= #{endRow}
-	  ]]>
-	</select>
+   <select id="selectTalkList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.BoardVO" resultMap="boardMap">
+    SELECT b.*
+    FROM (
+      SELECT a.*, ROW_NUMBER() OVER(
+        ORDER BY
+          CASE WHEN a.PIN_YN = 'Y' THEN 0 ELSE 1 END,
+          CASE WHEN a.NOTICE_YN = 'Y' THEN 0 ELSE 1 END,
+          a.BOARD_NO DESC
+      ) rnum
+      FROM (
+        SELECT 
+        	(SELECT NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = b.WRITER_NO) AS writer_nickname
+          , (SELECT MEM_ID FROM MEMBER m WHERE m.MEM_NO = b.WRITER_NO) AS writer_id
+          , b.BOARD_NO          
+          , b.BOARD_CTGRY_CD  
+          , b.WRITER_NO
+          , b.ATTACH_NO
+          , b.BOARD_TITLE
+          , b.BOARD_CONTENT
+          , b.VIEW_CNT
+          , b.LIKE_CNT
+          , b.NOTICE_YN
+          , b.PIN_YN
+          , b.DEL_YN
+          , b.DEL_DT
+          , b.REG_DT
+          , b.MOD_DT
+        FROM BOARD b
+        WHERE 1=1
+        <include refid="searchBoard"/>
+      ) a
+    ) b
+    <![CDATA[
+      WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+    ]]>
+  </select>
 
 
   <!-- =========================

@@ -8,7 +8,7 @@
 		<result property="faqTitle" column="FAQ_TITLE"/>
 		<result property="faqContent" column="FAQ_CONTENT"/>
 		<result property="faqOrder" column="FAQ_ORDER"/>
-		<result property="status" column="STATUS"/>
+<!-- 		<result property="status" column="STATUS"/> -->
 		<result property="useYn" column="USE_YN"/>
 		<result property="regId" column="REG_ID"/>
 		<result property="regDt" column="REG_DT"/>

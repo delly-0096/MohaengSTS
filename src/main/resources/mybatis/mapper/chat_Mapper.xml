@@ -30,12 +30,14 @@
 				  CHAT_ID
 				  , CHAT_USER_NO
 				  , JOINED_AT
-				  , ROLE
+				  , CHAT_ROLE
+				  , CHAT_STATUS
 		) VALUES (
 				 #{chatId}
 				  , #{chatUserNo}
 				  , SYSDATE
 				  , 'HOST'
+				  , 'ONLINE'
 		)
 	</insert>
 
@@ -95,18 +97,94 @@
 		WHERE CHAT_ID = #{chatId}
 	</select>
 	
-	<!--  채팅방 입장 시 insert -->
+	<!--  채팅방 입장 시 merge -->
 	<insert id="insertChatUser">
-		INSERT INTO CHAT_USER (
-			  CHAT_ID
-			  , CHAT_USER_NO
-			  , JOINED_AT
-			  , STATUS
+		MERGE INTO CHAT_USER CU
+		USING DUAL
+		ON (
+			CU.CHAT_ID = #{chatId}
+			AND CU.CHAT_USER_NO = #{memNo}
+		)
+		WHEN MATCHED THEN
+			UPDATE SET
+			CHAT_STATUS = 'ONLINE'
+			, JOINED_AT = SYSDATE
+		WHEN NOT MATCHED THEN
+			INSERT (
+				CHAT_ID
+				, CHAT_USER_NO
+				, JOINED_AT
+				, CHAT_ROLE
+				, CHAT_STATUS
 			) VALUES (
-			  #{chatId}
-			  , #{memNo}
-			  , SYSDATE
-			  , 'ONLINE'
+				#{chatId}
+				, #{memNo}
+				, SYSDATE
+				, 'GUEST'
+				, 'ONLINE'
 			)
+			
+	</insert>
+	
+	<!-- WebSocket 끊길 때 update -->
+	<update id="disconnectChatUser">
+		UPDATE CHAT_USER
+		SET CHAT_STATUS = 'OFFLINE'
+		WHERE CHAT_ID = #{chatId} 
+		AND CHAT_USER_NO = #{memNo}
+	</update>
+	
+	<!-- 채팅방 퇴장 -->
+	<delete id="exitChatUser">
+	    DELETE FROM CHAT_USER
+	    WHERE CHAT_ID = #{chatId}
+	      AND CHAT_USER_NO = #{memNo}
+	</delete>
+	
+	<!-- 채팅방 정보 가져오기 -->
+	<select id="getChatRoomById" parameterType="long" resultType="kr.or.ddit.mohaeng.vo.ChatRoomVO">
+		SELECT
+			R.CHAT_ID
+		  , R.CHAT_NAME
+		  , R.CHAT_CTGRY
+		  , C. CD_NAME	AS chat_ctgry_name
+		  , R.CHAT_MAX
+		  , (SELECT COUNT(*) FROM CHAT_USER WHERE CHAT_ID = R.CHAT_ID) AS currentUsers
+		FROM CHAT_ROOM R
+		LEFT JOIN CODE C ON R.CHAT_CTGRY = C.CD AND C.CDGR = 'CHAT_CATEGORY'
+		WHERE R.CHAT_ID = #{chatId}
+	</select>
+	
+	<!-- 채팅방 내 유저 정보 가져오기 -->
+	<select id="getChatUsersByRoomId" parameterType="long" resultType="kr.or.ddit.mohaeng.vo.ChatUserVO">
+		SELECT
+			U.MEM_ID   AS memId
+		  , M.NICKNAME AS memName
+		 FROM CHAT_USER CU
+		 JOIN MEMBER U ON CU.CHAT_USER_NO = U.MEM_NO
+		 JOIN MEM_USER M ON U.MEM_NO = M.MEM_NO
+		 WHERE CU.CHAT_ID = #{chatId}
+		  AND  CU.CHAT_STATUS != 'EXIT'
+	</select>
+	
+	<!-- 채팅 메시지 insert -->
+	<insert id="insertMessage" parameterType="kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO">
+    INSERT INTO CHAT (
+        CHAT_NO
+        , CHAT_ID
+        , CHAT_DESC
+        , CHAT_SENDER_ID
+        , CHAT_SENDTIME
+        , CHAT_TYPE
+        , CHAT_DEL
+    ) VALUES (
+        SEQ_CHAT_MSG.NEXTVAL
+        , #{chatId}
+		, #{message}
+        , #{memId}
+        , SYSDATE
+        , #{type}
+        , 'N'
+    )
 	</insert>
 </mapper>

@@ -5,21 +5,28 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.validation.Valid;
+import kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomCreateRequestDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomResponseDTO;
 import kr.or.ddit.mohaeng.community.chat.service.IChatService;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.vo.ChatRoomVO;
+import kr.or.ddit.mohaeng.vo.ChatUserVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -29,6 +36,9 @@ public class ChatController {
 
 	@Autowired
 	private IChatService chatService;
+	
+	@Autowired
+	private SimpMessagingTemplate messagingTemplate;
 
 	/* 채팅방 목록 가져오기 */
 	@GetMapping("/chat/rooms")
@@ -52,10 +62,12 @@ public class ChatController {
 			result.put("message", "입력값이 올바르지 않습니다.");
 			return result;
 		}
-		chatService.creatChatRoom(request, user);
+		
+		int chatId = chatService.creatChatRoom(request, user);
 
 		result.put("success", true);
 		result.put("message", "채팅방이 생성되었습니다");
+		result.put("chatId", chatId);
 		return result;
 	}
 
@@ -66,7 +78,47 @@ public class ChatController {
 			@PathVariable Long chatId,
 			@AuthenticationPrincipal CustomUserDetails user
 			){
-		return chatService.joinChatRoom(chatId, user.getMember().getMemNo());
+		Map<String, Object> result = chatService.joinChatRoom(chatId, user.getMember().getMemNo());
+		if ((boolean) result.get("success")) {
+			ChatRoomVO room = chatService.getChatRoomById(chatId);
+			List<ChatUserVO> userList = chatService.getChatUsersByRoomId(chatId);
+			
+			result.put("room", room);
+			result.put("userList", userList);
+	    }
+		return result;
+	}
+	
+	/* 채팅방 유저 정보 불러오기 */
+	@GetMapping("/chat/room/{chatId}/users")
+	@ResponseBody
+	public List<ChatUserVO> getChatUserList(@PathVariable Long chatId){
+		return chatService.getChatUsersByRoomId(chatId);
+	}
+	
+	/* 채팅방 퇴장 */
+	@PostMapping("/chat/room/{chatId}/leave")
+	@ResponseBody
+	public Map<String, Object> leaveChatRoom(
+	        @PathVariable Long chatId,
+	        @AuthenticationPrincipal CustomUserDetails user
+	        ){
+	    Map<String, Object> result = new HashMap<>();
+	    
+	    try {
+	        // 1. DB에서 사용자의 상태를 'EXIT'로 변경 (작성하신 exitChatUser 쿼리 실행)
+	        chatService.exitChatUser(chatId, user.getMember().getMemNo());
+	        
+	        // 2. 성공 응답 구성
+	        result.put("success", true);
+	        result.put("message", "채팅방에서 성공적으로 퇴장했습니다.");
+	    } catch (Exception e) {
+	        log.error("퇴장 처리 중 오류 발생: ", e);
+	        result.put("success", false);
+	        result.put("message", "퇴장 처리 중 오류가 발생했습니다.");
+	    }
+	    
+	    return result;
 	}
 
 }

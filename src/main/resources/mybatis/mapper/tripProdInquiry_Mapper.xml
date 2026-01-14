@@ -86,7 +86,7 @@
 	<update id="deleteInquiry" parameterType="map">
 	    UPDATE TRIP_PROD_INQUIRY
 	    SET DEL_YN = 'Y',
-	        MOD_DT = SYSDATE
+	        DEL_DT = SYSDATE
 	    WHERE PROD_INQRY_NO = #{prodInqryNo}
 	      AND INQUIRY_MEM_NO = #{inquiryMemNo}
 	      AND INQRY_STATUS = 'WAIT'

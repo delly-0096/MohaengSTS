@@ -17,12 +17,15 @@ import kr.or.ddit.mohaeng.community.mapper.ITalkMapper;
 import kr.or.ddit.mohaeng.file.mapper.IFileMapper;
 import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.vo.BoardFileVO;
+import kr.or.ddit.mohaeng.vo.BoardTagVO;
 import kr.or.ddit.mohaeng.vo.BoardVO;
 import kr.or.ddit.mohaeng.vo.NoticeFileVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import kr.or.ddit.mohaeng.vo.TalkFileVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -42,7 +45,7 @@ public  class TalkServiceImpl implements ITalkService{
         @Value("${kr.or.ddit.mohaeng.upload.path}")
         private String uploadTalkPath;
 
-		private Object talkMpper;
+		
         
         
         public BoardVO selectBoard(int boardNo) {  
@@ -75,9 +78,40 @@ public  class TalkServiceImpl implements ITalkService{
 		@Override
 		public int updateTalk(BoardVO vo) {
 
-			return iTalkMapper.updateTalk(vo);
-		}
+		    // 1) 게시글 업데이트
+		    int cnt = iTalkMapper.updateTalk(vo);
 
+		    if (cnt > 0) {
+		        // 2) 기존 태그 삭제 (mapper 필요)
+		        iTalkMapper.deleteTalkTags(vo.getBoardNo());
+
+		        // 3) 새 태그 등록
+		        if (vo.getBoardTagList() != null && !vo.getBoardTagList().isEmpty()) {
+
+		            List<BoardTagVO> tagList = new java.util.ArrayList<>();
+
+		            for (BoardTagVO t : vo.getBoardTagList()) {
+		                if (t == null) continue;
+		                if (t.getBoardTagName() == null) continue;
+
+		                String name = t.getBoardTagName().trim();
+		                if (name.isEmpty()) continue;
+
+		                BoardTagVO tagVO = new BoardTagVO();
+		                tagVO.setBoardNo(vo.getBoardNo());
+		                tagVO.setBoardTagName(name);
+
+		                tagList.add(tagVO);
+		            }
+
+		            if (!tagList.isEmpty()) {
+		                iTalkMapper.insertTalkTags(tagList);
+		            }
+		        }
+		    }
+
+		    return cnt;
+		}
 
 		@Override
 		public int deleteTalk(int boardNo) {
@@ -105,7 +139,7 @@ public  class TalkServiceImpl implements ITalkService{
 				uploadInfo.put("fileGbCd", "BOARD");
 				uploadInfo.put("filePath", "/talk");
 				
-				int attachNo = iFileService.saveFileList(vo.getBoardFile(),uploadInfo,Integer.parseInt(vo.getRegId()));
+				int attachNo = iFileService.saveFileList(vo.getBoardFile(),uploadInfo,vo.getRegId());
 				
 				if(attachNo !=0) {
 					vo.setAttachNo(attachNo);
@@ -115,15 +149,40 @@ public  class TalkServiceImpl implements ITalkService{
 			int status = iTalkMapper.insertTalk(vo);
 			
 			if(status !=0) {
-				result = ServiceResult.OK;
-			}else {
-				result = ServiceResult.FAILED;
-			}
-			
+				// 태그를 등록
+				// vo안에 있는 boardNo, 태그들 꺼내서 게시판 태그 테이블에 등록
+				if (vo.getBoardTagList() != null && !vo.getBoardTagList().isEmpty()) {
 
-			return result;
+		            // 1) boardNo 주입 + 빈값 제거 + trim
+		            List<BoardTagVO> tagList = new java.util.ArrayList<>();
+		            for (BoardTagVO t : vo.getBoardTagList()) {
+		                if (t == null) continue;
+		                if (t.getBoardTagName() == null) continue;
+
+		                String name = t.getBoardTagName().trim();
+		                if (name.isEmpty()) continue;
+
+		                BoardTagVO tagVO = new BoardTagVO();
+		                tagVO.setBoardNo(vo.getBoardNo());
+		                tagVO.setBoardTagName(name);
+		                tagList.add(tagVO);
+		            }
+
+		            // 2) 실제 insert (mapper에 메서드 필요)
+		            if (!tagList.isEmpty()) {
+		                iTalkMapper.insertTalkTags(tagList); // ✅ 너희 mapper에 추가해야 함
+		            }
+		        }
+
+		        result = ServiceResult.OK;
+		    } else {
+		        result = ServiceResult.FAILED;
+		    }
+
+		    return result;
 		}
-
+		
+		
 		private void boardfileUpload(List<BoardFileVO> boardFileList, int attachNo) throws Exception{
 			if(boardFileList != null&&boardFileList.size()>0) {
 				for(BoardFileVO boardFileVO: boardFileList) {

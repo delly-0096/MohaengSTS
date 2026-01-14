@@ -157,7 +157,6 @@
 		where FAQ_NO = #{faqNo}
 	</update>
 
-
 	<update id="updateAFaqOrder">
 		update FAQ
 		set FAQ_ORDER = #{faqOrder}

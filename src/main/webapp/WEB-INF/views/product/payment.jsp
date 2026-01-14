@@ -103,7 +103,6 @@
                 </a>
             </div>
         </div>
-       
         
     	<!--  결제 실패 시 구간 만들기 -->
 		<div class="payment-fail" style="display: none">
@@ -117,20 +116,36 @@
 				<div detail-row>
 					<span class="label"></span>
 					<span class="value" id="failCode">ㅇㅇ</span>
-					${code }
 				</div>
 				<div detail-row>
 				<!-- 						<span class="label">상품명</span>
 										<span class="value" id=""></span> -->
-	<%-- 			${code } --%>
 				</div>
-				<div>${orderId }</div>
 			</div>
 		</div>
-		 </c:if>
+		</c:if>
 		
 		<c:if test="${not empty error }">
+		<div class="payment-fail">
+            <div class="complete-icon">
+      		    <i class="bi bi-check-lg"></i>
+            </div>
+            <h1 class="fail-title">결제가 실패되었습니다</h1>
+            <hr/>
+            <p class="fail-message">${message }</p>
+			<div class="fail-details">
+				<div detail-row>
+					<span class="label">결제 상태</span>
+					<span class="value" id="failCode">${code }</span>
+				</div>
+				<div detail-row>
+					<span class="label">상품명</span>
+					<span class="value">${orderId}</span>
+				</div>
+			</div>
+		</div>
 		</c:if>
+		
     </div>
 </div>
 
@@ -261,11 +276,13 @@ document.addEventListener("DOMContentLoaded", async function(){
 			} else{
 				method.innerHTML = resultData.method;
 			}
-		} else {
-			// 다시 처리
-			alert("이미 처리된 결제 입니다.");
-			window.location.href = "/product/flight"
 			
+			// 성공하면 세션 삭제하기
+// 			flightProduct = sessionStorage.removeItem("flightProduct");
+// 			passengers = sessionStorage.removeItem("passengers");
+// 			reservationList = sessionStorage.removeItem("reservationList");
+// 			reserveAgree = sessionStorage.removeItem("reserveAgree");
+		} else {
 			resultData.code;
 			document.querySelector(".payment-fail").style.display = "block";
 			document.querySelector(".payment-complete").style.display = "none";
@@ -280,7 +297,6 @@ document.addEventListener("DOMContentLoaded", async function(){
 		console.log("error 발생");
 		console.log('${error}', '${code}');
 		loading.style.display = "none";
-		window.location.href = "/product/flight"
 	}
 });
 </script>

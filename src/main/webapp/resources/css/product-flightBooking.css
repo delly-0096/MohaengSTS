@@ -470,12 +470,12 @@
     transition: all 0.2s ease;
 }
 
-.seat.available {
+.seat.economey {
     background: #e2e8f0;
     color: #64748b;
 }
 
-.seat.available:hover {
+.seat.economey:hover {
     background: var(--primary-light);
     color: var(--primary-color);
 }
@@ -491,16 +491,16 @@
     cursor: not-allowed;
 }
 
-.seat.extra {
+.seat.business {
     background: #fef3c7;
     color: #92400e;
 }
 
-.seat.extra:hover {
+.seat.business:hover {
     background: #fde68a;
 }
 
-.seat.extra.selected {
+.seat.business.selected {
     background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
     color: white;
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);

@@ -22,16 +22,13 @@ public class PaymentVO {
 	private OffsetDateTime cancelDt; 	// 취소일시
 	private String cancelReason;		// 취소사유
 	
-	// 결제 세부 사항
-//	private PaymentInfoVO paymentInfo;
-	
-	
 	// 결제할 때 insert할 값들
 	private List<FlightProductVO> flightProductList;			// 항공 상품 목록
 	private List<FlightPassengersVO> flightPassengersList;		// 항공 탑승객 목록
 	private List<FlightReservationVO> flightReservationList;	// 항공 예약 목록
-	private FlightResvAgreeVO flightResvAgree;		// 항공 예약 동의 목록
+	private FlightResvAgreeVO flightResvAgree;					// 항공 예약 동의 목록
 	
+	private String productType;									// 상품 타입 (flight, tour 등등) 
 	
 	// 토스 api용 변수
 	private String paymentType;	// 결제 타입

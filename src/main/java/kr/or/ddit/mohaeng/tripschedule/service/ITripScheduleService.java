@@ -41,4 +41,6 @@ public interface ITripScheduleService {
 	public int deleteTripSchedule(int schdlNo);
 	
 	public void refreshScheduleStates();
+
+	public int updateTripSchedule(Params params);
 }

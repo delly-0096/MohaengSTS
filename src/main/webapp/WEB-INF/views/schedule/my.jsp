@@ -539,55 +539,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 status: '${schedule.schdlStatus}',
                 location: '${schedule.rgnNm}',
                 people: ${schedule.travelerCnt},
-                url: contextPath + '/schedule/view/1'
+                url: contextPath + '/schedule/view/${schedule.schdlNo}'
             }
         }<c:if test="${!s.last}">,</c:if>
         </c:forEach>
-        // {
-        //     id: '1',
-        //     title: '제주도 힐링 여행',
-        //     start: '2026-01-01',
-        //     end: '2026-01-05',
-        //     backgroundColor: '#4A90D9',
-        //     borderColor: '#357ABD',
-        //     textColor: '#ffffff',
-        //     extendedProps: {
-        //         status: 'upcoming',
-        //         location: '제주도',
-        //         people: 2,
-        //         url: contextPath + '/schedule/view/1'
-        //     }
-        // },
-        // {
-        //     id: '2',
-        //     title: '오사카 맛집 투어',
-        //     start: '2026-01-15',
-        //     end: '2026-01-19',
-        //     backgroundColor: '#4A90D9',
-        //     borderColor: '#357ABD',
-        //     textColor: '#ffffff',
-        //     extendedProps: {
-        //         status: 'upcoming',
-        //         location: '일본 오사카',
-        //         people: 2,
-        //         url: contextPath + '/schedule/view/2'
-        //     }
-        // },
-        // {
-        //     id: '3',
-        //     title: '방콕 휴양 여행',
-        //     start: '2025-12-10',
-        //     end: '2025-12-15',
-        //     backgroundColor: '#9ca3af',
-        //     borderColor: '#6b7280',
-        //     textColor: '#ffffff',
-        //     extendedProps: {
-        //         status: 'completed',
-        //         location: '태국 방콕',
-        //         people: 3,
-        //         url: contextPath + '/schedule/view/3'
-        //     }
-        // }
     ];
 
     console.log('캘린더 이벤트 개수:', calendarEvents.length);

@@ -768,7 +768,7 @@ function confirmAddPlace() {
     showToast(selectedItem.name + '이(가) ' + selectedDay + '일차 ' + startTime + ' ~ ' + endTime + '에 추가되었습니다.', 'success');
 
     // 일정 탭으로 전환
-//     switchPlannerTab('itinerary');
+    switchPlannerTab('itinerary');
 
     myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, { id: selectedItem.id });
 

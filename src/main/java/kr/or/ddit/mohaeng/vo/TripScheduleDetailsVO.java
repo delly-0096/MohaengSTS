@@ -1,6 +1,10 @@
 package kr.or.ddit.mohaeng.vo;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 
 import lombok.Data;
 
@@ -25,6 +29,27 @@ public class TripScheduleDetailsVO {
 		this.schdlTitle = schdlTitle;
 		this.schdlDt = schdlDt;
 	}
+	
+	public String getMonth() {
+        if (this.schdlStartDt == null) return "";
+        return String.valueOf(LocalDate.parse(this.schdlStartDt).getMonthValue());
+    }
 
+    // 2. 일 가져오기 (예: "15")
+    public String getDay() {
+        if (this.schdlStartDt == null) return "";
+        return String.valueOf(LocalDate.parse(this.schdlStartDt).getDayOfMonth());
+    }
+
+    // 3. 요일 가져오기 (예: "금")
+    public String getDayOfWeek() {
+        if (this.schdlStartDt == null) return "";
+        
+        // TextStyle.SHORT : "월", "화", "수"...
+        // TextStyle.FULL  : "월요일", "화요일", "수요일"...
+        return LocalDate.parse(this.schdlStartDt)
+                .getDayOfWeek()
+                .getDisplayName(TextStyle.SHORT, Locale.KOREAN);
+    }
 	
 }

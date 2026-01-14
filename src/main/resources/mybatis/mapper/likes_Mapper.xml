@@ -5,35 +5,39 @@
 
 <mapper namespace="kr.or.ddit.mohaeng.community.travellog.likes.mapper.ILikesMapper">
 
-    <!-- 존재 여부 -->
-    <select id="existsTripRecordLike" resultType="int">
-        SELECT COUNT(1)
-        FROM LIKES
-        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
-          AND LIKES_KEY = #{rcdNo}
-          AND MEM_NO = #{memNo}
-    </select>
+  <!-- ⚠️ MEMBER 테이블의 아이디 컬럼명이 MEM_ID 라고 가정.
+       만약 USER_ID / MBR_ID 같은 이름이면 여기만 바꿔줘! -->
+  <select id="selectMemNoByMemId" parameterType="string" resultType="long">
+    SELECT MEM_NO
+    FROM MEMBER
+    WHERE MEM_ID = #{memId}
+  </select>
 
-    <!-- 등록 -->
-    <insert id="insertTripRecordLike">
-        INSERT INTO LIKES (LIKES_KEY, LIKES_CAT_CD, MEM_NO)
-        VALUES (#{rcdNo}, 'TRIP_RECORD', #{memNo})
-    </insert>
+  <select id="existsLike" resultType="int">
+    SELECT COUNT(*)
+    FROM LIKES
+    WHERE LIKES_KEY    = #{likesKey}
+      AND LIKES_CAT_CD = #{likesCatCd}
+      AND MEM_NO       = #{memNo}
+  </select>
 
-    <!-- 삭제 -->
-    <delete id="deleteTripRecordLike">
-        DELETE FROM LIKES
-        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
-          AND LIKES_KEY = #{rcdNo}
-          AND MEM_NO = #{memNo}
-    </delete>
+  <insert id="insertLike">
+    INSERT INTO LIKES (LIKES_KEY, LIKES_CAT_CD, MEM_NO)
+    VALUES (#{likesKey}, #{likesCatCd}, #{memNo})
+  </insert>
 
-    <!-- 카운트 -->
-    <select id="countTripRecordLikes" resultType="long">
-        SELECT COUNT(1)
-        FROM LIKES
-        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
-          AND LIKES_KEY = #{rcdNo}
-    </select>
+  <delete id="deleteLike">
+    DELETE FROM LIKES
+    WHERE LIKES_KEY    = #{likesKey}
+      AND LIKES_CAT_CD = #{likesCatCd}
+      AND MEM_NO       = #{memNo}
+  </delete>
+
+  <select id="countLikes" resultType="int">
+    SELECT COUNT(*)
+    FROM LIKES
+    WHERE LIKES_KEY    = #{likesKey}
+      AND LIKES_CAT_CD = #{likesCatCd}
+  </select>
 
 </mapper>

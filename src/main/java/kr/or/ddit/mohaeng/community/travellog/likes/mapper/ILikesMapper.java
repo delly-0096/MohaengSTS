@@ -6,11 +6,21 @@ import org.apache.ibatis.annotations.Param;
 @Mapper
 public interface ILikesMapper {
 
-    int existsTripRecordLike(@Param("memNo") Long memNo, @Param("rcdNo") Long rcdNo);
+    // fallback: memId(username)로 memNo 조회
+    Long selectMemNoByMemId(@Param("memId") String memId);
 
-    int insertTripRecordLike(@Param("memNo") Long memNo, @Param("rcdNo") Long rcdNo);
+    int existsLike(@Param("likesKey") Long likesKey,
+                   @Param("likesCatCd") String likesCatCd,
+                   @Param("memNo") Long memNo);
 
-    int deleteTripRecordLike(@Param("memNo") Long memNo, @Param("rcdNo") Long rcdNo);
+    int insertLike(@Param("likesKey") Long likesKey,
+                   @Param("likesCatCd") String likesCatCd,
+                   @Param("memNo") Long memNo);
 
-    long countTripRecordLikes(@Param("rcdNo") Long rcdNo);
+    int deleteLike(@Param("likesKey") Long likesKey,
+                   @Param("likesCatCd") String likesCatCd,
+                   @Param("memNo") Long memNo);
+
+    int countLikes(@Param("likesKey") Long likesKey,
+                   @Param("likesCatCd") String likesCatCd);
 }

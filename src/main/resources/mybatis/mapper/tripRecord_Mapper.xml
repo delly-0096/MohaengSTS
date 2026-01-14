@@ -50,6 +50,20 @@
         NVL(lk.like_cnt, 0)   AS likeCount,
         NVL(cm.cmnt_cnt, 0)   AS commentCount,
         NVL(bm.bmk_cnt, 0)    AS bookmarkCount
+        
+        ,
+CASE
+  WHEN #{loginMemNo} IS NULL THEN 0
+  WHEN EXISTS (
+      SELECT 1
+      FROM LIKES l2
+      WHERE l2.LIKES_CAT_CD = 'TRIP_RECORD'
+        AND l2.LIKES_KEY    = tr.RCD_NO
+        AND l2.MEM_NO       = #{loginMemNo}
+  ) THEN 1
+  ELSE 0
+END AS myLiked
+        
 
     FROM TRIP_RECORD tr
     JOIN MEMBER m
@@ -162,7 +176,7 @@
                   SELECT 1 FROM LIKES
                   WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO AND MEM_NO=#{loginMemNo}
               ) THEN 1 ELSE 0
-            END AS liked,
+            END AS myLiked,
 
             CASE
               WHEN #{loginMemNo} IS NULL THEN 0

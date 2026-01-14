@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.community.travellog.record.dto.PagedResponse;
 import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordCreateReq;
@@ -72,18 +73,32 @@ public class TripRecordApiController {
         long rcdNo = service.createWithFiles(req, loginMemNo, coverFile, null); // images는 지금 안씀
         return ResponseEntity.ok(rcdNo);
     }
-
-
-    // 수정: MEMBER + 작성자만
+    
+    // 수정: MEMBER + 작성자만 (JSON)
     @PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
-    @PutMapping("/{rcdNo}")
-    public ResponseEntity<Void> update(
-            @PathVariable long rcdNo,
-            @RequestBody TripRecordUpdateReq req,
-            Authentication authentication
+    @PutMapping(value="/{rcdNo}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> updateJson(
+        @PathVariable long rcdNo,
+        @RequestBody TripRecordUpdateReq req,
+        Authentication authentication
     ) {
         Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
         service.update(rcdNo, req, loginMemNo);
+        return ResponseEntity.ok().build();
+    }
+
+
+    // ✅ 수정: MEMBER + 작성자만 (multipart: 커버 변경 지원)
+    @PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
+    @PutMapping(value = "/{rcdNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Void> updateMultipart(
+            @PathVariable long rcdNo,
+            @RequestPart("req") TripRecordUpdateReq req,
+            @RequestPart(value = "coverFile", required = false) MultipartFile coverFile,
+            Authentication authentication
+    ) {
+        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+        service.updateWithCover(rcdNo, req, loginMemNo, coverFile);
         return ResponseEntity.ok().build();
     }
 

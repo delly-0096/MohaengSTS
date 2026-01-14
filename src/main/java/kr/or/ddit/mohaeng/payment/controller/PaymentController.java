@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller
-@RequestMapping("/product/payment")
 public class PaymentController {
 		
 	@Autowired
@@ -36,7 +35,7 @@ public class PaymentController {
 	 * @param amount	  : 결제 금액
 	 * @return 결제 페이지
 	 */
-	@GetMapping("/flight")
+	@GetMapping("/product/payment/flight")
 	public String flightPayment(
 			@RequestParam String paymentType,
 			@RequestParam String orderId,
@@ -65,7 +64,7 @@ public class PaymentController {
 	 * @param model
 	 * @return 결제 페이지
 	 */
-	@GetMapping("/error")
+	@GetMapping("/product/payment/error")
 	public String errorPayment(	
 			@RequestParam String code,
 			@RequestParam String message,
@@ -84,21 +83,20 @@ public class PaymentController {
 	}
 	
 	/**
-	 * <p>항공 상품 결제</p>
+	 * <p>상품 결제</p>
 	 * @date 2025.01.09
 	 * @author sdg
-	 * @param paymentVO	json 객체 - 탑승객, 항공권, 예약 객체의 리스트타입
+	 * @param paymentVO	json 객체 - 상품, 탑승객, 항공권, 예약 객체의 리스트타입
 	 * @return api 응답 객체
 	 */
 	@ResponseBody
-	@PostMapping("/flight/confirm")
+	@PostMapping("/product/payment/confirm")
     public ResponseEntity<Map<String, Object>> confirmFlightPayment(@RequestBody PaymentVO paymentVO) {
 		log.info("confirmFlightPayment reservationList : {}", paymentVO.getFlightReservationList());
 		log.info("confirmFlightPayment productList : {}", paymentVO.getFlightProductList());
 		log.info("confirmFlightPayment passengersList : {}", paymentVO.getFlightPassengersList());
 		log.info("confirmFlightPayment resvAgree : {}", paymentVO.getFlightResvAgree());	// 느낌이 하나 객체 가져와서 resvno마다 하나씩 추가??
 		Map<String, Object> result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨 - serviceResult타입은 아님
-		// 그래서 타입이 뭐냐
 		
 		if(result != null) {
 			return new ResponseEntity<>(result, HttpStatus.OK);

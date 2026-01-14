@@ -83,4 +83,18 @@ public class FlightController {
 	public String flightBooking() {
 		return "product/flightBooking";
 	}
+	
+	/**
+	 * <p>좌석 정보 가져오기</p>
+	 * @param flightProductVO 항공권 정보
+	 * @return 좌석정보
+	 */
+	@ResponseBody
+	@PostMapping("/product/flight/seat")
+	public List<String> flightSeat(@RequestBody FlightProductVO flightProductVO){
+		// 항공편명, 출발, 도착시간, 시간정보 다 담기
+		log.info("flightProductVO : {}", flightProductVO);
+		return service.getSeatInfo(flightProductVO);
+	}
+	
 }

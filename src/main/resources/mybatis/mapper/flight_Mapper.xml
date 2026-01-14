@@ -128,5 +128,13 @@
 	      AND dep_time = #{depTime}
 	</select>
 	
+	<!-- 좌석정보 가져오기 -->
+	<select id="getSeatInfo" parameterType="Integer" resultType="string">
+		select
+			fp.flight_seat
+		from flight_reservation fr
+		INNER JOIN flight_passengers fp on(fr.reserve_no = fp.reserve_no)
+		where fr.flt_prod_id = #{fltProdId}
+	</select>
 	
 </mapper>

@@ -282,8 +282,6 @@ public class TripScheduleController {
 		return ResponseEntity.ok(1);
 	}
 	
-	
-	
 	@GetMapping("/my")
 	public String mySchedule(
 			@AuthenticationPrincipal CustomUserDetails customUser, Model model) {
@@ -327,4 +325,21 @@ public class TripScheduleController {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result); // 500 Error
 	    }
 	}
+	
+	@PostMapping("/thumbnail/update")
+	@ResponseBody
+	public ResponseEntity<?> updateThumbnail(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@RequestBody Params params
+			) {
+		System.out.println("params : " + params);
+		
+		int memNo = customUser.getMember().getMemNo();
+		params.put("memNo", memNo);
+		
+//		int resultSchedule = tripScheduleService.updateTripSchedule(params);
+		
+		return ResponseEntity.ok(1);
+	}
+	
 }

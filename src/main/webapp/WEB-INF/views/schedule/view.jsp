@@ -839,6 +839,7 @@ var selectedThumbnailUrl = null;
 var defaultThumbnailYn = null;
 var uploadedImageData = null;
 var thumbnailModal = null;
+let file = null;
 
 // 썸네일 모달 열기
 function openThumbnailModal() {
@@ -874,7 +875,7 @@ function selectThumbnailOption(element) {
 
 // 썸네일 업로드 처리
 function handleThumbnailUpload(input) {
-    var file = input.files[0];
+    file = input.files[0];
     if (!file) return;
 
     // 파일 크기 체크 (5MB)
@@ -943,18 +944,22 @@ function saveThumbnail() {
     // 모달 닫기
     thumbnailModal.hide();
 
+    let formData = new FormData();
+    formData.append("schdlNo", '${schedule.schdlNo}');
+    formData.append("thumbnailUrl", newThumbnailUrl);
+    formData.append("defaultYn", defaultThumbnailYn);
+
+    if(file != null){
+        formData.append("thumbnailFile", file);
+    }
+
     // 실제 서버 저장 로직 (AJAX)
     // TODO: 서버에 썸네일 URL 또는 이미지 데이터 전송
     fetch(`${pageContext.request.contextPath}/schedule/thumbnail/update`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            schdlNo: '${schedule.schdlNo}',
-            thumbnailData: newThumbnailUrl,
-            defaultYn: defaultThumbnailYn
-        })
+        body: formData
     }).then(response => response.json())
     .then(data => {
         console.log('서버 응답:', data);
@@ -1042,24 +1047,6 @@ function shareSchedule() {
     }
 }
 
-// function toggleScheduleViewBookmark(button) {
-//     var icon = button.querySelector('i');
-//     if (icon.classList.contains('bi-bookmark')) {
-//         icon.classList.remove('bi-bookmark');
-//         icon.classList.add('bi-bookmark-fill');
-//         button.innerHTML = '<i class="bi bi-bookmark-fill me-1"></i>북마크됨';
-//         if (typeof showToast === 'function') {
-//             showToast('북마크에 추가되었습니다.', 'success');
-//         }
-//     } else {
-//         icon.classList.remove('bi-bookmark-fill');
-//         icon.classList.add('bi-bookmark');
-//         button.innerHTML = '<i class="bi bi-bookmark me-1"></i>북마크';
-//         if (typeof showToast === 'function') {
-//             showToast('북마크가 해제되었습니다.', 'info');
-//         }
-//     }
-// }
 async function toggleScheduleViewBookmark(button) {
     var icon = button.querySelector('i');
 

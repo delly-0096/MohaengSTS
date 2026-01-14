@@ -181,6 +181,22 @@ public class FlightServiceImpl implements IFlightService {
 		return null;
 	}
 	
+	@Override
+	public List<String> getSeatInfo(FlightProductVO flightProductVO) {
+		Integer fltProdId = mapper.getFlightKey(flightProductVO);		// 항공권 키 얻기
+		log.info("getSeatInfo 실행 : {}", flightProductVO);
+		
+		if(fltProdId != null) {
+			List<String> seatList = mapper.getSeatInfo(fltProdId); 
+			log.info("seatList : {}", seatList);
+			log.info("seatListSize : {}", seatList.size());
+			
+			return seatList;
+		}else {
+			return null;
+		}
+	}
+	
 	
 	
 	@Override
@@ -242,5 +258,7 @@ public class FlightServiceImpl implements IFlightService {
 		}
 		return status;
 	}
+
+
 
 }

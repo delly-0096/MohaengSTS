@@ -39,4 +39,7 @@ public class TripRecordDetailVO {
 
     private String nickname; // MEM_USER.NICKNAME
     private String deleteYn;  	 // DELETE_YN
+    
+    private Long myLiked;
+
 }

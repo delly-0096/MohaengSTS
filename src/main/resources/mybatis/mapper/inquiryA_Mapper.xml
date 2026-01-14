@@ -154,7 +154,7 @@
 	</update>
 
 	<!--문의 답변 등록 -->
-	<update id="inqryReply" parameterType="kr.or.ddit.mohaeng.vo.InquiryVO">
+	<update id="aInquiryReply" parameterType="kr.or.ddit.mohaeng.vo.InquiryVO">
 		update INQUIRY
 		   set
 	     	REPLY_CN = #{replyCn}

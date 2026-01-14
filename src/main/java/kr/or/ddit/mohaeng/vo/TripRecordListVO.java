@@ -24,4 +24,7 @@ public class TripRecordListVO {
     
     private String nickname; // MEM_USER.NICKNAME
     private String deleteYn;  	 // DELETE_YN
+    
+    private Long myLiked; // 로그인한 일반회원이 이 글을 좋아요 했으면 1, 아니면 0
+
 }

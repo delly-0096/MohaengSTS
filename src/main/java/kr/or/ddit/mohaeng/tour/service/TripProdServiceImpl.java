@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.tour.mapper.ITripProdMapper;
+import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
+import kr.or.ddit.mohaeng.vo.CompanyVO;
 
 @Service
 public class TripProdServiceImpl implements ITripProdService {
@@ -28,6 +30,26 @@ public class TripProdServiceImpl implements ITripProdService {
 	public TripProdVO detail(int tripProdNo) {
 		mapper.increase(tripProdNo);
 		return mapper.detail(tripProdNo);
+	}
+
+	@Override
+	public CompanyVO getSellerStats(int compNo) {
+		return mapper.getSellerStats(compNo);
+	}
+
+	@Override
+	public TripProdPlaceVO getPlace(int tripProdNo) {
+		return mapper.getPlace(tripProdNo);
+	}
+
+	@Override
+	public int updateExpiredStatus() {
+		return mapper.updateExpiredStatus();
+	}
+
+	@Override
+	public void updateAttachNo(int tripProdNo, int attachNo) {
+		mapper.updateAttachNo(tripProdNo, attachNo);
 	}
 
 }

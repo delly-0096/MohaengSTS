@@ -2,6 +2,7 @@ package kr.or.ddit.mohaeng.community.controller;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.IOUtils;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import jakarta.servlet.http.HttpServletRequest;
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.community.service.ITalkService;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
@@ -45,12 +48,11 @@ public class TalkController {
     
     @Value("${file.upload-path}")
     String uploadPath;
-
-	private Integer boardNo;
     
     @RequestMapping
     public String communityForm(
     		@RequestParam(name = "page", required= false, defaultValue = "1") int currentPage,
+    		@RequestParam(required = false) Integer boardNo,
   			@RequestParam(required = false) String searchWord,
    			@RequestParam(required = false, defaultValue = "all") String ntcType,
    			Model model) {
@@ -73,25 +75,37 @@ public class TalkController {
       pagingVO.setDataList(dataList);
       
       model.addAttribute("pagingVO", pagingVO); 
-      return "community/talk";
+      if(boardNo !=null) {
+    	  BoardVO boardVO = talkService.selectTalk(boardNo);
+    	  model.addAttribute("boardVO" , boardVO);
+      }
+      return "community/talkList";
     }
  
     
+	
 	// 게시판 상세화면
-    public String talkDetail(@RequestParam int boardNo,Model model) {
-    	log.info("talkDetail");
-    	//상세화면
-    	BoardVO boardVO = talkService.selectBoard(boardNo);
-    	model.addAttribute("boardVO",boardVO);
-    	return "community/talk";
-    }
-    
-    // talk상세조회
     @GetMapping("/detail")
-    public String detail(@RequestParam int boardNo) {
-    	BoardVO boardVO = talkService.selectTalk(boardNo);
-    	return "community/talk";
-    }
+    public String talkDetail(@RequestParam int boardNo,Model model) {
+    	//talkDetail boardNo : 11
+    	log.info("talkDetail boardNo : {}", boardNo); //상세화면
+    	
+    	BoardVO boardVO = talkService.selectBoard(boardNo);
+    	/*
+    	BoardVO(boardNo=11, boardCtgryCd=free, writerNo=1, attachNo=0, boardTitle=uuyuu, boardContent=uuuuu, viewCnt=4, likeCnt=0, noticeYn=N, pinYn=N
+    	, delYn=N, delDt=null, regDt=Tue Jan 13 19:18:10 KST 2026, modDt=null, regId=null, modId=null, boardTagList=null
+    	, boardFileList=[
+    		BoardFileVO(item=null, fileNo=0, fileName=null, fileSize=0, fileFancysize=null, fileSavepath=null, fileDowncount=0, attachNo=0
+    		, fileSaveName=null, fileOriginalName=null, fileExt=null, filePath=null, fileGbCd=null, mimeType=null, regId=0, regDt=2026-01-13 19:18:10, useYn=null)
+    	], boardFile=null, writerId=null, writerNickname=null)
+    	 */
+    	log.info("talkDetail boardVO : {}", boardVO); //상세화면
+    	
+    	model.addAttribute("boardVO",boardVO);
+    	
+		return "community/talk"; 
+	}
+	
     
     // 글 작성폼 페이지 이동
     @GetMapping("/write")
@@ -103,37 +117,47 @@ public class TalkController {
     @ResponseBody
     @PostMapping("/insert")
     public ResponseEntity<String> insert(
-    		@RequestBody BoardVO vo,
+    		BoardVO vo,
     		@AuthenticationPrincipal CustomUserDetails user
     		) {
+
         log.info("insert 실행: {}", vo);
         
+        if (user == null) {
+        	System.out.println("여기에 왔음11111");
+            log.error("로그인 정보가 없습니다!");
+            return new ResponseEntity<>("LOGIN_REQUIRED", HttpStatus.UNAUTHORIZED);
+        }
+        System.out.println("여기에 왔음22222");
+        log.info("로그인 회원번호: {}", user.getMemNo());
         vo.setWriterNo(user.getMemNo());
+        vo.setRegId(user.getMemNo());
+        
         ServiceResult result = talkService.insertTalk(vo);
         if (result == ServiceResult.OK) {
+
         	return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
         }else {
         	return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
         }
     }
 
-    	
-    	
  
     // talk 수정
+ // talk 수정
     @PutMapping("/{boardNo}")
-    public int update(@PathVariable int boarNo, @RequestBody BoardVO vo) {
-    	vo.setBoardNo(boardNo);
-    	int cnt = talkService.updateTalk(vo);
-    	log.info("check:{}",vo);
-    	return talkService.updateTalk(vo);
+    @ResponseBody
+    public int update(@PathVariable int boardNo, @RequestBody BoardVO vo) {
+        vo.setBoardNo(boardNo);      // ✅ URL의 boardNo를 vo에 세팅
+        int cnt = talkService.updateTalk(vo); // ✅ 1번만 호출
+        log.info("update: {}", vo);
+        return cnt;
     }
-    //talk 삭제
-    @DeleteMapping("/{boardNo}")
-    public int delete(@PathVariable int boardNo) {
-     return talkService.deleteTalk(boardNo);
+
     
-}
+ 
+
+    
     @GetMapping("/thumbnail/{fileNo}")
     public ResponseEntity<byte[]> display(@PathVariable int fileNo){
     	InputStream in = null;

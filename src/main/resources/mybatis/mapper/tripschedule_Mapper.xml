@@ -139,7 +139,8 @@
 		    ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
 		 WHERE TS.MEM_NO = #{memNo}
 		   AND TS.DEL_YN != 'Y'
-		 ORDER BY TSD.SCHDL_DT ASC
+		 ORDER BY TS.REG_DT DESC
+		 		, TSD.SCHDL_DT ASC
 		     	, TSP.PLACE_ORDER ASC
     </select>
     
@@ -450,6 +451,35 @@
 			 , DEL_DT = SYSDATE
 		 WHERE SCHDL_NO = #{schdlNo}
 	</update>
+	
+	<update id="updateTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO">
+		UPDATE TRIP_SCHEDULE
+		   SET START_PLACE_TYPE 	= #{startPlaceType}
+		     , START_PLACE_ID		= #{startPlaceId}
+		     , TARGET_PLACE_TYPE	= #{targetPlaceType}
+		     , TARGET_PLACE_ID      = #{targetPlaceId}
+		     , SCHDL_NM             = #{schdlNm}
+		     , SCHDL_START_DT       = #{schdlStartDt}
+		     , SCHDL_END_DT         = #{schdlEndDt}
+		     , TRAVELER_CNT         = #{travelerCnt}
+		     , TOTAL_BUDGET         = #{totalBudget}
+		     , PUBLIC_YN            = #{publicYn}
+		     , MOD_DT               = sysdate
+		 WHERE SCHDL_NO = #{schdlNo}
+	</update>
+	
+	<delete id="deleteScheduleDetails" parameterType="int">
+		DELETE FROM TRIP_SCHEDULE_DETAILS
+		 WHERE SCHDL_NO = #{schdlNo}
+	</delete>
+	
+	<delete id="deleteSchedulePlace" parameterType="int">
+		DELETE FROM TRIP_SCHEDULE_PLACE
+		 WHERE SCHDL_DETAILS_NO IN (SELECT SCHDL_DETAILS_NO
+									  FROM TRIP_SCHEDULE_DETAILS
+									 WHERE SCHDL_NO = #{schdlNo}
+									)
+	</delete>
 	
 	<select id="checkBookmarkExists" parameterType="kr.or.ddit.util.Params" resultType="int">
 		SELECT COUNT(*)

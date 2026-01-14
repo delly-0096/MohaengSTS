@@ -1,8 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
-<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
 <c:set var="pageTitle" value="여행톡" />
 <c:set var="pageCss" value="community" />
@@ -16,9 +14,157 @@
             <h1><i class="bi bi-chat-dots me-3"></i>여행톡</h1>
             <p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
         </div>
-        <!-- boardVO있을때 상세출력 
+        <!-- 게시판 -->
+        <div class="board-container">
+            <!-- 카테고리 탭 -->
+            <div class="board-tabs">
+                <button class="board-tab active" data-category="all">전체</button>
+                <button class="board-tab" data-category="notice">공지사항</button>
+                <button class="board-tab" data-category="free">자유게시판</button>
+                <button class="board-tab" data-category="companion">동행 구하기</button>
+                <button class="board-tab" data-category="info">정보 공유</button>
+                <button class="board-tab" data-category="qna">여행 Q&A</button>
+                <button class="board-tab" data-category="review">후기</button>
+            </div>
+
+            <!-- 게시판 헤더 -->
+            <div class="board-header">
+                <div class="board-search">
+                    <select class="form-select search-type" id="searchType">
+                        <option value="all">전체</option>
+                        <option value="title">제목</option>
+                        <option value="content">내용</option>
+                        <option value="writer">작성자</option>
+                    </select>
+                    <input type="text" id="searchKeyword" placeholder="검색어를 입력하세요" onkeypress="handleSearchKeypress(event)">
+                    <button class="btn btn-primary btn-sm" onclick="searchPosts()">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+                <sec:authorize access="hasRole('MEMBER')">
+                <div class="board-actions">
+                    <button class="btn btn-outline-primary" onclick="openChatRoomList()">
+                        <i class="bi bi-chat-heart me-2"></i>지금모행
+                    </button>
+                    <button class="btn btn-primary" onclick="writePost()">
+                        <i class="bi bi-pencil me-2"></i>글쓰기
+                    </button>
+                </div>
+                </sec:authorize>
+                <sec:authorize access="hasRole('BUSINESS')">
+                <div class="board-actions">
+                    <span class="business-notice">
+                        <i class="bi bi-info-circle me-1"></i>기업회원은 여행톡 작성이 제한됩니다
+                    </span>
+                </div>
+                </sec:authorize>
+            </div>
+
+            <!-- 게시글 리스트 -->
+            <ul class="post-list">
+            	<c:set value="${pagingVO.dataList }" var="boardList"/>
+            	<c:choose>
+            		<c:when test="${empty boardList }">
+            				
+							 <li class="post-item" style="cursor:default;">
+							    <div class="post-content">
+							      <h4 class="post-title">등록된 게시글이 없습니다.</h4>
+							    </div>
+							  </li>
+						      <a href="${pageContext.request.contextPath}/community/talk/detail?boardNo=${board.boardNo}">
+
+						        ${board.boardTitle}
+						      </a>
+
+						    </h4>
+						
+						    <div class="post-meta">
+						      <span class="writer">
+						        ${board.writerNickname}
+						        <small>(${board.writerId})</small>
+						      </span>
+						      <span>${board.regDt}</span>
+						    </div>
+						  </div>
+						
+						  <div class="post-stats">
+						    <span><i class="bi bi-eye"></i> ${board.viewCnt}</span>
+						    <span><i class="bi bi-chat"></i> 0</span>
+								</div>
+							</li>
+						</c:when>
+						<c:otherwise>
+							<c:forEach items="${boardList}" var="board">
+								<c:set value="" var="type"/>
+								<c:set value="" var="style"/>
+								<c:choose>
+									<c:when test="${board.boardCtgryCd eq 'notice' }">
+										<c:set value="공지" var="type"/>
+										<c:set value="notice" var="style"/>	
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'free' }">
+										<c:set value="자유" var="type"/>	
+										<c:set value="free" var="style"/>
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'companion' }">
+										<c:set value="동행" var="type"/>
+										<c:set value="companion" var="style"/>
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'info' }">
+										<c:set value="정보" var="type"/>
+										<c:set value="info" var="style"/>	
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'qna' }">
+										<c:set value="Q&A" var="type"/>	
+										<c:set value="qna" var="style"/>
+									</c:when>
+									<c:when test="${board.boardCtgryCd eq 'review' }">
+										<c:set value="후기" var="type"/>	
+										<c:set value="review" var="style"/>
+									</c:when>
+								</c:choose>
+								<li class="post-item" >
+				                    <span class="post-category ${style }">${type }</span>
+				                    <div class="post-content">
+				                        <h4 class="post-title">
+											  <a href="${pageContext.request.contextPath}/community/talk/detail?boardNo=${board.boardNo}">
+											    ${board.boardTitle}
+											  </a>
+											  <small style="color:red;">[${board.boardNo}]</small>
+											</h4>
+
+				                        <div class="post-meta">
+				                            <span class="writer">
+												  ${board.writerNickname}
+												  <small>(${board.writerId})</small>
+											</span>
+				                            <span>${board.regDt }</span>
+				                        </div>
+				                    </div>
+				                    <div class="post-stats">
+				                        <span><i class="bi bi-eye"></i> ${board.viewCnt }</span>
+				                        <span><i class="bi bi-chat"></i> 0</span>
+				                    </div>
+				                </li>			
+							</c:forEach>
+						</c:otherwise>
+            	</c:choose>
+            </ul>
+
+            <!-- 페이지네이션 -->
+            <div class="pagination-container">
+                <nav>
+                    ${pagingVO.pagingHTML }
+                </nav>
+            </div>
+        </div>
+    </div>     
+</div>
+
+		<!-- boardVO있을때 상세출력 
 			model.addAttribute("boardVO",boardVO);
 		-->
+				<p>${boardVO}</p>
 				<c:if test="${not empty boardVO}">
 				  <div class="card mb-4">
 				    <div class="card-body">
@@ -32,14 +178,13 @@
 				          목록
 				        </a>
 				      </div>
-				      
 				
 				      <h3 class="mb-2">${boardVO.boardTitle}</h3>
 				
 				      <div class="text-muted mb-3">
-				          작성자: ${boardVO.writerNickname} <small>(${boardVO.writerId})</small>
-				          작성일: ${boardVO.regDt}
-				          조회수: ${boardVO.viewCnt}
+				        작성자: ${boardVO.writerNickname} <small>(${boardVO.writerId})</small>
+				        · 작성일: ${boardVO.regDt}
+				        · 조회수: ${boardVO.viewCnt}
 				      </div>
 				
 				      <hr/>
@@ -50,9 +195,6 @@
 				    </div>
 				  </div>
 				</c:if>
-    </div>     
-</div>
-		
 								
 <!-- 게시글 상세 모달 -->
 <div class="post-detail-overlay" id="postDetailOverlay" onclick="closePostDetail()">
@@ -186,8 +328,8 @@
 <div class="chat-window" id="chatWindow">
     <div class="chat-window-header">
         <div class="chat-room-info">
-            <span class="chat-room-category-badge" id="chatRoomBadge">${room.chatCtgryName }</span>
-            <h4 id="chatRoomTitle">${room.chatName }</h4>
+            <span class="chat-room-category-badge" id="chatRoomBadge">자유</span>
+            <h4 id="chatRoomTitle">채팅방 이름</h4>
             <span class="chat-room-users"><i class="bi bi-people-fill"></i> <span id="chatUserCount">0</span>명</span>
         </div>
         <div class="chat-window-actions">
@@ -215,6 +357,7 @@
             <button onclick="toggleChatUserList()"><i class="bi bi-x"></i></button>
         </div>
         <div class="chat-user-list" id="chatUserList">
+            <!-- 참여자 목록이 여기에 표시됨 -->
         </div>
     </div>
 
@@ -236,7 +379,8 @@
                 <i class="bi bi-paperclip"></i>
             </button>
         </div>
-        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." maxlength="500" onkeydown="handleKeydown(event)">
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." maxlength="500"
+               onkeydown="handleChatKeydown(event)">
         <button class="chat-send-btn" onclick="sendMessage()">
             <i class="bi bi-send-fill"></i>
         </button>
@@ -1568,14 +1712,8 @@
 }
 </style>
 
-<!-- Security 변수 추출  -->
-<sec:authentication property="principal" var="principal" />
-<sec:authorize access="isAuthenticated()">
-    <%-- 시큐리티의 principal 객체에서 직접 변수 추출 --%>
-    <c:set var="myId" value="${principal.member.memId}" />
-    <c:set var="myName" value="${principal.member.memName}" />
-</sec:authorize>
 <script>
+
 const api = (path) => contextPath + (path.startsWith('/') ? path : '/' + path);
 
 // 현재 선택된 카테고리
@@ -1594,7 +1732,6 @@ const categoryMap = {
 
 // 카테고리 탭 전환
 document.querySelectorAll('.board-tab').forEach(tab => {
-	
     tab.addEventListener('click', function() {
         document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
@@ -1726,29 +1863,22 @@ function writePost() {
 
 // ==================== 실시간 채팅 기능 ====================
 
-	let stompClient = null;
-	let currentChatId = null;
-	
 // 현재 사용자 정보
 const currentUser = {
-		isLoggedIn: ${not empty myName ? true : false},
-	    id: '${not empty myId ? myId : ""}',
-	    name: '${not empty myName ? myName : "게스트"}'
+    isLoggedIn: ${pageContext.request.userPrincipal != null},
+    id: <sec:authorize access="isAuthenticated()">
+            '${principal.member.memId}'
+        </sec:authorize>
+        <sec:authorize access="isAnonymous()">
+            null
+        </sec:authorize>,
+    name: <sec:authorize access="isAuthenticated()">
+              '${principal.member.memName}'
+          </sec:authorize>
+          <sec:authorize access="isAnonymous()">
+              '게스트'
+          </sec:authorize>
 };
-console.log("확인용 유저 정보:", currentUser);
-//     isLoggedIn: ${pageContext.request.userPrincipal != null},
-//     id: <sec:authorize access="isAuthenticated()">
-//             '${principal.member.memId}'
-//         </sec:authorize>
-//         <sec:authorize access="isAnonymous()">
-//             null
-//         </sec:authorize>,
-//     name: <sec:authorize access="isAuthenticated()">
-//               '${principal.member.memName}'
-//           </sec:authorize>
-//           <sec:authorize access="isAnonymous()">
-//               '게스트'
-//           </sec:authorize>
 
 // 현재 채팅방 정보
 let currentChatRoom = null;
@@ -1774,7 +1904,7 @@ function openChatRoomList() {
     document.body.style.overflow = 'hidden';
 }
 
-function loadChatRooms(category) {
+function  loadChatRooms(category) {
 	let url = api('/chat/rooms');
 	if(category) {
 		url += '?category=' + category;
@@ -1790,7 +1920,7 @@ function loadChatRooms(category) {
 // 채팅방 목록 닫기
 function closeChatRoomList() {
     document.getElementById('chatRoomModal').classList.remove('active');
-    document.body.style.overflow = '';  
+    document.body.style.overflow = '';
 }
 
 // 오버레이 클릭 시 닫기
@@ -1811,6 +1941,7 @@ function renderChatRoomListFromServer(rooms) {
 
     let html = '';
     rooms.forEach(room => {
+    	console.log('room:', room, 'chatId:', room.chatId);
         html += `
         <div class="chat-room-item \${room.full ? 'full' : ''}"
              onclick="joinChatRoom(\${room.chatId})">
@@ -1831,6 +1962,7 @@ function renderChatRoomListFromServer(rooms) {
         `;
     });
     
+    console.log("room :::::: ", rooms);
 
     listEl.innerHTML = html;
 }
@@ -1903,10 +2035,7 @@ function createChatRoom() {
 		// 생성 폼 닫기
 		cancelCreateRoom();
 		
-		const chatId = data.chatId;
-
-	    joinChatRoom(chatId);
-	    connectChat(chatId);   // ✅ chatId 직접 전달
+		joinChatRoom(data.chatId);
 		
 		// 서버 기준으로 채팅방 목록 다시 불러오기
 		loadChatRooms();
@@ -1916,91 +2045,30 @@ function createChatRoom() {
 		showToast('채팅방 생성 중 오류가 발생했습니다.', 'error');
 	});
 }
-// ==================== 웹소켓 연결 ====================
-function connectChat(chatId) {
-    console.log('🚀 연결 시도 중... chatId:', chatId);
-    currentChatId = chatId; // 전역 변수에 할당 확인
-    
-    // contextPath가 올바르게 잡혀있는지 확인 (개발자 도구 콘솔에서 출력해보세요)
-    const socket = new SockJS(contextPath + '/ws'); 
-    stompClient = Stomp.over(socket);
-
-    stompClient.connect({}, function (frame) {
-        console.log('✅ STOMP Connected: ' + frame);
-
-        // 구독 경로 수정 (EL 충돌 방지)
-        stompClient.subscribe('/topic/chat/' + chatId, function (message) {
-            const data = JSON.parse(message.body);
-            
-            if(data.type === 'CHAT') {
-            	renderChatMessage(data);	
-            } else {
-            	console.log("📢 시스템 메시지 수신 (입/퇴장):", data.type);
-            	loadChatUserList(chatId);
-            	
-            	if (typeof loadChatRooms === 'function') {
-                    loadChatRooms(); 
-                }
-            	addSystemMessage(data.message);
-            }
-        });
-
-        // 입장 메시지 전송 (Long 타입이므로 숫자로 변환하여 전송)
-        stompClient.send('/app/chat/system', {}, JSON.stringify({
-            chatId: parseInt(chatId), 
-            sender: currentUser.name,
-            type: 'ENTER'
-        }));
-    }, function(error) {
-        console.error('❌ STOMP error:', error);
-    });
-}
-
-// =================== 메시지 렌더링 ======================
-function renderChatMessage(data) {
-	const box = document.getElementById('chatMessages');
-    if (!box) return;
-
-    // 환영 메시지 제거
-    const welcomeMsg = box.querySelector('.chat-welcome-message');
-    if (welcomeMsg) welcomeMsg.remove();
-
-    const isMine = (data.sender === currentUser.name);
-    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-
-    if (data.type === 'CHAT') {
-        addChatMessage(data.sender, data.message, time, isMine);
-    } else {
-        addSystemMessage(data.message);
-    }
-}
-
-
 
 // ==================== 채팅 참여 ====================
 
 // 채팅방 참여
-//🔥 REST 입장 성공 → STOMP 연결 → ENTER 메시지
 function joinChatRoom(chatId) {
     if (!currentUser.isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
             sessionStorage.setItem('returnUrl', window.location.href);
-            window.location.href = '${pageContext.request.contextPath}/member/login';
+            window.location.href = 'pageContext.request.contextPath}/member/login';
         }
         return;
     }
+    console.log("chatId : ", chatId);
     
         if (!chatId) {
             console.error('❌ chatId is undefined');
             return;
         }
         
-        fetch(api('/chat/room/' + chatId + '/join'), {
+        fetch(api(`/chat/room/\${chatId}/join`), {
         	method : 'POST'
         })
         .then(res => res.json())
         .then(data => {
-        	console.log("📦 서버 응답 전체 데이터:", data);
         	if(!data.success) {
         		showToast(data.message, 'warning');
         		return;
@@ -2008,27 +2076,12 @@ function joinChatRoom(chatId) {
         	
         	closeChatRoomList();
             openChatWindow();
-            
-            if (data.room) {
-                document.getElementById('chatRoomTitle').textContent = data.room.chatName;
-                document.getElementById('chatRoomBadge').textContent = data.room.chatCtgryName;
-                document.getElementById('chatUserCount').textContent = data.room.currentUsers;
-            }
-            
-            if (data.userList) {
-                renderChatUserList(data.userList);
-            } else {
-            	loadChatUserList(chatId);
-            }
-            
-            connectChat(chatId);
-            
             addSystemMessage(currentUser.name + '님이 입장하셨습니다.');
         })
         .catch(err => {
             console.error(err);
             showToast('채팅방 입장 중 오류가 발생했습니다.', 'error');
-        });
+    });
 }
 
 // 채팅 윈도우 설정
@@ -2052,18 +2105,38 @@ function setupChatWindow(room) {
     renderChatUserList();
 }
 
+// 가상 사용자 생성
+function generateFakeUsers(count) {
+    const fakeNames = ['travel_kim', 'adventure_lee', 'trip_lover', 'wanderer', 'explorer_j',
+                       'nomad_s', 'journey_h', 'voyage_m', 'trek_park', 'globetrotter'];
+    const users = [];
+    for (let i = 0; i < Math.min(count, fakeNames.length); i++) {
+        // 랜덤하게 접속 상태 부여 (70% 온라인, 20% 자리비움, 10% 오프라인)
+        const rand = Math.random();
+        let status = 'online';
+        if (rand > 0.9) status = 'offline';
+        else if (rand > 0.7) status = 'away';
+
+        users.push({
+            id: 'user_' + i,
+            name: fakeNames[i],
+            isMe: false,
+            status: status,
+            lastSeen: status === 'offline' ? getRandomLastSeen() : null
+        });
+    }
+    return users;
+}
+
 // 랜덤 마지막 접속 시간 생성
 function getRandomLastSeen() {
     const times = ['5분 전', '10분 전', '30분 전', '1시간 전', '2시간 전'];
     return times[Math.floor(Math.random() * times.length)];
-    
 }
 
 // 참여자 목록 렌더링
-function renderChatUserList(users) {
+function renderChatUserList() {
     const listEl = document.getElementById('chatUserList');
-    if (!listEl || !users || users.length === 0) return;
-    
     let html = '';
 
     // 온라인 사용자를 먼저 정렬
@@ -2072,10 +2145,8 @@ function renderChatUserList(users) {
         return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
     });
 
-    users.forEach(user => {
-    	const name = user.memName || '익명';
-        const initial = name.charAt(0).toUpperCase();
-        const isMe = (user.memId === currentUser.id)
+    sortedUsers.forEach(user => {
+        const initial = user.name.charAt(0).toUpperCase();
         const status = user.status || 'online';
         const statusText = status === 'online' ? '온라인' :
                           status === 'away' ? '자리비움' :
@@ -2088,7 +2159,7 @@ function renderChatUserList(users) {
             '</div>' +
             '<div class="chat-user-info">' +
                 '<span class="chat-user-name' + (user.isMe ? ' me' : '') + '">' +
-                    name + (isMe ? ' (나)' : '') +
+                    user.name + (user.isMe ? ' (나)' : '') +
                 '</span>' +
                 '<span class="chat-user-status-text ' + status + '">' + statusText + '</span>' +
             '</div>' +
@@ -2098,20 +2169,21 @@ function renderChatUserList(users) {
     listEl.innerHTML = html;
 
     // 온라인 수 업데이트
-    const userCountEl = document.getElementById('chatUserCount');
-    if(userCountEl) {
-    	userCountEl.textContent = users.length;
-    }
+    const onlineCount = chatUsers.filter(u => u.status === 'online' || u.isMe).length;
+    document.getElementById('chatUserCount').textContent = onlineCount + '/' + chatUsers.length;
 }
 
-//명단만 따로 불러오는 함수
-function loadChatUserList(chatId) {
-    fetch(api('/chat/room/' + chatId + '/users'))
-    .then(res => res.json())
-    .then(users => {
-        renderChatUserList(users);
-    })
-    .catch(err => console.error("명단 로드 실패 : ", err));
+// 이전 메시지 로드 (데모용)
+function loadPreviousMessages() {
+    const demoMessages = [
+        { sender: 'travel_kim', message: '안녕하세요~ 반갑습니다!', time: '14:30' },
+        { sender: 'adventure_lee', message: '저도 반가워요! 어디 여행 계획 있으세요?', time: '14:31' },
+        { sender: 'trip_lover', message: '저는 다음 달에 제주도 갈 예정이에요', time: '14:32' }
+    ];
+
+    demoMessages.forEach(msg => {
+        addChatMessage(msg.sender, msg.message, msg.time, false);
+    });
 }
 
 // ==================== 채팅 윈도우 제어 ====================
@@ -2121,7 +2193,7 @@ function openChatWindow() {
     document.getElementById('chatWindow').classList.add('active');
     document.getElementById('chatMinimized').classList.remove('active');
     document.getElementById('chatInput').focus();
-    unreadCount = 0; 
+    unreadCount = 0;
     updateUnreadBadge();
 }
 
@@ -2137,78 +2209,30 @@ function maximizeChat() {
 }
 
 // 채팅 나가기
-async function leaveChat() {
-	if (!currentChatId) {
-        showToast('참여 중인 채팅방이 없습니다.', 'warning');
-        return;
-    }
+function leaveChat() {
+    if (!currentChatRoom) return;
 
     if (confirm('채팅방에서 나가시겠습니까?')) {
-    	
-    	try {
-            // 2. ChatController의 퇴장 메서드 호출 (DB 상태 EXIT로 변경)
-            // @AuthenticationPrincipal을 사용하므로 memNo를 따로 보낼 필요가 없어 더 안전합니다.
-            const response = await fetch('/chat/room/' + currentChatId + '/leave', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
+        // 퇴장 메시지
+        addSystemMessage(currentUser.name + '님이 퇴장하셨습니다.');
 
-            const result = await response.json();
+        // 사용자 수 감소
+        currentChatRoom.currentUsers--;
 
-            if (result.success) {
-                // 3. DB 업데이트 성공 후, WebSocket으로 다른 멤버들에게 알림
-                if (stompClient && stompClient.connected) {
-                    stompClient.send('/app/chat/system', {}, JSON.stringify({
-                        chatId: parseInt(currentChatId),
-                        sender: currentUser.name,
-                        memNo: currentUser.memNo, // 필드명이 no인지 memNo인지 확인 필요
-                        type: 'LEAVE'
-                    }));
-                    
-                    console.log("📤 WebSocket 퇴장 신호 전송 완료");
-                }
+        // 시뮬레이션 중지
+        stopChatSimulation();
 
-                // 4. 소켓 연결 해제 및 UI 정리 (약간의 지연을 주어 메시지 도달 보장)
-                setTimeout(() => {
-                    if (stompClient) {
-                        stompClient.disconnect(() => {
-                            console.log("🔌 STOMP 연결 해제 완료");
-                        });
-                        stompClient = null;
-                    }
-
-                    // 전역 변수 및 UI 초기화
-                    finalizeChatUI();
-                    showToast('채팅방에서 퇴장했습니다.', 'info');
-                }, 200);
-            } else {
-                showToast(result.message || '퇴장 처리 중 오류가 발생했습니다.', 'error');
-            }
-        } catch (error) {
-            console.error('❌ 퇴장 프로세스 에러:', error);
-            showToast('서버와의 통신에 실패했습니다.', 'error');
-        }
-    }
-}
-
-// UI 정리를 위한 공통 함수
-function finalizeChatUI() {
-    currentChatId = null;
-    currentChatRoom = null;
-    chatMessages = [];
-    
-    // UI 요소 닫기
-    document.getElementById('chatWindow').classList.remove('active');
-    document.getElementById('chatMinimized').classList.remove('active');
-    if(document.getElementById('chatUserPanel')) {
+        // UI 닫기
+        document.getElementById('chatWindow').classList.remove('active');
+        document.getElementById('chatMinimized').classList.remove('active');
         document.getElementById('chatUserPanel').classList.remove('active');
+
+        currentChatRoom = null;
+        chatMessages = [];
+        chatUsers = [];
+
+        showToast('채팅방에서 나왔습니다.', 'info');
     }
-    
-    // 메시지 영역 비우기
-    const msgEl = document.getElementById('chatMessages');
-    if (msgEl) msgEl.innerHTML = '';
 }
 
 // 참여자 목록 토글
@@ -2217,43 +2241,29 @@ function toggleChatUserList() {
 }
 
 // ==================== 메시지 전송/수신 ====================
+
+// 메시지 전송
 function sendMessage() {
     const input = document.getElementById('chatInput');
-    const content = input.value.trim();
-    if (!content) return;
-    
-    if (!stompClient || !currentChatId) {
-        console.warn('❌ STOMP not connected', stompClient, currentChatId);
-        showToast('채팅 서버에 연결되지 않았습니다.', 'warning');
-        return;
-    }
-    
-    stompClient.send('/app/chat/send', {}, JSON.stringify({
-        chatId: parseInt(currentChatId),
-        sender: currentUser.name,
-        type: 'CHAT',
-        message: content
-    }));
+    const message = input.value.trim();
 
+    if (!message) return;
+
+    // 내 메시지 추가
+    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+    addChatMessage(currentUser.name, message, time, true);
+
+    // 입력 초기화
     input.value = '';
+    input.focus();
 }
 
 // 엔터키 처리
-function handleKeydown(event) {
-	console.log("키 눌림:", event.key);
-	const isEnter = (event.key === 'Enter' || event.keyCode === 13);
-	    
-	    if (isEnter && !event.shiftKey) {
-	    	event.stopPropagation();
-	        // 한글 입력 중 엔터 중복 방지 (IME 컴포지션 체크)
-	        if (event.isComposing || event.keyCode === 229) {
-	            return;
-	        }
-	
-	        event.preventDefault(); // 줄바꿈 방지
-	        console.log("엔터키 감지 - 메시지 전송 시도");
-	        sendMessage();
-	    }
+function handleChatKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+        event.preventDefault();
+        sendMessage();
+    }
 }
 
 // 채팅 메시지 추가
@@ -2287,21 +2297,8 @@ function addChatMessage(sender, message, time, isMine) {
 }
 
 // 시스템 메시지 추가
-function sendSystemMessage(action) {
+function addSystemMessage(message) {
     const messagesEl = document.getElementById('chatMessages');
-    
-    stompClient.send('/app/chat/system', {}, JSON.stringify({
-        chatId: currentChatId,
-        sender: currentUser.name,
-        message: message,
-        type: 'CHAT',
-        memNo: currentUser.memNo, // 숫자 PK
-        memId: currentUser.memId     // "a004" 같은 문자열 아이디
-    }));
-    
-    console.log(currnetUser.memId);
-    console.log(currnetUser.id);
-    
 
     // 환영 메시지 제거
     const welcomeMsg = messagesEl.querySelector('.chat-welcome-message');
@@ -2313,22 +2310,6 @@ function sendSystemMessage(action) {
         '</div>';
 
     messagesEl.insertAdjacentHTML('beforeend', messageHtml);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-}
-
-// 입퇴장시 메시지
-function addSystemMessage(message) {
-    const messagesEl = document.getElementById('chatMessages');
-
-    const welcomeMsg = messagesEl.querySelector('.chat-welcome-message');
-    if (welcomeMsg) welcomeMsg.remove();
-
-    const html =
-        `<div class="chat-system-message">
-            <span>${message}</span>
-        </div>`;
-
-    messagesEl.insertAdjacentHTML('beforeend', html);
     messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
@@ -2530,6 +2511,43 @@ function closeImagePreview() {
 function downloadFile(fileName) {
     showToast('"' + fileName + '" 다운로드를 시작합니다.', 'info');
     // 실제로는 서버에서 파일을 다운로드하는 로직 구현
+}
+
+// ==================== 채팅 시뮬레이션 ====================
+
+// 가상 채팅 시뮬레이션 (데모용)
+function startChatSimulation() {
+    const simulatedMessages = [
+        { sender: 'travel_kim', message: '오~ 새로운 분이 오셨네요! 환영해요 👋' },
+        { sender: 'adventure_lee', message: '안녕하세요!' },
+        { sender: 'trip_lover', message: '반갑습니다~' },
+        { sender: 'wanderer', message: '저도 다음 달에 여행 가려고 계획 중이에요' },
+        { sender: 'explorer_j', message: '어디로 가세요?' },
+        { sender: 'travel_kim', message: '좋은 여행지 추천 있으면 알려주세요!' },
+        { sender: 'adventure_lee', message: '저는 최근에 후쿠오카 다녀왔는데 너무 좋았어요' },
+        { sender: 'trip_lover', message: '후쿠오카 음식이 정말 맛있죠' }
+    ];
+
+    let index = 0;
+
+    chatSimulationInterval = setInterval(() => {
+        if (index < simulatedMessages.length && currentChatRoom) {
+            const msg = simulatedMessages[index];
+            const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+            addChatMessage(msg.sender, msg.message, time, false);
+            index++;
+        } else {
+            stopChatSimulation();
+        }
+    }, 5000 + Math.random() * 5000); // 5~10초 랜덤 간격
+}
+
+// 시뮬레이션 중지
+function stopChatSimulation() {
+    if (chatSimulationInterval) {
+        clearInterval(chatSimulationInterval);
+        chatSimulationInterval = null;
+    }
 }
 
 // ESC 키로 모달 닫기

@@ -16,8 +16,29 @@
 // 장바구니 데이터
 var cart = [];
 
-function changeMainImage(thumb) {
-    document.getElementById('mainImage').src = thumb.src;
+function changeMainImage(img, index) {
+    if (typeof index !== 'undefined') {
+        currentImageIndex = index;
+    } else {
+        // index가 없으면 src로 찾기
+        var thumbs = document.querySelectorAll('#galleryThumbs img');
+        thumbs.forEach(function(thumb, i) {
+            if (thumb.src === img.src) {
+                currentImageIndex = i;
+            }
+        });
+    }
+    
+    var mainImage = document.getElementById('mainImage');
+    mainImage.style.opacity = '0';
+    
+    setTimeout(function() {
+        mainImage.src = img.src;
+        mainImage.style.opacity = '1';
+    }, 150);
+    
+    updateGalleryCounter();
+    updateThumbnailActive();
 }
 
 function updateTotal() {
@@ -1591,3 +1612,373 @@ document.addEventListener('keydown', function(e) {
         }
     }
 });
+
+// 카카오 지도 초기화
+function initMap() {
+	var mapContainer = document.getElementById('map'), // 지도를 표시할 div 
+	    mapOption = {
+	        center: new kakao.maps.LatLng(33.450701, 126.570667), // 지도의 중심좌표
+	        level: 3 // 지도의 확대 레벨
+	    };  
+
+	// 지도를 생성합니다    
+	var map = new kakao.maps.Map(mapContainer, mapOption); 
+
+	// 주소-좌표 변환 객체를 생성합니다
+	var geocoder = new kakao.maps.services.Geocoder();
+
+	// 주소로 좌표를 검색합니다
+	geocoder.addressSearch(placeAddr1, function(result, status) {
+
+	    // 정상적으로 검색이 완료됐으면 
+	     if (status === kakao.maps.services.Status.OK) {
+
+	        var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+
+	        // 결과값으로 받은 위치를 마커로 표시합니다
+	        var marker = new kakao.maps.Marker({
+	            map: map,
+	            position: coords
+	        });
+
+	        // 지도의 중심을 결과값으로 받은 위치로 이동시킵니다
+	        map.setCenter(coords);
+	    } 
+	});
+}
+
+// 페이지 로드 시 지도 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    initMap();
+});
+
+// ==================== 상품 이미지 관리 ====================
+var newImageFiles = [];
+
+function openImageUploadModal() {
+    newImageFiles = [];
+    document.getElementById('newImagesPreview').innerHTML = '';
+    
+    var modal = new bootstrap.Modal(document.getElementById('imageUploadModal'));
+    modal.show();
+    
+    loadCurrentImages();
+}
+
+function loadCurrentImages() {
+    var grid = document.getElementById('currentImagesGrid');
+
+    fetch(CONTEXT_PATH + '/tour/' + TRIP_PROD_NO + '/images')
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.success && data.images && data.images.length > 0) {
+                var html = '';
+                data.images.forEach(function(img, index) {
+                    // FILE_PATH에 슬래시가 없으면 product/ 폴더 추가
+                    var imagePath = img.FILE_PATH;
+                    if (imagePath && imagePath.indexOf('/') === -1) {
+                        imagePath = 'product/' + imagePath;
+                    }
+                    
+                    html += '<div class="current-image-item' + (index === 0 ? ' main-image' : '') + '" data-file-no="' + img.FILE_NO + '">' +
+                        '<img src="' + CONTEXT_PATH + '/upload/' + imagePath + '" alt="상품 이미지">' +
+                        '<button class="delete-btn" onclick="deleteProductImage(' + img.FILE_NO + ')">' +
+                            '<i class="bi bi-x"></i>' +
+                        '</button>' +
+                        (index === 0 ? '<span class="main-badge">대표</span>' : '') +
+                    '</div>';
+                });
+                grid.innerHTML = html;
+            } else {
+                grid.innerHTML = '<div class="no-images-message">' +
+                    '<i class="bi bi-image"></i>' +
+                    '<p>등록된 이미지가 없습니다.</p>' +
+                '</div>';
+            }
+        })
+        .catch(function(error) {
+            console.error('Error:', error);
+            grid.innerHTML = '<div class="no-images-message">' +
+                '<i class="bi bi-exclamation-circle"></i>' +
+                '<p>이미지를 불러올 수 없습니다.</p>' +
+            '</div>';
+        });
+}
+
+function deleteProductImage(fileNo) {
+    if (!confirm('이 이미지를 삭제하시겠습니까?')) return;
+    
+    fetch(CONTEXT_PATH + '/tour/' + TRIP_PROD_NO + '/image/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fileNo: fileNo })
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) {
+            showToast('이미지가 삭제되었습니다.', 'success');
+            loadCurrentImages();
+            refreshGallery();
+        } else {
+            showToast(data.message || '삭제에 실패했습니다.', 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showToast('오류가 발생했습니다.', 'error');
+    });
+}
+
+// 드래그 앤 드롭
+document.addEventListener('DOMContentLoaded', function() {
+    var dropZone = document.getElementById('imageDropZone');
+    if (!dropZone) return;
+    
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        this.classList.add('dragover');
+    });
+    
+    dropZone.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        this.classList.remove('dragover');
+        handleFiles(e.dataTransfer.files);
+    });
+    
+    var fileInput = document.getElementById('productImageInput');
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            handleFiles(this.files);
+        });
+    }
+});
+
+function handleFiles(files) {
+    var maxFiles = 10 - document.querySelectorAll('.current-image-item').length;
+    
+    for (var i = 0; i < files.length && newImageFiles.length < maxFiles; i++) {
+        var file = files[i];
+        
+        if (!file.type.startsWith('image/')) {
+            showToast('이미지 파일만 업로드 가능합니다.', 'warning');
+            continue;
+        }
+        
+        if (file.size > 5 * 1024 * 1024) {
+            showToast('파일 크기는 5MB 이하여야 합니다.', 'warning');
+            continue;
+        }
+        
+        newImageFiles.push(file);
+        addImagePreview(file);
+    }
+}
+
+function addImagePreview(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        var preview = document.getElementById('newImagesPreview');
+        var index = newImageFiles.indexOf(file);
+        
+        var div = document.createElement('div');
+        div.className = 'new-image-item';
+        div.innerHTML = '<img src="' + e.target.result + '" alt="미리보기">' +
+            '<button class="remove-btn" onclick="removeNewImage(' + index + ')">' +
+                '<i class="bi bi-x"></i>' +
+            '</button>';
+        preview.appendChild(div);
+    };
+    reader.readAsDataURL(file);
+}
+
+function removeNewImage(index) {
+    newImageFiles.splice(index, 1);
+    
+    // 미리보기 다시 렌더링
+    var preview = document.getElementById('newImagesPreview');
+    preview.innerHTML = '';
+    newImageFiles.forEach(function(file) {
+        addImagePreview(file);
+    });
+}
+
+function uploadProductImages() {
+    if (newImageFiles.length === 0) {
+        bootstrap.Modal.getInstance(document.getElementById('imageUploadModal')).hide();
+        return;
+    }
+    
+    var formData = new FormData();
+    newImageFiles.forEach(function(file) {
+        formData.append('files', file);
+    });
+    
+    fetch(CONTEXT_PATH + '/tour/' + TRIP_PROD_NO + '/image/upload', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.success) {
+            showToast(data.message || '이미지가 업로드되었습니다.', 'success');
+            newImageFiles = [];
+            document.getElementById('newImagesPreview').innerHTML = '';
+            loadCurrentImages();
+            refreshGallery();
+        } else {
+            showToast(data.message || '업로드에 실패했습니다.', 'error');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showToast('오류가 발생했습니다.', 'error');
+    });
+}
+
+function refreshGallery() {
+    fetch(CONTEXT_PATH + '/tour/' + TRIP_PROD_NO + '/images')
+        .then(function(response) { return response.json(); })
+        .then(function(data) {
+            if (data.success && data.images && data.images.length > 0) {
+                // FILE_PATH 경로 처리 추가
+                var firstImagePath = data.images[0].FILE_PATH;
+                if (firstImagePath && firstImagePath.indexOf('/') === -1) {
+                    firstImagePath = 'product/' + firstImagePath;
+                }
+                
+                // 메인 이미지 업데이트
+                document.getElementById('mainImage').src = CONTEXT_PATH + '/upload/' + firstImagePath;
+                
+                // 썸네일 업데이트
+                var thumbs = document.getElementById('galleryThumbs');
+                var html = '';
+                data.images.forEach(function(img, index) {
+                    var imagePath = img.FILE_PATH;
+                    if (imagePath && imagePath.indexOf('/') === -1) {
+                        imagePath = 'product/' + imagePath;
+                    }
+                    html += '<img src="' + CONTEXT_PATH + '/upload/' + imagePath + '" ' +
+                        'alt="썸네일" onclick="changeMainImage(this, ' + index + ')"' +
+                        (index === 0 ? ' class="active"' : '') + '>';
+                });
+                thumbs.innerHTML = html;
+                
+                // 갤러리 네비게이션 재초기화
+                currentImageIndex = 0;
+                initGalleryNavigation();
+                
+                // 총 이미지 수 업데이트
+                var totalCountEl = document.getElementById('totalImageCount');
+                if (totalCountEl) {
+                    totalCountEl.textContent = data.images.length;
+                }
+            } else {
+                // 이미지가 없는 경우 기본 이미지로
+                document.getElementById('mainImage').src = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80';
+                document.getElementById('galleryThumbs').innerHTML = '';
+                
+                // 갤러리 네비게이션 재초기화
+                currentImageIndex = 0;
+                galleryImages = ['https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80'];
+                updateGalleryCounter();
+                updateNavButtonsVisibility();
+                
+                var totalCountEl = document.getElementById('totalImageCount');
+                if (totalCountEl) {
+                    totalCountEl.textContent = 1;
+                }
+            }
+        });
+}
+
+// ==================== 갤러리 네비게이션 ====================
+var currentImageIndex = 0;
+var galleryImages = [];
+
+// 페이지 로드시 갤러리 초기화
+document.addEventListener('DOMContentLoaded', function() {
+    initGalleryNavigation();
+});
+
+function initGalleryNavigation() {
+    var thumbs = document.querySelectorAll('#galleryThumbs img');
+    galleryImages = Array.from(thumbs).map(function(img) {
+        return img.src;
+    });
+    
+    // 이미지가 없으면 기본 이미지 사용
+    if (galleryImages.length === 0) {
+        galleryImages = ['https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80'];
+    }
+    
+    updateGalleryCounter();
+    updateNavButtonsVisibility();
+}
+
+function prevImage() {
+    if (galleryImages.length <= 1) return;
+    
+    currentImageIndex--;
+    if (currentImageIndex < 0) {
+        currentImageIndex = galleryImages.length - 1;
+    }
+    updateMainImage();
+}
+
+function nextImage() {
+    if (galleryImages.length <= 1) return;
+    
+    currentImageIndex++;
+    if (currentImageIndex >= galleryImages.length) {
+        currentImageIndex = 0;
+    }
+    updateMainImage();
+}
+
+function updateMainImage() {
+    var mainImage = document.getElementById('mainImage');
+    mainImage.style.opacity = '0';
+    
+    setTimeout(function() {
+        mainImage.src = galleryImages[currentImageIndex];
+        mainImage.style.opacity = '1';
+    }, 150);
+    
+    updateGalleryCounter();
+    updateThumbnailActive();
+}
+
+function updateGalleryCounter() {
+    var counterEl = document.getElementById('currentImageIndex');
+    if (counterEl) {
+        counterEl.textContent = currentImageIndex + 1;
+    }
+}
+
+function updateThumbnailActive() {
+    var thumbs = document.querySelectorAll('#galleryThumbs img');
+    thumbs.forEach(function(thumb, index) {
+        if (index === currentImageIndex) {
+            thumb.classList.add('active');
+        } else {
+            thumb.classList.remove('active');
+        }
+    });
+}
+
+function updateNavButtonsVisibility() {
+    var prevBtn = document.querySelector('.gallery-prev');
+    var nextBtn = document.querySelector('.gallery-next');
+    var counter = document.querySelector('.gallery-counter');
+    
+    if (galleryImages.length <= 1) {
+        if (prevBtn) prevBtn.style.display = 'none';
+        if (nextBtn) nextBtn.style.display = 'none';
+        if (counter) counter.style.display = 'none';
+    }
+}

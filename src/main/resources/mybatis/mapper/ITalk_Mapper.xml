@@ -176,8 +176,8 @@
       ) rnum
       FROM (
         SELECT 
-        	(SELECT NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = b.WRITER_NO) AS writer_nickname
-          , (SELECT MEM_ID FROM MEMBER m WHERE m.MEM_NO = b.WRITER_NO) AS writer_id
+        	(SELECT NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = b.WRITER_NO) AS  writerNickname
+          , (SELECT MEM_ID FROM MEMBER m WHERE m.MEM_NO = b.WRITER_NO) AS writerId
           , b.BOARD_NO          
           , b.BOARD_CTGRY_CD  
           , b.WRITER_NO
@@ -219,5 +219,28 @@
     WHERE BOARD_NO = #{value}
       AND DEL_YN = 'N'
   </update>
+
+<!-- 태그 delete -->
+ <delete id="deleteTalkTags" parameterType="int">
+    DELETE FROM BOARD_TAG 
+    WHERE BOARD_NO = #{boardNo}
+</delete>
+
+<!-- 태그 insert -->
+<insert id="insertTalkTags" parameterType="java.util.List">
+    INSERT INTO Board_Tag (
+        BOARD_TAG_NO, 
+        BOARD_NO, 
+        BOARD_TAG_NAME
+    )
+    SELECT SEQ_TALK_TAG.NEXTVAL, A.* FROM (
+        <foreach collection="list" item="t" separator=" UNION ALL ">
+            SELECT #{t.boardNo} AS BOARD_NO, 
+                   #{t.boardTagName} AS BOARD_TAG_NAME 
+            FROM DUAL
+        </foreach>
+    ) A
+</insert>
+ 
 
 </mapper>

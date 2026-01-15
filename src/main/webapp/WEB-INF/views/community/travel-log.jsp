@@ -75,9 +75,18 @@
 					
 					<div class="travellog-card-header">
 						<!-- 프로필 이미지: 지금 VO에 없으니 임시 고정(나중에 memProfile 등 컬럼/조인으로 교체) -->
-						<img
-							src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
-							alt="프로필" class="travellog-avatar">
+						<c:choose>
+						  <c:when test="${not empty row.profilePath}">
+						    <img src="${pageContext.request.contextPath}/files${row.profilePath}"
+						         alt="프로필" class="travellog-avatar"
+						         >
+						  </c:when>
+						  <c:otherwise>
+						    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+						         alt="프로필" class="travellog-avatar">
+						  </c:otherwise>
+						</c:choose>
+
 
 						<div class="travellog-user-info">
 							<!-- 작성자 아이디 -->

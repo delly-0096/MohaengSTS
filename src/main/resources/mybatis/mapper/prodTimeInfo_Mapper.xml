@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.tour.mapper.IProdTimeInfoMapper">
+
+	<!-- 예약 가능 시간 목록 조회 -->
+    <select id="getAvailableTimes" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
+        SELECT 
+            TIME_INFO_NO,
+            TRIP_PROD_NO,
+            RSVT_AVAILABLE_TIME
+        FROM PROD_TIME_INFO
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+        ORDER BY RSVT_AVAILABLE_TIME
+    </select>
+    
+</mapper>

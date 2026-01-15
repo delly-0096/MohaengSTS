@@ -1587,3 +1587,36 @@
         font-size: 12px;
     }
 }
+/* 단체 예약 안내 메시지 */
+.group-booking-notice {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: #fff7ed;
+    border: 1px solid #fed7aa;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #c2410c;
+    line-height: 1.5;
+    animation: slideIn 0.3s ease-out;
+}
+
+.group-booking-notice i {
+    color: #ea580c;
+}
+
+.group-booking-notice a {
+    color: #ea580c;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.group-booking-notice a:hover {
+    color: #c2410c;
+}
+
+/* 버튼 비활성화 스타일 */
+.booking-actions .btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

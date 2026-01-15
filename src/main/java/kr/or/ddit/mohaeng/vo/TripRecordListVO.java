@@ -26,5 +26,7 @@ public class TripRecordListVO {
     private String deleteYn;  	 // DELETE_YN
     
     private Long myLiked; // 로그인한 일반회원이 이 글을 좋아요 했으면 1, 아니면 0
+    
+    private String profilePath; // 작성자 프로필 이미지 경로 ("/.../xxx.jpg")
 
 }

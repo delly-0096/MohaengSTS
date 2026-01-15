@@ -284,12 +284,12 @@ public class FileServiceImpl implements IFileService{
 
 	@Override
 	public List<AttachFileDetailVO> getAttachFileDetails(int attachNo) {
-		return fileMapper.selectAttachFileDetailList(attachNo);
+		return fileMapper.getAttachFileDetails(attachNo);
 	}
 
 	@Override
 	public int softDeleteFile(int attachNo, int fileNo) {
-		return fileMapper.softDeleteAttachFileDetail(attachNo, fileNo);
+		return fileMapper.softDeleteFile(attachNo, fileNo);
 	}
 
 	@Override
@@ -337,7 +337,7 @@ public class FileServiceImpl implements IFileService{
 	            detailVO.setMimyType(file.getContentType());
 	            detailVO.setRegId(regId);
 	            
-	            fileMapper.insertAttachFileDetailToExisting(detailVO);
+	            fileMapper.addFilesToAttach(detailVO);
 	            
 	        } catch (IOException e) {
 	            log.error("파일 저장 중 오류 발생: {}", e.getMessage());

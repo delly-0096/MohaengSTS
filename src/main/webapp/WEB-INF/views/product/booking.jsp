@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <c:set var="pageTitle" value="결제하기" />
 <c:set var="pageCss" value="product" />
@@ -35,7 +36,7 @@
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">이용 날짜 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control date-picker" id="useDate"
+                                    <input type="text" class="form-control booking-date" id="useDate"
                                            placeholder="날짜를 선택하세요" required>
                                 </div>
                             </div>
@@ -43,14 +44,23 @@
                                 <div class="form-group">
                                     <label class="form-label">희망 시간 <span class="text-danger">*</span></label>
                                     <select class="form-control form-select" id="useTime" required>
-                                        <option value="">시간을 선택하세요</option>
-                                        <option value="09:00">09:00</option>
-                                        <option value="10:00">10:00</option>
-                                        <option value="11:00">11:00</option>
-                                        <option value="14:00">14:00</option>
-                                        <option value="15:00">15:00</option>
-                                        <option value="16:00">16:00</option>
-                                    </select>
+							            <option value="">시간을 선택하세요</option>
+							            <c:choose>
+							                <c:when test="${not empty availableTimes}">
+							                    <c:forEach items="${availableTimes}" var="timeInfo">
+							                        <option value="${timeInfo.rsvtAvailableTime}">${timeInfo.rsvtAvailableTime}</option>
+							                    </c:forEach>
+							                </c:when>
+							                <c:otherwise>
+							                    <option value="09:00">09:00</option>
+							                    <option value="10:00">10:00</option>
+							                    <option value="11:00">11:00</option>
+							                    <option value="14:00">14:00</option>
+							                    <option value="15:00">15:00</option>
+							                    <option value="16:00">16:00</option>
+							                </c:otherwise>
+							            </c:choose>
+							        </select>
                                 </div>
                             </div>
                         </div>
@@ -64,21 +74,21 @@
                                 <div class="form-group">
                                     <label class="form-label">이름 <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="bookerName"
-                                           value="${sessionScope.loginUser.userName}" required>
+                                           value="${member.memName}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">연락처 <span class="text-danger">*</span></label>
                                     <input type="tel" class="form-control" id="bookerPhone"
-                                           value="${sessionScope.loginUser.phone}" placeholder="010-0000-0000" required>
+                                           value="${memUser.tel}" placeholder="010-0000-0000" required>
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-group mb-0">
                                     <label class="form-label">이메일 <span class="text-danger">*</span></label>
                                     <input type="email" class="form-control" id="bookerEmail"
-                                           value="${sessionScope.loginUser.email}" required>
+                                           value="${member.memEmail}" required>
                                     <small class="text-muted">결제 확인 메일이 발송됩니다.</small>
                                 </div>
                             </div>
@@ -100,12 +110,14 @@
                         <div class="point-use-container">
                             <div class="point-balance">
                                 <span class="point-label">보유 포인트</span>
-                                <span class="point-value" id="availablePoints">15,000 P</span>
+                                <span class="point-value" id="availablePoints">
+                                	<fmt:formatNumber value="${member.point}" pattern="#,###"/> P
+                                </span>
                             </div>
                             <div class="point-input-group">
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="usePointInput"
-                                           placeholder="0" min="0" max="15000" value="0">
+                                           placeholder="0" min="0" max="${member.point}" value="0">
                                     <span class="input-group-text">P</span>
                                 </div>
                                 <div class="point-buttons">
@@ -127,7 +139,7 @@
                     <!-- 결제 수단 -->
                     <div class="booking-section">
                         <h3><i class="bi bi-credit-card me-2"></i>결제 수단</h3>
-                        <div class="payment-methods">
+                        <!-- <div class="payment-methods">
                             <label class="payment-method">
                                 <input type="radio" name="paymentMethod" value="card" checked>
                                 <div class="payment-method-content">
@@ -156,7 +168,10 @@
                                     <span>계좌이체</span>
                                 </div>
                             </label>
-                        </div>
+                        </div> -->
+                        <div class="payment-container">
+						    <div id="payment-method"></div>
+						</div>
                     </div>
 
                     <!-- 약관 동의 -->
@@ -190,7 +205,7 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100 pay-btn">
+                    <button type="submit" id="payment-button" class="btn btn-primary btn-lg w-100 pay-btn">
                         <i class="bi bi-lock me-2"></i><span id="payBtnText">136,000원 결제하기</span>
                     </button>
                 </form>
@@ -202,12 +217,21 @@
                     <h4>결제 정보</h4>
 
                     <div class="summary-product-single">
-                        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&h=200&fit=crop&q=80" alt="상품 이미지">
-                        <div class="summary-product-info">
-                            <h5>제주 스쿠버다이빙 체험 (초보자 가능)</h5>
-                            <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 중문</p>
-                        </div>
-                    </div>
+					    <c:choose>
+					        <c:when test="${not empty productImages}">
+					            <img src="${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}" 
+					                 alt="${tp.tripProdTitle}">
+					        </c:when>
+					        <c:otherwise>
+					            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&h=200&fit=crop&q=80" 
+					                 alt="상품 이미지">
+					        </c:otherwise>
+					    </c:choose>
+					    <div class="summary-product-info">
+					        <h5>${tp.tripProdTitle}</h5>
+					        <p><i class="bi bi-geo-alt"></i> ${tp.ctyNm}</p>
+					    </div>
+					</div>
 
                     <div class="summary-details">
                         <div class="summary-row" id="useDateRow" style="display: none;">
@@ -677,21 +701,25 @@
 </style>
 
 <script>
-var pricePerPerson = 68000;
-var peopleCount = 2; // URL 파라미터에서 가져올 수 있음
-var availablePoints = 15000; // 보유 포인트 (서버에서 가져올 값)
+var pricePerPerson = ${sale.price};
+var peopleCount = 2; // URL 파라미터에서 가져올 인원수
+var availablePoints = ${member.point}; // 보유 포인트
 var appliedPoints = 0; // 적용된 포인트
+var totalPrice = 0;
+var saleEndDt = '<fmt:formatDate value="${tp.saleEndDt}" pattern="yyyy-MM-dd"/>';
+let widgets = null;
 
 // 페이지 로드
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     // URL 파라미터에서 정보 가져오기
     var urlParams = new URLSearchParams(window.location.search);
     var date = urlParams.get('date');
     var time = urlParams.get('time');
     var people = urlParams.get('people');
 
+    initDatePicker(date);
+
     if (date) {
-        document.getElementById('useDate').value = date;
         document.getElementById('useDateRow').style.display = 'flex';
         document.getElementById('summaryDate').textContent = date;
     }
@@ -705,20 +733,21 @@ document.addEventListener('DOMContentLoaded', function() {
     if (people) {
         peopleCount = parseInt(people);
         document.getElementById('summaryPeople').textContent = peopleCount + '명';
-        updateTotalPrice();
     }
 
-    initDatePicker();
+    updateTotalPrice();
+    
+    await main();
 });
 
 // 총 금액 업데이트
 function updateTotalPrice() {
     var subtotal = pricePerPerson * peopleCount;
-    var total = subtotal - appliedPoints;
-    if (total < 0) total = 0;
+    totalPrice = subtotal - appliedPoints;
+    if (totalPrice < 0) totalPrice = 0;
 
-    document.getElementById('totalAmount').textContent = total.toLocaleString() + '원';
-    document.getElementById('payBtnText').textContent = total.toLocaleString() + '원 결제하기';
+    document.getElementById('totalAmount').textContent = totalPrice.toLocaleString() + '원';
+    document.getElementById('payBtnText').textContent = totalPrice.toLocaleString() + '원 결제하기';
 
     // 상품 금액 업데이트
     document.getElementById('summaryProductPrice').textContent =
@@ -792,12 +821,14 @@ function cancelPoints() {
 }
 
 // 날짜 선택 초기화
-function initDatePicker() {
+function initDatePicker(defaultDate) {
     var dateInput = document.getElementById('useDate');
     if (dateInput && typeof flatpickr !== 'undefined') {
         flatpickr(dateInput, {
             dateFormat: 'Y-m-d',
             minDate: 'today',
+            maxDate: saleEndDt,
+            defaultDate: defaultDate || null,
             locale: 'ko',
             onChange: function(selectedDates, dateStr) {
                 document.getElementById('useDateRow').style.display = 'flex';
@@ -813,6 +844,95 @@ function initDatePicker() {
             document.getElementById('summaryTime').textContent = this.value;
         }
     });
+}
+
+async function main() {
+	const button = document.getElementById("payment-button");
+
+  	// ------  결제위젯 초기화 ------
+	const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+	const customerKey = "MyKgi0HwDJKFeRDGmc_wM";
+
+	const tossPayments = TossPayments(clientKey);
+	widgets = tossPayments.widgets({
+	  customerKey,
+	});
+	
+	// 비회원 결제 const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
+	
+	// ------ 주문의 결제 금액 설정 ------
+	await widgets.setAmount({
+	  currency: "KRW",
+	  value: totalPrice,
+	});
+	
+	console.log("totalPrice : ", totalPrice);
+	await Promise.all([
+	  // ------  결제 UI 렌더링 ------
+	  widgets.renderPaymentMethods({
+	    selector: "#payment-method",
+	    variantKey: "DEFAULT",
+	  }),
+	  // ------  이용약관 UI 렌더링 ------
+// 	  widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" }),
+	]);
+	
+	// 결제 form
+	const bookingForm = document.querySelector("#bookingInfoForm");
+	bookingForm.addEventListener("submit", async function(e){
+		e.preventDefault();
+
+		// 예약 정보
+		/* reservationList.push({
+			totalPrice : (parseInt(bookingData.flights[0].price) * totalPeople) + totalOutMoney,
+			memNo: customData.memNo
+		}); */
+		
+	    /* if(bookingData.tripType === 'round'){
+	    	reservationList.push({
+				totalPrice : (parseInt(bookingData.flights[1].price) * totalPeople) + totalInMoney,
+	    		memNo: customData.memNo
+    		});
+	    } */
+		
+		/* sessionStorage.setItem("reservationList", JSON.stringify(reservationList)); */
+		
+	    
+	    // 필수 약관 체크 확인 - 이것도 테이블에 담기
+	    let allAgreed = true;
+	    document.querySelectorAll('.agree-item').forEach(function(agree) {
+	        if (!agree.checked) allAgreed = false;
+	    });
+
+	    if (!allAgreed) {
+	        showToast('필수 약관에 동의해주세요.', 'error');
+	        return;
+	    }
+	    
+	    const reserveAgree = {
+	    	mktRecvAgreeYn : (document.getElementById('agreeMarketing').checked) ? 'Y' : 'N' 
+	    }
+	    
+	    console.log("reserveAgree : ", reserveAgree);
+		sessionStorage.setItem("reserveAgree", JSON.stringify(reserveAgree));
+	    
+		let orderName = currentSearchType === 'round' ?
+				bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm
+				+ bookingData.flights[1].startDt + " " + bookingData.flights[1].arrAirportNm + " " + bookingData.flights[1].airlineNm
+				: bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm;
+		
+		const timeStamp = Date.now();
+		await widgets.requestPayment({
+			orderId: "FLT-" + bookingData.flights[0].startDt + "-" + customData.memNo + "-" + timeStamp,			// 예약번호
+			orderName: orderName,
+			// paymentKey, paymentType, amount는 기본적으로 포함되어 있음
+			successUrl: window.location.origin + "/product/payment/flight",	// 성공 위치 - 리다이렉트로 이동
+			failUrl: window.location.origin + "/product/payment/error",		// 실패 위치 - 같은곳으로 보내자
+			customerEmail: customData.memEmail,								// 결제자 이메일
+			customerName: customData.memName,								// 결제자 이름
+			customerMobilePhone: customData.tel								// 결제자 전화번호
+		});
+	});
 }
 
 // 전체 동의 토글

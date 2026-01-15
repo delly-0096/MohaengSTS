@@ -591,16 +591,6 @@ function createFlightCardHtml(flight, labelClass) {
  	             </div>
  	         </div>
  	     </div>`
-		// type이 adult만 있을때
-// 								<span id="child">소아 \${(childPrice).toLocaleString()}</span>원<br/>
-// 						<span id="infant">유아 0원</span>
-	if(passengerType.child === 0 && passengerType.infant === 0){
-		html += `<span class="flight-price"> \${(flight.price).toLocaleString()}원</span>
-             </div>
-         </div>
-     </div>`;
-	 	return html;
-	}
 }
 
 // 사이드바 구간 HTML 생성

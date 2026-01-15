@@ -460,6 +460,12 @@ let schdlNm = "${ schedule.schdlNm }";
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
+const tourContentList = {
+    <c:forEach items="${ tourContentList }" var="content">
+        ${ content.contentTypeId } : '${ content.contentTypeName }',
+    </c:forEach>
+};
+
 // 일차 데이터 저장
 let dayData = {
 	<c:forEach items="${ schedule.tripScheduleDetailsList }" var="detail">
@@ -774,7 +780,7 @@ function confirmAddPlace() {
         '</div>' +
         '<div class="planner-item-content">' +
             '<span class="planner-item-name">' + selectedItem.name + '</span>' +
-            '<span class="planner-item-category">' + selectedItem.category + '</span>' +
+            '<span class="planner-item-category"> ' + selectedItem.category + '</span>' +
         '</div>' +
         '<div class="planner-item-cost">' +
             '<input type="text" class="cost-input" value="0" placeholder="0" onclick="this.select()" onchange="updateItemCost(' + selectedDay + ', ' + newItemId + ', this.value)">' +
@@ -1300,14 +1306,14 @@ async function initTourPlaceList(areaCode) {
 		             alt="\${ tourPlace.title }" class="search-result-image">
 		        <div class="search-result-content">
 		            <h5 class="search-result-name">\${ tourPlace.title }</h5>
-		            <span class="search-result-category">관광지 · 자연</span>
+		            <span class="search-result-category">\${getContentTypeName(tourPlace.contenttypeid)} · 자연</span>
 		            <div class="search-result-rating">
 		                <i class="bi bi-star-fill"></i>
 		                <span>4.8</span>
 		                <span class="text-muted">(1,234)</span>
 		            </div>
 		        </div>
-		        <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '관광지', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')">
+		        <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '\${getContentTypeName(tourPlace.contenttypeid)}', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')">
 		            <i class="bi bi-plus"></i>
 		        </button>
 		    </div>
@@ -1364,6 +1370,10 @@ function initTemplate() {
 //         document.getElementById('tripDates').textContent = preferenceData.travelDates;
 //     }
     
+}
+
+function getContentTypeName(contentTypeId) {
+    return tourContentList[contentTypeId] || '기타';
 }
 
 </script>

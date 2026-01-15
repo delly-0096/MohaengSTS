@@ -3,6 +3,7 @@ package kr.or.ddit.mohaeng.tripschedule.service;
 import java.util.List;
 import java.util.Map;
 
+import kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController.ThumbnailData;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleVO;
@@ -43,4 +44,10 @@ public interface ITripScheduleService {
 	public void refreshScheduleStates();
 
 	public int updateTripSchedule(Params params);
+
+	public int updateScheduleThumbnail(ThumbnailData thumbnailData);
+
+	public List<Params> tourContentList();
+
+	public void updateTripScheduleState();
 }

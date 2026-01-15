@@ -1886,6 +1886,7 @@ const currentUser = {
 };
 console.log("확인용 유저 정보:", currentUser);
 
+
 //현재 채팅방 정보
 let currentChatRoom = null;
 let chatMessages = [];
@@ -1934,6 +1935,7 @@ function closeChatRoomModal(event) {
  if (event.target === event.currentTarget) {
      closeChatRoomList();
  }
+ 
 }
 
 //채팅방 목록 렌더링

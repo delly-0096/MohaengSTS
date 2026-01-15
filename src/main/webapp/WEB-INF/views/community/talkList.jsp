@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
 
 <c:set var="pageTitle" value="여행톡" />
 <c:set var="pageCss" value="community" />
@@ -276,6 +278,7 @@
     </div>
 </div>
 
+
 <!-- 채팅방 목록 모달 -->
 <div class="chat-modal-overlay" id="chatRoomModal" onclick="closeChatRoomModal(event)">
     <div class="chat-modal" onclick="event.stopPropagation()">
@@ -328,8 +331,8 @@
 <div class="chat-window" id="chatWindow">
     <div class="chat-window-header">
         <div class="chat-room-info">
-            <span class="chat-room-category-badge" id="chatRoomBadge">자유</span>
-            <h4 id="chatRoomTitle">채팅방 이름</h4>
+            <span class="chat-room-category-badge" id="chatRoomBadge">${room.chatCtgryName }</span>
+            <h4 id="chatRoomTitle">${room.chatName }</h4>
             <span class="chat-room-users"><i class="bi bi-people-fill"></i> <span id="chatUserCount">0</span>명</span>
         </div>
         <div class="chat-window-actions">
@@ -357,7 +360,6 @@
             <button onclick="toggleChatUserList()"><i class="bi bi-x"></i></button>
         </div>
         <div class="chat-user-list" id="chatUserList">
-            <!-- 참여자 목록이 여기에 표시됨 -->
         </div>
     </div>
 
@@ -379,8 +381,7 @@
                 <i class="bi bi-paperclip"></i>
             </button>
         </div>
-        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." maxlength="500"
-               onkeydown="handleChatKeydown(event)">
+        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." maxlength="500" onkeydown="handleKeydown(event)">
         <button class="chat-send-btn" onclick="sendMessage()">
             <i class="bi bi-send-fill"></i>
         </button>
@@ -396,6 +397,7 @@
     <span id="chatMinimizedTitle">채팅방</span>
     <span class="chat-unread-badge" id="chatUnreadBadge">0</span>
 </div>
+
 
 <style>
 /* ==================== 채팅 버튼 영역 ==================== */
@@ -1712,10 +1714,18 @@
 }
 </style>
 
+<!-- Security 변수 추출  -->
+<sec:authentication property="principal" var="principal" />
+<sec:authorize access="isAuthenticated()">
+    <%-- 시큐리티의 principal 객체에서 직접 변수 추출 --%>
+    <c:set var="myId" value="${principal.member.memId}" />
+    <c:set var="myName" value="${principal.member.memName}" />
+    <c:set var= "myNickname" value="${principal.member.memUser.nickname}"/>
+</sec:authorize>
 <script>
-
 const api = (path) => contextPath + (path.startsWith('/') ? path : '/' + path);
 
+console.log("${principal.member.memUser}");
 // 현재 선택된 카테고리
 let currentCategory = 'all';
 
@@ -1861,158 +1871,153 @@ function writePost() {
     window.location.href = '${pageContext.request.contextPath}/community/talk/write';
 }
 
-// ==================== 실시간 채팅 기능 ====================
 
-// 현재 사용자 정보
+//==================== 실시간 채팅 기능 ====================
+
+	let stompClient = null;
+	let currentChatId = null;
+	
+//현재 사용자 정보
 const currentUser = {
-    isLoggedIn: ${pageContext.request.userPrincipal != null},
-    id: <sec:authorize access="isAuthenticated()">
-            '${principal.member.memId}'
-        </sec:authorize>
-        <sec:authorize access="isAnonymous()">
-            null
-        </sec:authorize>,
-    name: <sec:authorize access="isAuthenticated()">
-              '${principal.member.memName}'
-          </sec:authorize>
-          <sec:authorize access="isAnonymous()">
-              '게스트'
-          </sec:authorize>
+		isLoggedIn: ${not empty myName ? true : false},
+	    id: '${not empty myId ? myId : ""}',
+	    name: '${not empty myName ? myName : "게스트"}',
+	    nickname : '${not empty myNickname ? myNickname : myName}'
 };
+console.log("확인용 유저 정보:", currentUser);
 
-// 현재 채팅방 정보
+
+//현재 채팅방 정보
 let currentChatRoom = null;
 let chatMessages = [];
 let chatUsers = [];
 let unreadCount = 0;
 let chatSimulationInterval = null;
 
-// 카테고리 아이콘 매핑
+//카테고리 아이콘 매핑
 const categoryIcons = {
-    'FREE': 'bi-chat-dots',
-    'COMPANION': 'bi-people',
-    'REGION': 'bi-geo-alt',
-    'THEME': 'bi-palette'
+ 'FREE': 'bi-chat-dots',
+ 'COMPANION': 'bi-people',
+ 'REGION': 'bi-geo-alt',
+ 'THEME': 'bi-palette'
 };
 
-// ==================== 채팅방 목록 모달 ====================
+//==================== 채팅방 목록 모달 ====================
 
-// 채팅방 목록 열기
+//채팅방 목록 열기
 function openChatRoomList() {
-    document.getElementById('chatRoomModal').classList.add('active');
-    loadChatRooms();
-    document.body.style.overflow = 'hidden';
+ document.getElementById('chatRoomModal').classList.add('active');
+ loadChatRooms();
+ document.body.style.overflow = 'hidden';
 }
 
-function  loadChatRooms(category) {
+function loadChatRooms(category) {
 	let url = api('/chat/rooms');
 	if(category) {
 		url += '?category=' + category;
 	}
-    fetch(url)
-    .then(res => res.json())
-    .then(data => {
-        console.log('📦 raw response data:', data);
-        renderChatRoomListFromServer(data);
-    });
+ fetch(url)
+ .then(res => res.json())
+ .then(data => {
+     console.log('📦 raw response data:', data);
+     renderChatRoomListFromServer(data);
+ });
 }
 
-// 채팅방 목록 닫기
+//채팅방 목록 닫기
 function closeChatRoomList() {
-    document.getElementById('chatRoomModal').classList.remove('active');
-    document.body.style.overflow = '';
+ document.getElementById('chatRoomModal').classList.remove('active');
+ document.body.style.overflow = '';  
 }
 
-// 오버레이 클릭 시 닫기
+//오버레이 클릭 시 닫기
 function closeChatRoomModal(event) {
-    if (event.target === event.currentTarget) {
-        closeChatRoomList();
-    }
+ if (event.target === event.currentTarget) {
+     closeChatRoomList();
+ }
 }
 
-// 채팅방 목록 렌더링
+//채팅방 목록 렌더링
 function renderChatRoomListFromServer(rooms) {
 	const listEl = document.getElementById('chatRoomList');
 
-    if (!rooms || rooms.length === 0) {
-        listEl.innerHTML = '<div class="no-chat-rooms">현재 열린 채팅방이 없습니다</div>';
-        return;
-    }
+ if (!rooms || rooms.length === 0) {
+     listEl.innerHTML = '<div class="no-chat-rooms">현재 열린 채팅방이 없습니다</div>';
+     return;
+ }
 
-    let html = '';
-    rooms.forEach(room => {
-    	console.log('room:', room, 'chatId:', room.chatId);
-        html += `
-        <div class="chat-room-item \${room.full ? 'full' : ''}"
-             onclick="joinChatRoom(\${room.chatId})">
-            <div class="chat-room-details">
-                <div class="chat-room-name">
-                    \${room.chatName}
-                    \${room.full ? '<span class="badge bg-danger">만석</span>' : ''}
-                </div>
-                <div class="chat-room-meta">
-                    <span>\${room.chatCtgryName}</span>
-                    <span>\${room.createdByNickname} (\${room.createdById})</span>
-                </div>
-            </div>
-            <div class="chat-room-users-count">
-           	 \${room.currentUsers}/\${room.maxUsers}
-            </div>
-        </div>
-        `;
-    });
-    
-    console.log("room :::::: ", rooms);
+ let html = '';
+ rooms.forEach(room => {
+     html += `
+     <div class="chat-room-item \${room.full ? 'full' : ''}"
+          onclick="joinChatRoom(\${room.chatId})">
+         <div class="chat-room-details">
+             <div class="chat-room-name">
+                 \${room.chatName}
+                 \${room.full ? '<span class="badge bg-danger">만석</span>' : ''}
+             </div>
+             <div class="chat-room-meta">
+                 <span>\${room.chatCtgryName}</span>
+                 <span>\${room.createdByNickname} (\${room.createdById})</span>
+             </div>
+         </div>
+         <div class="chat-room-users-count">
+        	 \${room.currentUsers}/\${room.maxUsers}
+         </div>
+     </div>
+     `;
+ });
+ 
 
-    listEl.innerHTML = html;
+ listEl.innerHTML = html;
 }
 
-// 채팅방 필터
+//채팅방 필터
 document.querySelectorAll('.chat-filter-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.chat-filter-btn').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        renderChatRoomList(this.dataset.filter);
-    });
+ btn.addEventListener('click', function() {
+     document.querySelectorAll('.chat-filter-btn').forEach(b => b.classList.remove('active'));
+     this.classList.add('active');
+     renderChatRoomList(this.dataset.filter);
+ });
 });
 
-// ==================== 채팅방 생성 ====================
+//==================== 채팅방 생성 ====================
 
-// 생성 폼 열기
+//생성 폼 열기
 function openCreateRoomForm() {
-    if (!currentUser.isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            sessionStorage.setItem('returnUrl', window.location.href);
-            window.location.href = '${pageContext.request.contextPath}/member/login';
-        }
-        return;
-    }
+ if (!currentUser.isLoggedIn) {
+     if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+         sessionStorage.setItem('returnUrl', window.location.href);
+         window.location.href = '${pageContext.request.contextPath}/member/login';
+     }
+     return;
+ }
 
-    document.getElementById('createRoomForm').style.display = 'flex';
-    document.getElementById('newRoomName').focus();
+ document.getElementById('createRoomForm').style.display = 'flex';
+ document.getElementById('newRoomName').focus();
 }
 
-// 생성 폼 닫기
+//생성 폼 닫기
 function cancelCreateRoom() {
-    document.getElementById('createRoomForm').style.display = 'none';
-    document.getElementById('newRoomName').value = '';
+ document.getElementById('createRoomForm').style.display = 'none';
+ document.getElementById('newRoomName').value = '';
 }
 
-// 채팅방 생성
+//채팅방 생성
 function createChatRoom() {
-    const name = document.getElementById('newRoomName').value.trim();
-    const category = document.getElementById('newRoomCategory').value;
-    const maxUsers = parseInt(document.getElementById('newRoomMaxUsers').value) || 50;
+ const name = document.getElementById('newRoomName').value.trim();
+ const category = document.getElementById('newRoomCategory').value;
+ const maxUsers = parseInt(document.getElementById('newRoomMaxUsers').value) || 50;
 
-    if (!name) {
-        showToast('채팅방 이름을 입력해주세요.', 'warning');
-        return;
-    }
+ if (!name) {
+     showToast('채팅방 이름을 입력해주세요.', 'warning');
+     return;
+ }
 
-    if (name.length < 2 || name.length > 30) {
-        showToast('채팅방 이름은 2~30자로 입력해주세요.', 'warning');
-        return;
-    }
+ if (name.length < 2 || name.length > 30) {
+     showToast('채팅방 이름은 2~30자로 입력해주세요.', 'warning');
+     return;
+ }
 
 	const formData = new FormData();
 	formData.append('chatName', name);
@@ -2035,8 +2040,11 @@ function createChatRoom() {
 		// 생성 폼 닫기
 		cancelCreateRoom();
 		
-		joinChatRoom(data.chatId);
-		
+		const chatId = data.chatId;
+
+	    joinChatRoom(chatId);
+	    connectChat(chatId);   // ✅ chatId 직접 전달
+	    
 		// 서버 기준으로 채팅방 목록 다시 불러오기
 		loadChatRooms();
 	})
@@ -2045,225 +2053,438 @@ function createChatRoom() {
 		showToast('채팅방 생성 중 오류가 발생했습니다.', 'error');
 	});
 }
+//==================== 웹소켓 연결 ====================
+function connectChat(chatId) {
+    // 기존에 연결된 소켓이 있다면 먼저 끊어줍니다.
+    if (stompClient !== null && stompClient.connected) {
+        console.log('🔄 기존 연결을 해제하고 새로 연결합니다.');
+        stompClient.disconnect();
+    }
 
-// ==================== 채팅 참여 ====================
+    console.log('🚀 연결 시도 중... chatId:', chatId);
+    currentChatId = chatId;
+    
+    const socket = new SockJS(contextPath + '/ws'); 
+    stompClient = Stomp.over(socket);
 
-// 채팅방 참여
+    stompClient.connect({}, function (frame) {
+        console.log('✅ STOMP Connected: ' + frame);
+
+        stompClient.subscribe('/topic/chat/' + chatId, function (message) {
+            const data = JSON.parse(message.body);
+
+            // 🚨 방 폭파 신호 처리
+            if (data.type === 'ROOM_DELETED') {
+                alert(data.message);
+                if (typeof closeChatWindow === 'function') closeChatWindow();
+                location.reload(); 
+                return; 
+            }
+            
+            // 중복 렌더링 방지: 메시지 타입이 CHAT일 때만 렌더링
+            if(data.type === 'CHAT') {
+		        renderChatMessage(data);
+		    } 
+		    // 3. 시스템 메시지 (입장/퇴장)
+		    else if (data.type === 'ENTER' || data.type === 'LEAVE') {
+		        console.log("📢 시스템 메시지 처리:", data.type);
+		        
+		     // 💡 핵심: 필드명이 message인지 chatDesc인지 상관없이 텍스트를 추출합니다.
+		        const msgText = data.message || data.chatDesc || (data.sender + "님이 입장하셨습니다.");
+		        addSystemMessage(msgText); // 추출한 텍스트를 함수에 전달
+		        
+		        setTimeout(() => {
+		            console.log("🔄 명단 및 인원수 동기화 시작 (Type: " + data.type + ")");
+		            
+		            // 참여자 목록 새로고침
+		            if (typeof loadChatUserList === 'function') {
+		                loadChatUserList(chatId);
+		            }
+		            
+		            // 채팅방 목록(인원수) 새로고침
+		            if (typeof loadChatRooms === 'function') {
+		                loadChatRooms(); 
+		            }
+		        }, 200);
+		    }
+        });
+
+        // 입장 메시지 전송
+        stompClient.send('/app/chat/system', {}, JSON.stringify({
+            chatId: parseInt(chatId), 
+            sender: currentUser.nickname,
+            type: 'ENTER'
+        }));
+    }, function(error) {
+        console.error('❌ STOMP error:', error);
+    });
+}
+
+//=================== 메시지 렌더링 ======================
+function renderChatMessage(data) {
+	const box = document.getElementById('chatMessages');
+	if (!box || data.type !== 'CHAT') return;
+	
+	 // 환영 메시지 제거
+	const welcomeMsg = box.querySelector('.chat-welcome-message');
+	if (welcomeMsg) welcomeMsg.remove();
+	
+	const isMine = (data.memId === currentUser.id);
+	const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+	
+	if (data.type === 'CHAT') {
+	    addChatMessage(data.sender, data.message, time, isMine);
+	} else {
+	    addSystemMessage(data.message);
+	 }
+}
+
+
+
+//==================== 채팅 참여 ====================
+
+//채팅방 참여
+//🔥 REST 입장 성공 → STOMP 연결 → ENTER 메시지
 function joinChatRoom(chatId) {
-    if (!currentUser.isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            sessionStorage.setItem('returnUrl', window.location.href);
-            window.location.href = 'pageContext.request.contextPath}/member/login';
-        }
+ if (!currentUser.isLoggedIn) {
+     if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
+         sessionStorage.setItem('returnUrl', window.location.href);
+         window.location.href = '${pageContext.request.contextPath}/member/login';
+     }
+     return;
+ }
+ 
+     if (!chatId) {
+         console.error('❌ chatId is undefined');
+         return;
+     }
+     
+     fetch(api('/chat/room/' + chatId + '/join'), {
+     	method : 'POST'
+     })
+     .then(res => res.json())
+     .then(data => {
+     	console.log("📦 서버 응답 전체 데이터:", data);
+     	if(!data.success) {
+     		showToast(data.message, 'warning');
+     		return;
+     	}
+     	
+     	 // 채팅 목록 닫기
+     	 closeChatRoomList();
+     	 
+     	 // 선택한 채팅방 열기
+         openChatWindow();
+
+         // 과거 대화 내역 불러오기
+ 	     loadPreviousMessages(chatId);
+ 		
+         
+         if (data.room) {
+             document.getElementById('chatRoomTitle').textContent = data.room.chatName;
+             document.getElementById('chatRoomBadge').textContent = data.room.chatCtgryName;
+             document.getElementById('chatUserCount').textContent = data.room.currentUsers;
+         }
+         
+         if (data.userList) {
+             renderChatUserList(data.userList);
+         } else {
+         	loadChatUserList(chatId);
+         }
+         
+         connectChat(chatId);
+         
+         addSystemMessage(currentUser.name + '님이 입장하셨습니다.');
+     })
+     .catch(err => {
+         console.error(err);
+         showToast('채팅방 입장 중 오류가 발생했습니다.', 'error');
+     });
+}
+
+//채팅 윈도우 설정
+function setupChatWindow(room) {
+ document.getElementById('chatRoomBadge').textContent = room.categoryLabel;
+ document.getElementById('chatRoomTitle').textContent = room.name;
+ document.getElementById('chatUserCount').textContent = room.currentUsers;
+ document.getElementById('chatMinimizedTitle').textContent = room.name;
+
+ // 메시지 초기화
+ document.getElementById('chatMessages').innerHTML =
+     '<div class="chat-welcome-message">' +
+         '<i class="bi bi-chat-heart"></i>' +
+         '<p>"' + room.name + '" 채팅방에 오신 것을 환영합니다!</p>' +
+         '<span>서로 존중하며 즐거운 대화를 나눠보세요.</span>' +
+     '</div>';
+
+ // 참여자 목록 초기화
+ chatUsers = generateFakeUsers(room.currentUsers - 1);
+ chatUsers.push({ id: currentUser.id, name: currentUser.name, isMe: true, status: 'online' });
+ renderChatUserList();
+}
+
+//랜덤 마지막 접속 시간 생성
+function getRandomLastSeen() {
+ const times = ['5분 전', '10분 전', '30분 전', '1시간 전', '2시간 전'];
+ return times[Math.floor(Math.random() * times.length)];
+ 
+}
+
+//참여자 목록 렌더링
+function renderChatUserList(users) {
+ const listEl = document.getElementById('chatUserList');
+ if (!listEl) return;
+
+ if (!users || users.length === 0) {
+     listEl.innerHTML = '<div class="no-users">참여자가 없습니다.</div>';
+     const userCountEl = document.getElementById('chatUserCount');
+     if(userCountEl) userCountEl.textContent = '0';
+     return;
+ }
+
+ // 1. 서버에서 받은 users를 바로 정렬 (chatUsers 대신 users 사용)
+ const sortedUsers = [...users].sort((a, b) => {
+     const statusOrder = { 'online': 0, 'away': 1, 'offline': 2 };
+     const statusA = a.status || 'online';
+     const statusB = b.status || 'online';
+     return (statusOrder[statusA] || 0) - (statusOrder[statusB] || 0);
+ });
+ 
+ 
+ let html = '';
+
+
+ sortedUsers.forEach(user => {
+	 const name = user.memName || '익명';
+     const initial = name.charAt(0).toUpperCase();
+     // ID 비교 시 세션 아이디와 비교
+     const isMe = (user.memId === currentUser.id);
+     const status = user.status || 'online';
+     const statusText = status === 'online' ? '온라인' :
+                       status === 'away' ? '자리비움' : '오프라인';
+
+     html += '<div class="chat-user-item">' +
+         '<div class="chat-user-avatar">' +
+             initial +
+             '<span class="chat-user-status ' + status + '"></span>' +
+         '</div>' +
+         '<div class="chat-user-info">' +
+             '<span class="chat-user-name' + (user.isMe ? ' me' : '') + '">' +
+                 name + (isMe ? ' (나)' : '') +
+             '</span>' +
+             '<span class="chat-user-status-text ' + status + '">' + statusText + '</span>' +
+         '</div>' +
+     '</div>';
+ });
+
+ listEl.innerHTML = html;
+
+ // 온라인 수 업데이트
+ const userCountEl = document.getElementById('chatUserCount');
+ if(userCountEl) {
+ 	userCountEl.textContent = users.length;
+ }
+}
+
+//명단만 따로 불러오는 함수
+function loadChatUserList(chatId) {
+ fetch(api('/chat/room/' + chatId + '/users'))
+ .then(res => res.json())
+ .then(users => {
+     renderChatUserList(users);
+ })
+ .catch(err => console.error("명단 로드 실패 : ", err));
+}
+
+//==================== 이전 메시지 불러오기 ====================
+const chatWindow = document.getElementById('chatMessages');
+
+//  이전 메시지 로드 함수
+async function loadPreviousMessages(chatId) {
+	if (!chatId) {
+        console.warn("⚠️ chatId가 없어서 과거 내역 로드를 중단합니다.");
         return;
     }
-    console.log("chatId : ", chatId);
-    
-        if (!chatId) {
-            console.error('❌ chatId is undefined');
+	
+    try {
+    	const response = await fetch(api('/chat/room/' + chatId + '/messages'));
+        const messages = await response.json(); 
+        
+        console.log("받아온 이전 메시지들:", messages); 
+
+        const chatMessagesEl = document.getElementById('chatMessages');
+        if (!chatMessagesEl) {
+        	console.error("❌ chatMessages 요소를 찾을 수 없습니다.");
             return;
         }
-        
-        fetch(api(`/chat/room/\${chatId}/join`), {
-        	method : 'POST'
-        })
-        .then(res => res.json())
-        .then(data => {
-        	if(!data.success) {
-        		showToast(data.message, 'warning');
-        		return;
-        	}
-        	
-        	closeChatRoomList();
-            openChatWindow();
-            addSystemMessage(currentUser.name + '님이 입장하셨습니다.');
-        })
-        .catch(err => {
-            console.error(err);
-            showToast('채팅방 입장 중 오류가 발생했습니다.', 'error');
-    });
-}
 
-// 채팅 윈도우 설정
-function setupChatWindow(room) {
-    document.getElementById('chatRoomBadge').textContent = room.categoryLabel;
-    document.getElementById('chatRoomTitle').textContent = room.name;
-    document.getElementById('chatUserCount').textContent = room.currentUsers;
-    document.getElementById('chatMinimizedTitle').textContent = room.name;
-
-    // 메시지 초기화
-    document.getElementById('chatMessages').innerHTML =
-        '<div class="chat-welcome-message">' +
-            '<i class="bi bi-chat-heart"></i>' +
-            '<p>"' + room.name + '" 채팅방에 오신 것을 환영합니다!</p>' +
-            '<span>서로 존중하며 즐거운 대화를 나눠보세요.</span>' +
-        '</div>';
-
-    // 참여자 목록 초기화
-    chatUsers = generateFakeUsers(room.currentUsers - 1);
-    chatUsers.push({ id: currentUser.id, name: currentUser.name, isMe: true, status: 'online' });
-    renderChatUserList();
-}
-
-// 가상 사용자 생성
-function generateFakeUsers(count) {
-    const fakeNames = ['travel_kim', 'adventure_lee', 'trip_lover', 'wanderer', 'explorer_j',
-                       'nomad_s', 'journey_h', 'voyage_m', 'trek_park', 'globetrotter'];
-    const users = [];
-    for (let i = 0; i < Math.min(count, fakeNames.length); i++) {
-        // 랜덤하게 접속 상태 부여 (70% 온라인, 20% 자리비움, 10% 오프라인)
-        const rand = Math.random();
-        let status = 'online';
-        if (rand > 0.9) status = 'offline';
-        else if (rand > 0.7) status = 'away';
-
-        users.push({
-            id: 'user_' + i,
-            name: fakeNames[i],
-            isMe: false,
-            status: status,
-            lastSeen: status === 'offline' ? getRandomLastSeen() : null
-        });
+        chatMessagesEl.innerHTML = '';
+            
+        if (messages && messages.length > 0) {
+            messages.forEach((msg, index) => {
+                try {
+			        const displayNickname = msg.memNickname || msg.memName || '익명';
+                    // 개별 메시지 렌더링 시도
+                    renderChatMessage({
+                        sender: displayNickname, 
+                        message: msg.chatDesc || '(내용 없음)',
+                        type: 'CHAT',
+                        memId: msg.chatSenderId || '',
+                        sendTime: typeof formatChatTime === 'function' ? formatChatTime(msg.chatSendtime) : '시간미상'
+                    });
+                } catch (renderError) {
+                    // 특정 메시지(null 등)에서 에러가 나도 로그만 찍고 다음으로 넘어감
+                    console.warn(`⚠️ ${index}번째 메시지 렌더링 실패:`, renderError);
+                }
+            });
+            
+            chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+        }
+    } catch (error) {
+        console.error("❌ loadPreviousMessages 전체 프로세스 에러:", error);
     }
-    return users;
 }
 
-// 랜덤 마지막 접속 시간 생성
-function getRandomLastSeen() {
-    const times = ['5분 전', '10분 전', '30분 전', '1시간 전', '2시간 전'];
-    return times[Math.floor(Math.random() * times.length)];
-}
+	
+//==================== 채팅 윈도우 제어 ====================
 
-// 참여자 목록 렌더링
-function renderChatUserList() {
-    const listEl = document.getElementById('chatUserList');
-    let html = '';
-
-    // 온라인 사용자를 먼저 정렬
-    const sortedUsers = [...chatUsers].sort((a, b) => {
-        const statusOrder = { 'online': 0, 'away': 1, 'offline': 2 };
-        return (statusOrder[a.status] || 0) - (statusOrder[b.status] || 0);
-    });
-
-    sortedUsers.forEach(user => {
-        const initial = user.name.charAt(0).toUpperCase();
-        const status = user.status || 'online';
-        const statusText = status === 'online' ? '온라인' :
-                          status === 'away' ? '자리비움' :
-                          (user.lastSeen ? user.lastSeen : '오프라인');
-
-        html += '<div class="chat-user-item">' +
-            '<div class="chat-user-avatar">' +
-                initial +
-                '<span class="chat-user-status ' + status + '"></span>' +
-            '</div>' +
-            '<div class="chat-user-info">' +
-                '<span class="chat-user-name' + (user.isMe ? ' me' : '') + '">' +
-                    user.name + (user.isMe ? ' (나)' : '') +
-                '</span>' +
-                '<span class="chat-user-status-text ' + status + '">' + statusText + '</span>' +
-            '</div>' +
-        '</div>';
-    });
-
-    listEl.innerHTML = html;
-
-    // 온라인 수 업데이트
-    const onlineCount = chatUsers.filter(u => u.status === 'online' || u.isMe).length;
-    document.getElementById('chatUserCount').textContent = onlineCount + '/' + chatUsers.length;
-}
-
-// 이전 메시지 로드 (데모용)
-function loadPreviousMessages() {
-    const demoMessages = [
-        { sender: 'travel_kim', message: '안녕하세요~ 반갑습니다!', time: '14:30' },
-        { sender: 'adventure_lee', message: '저도 반가워요! 어디 여행 계획 있으세요?', time: '14:31' },
-        { sender: 'trip_lover', message: '저는 다음 달에 제주도 갈 예정이에요', time: '14:32' }
-    ];
-
-    demoMessages.forEach(msg => {
-        addChatMessage(msg.sender, msg.message, msg.time, false);
-    });
-}
-
-// ==================== 채팅 윈도우 제어 ====================
-
-// 채팅 윈도우 열기
+//채팅 윈도우 열기
 function openChatWindow() {
-    document.getElementById('chatWindow').classList.add('active');
-    document.getElementById('chatMinimized').classList.remove('active');
-    document.getElementById('chatInput').focus();
-    unreadCount = 0;
-    updateUnreadBadge();
+ document.getElementById('chatWindow').classList.add('active');
+ document.getElementById('chatMinimized').classList.remove('active');
+ document.getElementById('chatInput').focus();
+ unreadCount = 0; 
+ updateUnreadBadge();
 }
 
-// 채팅 최소화
+//채팅 최소화
 function minimizeChat() {
-    document.getElementById('chatWindow').classList.remove('active');
-    document.getElementById('chatMinimized').classList.add('active');
+ document.getElementById('chatWindow').classList.remove('active');
+ document.getElementById('chatMinimized').classList.add('active');
 }
 
-// 채팅 최대화
+//채팅 최대화
 function maximizeChat() {
-    openChatWindow();
+ openChatWindow();
 }
 
-// 채팅 나가기
-function leaveChat() {
-    if (!currentChatRoom) return;
+//채팅 나가기
+async function leaveChat() {
+	if (!currentChatId) {
+     showToast('참여 중인 채팅방이 없습니다.', 'warning');
+     return;
+ }
 
-    if (confirm('채팅방에서 나가시겠습니까?')) {
-        // 퇴장 메시지
-        addSystemMessage(currentUser.name + '님이 퇴장하셨습니다.');
+ if (confirm('채팅방에서 나가시겠습니까?')) {
+ 	
+ 	try {
+         const response = await fetch('/chat/room/' + currentChatId + '/leave', {
+             method: 'POST',
+             headers: {
+                 'Content-Type': 'application/json'
+             }
+         });
 
-        // 사용자 수 감소
-        currentChatRoom.currentUsers--;
+         const result = await response.json();
 
-        // 시뮬레이션 중지
-        stopChatSimulation();
+         if (result.success) {
+             // 3. DB 업데이트 성공 후, WebSocket으로 다른 멤버들에게 알림
+             if (stompClient && stompClient.connected) {
+                 stompClient.send('/app/chat/system', {}, JSON.stringify({
+                     chatId: parseInt(currentChatId),
+                     sender: currentUser.nickname,
+                     memNo: currentUser.memNo, // 필드명이 no인지 memNo인지 확인 필요
+                     type: 'LEAVE'
+                 }));
+                 
+                 console.log("📤 WebSocket 퇴장 신호 전송 완료");
+             }
 
-        // UI 닫기
-        document.getElementById('chatWindow').classList.remove('active');
-        document.getElementById('chatMinimized').classList.remove('active');
-        document.getElementById('chatUserPanel').classList.remove('active');
+             // 4. 소켓 연결 해제 및 UI 정리 (약간의 지연을 주어 메시지 도달 보장)
+             setTimeout(() => {
+                 if (stompClient) {
+                     stompClient.disconnect(() => {
+                         console.log("🔌 STOMP 연결 해제 완료");
+                     });
+                     stompClient = null;
+                 }
 
-        currentChatRoom = null;
-        chatMessages = [];
-        chatUsers = [];
-
-        showToast('채팅방에서 나왔습니다.', 'info');
-    }
+                 // 전역 변수 및 UI 초기화
+                 finalizeChatUI();
+                 showToast('채팅방에서 퇴장했습니다.', 'info');
+             }, 200);
+         } else {
+             showToast(result.message || '퇴장 처리 중 오류가 발생했습니다.', 'error');
+         }
+     } catch (error) {
+         console.error('❌ 퇴장 프로세스 에러:', error);
+         showToast('서버와의 통신에 실패했습니다.', 'error');
+     }
+ }
 }
 
-// 참여자 목록 토글
+//UI 정리를 위한 공통 함수
+function finalizeChatUI() {
+ currentChatId = null;
+ currentChatRoom = null;
+ chatMessages = [];
+ 
+ // UI 요소 닫기
+ document.getElementById('chatWindow').classList.remove('active');
+ document.getElementById('chatMinimized').classList.remove('active');
+ if(document.getElementById('chatUserPanel')) {
+     document.getElementById('chatUserPanel').classList.remove('active');
+ }
+ 
+ // 메시지 영역 비우기
+ const msgEl = document.getElementById('chatMessages');
+ if (msgEl) msgEl.innerHTML = '';
+}
+
+//참여자 목록 토글
 function toggleChatUserList() {
-    document.getElementById('chatUserPanel').classList.toggle('active');
+ document.getElementById('chatUserPanel').classList.toggle('active');
 }
 
 // ==================== 메시지 전송/수신 ====================
-
-// 메시지 전송
 function sendMessage() {
     const input = document.getElementById('chatInput');
-    const message = input.value.trim();
+    const content = input.value.trim();
+    if (!content) return;
+    
+    if (!stompClient || !currentChatId) {
+        console.warn('❌ STOMP not connected', stompClient, currentChatId);
+        showToast('채팅 서버에 연결되지 않았습니다.', 'warning');
+        return;
+    }
+    
+    stompClient.send('/app/chat/send', {}, JSON.stringify({
+        chatId: parseInt(currentChatId),
+        sender: currentUser.nickname,
+        type: 'CHAT',
+        message: content,
+        memId: currentUser.id,
+        memNo: currentUser.memNo 
+    }));
 
-    if (!message) return;
-
-    // 내 메시지 추가
-    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-    addChatMessage(currentUser.name, message, time, true);
-
-    // 입력 초기화
     input.value = '';
-    input.focus();
 }
 
 // 엔터키 처리
-function handleChatKeydown(event) {
-    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
-        event.preventDefault();
-        sendMessage();
-    }
+function handleKeydown(event) {
+	const isEnter = (event.key === 'Enter' || event.keyCode === 13);
+	    
+	    if (isEnter && !event.shiftKey) {
+	    	event.stopPropagation();
+	        // 한글 입력 중 엔터 중복 방지 (IME 컴포지션 체크)
+	        if (event.isComposing || event.keyCode === 229) {
+	            return;
+	        }
+	
+	        event.preventDefault(); // 줄바꿈 방지
+	        console.log("엔터키 감지 - 메시지 전송 시도");
+	        sendMessage();
+	    }
 }
 
 // 채팅 메시지 추가
@@ -2297,8 +2518,21 @@ function addChatMessage(sender, message, time, isMine) {
 }
 
 // 시스템 메시지 추가
-function addSystemMessage(message) {
+function sendSystemMessage(action) {
     const messagesEl = document.getElementById('chatMessages');
+    
+    stompClient.send('/app/chat/system', {}, JSON.stringify({
+        chatId: currentChatId,
+        sender: currentUser.name,
+        message: message,
+        type: 'CHAT',
+        memNo: currentUser.memNo, // 숫자 PK
+        memId: currentUser.memId     // "a004" 같은 문자열 아이디
+    }));
+    
+    console.log(currnetUser.memId);
+    console.log(currnetUser.id);
+    
 
     // 환영 메시지 제거
     const welcomeMsg = messagesEl.querySelector('.chat-welcome-message');
@@ -2310,6 +2544,31 @@ function addSystemMessage(message) {
         '</div>';
 
     messagesEl.insertAdjacentHTML('beforeend', messageHtml);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+// 입퇴장시 메시지
+function addSystemMessage(message) {
+    const messagesEl = document.getElementById('chatMessages');
+    if (!messagesEl) return;
+
+    // 환영 메시지(첫 입장 시 문구)가 있다면 제거
+    const welcomeMsg = messagesEl.querySelector('.chat-welcome-message');
+    if (welcomeMsg) welcomeMsg.remove();
+
+    // 새 시스템 메시지용 div 생성
+    const div = document.createElement('div');
+    div.className = 'chat-system-message';
+    
+    // 텍스트를 담을 span 생성 및 안전하게 텍스트 주입
+    const span = document.createElement('span');
+    span.textContent = message; // 👈 템플릿 리터럴 대신 직접 주입 (이게 제일 확실합니다!)
+    
+    // 조립 및 화면 추가
+    div.appendChild(span);
+    messagesEl.appendChild(div);
+    
+    // 스크롤을 맨 아래로 이동
     messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 

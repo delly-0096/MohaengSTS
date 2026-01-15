@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
@@ -27,6 +28,7 @@ import kr.or.ddit.mohaeng.community.chat.service.IChatService;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.ChatRoomVO;
 import kr.or.ddit.mohaeng.vo.ChatUserVO;
+import kr.or.ddit.mohaeng.vo.ChatVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -95,29 +97,49 @@ public class ChatController {
 	public List<ChatUserVO> getChatUserList(@PathVariable Long chatId){
 		return chatService.getChatUsersByRoomId(chatId);
 	}
+		
+	/* 과거 메시지 내역 불러오기 */
+	@GetMapping("/chat/room/{chatId}/messages")
+	@ResponseBody
+	public List<ChatVO> getChatMessages(@PathVariable Long chatId){
+		return chatService.getChatMessagesByRoomId(chatId);
+	}
 	
-	/* 채팅방 퇴장 */
+	/* 채팅방 퇴장 및 삭제 처리 */
 	@PostMapping("/chat/room/{chatId}/leave")
 	@ResponseBody
 	public Map<String, Object> leaveChatRoom(
-	        @PathVariable Long chatId,
-	        @AuthenticationPrincipal CustomUserDetails user
-	        ){
-	    Map<String, Object> result = new HashMap<>();
-	    
+			@PathVariable Long chatId, 
+			@AuthenticationPrincipal CustomUserDetails user
+	) {
+		Map<String, Object> result = new HashMap<>();
+	    String memId = user.getUsername(); 
+	    int memNo = user.getMember().getMemNo();
+	    // 만약 memNo가 필요하다면 user.getMember().getMemNo() 사용 가능
+
 	    try {
-	        // 1. DB에서 사용자의 상태를 'EXIT'로 변경 (작성하신 exitChatUser 쿼리 실행)
-	        chatService.exitChatUser(chatId, user.getMember().getMemNo());
-	        
-	        // 2. 성공 응답 구성
+	        boolean isDestroyed = chatService.processLeaveOrDestroy(chatId, memId, memNo);
+
+	        // 2. 방이 폭파되었다면 WebSocket으로 참여자들에게 알림 전송
+	        if (isDestroyed) {
+	            Map<String, Object> deleteSignal = new HashMap<>();
+	            deleteSignal.put("type", "ROOM_DELETED");
+	            deleteSignal.put("chatId", chatId);
+	            deleteSignal.put("message", "방장에 의해 채팅방이 삭제되었습니다.");
+
+	            messagingTemplate.convertAndSend("/topic/chat/" + chatId, deleteSignal);
+	        }
+
 	        result.put("success", true);
-	        result.put("message", "채팅방에서 성공적으로 퇴장했습니다.");
+	        result.put("isDestroyed", isDestroyed); 
+	        result.put("message", isDestroyed ? "방장에 의해 채팅방이 삭제되었습니다." : "채팅방에서 성공적으로 퇴장했습니다.");
+	        
 	    } catch (Exception e) {
-	        log.error("퇴장 처리 중 오류 발생: ", e);
+	        log.error("❌ 채팅방 퇴장 처리 중 오류 발생: ", e);
 	        result.put("success", false);
 	        result.put("message", "퇴장 처리 중 오류가 발생했습니다.");
 	    }
-	    
+
 	    return result;
 	}
 

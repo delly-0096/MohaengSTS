@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Mapper;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO;
 import kr.or.ddit.mohaeng.vo.ChatRoomVO;
 import kr.or.ddit.mohaeng.vo.ChatUserVO;
+import kr.or.ddit.mohaeng.vo.ChatVO;
 
 @Mapper
 public interface IChatMapper {
@@ -77,7 +78,7 @@ public interface IChatMapper {
 
 	/**
 	 *	<p> 채팅방 정보 가져오기 </p>
-	 *	@date 2026.01.12
+	 *	@date 2026.01.14
 	 *	@author kdrs
 	 *	@param 
 	 *	@return
@@ -86,7 +87,7 @@ public interface IChatMapper {
 
 	/**
 	 *	<p> 채팅방 유저 정보 가져오기 </p>
-	 *	@date 2026.01.12
+	 *	@date 2026.01.14
 	 *	@author kdrs
 	 *	@param 
 	 *	@return
@@ -95,7 +96,7 @@ public interface IChatMapper {
 
 	/**
 	 *	<p> 채팅방 퇴장 </p>
-	 *	@date 2026.01.12
+	 *	@date 2026.01.14
 	 *	@author kdrs
 	 *	@param 
 	 *	@return
@@ -104,12 +105,48 @@ public interface IChatMapper {
 
 	/**
 	 *	<p> 채팅방 메시지 insert </p>
-	 *	@date 2026.01.12
+	 *	@date 2026.01.14
 	 *	@author kdrs
 	 *	@param 
 	 *	@return
 	 */
 	public void insertMessage(ChatMessageDTO message);
+
+	/**
+	 *	<p> 지난 채팅 내역 불러오기 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public List<ChatVO> getChatMessageByRoomId(Long chatId);
+
+	/**
+	 *	<p> 채팅방 유저 삭제 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public void deleteAllChatUsersByRoomId(Long chatId);
+
+	/**
+	 *	<p> 채팅방 메시지 삭제 처리 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public void deleteAllChatMessagesByRoomId(Long chatId);
+
+	/**
+	 *	<p> 채팅방 삭제 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public void deleteChatRoomPermanently(Long chatId);
 
 
 }

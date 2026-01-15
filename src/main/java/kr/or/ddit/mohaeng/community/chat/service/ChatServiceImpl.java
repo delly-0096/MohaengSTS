@@ -16,7 +16,10 @@ import kr.or.ddit.mohaeng.community.chat.mapper.IChatMapper;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.ChatRoomVO;
 import kr.or.ddit.mohaeng.vo.ChatUserVO;
+import kr.or.ddit.mohaeng.vo.ChatVO;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class ChatServiceImpl implements IChatService{
 
@@ -189,6 +192,48 @@ public class ChatServiceImpl implements IChatService{
 		chatMapper.insertMessage(message);
 	}
 
+	/**
+	 *	<p> 지난 채팅 내역 불러오기 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	@Override
+	public List<ChatVO> getChatMessagesByRoomId(Long chatId) {
+		return chatMapper.getChatMessageByRoomId(chatId);
+	}
+
+	/**
+	 *	<p> HOST 퇴장 시 채팅방 삭제 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	@Override
+	@Transactional
+	public boolean processLeaveOrDestroy(Long chatId, String memId, int memNo) {
+		
+		ChatRoomVO room = chatMapper.getChatRoomById(chatId);
+	    
+	    // 2. 방장 여부 확인 (DB의 REG_ID 컬럼과 현재 사용자의 memId 비교)
+		if (room != null && room.getRegId() != null && room.getRegId().equals(memId)) {
+	        chatMapper.deleteAllChatUsersByRoomId(chatId);    // 참여자 전체 삭제
+	        chatMapper.deleteAllChatMessagesByRoomId(chatId); // 메시지 CHAT_DEL = 'Y'
+	        chatMapper.deleteChatRoomPermanently(chatId);    // 방 자체 삭제
+	        return true; 
+	        
+	    } else {
+	        Map<String, Object> params = new HashMap<>();
+	        params.put("chatId", chatId);
+	        params.put("memId", memId);
+	        params.put("memNo", memNo);
+	        
+	        chatMapper.exitChatUser(params); 
+	        return false; 
+	    }
+	}
 	
 	
 	

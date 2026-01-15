@@ -24,6 +24,25 @@
 		)
 	</insert>
 	
+	<!-- 채팅방 유저 삭제 -->
+	<delete id="deleteAllChatUsersByRoomId">
+	    DELETE FROM CHAT_USER
+	    WHERE CHAT_ID = #{chatId}
+	</delete>
+	
+	<!-- 채팅방 메시지 삭제 -->
+	<update id="deleteAllChatMessagesByRoomId">
+	    UPDATE CHAT
+	    SET CHAT_DEL = 'Y'
+	    WHERE CHAT_ID = #{chatId}
+	</update>
+	
+	<!-- HOST 퇴장 시 채팅방 삭제 -->
+	<delete id="deleteChatRoomPermanently">
+	    DELETE FROM CHAT_ROOM
+	    WHERE CHAT_ID = #{chatId}
+	</delete>
+		
 	<!-- 채팅방 HOST 생성 -->
 	<insert id="insertChatHost" parameterType="kr.or.ddit.mohaeng.vo.ChatUserVO">
 		INSERT INTO CHAT_USER (
@@ -146,6 +165,7 @@
 		SELECT
 			R.CHAT_ID
 		  , R.CHAT_NAME
+		  , R.REG_ID
 		  , R.CHAT_CTGRY
 		  , C. CD_NAME	AS chat_ctgry_name
 		  , R.CHAT_MAX
@@ -187,4 +207,24 @@
         , 'N'
     )
 	</insert>
+	
+	<!-- 채팅방 과거 메시지 내역 가져오기 -->
+	<select id="getChatMessageByRoomId" resultType="kr.or.ddit.mohaeng.vo.ChatVO">
+	SELECT
+          A.CHAT_NO
+        , A.CHAT_ID
+        , A.CHAT_DESC
+        , A.CHAT_SENDER_ID
+        , A.CHAT_SENDTIME
+        , A.CHAT_ATCH
+        , A.CHAT_TYPE
+        , C.NICKNAME AS memNickname 
+    FROM CHAT A
+    LEFT OUTER JOIN MEMBER B ON (A.CHAT_SENDER_ID = B.MEM_ID)
+    LEFT OUTER JOIN MEM_USER C ON (B.MEM_NO = C.MEM_NO)
+    WHERE A.CHAT_ID = #{chatId}
+      AND A.CHAT_TYPE = 'CHAT'
+      AND A.CHAT_DEL = 'N'
+    ORDER BY A.CHAT_SENDTIME ASC
+	</select>
 </mapper>

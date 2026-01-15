@@ -220,9 +220,12 @@ public  class TalkServiceImpl implements ITalkService{
 		public BoardVO selectTalk(int boardNo) {
 			return iTalkMapper.selectTalk(boardNo);
 		}
-
-
+		
+		
 	
+
+
+	   
 		
 
 	

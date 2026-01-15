@@ -8,252 +8,28 @@
 <c:set var="pageCss" value="community" />
 
 <%@ include file="../common/header.jsp" %>
-<body data-logged-in="<sec:authorize access='isAuthenticated()'>true</sec:authorize><sec:authorize access='isAnonymous()'>false</sec:authorize>">
-<div class="community-page">
-    <div class="container">
-        <!-- 헤더 -->
-        <div class="community-header">
-            <h1><i class="bi bi-chat-dots me-3"></i>여행톡</h1>
-            <p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
-        </div>
-        <!-- boardVO있을때 상세출력 
-			model.addAttribute("boardVO",boardVO);
-		-->
-				<c:if test="${not empty boardVO}">
-				  <div class="card mb-4">
-				    <div class="card-body">
-				      <div class="d-flex justify-content-between align-items-center mb-2">
-				        <span class="badge bg-primary">
-				          ${boardVO.boardCtgryCd}
-				        </span>
-				
-				        <a class="btn btn-sm btn-outline-secondary"
-				           href="${pageContext.request.contextPath}/community/talk">
-				          목록
-				        </a>
-				      </div>
-				      
-				
-				      <h3 class="mb-2">${boardVO.boardTitle}</h3>
-				
-				      <div class="text-muted mb-3">
-				          작성자: ${boardVO.writerNickname} <small>(${boardVO.writerId})</small>
-				          작성일: ${boardVO.regDt}
-				          조회수: ${boardVO.viewCnt}
-				      </div>
-				
-				      <hr/>
-				
-				      <div style="white-space: pre-wrap;">
-				        ${boardVO.boardContent}
-				      </div>
-				    </div>
-				  </div>
-				</c:if>
-    </div>     
-</div>
-		
-								
-<!-- 게시글 상세 모달 -->
-<div class="post-detail-overlay" id="postDetailOverlay" onclick="closePostDetail()">
-    <div class="post-detail-modal" onclick="event.stopPropagation()">
-        <div class="post-detail-header">
-            <span class="post-detail-category" id="postDetailCategory">카테고리</span>
-            <button class="post-detail-close" onclick="closePostDetail()">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div class="post-detail-body">
-            <h2 class="post-detail-title" id="postDetailTitle">게시글 제목</h2>
-            <div class="post-detail-meta">
-            <a href="${pageContext.request.contextPath}/community/talk?boardNo=${board.boardNo}">
-			                ${board.boardTitle}
-			              </a>
-                <div class="post-author">
-                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80" alt="프로필" id="postAuthorAvatar">
-                    <div class="author-info">
-                        <span class="author-name" id="postAuthorName">작성자</span>
-                        <span class="post-date" id="postDate">2024.03.15</span>
-                    </div>
-                </div>
-                <div class="post-detail-stats">
-                    <span><i class="bi bi-eye"></i> <span id="postViews">0</span></span>
-                    <span><i class="bi bi-chat"></i> <span id="postCommentCount">0</span></span>
-                    <span><i class="bi bi-heart"></i> <span id="postLikes">0</span></span>
-                </div>
-            </div>
-            <div class="post-detail-content" id="postDetailContent">
-                <!-- 게시글 본문 -->
-            </div>
-            <div class="post-detail-tags" id="postDetailTags" style="display: none;">
-                <!-- 태그 목록 -->
-            </div>
-            <div class="post-detail-actions">
-                <button class="post-action-btn" onclick="togglePostLike()">
-                    <i class="bi bi-heart" id="postLikeIcon"></i>
-                    <span>좋아요</span>
-                </button>
-                <button class="post-action-btn" onclick="togglePostBookmark()">
-                    <i class="bi bi-bookmark" id="postBookmarkIcon"></i>
-                    <span>북마크</span>
-                </button>
-                <button class="post-action-btn" onclick="sharePost()">
-                    <i class="bi bi-share"></i>
-                    <span>공유</span>
-                </button>
-                <sec:authorize access="hasRole('MEMBER')">
-                <button class="post-action-btn report" onclick="reportCurrentPost()">
-                    <i class="bi bi-flag"></i>
-                    <span>신고</span>
-                </button>
-                </sec:authorize>
-            </div>
-        </div>
-        <div class="post-comments-section">
-            <h4 class="comments-title"><i class="bi bi-chat-dots me-2"></i>댓글 <span id="commentsCount">0</span>개</h4>
-            <div class="comments-list" id="commentsList">
-                <!-- 댓글 목록 -->
-            </div>
-            <sec:authorize access="isAuthenticated()">
-            <div class="comment-write">
-                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80" alt="내 프로필" class="comment-avatar">
-                <div class="comment-input-wrapper">
-                    <textarea class="comment-input" id="commentInput" placeholder="댓글을 작성해주세요..." rows="1" oninput="autoResizeTextarea(this)"></textarea>
-                    <button class="comment-submit-btn" onclick="submitComment()">
-                        <i class="bi bi-send-fill"></i>
-                    </button>
-                </div>
-            </div>
-            </sec:authorize>
-            <sec:authorize access="isAnonymous()">
-            <div class="comment-login-notice">
-                <p><i class="bi bi-info-circle me-2"></i>댓글을 작성하려면 <a href="${pageContext.request.contextPath}/member/login">로그인</a>이 필요합니다.</p>
-            </div>
-            </sec:authorize>
-        </div>
-    </div>
-</div>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
-<!-- 채팅방 목록 모달 -->
-<div class="chat-modal-overlay" id="chatRoomModal" onclick="closeChatRoomModal(event)">
-    <div class="chat-modal" onclick="event.stopPropagation()">
-        <div class="chat-modal-header">
-            <h3><i class="bi bi-chat-heart me-2"></i>지금모행</h3>
-            <button class="chat-modal-close" onclick="closeChatRoomList()">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-        <div class="chat-modal-body">
-            <!-- 채팅방 생성 -->
-            <div class="chat-create-section">
-                <button class="btn btn-primary w-100" onclick="openCreateRoomForm()">
-                    <i class="bi bi-plus-circle me-2"></i>새 채팅방 만들기
-                </button>
-                <div class="create-room-form" id="createRoomForm" style="display: none;">
-                    <input type="text" class="form-control" id="newRoomName" placeholder="채팅방 이름을 입력하세요" maxlength="30">
-                    <select class="form-control form-select" id="newRoomCategory">
-                        <option value="FREE">자유 채팅</option>
-                        <option value="COMPANION">동행 모집</option>
-                        <option value="REGION">지역별 채팅</option>
-                        <option value="THEME">테마별 채팅</option>
-                    </select>
-                    <input type="number" class="form-control" id="newRoomMaxUsers" placeholder="최대 인원 (기본 50명)" min="2" max="100" value="50">
-                    <div class="create-room-actions">
-                        <button class="btn btn-outline" onclick="cancelCreateRoom()">취소</button>
-                        <button class="btn btn-primary" onclick="createChatRoom()">만들기</button>
-                    </div>
-                </div>
-            </div>
 
-            <!-- 채팅방 필터 -->
-            <div class="chat-room-filter">
-                <button class="chat-filter-btn active" data-filter="all">전체</button>
-                <button class="chat-filter-btn" data-filter="free">자유</button>
-                <button class="chat-filter-btn" data-filter="companion">동행</button>
-                <button class="chat-filter-btn" data-filter="local">지역</button>
-                <button class="chat-filter-btn" data-filter="theme">테마</button>
-            </div>
 
-            <!-- 채팅방 목록 -->
-            <div class="chat-room-list" id="chatRoomList">
-                <!-- 채팅방 아이템들이 여기에 동적으로 추가됨 -->
-            </div>
-        </div>
-    </div>
-</div>
+.thumb-wrap {
+  width: 120px;
+  height: 120px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: inline-block;
+  border: 1px solid #e5e7eb;
+  background: #f8fafc;
+}
 
-<!-- 채팅 윈도우 -->
-<div class="chat-window" id="chatWindow">
-    <div class="chat-window-header">
-        <div class="chat-room-info">
-            <span class="chat-room-category-badge" id="chatRoomBadge">${room.chatCtgryName }</span>
-            <h4 id="chatRoomTitle">${room.chatName }</h4>
-            <span class="chat-room-users"><i class="bi bi-people-fill"></i> <span id="chatUserCount">0</span>명</span>
-        </div>
-        <div class="chat-window-actions">
-            <button class="chat-action-btn" onclick="toggleChatUserList()" title="참여자 목록">
-                <i class="bi bi-people"></i>
-            </button>
-            <sec:authorize access="hasRole('MEMBER')">
-            <button class="chat-action-btn" onclick="reportCurrentChatroom()" title="채팅방 신고">
-                <i class="bi bi-flag"></i>
-            </button>
-            </sec:authorize>
-            <button class="chat-action-btn" onclick="minimizeChat()" title="최소화">
-                <i class="bi bi-dash-lg"></i>
-            </button>
-            <button class="chat-action-btn close" onclick="leaveChat()" title="나가기">
-                <i class="bi bi-x-lg"></i>
-            </button>
-        </div>
-    </div>
 
-    <!-- 참여자 목록 사이드 패널 -->
-    <div class="chat-user-panel" id="chatUserPanel">
-        <div class="chat-user-panel-header">
-            <h5>참여자 목록</h5>
-            <button onclick="toggleChatUserList()"><i class="bi bi-x"></i></button>
-        </div>
-        <div class="chat-user-list" id="chatUserList">
-        </div>
-    </div>
+.thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
-    <div class="chat-messages" id="chatMessages">
-        <!-- 메시지들이 여기에 표시됨 -->
-        <div class="chat-welcome-message">
-            <i class="bi bi-chat-heart"></i>
-            <p>채팅방에 오신 것을 환영합니다!</p>
-            <span>서로 존중하며 즐거운 대화를 나눠보세요.</span>
-        </div>
-    </div>
-
-    <div class="chat-input-area">
-        <div class="chat-attach-buttons">
-            <button class="chat-attach-btn" onclick="openImageUpload()" title="사진 보내기">
-                <i class="bi bi-image"></i>
-            </button>
-            <button class="chat-attach-btn" onclick="openFileUpload()" title="파일 보내기">
-                <i class="bi bi-paperclip"></i>
-            </button>
-        </div>
-        <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." maxlength="500" onkeydown="handleKeydown(event)">
-        <button class="chat-send-btn" onclick="sendMessage()">
-            <i class="bi bi-send-fill"></i>
-        </button>
-    </div>
-    <!-- 숨겨진 파일 입력 -->
-    <input type="file" id="imageUploadInput" accept="image/*" style="display: none;" onchange="handleImageUpload(event)">
-    <input type="file" id="fileUploadInput" style="display: none;" onchange="handleFileUpload(event)">
-</div>
-
-<!-- 최소화된 채팅 버튼 -->
-<div class="chat-minimized" id="chatMinimized" onclick="maximizeChat()">
-    <i class="bi bi-chat-heart-fill"></i>
-    <span id="chatMinimizedTitle">채팅방</span>
-    <span class="chat-unread-badge" id="chatUnreadBadge">0</span>
-</div>
-
-<style>
 /* ==================== 채팅 버튼 영역 ==================== */
 .board-actions {
     display: flex;
@@ -1567,7 +1343,6 @@
     }
 }
 </style>
-
 <!-- Security 변수 추출  -->
 <sec:authentication property="principal" var="principal" />
 <sec:authorize access="isAuthenticated()">
@@ -1576,6 +1351,7 @@
     <c:set var="myName" value="${principal.member.memName}" />
 </sec:authorize>
 <script>
+
 const api = (path) => contextPath + (path.startsWith('/') ? path : '/' + path);
 
 // 현재 선택된 카테고리
@@ -2963,5 +2739,6 @@ if (!document.getElementById('toastStyles')) {
     style.textContent = '@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } } @keyframes toastOut { from { opacity: 1; transform: translateX(-50%) translateY(0); } to { opacity: 0; transform: translateX(-50%) translateY(20px); } }';
     document.head.appendChild(style);
 }
+
 </script>
 <%@ include file="../common/footer.jsp" %>

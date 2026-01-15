@@ -154,38 +154,71 @@ public class TalkController {
         return cnt;
     }
 
-    
+    @GetMapping("/download/{fileNo}")
+    public ResponseEntity<byte[]> download(@PathVariable int fileNo) {
+        InputStream in = null;
+        ResponseEntity<byte[]> entity = null;
+
+        BoardFileVO boardFileVO = talkService.getFileInfo(fileNo);
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+
+            // 다운로드는 보통 octet-stream으로 주는게 무난
+            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+
+            // ✅ 다운로드는 attachment
+            headers.add("Content-Disposition",
+                "attachment; filename=\"" + boardFileVO.getFileOriginalName() + "\"");
+
+            in = new FileInputStream(uploadPath + "talk/" + boardFileVO.getFileName());
+            entity = new ResponseEntity<>(IOUtils.toByteArray(in), headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            entity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } finally {
+            try { if (in != null) in.close(); } catch (Exception e) { e.printStackTrace(); }
+        }
+        return entity;
+    }
+
  
 
     
-    @GetMapping("/thumbnail/{fileNo}")
-    public ResponseEntity<byte[]> display(@PathVariable int fileNo){
-    	InputStream in = null;
-    	ResponseEntity<byte[]> entity = null;
-    	
-    	BoardFileVO boardFileVO = talkService.getFileInfo(fileNo);
-    	
-    	try {
-			//파일 확장자에 알맞는 mediaType가져오기
-    		MediaType mType = MediaType.IMAGE_JPEG;
-    		HttpHeaders headers = new HttpHeaders();
-    		
-    		in = new FileInputStream(uploadPath + "talk/" + boardFileVO.getFileName());
-    		headers.setContentType(mType);
-    		entity = new ResponseEntity<byte[]>(IOUtils.toByteArray(in),headers,HttpStatus.CREATED);
-		} catch (Exception e) {
-			e.printStackTrace();
-			entity = new ResponseEntity<byte[]>(HttpStatus.BAD_REQUEST);
-		}finally {
-			try {
-				in.close();
-			} catch (Exception e) {
-			   e.printStackTrace();
-			}
-		}
-    	return entity;		
+    @GetMapping("/preview/{fileNo}")
+    public ResponseEntity<byte[]> preview(@PathVariable int fileNo) {
+        InputStream in = null;
+        ResponseEntity<byte[]> entity = null;
+
+        BoardFileVO boardFileVO = talkService.getFileInfo(fileNo);
+
+        try {
+            HttpHeaders headers = new HttpHeaders();
+
+            // ✅ mimeType이 DB에 있으면 그걸로 Content-Type 지정 (추천)
+            MediaType mType = MediaType.IMAGE_JPEG;
+            if (boardFileVO.getMimeType() != null && !boardFileVO.getMimeType().isBlank()) {
+                mType = MediaType.parseMediaType(boardFileVO.getMimeType());
+            }
+            headers.setContentType(mType);
+ 
+
+            // ✅ 미리보기는 inline
+            headers.add("Content-Disposition", "inline; filename=\"" + boardFileVO.getFileOriginalName() + "\"");
+
+            in = new FileInputStream(uploadPath + "talk/" + boardFileVO.getFileName());
+            entity = new ResponseEntity<>(IOUtils.toByteArray(in), headers, HttpStatus.OK);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            entity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        } finally {
+            try { if (in != null) in.close(); } catch (Exception e) { e.printStackTrace(); }
+        }
+        return entity;
     }
-    
+
 }  
     
     

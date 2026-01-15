@@ -1,27 +1,35 @@
 package kr.or.ddit.mohaeng.community.travellog.comments.mapper;
 
 import java.util.List;
-
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-
-import kr.or.ddit.mohaeng.vo.CommentItemVO;
+import kr.or.ddit.mohaeng.vo.CommentsVO;
 
 @Mapper
 public interface ICommentsMapper {
 
-    List<CommentItemVO> selectTripRecordComments(@Param("rcdNo") long rcdNo);
-
-    int insertTripRecordComment(
-            @Param("rcdNo") long rcdNo,
-            @Param("writerNo") long writerNo,
-            @Param("parentCmntNo") Long parentCmntNo,
-            @Param("content") String content
+    List<CommentsVO> selectCommentsByTarget(
+        @Param("targetType") String targetType,
+        @Param("targetNo") Long targetNo,
+        @Param("loginMemberNo") Long loginMemberNo
     );
 
-    // 작성자만 삭제 가능하게 where writerNo 걸어둠
-    int softDeleteTripRecordComment(
-            @Param("cmntNo") long cmntNo,
-            @Param("writerNo") long writerNo
+    int insertComment(CommentsVO vo);
+
+    int updateCommentContent(
+        @Param("cmntNo") Long cmntNo,
+        @Param("writerNo") Long writerNo,
+        @Param("content") String content
     );
+
+    int softDeleteComment(
+        @Param("cmntNo") Long cmntNo,
+        @Param("writerNo") Long writerNo
+    );
+
+    int countByTarget(
+        @Param("targetType") String targetType,
+        @Param("targetNo") Long targetNo
+    );
+
 }

@@ -41,5 +41,7 @@ public class TripRecordDetailVO {
     private String deleteYn;  	 // DELETE_YN
     
     private Long myLiked;
+    
+    private String profilePath; // 작성자 프로필
 
 }

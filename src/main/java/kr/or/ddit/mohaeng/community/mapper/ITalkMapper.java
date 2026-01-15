@@ -37,6 +37,7 @@ public interface ITalkMapper {
 
  public int deleteTalkTags(int boardNo);
  
+ 
 
 
 }

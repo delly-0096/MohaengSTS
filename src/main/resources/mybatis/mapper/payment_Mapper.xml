@@ -30,4 +30,15 @@
 	        , #{resMsg}, #{payRawData, jdbcType=CLOB}
 	    )
 	</insert>
+	
+	<!-- 포인트 적립 -->
+	<update id="insertPoint" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+		UPDATE member
+			SET
+			    point = #{point}
+			WHERE
+		        mem_no = #{memNo}
+	</update>
+	
+	
 </mapper>

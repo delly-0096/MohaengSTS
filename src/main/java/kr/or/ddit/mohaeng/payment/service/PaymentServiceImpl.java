@@ -23,6 +23,7 @@ import kr.or.ddit.mohaeng.vo.FlightPassengersVO;
 import kr.or.ddit.mohaeng.vo.FlightProductVO;
 import kr.or.ddit.mohaeng.vo.FlightReservationVO;
 import kr.or.ddit.mohaeng.vo.FlightResvAgreeVO;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 import kr.or.ddit.mohaeng.vo.PaymentInfoVO;
 import kr.or.ddit.mohaeng.vo.PaymentVO;
 import lombok.extern.slf4j.Slf4j;
@@ -129,6 +130,18 @@ public class PaymentServiceImpl implements IPaymentService {
 			int paymentInfoResult = payMapper.insertPaymentInfo(paymentInfo);
 			log.info("insertPaymentInfo : {}", paymentInfoResult);
 			
+			
+			// 포인트 정책 - 결제 금액의 3%
+			int pointResult = 0;
+			if(discount == 0) {
+				System.out.println("포인트 insert");
+				MemberVO member = new MemberVO();
+				member.setMemNo(paymentVO.getMemNo());
+				double point = (double)amount * 0.03;
+				member.setPoint((int) point);
+				pointResult = payMapper.insertPoint(member);
+				log.info("pointResult 결과 : {}", pointResult);
+			}
 			
 			
 			int result = 0;		// 결제 결과

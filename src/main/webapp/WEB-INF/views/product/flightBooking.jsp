@@ -328,7 +328,8 @@ let taxAndFees = 4000;
 let seatSelectionModal;
 
 let currentSegmentSelection = 0; 	   // 0: 가는편, 1: 오는편
-let selectedSeatsBySegment = [[], []]; // 구간별 좌석 저장
+let selectedSeatsBySegment = [[], []]; // 구간별 선택된 좌석 저장
+let occupiedSeatsList = [[], []];	   // 이미 다른사람이 지정한 좌석
 let reservationList = [];			   // 예약정보 테이블
 
 // 항공편 예약 데이터
@@ -377,8 +378,8 @@ async function main() {
 		body : JSON.stringify({memId : "${user.username}"})
 	});
 	
-	customData = await userData.json();
 	console.log("customData : ", customData);		// 이 정보로 입력, session에도 저장?
+	customData = await userData.json();				
 	
 	const bookerName = document.querySelector("#bookerName");
 	const bookerPhone = document.querySelector("#bookerPhone");
@@ -398,6 +399,9 @@ async function main() {
 	bookingForm.addEventListener("submit", async function(e){
 		e.preventDefault();
 
+		// 좌석 지정 함수 호출
+		await randomSeatAssignment();
+		
 		// 탑승객 card
 		const passengerInputs = document.querySelectorAll('.passenger-card');
 		console.log("passengerInputs : ", passengerInputs);
@@ -440,7 +444,6 @@ async function main() {
 	    }
 		
 		sessionStorage.setItem("reservationList", JSON.stringify(reservationList));
-		
 	    
 	    // 필수 약관 체크 확인 - 이것도 테이블에 담기
 	    let allAgreed = true;
@@ -502,7 +505,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     initPassengers();		// 탑승객 정보 초기화
     updateCountButtons();	// 탑승인원 버튼 상태 초기화
     seatSelectionModal = new bootstrap.Modal(document.getElementById('seatSelectionModal'));	// 좌석 선택 모달 초기화
-    await initSeatMap();
+    // 점유된 좌석 함수 호출
+    await getOccupiedSeats();
+    initSeatMap();
     calculateTotal();
     
     await main();
@@ -541,13 +546,13 @@ function initFlightDisplay() {
 
     cardsContainer.innerHTML = cardsHtml;
     segmentsContainer.innerHTML = segmentsHtml;
-
     // 기본 가격 업데이트
 }
 
 // 항공편 카드 HTML 생성
 function createFlightCardHtml(flight, labelClass) {
 	
+	// 처음에만 할것 들
 	passengerType.adult = bookingData.flights[0].adult;
     passengerType.child = bookingData.flights[0].child;
     passengerType.infant = bookingData.flights[0].infant;
@@ -582,7 +587,6 @@ function createFlightCardHtml(flight, labelClass) {
 	                        <span class="label">소아</span> 
 	                        <span class="value" id="child">\${childPrice.toLocaleString()}원</span>
 	                    </div>
-	                    
 	                    <div class="price-item infant \${passengerType.infant > 0 ? 'active' : ''}">
 	                        <span class="label">유아</span> 
 	                        <span class="value" id="infant">0원</span>
@@ -591,18 +595,22 @@ function createFlightCardHtml(flight, labelClass) {
  	             </div>
  	         </div>
  	     </div>`
+ 	     // 짐 표시할지 여부
+//     <div class="flight-baggage">
+// 	<i class="bi bi-luggage-fill"></i><span>\${data.checkedBaggage} kg</span>
+// </div>
 }
 
 // 사이드바 구간 HTML 생성
 function createSummarySegmentHtml(flight, labelClass) {
 	// 가격은 클래스에 따라서 바꿈 - 가격은 calculate에서 넣어줄겨
     return `<div class="summary-segment-item">
-          <div class="summary-segment-label">
-             <span class="summary-segment-badge \${labelClass}">\${flight.segmentLabel}</span>
-             <span class="summary-segment-route">\${flight.depIata} → \${flight.arrIata}</span>
-         </div>
-         <span class="summary-segment-price">\${(flight.price).toLocaleString()}원</span>
-     </div>`;
+		    	<div class="summary-segment-label">
+		        	<span class="summary-segment-badge \${labelClass}">\${flight.segmentLabel}</span>
+		            <span class="summary-segment-route">\${flight.depIata} → \${flight.arrIata}</span>
+				</div>
+		        <span class="summary-segment-price">\${(flight.price).toLocaleString()}원</span>
+		    </div>`;
 }
 
 // 탑승객 정보 초기화 - 탑승객 줄거나 늘어날 때는 기존거 남기고 했으면 좋겠다. 예약자랑 탑승객이랑 정보 같을수도 있잖슴
@@ -887,7 +895,7 @@ function calculateTotal() {
     document.getElementById('summaryFuel').textContent = (fuelSurcharge * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     
-    document.getElementById('totalAmount').textContent = totalFlightPrice.toLocaleString()  + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
+    document.getElementById('totalAmount').textContent = totalFlightPrice.toLocaleString() + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
     document.getElementById('payBtnText').textContent = totalFlightPrice.toLocaleString();
     
     if (widgets) {
@@ -935,20 +943,73 @@ function updateSeatModalTitle() {
     }
 }
 
+// db에서 끌어온 점유된 좌석 - 한번만 실행됨
+async function getOccupiedSeats(){
+	try {
+        const fetchPromises = bookingData.flights.map((flight, index) => 
+            axios.post(`/product/flight/seat`, flight
+       		).then(res => {
+           	console.log("getOccupiedSeats res.data : ", res.data);
+            occupiedSeatsList[index] = res.data;
+       		})
+  		);
+        await Promise.all(fetchPromises);	// 배열 데이터를 axios 처리할 경우 이 친구가 있어야 비동기 처리가 완료됨? 모든 배열을 다 돌아야 그 다음 코드가 진행된다??
+        console.log("좌석 정보 로드 완료:", occupiedSeatsList);
+    } catch (error) {
+        console.error("좌석 정보를 미리 가져오는데 실패했습니다.", error);
+    }
+}
+
+// 랜덤 좌석 할당
+async function randomSeatAssignment(){
+	// type = infant 가 있을때로 확인해서 선택하기.
+	console.log("randomSeatAssignment 실행");
+	
+	// occupiedSeatsList - db에 점유된 좌석
+	// selectedSeatsBySegment - 현재 좌석
+    const randColumns = ['A', 'B', 'C', 'D', 'E', 'F'];
+    const randRows = 20;
+    
+    console.log("selectedSeatsBySegment size : ", selectedSeatsBySegment.size);
+    console.log("selectedSeatsBySegment 0 : ", selectedSeatsBySegment[0]);
+    console.log("selectedSeatsBySegment 1 : ", selectedSeatsBySegment[1]);
+    
+    console.log("occupiedSeatsList  size : ", occupiedSeatsList.size);
+    console.log("occupiedSeatsList 0 : ", occupiedSeatsList[0]);
+    console.log("occupiedSeatsList 1 : ", occupiedSeatsList[1]);
+    
+    // rand 숫자 -> 생성 (1 ~ 20) + (A ~ F) 사이
+    
+    let count = bookingData.totalSegments;	// 총 segment
+    
+//     if () 
+    // currentSegmentSelection = 1 (1번은 들어갔을떄) -> selectedSeatsBySegment[번호]의 길이가 totalPeople보다 작으면 그 수만큼 받아야됨
+    // currentSegmentSelection = 0 -> 2번해야됨 (totalPeople 수 만큼)
+    
+    randColumns.forEach(col => {
+	    
+	    for(let i = 1; i <= randRows; i++){
+	    	const seat = i + col;
+		    const randEng = parseInt(Math.random() * randColumns.length);
+		    const randNum = parseInt(Math.random() * 20) + 1;
+		    const randSeat = randNum + randEng;	// 랜덤수 
+		    
+	    	if (selectedSeatsBySegment[index].includes(randSeat) || occupiedSeatsList[index].includes(randSeat)){
+	    		
+	    	} else {
+	    		
+	    	}
+	    }
+    });
+	
+}
+
 // 좌석 배치 초기화
-async function initSeatMap() {
+function initSeatMap() {
 	const economyInfo = document.getElementById("economy");
 	const businessInfo = document.getElementById("extra");
 	
-	let seatList = [];	// db에서 좌석 불러오기
-	try {
-		const res = await axios.post(`/product/flight/seat`, bookingData.flights[currentSegmentSelection]);
-		seatList = res.data;
-	} catch(error) {
-    	console.log("initSeatMap error 발생 : ", error);
-    }
-	
-    console.log("axios 외부 seatList : ", seatList);
+	console.log("initSeatMap의 occupiedSeatsList : ", occupiedSeatsList);
 	
     const seatMap = document.getElementById('seatMap');
     const columns = ['A', 'B', 'C', '', 'D', 'E', 'F'];
@@ -956,9 +1017,8 @@ async function initSeatMap() {
     let html = ``;
 	
     // 열 헤더
-    html += 
-    	`<div class="seat-row">
-   			<div class="seat-row-number"></div>`;
+    html += `<div class="seat-row">
+   				<div class="seat-row-number"></div>`;
     columns.forEach(function(col) {
         if (col === '') html += `<div class="seat-aisle"></div>`;
         else html += `<div class="seat" style="background: none; cursor: default; color: var(--gray-medium);">\${col}</div>`;
@@ -982,7 +1042,7 @@ async function initSeatMap() {
             if (col === '') html += `<div class="seat-aisle"></div>`; // 통로
             else {
             	const seatId = i + col;
-                const occupied = seatList.includes(seatId);	// 선택 불가 자리
+                const occupied = occupiedSeatsList[currentSegmentSelection].includes(seatId);	// 선택 불가 자리
                 const business = i <= 3;		// business
                 const seatClass = occupied ? 'occupied' : (business ? 'business' : 'economy');
                 
@@ -998,7 +1058,6 @@ async function initSeatMap() {
         });
         html += `</div>`;
     }
-    // html = 함수로 불러오기 - 그래야 좌석 선택안했을때 랜덤 호출 가능하거덩 
     seatMap.innerHTML = html;
 }
 
@@ -1055,7 +1114,6 @@ function confirmSeatSelection() {
 	        </button>
 	    </div>`;
     
-    // 좌석 랜덤 설정 하는 함수 호출
     calculateTotal();
     seatSelectionModal.hide();
 }

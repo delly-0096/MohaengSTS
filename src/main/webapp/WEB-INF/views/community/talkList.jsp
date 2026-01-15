@@ -1935,42 +1935,47 @@ function closeChatRoomModal(event) {
  if (event.target === event.currentTarget) {
      closeChatRoomList();
  }
+ 
 }
 
 //채팅방 목록 렌더링
 function renderChatRoomListFromServer(rooms) {
-	const listEl = document.getElementById('chatRoomList');
+	console.log("🔍 목록 렌더링 데이터 확인:", rooms[0]); // 첫 번째 방의 필드명을 확인!
+    const listEl = document.getElementById('chatRoomList');
+    if (!rooms || rooms.length === 0) {
+        listEl.innerHTML = '<div class="no-chat-rooms">현재 열린 채팅방이 없습니다</div>';
+        return;
+    }
 
- if (!rooms || rooms.length === 0) {
-     listEl.innerHTML = '<div class="no-chat-rooms">현재 열린 채팅방이 없습니다</div>';
-     return;
- }
+    let html = '';
+    rooms.forEach(room => {
+        // 💡 1. 안 읽은 메시지 배지 HTML 생성 (0보다 클 때만)
+        const unreadBadge = (room.unreadCount > 0) 
+            ? `<span class="badge bg-danger rounded-pill ms-2">\${room.unreadCount}</span>` 
+            : '';
 
- let html = '';
- rooms.forEach(room => {
-     html += `
-     <div class="chat-room-item \${room.full ? 'full' : ''}"
-          onclick="joinChatRoom(\${room.chatId})">
-         <div class="chat-room-details">
-             <div class="chat-room-name">
-                 \${room.chatName}
-                 \${room.full ? '<span class="badge bg-danger">만석</span>' : ''}
-             </div>
-             <div class="chat-room-meta">
-                 <span>\${room.chatCtgryName}</span>
-                 <span>\${room.createdByNickname} (\${room.createdById})</span>
-             </div>
-         </div>
-         <div class="chat-room-users-count">
-        	 \${room.currentUsers}/\${room.maxUsers}
-         </div>
-     </div>
-     `;
- });
- 
-
- listEl.innerHTML = html;
+        html += `
+        <div class="chat-room-item \${room.full ? 'full' : ''}"
+             onclick="joinChatRoom(\${room.chatId})">
+            <div class="chat-room-details">
+                <div class="chat-room-name">
+                    \${room.chatName}
+                    \${unreadBadge} \${room.full ? '<span class="badge bg-danger">만석</span>' : ''}
+                </div>
+                <div class="chat-room-meta">
+                    <span>\${room.chatCtgryName}</span>
+                    <span>\${room.createdByNickname} (\${room.createdById})</span>
+                </div>
+            </div>
+            <div class="chat-room-users-count">
+                \${room.currentUsers}/\${room.maxUsers}
+            </div>
+        </div>
+        `;
+    });
+    listEl.innerHTML = html;
 }
+
 
 //채팅방 필터
 document.querySelectorAll('.chat-filter-btn').forEach(btn => {
@@ -2296,6 +2301,17 @@ function loadChatUserList(chatId) {
  .catch(err => console.error("명단 로드 실패 : ", err));
 }
 
+// ================== 마지막 읽은 정보 업데이트 =================
+function sendReadUpdate() {
+    if (currentChatId && stompClient && stompClient.connected) {
+        stompClient.send('/app/chat/readupdate', {}, JSON.stringify({ // 👈 하이픈 확인!
+            chatId: parseInt(currentChatId),
+            memId: currentUser.id
+        }));
+        console.log("💾 읽음 위치 저장 요청 보냄:", currentChatId);
+    }
+}
+
 //==================== 이전 메시지 불러오기 ====================
 const chatWindow = document.getElementById('chatMessages');
 
@@ -2359,8 +2375,20 @@ function openChatWindow() {
 
 //채팅 최소화
 function minimizeChat() {
- document.getElementById('chatWindow').classList.remove('active');
- document.getElementById('chatMinimized').classList.add('active');
+	const chatWindow = document.getElementById('chatWindow');
+	chatWindow.classList.add('minimized');
+	
+	// 읽음 처리 로직
+	sendReadUpdate();
+	
+	document.getElementById('chatWindow').classList.remove('active');
+	document.getElementById('chatMinimized').classList.add('active');
+	
+	// 💡 [상태 저장 추가]
+    if (typeof currentChatId !== 'undefined' && currentChatId) {
+        sessionStorage.setItem('minimizedChatId', currentChatId);
+        sessionStorage.setItem('chatWindowState', 'minimized');
+    }
 }
 
 //채팅 최대화
@@ -2575,11 +2603,16 @@ function addSystemMessage(message) {
 // 읽지 않은 메시지 배지 업데이트
 function updateUnreadBadge() {
     const badge = document.getElementById('chatUnreadBadge');
+    if(!badge) return;
+    
     badge.textContent = unreadCount;
+    
     if (unreadCount > 0) {
         badge.classList.add('has-unread');
+        badge.style.display = 'flex';
     } else {
         badge.classList.remove('has-unread');
+        badge.style.display = 'none';
     }
 }
 
@@ -2590,7 +2623,7 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-// ==================== 파일/이미지 업로드 ====================
+// ==================== 채팅 파일/이미지 업로드 ====================
 
 // 이미지 업로드 열기
 function openImageUpload() {
@@ -2627,18 +2660,28 @@ function handleImageUpload(event) {
         return;
     }
 
-    // 이미지 미리보기 생성
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const imageUrl = e.target.result;
-        const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-        addImageMessage(currentUser.name, imageUrl, time, true);
-    };
-    reader.readAsDataURL(file);
-
-    // 입력 초기화
+    // 서버로 파일 업로드
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.appen('chatId', currentChatId);	// 현재 참여중인 방 ID
+    
+    fetch(api('/chat/upload'), {
+    	method : 'POST',
+    	bodd : formData
+    })
+    .then(res => res.json())
+    .then(data => {
+    	if(data.success {
+    		// 업로드 성공 시 소켓으로 파일 메시지 전송
+    		sendMessage('IMAGE', data.fileUrl);
+    		showToast('이미지가 전송되었습니다.' + 'success');
+    	} else {
+    		showToast('업로드 실패 : ' + data.message, 'error');
+    	}
+    })
+    .catch(err => console.error('Upload Error : ', err));
+    	
     event.target.value = '';
-    showToast('이미지가 전송되었습니다.', 'success');
 }
 
 // 파일 업로드 처리
@@ -2652,12 +2695,46 @@ function handleFileUpload(event) {
         return;
     }
 
-    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-    addFileMessage(currentUser.name, file.name, file.size, time, true);
-
-    // 입력 초기화
+    const formData = new formData();
+    formData.append('file', file);
+    formData.append('chatId', currentChatId);
+    
+    fetch(api('/chat/upload'), {
+    	method : 'POST',
+    	body : formData
+    })
+    .then(res => res.json())
+    .then(data => {
+    	if(data.success) {
+    		// 파일은 파일명, 사이즈 등을 JSON 형태로 소켓 전송
+    		const fileInfo = JSON.stringify({
+    			fileName : data.originName,
+    			fileSize: data.fileSize,
+                fileUrl: data.fileUrls
+    		});
+    		sendMessage('FILE', fileInfo);
+    		showToast('파일이 전송되었습니다.', 'success');
+    	}
+    });
+   	
     event.target.value = '';
-    showToast('파일이 전송되었습니다.', 'success');
+}
+
+//소켓 메시지 수신부 
+function onMessageReceived(payload) {
+    const chat = JSON.parse(payload.body);
+    const isMine = (chat.senderId === currentUser.id);
+    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+
+    if (chat.type === 'IMAGE') {
+        addImageMessage(chat.senderName, chat.content, time, isMine);
+    } else if (chat.type === 'FILE') {
+        const fileData = JSON.parse(chat.content);
+        addFileMessage(chat.senderName, fileData.fileName, fileData.fileSize, time, isMine);
+    } else {
+        // 일반 텍스트 메시지 처리
+        addMessage(chat.senderName, chat.content, time, isMine);
+    }
 }
 
 // 이미지 메시지 추가
@@ -2772,43 +2849,7 @@ function downloadFile(fileName) {
     // 실제로는 서버에서 파일을 다운로드하는 로직 구현
 }
 
-// ==================== 채팅 시뮬레이션 ====================
-
-// 가상 채팅 시뮬레이션 (데모용)
-function startChatSimulation() {
-    const simulatedMessages = [
-        { sender: 'travel_kim', message: '오~ 새로운 분이 오셨네요! 환영해요 👋' },
-        { sender: 'adventure_lee', message: '안녕하세요!' },
-        { sender: 'trip_lover', message: '반갑습니다~' },
-        { sender: 'wanderer', message: '저도 다음 달에 여행 가려고 계획 중이에요' },
-        { sender: 'explorer_j', message: '어디로 가세요?' },
-        { sender: 'travel_kim', message: '좋은 여행지 추천 있으면 알려주세요!' },
-        { sender: 'adventure_lee', message: '저는 최근에 후쿠오카 다녀왔는데 너무 좋았어요' },
-        { sender: 'trip_lover', message: '후쿠오카 음식이 정말 맛있죠' }
-    ];
-
-    let index = 0;
-
-    chatSimulationInterval = setInterval(() => {
-        if (index < simulatedMessages.length && currentChatRoom) {
-            const msg = simulatedMessages[index];
-            const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-            addChatMessage(msg.sender, msg.message, time, false);
-            index++;
-        } else {
-            stopChatSimulation();
-        }
-    }, 5000 + Math.random() * 5000); // 5~10초 랜덤 간격
-}
-
-// 시뮬레이션 중지
-function stopChatSimulation() {
-    if (chatSimulationInterval) {
-        clearInterval(chatSimulationInterval);
-        chatSimulationInterval = null;
-    }
-}
-
+//==================== 채팅 ESC로 닫기 ====================
 // ESC 키로 모달 닫기
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
@@ -3240,5 +3281,10 @@ if (!document.getElementById('toastStyles')) {
     style.textContent = '@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } } @keyframes toastOut { from { opacity: 1; transform: translateX(-50%) translateY(0); } to { opacity: 0; transform: translateX(-50%) translateY(20px); } }';
     document.head.appendChild(style);
 }
+
+window.addEventListener('beforeunload', function() {
+    // 💡 브라우저가 닫히기 직전 마지막 발악(?)으로 위치를 저장
+    sendReadUpdate();
+});
 </script>
 <%@ include file="../common/footer.jsp" %>

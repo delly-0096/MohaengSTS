@@ -61,4 +61,18 @@ public class ChatStompController {
             message
         );
     }
+	
+	/**
+	 *	<p> 마지막 메시지 갱신  </p>
+	 *	@date 2026.01.15
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	@MessageMapping("/chat/readupdate")
+	public void updateReadStatus(ChatMessageDTO data) {
+		chatService.syncLastMsgId(data.getChatId(), data.getMemId());
+		
+		log.info("📢 유저 {} 가 방 {} 을 나가며 읽음 상태를 갱신했습니다.", data.getMemId(), data.getChatId());
+	}
 }

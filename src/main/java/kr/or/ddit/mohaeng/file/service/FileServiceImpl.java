@@ -81,7 +81,7 @@ public class FileServiceImpl implements IFileService{
 	        throw new RuntimeException("파일 업로드 처리 중 에러 발생", e);
 	    }
     }
-
+	
 	/**
 	 *	<p> 프로필 파일 저장 </p>
 	 *	@date 2026.01.02

@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.validation.Valid;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO;
@@ -45,8 +46,12 @@ public class ChatController {
 	/* 채팅방 목록 가져오기 */
 	@GetMapping("/chat/rooms")
 	@ResponseBody
-	public List<ChatRoomResponseDTO> getChatRooms(@RequestParam(required = false) String category){
-		return chatService.getChatRooms(category);
+	public List<ChatRoomResponseDTO> getChatRooms(
+			@RequestParam(required = false) String category, 
+			@AuthenticationPrincipal CustomUserDetails user){
+		
+		String memId = (user != null) ? user.getUsername() : null;
+		return chatService.getChatRooms(category, memId);
 	}
 
 	/* 채팅방 만들기 */
@@ -82,6 +87,8 @@ public class ChatController {
 			){
 		Map<String, Object> result = chatService.joinChatRoom(chatId, user.getMember().getMemNo());
 		if ((boolean) result.get("success")) {
+			chatService.updateLastReadMessage(chatId, user.getUsername());
+			
 			ChatRoomVO room = chatService.getChatRoomById(chatId);
 			List<ChatUserVO> userList = chatService.getChatUsersByRoomId(chatId);
 			
@@ -115,7 +122,6 @@ public class ChatController {
 		Map<String, Object> result = new HashMap<>();
 	    String memId = user.getUsername(); 
 	    int memNo = user.getMember().getMemNo();
-	    // 만약 memNo가 필요하다면 user.getMember().getMemNo() 사용 가능
 
 	    try {
 	        boolean isDestroyed = chatService.processLeaveOrDestroy(chatId, memId, memNo);
@@ -142,5 +148,18 @@ public class ChatController {
 
 	    return result;
 	}
+	
+	/* 채팅 파일 & 이미지 업로드 */
+	@PostMapping("/chat/upload")
+	@ResponseBody
+	public Map<String, Object> uploadChatFile(
+			@RequestParam("file") MultipartFile file,
+			@RequestParam("chatId") Long chatId,
+			@AuthenticationPrincipal CustomUserDetails user) {
+		
+		int memNo = user.getMember().getMemNo();
+		return chatService.uploadChatFile(file, chatId, memNo);
+	}
+			
 
 }

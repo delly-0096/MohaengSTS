@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO;
 import kr.or.ddit.mohaeng.vo.ChatRoomVO;
@@ -38,7 +39,7 @@ public interface IChatMapper {
 	 *	@param 
 	 *	@return
 	 */
-	public List<ChatRoomVO> selectChatRooms(String category);
+	public List<ChatRoomVO> selectChatRooms	(String category, String memId);
 
 	/**
 	 *	<p> 채팅방 중복 입장 체크 </p>
@@ -147,6 +148,33 @@ public interface IChatMapper {
 	 *	@return
 	 */
 	public void deleteChatRoomPermanently(Long chatId);
+
+	/**
+	 *	<p> 채팅방 마지막 메시지 번호 조회 </p>
+	 *	@date 2026.01.15
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public int getLatestMsgId(long chatId);
+
+	/**
+	 *	<p> 내 LAST_MSG_ID 업데이트 </p>
+	 *	@date 2026.01.15
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public void updateLastMsgId(long chatId, String memId, int lastMsgId);
+
+	/**
+	 *	<p> 채팅방 입장 시 최신 메시지 갱신  </p>
+	 *	@date 2026.01.15
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	public void updateLastReadMessage(Long chatId, String memId);
 
 
 }

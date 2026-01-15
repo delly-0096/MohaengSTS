@@ -1126,6 +1126,11 @@
     color: white;
 }
 
+.complete-icon.fail {
+    background-color: #fff0f0; /* 실패 배경 (연빨강) */
+    color: #dc3545;            /* 실패 아이콘 (빨강) */
+}
+
 .complete-title,
 .fail-title {
     font-size: 28px;

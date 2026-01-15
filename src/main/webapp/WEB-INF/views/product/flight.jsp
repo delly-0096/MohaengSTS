@@ -139,7 +139,7 @@
 					<i class="bi bi-check-circle-fill me-2"></i>선택한 항공편
 				</h5>
 				<button type="button" class="btn btn-outline-secondary btn-sm"
-					onclick="resetFlightSelection()">
+					onclick="resetFlightSelection()"><!-- 이거 누르면 초기 상태로 돌아가야됨 - 아니면 첫번쨰 검색한결과를 조회해줘야됨 -->
 					<i class="bi bi-arrow-counterclockwise me-1"></i>다시 선택
 				</button>
 			</div>
@@ -197,12 +197,43 @@ let currentSelectionStep = 0; 		// 현재 선택 단계 (0: 가는편, 1: 오는
 let selectedFlights = []; 			// 선택된 항공편 목록
 let totalSegments = 2; 				// 총 선택해야 할 구간 수 (왕복: 2, 편도: 1)
 
-let storedData = null;	// storage에 저장된 정보
-let airportList = [];	// 항공 목록
+let storedData = null;				// storage에 저장된 정보
+let airportList = [];				// 항공 목록
 
 const list = document.getElementById('selectedFlightsList');
+let currentSearchState = null;		// 현재 상태?
 
-// let selectedFlightList = [];	// 선택한 항공권 저장
+// session데이터 가져오기 
+function restoreSearchForm() {
+	
+//     const saved = sessionStorage.getItem('flightProduct');
+//     if (!saved) return;
+
+//     const data = JSON.parse(saved);
+//     currentSearchState = data.flights[0]; // 상태 복원
+
+//     console.log("복원 코드 : ", currentSearchState);
+//     // UI 필드 복원
+//     document.querySelector('#departure').value = currentSearchState.depAirportNm;
+//     document.querySelector('#depAirportId').value = currentSearchState.depAirportId;
+//     document.querySelector('#depIataCode').value = currentSearchState.depIata;
+//     document.querySelector('#destination').value = currentSearchState.arrAirportNm;
+//     document.querySelector('#arrAirportId').value = currentSearchState.arrAirportId;
+//     document.querySelector('#arrIataCode').value = currentSearchState.arrIata;
+//     document.querySelector('#departDate').value = currentSearchState.startDt;
+//     document.querySelector('#returnDate').value = data.flights[1].startDt;
+    
+//     // 선택한 항목 보여줘야됨
+//     // update로 그것도 보여줘야됨 (오는 편) 그래야지 가능
+    
+    
+//     currentSelectionStep = 1;
+    
+//     // 복원 후 즉시 검색 실행 (선택 사항)
+//     searchFlights();
+// 아직 좀 조정해야됨
+
+}
 
 // 검색 타입 탭 전환
 document.querySelectorAll('.search-tab').forEach(tab => {
@@ -212,6 +243,7 @@ document.querySelectorAll('.search-tab').forEach(tab => {
 
         const type = this.dataset.type;
         currentSearchType = type;
+        // 탭 전환시에는 어떻게 할까??
 //         resetFlightSelection();
 		
         if (type === 'oneway') {
@@ -231,7 +263,8 @@ document.querySelectorAll('.search-tab').forEach(tab => {
 function updateFlightButtons() {
     const buttons = document.querySelectorAll('.flight-action-btn');
     const isLastStep = (currentSelectionStep >= totalSegments - 1);
-
+	console.log("isLastStep : ", isLastStep);
+    
     buttons.forEach(btn => {
         if (currentSearchType === 'oneway') {
             btn.textContent = '결제하기';
@@ -253,51 +286,34 @@ function updateSelectionStepIndicator() {
 
     indicator.style.display = 'block';
 
-    if (currentSearchType === 'round') {
-        stepText.textContent = currentSelectionStep === 0 ? '가는편 선택' : '오는편 선택';
-    }
+    if (currentSearchType === 'round') stepText.textContent = currentSelectionStep === 0 ? '가는편 선택' : '오는편 선택';
 }
 
 // 항공편 선택 처리 - id, data, searchData, startDate, duration, 
 function selectFlight(jsonSendData) {
-	
 	const flightData = JSON.parse(jsonSendData); 
     console.log("flightData : ", flightData)
-    selectedFlights.push(flightData);
-    currentSelectionStep++;
+    
+    selectedFlights[currentSelectionStep] = flightData;
     
     // 편도인 경우 바로 결제 페이지로 이동
-    if (currentSearchType === 'oneway' || currentSelectionStep === 2) {
+    if (currentSearchType === 'oneway' || currentSelectionStep === 1) {
         goToBooking();
         return;
+    }else{
+	    currentSelectionStep = 1;
+	    
+	    // ui 업데이트
+	    updateSelectedFlightsDisplay();
+	    updateSelectionStepIndicator();
+	    updateFlightButtons();
+	    
+	    searchFlights();
+		document.getElementById('flightResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    
-	
-    // 선택한 항공편 표시 업데이트
-    updateSelectedFlightsDisplay();
-	
-    /////////////////////////////////////////////
-    // 3번쨰일때 실행할 것
-    if(currentSelectionStep > totalSegments){
-    	resetFlightSelection();
-    	selectedFlights.push(flightData);
-        currentSelectionStep = 1;
-    	console.log("selectFlight currentSelectionStep 몇번째인지 : ", currentSelectionStep);
-    }
-    
-    // 다음 구간 선택을 위해 버튼 및 표시 업데이트
-    updateFlightButtons();
-    updateSelectionStepIndicator();
-
-    // axios 실행
-    searchFlights();
-    
-    // 스크롤을 검색 결과 상단으로 이동
-	document.getElementById('flightResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    
 }
 
-// 선택한 항공편 표시 업데이트
+// 선택한 항공편 검색 창 밑에 업데이트 
 function updateSelectedFlightsDisplay() {
     const container = document.getElementById('selectedFlightsContainer');
  
@@ -316,17 +332,18 @@ function updateSelectedFlightsDisplay() {
     		(currentSearchType === 'round') ? (index === 0 ? '가는편' : '오는편') : '편도';
     		
         totalPrice += parseInt(flight.price);
-        html += '<div class="selected-flight-item">' +
-            '<div class="selected-flight-info">' +
-                '<span class="selected-flight-label">' + label + '</span>' +
-                '<div class="selected-flight-detail">' + flight.startDate + '(' + flight.domesticDays + ')' + 
-                    '<span class="selected-flight-time">' + flight.depTimeFormmater + ' → ' + flight.arrTimeFormmater + '</span>' +
-                    '<span class="selected-flight-route">' + flight.depIata + ' → ' + flight.arrIata + '</span>' +
-                '</div>' +
-                '<span class="selected-flight-airline">' + flight.airlineNm + ' (' + flight.flightSymbol + ')</span>' +
-            '</div>' +
-            '<span class="selected-flight-price">' + flight.price.toLocaleString() + '원</span>' +
-        '</div>';
+        html += `
+        <div class="selected-flight-item">
+             <div class="selected-flight-info">
+                 <span class="selected-flight-label">\${label}</span>
+                 <div class="selected-flight-detail">\${flight.startDate} (\${flight.domesticDays}) 
+                     <span class="selected-flight-time">\${flight.depTimeFormmater} → \${flight.arrTimeFormmater}</span>
+                     <span class="selected-flight-route">\${flight.depIata} → \${flight.arrIata}</span>
+                 </div>
+                 <span class="selected-flight-airline">\${flight.airlineNm} (\${flight.flightSymbol})</span>
+             </div>
+             <span class="selected-flight-price">\${flight.price.toLocaleString()}원</span>
+        </div>`;
     });
 
     // 모든 구간 선택 완료 시 총 금액 및 결제 버튼 표시
@@ -344,21 +361,21 @@ function updateSelectedFlightsDisplay() {
     list.innerHTML = html;
 }
 
-// 선택 초기화
+// 1번째 검색한 부분으로 돌아감
 function resetFlightSelection() {
-    selectedFlights = [];
     currentSelectionStep = 0;
 
     document.getElementById('selectedFlightsContainer').style.display = 'none';
-    document.getElementById('selectedFlightsList').innerHTML = '';
-
+    list.innerHTML = '';
+    document.querySelector(".flight-result").innerHTML = '';
+    
     updateFlightButtons();
     updateSelectionStepIndicator();
+    searchFlights();
 }
 
 // 결제 페이지로 이동
 function goToBooking() {
-	
 	if (!selectedFlights || selectedFlights.length === 0) return;
 	
     const bookingData = {
@@ -370,11 +387,9 @@ function goToBooking() {
             segmentLabel: getSegmentLabel(index)
         }))
     };
-    
     // 항공편 데이터를 sessionStorage에 저장
     sessionStorage.setItem('flightProduct', JSON.stringify(bookingData));
     
-//     const flightIds = selectedFlights.map(f => f.id).join(',');
     window.location.href = `/product/flight/booking`;
 }
 
@@ -394,9 +409,7 @@ function togglePassengerPanel() {
 document.addEventListener('click', function(e) {
     // 일반 검색 승객 드롭다운
     const dropdown = document.querySelector('.search-form-row.mt-3 .passenger-dropdown');
-    if (dropdown && !dropdown.contains(e.target)) {
-        document.getElementById('passengerPanel').classList.remove('active');
-    }
+    if (dropdown && !dropdown.contains(e.target)) document.getElementById('passengerPanel').classList.remove('active');
 });
 
 // 승객 수 업데이트
@@ -524,14 +537,12 @@ function getFlightsForPage(page) {
     return flights;
 }
 
+// 조건에 맞는 항공권 카드 생성
 function createFlightCard(data, searchData, cabin, id) {
-	
-// 	let id = searchData.startDt + "" + id;	// 일단 항공권 id = 일자 + id
 	
 	// 버튼 텍스트 결정
     let isLastStep = (currentSelectionStep >= totalSegments - 1);
     let buttonText = (currentSearchType === 'oneway' || isLastStep) ? '결제하기' : '선택';
-    
 	
     // 시간
     let startDate = searchData.startDt.substring(0, 4) + "년 " + searchData.startDt.substring(4, 6) + "월 " + searchData.startDt.substring(6, 8) + "일 "; 
@@ -575,8 +586,6 @@ function createFlightCard(data, searchData, cabin, id) {
 	
 	const jsonSendData = JSON.stringify(sendData).replace(/"/g, '&quot;');
 	
-	// id에 돌아오는것, 가는것 알파벳 추가?
-			
     return `<div class="flight-card" data-flight-id="\${id}">
         <div class="flight-card-content">
             <div class="flight-info">
@@ -633,19 +642,21 @@ document.querySelector('#returnDate').addEventListener("change", function(e){
 	}
 });
 
-// 검색 폼 제출
+// 검색 폼 제출 (1번만 함)
 document.getElementById('flightSearchForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
     // 초기화
-//    	selectedFlights = [];
-//    	currentSelectionStep = 1;
-//    	list.innerHTML = "";
-  	resetFlightSelection();
-    
+   	currentSelectionStep = 0;
+   	
+   	updateFlightButtons();
+ 	updateSelectionStepIndicator();
+   	selectedFlights = [];	// 검색 한번해서 
+   	updateSelectedFlightsDisplay();		// 선택된 거 없애줌
     searchFlights();
 });
 
+// 항공권 조회
 function searchFlights() {
 	const result = document.querySelector('.flight-result');
     result.innerHTML = ``;
@@ -703,7 +714,6 @@ function searchFlights() {
     
 	// 피젯? 로더?
 	
-    // 실제 구현 시 API 호출 또는 검색 결과 페이지로 이동 - axios 설정
     axios.post(`/product/flight/searchFlight`, searchData
     ).then(res => {
     	const flight = res.data;
@@ -716,11 +726,9 @@ function searchFlights() {
                 // 유효성 검사 (금액이 있고 항공사 이름이 제대로 된 경우만)
                 if (item.airlineNm && item.airlineNm !== '/') {
 					let isPriceValid = false;
-					if (cabin === "economy") {
-	                    isPriceValid = item.economyCharge > 0;
-	                } else if (cabin === "business" || cabin === "prestige") {
-	                    isPriceValid = item.prestigeCharge > 0;
-	                }
+					if (cabin === "economy") isPriceValid = item.economyCharge > 0;
+	                else isPriceValid = item.prestigeCharge > 0;
+	                
 
 	                if (isPriceValid) {
 	                    html += createFlightCard(item, searchData, cabin, i);
@@ -760,9 +768,7 @@ function showSegmentAutocomplete(dropdown, query) {
 	    return isMatch && isNotDuplicate;
 	});
 	
-	
     let html = '';
-    
     if(filteredData.length > 0){
         html += filteredData.map(function(airport) {
             return createAutocompleteItemHtml(airport, query);
@@ -782,7 +788,7 @@ function showSegmentAutocomplete(dropdown, query) {
     });
 }
 
-// 출발지 도착지 클릭
+// 출발지 도착지 선택
 function selectAirportItem(item, dropdown) {
     const input = dropdown.previousElementSibling;
     const parent = input.closest('.form-group');
@@ -792,12 +798,8 @@ function selectAirportItem(item, dropdown) {
     const idInput = parent.querySelector('input[name*="AirportId"]');	// hidden태그에 값 입력
     const iataInput = parent.querySelector('input[name*="IataCode"]');	// hidden태그에 값 입력
     
-    if (idInput) {
-    	idInput.value = item.dataset.id;
-    }
-    if (iataInput) {
-    	iataInput.value = item.dataset.code;
-    }
+    if (idInput) idInput.value = item.dataset.id;
+    if (iataInput) iataInput.value = item.dataset.code;
     dropdown.classList.remove('active');
 }
 
@@ -821,17 +823,10 @@ function renderStoredData(storedData) {
 document.addEventListener('DOMContentLoaded', function() {
     // 모든 자동완성 인풋 박스를 찾습니다.
     
-    airportList = JSON.parse('${airportList}');
+    airportList = JSON.parse('${airportList}');	// 공항 목록 받은 것
     
-	// session에 담아놓을지?
-	storedData = sessionStorage.getItem('flightBookingData');
-    if(storedData){
-    	storedData = JSON.parse(storedData);
-    	console.log("저장 데이터 : ", storedData);
-    	renderStoredData(storedData);
-    }
+    restoreSearchForm();
     
-    // 받는 것은 성공. 그런데 어떻게 뿌릴지는 모르겠다
     const autoInputs = document.querySelectorAll('.airport-autocomplete');
 
     autoInputs.forEach(input => {
@@ -858,16 +853,10 @@ document.addEventListener('DOMContentLoaded', function() {
             locale: 'ko'
         });
     }
-    
+
+    //     initFlightInfiniteScroll();
 });
 
-// //페이지 로드시 초기화
-// document.addEventListener('DOMContentLoaded', function() {
-//     initFlightInfiniteScroll();
-//     // 항공편 선택 버튼 및 표시 초기화
-//     updateFlightButtons();
-//     updateSelectionStepIndicator();
-// });
 </script>
 
 <%-- <c:set var="pageJs" value="product" /> --%>

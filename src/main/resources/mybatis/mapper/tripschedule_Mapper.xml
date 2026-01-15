@@ -9,12 +9,12 @@
         <result property="prefNo"           column="PREF_NO" />
         <result property="startPlaceType"   column="START_PLACE_TYPE" />
         <result property="startPlaceId"     column="START_PLACE_ID" />
-        <result property="startPlaceId"     column="START_PLACE_ID" />
         <result property="targetPlaceType"  column="TARGET_PLACE_TYPE" />
-        <result property="targetPlaceId"    column="TARGET_PLACE_ID" />
         <result property="targetPlaceId"    column="TARGET_PLACE_ID" />
         <result property="schdlNm"   	    column="SCHDL_NM" />
         <result property="schdlStatus"      column="SCHDL_STATUS" />
+        <result property="attachNo"      	column="TS_ATTACH_NO" />
+        <result property="linkThumbnail"     column="LINK_THUMBNAIL" />
         <result property="schdlStartDt"     column="SCHDL_START_DT" />
         <result property="schdlEndDt"       column="SCHDL_END_DT" />
         <result property="travelerCnt"      column="TRAVELER_CNT" />
@@ -23,11 +23,13 @@
         <result property="publicYn"         column="PUBLIC_YN" />
         <result property="regDt"            column="TS_REG_DT" />
         <result property="modDt"            column="TS_MOD_DT" />
-        <result property="bkmkYn"            column="BKMK_YN" />
+        <result property="bkmkYn"           column="BKMK_YN" />
 
+		<association property="attachFile" resultMap="attachFileDetailMap" />
+		
         <collection property="tripScheduleDetailsList" 
                     resultMap="tripScheduleDetailsResultMap" 
-                    notNullColumn="SCHDL_DETAILS_NO" />
+                    notNullColumn="SCHDL_DETAILS_NO" /> 
     </resultMap>
 
     <resultMap id="tripScheduleDetailsResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO">
@@ -84,6 +86,22 @@
 	    <result property="plcAddr1" column="PLC_ADDR1" />
 	    <result property="plcAddr2" column="PLC_ADDR2" />
 	</resultMap>
+	
+	<resultMap id="attachFileDetailMap" type="kr.or.ddit.mohaeng.vo.AttachFileDetailVO">
+		<id property="fileNo" column="FILE_NO"/>
+		<result property="fileNo" column="FILE_NO"/>
+		<result property="attachNo" column="ATTACH_NO" />
+		<result property="fileName" column="FILE_NAME" />
+		<result property="fileOriginalName" column="FILE_ORIGINAL_NAME" />
+		<result property="fileExt" column="FILE_EXT" />
+		<result property="fileSize" column="FILE_SIZE" />
+		<result property="filePath" column="FILE_PATH" />
+		<result property="fileGbCd" column="FILE_GB_CD" />
+		<result property="mimyType" column="MIMN_TYPE" />
+		<result property="useYn" column="USE_YN" />
+		<result property="regId" column="REG_ID" />
+		<result property="regDt" column="REG_DT" />
+	</resultMap>
     
     <sql id="tripScheduleColumns">
     	 	  TS.SCHDL_NO
@@ -95,6 +113,9 @@
 		    , TS.TARGET_PLACE_ID
 		    , TS.SCHDL_NM
 		    , TS.SCHDL_STATUS
+		    , TS.ATTACH_NO		  AS TS_ATTACH_NO
+		    , (SELECT FILE_PATH FROM ATTACH_FILE_DETAIL FD WHERE TS.ATTACH_NO = FD.ATTACH_NO) AS FILE_PATH
+			, TS.LINK_THUMBNAIL
 		    , TS.SCHDL_START_DT
 		    , TS.SCHDL_END_DT
 		    , TS.TRAVELER_CNT
@@ -128,6 +149,27 @@
 	            WHERE B.SCHDL_NO = TS.SCHDL_NO 
 	              AND B.MEM_NO = #{memNo}
 	           ) AS BKMK_YN
+	        , TP.PLC_NO
+        	, TP.RGN_NO
+        	, TP.PLACE_TYPE
+			, (SELECT CONTENT_TYPE_NAME FROM TOUR_CONTENT_TYPE CT WHERE CT.CONTENT_TYPE_ID = TP.PLACE_TYPE) AS PLACE_NAME
+        	, TP.PLC_NM
+        	, TP.PLC_DESC
+        	, TP.PLC_ZIP
+        	, TP.ATTACH_NO AS IMG_ATTACH_NO
+        	, TP.LATITUDE
+        	, TP.LONGITUDE
+        	, TP.OPERATION_HOURS
+        	, TP.PLC_PRICE
+        	, TP.REG_ID
+        	, TP.REG_DT
+        	, TP.MOD_ID
+        	, TP.MOD_DT
+        	, TP.PCL_STATUS_CD
+        	, TP.POP_TRVL_YN
+        	, TP.DEFAULT_IMG
+        	, TP.PLC_ADDR1
+        	, TP.PLC_ADDR2
     </sql>
 
     <select id="selectTripScheduleList" parameterType="int" resultMap="tripScheduleResultMap">
@@ -137,6 +179,8 @@
 		    ON TS.SCHDL_NO = TSD.SCHDL_NO
 		  LEFT JOIN TRIP_SCHEDULE_PLACE TSP
 		    ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
+		  LEFT JOIN TOUR_PLACE TP
+		    ON TSP.PLACE_ID = TP.PLC_NO
 		 WHERE TS.MEM_NO = #{memNo}
 		   AND TS.DEL_YN != 'Y'
 		 ORDER BY TS.REG_DT DESC
@@ -146,27 +190,6 @@
     
     <select id="selectTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO" resultMap="tripScheduleResultMap">
         SELECT <include refid="tripScheduleColumns"/>
-        	 , TP.PLC_NO
-        	 , TP.RGN_NO
-        	 , TP.PLACE_TYPE
-			 , (SELECT CONTENT_TYPE_NAME FROM TOUR_CONTENT_TYPE CT WHERE CT.CONTENT_TYPE_ID = TP.PLACE_TYPE) AS PLACE_NAME
-        	 , TP.PLC_NM
-        	 , TP.PLC_DESC
-        	 , TP.PLC_ZIP
-        	 , TP.ATTACH_NO AS IMG_ATTACH_NO
-        	 , TP.LATITUDE
-        	 , TP.LONGITUDE
-        	 , TP.OPERATION_HOURS
-        	 , TP.PLC_PRICE
-        	 , TP.REG_ID
-        	 , TP.REG_DT
-        	 , TP.MOD_ID
-        	 , TP.MOD_DT
-        	 , TP.PCL_STATUS_CD
-        	 , TP.POP_TRVL_YN
-        	 , TP.DEFAULT_IMG
-        	 , TP.PLC_ADDR1
-        	 , TP.PLC_ADDR2
 		  FROM TRIP_SCHEDULE TS
 		  LEFT JOIN TRIP_SCHEDULE_DETAILS TSD
 		    ON TS.SCHDL_NO = TSD.SCHDL_NO
@@ -505,4 +528,41 @@
 	    WHERE MEM_NO = #{memNo}
 	      AND SCHDL_NO = #{schdlNo}
 	</delete>
+	
+	<update id="updateScheduleThumbnail" parameterType="kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController$ThumbnailData">
+		UPDATE TRIP_SCHEDULE
+		   SET 
+		   	<if test='defaultYn eq "Y"'>
+		   	   ATTACH_NO = null
+			 , LINK_THUMBNAIL = #{linkThumbnail}
+		   	</if>
+		   	<if test='defaultYn eq "N"'>
+		   	   ATTACH_NO = #{attachNo}
+			 , LINK_THUMBNAIL = null
+		   	</if>
+		 WHERE SCHDL_NO = #{schdlNo}
+	</update>
+	
+	<select id="tourContentList" resultType="kr.or.ddit.util.Params">
+		select CONTENT_TYPE_ID
+			 , CONTENT_TYPE_NAME
+		  FROM TOUR_CONTENT_TYPE
+	</select>
+	
+	<update id="scheduleOngoing" parameterType="int">
+		UPDATE TRIP_SCHEDULE
+		  SET SCHDL_STATUS = 'ONGOING'
+	 <![CDATA[
+		WHERE TO_DATE(SCHDL_START_DT) <= SYSDATE
+		  AND TO_DATE(SCHDL_END_DT) >= SYSDATE;
+		   ]]>
+	</update>
+	
+	<update id="scheduleCompleted" parameterType="int">
+		UPDATE TRIP_SCHEDULE
+		   SET SCHDL_STATUS = 'COMPLETED'
+	 <![CDATA[
+		 WHERE TO_DATE(SCHDL_END_DT) < SYSDATE;
+		   ]]>
+	</update>
 </mapper>

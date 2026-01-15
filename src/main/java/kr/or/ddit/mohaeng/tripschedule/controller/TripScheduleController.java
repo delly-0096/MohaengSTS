@@ -19,12 +19,16 @@ import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,8 +37,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
 import kr.or.ddit.mohaeng.admin.login.controller.ConnetController;
+import kr.or.ddit.mohaeng.community.travellog.comments.service.CommentsServiceImpl;
 import kr.or.ddit.mohaeng.login.controller.LoginController;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.tripschedule.enums.RegionCode;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
 import kr.or.ddit.mohaeng.vo.CustomUser;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
@@ -42,15 +48,22 @@ import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
 import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller
 @RequestMapping("/schedule")
 public class TripScheduleController {
+
+    private final CommentsServiceImpl commentsServiceImpl;
 	
 	@Autowired
 	ITripScheduleService tripScheduleService;
+
+    TripScheduleController(CommentsServiceImpl commentsServiceImpl) {
+        this.commentsServiceImpl = commentsServiceImpl;
+    }
 	
 	@GetMapping("/search")
 	public String search(Model model) {
@@ -78,7 +91,11 @@ public class TripScheduleController {
 	}
 	
 	@GetMapping("/planner")
-	public String planner() {
+	public String planner(Model model) {
+		List<Params> tourContentList = tripScheduleService.tourContentList();
+		System.out.println("tourContentList : " + tourContentList);
+		
+		model.addAttribute("tourContentList", tourContentList);
 		return "schedule/planner";
 	}
 	
@@ -95,9 +112,12 @@ public class TripScheduleController {
 		scheduleVO.setMemNo(memNo);
 		TripScheduleVO schedule = tripScheduleService.selectTripSchedule(scheduleVO);
 		
+		List<Params> tourContentList = tripScheduleService.tourContentList();
 		System.out.println("schedule : " + schedule);
+		System.out.println("tourContentList : " + tourContentList);
 		
 		model.addAttribute("schedule", schedule);
+		model.addAttribute("tourContentList", tourContentList);
 		
 		return "schedule/planner_edit";
 	}
@@ -282,8 +302,6 @@ public class TripScheduleController {
 		return ResponseEntity.ok(1);
 	}
 	
-	
-	
 	@GetMapping("/my")
 	public String mySchedule(
 			@AuthenticationPrincipal CustomUserDetails customUser, Model model) {
@@ -327,4 +345,30 @@ public class TripScheduleController {
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result); // 500 Error
 	    }
 	}
+	
+	@Data
+	public static class ThumbnailData {
+		private MultipartFile thumbnailFile;
+		private int schdlNo;
+	    private String linkThumbnail;
+	    private String defaultYn;
+	    private int attachNo;
+	    private int memNo;
+
+        // Lombok 미사용 시 기본 생성자와 Getter/Setter가 반드시 필요합니다.
+        public ThumbnailData() {}
+    }
+	
+	@PostMapping("/thumbnail/update")
+	@ResponseBody
+	public ResponseEntity<?> updateThumbnail(
+			@ModelAttribute ThumbnailData thumbnailData
+			) {
+		System.out.println("ThumbnailData : " + thumbnailData);
+		
+		int resultSchedule = tripScheduleService.updateScheduleThumbnail(thumbnailData);
+		
+		return ResponseEntity.ok(1);
+	}
+	
 }

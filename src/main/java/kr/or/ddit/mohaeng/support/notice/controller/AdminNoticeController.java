@@ -21,12 +21,15 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.support.notice.service.INoticeService;
+import kr.or.ddit.mohaeng.vo.BoardVO;
 import kr.or.ddit.mohaeng.vo.NoticeFileVO;
 import kr.or.ddit.mohaeng.vo.NoticeVO;
+import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import lombok.extern.slf4j.Slf4j;
 
 
@@ -48,8 +51,17 @@ public class AdminNoticeController {
      
   //관리자 목록조회
      @GetMapping
-     public List<NoticeVO> list() {
-    	 List<NoticeVO> list= noticeService.selectNoticeList();
+     public List<NoticeVO> list(
+    			@RequestParam(name = "page", required= false, defaultValue = "1") int currentPage
+    			) {
+    	 PaginationInfoVO<NoticeVO> pagingVO = new PaginationInfoVO<>();
+    	 
+    	 // 검색시 추가
+    	 
+    	 pagingVO.setCurrentPage(currentPage);
+  		 int totalRecord = noticeService.selectNoticeCount(pagingVO);
+  		 pagingVO.setTotalRecord(totalRecord);
+    	 List<NoticeVO> list= noticeService.selectNoticeList(pagingVO);
     	 log.info("list:"+ list);
     	 return list;
      }

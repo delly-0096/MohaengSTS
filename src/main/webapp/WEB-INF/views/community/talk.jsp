@@ -578,7 +578,6 @@
     }
 }
 </style>
-
 <!-- Security 변수 추출  -->
 <sec:authentication property="principal" var="principal" />
 <sec:authorize access="isAuthenticated()">
@@ -587,6 +586,7 @@
     <c:set var="myName" value="${principal.member.memName}" />
 </sec:authorize>
 <script>
+
 const api = (path) => contextPath + (path.startsWith('/') ? path : '/' + path);
 
 // 현재 선택된 카테고리
@@ -1209,5 +1209,6 @@ if (!document.getElementById('toastStyles')) {
     style.textContent = '@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(20px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } } @keyframes toastOut { from { opacity: 1; transform: translateX(-50%) translateY(0); } to { opacity: 0; transform: translateX(-50%) translateY(20px); } }';
     document.head.appendChild(style);
 }
+
 </script>
 <%@ include file="../common/footer.jsp" %>

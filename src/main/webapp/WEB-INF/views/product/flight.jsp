@@ -50,7 +50,7 @@
 							<div class="search-input-group">
 								<span class="input-icon"><i class="bi bi-geo-alt-fill"></i></span>
 								<input type="text" class="form-control airport-autocomplete"
-									id="destination" placeholder="도시 또는 공항" autocomplete="off">
+									id="destination" placeholder="도시 또는 공항" autocomplete="off"/>
 								<div class="autocomplete-dropdown" id="destinationDropdown"></div>
 							</div>
 							<input type="hidden" name="arrAirportId" id="arrAirportId" />
@@ -60,12 +60,12 @@
 						<div class="form-group">
 							<label class="form-label">가는날</label> <input type="text"
 								class="form-control date-picker" id="departDate"
-								placeholder="날짜 선택">
+								placeholder="날짜 선택"/>
 						</div>
 						<div class="form-group" id="returnDateGroup">
 							<label class="form-label">오는날</label> <input type="text"
 								class="form-control date-picker" id="returnDate"
-								placeholder="날짜 선택">
+								placeholder="날짜 선택"/>
 						</div>
 						<button type="submit" class="btn btn-primary btn-search">
 							<i class="bi bi-search me-2"></i>검색
@@ -78,7 +78,7 @@
 					<div class="form-group passenger-dropdown">
 						<label class="form-label">승객</label> <input type="text"
 							class="form-control passenger-input" id="passengerInput"
-							value="성인 1명" readonly onclick="togglePassengerPanel()">
+							value="성인 1명" readonly onclick="togglePassengerPanel()"/>
 						<div class="passenger-panel" id="passengerPanel">
 							<div class="passenger-row">
 								<div class="passenger-label">
@@ -728,7 +728,6 @@ function searchFlights() {
 					let isPriceValid = false;
 					if (cabin === "economy") isPriceValid = item.economyCharge > 0;
 	                else isPriceValid = item.prestigeCharge > 0;
-	                
 
 	                if (isPriceValid) {
 	                    html += createFlightCard(item, searchData, cabin, i);
@@ -773,9 +772,7 @@ function showSegmentAutocomplete(dropdown, query) {
         html += filteredData.map(function(airport) {
             return createAutocompleteItemHtml(airport, query);
         }).join('');
-    }else{
-   		html = `<div class="autocomplete-empty"><i class="bi bi-search"></i>\${query}에 대한 검색 결과가 없습니다.</div>`;
-    }
+    } else html = `<div class="autocomplete-empty"><i class="bi bi-search"></i>\${query}에 대한 검색 결과가 없습니다.</div>`;
 
     dropdown.innerHTML = html;
     dropdown.classList.add('active');

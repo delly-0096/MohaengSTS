@@ -63,16 +63,16 @@ public interface IFileMapper {
 	/**
      * 첨부파일 상세 목록 조회 (USE_YN = 'Y')
      */
-	public List<AttachFileDetailVO> selectAttachFileDetailList(int attachNo);
+	public List<AttachFileDetailVO> getAttachFileDetails(int attachNo);
 
 	/**
      * 개별 파일 소프트 삭제 (USE_YN = 'N')
      */
-	public int softDeleteAttachFileDetail(@Param("attachNo") int attachNo, @Param("fileNo") int fileNo);
+	public int softDeleteFile(@Param("attachNo") int attachNo, @Param("fileNo") int fileNo);
 
 	/**
      * 기존 ATTACH_NO에 파일 추가
      */
-	public void insertAttachFileDetailToExisting(AttachFileDetailVO detailVO);
+	public void addFilesToAttach(AttachFileDetailVO detailVO);
 	
 }

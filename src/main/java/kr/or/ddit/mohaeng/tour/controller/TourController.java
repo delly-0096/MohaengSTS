@@ -20,14 +20,17 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.file.service.IFileService;
+import kr.or.ddit.mohaeng.login.service.IMemberService;
 import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
 import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
 import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
+import kr.or.ddit.mohaeng.tour.service.IProdTimeInfoService;
 import kr.or.ddit.mohaeng.tour.service.ISearchLogService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdInfoService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdSaleService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdService;
+import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.SearchLogVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
@@ -35,6 +38,7 @@ import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
+import kr.or.ddit.mohaeng.vo.MemUserVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
 @Controller
@@ -61,6 +65,12 @@ public class TourController {
     
     @Autowired
     private IFileService fileService;
+
+	@Autowired
+	private IProdTimeInfoService timeInfoService;
+	
+	@Autowired
+	private IMemberService memberService;
 
     /**
      * 목록 페이지
@@ -137,11 +147,14 @@ public class TourController {
         List<TripProdInquiryVO> inquiry = inquiryService.getInquiryPaging(tripProdNo, 1, 5);
         int inquiryCount = inquiryService.getInquiryCount(tripProdNo);
         
-        // 상품 이미지 목록 추가
+        // 상품 이미지 목록
         if (tp.getAttachNo() != null && tp.getAttachNo() > 0) {
             List<AttachFileDetailVO> productImages = fileService.getAttachFileDetails(tp.getAttachNo());
             model.addAttribute("productImages", productImages);
         }
+        
+        // 예약 가능 시간 조회
+        List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
         
         model.addAttribute("tp", tp);
         model.addAttribute("sale", sale);
@@ -152,6 +165,7 @@ public class TourController {
         model.addAttribute("seller", seller);
         model.addAttribute("inquiry", inquiry);
         model.addAttribute("inquiryCount", inquiryCount);
+        model.addAttribute("availableTimes", availableTimes);
         
         return "product/tour-detail";
     }
@@ -945,9 +959,49 @@ public class TourController {
         return result;
     }
 
+    /**
+     * 결제 페이지
+     */
     @GetMapping("/{tripProdNo}/booking")
-    public String booking(@PathVariable int tripProdNo) {
-        return "product/booking";
+    public String booking(@PathVariable int tripProdNo, Model model, RedirectAttributes ra, HttpSession session) {
+    	// 로그인 체크
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            ra.addFlashAttribute("message", "로그인이 필요합니다.");
+            return "redirect:/member/login";
+        }
+    	
+    	// 상품 정보 조회
+        TripProdVO tp = tripProdService.detail(tripProdNo);
+        
+        if (tp == null) {
+            ra.addFlashAttribute("message", "존재하지 않는 상품입니다.");
+            return "redirect:/tour";
+        }
+        
+        // 판매 정보 (가격)
+        TripProdSaleVO sale = saleService.getSale(tripProdNo);
+        
+        // 예약 가능 시간 조회
+        List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
+        
+        // 상품 이미지 목록
+        if (tp.getAttachNo() != null && tp.getAttachNo() > 0) {
+            List<AttachFileDetailVO> productImages = fileService.getAttachFileDetails(tp.getAttachNo());
+            model.addAttribute("productImages", productImages);
+        }
+        
+        // 회원 정보 조회 (결제자 정보용)
+        MemberVO member = memberService.selectByMemNo(memNo);
+        MemUserVO memUser = memberService.selectMemUserByMemNo(memNo);
+        
+        model.addAttribute("tp", tp);
+        model.addAttribute("sale", sale);
+        model.addAttribute("availableTimes", availableTimes);
+        model.addAttribute("member", member);
+        model.addAttribute("memUser", memUser);
+    	
+    	return "product/booking";
     }
 
     @GetMapping("/complete/{tripProdNo}")

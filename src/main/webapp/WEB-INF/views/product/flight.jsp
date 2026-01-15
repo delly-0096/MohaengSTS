@@ -159,12 +159,11 @@
 			<div class="results-header">
 				<p class="results-count">
 					<!-- 검색 결과 출력 -->
-<!-- 					<button type="button" onclick="getMember()">정보</button> -->
 				</p>
 				<div class="sort-options">
-					<button class="sort-btn active" data-sort="price">최저가순</button>
+					<button class="sort-btn active" data-sort="departure">출발시간순</button><!-- 기본 호출 값 -->
+					<button class="sort-btn" data-sort="price">최저가순</button>
 					<button class="sort-btn" data-sort="duration">최단시간순</button>
-					<button class="sort-btn" data-sort="departure">출발시간순</button>
 				</div>
 			</div>
 
@@ -716,15 +715,15 @@ function searchFlights() {
 	
     axios.post(`/product/flight/searchFlight`, searchData
     ).then(res => {
-    	const flight = res.data;
+    	const flight =  res.data;
     	let html = '';
     	let validCount = 0;
     	
     	if(flight != null && flight.length > 0){
-    		
     		flight.forEach((item, i) => {
+    			console.log("item.depTime : ", item.depTime);
                 // 유효성 검사 (금액이 있고 항공사 이름이 제대로 된 경우만)
-                if (item.airlineNm && item.airlineNm !== '/') {
+                if (item.airlineNm && item.airlineNm !== '/' && timeCheck(item.depTime)) {
 					let isPriceValid = false;
 					if (cabin === "economy") isPriceValid = item.economyCharge > 0;
 	                else isPriceValid = item.prestigeCharge > 0;
@@ -753,6 +752,20 @@ function searchFlights() {
     });
 }
 
+// 출발 시간이 이미 지난시간인지 확인
+function timeCheck(time){
+	const year = parseInt(time.substring(0, 4));
+	const month = parseInt(time.substring(4, 6));
+	const day = parseInt(time.substring(6, 8));
+	const hour = parseInt(time.substring(9, 11));
+	const minute = parseInt(time.substring(12, 14));
+	
+	const targetDate = new Date(year, month - 1, day, hour, minute);
+	
+	const now = new Date();
+	return targetDate > now ? true : false;	// 지난 시간
+}
+	    		
 
 // 출발지, 도착지 검색
 function showSegmentAutocomplete(dropdown, query) {

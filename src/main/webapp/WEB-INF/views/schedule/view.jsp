@@ -22,8 +22,38 @@
             <!-- 썸네일 영역 -->
             <div class="schedule-thumbnail-section">
                 <div class="schedule-thumbnail" id="scheduleThumbnail">
-                    <img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=300&fit=crop&q=80"
-                         alt="일정 썸네일" id="thumbnailImage">
+                    <c:choose>
+                        <c:when test="${schedule.linkThumbnail != null && schedule.linkThumbnail != ''}">
+                            <img src="${schedule.linkThumbnail}" alt="일정 썸네일" id="thumbnailImage">
+                        </c:when>
+                        <c:when test="${schedule.attachNo != null && schedule.attachNo != 0}">
+                            <img src="${pageContext.request.contextPath }/file/searchthumbnail?path=${schedule.attachFile.filePath}" alt="일정 썸네일" id="thumbnailImage">
+                        </c:when>
+                        <c:otherwise>
+                            <%-- 이미지를 찾았는지 확인할 플래그 변수 선언 --%>
+                            <c:set var="imageFound" value="false" />
+                            <c:forEach items="${schedule.tripScheduleDetailsList}" var="detail">
+                                <%-- 이미 이미지를 찾았다면 더 이상 안쪽 로직을 수행하지 않음 --%>
+                                <c:if test="${not imageFound}">
+                                    <c:forEach items="${detail.tripSchedulePlaceList}" var="place">
+                                        <c:if test="${not imageFound}">
+                                            <%-- 1. 첨부파일이 있는 경우 --%><!-- 해당 케이스 미정 -->
+                                            <c:if test="${place.tourPlace.attachNo != null && place.tourPlace.attachNo != 0}">
+                                                <img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=200&h=150&fit=crop&q=80" alt="일정 썸네일" id="thumbnailImage">
+                                                <c:set var="imageFound" value="true" /> <%-- 찾았으므로 true로 변경 --%>
+                                            </c:if>
+                                            
+                                            <%-- 2. 기본 이미지가 있는 경우 --%>
+                                            <c:if test="${place.tourPlace.attachNo == null || place.tourPlace.attachNo == 0}">
+                                                <img src="${place.tourPlace.defaultImg}" alt="일정 썸네일" id="thumbnailImage">
+                                                <c:set var="imageFound" value="true" /> <%-- 찾았으므로 true로 변경 --%>
+                                            </c:if>
+                                        </c:if>
+                                    </c:forEach>
+                                </c:if>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
                     <button class="thumbnail-change-btn" onclick="openThumbnailModal()">
                         <i class="bi bi-camera"></i>
                         <span>썸네일 변경</span>
@@ -191,7 +221,7 @@
             <a href="${pageContext.request.contextPath}/schedule/my" class="btn btn-outline btn-lg">
                 <i class="bi bi-list me-2"></i>목록으로
             </a>
-            <a href="${pageContext.request.contextPath}/schedule/planner?id=${schedule.schdlNo}" class="btn btn-primary btn-lg">
+            <a href="${pageContext.request.contextPath}/schedule/planner/${schedule.schdlNo}" class="btn btn-primary btn-lg">
                 <i class="bi bi-pencil me-2"></i>일정 수정하기
             </a>
         </div>
@@ -868,7 +898,6 @@ function selectThumbnailOption(element) {
     // 이미지 URL 저장
     selectedThumbnailUrl = element.querySelector('img').src;
     defaultThumbnailYn = element.querySelector('img').getAttribute('data-default');
-    console.log(defaultThumbnailYn);
     uploadedImageData = null; // 업로드 이미지 초기화
 
 }
@@ -913,6 +942,8 @@ function handleThumbnailUpload(input) {
             opt.classList.remove('selected');
         });
     };
+
+    defaultThumbnailYn = 'N';
     reader.readAsDataURL(file);
 }
 
@@ -946,8 +977,10 @@ function saveThumbnail() {
 
     let formData = new FormData();
     formData.append("schdlNo", '${schedule.schdlNo}');
-    formData.append("thumbnailUrl", newThumbnailUrl);
+    formData.append("linkThumbnail", newThumbnailUrl);
     formData.append("defaultYn", defaultThumbnailYn);
+    console.log(defaultThumbnailYn);
+    formData.append("memNo", '${sessionScope.loginMember.memNo}');
 
     if(file != null){
         formData.append("thumbnailFile", file);

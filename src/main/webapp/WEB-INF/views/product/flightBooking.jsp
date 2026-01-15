@@ -351,9 +351,7 @@ async function main() {
 	const customerKey = "MyKgi0HwDJKFeRDGmc_wM";
 
 	const tossPayments = TossPayments(clientKey);
-	widgets = tossPayments.widgets({
-	  customerKey,
-	});
+	widgets = tossPayments.widgets({ customerKey });
 	
 	// 비회원 결제 const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
 	
@@ -368,7 +366,7 @@ async function main() {
 	  // ------  결제 UI 렌더링 ------
 	  widgets.renderPaymentMethods({
 	    selector: "#payment-method",
-	    variantKey: "DEFAULT",
+	    variantKey: "DEFAULT"
 	  }),
 	  // ------  이용약관 UI 렌더링 ------
 // 	  widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" }),
@@ -422,10 +420,10 @@ async function main() {
 	            lastName: card.querySelector('input[name^="lastName"]').value,
 	            firstName: card.querySelector('input[name^="firstName"]').value,
 	            gender: card.querySelector('select[name^="gender"]').value,
-	            birthDate: card.querySelector('input[name^="birthDate"]').value,
+	            birthDate: card.querySelector('#birthDate').value,
 	            extraBaggageOutbound: outMoney,
 	            extraBaggageInbound: inMoney,
-	            outSeat: selectedSeatsBySegment[0][index],
+	            outSeat: selectedSeatsBySegment[0][index], // 여기에 남기자
 	            inSeat: (bookingData.tripType === 'round') ? selectedSeatsBySegment[1][index] : "NONE"
 	        };
 	    });
@@ -460,17 +458,15 @@ async function main() {
 	        return;
 	    }
 	    
-	    const reserveAgree = {
-	    	mktRecvAgreeYn : (document.getElementById('agreeMarketing').checked) ? 'Y' : 'N' 
-	    }
+	    const reserveAgree = { mktRecvAgreeYn : (document.getElementById('agreeMarketing').checked) ? 'Y' : 'N' }
 	    
 	    console.log("reserveAgree : ", reserveAgree);
 		sessionStorage.setItem("reserveAgree", JSON.stringify(reserveAgree));
 	    
-		let orderName = currentSearchType === 'round' ?
-				bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm
-				+ bookingData.flights[1].startDt + " " + bookingData.flights[1].arrAirportNm + " " + bookingData.flights[1].airlineNm
-				: bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm;
+		let orderName = bookingData.tripType === 'round' ?
+				bookingData.flights[0].startDt + "_" + bookingData.flights[0].arrAirportNm + "_" + bookingData.flights[0].airlineNm
+				+ bookingData.flights[1].startDt + "_" + bookingData.flights[1].arrAirportNm + "_" + bookingData.flights[1].airlineNm
+				: "_" +bookingData.flights[0].startDt + "_" + bookingData.flights[0].arrAirportNm + "_" + bookingData.flights[0].airlineNm;
 		
 		const timeStamp = Date.now();
 		await widgets.requestPayment({
@@ -491,7 +487,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 	amount = document.querySelector("#payBtnText");
 	cabin = document.querySelector("#summaryCabin");
 	
-	if (!storedData) return;
+	if (!storedData) {
+		alert("입력된 정보가 없어 이전 화면으로 돌아갑니다.");
+		window.location.href = `/product/flight"`;
+		return;
+	}
 	
     bookingData = JSON.parse(storedData);
     console.log("bookingData : ", bookingData);
@@ -536,11 +536,8 @@ function initFlightDisplay() {
 
         // 라벨 클래스 결정
         var labelClass = '';
-        if (bookingData.tripType === 'round') {
-            labelClass = index === 0 ? '' : 'return';
-        } else {
-            labelClass = 'segment';
-        }
+        if (bookingData.tripType === 'round') labelClass = index === 0 ? '' : 'return';
+        else labelClass = 'segment';
 
         // 항공편 카드 HTML
         cardsHtml += createFlightCardHtml(flight, labelClass);
@@ -599,10 +596,7 @@ function createSummarySegmentHtml(flight, labelClass) {
 function initPassengers() {
     var container = document.getElementById('passengersContainer');
     totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
-    container.innerHTML = '';
     
-	// bookingData.flights[1].adult // 가져오면 적용됨
-	
 	for(let i = 1; i <= totalPassengerCount; i++){
 		console.log("수정");
 	}
@@ -696,6 +690,7 @@ function addPassengerCard(container, type, num) {
     container.appendChild(div);
 }
 
+// 나이 확인
 function ageCheck(userBirth, type){
 	console.log("userBirth : ", userBirth.value);
 	console.log("type : ", type);
@@ -733,8 +728,6 @@ function changepassengerType(type, delta) {
     var newCount = passengerType[type] + delta;
     totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
 	
-    console.log("change asdfasd");
-    
     // 유효성 검사
     if (type === 'adult') {
         if (newCount < 1) {
@@ -779,22 +772,25 @@ function changepassengerType(type, delta) {
     updateCountButtons();
 
     // 탑승객 카드 재생성
-    // initPassengers();	// 초기화 x
-    
-    
+    initPassengers();	// 초기화 x
 
     // 좌석 선택 초기화 (인원 변경 시)
-    if (selectedSeatsBySegment.length > 0) {
-//     	selectedSeatsBySegment = [[], []];	// 첫번째는 그대로 담기, 늘어나면 기존 인원의 좌석은 그대로 - 
-//         document.getElementById('summarySeatsRow').style.display = 'none';
+    if (delta < 0) {
+    	if(selectedSeatsBySegment[0].length > 0) selectedSeatsBySegment[0].pop();
+    	if(selectedSeatsBySegment[1].length > 0) selectedSeatsBySegment[1].pop();
+    	confirmSeatSelection();
+    }
+    // 하나만 0이면 confirm에서 처리해줌
+    
+    // 좌석길이 0 일때 출력
+    if(selectedSeatsBySegment[0].length <= 0 && selectedSeatsBySegment[1].length <= 0){
+    	selectedSeatsBySegment = [[], []];	// 첫번째는 그대로 담기, 늘어나면 기존 인원의 좌석은 그대로 - 
         document.querySelector('.seat-selection-info').innerHTML =
             `<p>좌석 선택은 선택사항입니다. 미선택 시 자동 배정됩니다.</p>
             <button type="button" class="btn btn-outline" onclick="openSeatSelection()">
                 <i class="bi bi-grid-3x3 me-1"></i>좌석 선택하기
             </button>`;
-        initSeatMap();
     }
-
     calculateTotal();
 }
 
@@ -815,9 +811,7 @@ function updateCountButtons() {
     // 총 인원 9명 제한
     var totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
     var plusButtons = document.querySelectorAll('.count-btn.plus');
-    plusButtons.forEach(function(btn) {
-        btn.disabled = totalPassengerCount >= 9;
-    });
+    plusButtons.forEach(btn => btn.disabled = totalPassengerCount >= 9);
 
 	// 유아 플러스 버튼 (성인 수 제한)
     var infantPlus = document.querySelector('.passenger-count-row:nth-child(3) .count-btn.plus');
@@ -916,8 +910,8 @@ function updateSeatModalTitle() {
 
 // 좌석 배치 초기화 -- 2번 할 수 있도록 수정해야됨 / 좌석 등급 따른 보여줄 화면 조정
 async function initSeatMap() {
-	// 좌석 불러오기
-	let seatList = [];
+	
+	let seatList = [];	// db에서 좌석 불러오기
 	try{
 		const res = await axios.post(`/product/flight/seat`, bookingData.flights[currentSegmentSelection]);
 		seatList = res.data;
@@ -928,24 +922,25 @@ async function initSeatMap() {
 	
     console.log("axios 외부 seatList : ", seatList);
 	
-    var seatMap = document.getElementById('seatMap');
-    var columns = ['A', 'B', 'C', '', 'D', 'E', 'F'];
-    var rows = 20;
-    var html = ``;
-
+    const seatMap = document.getElementById('seatMap');
+    const columns = ['A', 'B', 'C', '', 'D', 'E', 'F'];
+    const rows = 20;
+    let html = ``;
+	
     // 열 헤더
-    html += `<div class="seat-row">`;
-    html += `<div class="seat-row-number"></div>`;
+    html += 
+    	`<div class="seat-row">
+   			<div class="seat-row-number">
+   			</div>`;
     columns.forEach(function(col) {
         if (col === '') html += `<div class="seat-aisle"></div>`;
         else html += `<div class="seat" style="background: none; cursor: default; color: var(--gray-medium);">\${col}</div>`;
     });
     html += `</div>`;
 
-    // 좌석 행 -- 여기서 좌석 조정해야됨 
+    
     // cabinCalss 등급따라서 앞좌석 선택 못하도록 막기
     for (var i = 1; i <= rows; i++) {
-        
 	    if (bookingData.flights[0].cabinClass === "일반석" && i <= 3) continue; 
         if (bookingData.flights[0].cabinClass === "비즈니스" && i >= 4) continue;
         html += `<div class="seat-row">`;
@@ -959,18 +954,21 @@ async function initSeatMap() {
                 const occupied = seatList.includes(seatId);	// 선택 불가 자리
                 const business = i <= 3;		// business
                 const seatClass = occupied ? 'occupied' : (business ? 'business' : 'economy');
-				
-                const seatValid = occupied ? 'disabled' : 'onclick="toggleSeat(this)"';
+                
+                // 이전에 선택한 좌석은 selected로 설정
+				const isSelected = selectedSeatsBySegment[currentSegmentSelection].includes(seatId) ? 'selected' : '';	
+                
+                const seatValid = occupied ? 'disabled' : 'onclick="toggleSeat(this)"';		// 선택한 부분도 선택가자고
                 const checkedSeat = occupied ? '' : seatId;
                 
-                html += `<button type="button" class="seat \${seatClass}" data-seat="\${seatId}" \${seatValid}> 
+                html += `<button type="button" class="seat \${seatClass} \${isSelected}" data-seat="\${seatId}" \${seatValid} > 
                 			\${checkedSeat} 
                 		</button>`;
             }
         });
-
         html += `</div>`;
     }
+    // html = 함수로 불러오기 - 그래야 좌석 선택안했을때 랜덤 호출 가능하거덩 
     seatMap.innerHTML = html;
 }
 
@@ -998,31 +996,23 @@ function toggleSeat(btn) {
 // 좌석 선택 - 왕복에서는 선택버튼 누르면 오는편 좌석 정하게 하기
 function confirmSeatSelection() {
     // 결제 요약에 좌석 정보 반영
-    const rowWrapper = document.getElementById('summarySeatsRow');	// 가는편 div
     const rowOut = document.getElementById('summarySeatsRowOut');	// 가는편 div
     const rowIn = document.getElementById('summarySeatsRowIn');		// 오는편 div
     const seatSelectionInfo = document.querySelector('.seat-selection-info');
 	
-    
     // 가는 편
     if (selectedSeatsBySegment[0].length > 0) {
-    	rowWrapper.style.display = 'block';
         rowOut.style.display = 'flex';
         document.getElementById('summarySeatsOut').textContent = selectedSeatsBySegment[0].join(', ');
         showToast('좌석 ' + selectedSeatsBySegment[0].join(', ') + '이(가) 선택되었습니다.', 'success');
-    } else {
-    	rowWrapper.style.display = 'none';
-    }
+    } else rowOut.style.display = 'none';
     
     // 오는 편
     if (bookingData.tripType === 'round' && selectedSeatsBySegment[1].length > 0) {
-    	rowWrapper.style.display = 'block';
         rowIn.style.display = 'flex';
         document.getElementById('summarySeatsIn').textContent = selectedSeatsBySegment[1].join(', ');
         showToast('좌석 ' + selectedSeatsBySegment[1].join(', ') + '이(가) 선택되었습니다.', 'success');
-    } else {
-    	rowWrapper.style.display = 'none';
-    }
+    } else rowIn.style.display = 'none';
     
 	seatSelectionInfo.innerHTML = `
 	    <div class="selected-seats-display">
@@ -1035,22 +1025,16 @@ function confirmSeatSelection() {
 	        </button>
 	    </div>`;
     
-//     console.log("가는편 : ", selectedSeatsBySegment[0]);
-//     console.log("오는편 : ", selectedSeatsBySegment[1]);
-
     // 좌석 랜덤 설정 하는 함수 호출
     
     calculateTotal();
     seatSelectionModal.hide();
-    
 }
 
 // 전체 동의
 function toggleAllAgree() {
     var allCheckbox = document.getElementById('agreeAll');
-    document.querySelectorAll('.agree-item').forEach(function(item) {
-        item.checked = allCheckbox.checked;
-    });
+    document.querySelectorAll('.agree-item').forEach(item => item.checked = allCheckbox.checked);
     document.getElementById('agreeMarketing').checked = allCheckbox.checked;
 }
 

@@ -19,7 +19,7 @@
         <!-- 결제 단계 -->
         <div class="booking-steps">
             <div class="booking-step active">
-                <div class="step-icon">1</div>
+                <div>1</div>
                 <span>탑승객 정보</span>
             </div>
             <div class="booking-step">
@@ -369,7 +369,6 @@ async function main() {
 	  }),
 	]);
 	
-	
 	// 사용자 정보 호출
 	console.log("user.username : ", "${user.username}");
 	const userData = await fetch("/product/flight/user", {
@@ -416,7 +415,7 @@ async function main() {
 	            lastName: card.querySelector('input[name^="lastName"]').value,
 	            firstName: card.querySelector('input[name^="firstName"]').value,
 	            gender: card.querySelector('select[name^="gender"]').value,
-	            birthDate: card.querySelector('#birthDate').value,
+	            birthDate: card.querySelector('input[name^="birthDate"]').value,
 	            extraBaggageOutbound: outMoney,
 	            extraBaggageInbound: inMoney,
 	            outSeat: selectedSeatsBySegment[0][index], // 여기에 남기자
@@ -574,7 +573,7 @@ function createFlightCardHtml(flight, labelClass) {
 	             </div>
 	             <div class="flight-summary-details">
 	                 <span class="flight-airline">\${flight.airlineNm} (\${flight.flightSymbol})</span>
-	                 <div class="flight-price-group">
+	                 <span class="flight-price">
 	                 	<div class="price-item adult">
 		                 	<span class="label">성인</span> 
 	                        <span class="value" id="adult">\${(flight.price).toLocaleString()}원</span>
@@ -588,7 +587,7 @@ function createFlightCardHtml(flight, labelClass) {
 	                        <span class="label">유아</span> 
 	                        <span class="value" id="infant">0원</span>
 	                    </div>
-	 		 		 </div>
+	 		 		 </span>
  	             </div>
  	         </div>
  	     </div>`
@@ -667,8 +666,8 @@ function createPassengerCard(type, num){
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="form-label">생년월일 <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control birthdate-picker" id="birthDate" 
-                           placeholder="YYYYMMDD" onchange="ageCheck(this,'\${typeLabel}')" required>
+                    <input type="text" class="form-control birthdate-picker" name="birthDate" 
+                           placeholder="YYYY-MM-DD" onchange="ageCheck(this,'\${typeLabel}')" required>
                 </div>
             </div>
             <div class="col-md-4">
@@ -680,8 +679,7 @@ function createPassengerCard(type, num){
 		                <option value="10">10kg (20,000원)</option>
 		            </select>
 	            </div>
-	            
-	            \${true ? 
+	            \${bookingData.tripType === "round" ? 
            		`<div class="form-group mb-0 mt-2">
 	                <label class="form-label">오는편 추가 수하물</label>
 	                <select class="form-control form-select" name="extraBaggageInbound" onchange="calculateTotal()">
@@ -693,17 +691,6 @@ function createPassengerCard(type, num){
 	        </div>
 	    </div> 
 	</div>`;
-// 				<div class="form-group mb-0">
-//            	        <label class="form-label">오는편 추가 수하물</label>
-//            	        <select class="form-control form-select" name="extraBaggageInbound" onchange="calculateTotal()">
-//            	            <option value="0" selected>추가없음</option>
-//            	            <option value="5">5kg (10,000원)</option>
-//            	            <option value="10">10kg (20,000원)</option>
-//            	        </select>
-//            	    </div>
-// 			</div>
-// 		</div>
-// 	</div> : </div></div></div>}`;
 }
 
 // 나이 확인
@@ -838,7 +825,7 @@ function initBirthDatePicker(targetElement) {
 	const dateInput = targetElement.querySelector('.birthdate-picker');
     if (dateInput) {
         flatpickr(dateInput, {
-            dateFormat: "Ymd",
+            dateFormat: "Y-m-d",
             maxDate: "today",
             locale: "ko"
         });

@@ -29,8 +29,6 @@ public class ChatRoomResponseDTO {
 	 * 채팅방 최대 정원
 	 */
 	private int maxUsers;
-	
-	
 	/**
 	 * 채팅방 생성자 닉네임
 	 */
@@ -39,11 +37,12 @@ public class ChatRoomResponseDTO {
 	 * 채팅방 생성자 아이디
 	 */
 	private String createdById;
-
-	
 	/**
 	 * 채팅방 full 정원
 	 */
 	private boolean isFull;
-	
+	/**
+	 * 안 읽은 메세지 수
+	 */
+	private int unreadCount;
 }

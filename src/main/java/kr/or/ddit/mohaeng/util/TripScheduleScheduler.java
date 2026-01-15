@@ -17,7 +17,7 @@ public class TripScheduleScheduler {
 	
 	@Scheduled(cron = "0 0 12 * * *")
     public void updateTripSchedule() {
-//		tripScheduleService.tripSchedule
-		log.info("실은 이시간에 스케쥴러가 돌고있습니다. 이 부분은 나중에 여행일정 업데이트 코드 들어갈 예정");
+		log.info("여행일정 상태가 갱신되었습니다.");
+		tripScheduleService.updateTripScheduleState();
     }
 }

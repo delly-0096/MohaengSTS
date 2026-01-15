@@ -13,6 +13,8 @@ import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import kr.or.ddit.mohaeng.file.service.IFileService;
+import kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController.ThumbnailData;
 import kr.or.ddit.mohaeng.tripschedule.mapper.ITripScheduleMapper;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
@@ -25,6 +27,9 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	
 	@Autowired
 	ITripScheduleMapper iTripScheduleMapper;
+	
+	@Autowired
+	IFileService fileService;
 	
 	@Override
 	public List<Map<String, Object>> selectRegionList() {
@@ -219,7 +224,7 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			for(TripScheduleVO tripSchedule : scheduleList) {
 			    List<String> displayPlaceNames = new ArrayList<>(); // 화면에 표시할 2개만 담을 리스트
 			    int totalPlaceCnt = 0;
-			    String getUrl = "";
+//			    String getUrl = "";
 			    
 			    for(TripScheduleDetailsVO details : tripSchedule.getTripScheduleDetailsList()) {
 			        List<TripSchedulePlaceVO> places = details.getTripSchedulePlaceList();
@@ -231,25 +236,25 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			                if(displayPlaceNames.size() < 2) {
 			                    displayPlaceNames.add(place.getPlcNm());
 			                }
-			                if(getUrl.equals("")) {
-			                	TourPlaceVO placeVO = new TourPlaceVO();
-			                	placeVO.setPlcNo(place.getDestId());
-			                	placeVO = searchPlaceDetail(placeVO);
-			                	if(placeVO.getDefaultImg() == null) {
-			                		System.out.println("placeVO : " + placeVO);
-			                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
-			                		getUrl = placeVO.getDefaultImg();
-			                	} else {
-			                		getUrl = placeVO.getDefaultImg();
-			                	}
-			                	
-			                	tripSchedule.setThumbnail(getUrl);
-			                	
-			                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
-			                	if(placeVO.getAttachNo() != 0) {
-//			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
-			                	}
-			                }
+//			                if(getUrl.equals("")) {
+//			                	TourPlaceVO placeVO = new TourPlaceVO();
+//			                	placeVO.setPlcNo(place.getDestId());
+//			                	placeVO = searchPlaceDetail(placeVO);
+//			                	if(placeVO.getDefaultImg() == null) {
+//			                		System.out.println("placeVO : " + placeVO);
+//			                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
+//			                		getUrl = placeVO.getDefaultImg();
+//			                	} else {
+//			                		getUrl = placeVO.getDefaultImg();
+//			                	}
+//			                	
+//			                	tripSchedule.setThumbnail(getUrl);
+//			                	
+//			                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
+//			                	if(placeVO.getAttachNo() != 0) {
+////			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
+//			                	}
+//			                }
 			            }
 			        }
 			    }
@@ -266,32 +271,32 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		TripScheduleVO tripSchedule = iTripScheduleMapper.selectTripSchedule(params);
 		if(tripSchedule != null) {
 			int totalPlaceCnt = 0;
-			String getUrl = "";
+//			String getUrl = "";
 		    
 		    for(TripScheduleDetailsVO details : tripSchedule.getTripScheduleDetailsList()) {
 		        List<TripSchedulePlaceVO> places = details.getTripSchedulePlaceList();
 		        if(places != null) {
 		            for(TripSchedulePlaceVO place : places) {
 		            	totalPlaceCnt++;
-		                if(getUrl.equals("")) {
-		                	TourPlaceVO placeVO = new TourPlaceVO();
-		                	placeVO.setPlcNo(place.getDestId());
-		                	placeVO = searchPlaceDetail(placeVO);
-		                	if(placeVO.getDefaultImg() == null) {
-		                		System.out.println("placeVO : " + placeVO);
-		                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
-		                		getUrl = placeVO.getDefaultImg();
-		                	} else {
-		                		getUrl = placeVO.getDefaultImg();
-		                	}
-		                	
-		                	tripSchedule.setThumbnail(getUrl);
-		                	
-		                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
-		                	if(placeVO.getAttachNo() != 0) {
-//			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
-		                	}
-		                }
+//		                if(getUrl.equals("")) {
+//		                	TourPlaceVO placeVO = new TourPlaceVO();
+//		                	placeVO.setPlcNo(place.getDestId());
+//		                	placeVO = searchPlaceDetail(placeVO);
+//		                	if(placeVO.getDefaultImg() == null) {
+//		                		System.out.println("placeVO : " + placeVO);
+//		                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
+//		                		getUrl = placeVO.getDefaultImg();
+//		                	} else {
+//		                		getUrl = placeVO.getDefaultImg();
+//		                	}
+//		                	
+//		                	tripSchedule.setThumbnail(getUrl);
+//		                	
+//		                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
+//		                	if(placeVO.getAttachNo() != 0) {
+////			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
+//		                	}
+//		                }
 		            }
 		        }
 		    }
@@ -426,6 +431,35 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	    }
 		
 		return resultSchedule;
+	}
+
+	@Override
+	public int updateScheduleThumbnail(ThumbnailData thumbnailData) {
+		int resultKey = 0;
+		if(thumbnailData.getDefaultYn().equals("N")) {
+			Map<String, String> uploadInfo = new HashMap<>();
+			
+			uploadInfo.put("fileGbCd", "TRIP_SCHEDULE");
+			uploadInfo.put("filePath", "/tripschedule/thumbnail");
+			
+			resultKey = fileService.saveFile(thumbnailData.getThumbnailFile(), uploadInfo, thumbnailData.getMemNo());
+			thumbnailData.setAttachNo(resultKey);
+		}
+		
+		int result = iTripScheduleMapper.updateScheduleThumbnail(thumbnailData);
+		
+		return result;
+	}
+
+	@Override
+	public List<Params> tourContentList() {
+		return iTripScheduleMapper.tourContentList();
+	}
+
+	@Override
+	public void updateTripScheduleState() {
+		iTripScheduleMapper.scheduleOngoing();
+		iTripScheduleMapper.scheduleCompleted();
 	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)

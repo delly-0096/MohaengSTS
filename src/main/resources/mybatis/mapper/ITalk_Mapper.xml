@@ -43,6 +43,9 @@
 
     <!-- 첨부파일 리스트 -->
     <collection property="boardFileList" resultMap="attachFileDetailMap"/>
+    <!-- 해시태그 리스트 -->
+    <collection property="boardTagList"  ofType="string" column="BOARD_NO"
+              select="selectTalkTags"/>
   </resultMap>
 
   <resultMap id="attachFileDetailMap" type="kr.or.ddit.mohaeng.vo.BoardFileVO">
@@ -63,6 +66,7 @@
     <result property="regDt" column="REG_DT"/>
   </resultMap>
 
+	
   <!-- =========================
        1) 상세 조회 (파일 포함)
        ========================= -->
@@ -201,8 +205,33 @@
       WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
     ]]>
   </select>
-
-
+  
+     <!--여행톡 상세페이지 파일 1건 조회 (다운로드/미리보기용) -->
+  <select id="getFileInfo" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.BoardFileVO">
+    SELECT
+        FILE_NO,
+        ATTACH_NO,
+        FILE_NAME,
+        FILE_ORIGINAL_NAME,
+        FILE_EXT,
+        FILE_SIZE,
+        FILE_PATH,
+        FILE_GB_CD,
+        MIMY_TYPE,
+        USE_YN,
+        REG_ID,
+        REG_DT
+    FROM ATTACH_FILE_DETAIL
+    WHERE FILE_NO = #{fileNo}
+  </select>
+    <!--  태그추가 -->
+   <select id="selectTalkTags" parameterType="int" resultType="string">
+  SELECT BOARD_TAG_NAME
+  FROM BOARD_TAG
+  WHERE BOARD_NO = #{value}
+  ORDER BY BOARD_TAG_NO
+</select>
+   
   <!-- =========================
        6) 좋아요 증감(임시)
        ========================= -->

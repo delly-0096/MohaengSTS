@@ -2799,3 +2799,26 @@
         grid-template-columns: 1fr;
     }
 }
+
+.planner-items {
+    min-height: 10px; /* 아이템이 없어도 최소 50px의 높이를 유지 */
+/*     padding-bottom: 20px; 드롭하기 편하게 아래쪽 여백 추가 */
+/*     background-color: rgba(0,0,0,0.02); (선택사항) 비어있을 때 영역을 살짝 보이게 함 */
+}
+
+/* 지도 위 거리 표시 오버레이 스타일 */
+.dotOverlay {
+    position: relative;
+    bottom: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    background: #fff;
+    padding: 5px;
+    font-size: 12px;
+    box-shadow: 0px 1px 2px #888;
+}
+
+.dotOverlay .number {
+    font-weight: bold;
+    color: #ee6152;
+}

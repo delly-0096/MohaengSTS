@@ -46,4 +46,8 @@ public class ChatRoomVO {
 	 * 유형별 카테고리 (하드코딩)
 	 */
 	private String chatCtgry; 
+	/**
+	 * 안 읽은 메세지 수
+	 */
+	private int unreadCount;
 }

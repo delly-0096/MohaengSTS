@@ -34,6 +34,7 @@ public class TripScheduleVO {
 	private int placeCnt;
 	private String bkmkYn;
 	
+	private AttachFileDetailVO attachFile;
 	private List<TripScheduleDetailsVO> tripScheduleDetailsList;
 	private List<String> displayPlaceNames;
 	private String thumbnail;
@@ -43,7 +44,7 @@ public class TripScheduleVO {
 	 */
 	private String schdlStsNm;
 	
-	MemberVO member;
+	private MemberVO member;
 
 	public TripScheduleVO() {}
 	

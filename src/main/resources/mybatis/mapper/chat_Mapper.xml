@@ -24,6 +24,25 @@
 		)
 	</insert>
 	
+	<!-- 채팅방 유저 삭제 -->
+	<delete id="deleteAllChatUsersByRoomId">
+	    DELETE FROM CHAT_USER
+	    WHERE CHAT_ID = #{chatId}
+	</delete>
+	
+	<!-- 채팅방 메시지 삭제 -->
+	<update id="deleteAllChatMessagesByRoomId">
+	    UPDATE CHAT
+	    SET CHAT_DEL = 'Y'
+	    WHERE CHAT_ID = #{chatId}
+	</update>
+	
+	<!-- HOST 퇴장 시 채팅방 삭제 -->
+	<delete id="deleteChatRoomPermanently">
+	    DELETE FROM CHAT_ROOM
+	    WHERE CHAT_ID = #{chatId}
+	</delete>
+		
 	<!-- 채팅방 HOST 생성 -->
 	<insert id="insertChatHost" parameterType="kr.or.ddit.mohaeng.vo.ChatUserVO">
 		INSERT INTO CHAT_USER (
@@ -43,36 +62,41 @@
 
 	<!-- 채팅방 목록 조회 -->
 	<select id="selectChatRooms">
-		 SELECT
-		        R.CHAT_ID        AS chatId
-		      , R.CHAT_NAME      AS chatName
-		      , R.CHAT_CTGRY     AS chatCtgry
-		      , C.CD_NAME        AS chatCtgryName
-		      , R.CHAT_MAX       AS chatMax
-		      , NVL(CNT.USER_CNT, 0) AS currentUsers
-		      , R.REG_ID         AS createdById
-		      , U.NICKNAME       AS createdByNickname
-		    FROM CHAT_ROOM R
-		    LEFT JOIN CODE C
-		      ON R.CHAT_CTGRY = C.CD
-		     AND C.CDGR = 'CHAT_CATEGORY'
-		    LEFT JOIN (
-		        SELECT CHAT_ID, COUNT(*) AS USER_CNT
-		        FROM CHAT_USER
-		        GROUP BY CHAT_ID
-		    ) CNT
-		      ON R.CHAT_ID = CNT.CHAT_ID
-		    LEFT JOIN MEMBER M
-		      ON R.REG_ID = M.MEM_ID
-		    LEFT JOIN MEM_USER U
-		      ON M.MEM_NO = U.MEM_NO
-		<where>
-			<if test="category != null and category != ''">
-				R.CHAT_CTGRY = #{category}
-			</if>
-		</where> 
-		ORDER BY R.REG_DT DESC
-		
+		SELECT
+            R.CHAT_ID        AS chatId
+          , R.CHAT_NAME      AS chatName
+          , R.CHAT_CTGRY     AS chatCtgry
+          , C.CD_NAME        AS chatCtgryName
+          , R.CHAT_MAX       AS chatMax
+          , NVL(CNT.USER_CNT, 0) AS currentUsers
+          , R.REG_ID         AS createdById
+          , U.NICKNAME       AS createdByNickname
+          /* 💡 안 읽은 메시지 개수 (로그인한 memId 기준) */
+          , (SELECT COUNT(*) 
+             FROM CHAT Msg 
+             WHERE Msg.CHAT_ID = R.CHAT_ID 
+               AND Msg.CHAT_DEL = 'N'
+               AND Msg.CHAT_TYPE = 'CHAT'
+               AND Msg.CHAT_NO > (SELECT NVL(CU.LAST_MSG_ID, 0) 
+                                  FROM CHAT_USER CU 
+                                  WHERE CU.CHAT_ID = R.CHAT_ID 
+                                    AND CU.CHAT_USER_NO = (SELECT MEM_NO FROM MEMBER WHERE MEM_ID = #{memId}))
+            ) AS "unreadCount"
+        FROM CHAT_ROOM R
+        LEFT JOIN CODE C ON R.CHAT_CTGRY = C.CD AND C.CDGR = 'CHAT_CATEGORY'
+        LEFT JOIN (
+            SELECT CHAT_ID, COUNT(*) AS USER_CNT
+            FROM CHAT_USER
+            GROUP BY CHAT_ID
+        ) CNT ON R.CHAT_ID = CNT.CHAT_ID
+        LEFT JOIN MEMBER M ON R.REG_ID = M.MEM_ID
+        LEFT JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+    <where>
+        <if test="category != null and category != ''">
+            R.CHAT_CTGRY = #{category}
+        </if>
+    </where> 
+    ORDER BY R.REG_DT DESC
 	</select>
 	
 	<!--  채팅방 중복 입장 체크 -->
@@ -146,6 +170,7 @@
 		SELECT
 			R.CHAT_ID
 		  , R.CHAT_NAME
+		  , R.REG_ID
 		  , R.CHAT_CTGRY
 		  , C. CD_NAME	AS chat_ctgry_name
 		  , R.CHAT_MAX
@@ -187,4 +212,52 @@
         , 'N'
     )
 	</insert>
+	
+	<!-- 채팅방 과거 메시지 내역 가져오기 -->
+	<select id="getChatMessageByRoomId" resultType="kr.or.ddit.mohaeng.vo.ChatVO">
+	SELECT
+          A.CHAT_NO
+        , A.CHAT_ID
+        , A.CHAT_DESC
+        , A.CHAT_SENDER_ID
+        , A.CHAT_SENDTIME
+        , A.CHAT_ATCH
+        , A.CHAT_TYPE
+        , C.NICKNAME AS memNickname 
+    FROM CHAT A
+    LEFT OUTER JOIN MEMBER B ON (A.CHAT_SENDER_ID = B.MEM_ID)
+    LEFT OUTER JOIN MEM_USER C ON (B.MEM_NO = C.MEM_NO)
+    WHERE A.CHAT_ID = #{chatId}
+      AND A.CHAT_TYPE = 'CHAT'
+      AND A.CHAT_DEL = 'N'
+    ORDER BY A.CHAT_SENDTIME ASC
+	</select>
+	
+	<!-- 마지막 채팅 메시지 ID select -->
+	<select id="getLatestMsgId" parameterType="long" resultType="int">
+		SELECT NVL(MAX(CHAT_NO), 0)
+		FROM CHAT
+		WHERE CHAT_ID = #{chatId}
+	</select>
+	
+	<!-- 마지막 채팅 메시지 ID update -->
+	<update id="updateLastMsgId">
+		UPDATE CHAT_USER
+		   SET LAST_MSG_ID = #{lastMsgId}
+		 WHERE CHAT_ID = #{chatId}
+		   AND CHAT_USER_NO = (SELECT MEM_NO FROM MEMBER WHERE MEM_ID = #{memId})
+	</update>
+	
+	<!-- 최신 채팅 이력 update -->
+	<update id="updateLastReadMessage">
+	    UPDATE CHAT_USER
+	    SET LAST_MSG_ID = (
+	        SELECT NVL(MAX(CHAT_NO), 0)
+	        FROM CHAT
+	        WHERE CHAT_ID = #{chatId}
+	          AND CHAT_DEL = 'N'
+	    )
+	    WHERE CHAT_ID = #{chatId}
+	      AND CHAT_USER_NO = (SELECT MEM_NO FROM MEMBER WHERE MEM_ID = #{memId})
+	</update>
 </mapper>

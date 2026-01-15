@@ -70,7 +70,39 @@
                 <div class="schedule-card" data-status="upcoming" data-schdl-no="${schedule.schdlNo}">
 
                     <div class="schedule-card-image">
-                        <img src="${schedule.thumbnail}" alt="썸네일">
+                        <%-- <img src="${schedule.thumbnail}" alt="썸네일"> --%>
+                        <c:choose>
+                            <c:when test="${schedule.linkThumbnail != null && schedule.linkThumbnail != ''}">
+                                <img src="${schedule.linkThumbnail}" alt="일정 썸네일" id="thumbnailImage">
+                            </c:when>
+                            <c:when test="${schedule.attachNo != null && schedule.attachNo != 0}">
+                                <img src="${pageContext.request.contextPath }/file/searchthumbnail?path=${schedule.attachFile.filePath}" alt="일정 썸네일" id="thumbnailImage">
+                            </c:when>
+                            <c:otherwise>
+                                <%-- 이미지를 찾았는지 확인할 플래그 변수 선언 --%>
+                                <c:set var="imageFound" value="false" />
+                                <c:forEach items="${schedule.tripScheduleDetailsList}" var="detail">
+                                    <%-- 이미 이미지를 찾았다면 더 이상 안쪽 로직을 수행하지 않음 --%>
+                                    <c:if test="${not imageFound}">
+                                        <c:forEach items="${detail.tripSchedulePlaceList}" var="place">
+                                            <c:if test="${not imageFound}">
+                                                <%-- 1. 첨부파일이 있는 경우 --%><!-- 해당 케이스 미정 -->
+                                                <c:if test="${place.tourPlace.attachNo != null && place.tourPlace.attachNo != 0}">
+                                                    <img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=200&h=150&fit=crop&q=80" alt="일정 썸네일" id="thumbnailImage">
+                                                    <c:set var="imageFound" value="true" /> <%-- 찾았으므로 true로 변경 --%>
+                                                </c:if>
+                                                
+                                                <%-- 2. 기본 이미지가 있는 경우 --%>
+                                                <c:if test="${place.tourPlace.attachNo == null || place.tourPlace.attachNo == 0}">
+                                                    <img src="${place.tourPlace.defaultImg}" alt="일정 썸네일" id="thumbnailImage">
+                                                    <c:set var="imageFound" value="true" /> <%-- 찾았으므로 true로 변경 --%>
+                                                </c:if>
+                                            </c:if>
+                                        </c:forEach>
+                                    </c:if>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
                         <span class="schedule-card-status upcoming">D-8</span>
                         <button class="schedule-card-bookmark ${schedule.bkmkYn eq 'Y' ? 'active' : ''}" onclick="toggleScheduleBookmark(this)">
                             <i class="bi ${schedule.bkmkYn eq 'Y' ? 'bi-bookmark-fill' : 'bi-bookmark'}"></i>
@@ -539,55 +571,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 status: '${schedule.schdlStatus}',
                 location: '${schedule.rgnNm}',
                 people: ${schedule.travelerCnt},
-                url: contextPath + '/schedule/view/1'
+                url: contextPath + '/schedule/view/${schedule.schdlNo}'
             }
         }<c:if test="${!s.last}">,</c:if>
         </c:forEach>
-        // {
-        //     id: '1',
-        //     title: '제주도 힐링 여행',
-        //     start: '2026-01-01',
-        //     end: '2026-01-05',
-        //     backgroundColor: '#4A90D9',
-        //     borderColor: '#357ABD',
-        //     textColor: '#ffffff',
-        //     extendedProps: {
-        //         status: 'upcoming',
-        //         location: '제주도',
-        //         people: 2,
-        //         url: contextPath + '/schedule/view/1'
-        //     }
-        // },
-        // {
-        //     id: '2',
-        //     title: '오사카 맛집 투어',
-        //     start: '2026-01-15',
-        //     end: '2026-01-19',
-        //     backgroundColor: '#4A90D9',
-        //     borderColor: '#357ABD',
-        //     textColor: '#ffffff',
-        //     extendedProps: {
-        //         status: 'upcoming',
-        //         location: '일본 오사카',
-        //         people: 2,
-        //         url: contextPath + '/schedule/view/2'
-        //     }
-        // },
-        // {
-        //     id: '3',
-        //     title: '방콕 휴양 여행',
-        //     start: '2025-12-10',
-        //     end: '2025-12-15',
-        //     backgroundColor: '#9ca3af',
-        //     borderColor: '#6b7280',
-        //     textColor: '#ffffff',
-        //     extendedProps: {
-        //         status: 'completed',
-        //         location: '태국 방콕',
-        //         people: 3,
-        //         url: contextPath + '/schedule/view/3'
-        //     }
-        // }
     ];
 
     console.log('캘린더 이벤트 개수:', calendarEvents.length);

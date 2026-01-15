@@ -39,8 +39,18 @@ public interface IFileService {
 
 	public AttachFileDetailVO getProfileFile(Integer attachNo);
 
-	int saveFileList(List<MultipartFile> files, Map<String, String> uploadInfo, int regId);
-
+	public int saveFileList(List<MultipartFile> files, Map<String, String> uploadInfo, int regId);
+	
+	/***
+	 * @date 2026.01.15
+	 * @author kjh
+	 * @param file 단일 파일
+	 * @param uploadInfo 업로드 정보(파일 경로 및 파일사용 테이블 : 접근 경로 = filePath, 파일 분류 = fileGbCd)
+	 * @param regId(작성자 key)
+	 * @return
+	 */
+	public int saveFile(MultipartFile file, Map<String, String> uploadInfo, int regId);
+	
 	/**
      * 첨부파일 상세 목록 조회
      */

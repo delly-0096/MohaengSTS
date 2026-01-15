@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <c:set var="pageTitle" value="일정 계획하기" />
 <c:set var="pageCss" value="schedule" />
@@ -54,9 +55,56 @@
             </button>
         </div>
 
+        <c:set var="itemIdCounter" value="100" />
         <!-- 일정 탭 콘텐츠 -->
         <div class="planner-content" id="itineraryContent">
-            
+        	<c:forEach items="${ schedule.tripScheduleDetailsList }" var="detail">
+        	     <div class="planner-day" data-day="${ detail.schdlDt }">
+		            <div class="planner-day-header" onclick="openEditDayModal(${ detail.schdlDt })">
+		                <div class="planner-day-header-content">
+		                    <span class="planner-day-title" id="dayTitle${ detail.schdlDt }">${ detail.schdlDt }일차</span>
+		                    <span class="planner-day-theme" id="dayTheme${ detail.schdlDt }">
+		                    <c:if test="${ !empty detail.schdlTitle and detail.schdlTitle ne '' }">
+		                    	 - ${detail.schdlTitle}
+		                    </c:if>
+		                    </span>
+		                </div>
+		                <span class="planner-day-date" id="dayDate${ detail.schdlDt }">${detail.month}월 ${detail.day}일 (${detail.dayOfWeek})</span>
+		                <i class="bi bi-pencil planner-day-edit-icon"></i>
+		            </div>
+		            <div class="planner-items" id="day${ detail.schdlDt }Items">
+						<c:forEach items="${ detail.tripSchedulePlaceList }" var="place">
+                            <c:set var="itemIdCounter" value="${itemIdCounter + 1}" />
+							<div class="planner-item" draggable="true" data-item-id="${ itemIdCounter }" data-contentid="${ place.destId }" data-contenttypeid="${ place.destType }" data-start-time="${ place.placeStartTime }" data-end-time="${ place.placeEndTime }" data-latitude="${ place.tourPlace.latitude }" data-longitude="${ place.tourPlace.longitude }" data-cost="${ place.planCost }">
+								<div class="planner-item-time">
+									<input type="time" class="time-input time-start" value="${ place.placeStartTime }" onchange="updateItemTime(${ detail.schdlDt }, ${ itemIdCounter }, 'start', this.value)">
+									<span class="time-separator">~</span>
+									<input type="time" class="time-input time-end" value="${ place.placeEndTime }" onchange="updateItemTime(${ detail.schdlDt }, ${ itemIdCounter }, 'end', this.value)">
+								</div>
+								<div class="planner-item-content">
+									<span class="planner-item-name">${ place.tourPlace.plcNm }</span>
+									<span class="planner-item-category">${ place.tourPlace.placeName }</span>
+								</div>
+								<div class="planner-item-cost">
+									<input type="text" class="cost-input" value="<fmt:formatNumber value='${ place.planCost }' pattern='#,###' />" placeholder="0" onclick="this.select()" onchange="updateItemCost(${ detail.schdlDt }, ${ itemIdCounter }, this.value)">
+									<span class="cost-unit">원</span>
+								</div>
+								<div class="planner-item-actions"><button onclick="viewItemDetail(${ itemIdCounter })"><i class="bi bi-info-circle"></i></button>
+									<button onclick="removeItem(${ detail.schdlDt }, ${ itemIdCounter })"><i class="bi bi-trash"></i></button>
+								</div>
+							</div>
+						</c:forEach>
+		            </div>
+		            <button class="add-place-btn" onclick="openAddPlaceModal(${ detail.schdlDt })" style="margin-top: 8px; padding: 10px;">
+		                <i class="bi bi-plus"></i> 장소 추가
+		            </button>
+		        </div>
+        	</c:forEach>
+	        <div class="mt-4">
+	            <button class="btn btn-primary w-100" onclick="saveSchedule()">
+	                <i class="bi bi-bookmark me-2"></i>일정 저장
+	            </button>
+	        </div>
         </div>
 
         <!-- 검색 탭 콘텐츠 -->
@@ -395,9 +443,9 @@ let editSchdlNmModal
 let editDayModal;
 let budgetModal;
 let selectedDay = 1;
-let itemIdCounter = 100; // 새 아이템 ID 생성용
+let itemIdCounter = ${itemIdCounter}; // 새 아이템 ID 생성용
 let selectedVisibility = 'public'; // 기본값: 전체 공개
-let totalBudget = 0; // 총 예산
+let totalBudget = ${schedule.totalBudget > 0 ? schedule.totalBudget : 0}; // 총 예산
 
 let travelDates = "";
 let preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
@@ -408,16 +456,21 @@ let startDt = "";
 let endDt = "";
 let diffDay = 0;
 let duration = 0;
-let schdlNm = "";
+let schdlNm = "${ schedule.schdlNm }";
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
+const tourContentList = {
+    <c:forEach items="${ tourContentList }" var="content">
+        ${ content.contentTypeId } : '${ content.contentTypeName }',
+    </c:forEach>
+};
+
 // 일차 데이터 저장
 let dayData = {
-    1: { theme: '', date: '' },
-    2: { theme: '', date: '' },
-    3: { theme: '', date: '' },
-    4: { theme: '', date: '' }
+	<c:forEach items="${ schedule.tripScheduleDetailsList }" var="detail">
+        ${ detail.schdlDt}: { theme: '${detail.schdlTitle}', date: '${detail.schdlDt}' },
+    </c:forEach>
 };
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -471,11 +524,23 @@ document.addEventListener('DOMContentLoaded', async function() {
 	    // 마커 추가 (위도, 경도, 제목, 커스텀데이터)
 	    myMap.addMarker(place.lat, place.lng, place.title, { id: place.id });
 	});
+
+    let plannerItems = document.querySelectorAll(".planner-item");
+
+    plannerItems.forEach(item => {
+        let lat = parseFloat(item.dataset.latitude);
+        let lng = parseFloat(item.dataset.longitude);
+        let name = item.querySelector(".planner-item-name").innerText;
+        let itemId = item.dataset.itemId;
+        // 마커 추가
+        myMap.addMarker(lat, lng, name, { itemId: itemId });
+    });
 	
 	// 4. 마커가 다 보이도록 지도 줌 레벨 자동 조정
 	myMap.fitBounds();
-	
-	initReturn();
+
+    updateBudgetDisplay()
+
 });
 
 // 일자 선택
@@ -715,7 +780,7 @@ function confirmAddPlace() {
         '</div>' +
         '<div class="planner-item-content">' +
             '<span class="planner-item-name">' + selectedItem.name + '</span>' +
-            '<span class="planner-item-category">' + selectedItem.category + '</span>' +
+            '<span class="planner-item-category"> ' + selectedItem.category + '</span>' +
         '</div>' +
         '<div class="planner-item-cost">' +
             '<input type="text" class="cost-input" value="0" placeholder="0" onclick="this.select()" onchange="updateItemCost(' + selectedDay + ', ' + newItemId + ', this.value)">' +
@@ -737,7 +802,7 @@ function confirmAddPlace() {
     showToast(selectedItem.name + '이(가) ' + selectedDay + '일차 ' + startTime + ' ~ ' + endTime + '에 추가되었습니다.', 'success');
 
     // 일정 탭으로 전환
-//     switchPlannerTab('itinerary');
+    switchPlannerTab('itinerary');
 
     myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, { id: selectedItem.id });
 
@@ -774,15 +839,13 @@ async function viewItemDetail(itemId) {
 			</div>
 		</div>
 	`
-	
+
 	modal.show();
 	
     let placeItem = await searchPlaceDetail(itemContentId, contenttypeId);
 // 	placeItem.plcDesc = (placeItem.plcDesc).replaceAll('\n', '<br>');
 	console.log(placeItem);
 	
-// 	console.log(placeItem.expguide)
-// 	                 onerror="this.src='https://via.placeholder.com/400x300?text=성산일출봉'">
 
 	let plcDesc = (placeItem.plcDesc+"").replaceAll(/\\n/g, '<br>');
 	console.log("plcDesc:  " + plcDesc)
@@ -882,51 +945,8 @@ function saveSchedule() {
 	console.log("${sessionScope}")
 	console.log("${sessionScope.loginMember}")
     if (!isLoggedIn) {
-        sessionStorage.setItem('returnUrl', window.location.href);
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-
-			let tempPlanDataList = new Array;
-            let tempPlanData = new Array;
-
-            let plannerDayList = document.querySelectorAll(".planner-day");
-            
-            let plannerItems = document.querySelectorAll(".planner-item");
-
-            plannerItems.forEach(item => {
-                let parentItem = item.closest(".planner-day");
-                let day = parentItem.dataset.day;
-                let itemId = item.dataset.itemId;
-                let contentid = item.dataset.contentid;
-                let contenttypeid = item.dataset.contenttypeid;
-                let startTime = item.dataset.startTime;
-                let endTime = item.dataset.endTime;
-                let cost = item.dataset.cost;
-                let latitude = item.dataset.latitude;
-                let longitude = item.dataset.longitude;
-                let itemName = item.querySelector(".planner-item-name").innerText;
-                let itemCategory = item.querySelector(".planner-item-category").innerText;
-
-                tempPlanData = {
-                    day : day,
-                    itemId : itemId,
-                    contentid : contentid,
-                    contenttypeid : contenttypeid,
-                    startTime : startTime,
-                    endTime : endTime,
-                    cost : cost,
-                    itemName : itemName,
-                    itemCategory : itemCategory,
-                    latitude : latitude,
-                    longitude : longitude,
-                }
-
-                tempPlanDataList.push(tempPlanData);
-            });
-
-            console.log(tempPlanDataList);
-
-        	sessionStorage.setItem('tempPlanDataList', JSON.stringify(tempPlanDataList));
-        	sessionStorage.setItem('tempSchdlNm', schdlNm);
+            sessionStorage.setItem('returnUrl', window.location.href);
 
             window.location.href = '${pageContext.request.contextPath}/member/login';
         }
@@ -980,6 +1000,7 @@ function selectVisibility(visibility) {
 function confirmSaveSchedule() {
     // 1. Master 데이터 추출 (TRIP_SCHEDULE 매핑)
     const masterData = {
+        schdlNo : ${ schedule.schdlNo },
     	schdlNm : schdlNm,
         schdlStartDt: startDt, // 시작일 (YYYY-MM-DD)
         schdlEndDt: endDt,     // 종료일
@@ -1028,7 +1049,7 @@ function confirmSaveSchedule() {
     }
 
     // 3. 서버 전송 (AJAX)
-    fetch('${pageContext.request.contextPath}/schedule/insert', {
+    fetch('${pageContext.request.contextPath}/schedule/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(masterData)
@@ -1285,14 +1306,14 @@ async function initTourPlaceList(areaCode) {
 		             alt="\${ tourPlace.title }" class="search-result-image">
 		        <div class="search-result-content">
 		            <h5 class="search-result-name">\${ tourPlace.title }</h5>
-		            <span class="search-result-category">관광지 · 자연</span>
+		            <span class="search-result-category">\${getContentTypeName(tourPlace.contenttypeid)} · 자연</span>
 		            <div class="search-result-rating">
 		                <i class="bi bi-star-fill"></i>
 		                <span>4.8</span>
 		                <span class="text-muted">(1,234)</span>
 		            </div>
 		        </div>
-		        <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '관광지', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')">
+		        <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '\${getContentTypeName(tourPlace.contenttypeid)}', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')">
 		            <i class="bi bi-plus"></i>
 		        </button>
 		    </div>
@@ -1342,60 +1363,6 @@ function initTemplate() {
     diffDay = getDaysDiff(startDt, endDt);
     duration = diffDay + 1;
     
-    let plannerDay = "";
-    let selectBtnList = "";
-    let budgetListData = "";
-    
-    for(let i = 0; i < duration; i++) {
-		let dDay = i + 1;
-    	let durDate = new Date(startDt);
-    	durDate.setDate(durDate.getDate() + i);
-    	let shortWeekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(durDate);
-    	let dDateMonth = durDate.getMonth() + 1;
-    	let dDateDay = durDate.getDate();
-    	
-    	plannerDay += `
-    		<div class="planner-day" data-day="\${dDay}">
-            <div class="planner-day-header" onclick="openEditDayModal(\${dDay})">
-                <div class="planner-day-header-content">
-                    <span class="planner-day-title" id="dayTitle\${dDay}">\${dDay}일차</span>
-                    <span class="planner-day-theme" id="dayTheme\${dDay}"></span>
-                </div>
-                <span class="planner-day-date" id="dayDate\${dDay}">\${dDateMonth}월 \${dDateDay}일 (\${shortWeekday})</span>
-                <i class="bi bi-pencil planner-day-edit-icon"></i>
-            </div>
-            <div class="planner-items" id="day\${dDay}Items">
-				
-            </div>
-            <button class="add-place-btn" onclick="openAddPlaceModal(\${dDay})" style="margin-top: 8px; padding: 10px;">
-                <i class="bi bi-plus"></i> 장소 추가
-            </button>
-        </div>
-        `
-    	selectBtnList += `
-    		<button class="btn btn-outline time-select-btn \${ dDay == 1 ? 'active' : '' }" data-day="\${dDay}" onclick="selectDay(\${dDay})">\${dDay}일차</button>
-    	`
-    	
-   	    budgetListData += `
-            <div class="budget-status-item">
-            <span class="status-label">\${dDay}일차</span>
-            <span class="status-value" id="day\${dDay}Cost">0원</span>
-        </div>
-   	    `
-    }
-    
-    plannerDay += `
-        <div class="mt-4">
-            <button class="btn btn-primary w-100" onclick="saveSchedule()">
-                <i class="bi bi-bookmark me-2"></i>일정 담기
-            </button>
-        </div>
-    `
-     
-    $("#budgetList").html(budgetListData);
-    $("#itineraryContent").html(plannerDay);
-    daySelectButtons.innerHTML = selectBtnList;
-    
     initDragAndDrop();
     
     //여행기간 작성
@@ -1405,67 +1372,10 @@ function initTemplate() {
     
 }
 
-function initReturn() {
-	let tempPlanDataList = sessionStorage.getItem("tempPlanDataList");
-	let tempSchdlNm = sessionStorage.getItem("tempSchdlNm");
-	
-	let planDataList = JSON.parse(tempPlanDataList);
-    console.log(planDataList);
-	
-	if(planDataList && planDataList.length > 0) {
-		document.querySelector("#schdlNm").innerText = tempSchdlNm;
-		
-		schdlNm = tempSchdlNm;
-		planDataList.forEach(item => {
-            console.log(item)
-			itemIdCounter++;
-		    var newItemId = itemIdCounter;
-		    var newItem = document.createElement('div');
-		    
-		    newItem.className = 'planner-item';
-		    newItem.draggable = true;
-		    newItem.dataset.itemId = item.itemId;
-		    newItem.dataset.contentid = item.contentid;
-		    newItem.dataset.contenttypeid = item.contenttypeid;
-		    newItem.dataset.startTime = item.startTime;
-		    newItem.dataset.endTime = item.endTime;
-		    newItem.dataset.latitude = item.latitude;
-		    newItem.dataset.longitude = item.longitude;
-		    newItem.dataset.cost = item.cost;
-		    
-		    newItem.innerHTML =
-		        '<div class="planner-item-time">' +
-		            '<input type="time" class="time-input time-start" value="' + item.startTime + '" onchange="updateItemTime(' + item.day + ', ' + item.itemId + ', \'start\', this.value)">' +
-		            '<span class="time-separator">~</span>' +
-		            '<input type="time" class="time-input time-end" value="' + item.endTime + '" onchange="updateItemTime(' + item.day + ', ' + item.itemId + ', \'end\', this.value)">' +
-		        '</div>' +
-		        '<div class="planner-item-content">' +
-		            '<span class="planner-item-name">' + item.itemName + '</span>' +
-		            '<span class="planner-item-category">' + item.itemCategory + '</span>' +
-		        '</div>' +
-		        '<div class="planner-item-cost">' +
-		            '<input type="text" class="cost-input" value="0" placeholder="0" onclick="this.select()" onchange="updateItemCost(' + item.day + ', ' + item.itemId + ', this.value)">' +
-		            '<span class="cost-unit">원</span>' +
-		        '</div>' +
-		        '<div class="planner-item-actions">' +
-		            '<button onclick="viewItemDetail(' + item.itemId + ')"><i class="bi bi-info-circle"></i></button>' +
-		            '<button onclick="removeItem(' + item.day + ', ' + item.itemId + ')"><i class="bi bi-trash"></i></button>' +
-		        '</div>';
-		        
-	        let itemsContainer = document.getElementById('day' + item.day + 'Items');
-	        if (!itemsContainer) {
-	            console.error('Container not found');
-	            return;
-	        }
-	        
-    		itemsContainer.appendChild(newItem);
-		    initDragAndDropForItem(newItem);
-			myMap.addMarker(item.latitude, item.longitude, item.itemName, { id: item.itemId });
-			myMap.fitBounds();
-        });
-	}
-
+function getContentTypeName(contentTypeId) {
+    return tourContentList[contentTypeId] || '기타';
 }
+
 </script>
 
 <%@ include file="../common/footer.jsp" %>

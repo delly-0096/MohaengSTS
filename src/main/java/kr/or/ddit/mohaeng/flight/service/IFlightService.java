@@ -50,7 +50,15 @@ public interface IFlightService {
 	 * <p>결제자 번호, 이름, 이메일, 전화번호, 포인트 조회</p>
 	 * @author sdg
 	 * @param memId
-	 * @return
+	 * @return mem_no, mem_name, mem_email, point, tel
 	 */
-	public MemberVO getPayPerson(String memId); 
+	public MemberVO getPayPerson(String memId);
+
+	/**
+	 * <p>좌석 정보 조회</p>
+	 * @author sdg
+	 * @param flightProductVO 항공권 정보
+	 * @return 좌석정보
+	 */
+	public List<String> getSeatInfo(FlightProductVO flightProductVO); 
 }

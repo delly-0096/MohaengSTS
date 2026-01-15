@@ -250,7 +250,7 @@
                         <div class="summary-row" id="summarySeatsRowIn" style="display: none;">
                             <span class="summary-label">오는편 선택 좌석</span>
                             <span class="summary-value" id="summarySeatsIn">-</span>
-                        </div>
+           				</div>
                         <div class="summary-divider"></div>
                         <div class="summary-row">
                             <span class="summary-label">항공 운임 합계</span>
@@ -296,10 +296,12 @@
                 <div class="seat-map-container">
                     <div class="seat-legend">
                         <span class="legend-item"><span class="seat-sample available"></span> 선택 가능</span>
+                        
                         <span class="legend-item"><span class="seat-sample selected"></span> 선택됨</span>
                         <span class="legend-item"><span class="seat-sample occupied"></span> 선택 불가</span>
-                        <span class="legend-item"><span class="seat-sample extra"></span> 비즈니스 클래스</span>
-                        <!-- <span class="legend-item"><span class="seat-sample extra-selected"></span> 추가요금 선택</span> -->
+                        
+                        <span class="legend-item"><span class="seat-sample extra"></span> 선택 가능</span>
+                        <span class="legend-item"><span class="seat-sample extra-selected"></span> 선택됨</span>
                     </div>
                     <div class="seat-map" id="seatMap">
                         <!-- JavaScript로 좌석 배치 생성 -->
@@ -324,13 +326,15 @@ let fuelSurcharge = 9900;
 let taxAndFees = 4000;
 let seatSelectionModal;
 
-let currentSegmentSelection = 0; // 0: 가는편, 1: 오는편
+let currentSegmentSelection = 0; 	   // 0: 가는편, 1: 오는편
 let selectedSeatsBySegment = [[], []]; // 구간별 좌석 저장
+let reservationList = [];			   // 예약정보 테이블
 
 // 항공편 예약 데이터
 let bookingData = null;
 let totalFlightPrice = 0;
 let amount = 0;
+let totalPeople = 0;
 
 let widgets = null;
 
@@ -378,8 +382,8 @@ async function main() {
 		headers : {"Content-Type" : "application/json"},
 		body : JSON.stringify({memId : "${user.username}"})
 	});
-	
 	console.log("userData : ", userData);
+	
 	customData = await userData.json();
 	console.log("customData : ", customData);		// 이 정보로 입력, session에도 저장?
 	
@@ -388,15 +392,13 @@ async function main() {
 	const bookerEmail = document.querySelector("#bookerEmail");
 	const availablePoints = document.querySelector("#availablePoints");
 	
+	// 결제자 정보 입력
 	bookerName.value = customData.memName;
 	bookerPhone.value = customData.tel.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 	bookerEmail.value = customData.memEmail;
 	availablePoints.innerHTML = customData.point;
 	
-	if(customData.point >= 1000){
-		document.querySelector("#usePointInput").disabled = false;
-	}
-	
+	if(customData.point >= 1000) document.querySelector("#usePointInput").disabled = false;
 	
 	// 결제 form
 	const bookingForm = document.querySelector("#flightBookingForm");
@@ -406,27 +408,47 @@ async function main() {
 		// 탑승객 card
 		const passengerInputs = document.querySelectorAll('.passenger-card');
 		
+		let totalOutMoney = 0;
+		let totalInMoney = 0;
 		// 탑승객 정보
 	    const passengerData = Array.from(passengerInputs).map((card, index) => {
+	    	let outMoney = parseInt(card.querySelector('select[name="extraBaggageOutbound"]').value);
+	    	let inMoney = (bookingData.tripType === 'round') ? 
+            		parseInt(card.querySelector('select[name="extraBaggageInbound"]').value) : 0;
+            totalOutMoney += outMoney;
+            totalInMoney += inMoney;
 	        return {
-	            type: card.querySelector('.passenger-type-badge').textContent,
+	        	passengersType: card.querySelector('.passenger-type-badge').textContent,
 	            lastName: card.querySelector('input[name^="lastName"]').value,
 	            firstName: card.querySelector('input[name^="firstName"]').value,
 	            gender: card.querySelector('select[name^="gender"]').value,
 	            birthDate: card.querySelector('input[name^="birthDate"]').value,
-	            extraBaggageOutbound: card.querySelector('select[name="extraBaggageOutbound"]').value,
-	            extraBaggageInbound: (bookingData.tripType === 'round') ? 
-	            		card.querySelector('select[name="extraBaggageInbound"]').value : "0",
-	            outboundSeat: selectedSeatsBySegment[0][index],
-	            inboundSeat: (bookingData.tripType === 'round') ? selectedSeatsBySegment[1][index] : "NONE"
+	            extraBaggageOutbound: outMoney,
+	            extraBaggageInbound: inMoney,
+	            outSeat: selectedSeatsBySegment[0][index],
+	            inSeat: (bookingData.tripType === 'round') ? selectedSeatsBySegment[1][index] : "NONE"
 	        };
 	    });
-	    
-		// const reservationData = 
 		
 		console.log("passengers : ", passengerData);
 		sessionStorage.setItem("passengers", JSON.stringify(passengerData));
+
+		// 예약 정보
+		reservationList.push({
+			totalPrice : (parseInt(bookingData.flights[0].price) * totalPeople) + totalOutMoney,
+			memNo: customData.memNo
+		});
 		
+	    if(bookingData.tripType === 'round'){
+	    	reservationList.push({
+				totalPrice : (parseInt(bookingData.flights[1].price) * totalPeople) + totalInMoney,
+	    		memNo: customData.memNo
+    		});
+	    }
+		
+		sessionStorage.setItem("reservationList", JSON.stringify(reservationList));
+		
+	    
 	    // 필수 약관 체크 확인 - 이것도 테이블에 담기
 	    let allAgreed = true;
 	    document.querySelectorAll('.agree-item').forEach(function(agree) {
@@ -445,12 +467,15 @@ async function main() {
 	    console.log("reserveAgree : ", reserveAgree);
 		sessionStorage.setItem("reserveAgree", JSON.stringify(reserveAgree));
 	    
-	    
-	    
+		let orderName = currentSearchType === 'round' ?
+				bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm
+				+ bookingData.flights[1].startDt + " " + bookingData.flights[1].arrAirportNm + " " + bookingData.flights[1].airlineNm
+				: bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm;
+		
 		const timeStamp = Date.now();
 		await widgets.requestPayment({
 			orderId: "FLT-" + bookingData.flights[0].startDt + "-" + customData.memNo + "-" + timeStamp,			// 예약번호
-			orderName: bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm,
+			orderName: orderName,
 			// paymentKey, paymentType, amount는 기본적으로 포함되어 있음
 			successUrl: window.location.origin + "/product/payment/flight",	// 성공 위치 - 리다이렉트로 이동
 			failUrl: window.location.origin + "/product/payment/error",		// 실패 위치 - 같은곳으로 보내자
@@ -466,11 +491,12 @@ document.addEventListener('DOMContentLoaded', async function() {
 	amount = document.querySelector("#payBtnText");
 	cabin = document.querySelector("#summaryCabin");
 	
-	if (storedData) {
-	    bookingData = JSON.parse(storedData);
-	    cabin.innerHTML = bookingData.flights[0].cabinClass;
-	    initFlightDisplay();
-	}
+	if (!storedData) return;
+	
+    bookingData = JSON.parse(storedData);
+    console.log("bookingData : ", bookingData);
+    cabin.innerHTML = bookingData.flights[0].cabinClass;
+    initFlightDisplay();
 	
 	// 탑승객 정보 초기 세팅
 	passengerType.adult = bookingData.flights[0].adult;
@@ -480,7 +506,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     initPassengers();		// 탑승객 정보 초기화
     updateCountButtons();	// 탑승인원 버튼 상태 초기화
     seatSelectionModal = new bootstrap.Modal(document.getElementById('seatSelectionModal'));	// 좌석 선택 모달 초기화
-    initSeatMap();
+    await initSeatMap();
     calculateTotal();
     
     await main();
@@ -532,41 +558,41 @@ function initFlightDisplay() {
 
 // 항공편 카드 HTML 생성
 function createFlightCardHtml(flight, labelClass) {
-    return '<div class="flight-summary-card">' +
-        '<div class="flight-summary-label ' + labelClass + '">' + flight.segmentLabel + '</div>' +
-        '<div class="flight-summary-content">' + flight.startDate + '(' + flight.domesticDays + ')' +
-            '<div class="flight-summary-route">' +
-                '<div class="flight-summary-point">' +
-                    '<span class="time">' + flight.depTimeFormmater + '</span>' +
-                    '<span class="airport">' + flight.depAirportNm + ' (' + flight.depIata + ')</span>' +
-                '</div>' +
-                '<div class="flight-summary-arrow">' +
-                    '<span class="duration">' + flight.duration + '</span>' +
-                    '<div class="arrow-line"><i class="bi bi-airplane"></i></div>' +
-                '</div>' +
-                '<div class="flight-summary-point">' +
-                    '<span class="time">' + flight.arrTimeFormmater + '</span>' +
-                    '<span class="airport">' + flight.arrAirportNm + ' (' + flight.arrIata + ')</span>' +
-                '</div>' +
-            '</div>' +
-            '<div class="flight-summary-details">' +
-                '<span class="flight-airline">' + flight.airlineNm + '</span>' +
-                '<span class="flight-price">' + (flight.price).toLocaleString() + '원</span>' +
-            '</div>' +
-        '</div>' +
-    '</div>';
+    return `<div class="flight-summary-card">
+         <div class="flight-summary-label \${labelClass}">\${flight.segmentLabel}</div>
+         <div class="flight-summary-content">\${flight.startDate} (\${flight.domesticDays})
+             <div class="flight-summary-route">
+                 <div class="flight-summary-point">
+                     <span class="time">\${flight.depTimeFormmater}</span>
+                     <span class="airport">\${flight.depAirportNm} (\${flight.depIata})</span>
+                 </div>
+                 <div class="flight-summary-arrow">
+                     <span class="duration">\${flight.duration}</span>
+                     <div class="arrow-line"><i class="bi bi-airplane"></i></div>
+                 </div>
+                 <div class="flight-summary-point">
+                     <span class="time">\${flight.arrTimeFormmater}</span>
+                     <span class="airport">\${flight.arrAirportNm} (\${flight.arrIata})</span>
+                 </div>
+             </div>
+             <div class="flight-summary-details">
+                 <span class="flight-airline">\${flight.airlineNm} (\${flight.flightSymbol})</span>
+                 <span class="flight-price"> \${(flight.price).toLocaleString()}원</span>
+             </div>
+         </div>
+     </div>`;
 }
 
 // 사이드바 구간 HTML 생성
 function createSummarySegmentHtml(flight, labelClass) {
 	// 가격은 클래스에 따라서 바꿈
-    return '<div class="summary-segment-item">' +
-        '<div class="summary-segment-label">' +
-            '<span class="summary-segment-badge ' + labelClass + '">' + flight.segmentLabel + '</span>' +
-            '<span class="summary-segment-route">' + flight.depIata + ' → ' + flight.arrIata + '</span>' +
-        '</div>' +
-        '<span class="summary-segment-price">' + (flight.price).toLocaleString() + '원</span>' +
-    '</div>';
+    return `<div class="summary-segment-item">
+          <div class="summary-segment-label">
+             <span class="summary-segment-badge \${labelClass}">\${flight.segmentLabel}</span>
+             <span class="summary-segment-route">\${flight.depIata} → \${flight.arrIata}</span>
+         </div>
+         <span class="summary-segment-price">\${(flight.price).toLocaleString()}원</span>
+     </div>`;
 }
 
 // 탑승객 정보 초기화 - 탑승객 줄거나 늘어날 때는 기존거 남기고 했으면 좋겠다. 예약자랑 탑승객이랑 정보 같을수도 있잖슴
@@ -574,8 +600,6 @@ function initPassengers() {
     var container = document.getElementById('passengersContainer');
     totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
     container.innerHTML = '';
-    
-    // adultCount
     
 	// bookingData.flights[1].adult // 가져오면 적용됨
 	
@@ -600,10 +624,17 @@ function initPassengers() {
 }
 
 // 탑승객 카드 추가 - 탑승객 정보도 담아야될지??
+// function modifyPassengerCard(container, type, method, num) {
 function addPassengerCard(container, type, num) {
-    var typeLabels = { adult: '성인', child: '소아', infant: '유아' };
-    var typeLabel = typeLabels[type];
-
+	// type을 매개변수로 추가해서 plus면 추가하기, minus면 빼기 간단하잖아??
+    let typeLabels = { adult: '성인', child: '소아', infant: '유아' };
+    let typeLabel = typeLabels[type];
+	
+//     if(method === "+") // type 추가한것 추가
+//     if(method === "-") {
+			// type 줄인것
+//} 가장 최근것 삭제, 1개는 무조건 있어야됨
+    
     var div = document.createElement('div');
     div.className = 'passenger-card';
     div.innerHTML =
@@ -638,22 +669,23 @@ function addPassengerCard(container, type, num) {
 	            <div class="col-md-4">
 	                <div class="form-group mb-0">
 	                    <label class="form-label">생년월일 <span class="text-danger">*</span></label>
-	                    <input type="date" class="form-control" name="birthDate" required>
+	                    <input type="text" class="form-control birthdate-picker" id="birthDate" 
+	                    placeholder="생년월일을 입력해주세요" onchange="ageCheck(this,'\${typeLabel}')" required>
 	                </div>
 	            </div>
 	            <div class="col-md-4">
 	            <div class="form-group mb-0">
-	                <label class="form-label">가는편 추가 수하물 <span class="text-danger">*</span></label>
-	                <select class="form-control form-select" name="extraBaggageOutbound" onchange="calculateTotal()" required>
-		                <option value="0">추가없음</option>
+	                <label class="form-label">가는편 추가 수하물</label>
+	                <select class="form-control form-select" name="extraBaggageOutbound" onchange="calculateTotal()">
+		                <option value="0" selected>추가없음</option>
 		                <option value="5">5kg (10,000원)</option>
 		                <option value="10">10kg (20,000원)</option>
 		            </select>
 	            </div>
 	            <div class="form-group mb-0">
-	                <label class="form-label">오는편 추가 수하물 <span class="text-danger">*</span></label>
-	                <select class="form-control form-select" name="extraBaggageInbound" onchange="calculateTotal()" required>
-		                <option value="0">추가없음</option>
+	                <label class="form-label">오는편 추가 수하물</label>
+	                <select class="form-control form-select" name="extraBaggageInbound" onchange="calculateTotal()">
+		                <option value="0" selected>추가없음</option>
 		                <option value="5">5kg (10,000원)</option>
 		                <option value="10">10kg (20,000원)</option>
 		            </select>
@@ -664,12 +696,45 @@ function addPassengerCard(container, type, num) {
     container.appendChild(div);
 }
 
+function ageCheck(userBirth, type){
+	console.log("userBirth : ", userBirth.value);
+	console.log("type : ", type);
+	
+	const birth = new Date(userBirth.value);
+	const now = new Date();
+	
+	let age = now.getFullYear() - birth.getFullYear();	// 연도 계산
+	now.getMonth() - birth.getMonth();
+	age = now.getMonth() - birth.getMonth() < 0 ? age-- : age; 
+	
+	if(type === "성인" && age <= 11) {
+		 showToast('만 12세 미만은 성인으로 예약할 수 없습니다.', 'warning');
+		 userBirth.value = "";
+		 return userBirth.focus();
+	}
+	
+	if(type === "소아" && !(age < 2 || age >= 12)){
+		 showToast('소아는 탑승일 기준 만 2세~11세만 가능합니다.', 'warning');
+		 userBirth.value = "";
+		 return userBirth.focus();
+	}
+	
+	if(type === "유아" && age >= 2){
+		 showToast('만 2세 이상은 유아로 예약할 수 없습니다.', 'warning');
+		 userBirth.value = "";
+		 return userBirth.focus();
+	}
+}
+	
+
 
 // 탑승인원 변경
 function changepassengerType(type, delta) {
     var newCount = passengerType[type] + delta;
-    var totalPassengers = passengerType.adult + passengerType.child + passengerType.infant;
-
+    totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
+	
+    console.log("change asdfasd");
+    
     // 유효성 검사
     if (type === 'adult') {
         if (newCount < 1) {
@@ -700,7 +765,7 @@ function changepassengerType(type, delta) {
     }
 
     // 총 인원 제한
-    var newTotal = totalPassengers + delta;
+    var newTotal = totalPassengerCount + delta;
     if (newTotal > 9) {
         showToast('총 탑승객은 9명을 초과할 수 없습니다.', 'warning');
         return;
@@ -714,12 +779,14 @@ function changepassengerType(type, delta) {
     updateCountButtons();
 
     // 탑승객 카드 재생성
-    initPassengers();	// 초기화 x
+    // initPassengers();	// 초기화 x
+    
+    
 
     // 좌석 선택 초기화 (인원 변경 시)
     if (selectedSeatsBySegment.length > 0) {
-    	selectedSeatsBySegment = [[], []];	// 첫번째는 그대로 담기, 늘어나면 기존 인원의 좌석은 그대로
-        document.getElementById('summarySeatsRow').style.display = 'none';
+//     	selectedSeatsBySegment = [[], []];	// 첫번째는 그대로 담기, 늘어나면 기존 인원의 좌석은 그대로 - 
+//         document.getElementById('summarySeatsRow').style.display = 'none';
         document.querySelector('.seat-selection-info').innerHTML =
             `<p>좌석 선택은 선택사항입니다. 미선택 시 자동 배정됩니다.</p>
             <button type="button" class="btn btn-outline" onclick="openSeatSelection()">
@@ -746,17 +813,15 @@ function updateCountButtons() {
     infantMinus.disabled = passengerType.infant <= 0;
 
     // 총 인원 9명 제한
-    var totalPassengers = passengerType.adult + passengerType.child + passengerType.infant;
+    var totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
     var plusButtons = document.querySelectorAll('.count-btn.plus');
     plusButtons.forEach(function(btn) {
-        btn.disabled = totalPassengers >= 9;
+        btn.disabled = totalPassengerCount >= 9;
     });
 
-    // 유아 플러스 버튼 (성인 수 제한)
+	// 유아 플러스 버튼 (성인 수 제한)
     var infantPlus = document.querySelector('.passenger-count-row:nth-child(3) .count-btn.plus');
-    if (passengerType.infant >= passengerType.adult) {
-        infantPlus.disabled = true;
-    }
+    if (passengerType.infant >= passengerType.adult) infantPlus.disabled = true;
 }
 
 // 총 금액 계산 - 아이 요금제
@@ -771,7 +836,7 @@ function calculateTotal() {
 	childCount.innerHTML = passengerType.child;
 	infantCount.innerHTML = passengerType.infant;
 	
-	const totalPeople = passengerType.adult + passengerType.child;
+	totalPeople = passengerType.adult + passengerType.child;
     // const infantCount = passengerType.infant;
 //     var totalPassengers = passengerType.adult + passengerType.child;
     segmentCount = bookingData ? bookingData.flights.length : 1;
@@ -785,13 +850,10 @@ function calculateTotal() {
     let extraBaggageFee = 0;
     document.querySelectorAll('select[name^="extraBaggage"]').forEach(select => {
         const weight = parseInt(select.value);
-        if (weight === 5) {
-        	extraBaggageFee += 10000;
-        }
-        else if (weight === 10){
-        	extraBaggageFee += 20000;
-        }
+        if (weight === 5) extraBaggageFee += 10000;
+        else if (weight === 10) extraBaggageFee += 20000;
     });
+    
     if(extraBaggageFee !== 0) extraFeeView.style.display = 'flex';
     summaryExtra.innerHTML = extraBaggageFee.toLocaleString() + '원';
     
@@ -853,7 +915,19 @@ function updateSeatModalTitle() {
 }
 
 // 좌석 배치 초기화 -- 2번 할 수 있도록 수정해야됨 / 좌석 등급 따른 보여줄 화면 조정
-function initSeatMap() {
+async function initSeatMap() {
+	// 좌석 불러오기
+	let seatList = [];
+	try{
+		const res = await axios.post(`/product/flight/seat`, bookingData.flights[currentSegmentSelection]);
+		seatList = res.data;
+        console.log("axios 내부 seatList : ", seatList);
+	}catch(error) {
+    	console.log("error 발생 : ", error);
+    }
+	
+    console.log("axios 외부 seatList : ", seatList);
+	
     var seatMap = document.getElementById('seatMap');
     var columns = ['A', 'B', 'C', '', 'D', 'E', 'F'];
     var rows = 20;
@@ -863,33 +937,35 @@ function initSeatMap() {
     html += `<div class="seat-row">`;
     html += `<div class="seat-row-number"></div>`;
     columns.forEach(function(col) {
-        if (col === '') {
-            html += `<div class="seat-aisle"></div>`;
-        } else {
-            html += `<div class="seat" style="background: none; cursor: default; color: var(--gray-medium);">\${col}</div>`;
-        }
+        if (col === '') html += `<div class="seat-aisle"></div>`;
+        else html += `<div class="seat" style="background: none; cursor: default; color: var(--gray-medium);">\${col}</div>`;
     });
     html += `</div>`;
 
     // 좌석 행 -- 여기서 좌석 조정해야됨 
-    // 안되는 좌석 불러오기 db 
     // cabinCalss 등급따라서 앞좌석 선택 못하도록 막기
     for (var i = 1; i <= rows; i++) {
+        
+	    if (bookingData.flights[0].cabinClass === "일반석" && i <= 3) continue; 
+        if (bookingData.flights[0].cabinClass === "비즈니스" && i >= 4) continue;
         html += `<div class="seat-row">`;
         html += `<div class="seat-row-number">\${i}</div>`;
-
+		
         columns.forEach(function(col) {
-            if (col === '') {	// 통로
-                html += `<div class="seat-aisle"></div>`;
-            } else {
-                var seatId = i + col;	// a1 같이
-                var occupied = Math.random() < 0.3;
-                var extra = i <= 3;		// business
-                var seatClass = occupied ? 'occupied' : (extra ? 'extra available' : 'available');
-
-                html += '<button type="button" class="seat ' + seatClass + '" data-seat="' + seatId + '" ' +
-                        (occupied ? 'disabled' : 'onclick="toggleSeat(this)"') + '>' +
-                        (occupied ? '' : seatId) + '</button>';
+	        
+            if (col === '') html += `<div class="seat-aisle"></div>`; // 통로
+            else {
+            	const seatId = i + col;	// a1 같이
+                const occupied = seatList.includes(seatId);	// 선택 불가 자리
+                const business = i <= 3;		// business
+                const seatClass = occupied ? 'occupied' : (business ? 'business' : 'economy');
+				
+                const seatValid = occupied ? 'disabled' : 'onclick="toggleSeat(this)"';
+                const checkedSeat = occupied ? '' : seatId;
+                
+                html += `<button type="button" class="seat \${seatClass}" data-seat="\${seatId}" \${seatValid}> 
+                			\${checkedSeat} 
+                		</button>`;
             }
         });
 
@@ -916,34 +992,36 @@ function toggleSeat(btn) {
         btn.classList.add('selected');
         selectedSeatsBySegment[currentSegmentSelection].push(seatId);
     }
+    console.log("select4easdfas : ", selectedSeatsBySegment);
 }
 
 // 좌석 선택 - 왕복에서는 선택버튼 누르면 오는편 좌석 정하게 하기
 function confirmSeatSelection() {
     // 결제 요약에 좌석 정보 반영
-    
-    
+    const rowWrapper = document.getElementById('summarySeatsRow');	// 가는편 div
     const rowOut = document.getElementById('summarySeatsRowOut');	// 가는편 div
     const rowIn = document.getElementById('summarySeatsRowIn');		// 오는편 div
     const seatSelectionInfo = document.querySelector('.seat-selection-info');
-
+	
     
     // 가는 편
     if (selectedSeatsBySegment[0].length > 0) {
+    	rowWrapper.style.display = 'block';
         rowOut.style.display = 'flex';
         document.getElementById('summarySeatsOut').textContent = selectedSeatsBySegment[0].join(', ');
         showToast('좌석 ' + selectedSeatsBySegment[0].join(', ') + '이(가) 선택되었습니다.', 'success');
     } else {
-        rowOut.style.display = 'none';
+    	rowWrapper.style.display = 'none';
     }
     
     // 오는 편
     if (bookingData.tripType === 'round' && selectedSeatsBySegment[1].length > 0) {
+    	rowWrapper.style.display = 'block';
         rowIn.style.display = 'flex';
         document.getElementById('summarySeatsIn').textContent = selectedSeatsBySegment[1].join(', ');
         showToast('좌석 ' + selectedSeatsBySegment[1].join(', ') + '이(가) 선택되었습니다.', 'success');
     } else {
-        rowIn.style.display = 'none';
+    	rowWrapper.style.display = 'none';
     }
     
 	seatSelectionInfo.innerHTML = `

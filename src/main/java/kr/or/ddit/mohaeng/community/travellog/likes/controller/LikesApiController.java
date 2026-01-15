@@ -1,78 +1,81 @@
 package kr.or.ddit.mohaeng.community.travellog.likes.controller;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 import kr.or.ddit.mohaeng.community.travellog.likes.service.ILikesService;
-import kr.or.ddit.mohaeng.vo.LikesStatusVO;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/community/travel-log/likes")
 public class LikesApiController {
 
+    private static final String CAT_TRIP_RECORD = "TRIP_RECORD";
+
     private final ILikesService likesService;
 
-    public LikesApiController(ILikesService likesService) {
-        this.likesService = likesService;
-    }
-
-    // 1) 토글 (일반회원만)
-    @PreAuthorize("hasRole('ROLE_MEMBER')")
+    // ✅ 좋아요 토글 (일반회원만)
+    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     @PostMapping("/toggle")
-    public ResponseEntity<LikesStatusVO> toggle(@RequestBody ToggleReq req, Authentication authentication) {
-        Long memNo = extractMemNo(authentication);
-        LikesStatusVO res = likesService.toggleTripRecordLike(memNo, req.getRcdNo());
-        return ResponseEntity.ok(res);
-    }
-
-    // 2) 상태 조회 (상세에서 isLiked + likeCount)
-    @PreAuthorize("hasRole('ROLE_MEMBER')")
-    @GetMapping("/status")
-    public ResponseEntity<LikesStatusVO> status(@RequestParam("rcdNo") Long rcdNo, Authentication authentication) {
-        Long memNo = extractMemNo(authentication);
-        LikesStatusVO res = likesService.getTripRecordLikeStatus(memNo, rcdNo);
-        return ResponseEntity.ok(res);
-    }
-
-    // 3) 카운트만 (목록/집계용으로 필요하면 사용)
-    @GetMapping("/count")
-    public ResponseEntity<Long> count(@RequestParam("rcdNo") Long rcdNo) {
-        return ResponseEntity.ok(likesService.countTripRecordLikes(rcdNo));
-    }
-
-    // ===== 요청 DTO =====
-    public static class ToggleReq {
-        private Long rcdNo;
-        public Long getRcdNo() { return rcdNo; }
-        public void setRcdNo(Long rcdNo) { this.rcdNo = rcdNo; }
-    }
-
-    // ===== 로그인 사용자 memNo 추출 (SecurityUserUtil 제거 버전) =====
-    private Long extractMemNo(Authentication authentication) {
-        if (authentication == null || authentication.getPrincipal() == null) {
-            throw new IllegalStateException("인증 정보가 없습니다.");
+    public ResponseEntity<?> toggle(@RequestBody ToggleReq req, Authentication authentication) {
+        if (req == null || req.getRcdNo() == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "rcdNo is required"));
         }
 
-        Object principal = authentication.getPrincipal();
+        Long memNo = likesService.resolveMemNo(authentication);
 
-        // 1) 프로젝트에서 사용하는 CustomUser 우선
-        try {
-            if (principal instanceof kr.or.ddit.mohaeng.vo.CustomUser customUser) {
-                Object memNoObj = customUser.getMember().getMemNo();
-                return ((Number) memNoObj).longValue(); // int/long 모두 안전 처리
+        boolean liked = likesService.toggleLike(req.getRcdNo(), CAT_TRIP_RECORD, memNo);
+        int likeCount = likesService.countLikes(req.getRcdNo(), CAT_TRIP_RECORD);
+
+        Map<String, Object> body = new HashMap<>();
+        body.put("liked", liked);
+        body.put("likeCount", likeCount);
+        return ResponseEntity.ok(body);
+    }
+
+    // ✅ 초기 상태 조회(하트 채움 여부 + 총 좋아요 수)
+    @GetMapping("/status")
+    public ResponseEntity<?> status(@RequestParam("rcdNo") Long rcdNo, Authentication authentication) {
+        int likeCount = likesService.countLikes(rcdNo, CAT_TRIP_RECORD);
+
+        boolean liked = false;
+        if (authentication != null && authentication.isAuthenticated()
+                && !"anonymousUser".equals(String.valueOf(authentication.getPrincipal()))) {
+            // 로그인인데 ROLE_MEMBER가 아니면 liked는 false로만 처리(기업/관리자 등)
+            if (authentication.getAuthorities().stream().anyMatch(a -> "ROLE_MEMBER".equals(a.getAuthority()))) {
+                Long memNo = likesService.resolveMemNo(authentication);
+                liked = likesService.isLiked(rcdNo, CAT_TRIP_RECORD, memNo);
             }
-        } catch (Throwable ignored) {}
+        }
 
-        // 2) 혹시 CustomUserDetails를 쓰는 경우 대비
-        try {
-            if (principal instanceof kr.or.ddit.mohaeng.security.CustomUserDetails cud) {
-                Object memNoObj = cud.getMember().getMemNo();
-                return ((Number) memNoObj).longValue();
-            }
-        } catch (Throwable ignored) {}
+        return ResponseEntity.ok(Map.of(
+                "liked", liked,
+                "likeCount", likeCount
+        ));
+    }
 
-        throw new IllegalStateException("principal에서 memNo를 추출할 수 없습니다. principal 타입: " + principal.getClass());
+    // (옵션) 에러를 간단히 내려주기
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<?> handleIllegalState(IllegalStateException e) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", e.getMessage()));
+    }
+
+    @Data
+    public static class ToggleReq {
+        private Long rcdNo;
     }
 }

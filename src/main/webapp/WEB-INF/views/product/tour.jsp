@@ -138,10 +138,20 @@
 			        <c:otherwise>
 		            	<c:forEach items="${tpList}" var="tp">
 			                <!-- 투어 카드 1 -->
-			                <div class="tour-card" data-id="${tp.tripProdNo}" data-name="${tp.tripProdTitle}" data-price="${tp.price}" data-image="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80">
+			                <div class="tour-card" data-id="${tp.tripProdNo}" data-name="${tp.tripProdTitle}" data-price="${tp.price}" 
+     							data-image="${not empty tp.thumbImage ? pageContext.request.contextPath.concat('/upload/product/').concat(tp.thumbImage) : 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80'}">
 			                    <a href="${pageContext.request.contextPath}/tour/${tp.tripProdNo}" class="tour-link">
 			                        <div class="tour-image">
-			                            <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80" alt="스쿠버다이빙">
+			                            <c:choose>
+									        <c:when test="${not empty tp.thumbImage}">
+									            <img src="${pageContext.request.contextPath}/upload/product/${tp.thumbImage}" 
+									                 alt="${tp.tripProdTitle}">
+									        </c:when>
+									        <c:otherwise>
+									            <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80" 
+									                 alt="${tp.tripProdTitle}">
+									        </c:otherwise>
+									    </c:choose>
 			                            <span class="tour-category">
 										    <c:choose>
 										        <c:when test="${tp.prodCtgryType eq 'tour'}">투어</c:when>

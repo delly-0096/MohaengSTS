@@ -1,12 +1,15 @@
 package kr.or.ddit.mohaeng.community.travellog.likes.service;
 
-import kr.or.ddit.mohaeng.vo.LikesStatusVO;
+import org.springframework.security.core.Authentication;
 
 public interface ILikesService {
 
-    LikesStatusVO toggleTripRecordLike(Long memNo, Long rcdNo);
+    Long resolveMemNo(Authentication authentication);
 
-    LikesStatusVO getTripRecordLikeStatus(Long memNo, Long rcdNo);
+    boolean toggleLike(Long likesKey, String likesCatCd, Long memNo);
 
-    long countTripRecordLikes(Long rcdNo);
+    boolean isLiked(Long likesKey, String likesCatCd, Long memNo);
+
+    int countLikes(Long likesKey, String likesCatCd);
+
 }

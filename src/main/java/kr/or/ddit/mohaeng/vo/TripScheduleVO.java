@@ -19,6 +19,7 @@ public class TripScheduleVO {
 	private String schdlNm;	//여행일정명
 	private String schdlStatus; // 여행일정 상태
 	private int attachNo; // 첨부파일고유키
+	private String linkThumbnail; //썸네일 주소(관광지 기본이미지주소)
 	private String schdlStartDt; // 여행시작일자
 	private String schdlEndDt; // 여행종료일자
 	private int travelerCnt; // 여행인원
@@ -33,6 +34,7 @@ public class TripScheduleVO {
 	private int placeCnt;
 	private String bkmkYn;
 	
+	private AttachFileDetailVO attachFile;
 	private List<TripScheduleDetailsVO> tripScheduleDetailsList;
 	private List<String> displayPlaceNames;
 	private String thumbnail;
@@ -42,7 +44,7 @@ public class TripScheduleVO {
 	 */
 	private String schdlStsNm;
 	
-	MemberVO member;
+	private MemberVO member;
 
 	public TripScheduleVO() {}
 	

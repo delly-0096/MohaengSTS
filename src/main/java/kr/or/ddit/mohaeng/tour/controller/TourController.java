@@ -20,19 +20,25 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.file.service.IFileService;
+import kr.or.ddit.mohaeng.login.service.IMemberService;
 import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
 import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
 import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
+import kr.or.ddit.mohaeng.tour.service.IProdTimeInfoService;
 import kr.or.ddit.mohaeng.tour.service.ISearchLogService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdInfoService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdSaleService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdService;
+import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.SearchLogVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
+import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
+import kr.or.ddit.mohaeng.vo.CompanyVO;
+import kr.or.ddit.mohaeng.vo.MemUserVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 
 @Controller
@@ -59,6 +65,12 @@ public class TourController {
     
     @Autowired
     private IFileService fileService;
+
+	@Autowired
+	private IProdTimeInfoService timeInfoService;
+	
+	@Autowired
+	private IMemberService memberService;
 
     /**
      * 목록 페이지
@@ -125,17 +137,35 @@ public class TourController {
         List<ProdReviewVO> review = reviewService.getReviewPaging(tripProdNo, 1, 5);
         ProdReviewVO reviewStat = reviewService.getStat(tripProdNo);
         
+        // 판매상품 위치
+        TripProdPlaceVO place = tripProdService.getPlace(tripProdNo);
+        
+        // 판매자 정보
+        CompanyVO seller = tripProdService.getSellerStats(tp.getCompNo());
+        
         // 문의 목록
         List<TripProdInquiryVO> inquiry = inquiryService.getInquiryPaging(tripProdNo, 1, 5);
         int inquiryCount = inquiryService.getInquiryCount(tripProdNo);
+        
+        // 상품 이미지 목록
+        if (tp.getAttachNo() != null && tp.getAttachNo() > 0) {
+            List<AttachFileDetailVO> productImages = fileService.getAttachFileDetails(tp.getAttachNo());
+            model.addAttribute("productImages", productImages);
+        }
+        
+        // 예약 가능 시간 조회
+        List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
         
         model.addAttribute("tp", tp);
         model.addAttribute("sale", sale);
         model.addAttribute("info", info);
         model.addAttribute("review", review);
         model.addAttribute("reviewStat", reviewStat);
+        model.addAttribute("place", place);
+        model.addAttribute("seller", seller);
         model.addAttribute("inquiry", inquiry);
         model.addAttribute("inquiryCount", inquiryCount);
+        model.addAttribute("availableTimes", availableTimes);
         
         return "product/tour-detail";
     }
@@ -776,9 +806,202 @@ public class TourController {
         return result;
     }
 
+    /**
+     * 상품 이미지 목록 조회
+     */
+    @GetMapping("/{tripProdNo}/images")
+    @ResponseBody
+    public Map<String, Object> getProductImages(@PathVariable int tripProdNo) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            TripProdVO tp = tripProdService.detail(tripProdNo);
+            
+            if (tp == null || tp.getAttachNo() == null) {
+                result.put("success", true);
+                result.put("images", new ArrayList<>());
+                return result;
+            }
+            
+            List<AttachFileDetailVO> details = fileService.getAttachFileDetails(tp.getAttachNo());
+            
+            List<Map<String, Object>> images = new ArrayList<>();
+            for (AttachFileDetailVO d : details) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("FILE_NO", d.getFileNo());
+                map.put("FILE_PATH", d.getFilePath());
+                map.put("FILE_ORIGINAL_NAME", d.getFileOriginalName());
+                images.add(map);
+            }
+            
+            result.put("success", true);
+            result.put("images", images);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 조회에 실패했습니다.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * 상품 이미지 업로드
+     */
+    @PostMapping("/{tripProdNo}/image/upload")
+    @ResponseBody
+    public Map<String, Object> uploadProductImage(
+            @PathVariable int tripProdNo,
+            @RequestParam("files") List<MultipartFile> files,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            TripProdVO tp = tripProdService.detail(tripProdNo);
+            
+            if (tp == null) {
+                result.put("success", false);
+                result.put("message", "상품을 찾을 수 없습니다.");
+                return result;
+            }
+            
+            // 본인 상품인지 확인
+            if (!memNo.equals(tp.getMemNo())) {
+                result.put("success", false);
+                result.put("message", "수정 권한이 없습니다.");
+                return result;
+            }
+            
+            int newAttachNo = fileService.addFilesToAttach(
+                tp.getAttachNo(),
+                files,
+                "product",
+                "PRODUCT",
+                memNo
+            );
+            
+            // 새로 생성된 경우 상품에 연결
+            if (tp.getAttachNo() == null && newAttachNo > 0) {
+                tripProdService.updateAttachNo(tripProdNo, newAttachNo);
+            }
+            
+            result.put("success", true);
+            result.put("message", files.size() + "개의 이미지가 업로드되었습니다.");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 업로드에 실패했습니다.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * 상품 이미지 삭제
+     */
+    @PostMapping("/{tripProdNo}/image/delete")
+    @ResponseBody
+    public Map<String, Object> deleteProductImage(
+            @PathVariable int tripProdNo,
+            @RequestBody Map<String, Integer> params,
+            HttpSession session) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            TripProdVO tp = tripProdService.detail(tripProdNo);
+            
+            if (tp == null || tp.getAttachNo() == null) {
+                result.put("success", false);
+                result.put("message", "상품을 찾을 수 없습니다.");
+                return result;
+            }
+            
+            if (!memNo.equals(tp.getMemNo())) {
+                result.put("success", false);
+                result.put("message", "삭제 권한이 없습니다.");
+                return result;
+            }
+            
+            int fileNo = params.get("fileNo");
+            int deleted = fileService.softDeleteFile(tp.getAttachNo(), fileNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "이미지가 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "이미지 삭제에 실패했습니다.");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * 결제 페이지
+     */
     @GetMapping("/{tripProdNo}/booking")
-    public String booking(@PathVariable int tripProdNo) {
-        return "product/booking";
+    public String booking(@PathVariable int tripProdNo, Model model, RedirectAttributes ra, HttpSession session) {
+    	// 로그인 체크
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            ra.addFlashAttribute("message", "로그인이 필요합니다.");
+            return "redirect:/member/login";
+        }
+    	
+    	// 상품 정보 조회
+        TripProdVO tp = tripProdService.detail(tripProdNo);
+        
+        if (tp == null) {
+            ra.addFlashAttribute("message", "존재하지 않는 상품입니다.");
+            return "redirect:/tour";
+        }
+        
+        // 판매 정보 (가격)
+        TripProdSaleVO sale = saleService.getSale(tripProdNo);
+        
+        // 예약 가능 시간 조회
+        List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
+        
+        // 상품 이미지 목록
+        if (tp.getAttachNo() != null && tp.getAttachNo() > 0) {
+            List<AttachFileDetailVO> productImages = fileService.getAttachFileDetails(tp.getAttachNo());
+            model.addAttribute("productImages", productImages);
+        }
+        
+        // 회원 정보 조회 (결제자 정보용)
+        MemberVO member = memberService.selectByMemNo(memNo);
+        MemUserVO memUser = memberService.selectMemUserByMemNo(memNo);
+        
+        model.addAttribute("tp", tp);
+        model.addAttribute("sale", sale);
+        model.addAttribute("availableTimes", availableTimes);
+        model.addAttribute("member", member);
+        model.addAttribute("memUser", memUser);
+    	
+    	return "product/booking";
     }
 
     @GetMapping("/complete/{tripProdNo}")

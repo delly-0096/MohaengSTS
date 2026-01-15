@@ -457,6 +457,12 @@ let schdlNm = "";
 
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
+const tourContentList = {
+    <c:forEach items="${ tourContentList }" var="content">
+        ${ content.contentTypeId } : '${ content.contentTypeName }',
+    </c:forEach>
+};
+
 // 일차 데이터 저장
 let dayData = {
     1: { theme: '', date: '' },
@@ -746,7 +752,7 @@ function confirmAddPlace() {
         '</div>' +
         '<div class="planner-item-content">' +
             '<span class="planner-item-name">' + selectedItem.name + '</span>' +
-            '<span class="planner-item-category">' + selectedItem.category + '</span>' +
+            '<span class="planner-item-category"> ' + selectedItem.category + '</span>' +
         '</div>' +
         '<div class="planner-item-cost">' +
             '<input type="text" class="cost-input" value="0" placeholder="0" onclick="this.select()" onchange="updateItemCost(' + selectedDay + ', ' + newItemId + ', this.value)">' +
@@ -768,7 +774,7 @@ function confirmAddPlace() {
     showToast(selectedItem.name + '이(가) ' + selectedDay + '일차 ' + startTime + ' ~ ' + endTime + '에 추가되었습니다.', 'success');
 
     // 일정 탭으로 전환
-//     switchPlannerTab('itinerary');
+    switchPlannerTab('itinerary');
 
     myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, { id: selectedItem.id });
 
@@ -1316,14 +1322,14 @@ async function initTourPlaceList(areaCode) {
 		             alt="\${ tourPlace.title }" class="search-result-image">
 		        <div class="search-result-content">
 		            <h5 class="search-result-name">\${ tourPlace.title }</h5>
-		            <span class="search-result-category">관광지 · 자연</span>
+		            <span class="search-result-category">\${getContentTypeName(tourPlace.contenttypeid)} · 자연</span>
 		            <div class="search-result-rating">
 		                <i class="bi bi-star-fill"></i>
 		                <span>4.8</span>
 		                <span class="text-muted">(1,234)</span>
 		            </div>
 		        </div>
-		        <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '관광지', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')">
+		        <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '\${getContentTypeName(tourPlace.contenttypeid)}', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')">
 		            <i class="bi bi-plus"></i>
 		        </button>
 		    </div>
@@ -1379,6 +1385,10 @@ function initTemplate() {
     
     for(let i = 0; i < duration; i++) {
 		let dDay = i + 1;
+        dayData[dDay] = {
+            theme: '',
+            date: ''
+        }; // 일차별 데이터 초기화
     	let durDate = new Date(startDt);
     	durDate.setDate(durDate.getDate() + i);
     	let shortWeekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(durDate);
@@ -1502,6 +1512,11 @@ function initReturn() {
 	}
 
 }
+
+function getContentTypeName(contentTypeId) {
+    return tourContentList[contentTypeId] || '기타';
+}
+
 </script>
 
 <%@ include file="../common/footer.jsp" %>

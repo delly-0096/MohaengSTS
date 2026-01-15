@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController.ThumbnailData;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
 import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
@@ -45,5 +46,19 @@ public interface ITripScheduleMapper {
 	public int insertBookmark(Params params);
 
 	public int deleteTripSchedule(int schdlNo);
+
+	public int updateTripSchedule(TripScheduleVO tripScheduleVO);
+
+	public void deleteScheduleDetails(int schdlNo);
+
+	public void deleteSchedulePlace(int schdlNo);
+
+	public int updateScheduleThumbnail(ThumbnailData thumbnailData);
+
+	public List<Params> tourContentList();
+
+	public void scheduleOngoing();
+
+	public void scheduleCompleted();
 
 }

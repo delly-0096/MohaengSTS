@@ -33,7 +33,12 @@
                     s.CUR_STOCK,
                     r.AVG_RATING,
                     r.REVIEW_COUNT,
-                    r.RECOMMEND_COUNT
+                    r.RECOMMEND_COUNT,
+					(SELECT AFD.FILE_PATH 
+					 FROM ATTACH_FILE_DETAIL AFD 
+					 WHERE AFD.ATTACH_NO = t.ATTACH_NO 
+					   AND AFD.USE_YN = 'Y' 
+					   AND ROWNUM = 1) AS THUMB_IMAGE
                 FROM TRIP_PROD t
                 LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
                 LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
@@ -108,19 +113,19 @@
                 <!-- 정렬 -->
                 <choose>
                     <when test="sortBy == 'popular'">
-                        ORDER BY t.VIEW_CNT DESC NULLS LAST, t.REG_DT DESC
+                        ORDER BY t.VIEW_CNT DESC NULLS LAST, t.REG_DT DESC, t.TRIP_PROD_NO DESC
                     </when>
                     <when test="sortBy == 'price_low'">
-                        ORDER BY s.PRICE ASC NULLS LAST, t.REG_DT DESC
+                        ORDER BY s.PRICE ASC NULLS LAST, t.REG_DT DESC, t.TRIP_PROD_NO DESC
                     </when>
                     <when test="sortBy == 'price_high'">
-                        ORDER BY s.PRICE DESC NULLS LAST, t.REG_DT DESC
+                        ORDER BY s.PRICE DESC NULLS LAST, t.REG_DT DESC, t.TRIP_PROD_NO DESC
                     </when>
                     <when test="sortBy == 'rating'">
-                        ORDER BY r.AVG_RATING DESC NULLS LAST, r.REVIEW_COUNT DESC NULLS LAST
+                        ORDER BY r.AVG_RATING DESC NULLS LAST, r.REVIEW_COUNT DESC NULLS LAST, t.TRIP_PROD_NO DESC
                     </when>
                     <otherwise>
-                        ORDER BY r.RECOMMEND_COUNT DESC NULLS LAST, t.REG_DT DESC
+                        ORDER BY r.RECOMMEND_COUNT DESC NULLS LAST, t.REG_DT DESC, t.TRIP_PROD_NO DESC
                     </otherwise>
                 </choose>
             ) a
@@ -209,6 +214,97 @@
         FROM TRIP_PROD
         WHERE TRIP_PROD_NO = #{tripProdNo}
           AND (DEL_YN = 'N' OR DEL_YN IS NULL)
+      	  AND APPROVE_STATUS = '판매중'
     </select>
+    
+    <!-- 상품 위치 조회 -->
+	<select id="getPlace" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO">
+	    SELECT PROD_PLC_NO, TRIP_PROD_NO, ADDR1, ADDR2
+	    FROM TRIP_PROD_PLACE
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</select>
+    
+    <!-- 판매자(업체) 통계 정보 조회 -->
+	<select id="getSellerStats" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.CompanyVO">
+	    SELECT 
+	        c.COMP_NO as compNo,
+	        c.MEM_NO as memNo,
+	        c.BZMN_NM as bzmnNm,
+	        c.COMP_INTRO as compIntro,
+	        c.COMP_TEL as compTel,
+	        c.COMP_URL as compUrl,
+	        NVL((
+	            SELECT ROUND(AVG(r.RATING), 1)
+	            FROM PROD_REVIEW r
+	            JOIN TRIP_PROD tp ON r.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	            WHERE tp.COMP_NO = c.COMP_NO
+	        ), 0) as avgRating,
+	        (
+	            SELECT COUNT(*)
+	            FROM PROD_REVIEW r
+	            JOIN TRIP_PROD tp ON r.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	            WHERE tp.COMP_NO = c.COMP_NO
+	        ) as totalReviewCount,
+	        (
+	            SELECT COUNT(*)
+	            FROM TRIP_PROD_INQUIRY i
+	            JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	            WHERE tp.COMP_NO = c.COMP_NO
+	              AND i.DEL_YN = 'N'
+	        ) as totalInquiryCount,
+	        (
+	            SELECT COUNT(*)
+	            FROM TRIP_PROD_INQUIRY i
+	            JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	            WHERE tp.COMP_NO = c.COMP_NO
+	              AND i.INQRY_STATUS = 'DONE'
+	              AND i.DEL_YN = 'N'
+	        ) as answeredCount,
+	        NVL(ROUND(
+	            (SELECT COUNT(*) 
+	             FROM TRIP_PROD_INQUIRY i 
+	             JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO 
+	             WHERE tp.COMP_NO = c.COMP_NO 
+	               AND i.INQRY_STATUS = 'DONE'
+	               AND i.DEL_YN = 'N')
+	            * 100.0 /
+	            NULLIF((SELECT COUNT(*) 
+	                    FROM TRIP_PROD_INQUIRY i 
+	                    JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO 
+	                    WHERE tp.COMP_NO = c.COMP_NO
+	                      AND i.DEL_YN = 'N'), 0)
+	        , 0), 0) as responseRate,
+	        NVL((
+	            SELECT ROUND(AVG((i.REPLY_DT - i.REG_DT) * 24), 1)
+	            FROM TRIP_PROD_INQUIRY i
+	            JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	            WHERE tp.COMP_NO = c.COMP_NO
+	              AND i.INQRY_STATUS = 'DONE'
+	              AND i.REPLY_DT IS NOT NULL
+	              AND i.DEL_YN = 'N'
+	        ), 0) as avgResponseTime
+	    FROM COMPANY c
+	    WHERE c.COMP_NO = #{compNo}
+	</select>
+	
+	<!-- 판매 종료일이 지난 상품 판매중지 처리 -->
+	<update id="updateExpiredStatus">
+	    UPDATE TRIP_PROD
+	    SET APPROVE_STATUS = '판매중지',
+	        MOD_DT = SYSDATE
+	    <![CDATA[
+	    WHERE SALE_END_DT < TRUNC(SYSDATE)
+	    ]]>
+	      AND APPROVE_STATUS = '판매중'
+	      AND (DEL_YN = 'N' OR DEL_YN IS NULL)
+	</update>
+	
+	<!-- 상품 첨부파일 번호 업데이트 -->
+	<update id="updateAttachNo">
+	    UPDATE TRIP_PROD
+	    SET ATTACH_NO = #{attachNo},
+	        MOD_DT = SYSDATE
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
 
 </mapper>

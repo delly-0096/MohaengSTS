@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.community.travellog.record.service;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import kr.or.ddit.mohaeng.community.travellog.record.dto.PagedResponse;
 import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordCreateReq;
 import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordUpdateReq;
@@ -26,5 +28,7 @@ public interface ITripRecordService {
             org.springframework.web.multipart.MultipartFile coverFile,
             java.util.List<org.springframework.web.multipart.MultipartFile> images
     );
+
+	void updateWithCover(long rcdNo, TripRecordUpdateReq req, Long loginMemNo, MultipartFile coverFile);
 
 }

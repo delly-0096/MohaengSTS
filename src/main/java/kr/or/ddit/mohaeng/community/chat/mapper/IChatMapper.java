@@ -1,9 +1,11 @@
 package kr.or.ddit.mohaeng.community.chat.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO;
 import kr.or.ddit.mohaeng.vo.ChatRoomVO;
 import kr.or.ddit.mohaeng.vo.ChatUserVO;
 
@@ -65,12 +67,49 @@ public interface IChatMapper {
 	public int selectChatMax(Long chatId);
 
 	/**
-	 *	<p> 채팅방 입장 시 insert </p>
+	 *	<p> 채팅방 입장 시 merge </p>
 	 *	@date 2026.01.12
 	 *	@author kdrs
 	 *	@param 
 	 *	@return
 	 */
 	public void insertChatUser(Long chatId, int memNo);
+
+	/**
+	 *	<p> 채팅방 정보 가져오기 </p>
+	 *	@date 2026.01.12
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public ChatRoomVO getChatRoomById(Long chatId);
+
+	/**
+	 *	<p> 채팅방 유저 정보 가져오기 </p>
+	 *	@date 2026.01.12
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public List<ChatUserVO> getChatUsersByRoomId(Long chatId);
+
+	/**
+	 *	<p> 채팅방 퇴장 </p>
+	 *	@date 2026.01.12
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public void exitChatUser(Map<String, Object> params);
+
+	/**
+	 *	<p> 채팅방 메시지 insert </p>
+	 *	@date 2026.01.12
+	 *	@author kdrs
+	 *	@param 
+	 *	@return
+	 */
+	public void insertMessage(ChatMessageDTO message);
+
 
 }

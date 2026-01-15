@@ -11,6 +11,8 @@
 <%@ include file="../common/header.jsp" %>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/tour-detail.css">
 
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=9976009a2fb2e0385884b79eca12dd63&libraries=services,clusterer"></script>
+
 <div class="product-detail-page">
     <div class="container">
         <!-- 브레드크럼 -->
@@ -23,18 +25,46 @@
         </nav>
 
         <!-- 갤러리 -->
-        <div class="product-gallery">
-            <div class="gallery-main">
-                <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800&h=500&fit=crop&q=80"
-                     alt="스쿠버다이빙" id="mainImage">
-            </div>
-            <div class="gallery-thumbs">
-                <img src="https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=200&h=150&fit=crop&q=80"
-                     alt="스쿠버다이빙" onclick="changeMainImage(this)">
-                <img src="https://images.unsplash.com/photo-1682687220742-aba13b6e50ba?w=200&h=150&fit=crop&q=80"
-                     alt="스쿠버다이빙" onclick="changeMainImage(this)">
-            </div>
-        </div>
+		<div class="product-gallery">
+		    <div class="gallery-main">
+		        <c:choose>
+		            <c:when test="${not empty productImages}">
+		                <img src="${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}" 
+		                     alt="${tp.tripProdTitle}" id="mainImage">
+		            </c:when>
+		            <c:otherwise>
+		                <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=800&h=500&fit=crop&q=80"
+		                     alt="${tp.tripProdTitle}" id="mainImage">
+		            </c:otherwise>
+		        </c:choose>
+		        
+		        <!-- 이전/다음 버튼 -->
+		        <button class="gallery-nav-btn gallery-prev" onclick="prevImage()">
+		            <i class="bi bi-chevron-left"></i>
+		        </button>
+		        <button class="gallery-nav-btn gallery-next" onclick="nextImage()">
+		            <i class="bi bi-chevron-right"></i>
+		        </button>
+		        
+		        <!-- 이미지 카운터 -->
+		        <div class="gallery-counter" id="galleryCounter">
+		            <span id="currentImageIndex">1</span> / <span id="totalImageCount">${not empty productImages ? fn:length(productImages) : 1}</span>
+		        </div>
+		        
+		        <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && sessionScope.loginMember.memNo == tp.memNo}">
+		            <button class="gallery-edit-btn" onclick="openImageUploadModal()">
+		                <i class="bi bi-camera"></i> 이미지 수정
+		            </button>
+		        </c:if>
+		    </div>
+		    <div class="gallery-thumbs" id="galleryThumbs">
+		        <c:forEach items="${productImages}" var="img" varStatus="status">
+		            <img src="${pageContext.request.contextPath}/upload/product/${img.filePath}" 
+		                 alt="썸네일" onclick="changeMainImage(this, ${status.index})"
+		                 class="${status.index == 0 ? 'active' : ''}">
+		        </c:forEach>
+		    </div>
+		</div>
 
         <div class="product-detail-content">
             <!-- 상품 정보 -->
@@ -167,14 +197,18 @@
 				</c:if>
 
                 <!-- 위치 -->
-                <div class="product-description" style="border-bottom: none;">
-                    <h3>위치</h3>
-                    <p><i class="bi bi-geo-alt me-2"></i>제주특별자치도 서귀포시 중문관광로 123</p>
-                    <div class="bg-light rounded-3 p-4 text-center" style="height: 200px;">
-                        <i class="bi bi-map" style="font-size: 48px; color: var(--gray-medium);"></i>
-                        <p class="mt-2 text-muted">지도가 표시됩니다</p>
-                    </div>
-                </div>
+				<div class="product-description" style="border-bottom: none;">
+				    <h3>위치</h3>
+				    <c:choose>
+				        <c:when test="${not empty place}">
+				            <p><i class="bi bi-geo-alt me-2"></i>${place.addr1}<c:if test="${not empty place.addr2}">, ${place.addr2}</c:if></p>
+				            <div id="map" style="width:100%; height:300px; border-radius:12px;"></div>
+				        </c:when>
+				        <c:otherwise>
+				            <p class="text-muted"><i class="bi bi-geo-alt me-2"></i>위치 정보가 등록되지 않았습니다.</p>
+				        </c:otherwise>
+				    </c:choose>
+				</div>
             </div>
 
             <!-- 결제 사이드바 -->
@@ -193,31 +227,58 @@
                     <form class="booking-form" id="bookingForm">
                         <div class="form-group">
                             <label class="form-label">날짜 선택</label>
-                            <input type="text" class="form-control date-picker" id="bookingDate"
+                            <input type="text" class="form-control booking-date-picker" id="bookingDate"
                                    placeholder="날짜를 선택하세요" required>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">시간 선택</label>
                             <select class="form-control form-select" id="bookingTime" required>
-                                <option value="">시간을 선택하세요</option>
-                                <option value="09:00">09:00</option>
-                                <option value="10:00">10:00</option>
-                                <option value="11:00">11:00</option>
-                                <option value="14:00">14:00</option>
-                                <option value="15:00">15:00</option>
-                                <option value="16:00">16:00</option>
-                            </select>
+						        <option value="">시간을 선택하세요</option>
+						        <c:choose>
+						            <c:when test="${not empty availableTimes}">
+						                <c:forEach items="${availableTimes}" var="timeInfo">
+						                    <option value="${timeInfo.rsvtAvailableTime}">${timeInfo.rsvtAvailableTime}</option>
+						                </c:forEach>
+						            </c:when>
+						            <c:otherwise>
+						                <!-- 등록된 시간이 없을 경우 기본값 -->
+						                <option value="09:00">09:00</option>
+						                <option value="10:00">10:00</option>
+						                <option value="11:00">11:00</option>
+						                <option value="14:00">14:00</option>
+						                <option value="15:00">15:00</option>
+						                <option value="16:00">16:00</option>
+						            </c:otherwise>
+						        </c:choose>
+						    </select>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">인원 선택</label>
-                            <select class="form-control form-select" id="bookingPeople" onchange="updateTotal()">
-                                <option value="1">1명</option>
-                                <option value="2" selected>2명</option>
-                                <option value="3">3명</option>
-                                <option value="4">4명</option>
-                            </select>
+						    <select class="form-control form-select" id="bookingPeople" onchange="updateTotal(); checkGroupBooking();">
+						        <c:set var="minPeople" value="${info.prodMinPeople != null ? info.prodMinPeople : 1}" />
+						        <c:set var="maxPeople" value="${info.prodMaxPeople != null ? info.prodMaxPeople : 10}" />
+						        
+						        <c:choose>
+						            <c:when test="${maxPeople >= 5}">
+						                <c:forEach begin="${minPeople}" end="4" var="i">
+						                    <option value="${i}" ${i == 2 ? 'selected' : ''}>${i}명</option>
+						                </c:forEach>
+						                <option value="5+">5명 이상</option>
+						            </c:when>
+						            <c:otherwise>
+						                <c:forEach begin="${minPeople}" end="${maxPeople}" var="i">
+						                    <option value="${i}" ${i == 2 || (i == minPeople && minPeople > 2) ? 'selected' : ''}>${i}명</option>
+						                </c:forEach>
+						            </c:otherwise>
+						        </c:choose>
+						    </select>
+						    
+						    <div class="group-booking-notice" id="groupBookingNotice" style="display: none;">
+						        <i class="bi bi-info-circle me-1"></i>
+						        5명 이상 단체 예약은 하단의 <a href="javascript:void(0)" onclick="scrollToInquiry()">판매자 문의</a>를 이용해주세요.
+						    </div>
                         </div>
 
                         <div class="booking-total">
@@ -372,25 +433,38 @@
             </div>
 
             <!-- 판매자 정보 -->
-            <div class="seller-info-card">
-                <div class="seller-profile">
-                    <div class="seller-logo">
-                        <i class="bi bi-building"></i>
-                    </div>
-                    <div class="seller-details">
-                        <h4>제주다이브센터</h4>
-                        <div class="seller-meta">
-                            <span><i class="bi bi-patch-check-fill text-primary"></i> 인증업체</span>
-                            <span><i class="bi bi-star-fill text-warning"></i> 4.9</span>
-                            <span><i class="bi bi-chat-dots"></i> 응답률 98%</span>
-                        </div>
-                        <p class="seller-desc">제주도 스쿠버다이빙 전문 업체로 10년 이상의 경험을 보유하고 있습니다.</p>
-                    </div>
-                </div>
-                <div class="seller-contact">
-                    <span><i class="bi bi-clock"></i> 평균 응답시간: 1시간 이내</span>
-                </div>
-            </div>
+			<div class="seller-info-card">
+			    <div class="seller-profile">
+			        <div class="seller-logo">
+			            <i class="bi bi-building"></i>
+			        </div>
+			        <div class="seller-details">
+			            <h4>${seller.bzmnNm}</h4>
+			            <div class="seller-meta">
+			                <span><i class="bi bi-star-fill text-warning"></i> ${seller.avgRating > 0 ? seller.avgRating : '-'}</span>
+			                <span><i class="bi bi-chat-dots"></i> 응답률 <fmt:formatNumber value="${seller.responseRate}" maxFractionDigits="0"/>%</span>
+			            </div>
+			            <c:choose>
+			                <c:when test="${not empty seller.compIntro}">
+			                    <p class="seller-desc">${seller.compIntro}</p>
+			                </c:when>
+			                <c:otherwise>
+			                    <p class="seller-desc text-muted">업체 소개가 등록되지 않았습니다.</p>
+			                </c:otherwise>
+			            </c:choose>
+			        </div>
+			    </div>
+			    <div class="seller-contact">
+			        <span><i class="bi bi-clock"></i> 평균 응답시간: 
+			            <c:choose>
+			                <c:when test="${seller.answeredCount == 0 || seller.totalInquiryCount == 0}">정보 없음</c:when>
+			                <c:when test="${seller.avgResponseTime < 1}">1시간 이내</c:when>
+			                <c:when test="${seller.avgResponseTime < 24}"><fmt:formatNumber value="${seller.avgResponseTime}" maxFractionDigits="0"/>시간 이내</c:when>
+			                <c:otherwise><fmt:formatNumber value="${seller.avgResponseTime / 24}" maxFractionDigits="0"/>일 이내</c:otherwise>
+			            </c:choose>
+			        </span>
+			    </div>
+			</div>
 
             <!-- 문의 작성 -->
             <div class="inquiry-form-card">
@@ -758,6 +832,53 @@
 </div>
 </c:if>
 
+<!-- 상품 이미지 수정 모달 (기업회원 전용) -->
+<c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && sessionScope.loginMember.memNo == tp.memNo}">
+<div class="modal fade" id="imageUploadModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-images me-2"></i>상품 이미지 관리
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 현재 이미지 목록 -->
+                <div class="current-images-section mb-4">
+                    <h6 class="mb-3">현재 등록된 이미지</h6>
+                    <div class="current-images-grid" id="currentImagesGrid">
+                        <!-- JS로 동적 로드 -->
+                        <div class="loading-placeholder">
+                            <div class="spinner-border spinner-border-sm" role="status"></div>
+                            <span>이미지 로딩 중...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 새 이미지 업로드 -->
+                <div class="new-images-section">
+                    <h6 class="mb-3">새 이미지 추가 <span class="text-muted">(최대 10장)</span></h6>
+                    <input type="file" id="productImageInput" accept="image/*" multiple style="display: none;">
+                    <div class="image-drop-zone" id="imageDropZone" onclick="document.getElementById('productImageInput').click()">
+                        <i class="bi bi-cloud-arrow-up"></i>
+                        <p>클릭하여 이미지 선택 또는 드래그 앤 드롭</p>
+                        <small class="text-muted">JPG, PNG, GIF (최대 5MB)</small>
+                    </div>
+                    <div class="new-images-preview" id="newImagesPreview"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
+                <button type="button" class="btn btn-primary" onclick="uploadProductImages()">
+                    <i class="bi bi-check-lg me-1"></i>저장
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</c:if>
+
 <script>
 const CONTEXT_PATH = '${pageContext.request.contextPath}';
 const TRIP_PROD_NO = '${tp.tripProdNo}';
@@ -767,13 +888,20 @@ var loginMemType = '${sessionScope.loginMember.memType}';
 var isLoggedIn = ${not empty sessionScope.loginMember};
 var totalReviewCount = ${reviewStat.reviewCount != null ? reviewStat.reviewCount : 0};
 var totalInquiryCount = ${inquiryCount != null ? inquiryCount : 0};
+var placeAddr1 = '${place.addr1}';
+var saleEndDt = '<fmt:formatDate value="${tp.saleEndDt}" pattern="yyyy-MM-dd"/>';
+var minPeople = ${info.prodMinPeople != null ? info.prodMinPeople : 1};
+var maxPeople = ${info.prodMaxPeople != null ? info.prodMaxPeople : 10};
 
 // 현재 상품 정보
 const currentProduct = {
     id: '${tp.tripProdNo}',
     name: '${tp.tripProdTitle}',
     price: ${sale != null ? sale.price : 0},
-    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&h=300&fit=crop&q=80'
+    image: <c:choose>
+        <c:when test="${not empty productImages}">'${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}'</c:when>
+        <c:otherwise>'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80'</c:otherwise>
+    </c:choose>
 };
 </script>
 

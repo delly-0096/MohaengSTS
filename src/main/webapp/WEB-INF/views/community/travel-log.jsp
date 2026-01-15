@@ -43,7 +43,7 @@
         <!-- 필터 -->
         <div class="travellog-filters">
             <span class="travellog-filter active" data-filter="all">전체</span>
-            <span class="travellog-filter" data-filter="popular-bookmark">인기 북마크</span>
+<!--             <span class="travellog-filter" data-filter="popular-bookmark">인기 북마크</span> -->
             <span class="travellog-filter" data-filter="popular-spot">인기 관광지</span>
             <sec:authorize access="hasAuthority('ROLE_MEMBER')" >
             	<span class="travellog-filter" data-filter="my-spot">내 관광지</span>
@@ -59,17 +59,34 @@
 	        </div>
 	    </c:if>
 
-			<c:forEach var="row" items="${paged.content}">
-				<div class="travellog-card" data-id="${row.rcdNo}"
+<%-- 			<c:forEach var="row" items="${paged.content}"> --%>
+				<c:forEach var="row" items="${paged.content}" varStatus="st">
+  <div class="travellog-card"
+       data-index="${st.index}"
+       data-id="${row.rcdNo}"
+       data-writer="${row.memId}"
+       data-like="${row.likeCount}"
+       onclick="goDetail(${row.rcdNo})">
+				
+<%-- 				<div class="travellog-card" data-id="${row.rcdNo}"
 					data-writer="${row.memId}" data-like="${row.likeCount}"
 					data-bookmark="${row.bookmarkCount}"
-					onclick="goDetail(${row.rcdNo})">
+					onclick="goDetail(${row.rcdNo})"> --%>
 					
 					<div class="travellog-card-header">
 						<!-- 프로필 이미지: 지금 VO에 없으니 임시 고정(나중에 memProfile 등 컬럼/조인으로 교체) -->
-						<img
-							src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
-							alt="프로필" class="travellog-avatar">
+						<c:choose>
+						  <c:when test="${not empty row.profilePath}">
+						    <img src="${pageContext.request.contextPath}/files${row.profilePath}"
+						         alt="프로필" class="travellog-avatar"
+						         >
+						  </c:when>
+						  <c:otherwise>
+						    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+						         alt="프로필" class="travellog-avatar">
+						  </c:otherwise>
+						</c:choose>
+
 
 						<div class="travellog-user-info">
 							<!-- 작성자 아이디 -->
@@ -128,11 +145,11 @@
 					<div class="travellog-card-actions">
 						<!-- 좋아요 -->
 						<button class="travellog-action-btn"
-							onclick="event.stopPropagation(); toggleLike(this, ${row.rcdNo})">
+  onclick="event.stopPropagation(); toggleListLike(this, ${row.rcdNo});">
+  <i class="bi ${row.myLiked == 1 ? 'bi-heart-fill' : 'bi-heart'}"></i>
+  <span>${row.likeCount}</span>
+</button>
 
-
-							<i class="bi bi-heart"></i> <span>${row.likeCount}</span>
-						</button>
 
 						<!-- 댓글 -->
 						<%-- 	                <button class="travellog-action-btn" onclick="location.href='${pageContext.request.contextPath}/community/travel-log/detail?rcdNo=${row.rcdNo}'"> --%>
@@ -147,14 +164,14 @@
 
 
 
-						<!-- 북마크 -->
+<%-- 						<!-- 북마크 -->
 						<button class="travellog-action-btn"
 							onclick="event.stopPropagation(); toggleBookmark(this, ${row.rcdNo})">
 
 
 
 							<i class="bi bi-bookmark"></i> <span>${row.bookmarkCount}</span>
-						</button>
+<!-- <!-- 						</button> --> --> --%>
 
 						<!-- <button class="travellog-action-btn" -->
 						<!--         style="margin-left:auto;" -->
@@ -213,7 +230,7 @@
 <div class="login-overlay" id="loginOverlay">
     <div class="login-overlay-content">
         <i class="bi bi-journal-richtext" style="font-size: 64px; color: var(--primary-color); margin-bottom: 24px;"></i>
-        <h3>더 많은 여행기록을 보려면<br>로그인해주세요</h3>
+        <h3>더 많은 여행기록을 이용하려면<br>로그인해주세요</h3>
         <p>로그인하고 다른 여행자들의 특별한 순간을 만나보세요!</p>
         <div class="d-flex gap-2 justify-content-center">
             <a href="${pageContext.request.contextPath}/member/login" class="btn btn-primary">로그인</a>
@@ -823,7 +840,6 @@ location.href = cp + '/community/travel-log/detail?rcdNo=' + rcdNo + '#commentSe
 }
 
 
-
 // HTML 이스케이프 함수
 function escapeHtml(text) {
     if (!text) return '';
@@ -887,21 +903,31 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 // 필터 전환
-document.querySelectorAll('.travellog-filter').forEach(filter => {
-    filter.addEventListener('click', function() {
-        document.querySelectorAll('.travellog-filter').forEach(f => f.classList.remove('active'));
-        this.classList.add('active');
-        // 실제 구현 시 필터링 로직
-    });
-});
+/* document.querySelectorAll('.travellog-filter').forEach(tab => {
+  tab.addEventListener('click', function () {
+    document.querySelectorAll('.travellog-filter')
+      .forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+
+    applyFilter(this.dataset.filter, LOGIN_MEM_ID);
+  });
+}); */
+
 
 // 좋아요 토글
-function toggleLike(btn, rcdNo) {
-  if (isBusiness) return;
-  if (!isMember) {
-    showLoginOverlay();
+function toggleListLike(btn, rcdNo) {
+  if (!btn) return;
+
+  // 혹시 아이콘/카운트 못 찾으면 빠르게 종료 (에러 방지)
+  const icon = btn.querySelector('i');
+  const count = btn.querySelector('span');
+  if (!icon || !count) {
+    console.warn('toggleLike: icon/span not found', btn);
     return;
   }
+
+  if (isBusiness) return;
+  if (!isMember) { showLoginOverlay(); return; }
 
   fetch(cp + '/api/community/travel-log/likes/toggle', {
     method: 'POST',
@@ -910,15 +936,7 @@ function toggleLike(btn, rcdNo) {
   })
   .then(res => res.json())
   .then(data => {
-    const icon = btn.querySelector('i');
-    const count = btn.querySelector('span');
-
-    if (data.liked) {
-      icon.className = 'bi bi-heart-fill';
-    } else {
-      icon.className = 'bi bi-heart';
-    }
-
+    icon.className = data.liked ? 'bi bi-heart-fill' : 'bi bi-heart';
     count.textContent = data.likeCount;
   })
   .catch(err => {
@@ -928,8 +946,9 @@ function toggleLike(btn, rcdNo) {
 }
 
 
+
 // 북마크 토글
-function toggleBookmark(btn, id) {
+/* function toggleBookmark(btn, id) {
 	if (isBusiness) return;
     if (!isMember) {
         showLoginOverlay();
@@ -946,11 +965,16 @@ function toggleBookmark(btn, id) {
         icon.className = 'bi bi-bookmark';
         showToast('북마크가 해제되었습니다.', 'info');
     }
-}
+} */
 
 // 공유
+// 공유 (✅ 절대 URL로 복사)
 function shareTravellog(id) {
-  const url = cp + '/community/travel-log/detail?rcdNo=' + id;
+  // cp = '${pageContext.request.contextPath}' (예: "" or "/mohaeng")
+  const path = cp + '/community/travel-log/detail?rcdNo=' + id;
+
+  // ✅ 도메인(호스트) + contextPath + path
+  const url = new URL(path, location.origin).href;
 
   // HTTPS/localhost면 clipboard API 동작
   if (navigator.clipboard && window.isSecureContext) {
@@ -966,6 +990,7 @@ function shareTravellog(id) {
   // http 환경(또는 권한 문제) fallback
   prompt('복사해서 사용하세요:', url);
 }
+
 
 
 
@@ -1010,7 +1035,7 @@ function toggleDetailLike(btn) {
     }
 }
 
-// 상세 북마크 토글
+/* // 상세 북마크 토글
 function toggleDetailBookmark(btn) {
     if (!isMember) {
         showLoginOverlay();
@@ -1030,7 +1055,7 @@ function toggleDetailBookmark(btn) {
         text.textContent = '저장';
         showToast('북마크가 해제되었습니다.', 'info');
     }
-}
+} */
 
 // 공유
 function shareDetail() {
@@ -1090,6 +1115,14 @@ var additionalCards = [
 
 // 페이지 로드시 인피니티 스크롤 초기화
 document.addEventListener('DOMContentLoaded', function() {
+	  // 최초 순서 저장(없으면 자동 부여)
+	  document.querySelectorAll('#travellogGrid .travellog-card').forEach((card, idx) => {
+	    if (!card.dataset.index) card.dataset.index = String(idx);
+	  });
+
+	  const LOGIN_MEM_ID = '${loginName != null ? loginName : ""}';
+	  applyFilter('all', LOGIN_MEM_ID);
+	  
     initInfiniteScroll();
 });
 
@@ -1260,7 +1293,7 @@ function createTravellogCard(data) {
       // 좋아요
       + '<button class="travellog-action-btn' + disabledClass + '"'
         + disabledAttr
-        + ' onclick="event.stopPropagation(); toggleLike(this, ' + data.id + ')">'
+        + ' onclick="event.stopPropagation(); toggleListLike(this, ' + data.id + ')">'
         + '<i class="bi bi-heart"></i>'
         + '<span>' + data.likes + '</span>'
       + '</button>'
@@ -1274,11 +1307,11 @@ function createTravellogCard(data) {
       + '</button>'
 
       // 북마크
-      + '<button class="travellog-action-btn' + disabledClass + '"'
+/*       + '<button class="travellog-action-btn' + disabledClass + '"'
         + disabledAttr
         + ' onclick="event.stopPropagation(); toggleBookmark(this, ' + data.id + ')">'
         + '<i class="bi bi-bookmark"></i>'
-      + '</button>'
+      + '</button>' */
 
       // 공유(기업회원도 가능하게 둘 거면 disabled 처리 제외 가능)
       + '<button class="travellog-action-btn" style="margin-left:auto;" onclick="event.stopPropagation(); shareTravellog(' + data.id + ')">'
@@ -1459,13 +1492,11 @@ function showLoginOverlay() {
 			  applyFilter('all', LOGIN_MEM_ID);
 			});
 
-			function applyFilter(filter, LOGIN_MEM_ID) {
+		function applyFilter(filter, LOGIN_MEM_ID) {
 			  const grid = document.getElementById('travellogGrid');
-			  if (!grid) return;
-
 			  const cards = Array.from(grid.querySelectorAll('.travellog-card'));
 
-			  // 전부 보이게 초기화
+			  // 전부 보이게
 			  cards.forEach(c => c.style.display = 'block');
 
 			  if (filter === 'my-spot') {
@@ -1477,18 +1508,23 @@ function showLoginOverlay() {
 			    return;
 			  }
 
-			  if (filter === 'popular-bookmark') {
-			    sortCards(grid, cards, 'bookmark');
-			    return;
-			  }
-
 			  if (filter === 'popular-spot') {
-			    sortCards(grid, cards, 'like');
+			    cards
+			      .sort((a, b) =>
+			        parseInt(b.dataset.like || 0) - parseInt(a.dataset.like || 0)
+			      )
+			      .forEach(card => grid.appendChild(card));
 			    return;
 			  }
 
-			  // all → 그대로
+			  // 전체(all) → 원래 순서로 복원
+			  cards
+			    .sort((a, b) =>
+			      parseInt(a.dataset.index) - parseInt(b.dataset.index)
+			    )
+			    .forEach(card => grid.appendChild(card));
 			}
+
 
 			function sortCards(grid, cards, type) {
 			  const key = (type === 'like') ? 'like' : 'bookmark';

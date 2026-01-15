@@ -176,10 +176,25 @@
     color: var(--gray-dark);
 }
 
-.flight-summary-details .flight-price {
-    font-weight: 700;
-    font-size: 16px;
-    color: var(--primary-color);
+/* 가격칸 */
+.price-item {
+    font-size: 0.9rem;
+    color: #999; /* 기본적으로는 약간 흐리게 (미선택 시) */
+}
+
+/* 성인은 기본이므로 조금 더 진하게, 혹은 인원이 있을 때 진하게 */
+.price-item.active, .price-item.adult {
+    color: #00704a; /* 항공사 메인 컬러나 강조색 사용 */
+    font-weight: 600;
+}
+
+.price-item .label {
+    margin-right: 8px;
+}
+
+.price-item .value {
+    display: inline-block;
+    min-width: 80px; /* 금액 자리수 정렬을 위해 */
 }
 
 /* 탑승인원 설정 */

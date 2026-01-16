@@ -42,22 +42,22 @@
             <ul class="nav nav-pills gap-2">
                 <li class="nav-item">
                     <a class="nav-link active" href="#" data-filter="all">
-                        <i class="bi bi-grid-3x3-gap me-2"></i>전체 <span class="badge bg-primary ms-1">3</span>
+                        <i class="bi bi-grid-3x3-gap me-2"></i>전체 <span class="badge bg-primary ms-1" id="allCount">3</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#" data-filter="upcoming">
-                        <i class="bi bi-airplane me-2"></i>다가오는 여행 <span class="badge bg-primary ms-1">2</span>
+                        <i class="bi bi-airplane me-2"></i>다가오는 여행 <span class="badge bg-primary ms-1" id="upcomingCount">2</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#" data-filter="ongoing">
-                        <i class="bi bi-play-circle me-2"></i>진행중 <span class="badge bg-primary ms-1">0</span>
+                        <i class="bi bi-play-circle me-2"></i>진행중 <span class="badge bg-primary ms-1" id="ongoingCount">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#" data-filter="completed">
-                        <i class="bi bi-check-circle me-2"></i>완료된 여행 <span class="badge bg-primary ms-1">1</span>
+                        <i class="bi bi-check-circle me-2"></i>완료된 여행 <span class="badge bg-primary ms-1" id="completedCount">1</span>
                     </a>
                 </li>
             </ul>
@@ -67,7 +67,8 @@
         <div class="schedule-grid" id="scheduleGrid">
             <!-- 다가오는 여행 -->
             <c:forEach var="schedule" items="${scheduleList}">
-                <div class="schedule-card" data-status="upcoming" data-schdl-no="${schedule.schdlNo}">
+                <c:set var="scheduleStatus" value="${fn:toLowerCase(schedule.schdlStatus.toLowerCase())}" />
+                <div class="schedule-card" data-status="${scheduleStatus}" data-schdl-no="${schedule.schdlNo}">
 
                     <div class="schedule-card-image">
                         <%-- <img src="${schedule.thumbnail}" alt="썸네일"> --%>
@@ -103,7 +104,13 @@
                                 </c:forEach>
                             </c:otherwise>
                         </c:choose>
-                        <span class="schedule-card-status upcoming">D-8</span>
+                        <span class="schedule-card-status ${scheduleStatus}">
+                            <c:choose>
+                                <c:when test="${scheduleStatus == 'upcoming'}">D-${schedule.DDay}</c:when>
+                                <c:when test="${scheduleStatus == 'ongoing'}">진행중</c:when>
+                                <c:when test="${scheduleStatus == 'completed'}">완료</c:when>
+                            </c:choose>
+                        </span>
                         <button class="schedule-card-bookmark ${schedule.bkmkYn eq 'Y' ? 'active' : ''}" onclick="toggleScheduleBookmark(this)">
                             <i class="bi ${schedule.bkmkYn eq 'Y' ? 'bi-bookmark-fill' : 'bi-bookmark'}"></i>
                         </button>
@@ -568,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // borderColor: '$schedule.borderColor',
             // textColor: '$schedule.textColor',
             extendedProps: {
-                status: '${schedule.schdlStatus}',
+                status: '${fn:toLowerCase(schedule.schdlStatus.toLowerCase())}',
                 location: '${schedule.rgnNm}',
                 people: ${schedule.travelerCnt},
                 url: contextPath + '/schedule/view/${schedule.schdlNo}'
@@ -676,6 +683,9 @@ document.addEventListener('DOMContentLoaded', function() {
             removeTooltip();
         }
     });
+
+    // 카운트 업데이트
+    initStateCounts();
 });
 
 function removeTooltip() {
@@ -744,6 +754,29 @@ async function toggleScheduleBookmark(button) {
         })
     });
 }
+
+initStateCounts = () => {
+    const cards = document.querySelectorAll('.schedule-card');
+    let counts = {
+        all: 0,
+        upcoming: 0,
+        ongoing: 0,
+        completed: 0
+    };
+
+    cards.forEach(card => {
+        counts.all++;
+        const status = card.dataset.status;
+        if (counts[status] !== undefined) {
+            counts[status]++;
+        }
+    });
+
+    document.getElementById('allCount').textContent = counts.all;
+    document.getElementById('upcomingCount').textContent = counts.upcoming;
+    document.getElementById('ongoingCount').textContent = counts.ongoing;
+    document.getElementById('completedCount').textContent = counts.completed;
+};
 </script>
 
 <%@ include file="../common/footer.jsp" %>

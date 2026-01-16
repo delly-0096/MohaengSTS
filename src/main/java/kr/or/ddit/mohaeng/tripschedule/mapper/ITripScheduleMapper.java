@@ -61,4 +61,6 @@ public interface ITripScheduleMapper {
 
 	public void scheduleCompleted();
 
+	public List<TourPlaceVO> selectPopularPlaceList(List<Map<String, String>> tourPlaceList);
+
 }

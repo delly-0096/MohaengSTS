@@ -66,7 +66,6 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			String addr2 = tourPlace.get("addr2");
 			String mapy = tourPlace.get("mapy");
 			String mapx = tourPlace.get("mapx");
-//			String defaultImg = tourPlace.get("firstimage2");
 			String defaultImg = tourPlace.get("firstimage");
 			
 			TourPlaceVO tourPlaceVO = new TourPlaceVO(contentid, areacode, contenttypeid, title, zip, addr1, addr2
@@ -460,6 +459,80 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	public void updateTripScheduleState() {
 		iTripScheduleMapper.scheduleOngoing();
 		iTripScheduleMapper.scheduleCompleted();
+	}
+
+	@Override
+	public TourPlaceVO updatePlaceDetail(Params params) {
+		RestClient restClient = RestClient.create();
+		
+		int contentId = params.getInt("contentId");
+		int contenttypeId = params.getInt("contenttypeId");
+		
+		String introUrlString = "https://apis.data.go.kr/B551011/KorService2/detailIntro2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
+				+ "&contentId=" + contentId
+				+ "&contentTypeId=" + contenttypeId
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+		
+		String detailUrlString = "https://apis.data.go.kr/B551011/KorService2/detailCommon2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
+				+ "&contentId=" + contentId
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+		
+		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
+		URI introUri = URI.create(introUrlString);
+		URI detailUri = URI.create(detailUrlString);
+		
+		JsonNode introNode = restClient.get()
+			    .uri(introUri)
+			    .retrieve()
+			    .body(JsonNode.class);
+		
+		JsonNode introItemNode = introNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item")
+				.get(0);
+		
+		JsonNode detailNode = restClient.get()
+				.uri(detailUri)
+				.retrieve()
+				.body(JsonNode.class);
+		
+		JsonNode detailItemNode = detailNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item")
+				.get(0);
+		
+		//어떤 키값에 비용과 이용시간 정보가 있는건지 체킹 후 params 에 넣음
+		contentIdCheck(params);
+		
+		System.out.println("		JsonNode detailItemNode : "+ detailItemNode);
+		
+		String plcDesc = detailItemNode.get("overview")+"";
+		String plcNm = detailItemNode.get("title")+"";
+		String operationHours = introItemNode.get(params.getString("operationhours"))+"";
+		String plcPrice = introItemNode.get(params.getString("plcprice"))+"";
+		String defaultImg = detailItemNode.get("firstimage")+"";
+		String plcAddr1 = detailItemNode.get("addr1")+"";
+		
+		TourPlaceVO tourPlaceVO = new TourPlaceVO();
+		tourPlaceVO.setPlcNo(contentId);
+		tourPlaceVO.setPlcNm(plcNm);
+		tourPlaceVO.setPlcDesc(plcDesc.replace("\"", ""));
+		tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
+		tourPlaceVO.setPlcPrice(plcPrice.replace("\"", ""));
+		tourPlaceVO.setDefaultImg(defaultImg.replace("\"", ""));
+		tourPlaceVO.setPlcAddr1(plcAddr1.replace("\"", ""));
+		
+		saveTourPlacInfo(tourPlaceVO);
+		
+		return tourPlaceVO;
+	}
+
+	@Override
+	public List<TourPlaceVO> selectPopularPlaceList(List<Map<String, String>> tourPlaceList) {
+		List<TourPlaceVO> popularTourPlaceList = iTripScheduleMapper.selectPopularPlaceList(tourPlaceList);
+		return popularTourPlaceList;
 	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)

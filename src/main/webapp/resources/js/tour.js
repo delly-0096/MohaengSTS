@@ -28,7 +28,6 @@ var tourCurrentPage = 1;
 var tourIsLoading = false;
 var tourHasMore = true;
 var tourPageSize = 12;
-var tourTotalCount = totalCount; // JSP에서 전달받은 변수
 
 // ==================== 인기 검색어 변수 ====================
 var currentKeywordIndex = 0;

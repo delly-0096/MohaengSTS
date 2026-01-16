@@ -67,7 +67,7 @@
                            autocomplete="off">
                     <!-- 자동완성 드롭다운 -->
                     <div class="place-autocomplete-dropdown" id="placeAutocomplete">
-                        <div class="autocomplete-section">
+                        <div class="autocomplete-section" id="autocomplete-section">
                             <div class="autocomplete-section-title">추천 장소</div>
                             <div class="place-autocomplete-item" onclick="selectPlace(5, '한라산 국립공원', '관광지', 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=80&h=80&fit=crop&q=80')">
                                 <div class="place-autocomplete-icon"><i class="bi bi-geo-alt"></i></div>
@@ -128,12 +128,20 @@
                         </div>
                     </div>
                 </div>
-                <div class="search-filters">
-                    <button class="filter-chip active" data-filter="all" onclick="filterSearch('all')">전체</button>
-                    <button class="filter-chip" data-filter="attraction" onclick="filterSearch('attraction')">관광지</button>
-                    <button class="filter-chip" data-filter="restaurant" onclick="filterSearch('restaurant')">맛집</button>
-                    <button class="filter-chip" data-filter="cafe" onclick="filterSearch('cafe')">카페</button>
-                    <button class="filter-chip" data-filter="activity" onclick="filterSearch('activity')">액티비티</button>
+                <div class="search-bar-container">
+                    
+                    <div class="search-filters">
+                        <button class="filter-chip active" data-filter="all" onclick="filterSearch('all')">전체</button>
+                        <button class="filter-chip" data-filter="attraction" onclick="filterSearch('attraction')">관광지</button>
+                        <button class="filter-chip" data-filter="restaurant" onclick="filterSearch('restaurant')">맛집</button>
+                        <button class="filter-chip" data-filter="cafe" onclick="filterSearch('cafe')">카페</button>
+                        <button class="filter-chip" data-filter="activity" onclick="filterSearch('activity')">액티비티</button>
+                    </div>
+
+                    <div class="search-actions">
+                        <button class="filter-region active" onclick="setRegion()">지역관광</button>
+                    </div>
+
                 </div>
             </div>
 
@@ -455,6 +463,8 @@ let diffDay = 0;
 let duration = 0;
 let schdlNm = "";
 
+let searchPage = 1;
+
 const weekdays = ['일', '월', '화', '수', '목', '금', '토'];
 
 const tourContentList = {
@@ -633,6 +643,30 @@ function filterSearch(filter) {
     }
 }
 
+function setRegion() {
+    // 모든 필터 칩에서 active 클래스 제거
+    var chips = document.querySelector('.filter-region');
+    console.log(chips.classList)
+    if(chips.classList.contains('active')) {
+        chips.classList.remove('active');
+        initTourPlaceList(0)
+    } else {
+        chips.classList.add('active');
+        initTourPlaceList(destinationcode)
+    }
+
+    // 실제 구현 시 필터링 로직
+    if (typeof showToast === 'function') {
+        if(chips.classList.contains('active')) {
+            showToast('지역관광 필터가 적용되었습니다.', 'info');
+        } else {
+            showToast('지역관광 필터가 해제되었습니다.', 'info');
+        }
+    }
+
+    
+}
+
 function searchPlaces(keyword) {
     // 실제 구현 시 API 호출
     console.log('Searching for:', keyword);
@@ -675,7 +709,7 @@ function filterPlaceAutocomplete(keyword) {
 }
 
 // 장소 선택
-function selectPlace(id, name, category, imageUrl) {
+function selectPlace(id, name, category, latitude, longitude, contentid, contenttypeid) {
     // 입력란에 선택한 장소 이름 표시
     document.getElementById('searchInput').value = name;
 
@@ -683,7 +717,7 @@ function selectPlace(id, name, category, imageUrl) {
     hidePlaceAutocomplete();
 
     // 일정에 추가할 항목 설정
-    selectedItem = { id: id, name: name, category: category, imageUrl: imageUrl };
+    selectedItem = { id, name, category, latitude, longitude , contentid, contenttypeid};
 
     // 일자 선택 모달 표시
     selectDayModal.show();
@@ -1302,7 +1336,16 @@ async function initDestinationData(destinationcode) {
 }
 
 async function initTourPlaceList(areaCode) {
-	const response = await fetch("/schedule/common/initTourPlaceList?areaCode="+areaCode)
+	const response = await fetch("/schedule/common/initTourPlaceList",{
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            areaCode : areaCode,
+            page : 1
+        })
+    })
 	
 	const dataList = await response.json();
 	
@@ -1315,10 +1358,10 @@ async function initTourPlaceList(areaCode) {
 	for(let i = 0; i < items.length && outputCnt < 15; i++) {
 		let tourPlace = items[i];
 		
-		if(tourPlace.firstimage2) {
+		if(tourPlace.firstimage) {
 			placeData += `
 		        <div class="search-result-item" data-contentid="\${tourPlace.contentid}">
-		        <img src="\${ tourPlace.firstimage2 }"
+		        <img src="\${ tourPlace.firstimage }"
 		             alt="\${ tourPlace.title }" class="search-result-image">
 		        <div class="search-result-content">
 		            <h5 class="search-result-name">\${ tourPlace.title }</h5>
@@ -1340,7 +1383,7 @@ async function initTourPlaceList(areaCode) {
 	}
 	
 	$("#searchResults").html(placeData);
-	
+	searchPage = 1;
 	return dataList;
 }
 
@@ -1515,6 +1558,100 @@ function initReturn() {
 
 function getContentTypeName(contentTypeId) {
     return tourContentList[contentTypeId] || '기타';
+}
+
+$("#searchInput").on("keydown",  function() {
+    if (event.key === "Enter") {
+        event.preventDefault(); // 폼 제출 방지
+
+        let keyword = $("#searchInput").val().trim();
+        searchPage = 1;
+        areaCode = "";
+
+        let isRegionActive = document.querySelector(".filter-region").classList.contains("active");
+
+        if(isRegionActive) {
+            areaCode = preferenceData.destinationcode;
+        }
+        
+        searchTourPlaceList(keyword, areaCode, searchPage);
+    }
+});
+
+function searchTourPlaceList(keyword, areaCode, page) {
+    fetch("/schedule/common/searchTourPlaceList",{
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            keyword : keyword,
+            areaCode : areaCode,
+            page : page
+        })
+    })
+    .then(response => response.json())
+    .then(dataList => {
+        let items = dataList.response.body.items.item;
+        let popularList = [];
+
+        for(let i = 0; i < dataList.popularPlaceList.length; i++) {
+        	popularList[i] = dataList.popularPlaceList[i].plcNo + "";
+        }
+        console.log(popularList);
+
+        let placeData = "";
+        let popPlaceData = "";
+
+        let outputCnt = 0;
+        
+        for(let i = 0; i < items.length && outputCnt < 15; i++) {
+            let tourPlace = items[i];
+            console.log(tourPlace);
+            let isPopular = popularList.includes(tourPlace.contentid);
+            
+            if(tourPlace.firstimage) {
+                placeData += `
+                    <div class="search-result-item" data-contentid="\${tourPlace.contentid}">
+                    <img src="\${ tourPlace.firstimage }"
+                        alt="\${ tourPlace.title }" class="search-result-image">
+                    <div class="search-result-content">
+                        <h5 class="search-result-name">\${ tourPlace.title }</h5>
+                        <span class="search-result-category">\${getContentTypeName(tourPlace.contenttypeid)} · 자연</span>
+                        <div class="search-result-rating">
+                            <i class="bi bi-star-fill"></i>
+                            <span>4.8</span>
+                            <span class="text-muted">(1,234)</span>
+                        </div>
+                    </div>
+                    <button class="search-result-add" onclick="addToItinerary(\${tourPlace.contentid}, '\${ tourPlace.title }', '\${getContentTypeName(tourPlace.contenttypeid)}', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')">
+                        <i class="bi bi-plus"></i>
+                    </button>
+                </div>
+                `;
+                
+                outputCnt++;
+		    }
+
+            console.log(isPopular);
+            if(isPopular) {
+                popPlaceData += `
+                    <div class="place-autocomplete-item" onclick="selectPlace(\${tourPlace.contentid}, '\${ tourPlace.title }', '\${getContentTypeName(tourPlace.contenttypeid)}', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')" style="display: flex;">
+                        <div class="place-autocomplete-icon">
+                            <img class="place-img" src="\${ tourPlace.firstimage }" alt="\${ tourPlace.title }" class="place-autocomplete-image">
+                        </div>
+                        <div class="place-autocomplete-info">
+                            <span class="place-autocomplete-name">\${ tourPlace.title }</span>
+                            <span class="place-autocomplete-category">\${getContentTypeName(tourPlace.contenttypeid)} · 자연</span>
+                        </div>
+                    </div>
+                `
+                $("#placeAutocomplete").children("#autocomplete-section").append(popPlaceData);
+            }
+	    }
+	    $("#searchResults").html(placeData);
+    });
+	searchPage++;
 }
 
 </script>

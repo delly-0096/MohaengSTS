@@ -554,7 +554,7 @@
 		  SET SCHDL_STATUS = 'ONGOING'
 	 <![CDATA[
 		WHERE TO_DATE(SCHDL_START_DT) <= SYSDATE
-		  AND TO_DATE(SCHDL_END_DT) >= SYSDATE;
+		  AND TO_DATE(SCHDL_END_DT) >= SYSDATE
 		   ]]>
 	</update>
 	
@@ -562,7 +562,36 @@
 		UPDATE TRIP_SCHEDULE
 		   SET SCHDL_STATUS = 'COMPLETED'
 	 <![CDATA[
-		 WHERE TO_DATE(SCHDL_END_DT) < SYSDATE;
+		 WHERE TO_DATE(SCHDL_END_DT) < SYSDATE
 		   ]]>
 	</update>
+	
+	<select id="selectPopularPlaceList" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+		  FROM TOUR_PLACE
+		 WHERE POP_TRVL_YN = 'Y'
+		   AND PLC_NO IN
+		<foreach item="tourPlace" collection="tourPlaceList" open="(" separator="," close=")">
+			#{tourPlace.contentid}
+		</foreach>
+	</select>
 </mapper>

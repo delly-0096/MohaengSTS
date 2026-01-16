@@ -698,6 +698,16 @@
         grid-template-columns: 1fr 1fr;
     }
 }
+
+/* 토스페이먼츠 테스트 배너 가리기 */
+.payment-container {
+    position: relative;
+    overflow: hidden;
+}
+
+#payment-method iframe {
+    margin-top: -140px !important; /* 배너 + 여백 모두 제거 */
+}
 </style>
 
 <script>
@@ -708,6 +718,7 @@ var appliedPoints = 0; // 적용된 포인트
 var totalPrice = 0;
 var saleEndDt = '<fmt:formatDate value="${tp.saleEndDt}" pattern="yyyy-MM-dd"/>';
 let widgets = null;
+let reservationList = [];
 
 // 페이지 로드
 document.addEventListener('DOMContentLoaded', async function() {
@@ -858,8 +869,6 @@ async function main() {
 	  customerKey,
 	});
 	
-	// 비회원 결제 const widgets = tossPayments.widgets({ customerKey: TossPayments.ANONYMOUS });
-	
 	// ------ 주문의 결제 금액 설정 ------
 	await widgets.setAmount({
 	  currency: "KRW",
@@ -872,9 +881,7 @@ async function main() {
 	  widgets.renderPaymentMethods({
 	    selector: "#payment-method",
 	    variantKey: "DEFAULT",
-	  }),
-	  // ------  이용약관 UI 렌더링 ------
-// 	  widgets.renderAgreement({ selector: "#agreement", variantKey: "AGREEMENT" }),
+	  })
 	]);
 	
 	// 결제 form
@@ -883,19 +890,12 @@ async function main() {
 		e.preventDefault();
 
 		// 예약 정보
-		/* reservationList.push({
-			totalPrice : (parseInt(bookingData.flights[0].price) * totalPeople) + totalOutMoney,
-			memNo: customData.memNo
-		}); */
+		reservationList.push({
+			totalPrice : totalPrice,
+			memNo: "${tp.memNo}"
+		});
 		
-	    /* if(bookingData.tripType === 'round'){
-	    	reservationList.push({
-				totalPrice : (parseInt(bookingData.flights[1].price) * totalPeople) + totalInMoney,
-	    		memNo: customData.memNo
-    		});
-	    } */
-		
-		/* sessionStorage.setItem("reservationList", JSON.stringify(reservationList)); */
+		sessionStorage.setItem("reservationList", JSON.stringify(reservationList));
 		
 	    
 	    // 필수 약관 체크 확인 - 이것도 테이블에 담기
@@ -915,22 +915,18 @@ async function main() {
 	    
 	    console.log("reserveAgree : ", reserveAgree);
 		sessionStorage.setItem("reserveAgree", JSON.stringify(reserveAgree));
-	    
-		let orderName = currentSearchType === 'round' ?
-				bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm
-				+ bookingData.flights[1].startDt + " " + bookingData.flights[1].arrAirportNm + " " + bookingData.flights[1].airlineNm
-				: bookingData.flights[0].startDt + " " + bookingData.flights[0].arrAirportNm + " " + bookingData.flights[0].airlineNm;
 		
 		const timeStamp = Date.now();
+		
 		await widgets.requestPayment({
-			orderId: "FLT-" + bookingData.flights[0].startDt + "-" + customData.memNo + "-" + timeStamp,			// 예약번호
-			orderName: orderName,
+			orderId: "TOUR-" + ${tp.tripProdNo} + "-" + ${member.memNo} + "-" + timeStamp,			// 예약번호
+			orderName: "${tp.tripProdTitle}",
 			// paymentKey, paymentType, amount는 기본적으로 포함되어 있음
 			successUrl: window.location.origin + "/product/payment/flight",	// 성공 위치 - 리다이렉트로 이동
 			failUrl: window.location.origin + "/product/payment/error",		// 실패 위치 - 같은곳으로 보내자
-			customerEmail: customData.memEmail,								// 결제자 이메일
-			customerName: customData.memName,								// 결제자 이름
-			customerMobilePhone: customData.tel								// 결제자 전화번호
+			customerEmail: "${member.memEmail}",								// 결제자 이메일
+			customerName: "${member.memName}",								// 결제자 이름
+			customerMobilePhone: "${memUser.tel}"								// 결제자 전화번호
 		});
 	});
 }
@@ -959,7 +955,7 @@ function updateAllAgreeStatus() {
 }
 
 // 폼 제출
-document.getElementById('bookingInfoForm').addEventListener('submit', function(e) {
+/* document.getElementById('bookingInfoForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
     // 필수 입력값 검증
@@ -1014,7 +1010,7 @@ document.getElementById('bookingInfoForm').addEventListener('submit', function(e
             window.location.href = '${pageContext.request.contextPath}/product/tour/complete/1';
         }, 500);
     }, 1500);
-});
+}); */
 </script>
 
 <%@ include file="../common/footer.jsp" %>

@@ -47,7 +47,13 @@
 	    NVL(mu.NICKNAME, m.MEM_NAME) AS NICKNAME,
 	
 	    /* ✅ 프로필 경로 */
-	    (prof.FILE_PATH || prof.FILE_NAME) AS PROFILE_PATH,
+	    CASE
+  WHEN prof.FILE_PATH IS NULL THEN NULL
+  WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
+  WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
+  ELSE prof.FILE_PATH || prof.FILE_NAME
+END AS PROFILE_PATH,
+
 	
 	    (LEVEL - 1) AS DEPTH,
 	
@@ -81,22 +87,25 @@
 	
 	  /* ✅ 여기 추가: 프로필 파일(대표 1개만) */
 	  LEFT JOIN (
-	    SELECT t.*
-	    FROM (
-	      SELECT
-	        afd.MEM_NO,
-	        afd.FILE_PATH,
-	        afd.FILE_NAME,
-	        ROW_NUMBER() OVER (
-	          PARTITION BY afd.MEM_NO
-	          ORDER BY afd.REG_DT DESC NULLS LAST
-	        ) AS RN
-	      FROM TEAM3_202507F.ATTACH_FILE_DETAIL afd
-	      WHERE afd.FILE_GB_CD = 'PROFILE'
-	    ) t
-	    WHERE t.RN = 1
-	  ) prof
-	    ON prof.MEM_NO = m.MEM_NO
+  SELECT attach_no,
+         file_path,
+         file_name
+  FROM (
+    SELECT
+      afd.ATTACH_NO,
+      afd.FILE_PATH,
+      afd.FILE_NAME,
+      ROW_NUMBER() OVER (
+        PARTITION BY afd.ATTACH_NO
+        ORDER BY afd.REG_DT DESC NULLS LAST, afd.FILE_NO DESC
+      ) AS rn
+    FROM TEAM3_202507F.ATTACH_FILE_DETAIL afd
+    WHERE afd.FILE_GB_CD = 'PROFILE'
+      AND NVL(afd.USE_YN, 'Y') = 'Y'
+  )
+  WHERE rn = 1
+) prof
+  ON prof.ATTACH_NO = m.MEM_PROFILE
 	
 	  WHERE c.TARGET_TYPE = #{targetType}
 	    AND c.TARGET_NO = #{targetNo}

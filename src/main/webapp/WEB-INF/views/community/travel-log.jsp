@@ -2,6 +2,7 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 <%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <!-- 현재 로그인/권한 상태를 JS가 읽어가게 심어둠 -->
 <span id="authRole" style="display:none;">
@@ -75,17 +76,35 @@
 					
 					<div class="travellog-card-header">
 						<!-- 프로필 이미지: 지금 VO에 없으니 임시 고정(나중에 memProfile 등 컬럼/조인으로 교체) -->
-						<c:choose>
+						<%-- <c:choose>
 						  <c:when test="${not empty row.profilePath}">
 						    <img src="${pageContext.request.contextPath}/files${row.profilePath}"
 						         alt="프로필" class="travellog-avatar"
 						         >
 						  </c:when>
 						  <c:otherwise>
-						    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+						    <img src="${pageContext.request.contextPath}/img/default-profile.svg"
 						         alt="프로필" class="travellog-avatar">
 						  </c:otherwise>
+						</c:choose> --%>
+						<c:set var="pp" value="${row.profilePath}" />
+
+						<c:choose>
+						  <c:when test="${not empty pp and pp != 'null'}">
+						    <!-- pp가 /profile/... 이면 /upload + pp 로만 만든다 (추가 결합 금지) -->
+						    <img
+						      src="<c:url value='/upload${pp}'/>"
+						      class="travellog-avatar"
+						      alt="프로필"
+						      onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';"
+						    />
+						  </c:when>
+						  <c:otherwise>
+  <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+       class="travellog-avatar" alt="프로필"/>
+</c:otherwise>
 						</c:choose>
+						
 
 
 						<div class="travellog-user-info">
@@ -99,7 +118,7 @@
 
 
 							<!-- 지역코드(locCd)로 표시 (지금 리스트VO에 없으면 이 줄은 지우거나, ListVO에 locCd 추가 필요) -->
-							<span class="travellog-location">${row.locCd}</span>
+							<span class="travellog-location">${row.locName}</span>
 						</div>
 
 						<div class="travellog-more-wrapper">

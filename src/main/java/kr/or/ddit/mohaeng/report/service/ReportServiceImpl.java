@@ -1,11 +1,11 @@
-package kr.or.ddit.mohaeng.community.travellog.report.service;
+package kr.or.ddit.mohaeng.report.service;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import kr.or.ddit.mohaeng.community.travellog.report.exception.DuplicateReportException;
-import kr.or.ddit.mohaeng.community.travellog.report.mapper.IReportMapper;
+import kr.or.ddit.mohaeng.report.exception.DuplicateReportException;
+import kr.or.ddit.mohaeng.report.mapper.IReportMapper;
 import kr.or.ddit.mohaeng.vo.ReportVO;
 import lombok.RequiredArgsConstructor;
 

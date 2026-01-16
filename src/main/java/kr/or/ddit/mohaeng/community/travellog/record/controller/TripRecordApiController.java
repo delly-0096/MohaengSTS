@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.community.travellog.record.controller;
 
+import java.util.List;
+
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -59,20 +61,42 @@ public class TripRecordApiController {
     }
 
     // 작성: MEMBER만
+	/*
+	 * @PreAuthorize("hasRole('MEMBER')")
+	 * 
+	 * @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE) public
+	 * ResponseEntity<Long> create(
+	 * 
+	 * @RequestPart("req") TripRecordCreateReq req,
+	 * 
+	 * @RequestPart(value = "coverFile", required = false)
+	 * org.springframework.web.multipart.MultipartFile coverFile, Authentication
+	 * authentication ) { Long loginMemNo =
+	 * AuthPrincipalExtractor.getMemNo(authentication); // hasRole('MEMBER')면 원래
+	 * null이 나오면 안 되지만 안전장치 if (loginMemNo == null) return
+	 * ResponseEntity.status(401).build();
+	 * 
+	 * long rcdNo = service.createWithFiles(req, loginMemNo, coverFile, null); //
+	 * images는 지금 안씀 return ResponseEntity.ok(rcdNo); }
+	 */
+    
+ // 작성: MEMBER만
     @PreAuthorize("hasRole('MEMBER')")
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Long> create(
-    		@RequestPart("req") TripRecordCreateReq req,
-            @RequestPart(value = "coverFile", required = false) org.springframework.web.multipart.MultipartFile coverFile,
+            @RequestPart("req") TripRecordCreateReq req,
+            @RequestPart(value = "coverFile", required = false) MultipartFile coverFile,
+            @RequestPart(value = "bodyFiles", required = false) java.util.List<MultipartFile> bodyFiles,
+            @RequestPart(value = "blocks", required = false) java.util.List<kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq> blocks,
             Authentication authentication
     ) {
         Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        // hasRole('MEMBER')면 원래 null이 나오면 안 되지만 안전장치
         if (loginMemNo == null) return ResponseEntity.status(401).build();
 
-        long rcdNo = service.createWithFiles(req, loginMemNo, coverFile, null); // images는 지금 안씀
+        long rcdNo = service.createWithBlocks(req, loginMemNo, coverFile, bodyFiles, blocks);
         return ResponseEntity.ok(rcdNo);
     }
+
     
     // 수정: MEMBER + 작성자만 (JSON)
     @PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")

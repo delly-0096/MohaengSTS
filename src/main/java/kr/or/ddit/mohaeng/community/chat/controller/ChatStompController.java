@@ -29,15 +29,21 @@ public class ChatStompController {
 			Principal principal
 			) {
 		if (principal instanceof Authentication) {
+			System.out.println("==== [소켓 수신 데이터 확인] ====");
+		    System.out.println("메시지 타입: " + message.getType());
+		    System.out.println("메시지 내용: " + message.getMessage());
+		    System.out.println("첨부파일 번호(chatAtch): " + message.getChatAtch()); // 👈 이게 0인지 아닌지 확인!
+		    System.out.println("================================");
 	        Authentication auth = (Authentication) principal;
 	        CustomUserDetails user = (CustomUserDetails) auth.getPrincipal();
 	        
 	        message.setMemId(user.getUsername());
 	        message.setMemNo(user.getMember().getMemNo());
+	        
 	    }
 		
-		if ("CHAT".equals(message.getType())) {
-			chatService.insertMessage(message);
+		if ("CHAT".equals(message.getType()) || "IMAGE".equals(message.getType()) || "FILE".equals(message.getType())) {
+	        chatService.insertMessage(message);
 	    }
 		
 		messagingTemplate.convertAndSend(

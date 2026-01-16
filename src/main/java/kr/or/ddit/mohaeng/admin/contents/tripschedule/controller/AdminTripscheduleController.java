@@ -34,7 +34,9 @@ public class AdminTripscheduleController {
 		
 		ResponseEntity<Map<String, Object>> entity = null;
 		Map<String, Object> resultMap = new HashMap<>();
+		
 //		ServiceResult result = blogService.signup(memberVO);
+		
 		List<Params> adminScheduleList = adminTripscheduleService.selectAdminScheduleList();
 		System.out.println("adminScheduleList : " + adminScheduleList);
 		resultMap.put("scheduleList", adminScheduleList);

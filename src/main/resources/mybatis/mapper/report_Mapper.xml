@@ -3,7 +3,7 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
-<mapper namespace="kr.or.ddit.mohaeng.community.travellog.report.mapper.IReportMapper">
+<mapper namespace="kr.or.ddit.mohaeng.report.mapper.IReportMapper">
 
    <insert id="insertReport" parameterType="kr.or.ddit.mohaeng.vo.ReportVO">
     <selectKey keyProperty="rptNo" resultType="long" order="BEFORE">

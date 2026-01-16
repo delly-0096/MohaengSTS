@@ -29,4 +29,5 @@ public class TripRecordListVO {
     
     private String profilePath; // 작성자 프로필 이미지 경로 ("/.../xxx.jpg")
 
+    private String locName;
 }

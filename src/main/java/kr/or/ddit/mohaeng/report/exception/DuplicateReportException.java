@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.community.travellog.report.exception;
+package kr.or.ddit.mohaeng.report.exception;
 
 public class DuplicateReportException extends RuntimeException {
 

@@ -106,6 +106,17 @@ public class FlightServiceImpl implements IFlightService {
 			        	vo.setAirlineId(airlineVO.getAirlineId());
 			        }
 			        
+			        vo.setDepAirportId(flightProduct.getDepAirportId());
+			        vo.setArrAirportId(flightProduct.getArrAirportId());
+			        
+			        // 여기서 호출해서 좌석 개수 가져오기?
+			        log.info("vo.setDepTime : {}", vo.getDepTime());
+			        log.info("vo.setArrTime : {}", vo.getArrTime());
+			        List<String> seatList = flightMapper.getFlightSeat(vo);
+//			        log.info("getFlightSeat 실행후 seatList : {}", seatList);
+			        if(flightProduct.getCabin().equals("economy") && seatList.size() >= 102) continue;
+			        if(flightProduct.getCabin().equals("business") && seatList.size() >= 18) continue;
+			        
 			        flightProductList.add(vo);
 			    }
 			} else if (items.isObject()) {
@@ -181,22 +192,14 @@ public class FlightServiceImpl implements IFlightService {
 	}
 	
 	@Override
-	public List<String> getSeatInfo(FlightProductVO flightProductVO) {
-		Integer fltProdId = flightMapper.getFlightKey(flightProductVO);		// 항공권 키 얻기
+	public List<String> getFlightSeat(FlightProductVO flightProductVO) {
 		log.info("getSeatInfo 실행 : {}", flightProductVO);
 		
-		if(fltProdId != null) {
-			List<String> seatList = flightMapper.getSeatInfo(fltProdId); 
-			log.info("seatList : {}", seatList);
+		List<String> seatList = flightMapper.getFlightSeat(flightProductVO); 
+		log.info("seatList : {}", seatList);
 			
-			return seatList;
-		}else {
-			log.info("seatList 없음");
-			return null;
-		}
+		return seatList;
 	}
-	
-	
 	
 	@Override
 	public int registerAirport() {

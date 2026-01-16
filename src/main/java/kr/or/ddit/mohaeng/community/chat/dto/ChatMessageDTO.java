@@ -21,4 +21,5 @@ public class ChatMessageDTO {
     
     private int memNo;
     private String memId;
+    private int chatAtch;
 }

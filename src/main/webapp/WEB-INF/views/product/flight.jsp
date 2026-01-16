@@ -821,6 +821,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     loader = document.querySelector("#flightScrollLoader");	// 인피니티 스크롤 객체
     initFlightInfiniteScroll();
+//     result = document.querySelector(".flight-result");
     const autoInputs = document.querySelectorAll('.airport-autocomplete');
     
     autoInputs.forEach(input => {

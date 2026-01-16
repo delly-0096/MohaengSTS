@@ -190,7 +190,6 @@
 
 <script>
 let passengers = { adult: 1, child: 0, infant: 0 };
-// ==================== 항공편 선택 상태 관리 ====================
 let currentSearchType = 'round'; 	// round - 왕복, oneway - 편도
 let currentSelectionStep = 0; 		// 현재 선택 단계 (0: 가는편, 1: 오는편)
 let selectedFlights = []; 			// 선택된 항공편 목록
@@ -201,10 +200,10 @@ let airportList = [];				// 항공 목록
 
 const list = document.getElementById('selectedFlightsList');
 let currentSearchState = null;		// 현재 상태?
-
+let loader = null;		// 인피니티 스크롤
+		
 // session데이터 가져오기 
 function restoreSearchForm() {
-	
 //     const saved = sessionStorage.getItem('flightProduct');
 //     if (!saved) return;
 
@@ -224,7 +223,6 @@ function restoreSearchForm() {
     
 //     // 선택한 항목 보여줘야됨
 //     // update로 그것도 보여줘야됨 (오는 편) 그래야지 가능
-    
     
 //     currentSelectionStep = 1;
     
@@ -389,7 +387,6 @@ function goToBooking() {
     };
     // 항공편 데이터를 sessionStorage에 저장
     sessionStorage.setItem('flightProduct', JSON.stringify(bookingData));
-    
     window.location.href = `/product/flight/booking`;
 }
 
@@ -431,31 +428,32 @@ function updatePassenger(type, delta) {
 }
 
 // ==================== 인피니티 스크롤 ====================
-var flightCurrentPage = 1;
-var flightIsLoading = false;
-var flightHasMore = false;	// 인피니티 스크롤 적용시
-var flightTotalPages = 4;
+let flightFullData = [];      // API로부터 받은 전체 항공권 데이터 저장소
+let flightCurrentPage = 1;    // 현재 페이지
+let flightItemsPerPage = 10;  // 한 번에 보여줄 개수
+let flightIsLoading = false;  // 로딩 중복 방지 플래그
+let flightHasMore = false;    // 더 가져올 데이터가 있는지 여부
+let currentSearchData = null; // 검색 조건 저장 (카드 생성용)
 
 // 추가 항공편 데모 데이터 - 인피니티
-var additionalFlights = [
-    {
-        airline: '아시아나',
-        flightNo: 'OZ8905',
-        departureTime: '09:30',
-        departureAirport: 'GMP 김포',
-        arrivalTime: '10:40',
-        arrivalAirport: 'CJU 제주',
-        duration: '1시간 10분',
-        type: '직항',
-        price: 62000,
-        fuel: 28000,
-        tax: 24000,
-    }
-];
+// var additionalFlights = [
+//     {
+//         airline: '아시아나',
+//         flightNo: 'OZ8905',
+//         departureTime: '09:30',
+//         departureAirport: 'GMP 김포',
+//         arrivalTime: '10:40',
+//         arrivalAirport: 'CJU 제주',
+//         duration: '1시간 10분',
+//         type: '직항',
+//         price: 62000,
+//         fuel: 28000,
+//         tax: 24000,
+//     }
+// ];
 
-// 스크롤 초기화
+// 인피니티 스크롤 초기화
 function initFlightInfiniteScroll() {
-    var loader = document.getElementById('flightScrollLoader');
     if (!loader) return;
 
     var observer = new IntersectionObserver(function(entries) {
@@ -478,21 +476,20 @@ function loadMoreFlights() {
     if (flightIsLoading || !flightHasMore) return;
 
     flightIsLoading = true;
-    document.getElementById('flightScrollLoader').style.display = 'flex';
+    loader.style.display = 'flex';
 
     setTimeout(function() {
         flightCurrentPage++;
 
         if (flightCurrentPage > flightTotalPages) {
             flightHasMore = false;
-            document.getElementById('flightScrollLoader').style.display = 'none';
+            loader.style.display = 'none';
             document.getElementById('flightScrollEnd').style.display = 'block';
             flightIsLoading = false;
             return;
         }
 
         var resultsList = document.getElementById('flightResults');
-        var loader = document.getElementById('flightScrollLoader');
         var flightsToAdd = getFlightsForPage(flightCurrentPage);		// 넘길 것? 그다음 페이지로 보여주기??
 
         flightsToAdd.forEach(function(flight, index) {
@@ -518,12 +515,12 @@ function loadMoreFlights() {
 
 // 전체를 불러오고 id를 10개씩 나눠서 인피니티 적용
 function getFlightsForPage(page) {
-    var flights = [];
+//     var flights = [];  // flightFullData이거 사용
     for (var i = 0; i < 3; i++) {
-        var dataIndex = ((page - 2) * 3 + i) % additionalFlights.length;
-        flights.push(Object.assign({}, additionalFlights[dataIndex]));
+//         var dataIndex = ((page - 2) * 3 + i) % 항공리스트.length;
+//         flights.push(Object.assign({}, 항공리스트[dataIndex]));
     }
-    return flights;
+//     return flights;
 }
 
 // 조건에 맞는 항공권 카드 생성
@@ -698,6 +695,7 @@ function searchFlights() {
     
 	// 피젯? 로더?
 	
+			
     axios.post(`/product/flight/searchFlight`, searchData
     ).then(res => {
     	const flight = res.data;	// 데이터 조회
@@ -713,11 +711,18 @@ function searchFlights() {
     		flight.sort((a, b) => durationFormmater(a.depTime, a.arrTime, "duration") - durationFormmater(b.depTime, b.arrTime, "duration"));
     	}
     	
+    	// 인핀니티 적용
+		flightFullData = flight; 
+        currentSearchData = searchData;
+        flightHasMore = flightFullData.length > flightItemsPerPage;
+
+        
+        
     	// api 기본 호출 값은 출발시간 순 
     	if(flight != null && flight.length > 0){
     		flight.forEach((item, i) => {
                 // 유효성 검사 (금액이 있고 항공사 이름이 제대로 된 경우만)
-                if (item.airlineNm && item.airlineNm !== '/' && timeCheck(item.depTime)) {
+                if (item.airlineNm && item.airlineNm !== '/' && timeCheck(item.depTime)) {	// 이거를 먼저 필터링하고 price, duration.. 등을 필터링 하기
 					let isPriceValid = false;
 					if (cabin === "economy") isPriceValid = item.economyCharge > 0;
 	                else isPriceValid = item.prestigeCharge > 0;
@@ -858,13 +863,11 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
-            // 실제 구현 시 정렬 로직
         });
     });
+    loader = document.querySelector("#flightScrollLoader");	// 인피니티 스크롤 객체
     
     const autoInputs = document.querySelectorAll('.airport-autocomplete');
-
-    
     
     autoInputs.forEach(input => {
         const dropdown = input.nextElementSibling; // 바로 뒤에 있는 .autocomplete-dropdown

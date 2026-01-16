@@ -87,4 +87,16 @@ public class TripScheduleVO {
 		// 두 날짜 사이의 차이 계산
         return (int) ChronoUnit.DAYS.between(start, end);
 	}
+	
+	public int getDDay() {
+	    // 1. 저장된 시작 날짜 문자열을 LocalDate 객체로 변환
+	    LocalDate start = LocalDate.parse(this.schdlStartDt);
+	    
+	    // 2. 현재 날짜 가져오기
+	    LocalDate today = LocalDate.now();
+	    
+	    // 3. 오늘과 시작 날짜 사이의 일수 차이 계산
+	    // 결과가 0이면 당일, 양수면 남은 날(D-Day), 음수면 지난 날을 의미합니다.
+	    return (int) ChronoUnit.DAYS.between(today, start);
+	}
 }

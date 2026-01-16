@@ -50,4 +50,8 @@ public interface ITripScheduleService {
 	public List<Params> tourContentList();
 
 	public void updateTripScheduleState();
+
+	public TourPlaceVO updatePlaceDetail(Params params);
+
+	public List<TourPlaceVO> selectPopularPlaceList(List<Map<String, String>> tourPlaceList);
 }

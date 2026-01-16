@@ -1,51 +1,36 @@
 package kr.or.ddit.mohaeng.tripschedule.controller;
 
-import java.io.Console;
 import java.net.URI;
-import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;import java.util.Map;
+import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.ModelAndView;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
-import kr.or.ddit.mohaeng.admin.login.controller.ConnetController;
 import kr.or.ddit.mohaeng.community.travellog.comments.service.CommentsServiceImpl;
-import kr.or.ddit.mohaeng.login.controller.LoginController;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
-import kr.or.ddit.mohaeng.tripschedule.enums.RegionCode;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
-import kr.or.ddit.mohaeng.vo.CustomUser;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
-import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
-import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
 import lombok.Data;
@@ -142,16 +127,29 @@ public class TripScheduleController {
 	}
 	
 	@ResponseBody
-	@GetMapping("/common/initTourPlaceList")
-	public ResponseEntity<Map<String, Object>> initTourPlaceList(HttpServletRequest req ,Model model) {
-		Params params = Params.of(req);
+	@PostMapping("/common/initTourPlaceList")
+	public ResponseEntity<Map<String, Object>> initTourPlaceList(@RequestBody Params params ,Model model) {
+//		Params params = Params.of(req);
 		RestClient restClient = RestClient.create();
-
+		String page = "1";
+		String areaCode = "";
+		
+		if(params.get("page") != null && !params.get("page").equals("")) {
+			page = params.getString("page");
+		}
+		
+		if(params.get("areaCode") != null && !params.get("areaCode").equals("")) {
+			areaCode = params.getString("areaCode");
+		}
+		
 		String urlString = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2?MobileOS=WEB&MobileApp=mohaeng&_type=json"
 				+ "&arrange=Q"
-				+ "&pageNo=1&numOfRows=15"
-				+ "&areaCode=" + params.get("areaCode")
+				+ "&pageNo=" + page + "&numOfRows=15"
 				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+		
+		if(!areaCode.equals("")) {
+			urlString  += "&areaCode=" + params.get("areaCode");
+		}
 
 		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
 		URI uri = URI.create(urlString);
@@ -181,7 +179,7 @@ public class TripScheduleController {
 	@GetMapping("/common/searchPlaceDetail")
 	public ResponseEntity<TourPlaceVO> searchPlaceDetail(int contentId, int contenttypeId, Model model) {
 		Params params = new Params();
-		RestClient restClient = RestClient.create();
+		
 		params.put("contentId", contentId);
 		params.put("contenttypeId", contenttypeId);
 		
@@ -193,67 +191,77 @@ public class TripScheduleController {
 			return new ResponseEntity<TourPlaceVO>(myTourPlaceVO, HttpStatus.OK);
 		}
 		
-		String introUrlString = "https://apis.data.go.kr/B551011/KorService2/detailIntro2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
-				+ "&contentId=" + contentId
-				+ "&contentTypeId=" + contenttypeId
-				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
-		
-		String detailUrlString = "https://apis.data.go.kr/B551011/KorService2/detailCommon2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
-				+ "&contentId=" + contentId
-				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
-		
-		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
-		URI introUri = URI.create(introUrlString);
-		URI detailUri = URI.create(detailUrlString);
-		
-		JsonNode introNode = restClient.get()
-			    .uri(introUri)
-			    .retrieve()
-			    .body(JsonNode.class);
-		
-		JsonNode introItemNode = introNode.path("response")
-				.path("body")
-				.path("items")
-				.path("item")
-				.get(0);
-		
-		JsonNode detailNode = restClient.get()
-				.uri(detailUri)
-				.retrieve()
-				.body(JsonNode.class);
-		
-		JsonNode detailItemNode = detailNode.path("response")
-				.path("body")
-				.path("items")
-				.path("item")
-				.get(0);
-		
-		//어떤 키값에 비용과 이용시간 정보가 있는건지 체킹 후 params 에 넣음
-		tripScheduleService.contentIdCheck(params);
-		
-		System.out.println("		JsonNode detailItemNode : "+ detailItemNode);
-		
-		String plcDesc = detailItemNode.get("overview")+"";
-		String plcNm = detailItemNode.get("title")+"";
-		String operationHours = introItemNode.get(params.getString("operationhours"))+"";
-		String plcPrice = introItemNode.get(params.getString("plcprice"))+"";
-		String defaultImg = detailItemNode.get("firstimage")+"";
-		String plcAddr1 = detailItemNode.get("addr1")+"";
-		
-		TourPlaceVO tourPlaceVO = new TourPlaceVO();
-		tourPlaceVO.setPlcNo(contentId);
-		tourPlaceVO.setPlcNm(plcNm);
-		tourPlaceVO.setPlcDesc(plcDesc.replace("\"", ""));
-		tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
-		tourPlaceVO.setPlcPrice(plcPrice.replace("\"", ""));
-		tourPlaceVO.setDefaultImg(defaultImg.replace("\"", ""));
-		tourPlaceVO.setPlcAddr1(plcAddr1.replace("\"", ""));
-		
-		int cnt = tripScheduleService.saveTourPlacInfo(tourPlaceVO);
-		
+		TourPlaceVO tourPlaceVO = tripScheduleService.updatePlaceDetail(params);
+
 		System.out.println("tourPlaceVO : " + tourPlaceVO);
 		
 		return new ResponseEntity<TourPlaceVO>(tourPlaceVO, HttpStatus.OK);
+	}
+	
+	@ResponseBody
+	@PostMapping("/common/searchTourPlaceList")
+	public ResponseEntity<Map<String, Object>> searchTourPlaceList(@RequestBody Params params ,Model model) {
+		
+		log.info("searchTourPlaceList Params : {}", params);
+		
+		RestClient restClient = RestClient.create();
+		String page = "1";
+		String areaCode = "";
+		String keyword = "";
+		
+		if(params.get("page") != null && !params.get("page").equals("")) {
+			page = params.getString("page");
+		}
+		
+		if(params.get("areaCode") != null && !params.get("areaCode").equals("")) {
+			areaCode = params.getString("areaCode");
+		}
+		
+		if(params.get("areaCode") != null && !params.get("areaCode").equals("")) {
+			keyword = params.getString("keyword");
+		}
+		
+		String urlString = "https://apis.data.go.kr/B551011/KorService2/searchKeyword2?"
+				+ "numOfRows=15"
+				+ "&pageNo=" + page
+				+ "&arrange=O"
+				+ "&MobileOS=web&MobileApp=mohaeng&_type=json"
+				+ "&keyword=" + keyword
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+				
+				
+		if(!areaCode.equals("")) {
+			urlString  += "&areaCode=" + params.get("areaCode");
+		}
+
+		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
+		URI uri = URI.create(urlString);
+		
+		JsonNode responseNode = restClient.get()
+			    .uri(uri)
+			    .retrieve()
+			    .body(JsonNode.class);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> responseMap = mapper.convertValue(responseNode, Map.class);
+		
+		JsonNode itemsNode = responseNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item");
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, String>> tourPlaceList = objectMapper.convertValue(itemsNode, new TypeReference<>() {});
+		
+		System.out.println("tourPlaceList  :" + tourPlaceList);
+		
+		tripScheduleService.mergeSearchTourPlace(tourPlaceList);
+		
+		List<TourPlaceVO> popularPlaceList = tripScheduleService.selectPopularPlaceList(tourPlaceList);
+		
+		responseMap.put("popularPlaceList", popularPlaceList);
+		
+		return new ResponseEntity<Map<String, Object>>(responseMap, HttpStatus.OK);
 	}
 	
 	@PostMapping("/insert")

@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -135,27 +136,27 @@ public class AdminPointController {
 			pagingVO.setTotalRecord(totalCount); // 여기서 totalPage 등이 자동 계산
 			pagingVO.setCurrentPage(page); // 여기서 startRow, endRow가 자동 계산
 
-			// 5. [데이터 조회] 계산된 시작/끝 번호를 들고 진짜 데이터를 가져옵니다.
-	        searchVO.setPaginationVO(pagingVO);
-	        List<PointDetailsVO> historyList = pointService.getAllPointHistory(searchVO);
+			//데이터 조회
+			searchVO.setPaginationVO(pagingVO);
+			List<PointDetailsVO> historyList = pointService.allPointHistory(searchVO);
 
-	        // 6. [최종 포장] 우리 설계도(VO)의 정석대로 pagingVO 안에 리스트를 넣습니다.
-	        pagingVO.setDataList(historyList);
+			//최종 포장. pagingVO안에 리스트 넣음
+			pagingVO.setDataList(historyList);
 
-	        // 7. [성공 배송] 박스에 성공 표시를 하고, 200번 도장을 찍어 보냅니다.
-	        result.put("success", true);
-	        result.put("paginationVO", pagingVO); // 이 안에 모든 게 다 들어있음!
+			//성공 배송.200번 보냄
+			result.put("success", true);
+			result.put("paginationVO", pagingVO); //여기 다 들어 있음
 
-	        return ResponseEntity.ok(result);
+			return ResponseEntity.ok(result);
 
-		} catch (Exception e) {
-			// 8. [비상 대처] 서버 에러 발생 시 빨간색 500번 도장을 찍고 사과 메시지를 보냅니다.
-	        e.printStackTrace();
-	        result.put("success", false);
-	        result.put("message", "포인트 내역 조회 중 서버 오류가 발생했습니다.");
+		}catch (Exception e) {
+			e.printStackTrace();
+			result.put("success", false);
+			result.put("message", "포인트 내역 조회 중 서버 오류가 발생했습니다.");
 
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
-	    }
+			//실패 도장
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result);
+		}
 	}
 
 }

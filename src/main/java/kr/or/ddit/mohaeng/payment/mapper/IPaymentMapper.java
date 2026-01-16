@@ -12,4 +12,5 @@ public interface IPaymentMapper {
 	public int insertPayment(PaymentVO paymentVO);	// 결제 정보 입력
 	public int insertPaymentInfo(PaymentInfoVO paymentInfo);	// 결제 상세정보 추가
 	public int insertPoint(MemberVO member);	// 포인트 적립
+	public int updatePoint(MemberVO member);	// 사용 포인트 감면
 }

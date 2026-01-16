@@ -93,7 +93,6 @@ public class PaymentServiceImpl implements IPaymentService {
 			int payResult = payMapper.insertPayment(paymentVO);
 			log.info("insertPayment : {}", payResult);
 
-			
 			// 결제 상세 정보
 			PaymentInfoVO paymentInfo = new PaymentInfoVO();
 			log.info("paymentInfo : {}", paymentInfo);
@@ -134,7 +133,6 @@ public class PaymentServiceImpl implements IPaymentService {
 			// 포인트 정책 - 결제 금액의 3%
 			int pointResult = 0;
 			if(discount == 0) {
-				System.out.println("포인트 insert");
 				MemberVO member = new MemberVO();
 				member.setMemNo(paymentVO.getMemNo());
 				double point = (double)amount * 0.03;
@@ -143,6 +141,14 @@ public class PaymentServiceImpl implements IPaymentService {
 				log.info("pointResult 결과 : {}", pointResult);
 			}
 			
+			int minusPointResult = 0;
+			if(discount != 0) {
+				MemberVO member = new MemberVO();
+				member.setMemNo(paymentVO.getMemNo());
+				member.setPoint(discount);	// 사용 포인트를 빼는 update
+				minusPointResult = payMapper.updatePoint(member);
+				log.info("minusPointResult 결과 : {}", minusPointResult);
+			}
 			
 			int result = 0;		// 결제 결과
 			if(paymentVO.getProductType().equals("flight")) {
@@ -155,12 +161,11 @@ public class PaymentServiceImpl implements IPaymentService {
 				for(FlightPassengersVO flightPassengers : paymentVO.getFlightPassengersList()) {
 					if(flightPassengers.getPassengersType().equals("성인")) {
 						adult++;
-					}else if (flightPassengers.getPassengersType().equals("소아")) {
+					} else if (flightPassengers.getPassengersType().equals("소아")) {
 						child++;
-					}else {
+					} else {
 						infant++;
 					}
-					// 유아는 어떻게 할지
 				}
 				
 				if(adult != 0) {
@@ -175,10 +180,7 @@ public class PaymentServiceImpl implements IPaymentService {
 					String infantInfo = "유아 " + infant + "명";
 					responseBody.put("infant", infantInfo);
 				}
-				
-				// 탑승객 수 만큼 response에 set하기
 			}
-
 
 			return responseBody;
 		} else {

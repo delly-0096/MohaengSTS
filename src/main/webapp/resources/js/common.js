@@ -132,11 +132,23 @@ function initFloatingChatbot() {
 	}
 }
 
+let isSending = false;  // 전송 중 상태 플래그
+
 async function sendChatMessage() {
+	if (isSending) return;
+	
     const input = document.getElementById('chatbotInput');
+	const sendBtn = document.querySelector('.chatbot-send-btn');
     const message = input.value.trim();
     
     if (!message) return;
+	
+	// 전송 시작 - 버튼 비활성화
+	isSending = true;
+	if (sendBtn) {
+	    sendBtn.disabled = true;
+	    sendBtn.style.opacity = '0.5';
+	}
     
     // 사용자 메시지 표시
     addUserMessage(message);
@@ -169,6 +181,13 @@ async function sendChatMessage() {
         console.error('Error:', error);
         hideTypingIndicator();
         addBotMessage('죄송해요, 오류가 발생했어요. 다시 시도해 주세요.');
+    } finally {
+        // 전송 완료 - 버튼 다시 활성화
+        isSending = false;
+        if (sendBtn) {
+            sendBtn.disabled = false;
+            sendBtn.style.opacity = '1';
+        }
     }
 }
 
@@ -462,17 +481,6 @@ let isChatbotHidden = localStorage.getItem('chatbotHidden') === 'true';
 function initChatbotVisibility() {
     const chatbotFloating = document.querySelector('.chatbot-floating');
     if (!chatbotFloating) return;
-
-    // 숨김 버튼 추가
-    const hideBtn = document.createElement('button');
-    hideBtn.className = 'chatbot-hide-btn';
-    hideBtn.innerHTML = '<i class="bi bi-x"></i>';
-    hideBtn.title = '챗봇 숨기기';
-    hideBtn.onclick = function(e) {
-        e.stopPropagation();
-        hideChatbot();
-    };
-    chatbotFloating.appendChild(hideBtn);
 
     // 저장된 상태 복원
     if (isChatbotHidden) {

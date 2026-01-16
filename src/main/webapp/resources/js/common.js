@@ -1000,19 +1000,58 @@ function submitReport() {
     }
 
     // 신고 데이터
-    var submitData = {
-        type: reportData.type,
-        targetId: reportData.targetId,
-        reason: reason,
-        detail: detailText
-    };
+	// 공통 페이로드 구성 (게시판, 상품, 채팅방 통합)
+	var submitData = {
+	        mgmtType: 'REPORT',               // 기본값: 신고
+	        targetType: reportData.type.toUpperCase(), // CHATROOM, BOARD, TRIP_PROD 등
+	        targetNo: reportData.targetId,    // 대상 PK
+	        ctgryCd: selectedReason.value,    // 신고 사유 코드
+	        content: detailText              // 상세 내용
+ };
 
-    console.log('신고 데이터:', submitData);
-
-    // TODO: 실제 API 호출로 변경
-    // 성공 시뮬레이션
-    closeReportModal();
-    showToast('신고가 접수되었습니다. 검토 후 조치하겠습니다.', 'success');
+	// 단일 API로 전송
+	fetch(api('/api/report'), {
+	        method: 'POST',
+	        headers: { 'Content-Type': 'application/json' },
+	        body: JSON.stringify(submitData)
+	    })
+		.then(async (res) => {
+			const responseText = await res.text();
+			    
+			    if (!res.ok) {
+			        // 💡 2. 에러가 났을 때, responseText가 JSON 형태인지 문자열인지 판단
+			        try {
+			            const err = JSON.parse(responseText);
+			            throw new Error(err.message || responseText);
+			        } catch (e) {
+			            // JSON 파싱 실패 시 (순수 문자열일 때) 그대로 에러로 던짐
+			            throw new Error(responseText || '신고 처리 중 오류가 발생했습니다.');
+			        }
+			    }
+		})
+		.then(data => {
+		        // 성공 시 1(int)을 반환하므로 이를 체크
+		        if (data === 1 || data.success === true) { 
+		            showToast('신고가 성공적으로 접수되었습니다.', 'success');
+		            
+		            // 모달 닫기
+		            closeReportModal(); 
+		            
+		            // 폼 초기화
+		            const form = document.getElementById('reportForm');
+		            if (form) form.reset();
+		        } else {
+		            showToast('신고 처리 중 오류가 발생했습니다.', 'error');
+		        }
+		    })
+		    .catch(err => {
+		        // 중복 신고(500 에러) 등은 여기서 처리됨
+		        showToast(err.message, 'warning');
+				
+				setTimeout(() => {
+				        closeReportModal();
+				    }, 1000);
+		    });
 }
 
 // 신고 모달 초기화 (문서 로드 시)

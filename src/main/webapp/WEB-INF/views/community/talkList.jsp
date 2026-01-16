@@ -302,7 +302,7 @@
                         <option value="REGION">지역별 채팅</option>
                         <option value="THEME">테마별 채팅</option>
                     </select>
-                    <input type="number" class="form-control" id="newRoomMaxUsers" placeholder="최대 인원 (기본 50명)" min="2" max="100" value="50">
+                    <input type="number" class="form-control" id="newRoomMaxUsers" placeholder="최대 인원 (기본 30명)" min="2" max="100" value="30">
                     <div class="create-room-actions">
                         <button class="btn btn-outline" onclick="cancelCreateRoom()">취소</button>
                         <button class="btn btn-primary" onclick="createChatRoom()">만들기</button>
@@ -380,6 +380,9 @@
             <button class="chat-attach-btn" onclick="openFileUpload()" title="파일 보내기">
                 <i class="bi bi-paperclip"></i>
             </button>
+		    <button class="chat-attach-btn pin-search-btn" onclick="openPlaceSearch()" title="장소 공유하기">
+		        <i class="bi bi-geo-alt-fill"></i>
+		    </button>
         </div>
         <input type="text" id="chatInput" placeholder="메시지를 입력하세요..." maxlength="500" onkeydown="handleKeydown(event)">
         <button class="chat-send-btn" onclick="sendMessage()">
@@ -670,7 +673,7 @@
     position: fixed;
     bottom: 20px;
     right: 100px;
-    width: 380px;
+    width: 450px;
     height: 520px;
     background: white;
     border-radius: 20px;
@@ -1016,11 +1019,13 @@
     border-top: 1px solid #eee;
     background: white;
     align-items: center;
+    gap: 8px;
 }
 
 .chat-attach-buttons {
     display: flex;
-    gap: 4px;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .chat-attach-btn {
@@ -1028,6 +1033,7 @@
     height: 36px;
     border: none;
     border-radius: 50%;
+    border: 1px solid #e2e8f0;
     background: #f1f5f9;
     color: #64748b;
     cursor: pointer;
@@ -1039,8 +1045,9 @@
 }
 
 .chat-attach-btn:hover {
-    background: var(--primary-color);
-    color: white;
+	border-color: var(--primary-color);
+    background: #f8fafc;
+    color: var(--primary-color);
     transform: scale(1.1);
 }
 
@@ -1059,6 +1066,7 @@
 }
 
 .chat-send-btn {
+	flex-shrink: 0;
     width: 44px;
     height: 44px;
     border: none;
@@ -1079,6 +1087,57 @@
 
 .chat-send-btn:active {
     transform: scale(0.95);
+}
+
+/* 장소 카드 전용 CSS */
+.location-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #eee;
+    min-width: 160px;
+}
+.location-header {
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+.btn-go-map {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 4px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    cursor: pointer;
+}
+.btn-go-map:hover {
+    background: #e2e8f0;
+}
+
+/* 핀 바 전체 스타일 */
+.chat-input-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 0 10px;
+}
+
+.action-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.action-btn:hover {
+    color: #ff4757; /* 핀 버튼은 낭만 레드! */
+}
+
+.pin-search-btn i {
+    color: #ff4757; /* 핀 아이콘만 포인트를 줘서 강조해도 예뻐요 */
 }
 
 /* 이미지/파일 메시지 */
@@ -1140,7 +1199,7 @@
 }
 
 .chat-message.mine .chat-file-name {
-    color: white;
+    color: #333;
 }
 
 .chat-file-size {
@@ -1725,7 +1784,6 @@
 <script>
 const api = (path) => contextPath + (path.startsWith('/') ? path : '/' + path);
 
-console.log("${principal.member.memUser}");
 // 현재 선택된 카테고리
 let currentCategory = 'all';
 
@@ -2048,7 +2106,7 @@ function createChatRoom() {
 		const chatId = data.chatId;
 
 	    joinChatRoom(chatId);
-	    connectChat(chatId);   // ✅ chatId 직접 전달
+	    connectChat(chatId);
 	    
 		// 서버 기준으로 채팅방 목록 다시 불러오기
 		loadChatRooms();
@@ -2060,7 +2118,6 @@ function createChatRoom() {
 }
 //==================== 웹소켓 연결 ====================
 function connectChat(chatId) {
-    // 기존에 연결된 소켓이 있다면 먼저 끊어줍니다.
     if (stompClient !== null && stompClient.connected) {
         console.log('🔄 기존 연결을 해제하고 새로 연결합니다.');
         stompClient.disconnect();
@@ -2077,7 +2134,8 @@ function connectChat(chatId) {
 
         stompClient.subscribe('/topic/chat/' + chatId, function (message) {
             const data = JSON.parse(message.body);
-
+            console.log("📥 소켓 수신 원본:", data);
+            
             // 🚨 방 폭파 신호 처리
             if (data.type === 'ROOM_DELETED') {
                 alert(data.message);
@@ -2086,32 +2144,30 @@ function connectChat(chatId) {
                 return; 
             }
             
-            // 중복 렌더링 방지: 메시지 타입이 CHAT일 때만 렌더링
-            if(data.type === 'CHAT') {
-		        renderChatMessage(data);
-		    } 
-		    // 3. 시스템 메시지 (입장/퇴장)
-		    else if (data.type === 'ENTER' || data.type === 'LEAVE') {
-		        console.log("📢 시스템 메시지 처리:", data.type);
-		        
-		     // 💡 핵심: 필드명이 message인지 chatDesc인지 상관없이 텍스트를 추출합니다.
-		        const msgText = data.message || data.chatDesc || (data.sender + "님이 입장하셨습니다.");
-		        addSystemMessage(msgText); // 추출한 텍스트를 함수에 전달
-		        
-		        setTimeout(() => {
-		            console.log("🔄 명단 및 인원수 동기화 시작 (Type: " + data.type + ")");
-		            
-		            // 참여자 목록 새로고침
-		            if (typeof loadChatUserList === 'function') {
-		                loadChatUserList(chatId);
-		            }
-		            
-		            // 채팅방 목록(인원수) 새로고침
-		            if (typeof loadChatRooms === 'function') {
-		                loadChatRooms(); 
-		            }
-		        }, 200);
-		    }
+         	// 모든 메시지 타입에 대해 렌더링 및 배지 처리 수행
+            const chatTypes = ['CHAT', 'IMAGE', 'FILE', 'LOCATION'];
+            if (chatTypes.includes(data.type)) {
+                // 1. 화면에 메시지 그리기 (창이 닫혀있어도 DOM에는 추가됨)
+                renderChatMessage(data);
+
+                // 내가 보낸 게 아니고 창이 최소화 상태일 때 카운트 업
+                const isWindowActive = document.getElementById('chatWindow').classList.contains('active');
+                if (data.memId !== currentUser.id && !isWindowActive) {
+                    let count = parseInt(sessionStorage.getItem('unreadCount') || '0');
+                    count++;
+                    sessionStorage.setItem('unreadCount', count);
+                    if (typeof updateUnreadBadge === 'function') updateUnreadBadge();
+                }
+            }
+            else if (data.type === 'ENTER' || data.type === 'LEAVE') {
+                const msgText = data.message || data.chatDesc || (data.sender + "님이 입장하셨습니다.");
+                addSystemMessage(msgText);
+                
+                setTimeout(() => {
+                    if (typeof loadChatUserList === 'function') loadChatUserList(chatId);
+                    if (typeof loadChatRooms === 'function') loadChatRooms(); 
+                }, 200);
+            }
         });
 
         // 입장 메시지 전송
@@ -2127,21 +2183,34 @@ function connectChat(chatId) {
 
 //=================== 메시지 렌더링 ======================
 function renderChatMessage(data) {
-	const box = document.getElementById('chatMessages');
-	if (!box || data.type !== 'CHAT') return;
-	
-	 // 환영 메시지 제거
-	const welcomeMsg = box.querySelector('.chat-welcome-message');
-	if (welcomeMsg) welcomeMsg.remove();
-	
-	const isMine = (data.memId === currentUser.id);
-	const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-	
-	if (data.type === 'CHAT') {
-	    addChatMessage(data.sender, data.message, time, isMine);
-	} else {
-	    addSystemMessage(data.message);
-	 }
+    const box = document.getElementById('chatMessages');
+    if (!box) return;
+    
+ 	// 시간미상 해결을 위한 변수 선언
+    const rawTime = data.chatSendtime || data.sendTime || new Date().toISOString();
+    const displayTime = (typeof formatChatTime === 'function') ? formatChatTime(rawTime) : '시간미상';
+    const isMine = (data.memId === currentUser.id);
+
+    if (data.type === 'IMAGE') {
+        addImageMessage(data.sender, data.message, displayTime, isMine);
+    } else if (data.type === 'FILE') {
+    	try {
+            // 이미 객체면 그대로 쓰고, 문자열이면 파싱
+            const fileData = (typeof data.message === 'string') ? JSON.parse(data.message) : data.message;
+            addFileMessage(data.sender, fileData.fileName, fileData.fileSize, displayTime, isMine, fileData.fileUrl);
+        } catch(e) { 
+            console.error("파일 데이터 파싱 실패", e); 
+        }
+    } else if (data.type === 'LOCATION') {
+        try {
+            const locData = (typeof data.message === 'string') ? JSON.parse(data.message) : data.message;
+            addLocationMessage(data.sender, locData.placeName, displayTime, isMine);
+        } catch(e) { 
+            addChatMessage(data.sender, escapeHtml(data.message), displayTime, isMine); 
+        }
+    } else {
+        addChatMessage(data.sender, escapeHtml(data.message), displayTime, isMine);
+    }
 }
 
 
@@ -2175,14 +2244,16 @@ function joinChatRoom(chatId) {
      		return;
      	}
      	
-     	 // 채팅 목록 닫기
-     	 closeChatRoomList();
-     	 
-     	 // 선택한 채팅방 열기
-         openChatWindow();
+     	currentChatRoom = data.room;
+    	 currentChatId = data.room.chatId;
+    	
+    	 closeChatRoomList();
+    	 
+    	 // 💡 핵심: 두 번째 인자로 data.room 객체를 같이 보냅니다.
+        openChatWindow(currentChatId, data.room);
 
          // 과거 대화 내역 불러오기
- 	     loadPreviousMessages(chatId);
+ 	     loadPreviousMessages(currentChatId);
  		
          
          if (data.room) {
@@ -2329,27 +2400,19 @@ async function loadPreviousMessages(chatId) {
         console.log("받아온 이전 메시지들:", messages); 
 
         const chatMessagesEl = document.getElementById('chatMessages');
-        if (!chatMessagesEl) {
-        	console.error("❌ chatMessages 요소를 찾을 수 없습니다.");
-            return;
-        }
-
         chatMessagesEl.innerHTML = '';
             
         if (messages && messages.length > 0) {
             messages.forEach((msg, index) => {
-                try {
-			        const displayNickname = msg.memNickname || msg.memName || '익명';
-                    // 개별 메시지 렌더링 시도
+                try {                    
                     renderChatMessage({
-                        sender: displayNickname, 
-                        message: msg.chatDesc || '(내용 없음)',
-                        type: 'CHAT',
-                        memId: msg.chatSenderId || '',
-                        sendTime: typeof formatChatTime === 'function' ? formatChatTime(msg.chatSendtime) : '시간미상'
+                        sender: msg.memNickname || '익명', 
+                        message: msg.chatDesc, 
+                        type: msg.chatType,
+                        memId: msg.chatSenderId,
+                        sendTime: msg.chatSendtime
                     });
                 } catch (renderError) {
-                    // 특정 메시지(null 등)에서 에러가 나도 로그만 찍고 다음으로 넘어감
                     console.warn(`⚠️ ${index}번째 메시지 렌더링 실패:`, renderError);
                 }
             });
@@ -2363,93 +2426,192 @@ async function loadPreviousMessages(chatId) {
 
 	
 //==================== 채팅 윈도우 제어 ====================
+document.addEventListener('DOMContentLoaded', function() {
+    // 💡 세션 스토리지에서 저장된 채팅방 ID 확인
+    const savedChatId = sessionStorage.getItem('activeChatId');
+    
+    if (savedChatId) {
+        console.log("🚀 참여 중이던 채팅방 복구 중:", savedChatId);
+        openChatWindow(savedChatId);
+    }
+});
+	
+	
+// 채팅 윈도우 열기
+function openChatWindow(receivedId, roomData) {
+	
+	const targetId = receivedId || currentChatId || sessionStorage.getItem('activeChatId');
+	
+	if (!targetId || targetId === "null" || targetId === "undefined") {
+        console.error('❌ openChatWindow: targetId가 없습니다.');
+        return;
+    }
+	
+	currentChatId = targetId;
+	sessionStorage.setItem('activeChatId', targetId);
+	
+    // UI 제어
+    const chatWin = document.getElementById('chatWindow');
+    const chatMin = document.getElementById('chatMinimized');
+    if (chatWin) chatWin.classList.add('active');
+    if (chatMin) chatMin.classList.remove('active');
+    if (document.getElementById('chatInput')) document.getElementById('chatInput').focus();
+    
+    // roomData가 전달되었다면 바로 UI 업데이트, 없으면 서버에 물어봄
+    if (roomData) {
+        updateChatUI(roomData);
+    } else {
+        // 새로고침 등으로 데이터가 없을 때만 POST로 다시 가져옴
+        fetch(api('/chat/room/' + targetId + '/join'), { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success && data.room) updateChatUI(data.room);
+            })
+            .catch(err => console.error("방 정보 복구 실패:", err));
+    }
 
-//채팅 윈도우 열기
-function openChatWindow() {
- document.getElementById('chatWindow').classList.add('active');
- document.getElementById('chatMinimized').classList.remove('active');
- document.getElementById('chatInput').focus();
- unreadCount = 0; 
- updateUnreadBadge();
+    unreadCount = 0; 
+    sessionStorage.setItem('unreadCount', '0');
+    if (typeof updateUnreadBadge === 'function') updateUnreadBadge();
+
+    loadPreviousMessages(targetId);
 }
+
+// 중복 코드를 방지하기 위한 UI 업데이트 함수
+function updateChatUI(room) {
+	if (!room) return;
+    if (document.getElementById('chatRoomTitle')) 
+        document.getElementById('chatRoomTitle').textContent = room.chatName || "채팅방";
+    if (document.getElementById('chatRoomBadge')) 
+        document.getElementById('chatRoomBadge').textContent = room.chatCtgryName || "자유";
+    if (document.getElementById('chatUserCount')) 
+        document.getElementById('chatUserCount').textContent = room.currentUsers || 0;
+    
+    const minTitle = document.getElementById('chatMinimizedTitle');
+    if (minTitle) minTitle.textContent = room.chatName || "채팅방";
+}
+
+//1. 상태 변경 함수
+function updateChatState(state) {
+    // state: 'MIN', 'MAX', 'NONE'
+    sessionStorage.setItem('chatDisplayState', state);
+}
+
+// 2. 페이지 로드 시 복구 로직
+document.addEventListener('DOMContentLoaded', function() {
+	const savedChatId = sessionStorage.getItem('activeChatId');
+    const savedState = sessionStorage.getItem('chatWindowState');
+
+    if (savedChatId && savedChatId !== "null") {
+        currentChatId = savedChatId;
+        
+        // 소켓부터 무조건 다시 연결 (메시지 전송 실패 방지)
+        connectChat(savedChatId);
+        
+        // 상태에 따른 분기 처리
+        if (savedState === 'MAX') {
+            openChatWindow(savedChatId); 
+        } else {
+            // 디폴트 및 MIN 상태: 아이콘만 활성화
+            document.getElementById('chatMinimized').classList.add('active');
+            document.getElementById('chatWindow').classList.remove('active');
+            loadPreviousMessages(savedChatId);
+            // 방 정보만 조용히 업데이트
+            fetch(api('/chat/room/' + savedChatId + '/join'), { method: 'POST' })
+                .then(res => res.json())
+                .then(data => { if(data.room) updateChatUI(data.room); });
+        }
+    }
+});
 
 //채팅 최소화
 function minimizeChat() {
-	const chatWindow = document.getElementById('chatWindow');
-	chatWindow.classList.add('minimized');
-	
-	// 읽음 처리 로직
-	sendReadUpdate();
-	
-	document.getElementById('chatWindow').classList.remove('active');
-	document.getElementById('chatMinimized').classList.add('active');
-	
-	// 💡 [상태 저장 추가]
-    if (typeof currentChatId !== 'undefined' && currentChatId) {
-        sessionStorage.setItem('minimizedChatId', currentChatId);
-        sessionStorage.setItem('chatWindowState', 'minimized');
+	if (!currentChatId) {
+        currentChatId = sessionStorage.getItem('activeChatId');
+    }
+    
+    if (!currentChatId) return; 
+    
+    const chatWindow = document.getElementById('chatWindow');
+    const chatMinimized = document.getElementById('chatMinimized');
+    
+    // UI 처리: 창은 끄고, 아이콘은 켜고
+    if (chatWindow) {
+        chatWindow.classList.add('minimized');
+        chatWindow.classList.remove('active');
+    }
+    if (chatMinimized) {
+        chatMinimized.classList.add('active');
+    }
+    
+    // 읽음 처리 알림
+    sendReadUpdate();
+    
+    // 💡 [핵심] 세션에 '나 지금 최소화야'라고 확실히 기록
+    sessionStorage.setItem('activeChatId', currentChatId);
+    sessionStorage.setItem('chatWindowState', 'MIN');
     }
 }
 
 //채팅 최대화
 function maximizeChat() {
- openChatWindow();
+	const savedId = sessionStorage.getItem('activeChatId');
+    // 💡 여기서만 'MAX'라고 확실히 저장해줍니다.
+    sessionStorage.setItem('chatWindowState', 'MAX'); 
+    openChatWindow(savedId);
 }
 
 //채팅 나가기
-async function leaveChat() {
-	if (!currentChatId) {
-     showToast('참여 중인 채팅방이 없습니다.', 'warning');
-     return;
+async function leaveChat() {    
+	// 전역 변수에 없으면 세션에서 가져옴
+    if (!currentChatId) {
+        currentChatId = sessionStorage.getItem('activeChatId');
+    }
+
+    // 정말로 ID가 없는지 체크
+    if (!currentChatId || currentChatId === "null") {
+        showToast('참여 중인 채팅방이 없습니다.', 'warning');
+        return;
+    }
+    
+    if (confirm('채팅방에서 나가시겠습니까?')) {
+        try {
+            // 💡 3. 서버에 퇴장 알림 (아직 세션 안 지웠으니 currentChatId 사용 가능)
+            const response = await fetch(api('/chat/room/' + currentChatId + '/leave'), {
+                method: 'POST'
+            });
+            const result = await response.json();
+
+            if (result.success) {
+                // 💡 4. 소켓으로 퇴장 메시지 전송
+                if (stompClient && stompClient.connected) {
+                    stompClient.send('/app/chat/system', {}, JSON.stringify({
+                        chatId: parseInt(currentChatId),
+                        sender: currentUser.nickname,
+                        type: 'LEAVE'
+                    }));
+                }
+
+                // 💡 5. 모든 통신이 끝난 '후'에 데이터를 삭제
+                sessionStorage.removeItem('activeChatId');
+                sessionStorage.removeItem('chatWindowState');
+                currentChatId = null;
+
+                setTimeout(() => {
+                    if (stompClient) {
+                        stompClient.disconnect();
+                        stompClient = null;
+                    }
+                    finalizeChatUI(); // UI 정리
+                    showToast('채팅방에서 퇴장했습니다.', 'info');
+                }, 200);
+            }
+        } catch (error) {
+            console.error('❌ 퇴장 프로세스 에러:', error);
+        }
+    }
  }
 
- if (confirm('채팅방에서 나가시겠습니까?')) {
- 	
- 	try {
-         const response = await fetch('/chat/room/' + currentChatId + '/leave', {
-             method: 'POST',
-             headers: {
-                 'Content-Type': 'application/json'
-             }
-         });
-
-         const result = await response.json();
-
-         if (result.success) {
-             // 3. DB 업데이트 성공 후, WebSocket으로 다른 멤버들에게 알림
-             if (stompClient && stompClient.connected) {
-                 stompClient.send('/app/chat/system', {}, JSON.stringify({
-                     chatId: parseInt(currentChatId),
-                     sender: currentUser.nickname,
-                     memNo: currentUser.memNo, // 필드명이 no인지 memNo인지 확인 필요
-                     type: 'LEAVE'
-                 }));
-                 
-                 console.log("📤 WebSocket 퇴장 신호 전송 완료");
-             }
-
-             // 4. 소켓 연결 해제 및 UI 정리 (약간의 지연을 주어 메시지 도달 보장)
-             setTimeout(() => {
-                 if (stompClient) {
-                     stompClient.disconnect(() => {
-                         console.log("🔌 STOMP 연결 해제 완료");
-                     });
-                     stompClient = null;
-                 }
-
-                 // 전역 변수 및 UI 초기화
-                 finalizeChatUI();
-                 showToast('채팅방에서 퇴장했습니다.', 'info');
-             }, 200);
-         } else {
-             showToast(result.message || '퇴장 처리 중 오류가 발생했습니다.', 'error');
-         }
-     } catch (error) {
-         console.error('❌ 퇴장 프로세스 에러:', error);
-         showToast('서버와의 통신에 실패했습니다.', 'error');
-     }
- }
-}
 
 //UI 정리를 위한 공통 함수
 function finalizeChatUI() {
@@ -2475,28 +2637,40 @@ function toggleChatUserList() {
 }
 
 // ==================== 메시지 전송/수신 ====================
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const content = input.value.trim();
-    if (!content) return;
-    
+function sendSocketMessage(chatData) {
     if (!stompClient || !currentChatId) {
         console.warn('❌ STOMP not connected', stompClient, currentChatId);
         showToast('채팅 서버에 연결되지 않았습니다.', 'warning');
         return;
     }
     
-    stompClient.send('/app/chat/send', {}, JSON.stringify({
+    const payload = {
         chatId: parseInt(currentChatId),
         sender: currentUser.nickname,
-        type: 'CHAT',
-        message: content,
         memId: currentUser.id,
-        memNo: currentUser.memNo 
-    }));
+        memNo: currentUser.memNo,
+        ...chatData // message, type, chatAtch 등이 여기서 덮어씌워짐
+    };
 
-    input.value = '';
+    stompClient.send('/app/chat/send', {}, JSON.stringify(payload));
 }
+
+function sendMessage(type, message) {
+	    const input = document.getElementById('chatInput');
+	    
+	    // 만약 인자가 있으면(장소 공유 등) 그 값을 쓰고, 없으면(일반 채팅) 입력창 값을 씁니다.
+	    const msgType = type || 'CHAT';
+	    const msgContent = message || input.value.trim();
+	    
+	    if (!msgContent) return;
+	    
+	    sendSocketMessage({
+	        type: msgType,
+	        message: msgContent
+	    });
+
+	    if(!type) input.value = ''; // 일반 채팅일 때만 입력창 비우기
+	}
 
 // 엔터키 처리
 function handleKeydown(event) {
@@ -2530,7 +2704,7 @@ function addChatMessage(sender, message, time, isMine) {
             '<div class="chat-message-avatar">' + initial + '</div>' +
             '<div class="chat-message-content">' +
                 '<span class="chat-message-sender">' + sender + '</span>' +
-                '<div class="chat-message-bubble">' + escapeHtml(message) + '</div>' +
+                '<div class="chat-message-bubble">' + message + '</div>' +
                 '<span class="chat-message-time">' + time + '</span>' +
             '</div>' +
         '</div>';
@@ -2539,11 +2713,10 @@ function addChatMessage(sender, message, time, isMine) {
     messagesEl.scrollTop = messagesEl.scrollHeight;
 
     // 최소화 상태일 때 읽지 않은 메시지 카운트
-    if (!isMine && !document.getElementById('chatWindow').classList.contains('active')) {
-        unreadCount++;
-        updateUnreadBadge();
-    }
+    const isWindowActive = document.getElementById('chatWindow').classList.contains('active');
 }
+
+
 
 // 시스템 메시지 추가
 function sendSystemMessage(action) {
@@ -2600,16 +2773,35 @@ function addSystemMessage(message) {
     messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
+//[공통 로직] 안 읽은 메시지 카운트 처리
+function checkAndIncrementUnread(isMine) {
+    const isWindowActive = document.getElementById('chatWindow').classList.contains('active');
+    
+    // 💡 내가 보낸 게 아니고, 채팅창이 활성화(active) 상태가 아닐 때만 카운트 업!
+    if (!isMine && !isWindowActive) {
+        let count = parseInt(sessionStorage.getItem('unreadCount') || '0');
+        count++;
+        sessionStorage.setItem('unreadCount', count);
+        if (typeof updateUnreadBadge === 'function') {
+            updateUnreadBadge();
+        }
+    }
+}
+
 // 읽지 않은 메시지 배지 업데이트
 function updateUnreadBadge() {
     const badge = document.getElementById('chatUnreadBadge');
     if(!badge) return;
     
-    badge.textContent = unreadCount;
+    let currentUnread = parseInt(sessionStorage.getItem('unreadCount') || '0');
+    badge.textContent = currentUnread > 99 ? '99+' : currentUnread;
     
-    if (unreadCount > 0) {
+    if (currentUnread > 0) {
         badge.classList.add('has-unread');
         badge.style.display = 'flex';
+        // 💡 에이스의 디테일: 숫자가 변할 때 살짝 애니메이션 효과 (CSS 필요)
+        badge.classList.add('pulse-animation');
+        setTimeout(() => badge.classList.remove('pulse-animation'), 300);
     } else {
         badge.classList.remove('has-unread');
         badge.style.display = 'none';
@@ -2621,6 +2813,45 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+// 시간 설정하기
+function formatChatTime(dateStr) {
+if (!dateStr) return '시간미상';
+    
+    // 1. 서버 날짜 객체 생성
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+
+    // 💡 2. 'now' 변수 선언 (이게 없어서 에러가 났던 겁니다!)
+    const now = new Date();
+    
+    // 3. 오늘인지 판별
+    const isToday = (
+        date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth() &&
+        date.getDate() === now.getDate()
+    );
+
+    // 4. 시간 포맷팅 (오전/오후 HH:mm)
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? '오후' : '오전';
+    hours = hours % 12 || 12;
+
+    const timeStr = ampm + ' ' + hours + ':' + minutes;
+
+    if (isToday) {
+        // 오늘이면: "오후 12:13"
+        return timeStr;
+    } else {
+        // 어제 이전이면: "26.01.15 오후 12:13"
+        const year = date.getFullYear().toString().slice(-2);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        
+        return year + '.' + month + '.' + day + ' ' + timeStr;
+    }
 }
 
 // ==================== 채팅 파일/이미지 업로드 ====================
@@ -2663,18 +2894,22 @@ function handleImageUpload(event) {
     // 서버로 파일 업로드
     const formData = new FormData();
     formData.append('file', file);
-    formData.appen('chatId', currentChatId);	// 현재 참여중인 방 ID
+    formData.append('chatId', currentChatId);	// 현재 참여중인 방 ID
     
     fetch(api('/chat/upload'), {
     	method : 'POST',
-    	bodd : formData
+    	body : formData
     })
     .then(res => res.json())
     .then(data => {
-    	if(data.success {
-    		// 업로드 성공 시 소켓으로 파일 메시지 전송
-    		sendMessage('IMAGE', data.fileUrl);
-    		showToast('이미지가 전송되었습니다.' + 'success');
+    	if(data.success) {
+    		sendSocketMessage({
+                type: 'IMAGE',
+                message: data.fileUrl,
+                chatAtch: data.attachNo
+            });
+    		console.log("서버에서 받은 attachNo:", data.attachNo);
+    		showToast('이미지가 전송되었습니다.', 'success');
     	} else {
     		showToast('업로드 실패 : ' + data.message, 'error');
     	}
@@ -2686,54 +2921,54 @@ function handleImageUpload(event) {
 
 // 파일 업로드 처리
 function handleFileUpload(event) {
-    const file = event.target.files[0];
+	const file = event.target.files[0];
     if (!file) return;
 
-    // 파일 크기 확인 (10MB 제한)
-    if (file.size > 10 * 1024 * 1024) {
-        showToast('파일은 10MB 이하만 업로드 가능합니다.', 'warning');
-        return;
-    }
-
-    const formData = new formData();
+    const formData = new FormData(); // 💡 대문자 F 확인!
     formData.append('file', file);
     formData.append('chatId', currentChatId);
     
     fetch(api('/chat/upload'), {
-    	method : 'POST',
-    	body : formData
+        method : 'POST',
+        body : formData
     })
     .then(res => res.json())
     .then(data => {
-    	if(data.success) {
-    		// 파일은 파일명, 사이즈 등을 JSON 형태로 소켓 전송
-    		const fileInfo = JSON.stringify({
-    			fileName : data.originName,
-    			fileSize: data.fileSize,
-                fileUrl: data.fileUrls
-    		});
-    		sendMessage('FILE', fileInfo);
-    		showToast('파일이 전송되었습니다.', 'success');
-    	}
+        if(data.success) {
+            // 💡 서버가 준 originName을 fileName으로 확실히 매칭!
+            const fileInfo = JSON.stringify({
+                fileName : data.originName, 
+                fileSize : data.fileSize,
+                fileUrl  : data.fileUrl
+            });
+
+            sendSocketMessage({
+                type: 'FILE',
+                message: fileInfo,
+                chatAtch: data.attachNo
+            });
+
+            showToast('파일 전송 완료!', 'success');
+        }
     });
-   	
     event.target.value = '';
 }
 
 //소켓 메시지 수신부 
 function onMessageReceived(payload) {
-    const chat = JSON.parse(payload.body);
-    const isMine = (chat.senderId === currentUser.id);
-    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+	try {
+        const chat = JSON.parse(payload.body);
+        console.log("수신된 데이터:", chat);
 
-    if (chat.type === 'IMAGE') {
-        addImageMessage(chat.senderName, chat.content, time, isMine);
-    } else if (chat.type === 'FILE') {
-        const fileData = JSON.parse(chat.content);
-        addFileMessage(chat.senderName, fileData.fileName, fileData.fileSize, time, isMine);
-    } else {
-        // 일반 텍스트 메시지 처리
-        addMessage(chat.senderName, chat.content, time, isMine);
+        renderChatMessage({
+            sender: msg.memNickname || '익명', 
+            message: msg.chatDesc, 
+            type: msg.chatType,
+            memId: msg.chatSenderId,
+            sendTime: formatChatTime(msg.chatSendtime)
+        });
+    } catch (e) {
+        console.error("메시지 수신 에러:", e);
     }
 }
 
@@ -2759,29 +2994,27 @@ function addImageMessage(sender, imageUrl, time, isMine) {
 
     messagesEl.insertAdjacentHTML('beforeend', messageHtml);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    
 }
 
 // 파일 메시지 추가
-function addFileMessage(sender, fileName, fileSize, time, isMine) {
-    const messagesEl = document.getElementById('chatMessages');
-
-    // 환영 메시지 제거
-    const welcomeMsg = messagesEl.querySelector('.chat-welcome-message');
-    if (welcomeMsg) welcomeMsg.remove();
-
-    const initial = sender.charAt(0).toUpperCase();
-    const fileSizeText = formatFileSize(fileSize);
-    const fileIcon = getFileIcon(fileName);
+function addFileMessage(sender, fileName, fileSize, time, isMine, fileUrl) {
+const messagesEl = document.getElementById('chatMessages');
+    
+    // 인자로 받은 fileName이 없을 때를 대비한 안전장치
+    const displayFileName = fileName || "알 수 없는 파일";
+    const fileSizeText = formatFileSize(fileSize); // 아까 고친 NaN 방어용 함수
+    const fileIcon = getFileIcon(displayFileName);
 
     const messageHtml =
         '<div class="chat-message' + (isMine ? ' mine' : '') + '">' +
-            '<div class="chat-message-avatar">' + initial + '</div>' +
+            '<div class="chat-message-avatar">' + sender.charAt(0).toUpperCase() + '</div>' +
             '<div class="chat-message-content">' +
                 '<span class="chat-message-sender">' + sender + '</span>' +
-                '<div class="chat-message-file" onclick="downloadFile(\'' + fileName + '\')">' +
+                '<div class="chat-message-file" style="cursor:pointer;" onclick="downloadFile(\'' + displayFileName + '\', \'' + fileUrl + '\')">' +
                     '<div class="chat-file-icon"><i class="bi ' + fileIcon + '"></i></div>' +
                     '<div class="chat-file-info">' +
-                        '<span class="chat-file-name">' + escapeHtml(fileName) + '</span>' +
+                        '<span class="chat-file-name">' + displayFileName + '</span>' +
                         '<span class="chat-file-size">' + fileSizeText + '</span>' +
                     '</div>' +
                 '</div>' +
@@ -2791,10 +3024,15 @@ function addFileMessage(sender, fileName, fileSize, time, isMine) {
 
     messagesEl.insertAdjacentHTML('beforeend', messageHtml);
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    
 }
 
 // 파일 크기 포맷
 function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    // 숫자가 아니거나 값이 없으면 '0 B' 반환 (NaN 방지)
+    if (!bytes || isNaN(bytes)) return '0 B'; 
+    
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -2802,6 +3040,10 @@ function formatFileSize(bytes) {
 
 // 파일 아이콘 결정
 function getFileIcon(fileName) {
+	if (!fileName || typeof fileName !== 'string' || !fileName.includes('.')) {
+        return 'fa-file-alt'; // 기본 아이콘
+    }
+	try {
     const ext = fileName.split('.').pop().toLowerCase();
     const iconMap = {
         'pdf': 'bi-file-earmark-pdf',
@@ -2814,6 +3056,9 @@ function getFileIcon(fileName) {
         'mp4': 'bi-file-earmark-play', 'avi': 'bi-file-earmark-play', 'mov': 'bi-file-earmark-play'
     };
     return iconMap[ext] || 'bi-file-earmark';
+    } catch (e) {
+        return 'fa-file-alt';
+    }
 }
 
 // 이미지 미리보기
@@ -2843,12 +3088,66 @@ function closeImagePreview() {
     }
 }
 
-// 파일 다운로드 (데모)
-function downloadFile(fileName) {
-    showToast('"' + fileName + '" 다운로드를 시작합니다.', 'info');
-    // 실제로는 서버에서 파일을 다운로드하는 로직 구현
+// 파일 다운로드
+function downloadFile(fileName, fileUrl) {
+	// fileUrl이 없거나 JSON 형태({로 시작)면 실행 차단
+	if (!fileUrl || fileUrl.startsWith('{')) {
+        console.error("❌ 잘못된 파일 경로:", fileUrl);
+        showToast("파일 경로가 올바르지 않습니다.", "error");
+        return;
+    }
+    
+    // fileName이 없으면 기본값 설정
+    const downloadName = fileName || 'download_file';
+    
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = downloadName; 
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
+// ================== 장소 공유 ===================
+function openPlaceSearch() {
+const placeName = prompt("공유하고 싶은 장소 이름을 입력하세요.");
+    
+    if (!placeName || placeName.trim() === "") return;
+
+    // 'LOCATION' 타입의 데이터 구조 생성
+    const locationData = {
+        placeName: placeName,
+        message: "📍 [장소공유] " + placeName
+    };
+
+    // 💡 3. 서버(WebSocket)로 메시지 전송
+    if (typeof sendMessage === 'function') {
+        sendMessage("LOCATION", JSON.stringify(locationData));
+        showToast('장소가 성공적으로 공유되었습니다!', 'success');
+    } else {
+        console.error("메시지 전송 함수를 찾을 수 없습니다.");
+    }
+}
+
+function addLocationMessage(sender, placeName, time, isMine) {
+	const safePlaceName = typeof escapeHtml === 'function' ? escapeHtml(placeName) : placeName;
+    
+    // 장소 전용 카드 UI 구성
+    const locationHtml = 
+        '<div class="location-card">' +
+            '<div class="location-info">' +
+                '<i class="bi bi-geo-alt-fill text-danger"></i>' +
+                '<span class="place-name">' + safePlaceName + '</span>' +
+            '</div>' +
+            '<button type="button" class="btn-map-link" onclick="window.open(\'https://map.kakao.com/?q=' + encodeURIComponent(placeName) + '\')">' +
+                '지도에서 위치 확인' +
+            '</button>' +
+        '</div>';
+
+    // 기존 메시지 추가 함수를 재활용하여 말풍선 안에 넣습니다.
+    addChatMessage(sender, locationHtml, time, isMine);
+}
+	
 //==================== 채팅 ESC로 닫기 ====================
 // ESC 키로 모달 닫기
 document.addEventListener('keydown', function(e) {
@@ -3260,18 +3559,31 @@ function reportCurrentPost() {
     if (!currentPostId) return;
     var post = postsData[currentPostId];
     if (!post) return;
-    openReportModal('post', currentPostId, post.title);
+    openReportModal('POST', currentPostId, post.title);
 }
 
 // 댓글 신고
 function reportComment(commentId, commentText) {
-    openReportModal('comment', commentId, commentText);
+    openReportModal('COMMENT', commentId, commentText);
 }
 
 // 현재 채팅방 신고
 function reportCurrentChatroom() {
-    if (!currentChatRoom) return;
-    openReportModal('chatroom', currentChatRoom.id, currentChatRoom.name);
+	const targetId = currentChatId || sessionStorage.getItem('activeChatId');
+    const roomName = (currentChatRoom && currentChatRoom.chatName) 
+                     || document.getElementById('chatRoomTitle').textContent;
+
+    if (!targetId || targetId === "null") {
+        showToast('신고할 채팅방 정보가 없습니다.', 'warning');
+        return;
+    }
+
+    // 신고 모달 호출 (타입, 대상ID, 대상이름)
+    if (typeof openReportModal === 'function') {
+        openReportModal('CHATROOM', targetId, roomName);
+    } else {
+        console.error("신고 모달 함수(openReportModal)를 찾을 수 없습니다.");
+    }
 }
 
 // 토스트 애니메이션 스타일 추가

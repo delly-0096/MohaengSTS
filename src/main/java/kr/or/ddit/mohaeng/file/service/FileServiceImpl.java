@@ -32,6 +32,66 @@ public class FileServiceImpl implements IFileService{
     private String uploadPath;
 	
 	/**
+	 *	<p> 범용 파일 저장하기 </p>
+	 *	@date 2026.01.15
+	 *	@author kdrs
+	 *  @param files 업로드할 파일 리스트
+	 *  @param subPath 저장될 하위 폴더 (예: "chat", "profile", "board")
+	 *  @param fileGbCd 파일 분류 코드 (예: "CHAT", "PROFILE", "ATTACH")
+	 *  @param regId 등록자 No
+	 *  @return 생성된 attachNo
+	 */
+	@Override
+	@Transactional
+	public int saveFiles(List<MultipartFile> files, String subPath, String fileGbCd, int regId) {
+		if (files == null || files.isEmpty()) return 0;
+		
+		// ATTACH_FILE (마스터)
+		AttachFileVO attachVO = new AttachFileVO();
+		attachVO.setRegId(regId); 	// 쿼리의 #{regId}와 매칭
+		fileMapper.insertAttachFile(attachVO);
+		int attachNo = attachVO.getAttachNo();
+		
+		for (MultipartFile file : files) {
+	        if (file.isEmpty()) continue;
+
+	        try {
+	            // 2. 파일명 생성 및 경로 설정
+	            String originalName = file.getOriginalFilename();
+	            String ext = originalName.substring(originalName.lastIndexOf(".") + 1);
+	            String saveName = UUID.randomUUID().toString() + "." + ext;
+
+	            // 저장 위치: C:/upload/{subPath}/ (FileConfiguration의 uploadPath 활용)
+	            File targetDir = new File(uploadPath + subPath + "/");
+	            if (!targetDir.exists()) targetDir.mkdirs();
+
+	            // 3. 물리적 저장
+	            file.transferTo(new File(targetDir, saveName));
+
+	            // 4. ATTACH_FILE_DETAIL 기록
+	            AttachFileDetailVO detailVO = new AttachFileDetailVO();
+	            detailVO.setAttachNo(attachNo);
+	            detailVO.setFileName(saveName);
+	            detailVO.setFileOriginalName(originalName);
+	            detailVO.setFileExt(ext);
+	            detailVO.setFileSize(file.getSize());
+	            detailVO.setFilePath("/" + subPath + "/" + saveName); // 접근 경로를 DB에 저장
+	            detailVO.setFileGbCd(fileGbCd);
+	            detailVO.setMimyType(file.getContentType());
+	            detailVO.setRegId(regId);
+
+	            fileMapper.insertAttachFileDetail(detailVO);
+
+	        } catch (IOException e) {
+	            log.error("파일 저장 중 에러 발생: {}", e.getMessage());
+	            throw new RuntimeException("파일 시스템 저장 실패", e);
+	        }
+	    }
+	    return attachNo;
+		
+	}
+	
+	/**
 	 *	<p> 기업회원 가입시 파일 업로드 </p>
 	 *	@date 2026.01.02
 	 *	@author kdrs
@@ -134,6 +194,8 @@ public class FileServiceImpl implements IFileService{
         return attachNo; // 생성된 마스터 번호 반환
 		
 	}
+	
+
 
 	/**
 	 * <p> 프로필 파일 삭제 </p>

@@ -35,10 +35,18 @@
 	<update id="insertPoint" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
 		UPDATE member
 			SET
-			    point = #{point}
+			    point = point + #{point}
 			WHERE
 		        mem_no = #{memNo}
 	</update>
 	
+	<!-- 포인트 사용 -->
+	<update id="updatePoint" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+		UPDATE member
+			SET
+			    point = point - #{point}
+			WHERE
+		        mem_no = #{memNo}
+	</update>
 	
 </mapper>

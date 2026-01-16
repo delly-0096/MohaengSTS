@@ -50,5 +50,8 @@ public class FlightProductVO {
 	
 	// 페이징용
 	private int pageNo = 1;
-	private int numOfRows = 100;
+	private int numOfRows = 110;	// 넉넉하게
+	
+	private String cabin;			// 좌석 등급
+	
 }

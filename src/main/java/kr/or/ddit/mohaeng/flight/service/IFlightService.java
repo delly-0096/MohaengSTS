@@ -60,5 +60,5 @@ public interface IFlightService {
 	 * @param flightProductVO 항공권 정보
 	 * @return 좌석정보
 	 */
-	public List<String> getSeatInfo(FlightProductVO flightProductVO); 
+	public List<String> getFlightSeat(FlightProductVO flightProductVO); 
 }

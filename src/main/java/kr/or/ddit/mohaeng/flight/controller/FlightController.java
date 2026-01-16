@@ -93,7 +93,7 @@ public class FlightController {
 	@PostMapping("/product/flight/seat")
 	public List<String> flightSeat(@RequestBody FlightProductVO flightProductVO){
 		log.info("flightProductVO : {}", flightProductVO);
-		return service.getSeatInfo(flightProductVO);
+		return service.getFlightSeat(flightProductVO);
 	}
 	
 }

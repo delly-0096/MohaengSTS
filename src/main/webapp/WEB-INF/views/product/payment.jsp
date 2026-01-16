@@ -272,12 +272,12 @@ document.addEventListener("DOMContentLoaded", async function(){
 			document.querySelector(".payment-complete").style.display = "block";
 			
 			// 성공하면 세션 삭제하기
-			flightProduct = sessionStorage.removeItem("flightProduct");
-			passengers = sessionStorage.removeItem("passengers");
-			reservationList = sessionStorage.removeItem("reservationList");
-			reserveAgree = sessionStorage.removeItem("reserveAgree");
+			sessionStorage.removeItem("flightProduct");
+			sessionStorage.removeItem("passengers");
+			sessionStorage.removeItem("reservationList");
+			sessionStorage.removeItem("reserveAgree");
+			sessionStorage.removeItem("@tosspayments/session-id");
 		} else {
-			
 			try {
 			    const msgSplit = resultData.message.split(': "');
 			    const jsonStr = msgSplit[msgSplit.length - 1].replace(/"$/, ''); // 마지막 따옴표 제거

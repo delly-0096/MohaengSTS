@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper">
+
+	<!-- 숙소 API 정보 INSERT -->
+	<insert id="insertAccommodation" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+    INSERT INTO ACCOMMODATION (
+          ACC_NO
+        , TRIP_PROD_NO 
+        , API_CONTENT_ID  
+        , ACC_CAT_CD
+        , STAR_GRADE
+        , ZIP
+        , ADDR1
+        , ADDR2
+        , TOTAL_ROOM_CNT
+    ) VALUES (
+          SEQ_ACCOMMODATION.NEXTVAL
+        , #{tripProdNo}
+        , #{apiContentId}
+        , #{accCatCd}
+        , #{starGrade}
+        , #{zip}
+        , #{addr1}
+        , #{addr2}
+        , #{totalRoomCnt}
+    )
+	</insert>
+
+	<!-- 숙소 상세 정보와 시설 정보 조인 -->
+	<select id="getAccommodationDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	    SELECT 
+	          A.ACC_NO
+	        , A.ACC_CAT_CD
+	        , A.STAR_GRADE
+	        , A.ADDR1
+	        , A.ADDR2
+	        , F.WIFI_YN
+	        , F.PARKING_YN
+	        , F.BREAKFAST_YN
+	        , F.POOL_YN
+	    FROM ACCOMMODATION A
+	    LEFT JOIN ACC_FACILITY F ON A.ACC_NO = F.ACC_NO
+	    WHERE A.ACC_NO = #{accNo}
+	</select>
+	
+</mapper>

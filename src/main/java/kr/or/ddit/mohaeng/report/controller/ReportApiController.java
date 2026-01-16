@@ -1,11 +1,11 @@
-package kr.or.ddit.mohaeng.community.travellog.report.controller;
+package kr.or.ddit.mohaeng.report.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import kr.or.ddit.mohaeng.community.travellog.report.service.IReportService;
+import kr.or.ddit.mohaeng.report.service.IReportService;
 import kr.or.ddit.mohaeng.vo.ReportVO;
 import lombok.RequiredArgsConstructor;
 

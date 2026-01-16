@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.community.mapper.ICommentMapper">
+
+
+					<!-- ICommentMapper.xml -->
+				<select id="selectTalkCommentTree" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.CommentVO">
+				SELECT
+				  LEVEL - 1 AS depth,
+				  c.CMNT_NO AS cmntNo,
+				  c.TARGET_TYPE AS targetType,
+				  c.TARGET_NO AS targetNo,
+				  c.WRITER_NO AS writerNo,
+				  c.PARENT_CMNT_NO AS parentCmntNo,
+				  c.CMNT_CONTENT AS cmntContent,
+				  c.CMNT_STATUS AS cmntStatus,
+				  c.REG_DT AS regDt,
+				  c.MOD_DT AS modDt
+				FROM COMMENTS c 
+				WHERE c.TARGET_TYPE = 'TALK'
+				  AND c.TARGET_NO = #{value}
+				START WITH c.PARENT_CMNT_NO IS NULL
+				CONNECT BY PRIOR c.CMNT_NO = c.PARENT_CMNT_NO
+				ORDER SIBLINGS BY c.REG_DT ASC
+				</select>
+				
+				<select id="countValidParentInSameBoard" resultType="int">
+					  SELECT COUNT(*)
+					  FROM COMMENTS
+					  WHERE CMNT_NO = #{parentCmntNo}
+					    AND TARGET_TYPE = 'TALK'
+					    AND TARGET_NO = #{targetNo}
+					</select>
+
+
+				
+				<insert id="insertTalkComment" parameterType="kr.or.ddit.mohaeng.vo.CommentVO">
+					INSERT INTO COMMENTS (
+					  CMNT_NO, TARGET_TYPE, TARGET_NO, WRITER_NO, PARENT_CMNT_NO,
+					  CMNT_CONTENT, CMNT_STATUS, REG_DT
+					) VALUES (
+					  SEQ_COMMENTS.NEXTVAL,
+					  'TALK',
+					  #{targetNo},
+					  #{writerNo},
+					  <choose>
+					    <when test="parentCmntNo == null or parentCmntNo == 0">NULL</when>
+					    <otherwise>#{parentCmntNo}</otherwise>
+					  </choose>,
+					  #{cmntContent},
+					  0,
+					  SYSDATE
+					)
+</insert>
+				<update id="updateTalkComment" parameterType="kr.or.ddit.mohaeng.vo.CommentVO">
+					UPDATE COMMENTS
+					SET CMNT_CONTENT = #{cmntContent},
+					    MOD_DT = SYSDATE
+					WHERE CMNT_NO = #{cmntNo}
+					</update>
+					
+					<update id="deleteTalkComment" parameterType="int">
+					UPDATE COMMENTS
+					SET CMNT_STATUS = 1,   
+					    MOD_DT = SYSDATE
+					WHERE CMNT_NO = #{value}
+					</update>
+										
+	</mapper>
+
+				

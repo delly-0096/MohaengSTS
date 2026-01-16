@@ -73,7 +73,7 @@ public class PaymentServiceImpl implements IPaymentService {
 			// api 에서 가져올 정보
 			// memNo이미 존재
 			paymentVO.setPaymentKey(responseBody.get("paymentKey").toString());
-			int amount = (int) responseBody.get("totalAmount");
+			int amount = (int) responseBody.get("totalAmount");	// 실제 결제된 금액
 			paymentVO.setPayTotalAmt(amount); // 숫자
 			String payMethod = responseBody.get("method").toString(); 
 			paymentVO.setPayMethodCd(payMethod);
@@ -84,7 +84,14 @@ public class PaymentServiceImpl implements IPaymentService {
 			String status = responseBody.get("status").toString();
 			paymentVO.setPayStatus(status);
 
-			int discount = responseBody.get("discount") == null ? 0 : (int) responseBody.get("discount");
+			// 포인트사용 경우
+			int discount = 0;
+			if(responseBody.get("metadata") != null) {
+				Map<String, Object> metadata = (Map<String, Object>) responseBody.get("metadata");
+			    if (metadata.get("usedPoints") != null) {
+			        discount = Integer.parseInt(metadata.get("usedPoints").toString());
+			    }
+			}
 			paymentVO.setUsePoint(discount); // 사용포인트
 			// 취소 사유 2개는 = 취소 환불시 사용하기
 

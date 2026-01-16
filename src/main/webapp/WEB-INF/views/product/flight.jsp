@@ -201,7 +201,8 @@ let airportList = [];				// 항공 목록
 const list = document.getElementById('selectedFlightsList');
 let currentSearchState = null;		// 현재 상태?
 let loader = null;		// 인피니티 스크롤
-		
+let cabin = "";
+const result = document.querySelector('.flight-result'); // 항공권 출력란 
 // session데이터 가져오기 
 function restoreSearchForm() {
 //     const saved = sessionStorage.getItem('flightProduct');
@@ -382,18 +383,12 @@ function goToBooking() {
         flights: selectedFlights.map((f, index) => ({
             ...f,
             segmentIndex: index,
-            segmentLabel: getSegmentLabel(index)
+            segmentLabel: currentSearchType === "oneway" ? "편도" : (index === 0 ? '가는편' : '오는편')
         }))
     };
     // 항공편 데이터를 sessionStorage에 저장
     sessionStorage.setItem('flightProduct', JSON.stringify(bookingData));
     window.location.href = `/product/flight/booking`;
-}
-
-// 구간 라벨 생성
-function getSegmentLabel(index) {
-	if (currentSearchType === 'oneway') return '편도';
-    return index === 0 ? '가는편' : '오는편';
 }
 
 // 승객 패널 토글
@@ -435,92 +430,59 @@ let flightIsLoading = false;  // 로딩 중복 방지 플래그
 let flightHasMore = false;    // 더 가져올 데이터가 있는지 여부
 let currentSearchData = null; // 검색 조건 저장 (카드 생성용)
 
-// 추가 항공편 데모 데이터 - 인피니티
-// var additionalFlights = [
-//     {
-//         airline: '아시아나',
-//         flightNo: 'OZ8905',
-//         departureTime: '09:30',
-//         departureAirport: 'GMP 김포',
-//         arrivalTime: '10:40',
-//         arrivalAirport: 'CJU 제주',
-//         duration: '1시간 10분',
-//         type: '직항',
-//         price: 62000,
-//         fuel: 28000,
-//         tax: 24000,
-//     }
-// ];
-
 // 인피니티 스크롤 초기화
 function initFlightInfiniteScroll() {
     if (!loader) return;
 
-    var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting && !flightIsLoading && flightHasMore) {
-                loadMoreFlights();
-            }
-        });
+    // loader가 돌아가는 순간 실행 하는 객체 intersection
+    const observer = new IntersectionObserver((entries) => {
+    	// 0으로 지정한 것 loader가 들어오는 순간 스크롤 가동
+    	if (entries[0].isIntersecting && !flightIsLoading && flightHasMore) {
+            flightIsLoading = true;
+
+            setTimeout(() => {
+                flightCurrentPage++;
+                renderFlightBatch(); // 10개씩 그리는 함수 호출
+                console.log("flightIsLoading : ", flightIsLoading);
+            }, 500);
+        }
     }, {
         root: null,
-        rootMargin: '100px',
+        rootMargin: '100px', // 보이기 100px 전에 미리 호출하여 부드러운 연결
         threshold: 0
     });
 
-    observer.observe(loader);
+    observer.observe(loader);	// 로딩바 조회
 }
 
-// infinity scroll - 같은 정보를 page늘려서 보내기
-function loadMoreFlights() {
-    if (flightIsLoading || !flightHasMore) return;
-
+// 항공권 생성 카드 호출
+function renderFlightBatch(){
+// 	if (flightIsLoading) return;	// 기본값이 false
     flightIsLoading = true;
-    loader.style.display = 'flex';
+	
+    const start = (flightCurrentPage - 1) * flightItemsPerPage;	// 처음에는 0
+    const end = start + flightItemsPerPage;						// 처음에는 10
+    const batch = flightFullData.slice(start, end);				// 10개
+    
+    let html = '';
 
-    setTimeout(function() {
-        flightCurrentPage++;
-
-        if (flightCurrentPage > flightTotalPages) {
-            flightHasMore = false;
-            loader.style.display = 'none';
-            document.getElementById('flightScrollEnd').style.display = 'block';
-            flightIsLoading = false;
-            return;
-        }
-
-        var resultsList = document.getElementById('flightResults');
-        var flightsToAdd = getFlightsForPage(flightCurrentPage);		// 넘길 것? 그다음 페이지로 보여주기??
-
-        flightsToAdd.forEach(function(flight, index) {
-            var flightHtml = createFlightCard(flight, flightCurrentPage * 10 + index);	// 
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = flightHtml;
-            var newCard = tempDiv.firstElementChild;
-
-            newCard.style.opacity = '0';
-            newCard.style.transform = 'translateY(20px)';
-            resultsList.insertBefore(newCard, loader);
-
-            setTimeout(function() {
-                newCard.style.transition = 'all 0.4s ease';
-                newCard.style.opacity = '1';
-                newCard.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-
-        flightIsLoading = false;
-    }, 800);
-}
-
-// 전체를 불러오고 id를 10개씩 나눠서 인피니티 적용
-function getFlightsForPage(page) {
-//     var flights = [];  // flightFullData이거 사용
-    for (var i = 0; i < 3; i++) {
-//         var dataIndex = ((page - 2) * 3 + i) % 항공리스트.length;
-//         flights.push(Object.assign({}, 항공리스트[dataIndex]));
+    batch.forEach((item, i) => {
+        html += createFlightCard(item, currentSearchData, cabin, start + i);
+    });
+    
+    result.insertAdjacentHTML('beforeend', html);
+    
+    flightIsLoading = false;	// 더 할거 없음
+    
+    if (end >= flightFullData.length) {
+        flightHasMore = false;
+        loader.style.display = 'none';
+        document.getElementById('flightScrollEnd').style.display = 'block';
+    } else {
+        flightHasMore = true;
+        loader.style.display = 'flex';
+        document.getElementById('flightScrollEnd').style.display = 'none';
     }
-//     return flights;
 }
 
 // 조건에 맞는 항공권 카드 생성
@@ -540,7 +502,7 @@ function createFlightCard(data, searchData, cabin, id) {
 	
 	// 소요시간 가져오기
 	let timeSet = durationFormmater(data.depTime, data.arrTime, "duration"); 
-	let duration = parseInt(timeSet / 60) + "시간 " + (timeSet % 60) + "분"; 
+	let duration = parseInt(timeSet / 60) + "시간 " + (timeSet % 60 === 0 ? "" : (timeSet % 60) + "분"); 
 	
 	let price = cabin === "economy" ? data.economyCharge : data.prestigeCharge;
 	let pirceFormat = price.toLocaleString(); 
@@ -635,7 +597,7 @@ document.getElementById('flightSearchForm').addEventListener('submit', function(
 
 // 항공권 조회
 function searchFlights() {
-	const result = document.querySelector('.flight-result');
+// 	const result = document.querySelector('.flight-result');
     result.innerHTML = ``;
     const searchCount = document.querySelector(".results-count");
     searchCount.innerHTML = ``;
@@ -652,7 +614,7 @@ function searchFlights() {
 	const startDt = document.querySelector('#departDate').value;
     const endDt = document.querySelector('#returnDate').value;
 	
-    const cabin = document.querySelector("#cabinClass").value;	// 좌석 등급
+    cabin = document.querySelector("#cabinClass").value;	// 좌석 등급
     
     const activeSortBtn = document.querySelector('.sort-btn.active');
     const sorted = activeSortBtn ? activeSortBtn.dataset.sort : 'departure';
@@ -690,60 +652,52 @@ function searchFlights() {
 		cabin : cabin		// 중복되지만 일단 넣자
     }
     
+	
+    if (loader) {
+        loader.style.display = 'flex'; // 로더 노출
+        document.getElementById('flightScrollEnd').style.display = 'none'; // '마지막' 메시지 숨김
+    }
+	
     // 왕복/편도 검색
     showToast('항공편을 검색하고 있습니다...', 'info');
     
-	// 피젯? 로더?
-	
-			
     axios.post(`/product/flight/searchFlight`, searchData
     ).then(res => {
     	const flight = res.data;	// 데이터 조회
-    	console.log("항공권 조회 : ", flight)
-    	let html = '';
-    	let validCount = 0;
+    	if (!flight || flight.length === 0) {	// 데이터 없을때
+            result.innerHTML = `<div class="no-results-msg">조회된 조건에 맞는 항공편이 없습니다.</div>`;
+            flightHasMore = false;
+            return;
+        }
+    	
+    	// 가격 없는것, 항공편명 없는것, 이미 출발할 항공권 필터
+    	const filteredFlight = flight.filter(item => 
+            item.airlineNm && item.airlineNm !== '/' && timeCheck(item.depTime) && (item.economyCharge !== 0)
+        );
+    	
+    	// 필터 된 데이터 없을시 출력할 메시지
+    	if (filteredFlight.length === 0) {
+            result.innerHTML = `<div class="no-results-msg">조회된 조건에 맞는 항공편이 없습니다.</div>`;
+            flightHasMore = false;
+            if (loader) loader.style.display = 'none';
+            return;
+        }
     	
     	// 금액 sorting
-    	if(sorted === "price") flight.sort((a, b) => a.economyCharge - b.economyCharge);
+    	if(sorted === "price") filteredFlight.sort((a, b) => a.economyCharge - b.economyCharge);
     	
     	// 소요시간 sorting
     	if(sorted === "duration") {
-    		flight.sort((a, b) => durationFormmater(a.depTime, a.arrTime, "duration") - durationFormmater(b.depTime, b.arrTime, "duration"));
+    		filteredFlight.sort((a, b) => durationFormmater(a.depTime, a.arrTime, "duration") - durationFormmater(b.depTime, b.arrTime, "duration"));
     	}
     	
     	// 인핀니티 적용
-		flightFullData = flight; 
+		flightFullData = filteredFlight; // 인피니티 배열에 담기
         currentSearchData = searchData;
-        flightHasMore = flightFullData.length > flightItemsPerPage;
-
-        
-        
-    	// api 기본 호출 값은 출발시간 순 
-    	if(flight != null && flight.length > 0){
-    		flight.forEach((item, i) => {
-                // 유효성 검사 (금액이 있고 항공사 이름이 제대로 된 경우만)
-                if (item.airlineNm && item.airlineNm !== '/' && timeCheck(item.depTime)) {	// 이거를 먼저 필터링하고 price, duration.. 등을 필터링 하기
-					let isPriceValid = false;
-					if (cabin === "economy") isPriceValid = item.economyCharge > 0;
-	                else isPriceValid = item.prestigeCharge > 0;
-
-	                if (isPriceValid) {
-	                    html += createFlightCard(item, searchData, cabin, i);
-	                    validCount++;
-	                }
-                }
-            });
-    	} 
-    	
-    	if (validCount > 0) {
-            result.innerHTML = html;
-            flightHasMore = true;
-        } else {
-            result.innerHTML = `<div class="no-results-msg">조회된 조건에 맞는 항공편이 없습니다.</div>`;
-            flightHasMore = false;
-        }
-    	
-   		searchCount.innerHTML = `<strong>\${searchData.depAirportNm} (\${searchData.depIata})</strong> → <strong>\${searchData.arrAirportNm} (\${searchData.arrIata})</strong> 검색 결과 <strong>\${validCount}</strong>개`;
+        flightHasMore = flightFullData.length > flightItemsPerPage;	// 인피니티 배열이 10개보다 커야지 의미있음
+        flightCurrentPage = 1;
+        renderFlightBatch();	// 랜더링
+        searchCount.innerHTML = `<strong>\${searchData.depAirportNm} (\${searchData.depIata})</strong> → <strong>\${searchData.arrAirportNm} (\${searchData.arrIata})</strong> 검색 결과 <strong>\${filteredFlight.length}</strong>개`;
     })
     .catch(error => {
     	console.log("error 발생 : ", error);
@@ -866,7 +820,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     loader = document.querySelector("#flightScrollLoader");	// 인피니티 스크롤 객체
-    
+    initFlightInfiniteScroll();
     const autoInputs = document.querySelectorAll('.airport-autocomplete');
     
     autoInputs.forEach(input => {
@@ -893,10 +847,9 @@ document.addEventListener('DOMContentLoaded', function() {
             locale: 'ko'
         });
     }
-    //     initFlightInfiniteScroll();
+
 });
 
 </script>
 
-<%-- <c:set var="pageJs" value="product" /> --%>
 <%@ include file="../common/footer.jsp"%>

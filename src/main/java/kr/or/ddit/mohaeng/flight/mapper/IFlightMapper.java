@@ -29,5 +29,5 @@ public interface IFlightMapper {
 	public int insertPassengers(FlightPassengersVO flightPassengersVO);				// 탑승객 정보 추가
 	
 	public Integer getFlightKey(FlightProductVO flightProductVO);					// 항공권 키 확인 - null일 경우를 대비하여 Integer로 변경
-	public List<String> getSeatInfo(Integer fltProdId);								// 항공권 좌석 정보 조회
+	public List<String> getFlightSeat(FlightProductVO flightProduct);				// 항공권 좌석 정보 조회..
 }

@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.community.travellog.report.service;
+package kr.or.ddit.mohaeng.report.service;
 
 import org.springframework.security.core.Authentication;
 

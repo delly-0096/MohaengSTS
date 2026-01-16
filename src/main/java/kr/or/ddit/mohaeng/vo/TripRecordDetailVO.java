@@ -43,5 +43,7 @@ public class TripRecordDetailVO {
     private Long myLiked;
     
     private String profilePath; // 작성자 프로필
+    
+    private String locName;
 
 }

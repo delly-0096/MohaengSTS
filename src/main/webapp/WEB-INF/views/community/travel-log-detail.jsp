@@ -883,19 +883,61 @@
 				<div class="travellog-detail-body">
 					<!-- 작성자 영역 -->
 					<div class="travellog-detail-author">
-						<c:choose>
-  <c:when test="${empty detail.profilePath or detail.profilePath == 'null'}">
+<%-- 						<c:choose>
+							<c:when test="${empty detail.profilePath or detail.profilePath == 'null'}">
+  <img class="travellog-detail-avatar"
+       src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+       alt="avatar">
+</c:when>
+							<c:otherwise>
+							  <img class="travellog-detail-avatar"
+							       src="${pageContext.request.contextPath}/files${detail.profilePath}"
+							       alt="avatar"
+							       onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
+							</c:otherwise>
+							
+						</c:choose> --%>
+
+<%-- <c:choose>
+  <c:when test="${not empty detail.profilePath and detail.profilePath != 'null'}">
     <img class="travellog-detail-avatar"
-         src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
-         alt="avatar">
+         src="<c:url value='/upload${detail.profilePath}'/>"
+         alt="avatar"
+         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
   </c:when>
   <c:otherwise>
     <img class="travellog-detail-avatar"
-         src="${pageContext.request.contextPath}/files${detail.profilePath}"
-         alt="avatar"
-         onerror="this.onerror=null;this.src='https://www.svgrepo.com/show/513078/user-circle.svg';">
+         src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+         alt="avatar">
+  </c:otherwise>
+</c:choose> --%>
+
+<c:set var="pp" value="${detail.profilePath}" />
+<c:choose>
+  <c:when test="${not empty pp and pp != 'null'}">
+    <c:choose>
+      <c:when test="${fn:startsWith(pp, '/upload')}">
+        <img class="travellog-detail-avatar"
+             src="<c:url value='${pp}'/>"
+             alt="avatar"
+             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
+      </c:when>
+      <c:otherwise>
+        <img class="travellog-detail-avatar"
+             src="<c:url value='/upload${pp}'/>"
+             alt="avatar"
+             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
+      </c:otherwise>
+    </c:choose>
+  </c:when>
+  <c:otherwise>
+    <img class="travellog-detail-avatar"
+         src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+         alt="avatar">
   </c:otherwise>
 </c:choose>
+
+
 
 						<div class="travellog-detail-author-info">
 							<div class="travellog-detail-author-name">
@@ -957,8 +999,8 @@
 
 					<!-- 여행 메타 -->
 					<div class="travellog-detail-meta">
-						<span class="meta-pill"> <i class="bi bi-geo-alt"></i> 지역:
-							<c:out value="${detail.locCd}" />
+						<span class="meta-pill"> <i class="bi bi-geo-alt"></i>
+							<c:out value="${detail.locName}" />
 						</span> <span class="meta-pill"> <i class="bi bi-calendar-range"></i>
 							일정: <fmt:formatDate value="${detail.startDt}"
 								pattern="yyyy년 M월 d일" /> ~ <fmt:formatDate
@@ -1060,7 +1102,7 @@ const ROLE_MEMBER = 'ROLE_MEMBER';
 const ROLE_BUSINESS = 'ROLE_BUSINESS';
 
 	// ✅ 기본 프로필(민트 사람 아이콘) - 외부링크 없이 사용 가능
-	const DEFAULT_AVATAR = (() => {
+	/* const DEFAULT_AVATAR = (() => {
 	  const svg = `
 	  <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
 	    <circle cx="40" cy="40" r="40" fill="#1abc9c"/>
@@ -1068,7 +1110,11 @@ const ROLE_BUSINESS = 'ROLE_BUSINESS';
 	    <path d="M20 66c4-12 16-18 20-18s16 6 20 18" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
 	  </svg>`;
 	  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
-	})();
+	})(); */
+	
+	// ✅ 기본 프로필(외부 이미지로 고정)
+	const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80";
+
 
 const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
 const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
@@ -1510,305 +1556,194 @@ function formatCommentDt(regDt) {
   
   
 async function loadComments(rcdNo) {
-	
-	const url = CTX + '/api/community/travel-log/comments?rcdNo=' + encodeURIComponent(rcdNo);
-	
-	const res = await fetch(url, { credentials: 'same-origin' });
+	  const url = CTX + '/api/community/travel-log/comments?rcdNo=' + encodeURIComponent(rcdNo);
 
-	if (!res.ok) {
-		const text = await res.text().catch(() => '');
-  		console.error('댓글 조회 실패', res.status, text);
-  		return;
+	  const res = await fetch(url, { credentials: 'same-origin' });
+	  if (!res.ok) {
+	    const text = await res.text().catch(() => '');
+	    console.error('댓글 조회 실패', res.status, text);
+	    return;
+	  }
+
+	  const list = await res.json();
+
+	  // 카운트 표시
+	  const cnt = Array.isArray(list) ? list.length : 0;
+	  const cc = document.getElementById("commentCount");
+	  if (cc) cc.textContent = cnt;
+
+	  const topCnt = document.getElementById("commentCountTop");
+	  if (topCnt) topCnt.textContent = cnt;
+
+	  const wrap = document.getElementById("commentList");
+	  if (!wrap) return;
+	  wrap.innerHTML = "";
+
+	  // ===== 공통 유틸 =====
+	  const getNo = (x) => Number(
+	    x?.cmntNo ?? x?.commentNo ?? x?.cmnt_no ?? x?.comment_no ??
+	    x?.cmntId ?? x?.commentId ?? x?.id ?? x?.no ?? 0
+	  );
+
+	  // ===== 댓글 렌더 =====
+	  function renderOneComment(c, rcdNo, isReply) {
+	    const contentRaw = (c.cmntContent ?? '');
+
+	    const cmntNo = getNo(c);
+
+	    // ✅ 삭제 여부(서버 필드명 자동 대응)
+	    const isDeleted =
+	      (c.delYn === 'Y') ||
+	      (c.deleteYn === 'Y') ||
+	      (c.deleted === true) ||
+	      (c.cmntDelYn === 'Y') ||
+	      (String(c.status || '').toUpperCase() === 'DELETED') ||
+	      (typeof contentRaw === 'string' && contentRaw.trim() === '삭제된 댓글입니다.');
+
+	    const isWriter = (Number(c.isWriter) === 1);
+
+	    const canReply  = (!isDeleted && AUTH_ROLE === ROLE_MEMBER);
+	    const canReport = (!isDeleted && AUTH_ROLE === ROLE_MEMBER && !isWriter);
+
+	    const myLiked = (Number(c.myLiked) === 1);
+	    const likeCount = Number(c.likeCount || 0);
+
+	    // ===== 아바타 =====
+	    const hasProfile =
+	      (c.profilePath && String(c.profilePath).trim() !== '' && String(c.profilePath).trim() !== 'null');
+
+	    const profilePath = hasProfile ? String(c.profilePath).trim() : '';
+// 	    const normalized = (profilePath && profilePath.startsWith('/')) ? profilePath : ('/' + profilePath);
+// 	    const avatar = hasProfile ? (CTX + '/files' + normalized) : DEFAULT_AVATAR;
+// const avatar = hasProfile ? (CTX + '/upload' + normalized) : DEFAULT_AVATAR;
+
+let normalized = profilePath.startsWith('/') ? profilePath : ('/' + profilePath);
+
+// 이미 /upload 로 시작하면 그대로 사용
+const avatar = hasProfile
+  ? (normalized.startsWith('/upload') ? (CTX + normalized) : (CTX + '/upload' + normalized))
+  : DEFAULT_AVATAR;
+
+	    // ===== 버튼들 =====
+	    const iconCls = myLiked ? 'bi-heart-fill' : 'bi-heart';
+	    const btnCls  = 'cmnt-like-btn' + (myLiked ? ' active' : '');
+
+	    const likeBtnHtml = (!isDeleted && Number.isFinite(cmntNo) && cmntNo > 0)
+	      ? '<button type="button" class="' + btnCls + '" onclick="toggleCommentLike(' + cmntNo + ', this)">' +
+	          '<i class="bi ' + iconCls + '"></i>' +
+	          '<span class="cmnt-like-count">' + likeCount + '</span>' +
+	        '</button>'
+	      : '';
+
+	    const replyBtnHtml = (canReply && Number.isFinite(cmntNo) && cmntNo > 0)
+	      ? '<button type="button" onclick="toggleReplyBox(' + cmntNo + ')">' +
+	          '<i class="bi bi-reply"></i> 답글' +
+	        '</button>'
+	      : '';
+
+	    const editDelHtml = (!isDeleted && isWriter && Number.isFinite(cmntNo) && cmntNo > 0)
+	      ? '<button type="button" onclick="openEditComment(' + cmntNo + ', \'' + escapeJsString(contentRaw) + '\')">' +
+	          '<i class="bi bi-pencil"></i> 수정' +
+	        '</button>' +
+	        '<button type="button" onclick="deleteComment(' + cmntNo + ')">' +
+	          '<i class="bi bi-trash"></i> 삭제' +
+	        '</button>'
+	      : '';
+
+	    const reportBtnHtml = (!isDeleted && canReport && Number.isFinite(cmntNo) && cmntNo > 0)
+	      ? '<button type="button" onclick="reportComment(' + cmntNo + ', \'' + escapeJsString(contentRaw) + '\')">' +
+	          '<i class="bi bi-flag"></i> 신고' +
+	        '</button>'
+	      : '';
+
+	    const replyBoxHtml = (canReply && Number.isFinite(cmntNo) && cmntNo > 0)
+	      ? '<div id="replyBox-' + cmntNo + '" style="display:none; margin-top:10px;">' +
+	          '<div class="detail-comment-input" style="margin-bottom:0;">' +
+	            '<input id="replyInput-' + cmntNo + '" placeholder="대댓글을 입력하세요...">' +
+	            '<button type="button" onclick="submitReply(' + rcdNo + ', ' + cmntNo + ')">등록</button>' +
+	          '</div>' +
+	        '</div>'
+	      : '';
+
+	    const contentHtml = isDeleted ? '삭제된 댓글입니다.' : escapeHtml(contentRaw);
+
+	    const item = document.createElement("div");
+	    item.className = "detail-comment" + (isReply ? " is-reply" : "");
+
+	    item.innerHTML =
+	      '<img class="detail-comment-avatar" src="' + avatar + '" alt="avatar" ' +
+	        'onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR + '\';" />' +
+	      '<div class="detail-comment-content">' +
+	        '<div class="detail-comment-header">' +
+	          '<span class="detail-comment-author">' + (c.nickname || c.writerId || 'unknown') + '</span>' +
+	          '<span class="detail-comment-time">' + formatCommentDt(c.regDt || c.reg_dt) + '</span>' +
+	        '</div>' +
+	        '<p class="detail-comment-text">' + contentHtml + '</p>' +
+	        '<div class="detail-comment-actions">' +
+	          likeBtnHtml +
+	          replyBtnHtml +
+	          editDelHtml +
+	          reportBtnHtml +
+	        '</div>' +
+	        replyBoxHtml +
+	      '</div>';
+
+	    return item;
+	  }
+
+	  // ===== 2단 고정 렌더링(부모 + 모든 자식들을 root 기준으로 한 번 들여쓰기) =====
+	  const parents2 = [];
+	  const repliesByRoot = new Map(); // key=rootNo, value=replies[]
+
+	  (Array.isArray(list) ? list : []).forEach((c) => {
+	    const parentNoRaw = (c.parentCmntNo ?? c.parent_cmnt_no ?? c.parentNo ?? null);
+	    const parentKey = (parentNoRaw == null || parentNoRaw === '' ? null : Number(parentNoRaw));
+
+	    // 최상위
+	    if (parentKey == null || !Number.isFinite(parentKey)) {
+	      parents2.push(c);
+	      return;
+	    }
+
+	    // root 기준으로 묶기 (없으면 parentKey를 root로 사용)
+	    const rootRaw = (c.rootCmntNo ?? c.root_cmnt_no ?? c.ROOT_CMNT_NO);
+	    const root = Number(rootRaw) || parentKey;
+
+	    if (!repliesByRoot.has(root)) repliesByRoot.set(root, []);
+	    repliesByRoot.get(root).push(c);
+	  });
+
+	  // 정렬(번호순)
+	  parents2.sort((a, b) => getNo(a) - getNo(b));
+	  repliesByRoot.forEach(arr => arr.sort((a, b) => getNo(a) - getNo(b)));
+
+	  // 출력
+	  parents2.forEach((p) => {
+	    const pNo = getNo(p);
+
+	    const group = document.createElement('div');
+	    group.className = 'detail-comment-group';
+
+	    group.appendChild(renderOneComment(p, rcdNo, false));
+
+	    const replies = repliesByRoot.get(pNo) || [];
+	    if (replies.length > 0) {
+	      const replyList = document.createElement('div');
+	      replyList.className = 'reply-list';
+
+	      replies.forEach((r) => {
+	        // ✅ 대댓글/대대댓글 포함해도 전부 2단(한 번 들여쓰기)로만 보이게
+	        replyList.appendChild(renderOneComment(r, rcdNo, true));
+	      });
+
+	      group.appendChild(replyList);
+	    }
+
+	    wrap.appendChild(group);
+	  });
 	}
 
-	
-	const list = await res.json();
-	
-	document.getElementById("commentCount").textContent = list.length;
-	
-	const topCnt = document.getElementById("commentCountTop");
-  	if (topCnt) topCnt.textContent = list.length;	
-	
-  	const wrap = document.getElementById("commentList");
-  	wrap.innerHTML = "";
 
-  	// ===== 1) 부모/자식 그룹핑 =====
-  	const parents = [];
-  	const childrenMap = new Map(); // key: parentCmntNo, value: children[]
-
-  	list.forEach((c) => {
-  	  const parentNo = (c.parentCmntNo ?? c.parent_cmnt_no ?? c.parentNo ?? null);
-  	  const parentKey = (parentNo == null || parentNo === '' ? null : Number(parentNo));
-
-  	  if (parentKey == null || !Number.isFinite(parentKey)) {
-  	    parents.push(c);
-  	  } else {
-  	    if (!childrenMap.has(parentKey)) childrenMap.set(parentKey, []);
-  	    childrenMap.get(parentKey).push(c);
-  	  }
-  	});
-
-  	// (선택) 정렬: 같은 그룹 내 작성시간/번호 기준 정렬하고 싶으면 켜기
-  	const byNoAsc = (a,b) => Number(a.cmntNo ?? a.commentNo ?? 0) - Number(b.cmntNo ?? b.commentNo ?? 0);
-  	parents.sort(byNoAsc);
-  	childrenMap.forEach(arr => arr.sort(byNoAsc));
-
-  	// ===== 2) 렌더 함수(부모/자식 공통) =====
-  	function renderOneComment(c, rcdNo, isReply){
-  	  const contentRaw = (c.cmntContent ?? '');
-
-  	  const rawCmntNo =
-  	        c.cmntNo
-  	     ?? c.commentNo
-  	     ?? c.cmnt_no
-  	     ?? c.comment_no
-  	     ?? c.cmntId
-  	     ?? c.commentId
-  	     ?? c.cmnt_id
-  	     ?? c.comment_id
-  	     ?? c.id
-  	     ?? c.no;
-
-  	  const cmntNo = Number(rawCmntNo);
-  	  
-//   	  const rootParentNo = Number(c.rootCmntNo || c.root_cmnt_no || c.ROOT_CMNT_NO || cmntNo);
-
-  	  // ✅ 삭제 여부(서버 필드명 자동 대응)
-  	  const isDeleted =
-  	    (c.delYn === 'Y') ||
-  	    (c.deleteYn === 'Y') ||
-  	    (c.deleted === true) ||
-  	    (c.cmntDelYn === 'Y') ||
-  	    (String(c.status || '').toUpperCase() === 'DELETED') ||
-  	    (typeof contentRaw === 'string' && contentRaw.trim() === '삭제된 댓글입니다.');
-	
-  		const hasProfile = (c.profilePath && String(c.profilePath).trim() !== '' && String(c.profilePath).trim() !== 'null');
-
-	 // profilePath가 "/2026/01/..../a.jpg" 처럼 오면 그대로 붙이고,
-	 // 혹시 "2026/01/..."처럼 슬래시가 없으면 앞에 '/'를 보정
-	 const profilePath = hasProfile ? String(c.profilePath).trim() : '';
-	 const normalized = (profilePath && profilePath.startsWith('/')) ? profilePath : ('/' + profilePath);
-	
-	 const avatar = hasProfile ? (CTX + '/files' + normalized) : DEFAULT_AVATAR;
-
-
-  	  const isWriter = (Number(c.isWriter) === 1);
-
-  	  const canReply  = (!isDeleted && AUTH_ROLE === ROLE_MEMBER);
-  	  const canReport = (!isDeleted && AUTH_ROLE === ROLE_MEMBER && !isWriter);
-
-  	  const myLiked = (Number(c.myLiked) === 1);
-  	  const likeCount = Number(c.likeCount || 0);
-
-  	  const iconCls = myLiked ? 'bi-heart-fill' : 'bi-heart';
-  	  const btnCls  = 'cmnt-like-btn' + (myLiked ? ' active' : '');
-
-  	  const likeBtnHtml = (!isDeleted && Number.isFinite(cmntNo))
-  	    ? '<button type="button" class="' + btnCls + '" onclick="toggleCommentLike(' + cmntNo + ', this)">' +
-  	        '<i class="bi ' + iconCls + '"></i>' +
-  	        '<span class="cmnt-like-count">' + likeCount + '</span>' +
-  	      '</button>'
-  	    : '';
-
-  	  const reportBtnHtml =
-  	    (!isDeleted && canReport && Number.isFinite(cmntNo) && cmntNo > 0)
-  	      ? '<button type="button" onclick="reportComment(' + cmntNo + ', \'' + escapeJsString(contentRaw) + '\')">' +
-  	          '<i class="bi bi-flag"></i> 신고' +
-  	        '</button>'
-  	      : '';
-
-  	  const contentHtml = isDeleted ? '삭제된 댓글입니다.' : escapeHtml(contentRaw);
-  	  const contentForJs = escapeJsString(contentRaw);
-
-  	  const editDelHtml = (!isDeleted && isWriter && Number.isFinite(cmntNo))
-  	    ? '<button type="button" onclick="openEditComment(' + cmntNo + ', \'' + contentForJs + '\')">' +
-  	        '<i class="bi bi-pencil"></i> 수정' +
-  	      '</button>' +
-  	      '<button type="button" onclick="deleteComment(' + cmntNo + ')">' +
-  	        '<i class="bi bi-trash"></i> 삭제' +
-  	      '</button>'
-  	    : '';
-
-	  const replyBtnHtml = canReply && Number.isFinite(cmntNo)
-  	    ? '<button type="button" onclick="toggleReplyBox(' + cmntNo + ')">' +
-  	        '<i class="bi bi-reply"></i> 답글' +
-  	      '</button>'
-  	    : '';
-
-  	  const replyBoxHtml = canReply && Number.isFinite(cmntNo)
-  	    ? '<div id="replyBox-' + cmntNo + '" style="display:none; margin-top:10px;">' +
-  	        '<div class="detail-comment-input" style="margin-bottom:0;">' +
-  	          '<input id="replyInput-' + cmntNo + '" placeholder="대댓글을 입력하세요...">' +
-  	          '<button type="button" onclick="submitReply(' + rcdNo + ', ' + cmntNo + ')">등록</button>' +
-  	        '</div>' +
-  	      '</div>'
-  	    : '';
-
-
-  	  const item = document.createElement("div");
-  	  item.className = "detail-comment" + (isReply ? " is-reply" : "");
-
-  	item.innerHTML =
-  	  '<img class="detail-comment-avatar" src="' + avatar + '" alt="avatar" ' +
-  	    'onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR + '\';" />' +
-  	  '<div class="detail-comment-content">' +
-  	    '<div class="detail-comment-header">' +
-  	      '<span class="detail-comment-author">' + (c.nickname || c.writerId || 'unknown') + '</span>' +
-  	      '<span class="detail-comment-time">' + formatCommentDt(c.regDt || c.reg_dt) + '</span>' +
-  	    '</div>' +
-  	    '<p class="detail-comment-text">' + contentHtml + '</p>' +
-  	    '<div class="detail-comment-actions">' +
-  	      likeBtnHtml +
-  	      replyBtnHtml +
-  	      editDelHtml +
-  	      reportBtnHtml +
-  	    '</div>' +
-  	    replyBoxHtml +
-  	  '</div>';
-
-  	  return item;
-  	}
-
-  	// ===== 3) 실제 출력: 부모 → 자식들(바로 아래) =====
-  	/* parents.forEach((p) => {
-  	  const pNo = Number(p.cmntNo ?? p.commentNo ?? 0);
-
-  	  // 그룹 래퍼(부모+대댓글 묶음)
-  	  const group = document.createElement('div');
-  	  group.className = 'detail-comment-group';
-
-  	  // 부모 추가
-  	  group.appendChild(renderOneComment(p, rcdNo, false));
-
-  	  // 자식 리스트가 있으면 바로 이어서 추가
-  	  const children = childrenMap.get(pNo) || [];
-  	  if (children.length > 0) {
-  	    const replyList = document.createElement('div');
-  	    replyList.className = 'reply-list';
-
-  	    children.forEach((ch) => {
-  	      replyList.appendChild(renderOneComment(ch, rcdNo, true));
-  	    });
-
-  	    group.appendChild(replyList);
-  	  }
-
-  	  wrap.appendChild(group);
-  	}); */
-  	
- // depth별 들여쓰기 px (원하면 숫자 바꿔도 됨)
-  	const INDENT_PX = 56;
-
-  	function getCmntNo(node){
-  	  const raw =
-  	        node.cmntNo
-  	     ?? node.commentNo
-  	     ?? node.cmnt_no
-  	     ?? node.comment_no
-  	     ?? node.cmntId
-  	     ?? node.commentId
-  	     ?? node.id
-  	     ?? node.no;
-  	  return Number(raw);
-  	}
-
-  	function renderThread(node, depth){
-  	  const nodeNo = getCmntNo(node);
-
-  	  // ✅ 1) "노드 컨테이너"(세로) 생성
-  	  const nodeWrap = document.createElement('div');
-  	  nodeWrap.className = 'cmnt-node' + (depth >= 1 ? ' is-reply' : '');
-
-  	  // ✅ 2) 들여쓰기는 margin-left가 아니라 "padding-left"로 (선 + 내용 같이 이동)
-  	  if (depth >= 1) {
-  	    nodeWrap.style.paddingLeft = (INDENT_PX * depth) + 'px';
-  	  }
-
-  	  // ✅ 3) 댓글 본문(기존 renderOneComment는 .detail-comment flex 덩어리)
-  	  const bodyEl = renderOneComment(node, rcdNo, depth >= 1);
-  	  nodeWrap.appendChild(bodyEl);
-
-  	  // ✅ 4) 자식들은 "아래로 계속" (세로 컨테이너에 붙임)
-  	  const kids = (Number.isFinite(nodeNo) && nodeNo > 0) ? (childrenMap.get(nodeNo) || []) : [];
-  	  if (kids.length > 0) {
-  	    const childrenEl = document.createElement('div');
-  	    childrenEl.className = 'cmnt-children';
-
-  	    kids.forEach((ch) => {
-  	      childrenEl.appendChild(renderThread(ch, depth + 1));
-  	    });
-
-  	    nodeWrap.appendChild(childrenEl);
-  	  }
-
-  	  return nodeWrap;
-  	}
-
- // ✅ ROOT 기준으로 "부모 아래로만" 쌓이게 2단 고정 렌더링
-
-  	function getNo(c){
-  	  const raw =
-  	    c.cmntNo ?? c.commentNo ?? c.cmnt_no ?? c.comment_no ??
-  	    c.cmntId ?? c.commentId ?? c.id ?? c.no;
-  	  return Number(raw);
-  	}
-
-  	function getRoot(c){
-  	  const raw = c.rootCmntNo ?? c.root_cmnt_no ?? c.ROOT_CMNT_NO;
-  	  const n = Number(raw);
-  	  return Number.isFinite(n) && n > 0 ? n : null;
-  	}
-
-  	const parents2 = [];
-  	const repliesByRoot = new Map(); // key=rootCmntNo, value=replies[]
-
-  	list.forEach((c) => {
-  	  const parentNo = (c.parentCmntNo ?? c.parent_cmnt_no ?? c.parentNo ?? null);
-  	  const parentKey = (parentNo == null || parentNo === '' ? null : Number(parentNo));
-
-  	  // 최상위 댓글
-  	  if (parentKey == null || !Number.isFinite(parentKey)) {
-  	    parents2.push(c);
-  	    return;
-  	  }
-
-  	  // 대댓글/대대댓글 포함: root 기준으로 모으기
-  	  const root = getRoot(c) || parentKey;
-  	  if (!repliesByRoot.has(root)) repliesByRoot.set(root, []);
-  	  repliesByRoot.get(root).push(c);
-  	});
-
-  	// 정렬(번호순)
-  	const byNoAsc2 = (a,b) => getNo(a) - getNo(b);
-  	parents2.sort(byNoAsc2);
-  	repliesByRoot.forEach(arr => arr.sort(byNoAsc2));
-
-  	// 출력: 부모 -> reply-list(아래로만)
-  	parents2.forEach((p) => {
-  	  const pNo = getNo(p);
-
-  	  const group = document.createElement('div');
-  	  group.className = 'detail-comment-group';
-
-  	  group.appendChild(renderOneComment(p, rcdNo, false));
-
-  	  const replies = repliesByRoot.get(pNo) || [];
-  	  if (replies.length > 0) {
-  	    const replyList = document.createElement('div');
-  	    replyList.className = 'reply-list';
-
-  	    replies.forEach((r) => {
-  	      replyList.appendChild(renderOneComment(r, rcdNo, true));
-  	    });
-
-  	    group.appendChild(replyList);
-  	  }
-
-  	  wrap.appendChild(group);
-  	});
-
-
-}
 
 function toggleReplyBox(cmntNo) {
 	  // 다른 입력칸 닫기

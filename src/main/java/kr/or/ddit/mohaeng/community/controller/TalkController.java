@@ -29,10 +29,12 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.servlet.http.HttpServletRequest;
 import kr.or.ddit.mohaeng.ServiceResult;
+import kr.or.ddit.mohaeng.community.service.CommentService;
 import kr.or.ddit.mohaeng.community.service.ITalkService;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.BoardFileVO;
 import kr.or.ddit.mohaeng.vo.BoardVO;
+import kr.or.ddit.mohaeng.vo.CommentVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,222 +42,198 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequestMapping("/community/talk")
 public class TalkController {
-	
-    @Autowired
+
+	@Autowired
 	private ITalkService talkService;
-    
-    //여행톡 목록화면
-    
-    @Value("${file.upload-path}")
-    String uploadPath;
-    
-    @RequestMapping
-    public String communityForm(
-    		@RequestParam(name = "page", required= false, defaultValue = "1") int currentPage,
-    		@RequestParam(required = false) Integer boardNo,
-  			@RequestParam(required = false) String searchWord,
-   			@RequestParam(required = false, defaultValue = "all") String ntcType,
-   			Model model) {
-      log.info("communityForm()...실행");
-      PaginationInfoVO<BoardVO> pagingVO = new PaginationInfoVO<>();
-      
-      // 검색시 추가
-      if(StringUtils.isNoneBlank(searchWord)) {
-    	  pagingVO.setSearchWord(searchWord);
-    	  pagingVO.setSearchType(ntcType);
-    	  model.addAttribute("searchWord", searchWord);
-    	  model.addAttribute("ntcType", ntcType);
-      }
-      
-      pagingVO.setCurrentPage(currentPage);
-      int totalRecord = talkService.selectTalkCount(pagingVO);
-      pagingVO.setTotalRecord(totalRecord);
-      //게시판 목록
-      List<BoardVO> dataList = talkService.selectTalkList(pagingVO);
-      pagingVO.setDataList(dataList);
-      
-      model.addAttribute("pagingVO", pagingVO); 
-      if(boardNo !=null) {
-    	  BoardVO boardVO = talkService.selectTalk(boardNo);
-    	  model.addAttribute("boardVO" , boardVO);
-      }
-      return "community/talkList";
-    }
- 
-    
-	
-	// 게시판 상세화면
-    @GetMapping("/detail")
-    public String talkDetail(@RequestParam int boardNo,Model model) {
-    	//talkDetail boardNo : 11
-    	log.info("talkDetail boardNo : {}", boardNo); //상세화면
-    	
-    	BoardVO boardVO = talkService.selectBoard(boardNo);
-    	/*
-    	BoardVO(boardNo=11, boardCtgryCd=free, writerNo=1, attachNo=0, boardTitle=uuyuu, boardContent=uuuuu, viewCnt=4, likeCnt=0, noticeYn=N, pinYn=N
-    	, delYn=N, delDt=null, regDt=Tue Jan 13 19:18:10 KST 2026, modDt=null, regId=null, modId=null, boardTagList=null
-    	, boardFileList=[
-    		BoardFileVO(item=null, fileNo=0, fileName=null, fileSize=0, fileFancysize=null, fileSavepath=null, fileDowncount=0, attachNo=0
-    		, fileSaveName=null, fileOriginalName=null, fileExt=null, filePath=null, fileGbCd=null, mimeType=null, regId=0, regDt=2026-01-13 19:18:10, useYn=null)
-    	], boardFile=null, writerId=null, writerNickname=null)
-    	 */
-    	log.info("talkDetail boardVO : {}", boardVO); //상세화면
-    	
-    	model.addAttribute("boardVO",boardVO);
-    	
-		return "community/talk"; 
+
+	// 여행톡 목록화면
+
+	@Value("${file.upload-path}")
+	String uploadPath;
+
+	@Autowired
+	private CommentService commentService;
+
+	@RequestMapping
+	public String communityForm(@RequestParam(name = "page", required = false, defaultValue = "1") int currentPage,
+			@RequestParam(required = false) Integer boardNo, @RequestParam(required = false) String searchWord,
+			@RequestParam(required = false, defaultValue = "all") String ntcType, Model model) {
+		log.info("communityForm()...실행");
+		PaginationInfoVO<BoardVO> pagingVO = new PaginationInfoVO<>();
+
+		// 검색시 추가
+		if (StringUtils.isNoneBlank(searchWord)) {
+			pagingVO.setSearchWord(searchWord);
+			pagingVO.setSearchType(ntcType);
+			model.addAttribute("searchWord", searchWord);
+			model.addAttribute("ntcType", ntcType);
+		}
+
+		pagingVO.setCurrentPage(currentPage);
+		int totalRecord = talkService.selectTalkCount(pagingVO);
+		pagingVO.setTotalRecord(totalRecord);
+		// 게시판 목록
+		List<BoardVO> dataList = talkService.selectTalkList(pagingVO);
+		pagingVO.setDataList(dataList);
+
+		model.addAttribute("pagingVO", pagingVO);
+		if (boardNo != null) {
+			BoardVO boardVO = talkService.selectTalk(boardNo);
+			model.addAttribute("boardVO", boardVO);
+		}
+		return "community/talkList";
 	}
-	
-    
-    // 글 작성폼 페이지 이동
-    @GetMapping("/write")
-    public String talkWrite() {
-    	return "community/talk-write";
-    }
-    
-    //talk 등록
-    @ResponseBody
-    @PostMapping("/insert")
-    public ResponseEntity<String> insert(
-    		BoardVO vo,
-    		@AuthenticationPrincipal CustomUserDetails user
-    		) {
 
-        log.info("insert 실행: {}", vo);
-        
-        if (user == null) {
-        	System.out.println("여기에 왔음11111");
-            log.error("로그인 정보가 없습니다!");
-            return new ResponseEntity<>("LOGIN_REQUIRED", HttpStatus.UNAUTHORIZED);
-        }
-        System.out.println("여기에 왔음22222");
-        log.info("로그인 회원번호: {}", user.getMemNo());
-        vo.setWriterNo(user.getMemNo());
-        vo.setRegId(user.getMemNo());
-        
-        ServiceResult result = talkService.insertTalk(vo);
-        if (result == ServiceResult.OK) {
+	// 게시판 상세화면
+	/*
+	 * @GetMapping("/detail") public String talkDetail(@RequestParam int
+	 * boardNo,Model model) { //talkDetail boardNo : 11
+	 * log.info("talkDetail boardNo : {}", boardNo); //상세화면
+	 * 
+	 * BoardVO boardVO = talkService.selectBoard(boardNo);
+	 * 
+	 * BoardVO(boardNo=11, boardCtgryCd=free, writerNo=1, attachNo=0,
+	 * boardTitle=uuyuu, boardContent=uuuuu, viewCnt=4, likeCnt=0, noticeYn=N,
+	 * pinYn=N , delYn=N, delDt=null, regDt=Tue Jan 13 19:18:10 KST 2026,
+	 * modDt=null, regId=null, modId=null, boardTagList=null , boardFileList=[
+	 * BoardFileVO(item=null, fileNo=0, fileName=null, fileSize=0,
+	 * fileFancysize=null, fileSavepath=null, fileDowncount=0, attachNo=0 ,
+	 * fileSaveName=null, fileOriginalName=null, fileExt=null, filePath=null,
+	 * fileGbCd=null, mimeType=null, regId=0, regDt=2026-01-13 19:18:10, useYn=null)
+	 * ], boardFile=null, writerId=null, writerNickname=null)
+	 * 
+	 * log.info("talkDetail boardVO : {}", boardVO); //상세화면
+	 * 
+	 * model.addAttribute("boardVO",boardVO); List<CommentVO> comments =
+	 * commentService.getTalkComments(boardNo); model.addAttribute("comments",
+	 * comments);
+	 * 
+	 * return "community/talk"; }
+	 */
+	@GetMapping("/detail")
+	public String talkDetail(@RequestParam int boardNo, Model model) {
 
-        	return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
-        }else {
-        	return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
-        }
-    }
+		BoardVO boardVO = talkService.selectTalk(boardNo); // 너희 상세 조회 로직
+		model.addAttribute("boardVO", boardVO);
 
- 
-    // talk 수정
- // talk 수정
-    @PutMapping("/{boardNo}")
-    @ResponseBody
-    public int update(@PathVariable int boardNo, @RequestBody BoardVO vo) {
-        vo.setBoardNo(boardNo);      // ✅ URL의 boardNo를 vo에 세팅
-        int cnt = talkService.updateTalk(vo); // ✅ 1번만 호출
-        log.info("update: {}", vo);
-        return cnt;
-    }
+		// ✅ 댓글 목록 조회
+		List<CommentVO> commentList = commentService.getTalkComments(boardNo);
+		model.addAttribute("commentList", commentList);
 
-    @GetMapping("/download/{fileNo}")
-    public ResponseEntity<byte[]> download(@PathVariable int fileNo) {
-        InputStream in = null;
-        ResponseEntity<byte[]> entity = null;
+		return "community/comment"; // 너희 JSP 경로
+	}
 
-        BoardFileVO boardFileVO = talkService.getFileInfo(fileNo);
+	// 글 작성폼 페이지 이동
+	@GetMapping("/write")
+	public String talkWrite() {
+		return "community/talk-write";
+	}
 
-        try {
-            HttpHeaders headers = new HttpHeaders();
+	// talk 등록
+	@ResponseBody
+	@PostMapping("/insert")
+	public ResponseEntity<String> insert(BoardVO vo, @AuthenticationPrincipal CustomUserDetails user) {
 
-            // 다운로드는 보통 octet-stream으로 주는게 무난
-            headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+		log.info("insert 실행: {}", vo);
 
-            // ✅ 다운로드는 attachment
-            headers.add("Content-Disposition",
-                "attachment; filename=\"" + boardFileVO.getFileOriginalName() + "\"");
+		if (user == null) {
+			System.out.println("여기에 왔음11111");
+			log.error("로그인 정보가 없습니다!");
+			return new ResponseEntity<>("LOGIN_REQUIRED", HttpStatus.UNAUTHORIZED);
+		}
+		System.out.println("여기에 왔음22222");
+		log.info("로그인 회원번호: {}", user.getMemNo());
+		vo.setWriterNo(user.getMemNo());
+		vo.setRegId(user.getMemNo());
 
-            in = new FileInputStream(uploadPath + "talk/" + boardFileVO.getFileName());
-            entity = new ResponseEntity<>(IOUtils.toByteArray(in), headers, HttpStatus.OK);
+		ServiceResult result = talkService.insertTalk(vo);
+		if (result == ServiceResult.OK) {
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            entity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } finally {
-            try { if (in != null) in.close(); } catch (Exception e) { e.printStackTrace(); }
-        }
-        return entity;
-    }
+			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+		}
+	}
 
- 
+	// talk 수정
+	// talk 수정
+	@PutMapping("/{boardNo}")
+	@ResponseBody
+	public int update(@PathVariable int boardNo, @RequestBody BoardVO vo) {
+		vo.setBoardNo(boardNo); // ✅ URL의 boardNo를 vo에 세팅
+		int cnt = talkService.updateTalk(vo); // ✅ 1번만 호출
+		log.info("update: {}", vo);
+		return cnt;
+	}
 
-    
-    @GetMapping("/preview/{fileNo}")
-    public ResponseEntity<byte[]> preview(@PathVariable int fileNo) {
-        InputStream in = null;
-        ResponseEntity<byte[]> entity = null;
+	@GetMapping("/download/{fileNo}")
+	public ResponseEntity<byte[]> download(@PathVariable int fileNo) {
+		InputStream in = null;
+		ResponseEntity<byte[]> entity = null;
 
-        BoardFileVO boardFileVO = talkService.getFileInfo(fileNo);
+		BoardFileVO boardFileVO = talkService.getFileInfo(fileNo);
 
-        try {
-            HttpHeaders headers = new HttpHeaders();
+		try {
+			HttpHeaders headers = new HttpHeaders();
 
-            // ✅ mimeType이 DB에 있으면 그걸로 Content-Type 지정 (추천)
-            MediaType mType = MediaType.IMAGE_JPEG;
-            if (boardFileVO.getMimeType() != null && !boardFileVO.getMimeType().isBlank()) {
-                mType = MediaType.parseMediaType(boardFileVO.getMimeType());
-            }
-            headers.setContentType(mType);
- 
+			// 다운로드는 보통 octet-stream으로 주는게 무난
+			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
 
-            // ✅ 미리보기는 inline
-            headers.add("Content-Disposition", "inline; filename=\"" + boardFileVO.getFileOriginalName() + "\"");
+			// ✅ 다운로드는 attachment
+			headers.add("Content-Disposition", "attachment; filename=\"" + boardFileVO.getFileOriginalName() + "\"");
 
-            in = new FileInputStream(uploadPath + "talk/" + boardFileVO.getFileName());
-            entity = new ResponseEntity<>(IOUtils.toByteArray(in), headers, HttpStatus.OK);
+			in = new FileInputStream(uploadPath + "talk/" + boardFileVO.getFileName());
+			entity = new ResponseEntity<>(IOUtils.toByteArray(in), headers, HttpStatus.OK);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            entity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        } finally {
-            try { if (in != null) in.close(); } catch (Exception e) { e.printStackTrace(); }
-        }
-        return entity;
-    }
+		} catch (Exception e) {
+			e.printStackTrace();
+			entity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		} finally {
+			try {
+				if (in != null)
+					in.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return entity;
+	}
 
-}  
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-  
+	@GetMapping("/preview/{fileNo}")
+	public ResponseEntity<byte[]> preview(@PathVariable int fileNo) {
+		InputStream in = null;
+		ResponseEntity<byte[]> entity = null;
+
+		BoardFileVO boardFileVO = talkService.getFileInfo(fileNo);
+
+		try {
+			HttpHeaders headers = new HttpHeaders();
+
+			// ✅ mimeType이 DB에 있으면 그걸로 Content-Type 지정 (추천)
+			MediaType mType = MediaType.IMAGE_JPEG;
+			if (boardFileVO.getMimeType() != null && !boardFileVO.getMimeType().isBlank()) {
+				mType = MediaType.parseMediaType(boardFileVO.getMimeType());
+			}
+			headers.setContentType(mType);
+
+			// ✅ 미리보기는 inline
+			headers.add("Content-Disposition", "inline; filename=\"" + boardFileVO.getFileOriginalName() + "\"");
+
+			in = new FileInputStream(uploadPath + "talk/" + boardFileVO.getFileName());
+			entity = new ResponseEntity<>(IOUtils.toByteArray(in), headers, HttpStatus.OK);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			entity = new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		} finally {
+			try {
+				if (in != null)
+					in.close();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return entity;
+	}
+
+}

@@ -1774,13 +1774,14 @@
 </style>
 
 <!-- Security 변수 추출  -->
-<sec:authentication property="principal" var="principal" />
 <sec:authorize access="isAuthenticated()">
-    <%-- 시큐리티의 principal 객체에서 직접 변수 추출 --%>
-    <c:set var="myId" value="${principal.member.memId}" />
-    <c:set var="myName" value="${principal.member.memName}" />
-    <c:set var= "myNickname" value="${principal.member.memUser.nickname}"/>
+  <sec:authentication property="principal" var="principal" />
+
+  <c:set var="myId" value="${principal.member.memId}" />
+  <c:set var="myName" value="${principal.member.memName}" />
+  <c:set var="myNickname" value="${principal.member.memUser.nickname}" />
 </sec:authorize>
+
 <script>
 const api = (path) => contextPath + (path.startsWith('/') ? path : '/' + path);
 

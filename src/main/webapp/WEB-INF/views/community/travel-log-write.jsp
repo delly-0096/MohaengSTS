@@ -14,6 +14,28 @@
 
 <%@ include file="../common/header.jsp" %>
 
+<style>
+#locationSuggestions .location-item{
+  height: 56px;
+  box-sizing: border-box;
+}
+#locationSuggestions{
+  max-height: calc(56px * 3);
+  overflow-y: auto;
+}
+
+#locationSuggestions .location-item i { color: #1abc9c; }
+#locationSuggestions .location-item small { color: #6b7280; }
+#locationSuggestions .location-item:hover { background: #e8fbf6; }
+
+/* 안내/빈결과 메시지도 동일 톤 */
+#locationSuggestions .location-empty {
+  padding: 12px;
+  color: #6b7280;
+}
+
+</style>
+
 <div class="travellog-write-page">
     <div class="travellog-write-container">
             <!-- 헤더 -->
@@ -135,7 +157,7 @@
                         <h3 class="settings-title"><i class="bi bi-info-circle"></i> 여행 정보</h3>
 
                         <!-- 위치 정보 -->
-                        <div class="setting-item" onclick="toggleSettingInput('location')">
+                        <div class="setting-item" id="locationSettingItem">
                             <div class="setting-icon"><i class="bi bi-geo-alt"></i></div>
                             <div class="setting-content">
                                 <span class="setting-label">위치</span>
@@ -146,7 +168,10 @@
                         <div class="setting-input-area" id="locationInputArea">
                             <div class="search-input-wrapper">
                                 <i class="bi bi-search"></i>
-                                <input type="text" id="locationInput" placeholder="도시, 장소 검색" onkeyup="searchLocation(event)">
+                                <input type="text" id="locationInput" placeholder="지역 검색" autocomplete="off"
+       oninput="onLocationInput(event)"
+       oncompositionend="onLocationInput(event)"
+       onkeyup="onLocationInput(event)">
                             </div>
                             <div class="location-suggestions" id="locationSuggestions"></div>
                         </div>
@@ -410,16 +435,14 @@
         </div>
     </div>
 </div>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 let travelStartDate = null; // Date 객체
 let travelEndDate = null;   // Date 객체
 
 
-window.__CTX__ = window.__CTX__ || (typeof contextPath !== 'undefined'
-    ? contextPath
-    : '${pageContext.request.contextPath}');
-  window.showToast = window.showToast || function (msg, type) { alert(msg); };
+window.__CTX__ = '${pageContext.request.contextPath}';
+window.showToast = window.showToast || function (msg, type) { alert(msg); };
 // 블록 ID 카운터
 let blockIdCounter = 1;
 
@@ -427,8 +450,10 @@ let blockIdCounter = 1;
 let coverImageData = null;
 let linkedSchedule = null;
 let tags = [];
-let selectedLocation = '';
+let selectedLocationName = ''; // 화면 표시용 (RGN_NM)
+let selectedLocationCode = ''; // 저장용 (RGN_NO 문자열)
 let bodyImageFiles = [];
+let __locJustOpened = false;
 
 // 모달 인스턴스
 let scheduleModal, placeBlockModal, previewModal;
@@ -479,7 +504,162 @@ if (dateInput && typeof flatpickr !== 'undefined') {
         // TODO: 서버에서 일정 정보를 가져와서 자동 연결
         console.log('Schedule ID from URL:', scheduleId);
     }
+    
+    // ⭐ 여기로 위치 자동완성 init을 넣기
+    initLocationAutocomplete();
+
+    // 별점 hover init도 여기로
+    initStarRatingHover();
+
+    // datepicker force도 여기로
+    initTravelDatePickerForce();
+    setTimeout(initTravelDatePickerForce, 0);
+    setTimeout(initTravelDatePickerForce, 300);
+    
+    document.getElementById('locationSettingItem')?.addEventListener('click', function(e){
+    	  e.stopPropagation();
+    	  toggleSettingInput('location');
+    	});
+
+    
 });
+
+		function initLocationAutocomplete() {
+			  console.log('[loc] init');
+
+			  const input = document.getElementById('locationInput');
+			  const box = document.getElementById('locationSuggestions');
+			  if (!input || !box) {
+			    console.log('[loc] init failed: input/box not found');
+			    return;
+			  }
+
+			  // ✅ input 기준으로 중복 바인딩 방지
+			  if (input.dataset.locBound === '1') {
+			    console.log('[loc] already bound (input)');
+			    return;
+			  }
+			  input.dataset.locBound = '1';
+
+			  function handleQuery() {
+			    const q = (input.value || '').trim();
+			    console.log('[loc] input=', q);
+			    debounceFetchRegions(q);
+			  }
+
+			  // ✅ focus: 열기
+			  input.addEventListener('focus', function () {
+			    openLocationSuggestions();
+			  }, true);
+
+			  // ✅ 실제 타이핑: input에 직접 바인딩(가장 확실)
+			  input.addEventListener('input', function () {
+			    handleQuery();
+			  }, true);
+
+			  // ✅ 한글 IME 조합 끝
+			  input.addEventListener('compositionend', function () {
+			    handleQuery();
+			  }, true);
+
+			  // ✅ 혹시 input 이벤트가 이상하면 keyup로 보강
+			  input.addEventListener('keyup', function (e) {
+			    const k = e.key;
+			    if (k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight' || k === 'Escape' || k === 'Enter') return;
+			    handleQuery();
+			  }, true);
+
+			  // ESC 닫기
+			  input.addEventListener('keydown', function (e) {
+			    if (e.key === 'Escape') {
+			      closeLocationSuggestions();
+			      input.blur();
+			    }
+			  }, true);
+
+			  // 바깥 클릭 닫기(이건 document가 편함)
+			  document.addEventListener('click', function (e) {
+			    const inputArea = document.getElementById('locationInputArea');
+			    if (!inputArea) return;
+			    if (inputArea.style.display !== 'block') return;
+			    if (!inputArea.contains(e.target)) {
+			      closeLocationSuggestions();
+			      inputArea.style.display = 'none';
+			    }
+			  }, true);
+
+			  console.log('[loc] bound OK (direct input listeners)');
+			}
+
+
+
+	
+	
+// 플러스
+function collectBlocksForSave() {
+  const result = [];
+  const blocks = document.querySelectorAll('#blogEditor .editor-block');
+
+  blocks.forEach((block, idx) => {
+    const order = idx + 1;
+
+    // TEXT
+    if (block.classList.contains('text-block')) {
+      result.push({
+        type: 'TEXT',
+        order,
+        text: block.querySelector('textarea')?.value || ''
+      });
+      return;
+    }
+
+    // IMAGE
+    if (block.classList.contains('image-block')) {
+      result.push({
+        type: 'IMAGE',
+        order,
+        fileIndex: Number(block.dataset.fileIdx), // 여기서 매칭
+        desc: block.querySelector('.image-caption')?.value || ''
+      });
+      return;
+    }
+
+    // DIVIDER
+    if (block.classList.contains('divider-block')) {
+      result.push({ type: 'DIVIDER', order });
+      return;
+    }
+
+    // DAY_HEADER -> TEXT로 저장(빠른 방식)
+    if (block.classList.contains('day-header-block')) {
+      const day = block.querySelector('.day-badge')?.textContent?.trim() || '';
+      const date = block.querySelector('.day-date')?.textContent?.trim() || '';
+      result.push({
+        type: 'TEXT',
+        order,
+        text: (day + ' ' + date).trim()
+      });
+      return;
+    }
+
+    // PLACE  (중요: plcNo가 있어야 DB 저장 가능)
+    if (block.classList.contains('place-block')) {
+      const rating = block.querySelector('.place-rating')?.dataset?.rating || '0';
+      result.push({
+        type: 'PLACE',
+        order,
+        plcNo: block.dataset.plcNo || null,          // ⚠️ 지금 너 코드는 plcNo가 없음
+        rating: Number(rating),
+        review: block.querySelector('textarea')?.value || ''
+      });
+      return;
+    }
+  });
+
+  return result;
+}
+
+		
 
 // 커버 이미지 처리
 function handleCoverImage(event) {
@@ -542,6 +722,9 @@ function addImageBlocks(event) {
 
         // ✅ 여기 추가 (파일을 전역 배열에 보관)
         bodyImageFiles.push(file);
+        
+        const fileIdx = bodyImageFiles.length - 1; // 플러스
+        
 
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -551,6 +734,9 @@ function addImageBlocks(event) {
             const block = document.createElement('div');
             block.className = 'editor-block image-block';
             block.dataset.blockId = currentId;
+            
+            block.dataset.fileIdx = fileIdx;	// 플러스
+            
             block.innerHTML =
                 '<div class="block-actions">' +
                     '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
@@ -686,9 +872,7 @@ function initStarRatingHover() {
 }
 
 // 초기화 시 호버 효과 등록
-document.addEventListener('DOMContentLoaded', function() {
-    initStarRatingHover();
-});
+
 
 // 블록 위로 이동
 function moveBlockUp(blockId) {
@@ -909,12 +1093,11 @@ function selectSchedule(schedule) {
     }
     placesContainer.innerHTML = placesHtml;
 
-    // 위치 및 날짜 자동 설정
-    // 위치 및 날짜 자동 설정
-// 위치 및 날짜 자동 설정
 // 위치
 document.getElementById('locationValue').textContent = schedule.location;
-selectedLocation = schedule.location;
+// selectedLocation = schedule.location;
+selectedLocationName = schedule.location;
+selectedLocationCode = '';
 
 // 날짜 (schedule.dates: "2024.03.15 - 2024.03.18")
 if (schedule.dates && schedule.dates.includes(' - ')) {
@@ -928,8 +1111,7 @@ if (schedule.dates && schedule.dates.includes(' - ')) {
 
   console.log('schedule parsed dates =>', travelStartDate, travelEndDate);
 
-  document.getElementById('dateValue').textContent =
-    `${startStr} ~ ${endStr}`;
+  document.getElementById('dateValue').textContent = startStr + ' ~ ' + endStr;
 
   // flatpickr 동기화
   const fp = document.getElementById('travelDateRange')?._flatpickr;
@@ -1080,6 +1262,7 @@ function unlinkSchedule() {
 
 // 설정 입력 영역 토글
 function toggleSettingInput(type) {
+	
     const area = document.getElementById(type + 'InputArea');
     const isVisible = area.style.display === 'block';
 
@@ -1091,48 +1274,189 @@ function toggleSettingInput(type) {
         area.style.display = 'block';
         const input = area.querySelector('input');
         if (input) input.focus();
+        
+        if (type === 'location') {
+        	  initLocationAutocomplete();
+        	  __locJustOpened = true;
+        	  openLocationSuggestions();
+        }
     }
 }
 
 // 위치 검색
-function searchLocation(event) {
-    const query = event.target.value.trim();
-    const suggestions = document.getElementById('locationSuggestions');
 
-    if (query.length < 2) {
-        suggestions.innerHTML = '';
-        return;
-    }
 
-    // 데모 데이터
-    const locations = [
-        { name: '제주도', sub: '대한민국' },
-        { name: '서울', sub: '대한민국' },
-        { name: '부산', sub: '대한민국' },
-        { name: '해남', sub: '대한민국' },
-        { name: '오사카', sub: '일본' },
-        { name: '도쿄', sub: '일본' },
-        { name: '방콕', sub: '태국' },
-        { name: '파리', sub: '프랑스' },
-        { name: '발리', sub: '인도네시아' },
-        { name: '하와이', sub: '미국' },
-        { name: '뉴욕', sub: '미국' }
-    ].filter(function(loc) { return loc.name.includes(query) || loc.sub.includes(query); });
 
-    suggestions.innerHTML = locations.map(function(loc) {
-        return '<div class="location-item" onclick="selectLocationItem(\'' + loc.name + ', ' + loc.sub + '\')">' +
-            '<i class="bi bi-geo-alt"></i>' +
-            '<span>' + loc.name + ', ' + loc.sub + '</span>' +
-        '</div>';
-    }).join('');
+
+//====== 위치 자동완성(지역) ======
+let regionAbortController = null;
+let regionDebounceTimer = null;
+
+// DOMContentLoaded에서 이벤트를 "JS로" 묶어주면 JSP onfocus/oninput 없어도 됨.
+// 너는 이미 onfocus/oninput을 걸어놨으니, 아래 init만 추가해도 OK.
+async function openLocationSuggestions() {
+	  console.log('[loc] open');
+
+	  const input = document.getElementById('locationInput');
+	  if (!input) return;
+
+	  const v = (input.value || '').trim();
+	  const q = (v && v !== (selectedLocationName || '')) ? v : '';
+
+	  // ✅ 열릴 때(패널 열기 직후)만 한번 select
+	  if (__locJustOpened) {
+	    __locJustOpened = false;
+	    input.select();
+	  }
+
+	  await fetchAndRenderRegions(q);
+	}
+
+function debounceFetchRegions(query) {
+	  if (regionDebounceTimer) clearTimeout(regionDebounceTimer);
+	  regionDebounceTimer = setTimeout(function () {
+	    fetchAndRenderRegions(query);
+	  }, 400);
 }
 
-function selectLocationItem(location) {
-    selectedLocation = location;
-    document.getElementById('locationValue').textContent = location;
-    document.getElementById('locationInput').value = location;
-    document.getElementById('locationSuggestions').innerHTML = '';
-    document.getElementById('locationInputArea').style.display = 'none';
+function onLocationInput(e) {
+	  const el = e && e.target ? e.target : document.getElementById('locationInput');
+	  if (!el) return;
+
+	  const q = (el.value || '').trim();
+	  console.log('[loc] input=', q);
+
+	  // 방향키/ESC/ENTER는 keyup에서 걸러주기(옵션)
+	  if (e && e.type === 'keyup') {
+	    const k = e.key;
+	    if (k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight' || k === 'Escape' || k === 'Enter') return;
+	  }
+
+	  debounceFetchRegions(q);
+	}
+
+
+// 실제 호출 + 렌더
+async function fetchAndRenderRegions(query) {
+	
+	console.log('[loc] base=', window.__CTX__);
+	const url = window.__CTX__ + '/api/regions?keyword=' + encodeURIComponent(query || '') + '&size=10';
+	console.log('[loc] url=', url);
+	
+	console.log('[loc] fetch query=', query);
+  const suggestions = document.getElementById('locationSuggestions');
+  if (!suggestions) return;
+//base는 ''(루트)일 수도 있으니 체크하지 않는다
+const base = (window.__CTX__ ?? '');
+
+if (!suggestions) return;  
+
+  suggestions.style.display = 'block';
+
+  // 이전 요청 취소
+  if (regionAbortController) regionAbortController.abort();
+  regionAbortController = new AbortController();
+
+  try {
+    const url = base + '/api/regions?keyword=' + encodeURIComponent(query || '') + '&size=10';
+
+    const res = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      signal: regionAbortController.signal
+    });
+    
+    console.log('[loc] res status=', res.status);
+
+    if (!res.ok) throw new Error('지역 검색 실패');
+
+    const list = await res.json();
+
+    console.log('[loc] list len=', Array.isArray(list)? list.length : 'not array', list);
+    
+    // 목록 비우고 시작
+    suggestions.innerHTML = '';
+
+    // 결과 없을 때
+    if (!Array.isArray(list) || list.length === 0) {
+      const msg = document.createElement('div');
+      msg.className = 'location-empty';
+
+      if (!query || query.length === 0) {
+        // 포커스 시 기본목록이 비는 경우: "없음" 대신 안내문만
+        msg.textContent = '지역을 입력하면 목록이 표시됩니다';
+      } else {
+        msg.textContent = '검색 결과가 없습니다';
+      }
+
+      suggestions.appendChild(msg);
+      suggestions.style.display = 'block';
+      return;
+    }
+
+    // 결과 렌더: innerHTML 문자열로 만들지 말고 DOM으로 만들기(안전/EL 충돌 없음)
+    for (let i = 0; i < list.length; i++) {
+      const r = list[i] || {};
+      const nm = (r.rgnNm || '').toString();
+      const sub = (r.rgnDetail || '').toString();
+      const no = (r.rgnNo == null ? '' : String(r.rgnNo));
+
+      const item = document.createElement('div');
+      item.className = 'location-item';
+      item.setAttribute('data-no', no);
+
+      const icon = document.createElement('i');
+      icon.className = 'bi bi-geo-alt';
+
+      const span = document.createElement('span');
+      span.textContent = nm;
+
+      if (sub && sub.length > 0) {
+        const small = document.createElement('small');
+        small.style.opacity = '0.7';
+        small.textContent = ' (' + sub + ')';
+        span.appendChild(small);
+      }
+
+      item.appendChild(icon);
+      item.appendChild(span);
+
+      item.addEventListener('click', function () {
+        selectRegionItem(no, nm);
+      });
+
+      suggestions.appendChild(item);
+    }
+
+    suggestions.style.display = 'block';
+
+  } catch (e) {
+    // abort는 정상 흐름
+    if (e && e.name === 'AbortError') return;
+
+    console.error(e);
+    suggestions.innerHTML = '';
+    suggestions.style.display = 'none';
+  }
+}
+
+function closeLocationSuggestions() {
+  const suggestions = document.getElementById('locationSuggestions');
+  if (!suggestions) return;
+  suggestions.innerHTML = '';
+  suggestions.style.display = 'none';
+}
+
+// 선택 시 처리(너가 이미 쓰던 변수/표시 유지)
+function selectRegionItem(rgnNo, rgnNm) {
+  selectedLocationCode = String(rgnNo || '');
+  selectedLocationName = String(rgnNm || '');
+
+  document.getElementById('locationValue').textContent = selectedLocationName;
+  document.getElementById('locationInput').value = selectedLocationName;
+
+  closeLocationSuggestions();
+  document.getElementById('locationInputArea').style.display = 'none';
 }
 
 // 태그 관리
@@ -1223,7 +1547,7 @@ function previewTravellog() {
 
     // 메타 정보
     contentHtml += '<div class="preview-meta">' +
-        '<span><i class="bi bi-geo-alt"></i> ' + (selectedLocation || '위치 미지정') + '</span>' +
+        '<span><i class="bi bi-geo-alt"></i> ' + (selectedLocationName || '위치 미지정') + '</span>' +
         '<span><i class="bi bi-calendar3"></i> ' + document.getElementById('dateValue').textContent + '</span>' +
     '</div>';
 
@@ -1286,13 +1610,6 @@ function previewTravellog() {
     previewModal.show();
 }
 
-// 임시저장
-/* function saveDraft() {
-    const data = collectFormData();
-    localStorage.setItem('travellog_draft', JSON.stringify(data));
-    showToast('임시저장되었습니다.', 'success');
-} */
-
 // 폼 데이터 수집
 function collectFormData() {
     const blocks = [];
@@ -1330,7 +1647,8 @@ function collectFormData() {
         coverImage: coverImageData ? coverImageData.dataUrl : null,
         linkedSchedule: linkedSchedule,
         blocks: blocks,
-        location: selectedLocation,
+        locationName: selectedLocationName,
+        locationCode: selectedLocationCode,
         dateRange: document.getElementById('dateValue').textContent,
         tags: tags,
         visibility: document.getElementById('visibility').value,
@@ -1339,22 +1657,44 @@ function collectFormData() {
     };
 }
 
+// 플러스
+
+
+
 // 뒤로가기
 function goBack() {
-    const blogTitleEl = document.getElementById('blogTitle');
-    const textareaEl = document.querySelector('.editor-block textarea');
-    const hasContent = (blogTitleEl && blogTitleEl.value.trim()) ||
-                      coverImageData ||
-                      document.querySelectorAll('.editor-block').length > 1 ||
-                      (textareaEl && textareaEl.value.trim());
+	  const blogTitleEl = document.getElementById('blogTitle');
+	  const textareaEl = document.querySelector('.editor-block textarea');
 
-    if (hasContent) {
-        if (!confirm('작성 중인 내용이 저장되지 않습니다.\n정말 나가시겠습니까?')) {
-            return;
-        }
-    }
-    window.history.back();
-}
+	  const hasContent =
+	    (blogTitleEl && blogTitleEl.value.trim()) ||
+	    coverImageData ||
+	    document.querySelectorAll('.editor-block').length > 1 ||
+	    (textareaEl && textareaEl.value.trim());
+
+	  if (!hasContent) {
+	    window.history.back();
+	    return;
+	  }
+
+	  Swal.fire({
+	    title: '페이지를 나가시겠어요?',
+	    text: '작성 중인 내용은 저장되지 않습니다.',
+	    icon: 'warning',
+	    showCancelButton: true,
+	    confirmButtonText: '나가기',
+	    cancelButtonText: '취소',
+	    reverseButtons: true,
+	    confirmButtonColor: '#ef4444',   // 빨간색
+	    cancelButtonColor: '#6b7280'
+	  }).then((result) => {
+	    if (result.isConfirmed) {
+	      window.history.back();
+	    }
+	  });
+	}
+
+
 
 function getMainStoryText() {
 	  // ✅ "여행 이야기를 작성하세요..."가 들어있는 첫 text-block textarea만 사용
@@ -1367,7 +1707,7 @@ function getMainStoryText() {
 	  const y = dateObj.getFullYear();
 	  const m = String(dateObj.getMonth() + 1).padStart(2, '0');
 	  const d = String(dateObj.getDate()).padStart(2, '0');
-	  return `\${y}-\${m}-\${d}`;
+	  return y + '-' + m + '-' + d;
 	}
 
 	function isValidDate(d) {
@@ -1376,48 +1716,6 @@ function getMainStoryText() {
 
 // 제출
 function submitTravellog() {
-	
-// 	console.log("submitTravellog VERSION:", submitTravellog.toString().slice(0, 120));
-// 	console.trace("submitTravellog called");
-
-	
-// 	// fp에서 최신값 다시 동기화
-// 	const fp = document.getElementById('travelDateRange')?._flatpickr;
-// 	if (fp?.selectedDates?.length === 2) {
-// 	  travelStartDate = fp.selectedDates[0];
-// 	  travelEndDate = fp.selectedDates[1];
-// 	}
-
-// 	  // ✅ Date 객체만 허용 (문자열 "--" 같은거면 여기서 걸러짐)
-// 	  if (!isValidDate(travelStartDate) || !isValidDate(travelEndDate)) {
-// 	    showToast('여행 기간을 선택해주세요.', 'error');
-// 	    console.log('travelStartDate/endDate invalid =>', travelStartDate, travelEndDate);
-// 	    return;
-// 	  }
-
-	
-// 	  const title = document.getElementById('blogTitle').value.trim();
-// 	  const mainContent = getMainStoryText();
-
-// 	  if (!title) {
-// 	    showToast('제목을 입력해주세요.', 'error');
-// 	    document.getElementById('blogTitle').focus();
-// 	    return;
-// 	  }
-
-// 	  // 내용 필수로 하고 싶으면 주석 해제
-// 	  if (!mainContent) {
-// 	    showToast('여행 이야기를 입력해주세요.', 'error');
-// 	    const firstTextArea = document.querySelector('#blogEditor .text-block textarea');
-// 	    if (firstTextArea) firstTextArea.focus();
-// 	    return;
-// 	  }
-
-// 	  // 날짜 range 필수로 하고 싶으면 주석 해제
-// 	  if (!travelStartDate || !travelEndDate) {
-// 	    showToast('여행 기간을 선택해주세요.', 'error');
-// 	    return;
-// 	  }
 
 	// fp에서 최신값 다시 동기화
   const fp = document.getElementById('travelDateRange')?._flatpickr;
@@ -1457,14 +1755,12 @@ function submitTravellog() {
     return;
   }
 
-  // ✅ 위치 필수
-  if (!selectedLocation || !selectedLocation.trim()) {
-    showToast('위치를 선택해주세요.', 'error');
-    // 위치 입력 영역 열어주기(UX)
-    toggleSettingInput('location');
-    document.getElementById('locationInput')?.focus();
-    return;
-  }
+  if (!selectedLocationCode) {
+	  showToast('위치를 선택해주세요.', 'error');
+	  toggleSettingInput('location');
+	  document.getElementById('locationInput')?.focus();
+	  return;
+	}
 
   // ✅ 본문(원하면 유지)
   const mainContent = getMainStoryText();
@@ -1486,8 +1782,8 @@ function submitTravellog() {
 	    rcdTitle: title,               // ✅ RCD_TITLE
 	    rcdContent: mainContent,       // ✅ RCD_CONTENT (첫 텍스트만)
 	    tripDaysCd: null,
-	    locCd: selectedLocation || null, // ✅ LOC_CD
-
+	    locCd: selectedLocationCode, // ✅ REGION.RGN_NO를 문자열로 저장
+	    
 	    // ✅ 날짜는 YYYY-MM-DD 문자열로 보내기 (서버에서 DATE로 변환/매핑)
 	    startDt: formatDateToYMD(travelStartDate),
 	    endDt: formatDateToYMD(travelEndDate),
@@ -1503,7 +1799,17 @@ function submitTravellog() {
 	  console.log('REQ JSON =>', req);
 	  
 	  const formData = new FormData();
+	  
+	  // 플러스
+	  // blocks JSON 추가
+	  const blocks = collectBlocksForSave();
+	  formData.append("blocks", new Blob([JSON.stringify(blocks)], { type:"application/json" }));
 
+	  // 본문 이미지 파일들 추가
+	  bodyImageFiles.forEach(f => formData.append("bodyFiles", f));
+	  //
+	  
+	  
 	  // 1) JSON req
 	  formData.append(
 	    "req",
@@ -1537,7 +1843,7 @@ function submitTravellog() {
 	      submitBtn.disabled = false;
 	      submitBtn.textContent = '등록';
 	    });
-	}
+}
 
 function initTravelDatePickerForce() {
 	  const dateInput = document.getElementById('travelDateRange');
@@ -1573,13 +1879,7 @@ function initTravelDatePickerForce() {
 	  });
 	}
 
-	document.addEventListener('DOMContentLoaded', function() {
-	  initTravelDatePickerForce();
 
-	  // ✅ 공통 스크립트가 뒤에서 덮어써도, 마지막에 내가 다시 덮어쓰기
-	  setTimeout(initTravelDatePickerForce, 0);
-	  setTimeout(initTravelDatePickerForce, 300); // 혹시 공통에서 setTimeout으로 초기화하는 경우까지 커버
-	});
 
 
 </script>

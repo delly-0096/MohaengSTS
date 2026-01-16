@@ -42,9 +42,16 @@
 	        tr.OPEN_SCOPE_CD AS openScopeCd,
 	        tr.LOC_CD        AS locCd,
 	        mu.NICKNAME      AS nickname,
+	        RG.RGN_NM        AS locName,
 	
 	        -- ✅ 프로필(작성자)
-	        prof.FILE_PATH   AS profilePath,
+	        CASE
+			  WHEN prof.FILE_PATH IS NULL THEN NULL
+			  WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
+			  WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
+			  ELSE prof.FILE_PATH || prof.FILE_NAME
+			END AS profilePath,
+
 	
 	        tr.ATTACH_NO     AS attachNo,
 	        afd.FILE_PATH    AS coverPath,
@@ -67,22 +74,26 @@
 	
 	    FROM TRIP_RECORD tr
 	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
+	    LEFT JOIN REGION RG
+  			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
 	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
 	
 	    -- ✅ 프로필 1장 (MEMBER.MEM_PROFILE = attach_no)
 	    LEFT JOIN (
-	        SELECT attach_no,
-	               file_path,
-	               ROW_NUMBER() OVER (
-	                 PARTITION BY attach_no
-	                 ORDER BY reg_dt DESC, file_no DESC
-	               ) AS rn
-	        FROM ATTACH_FILE_DETAIL
-	        WHERE use_yn = 'Y'
-	          AND file_gb_cd = 'PROFILE'
-	    ) prof
-	      ON prof.attach_no = m.MEM_PROFILE
-	     AND prof.rn = 1
+		    SELECT attach_no,
+		           file_path,
+		           file_name,
+		           ROW_NUMBER() OVER (
+		             PARTITION BY attach_no
+		             ORDER BY reg_dt DESC, file_no DESC
+		           ) AS rn
+		    FROM ATTACH_FILE_DETAIL
+		    WHERE use_yn = 'Y'
+		      AND file_gb_cd = 'PROFILE'
+		) prof
+		  ON prof.attach_no = m.MEM_PROFILE
+		 AND prof.rn = 1
+
 	
 	    -- ✅ 커버 1장 (TRIP_RECORD.ATTACH_NO)
 	    LEFT JOIN (
@@ -166,12 +177,19 @@
 	        tr.OPEN_SCOPE_CD AS openScopeCd,
 	        tr.MAP_DISP_YN   AS mapDispYn,
 	        tr.REPLY_ENBL_YN AS replyEnblYn,
+	        RG.RGN_NM        AS locName,
 	
 	        afd.FILE_PATH    AS coverPath,
 	        mu.NICKNAME      AS nickname,
 	
 	        -- ✅ 프로필 경로
-	        prof.FILE_PATH   AS profilePath,
+	        CASE
+			  WHEN prof.FILE_PATH IS NULL THEN NULL
+			  WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
+			  WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
+			  ELSE prof.FILE_PATH || prof.FILE_NAME
+			END AS profilePath,
+
 	
 	        (SELECT COUNT(*) FROM LIKES
 	          WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO) AS likeCount,
@@ -200,22 +218,26 @@
 	
 	    FROM TRIP_RECORD tr
 	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
+	    LEFT JOIN REGION RG
+  			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
 	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
 	
 	    -- ✅ 프로필 1장
 	    LEFT JOIN (
-	        SELECT attach_no,
-	               file_path,
-	               ROW_NUMBER() OVER (
-	                 PARTITION BY attach_no
-	                 ORDER BY reg_dt DESC, file_no DESC
-	               ) AS rn
-	        FROM ATTACH_FILE_DETAIL
-	        WHERE use_yn = 'Y'
-	          AND file_gb_cd = 'PROFILE'
-	    ) prof
-	      ON prof.attach_no = m.MEM_PROFILE
-	     AND prof.rn = 1
+		    SELECT attach_no,
+		           file_path,
+		           file_name,
+		           ROW_NUMBER() OVER (
+		             PARTITION BY attach_no
+		             ORDER BY reg_dt DESC, file_no DESC
+		           ) AS rn
+		    FROM ATTACH_FILE_DETAIL
+		    WHERE use_yn = 'Y'
+		      AND file_gb_cd = 'PROFILE'
+		) prof
+		  ON prof.attach_no = m.MEM_PROFILE
+		 AND prof.rn = 1
+
 	
 	    -- ✅ 커버 1장
 	    LEFT JOIN (
@@ -323,8 +345,8 @@
 
 <!-- TRIP_RECORD_SEQ -->
 <insert id="insertTripRecordSeq">
-  INSERT INTO TRIP_RECORD_SEQ (RCD_CONN_NO, RCD_NO, RCD_ORDER)
-  VALUES (#{connNo}, #{rcdNo}, #{order})
+  INSERT INTO TRIP_RECORD_SEQ (RCD_CONN_NO, RCD_NO, RCD_ORDER, BLOCK_TYPE, TARGET_PK)
+  VALUES (#{connNo}, #{rcdNo}, #{order}, #{blockType}, #{targetPk})
 </insert>
 
 <!-- TRIP_RECORD_TXT : PK는 SYS_GUID() -->
@@ -379,6 +401,48 @@
 </insert>
 
 
+<select id="selectTripRecordBlocks"
+        parameterType="long"
+        resultType="kr.or.ddit.mohaeng.vo.TripRecordBlockVO">
+
+  SELECT
+    s.RCD_ORDER   AS "order",
+    s.BLOCK_TYPE  AS "blockType",
+    s.TARGET_PK   AS "targetPk",
+
+    t.TXT_CONN    AS "text",
+
+    i.RCD_IMG_DESC AS "desc",
+    afd.FILE_PATH  AS "imgPath"
+
+  FROM TRIP_RECORD_SEQ s
+
+  LEFT JOIN TRIP_RECORD_TXT t
+    ON s.BLOCK_TYPE = 'TEXT'
+   AND s.TARGET_PK  = TO_CHAR(t.RCD_CONN_NO)
+
+  LEFT JOIN TRIP_RECORD_IMG i
+    ON s.BLOCK_TYPE = 'IMAGE'
+   AND s.TARGET_PK  = TO_CHAR(i.RCD_CONN_NO)
+
+  LEFT JOIN (
+    SELECT attach_no, MIN(file_no) AS file_no
+    FROM ATTACH_FILE_DETAIL
+    WHERE use_yn='Y'
+      AND file_gb_cd='ATTACH'
+    GROUP BY attach_no
+  ) pick
+    ON pick.attach_no = i.RCD_IMG
+
+  LEFT JOIN ATTACH_FILE_DETAIL afd
+    ON afd.attach_no = pick.attach_no
+   AND afd.file_no   = pick.file_no
+   AND afd.use_yn    = 'Y'
+
+  WHERE s.RCD_NO = #{rcdNo}
+  ORDER BY s.RCD_ORDER ASC
+
+</select>
 
 
 

@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.community.travellog.report.mapper;
+package kr.or.ddit.mohaeng.report.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
 import kr.or.ddit.mohaeng.vo.ReportVO;

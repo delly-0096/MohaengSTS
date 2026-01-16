@@ -90,8 +90,12 @@ public class TripRecordPageController {
 
         model.addAttribute("likeActiveClass", detail.getMyLiked() == 1 ? "active" : "");
         model.addAttribute("likeIconClass", detail.getMyLiked() == 1 ? "bi-heart-fill" : "bi-heart");
+        
+        model.addAttribute("blocks", tripRecordService.blocks(rcdNo));
 
         // ✅ 너 detail jsp 파일명에 맞추기
         return "community/travel-log-detail";
     }
+    
+    
 }

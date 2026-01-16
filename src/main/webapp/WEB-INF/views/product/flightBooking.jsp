@@ -154,7 +154,7 @@
                             <div class="point-input-group">
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="usePointInput"
-                                           placeholder="0" min="0" max="15000" value="0" disabled><!-- 1000이 넘으면 사용가능하도록 설정 -->
+                                           value="0" oninput="validPoints(this)" disabled><!-- 1000이 넘으면 사용가능하도록 설정 -->
                                     <span class="input-group-text">P</span>
                                 </div>
                                 <div class="point-buttons">
@@ -167,7 +167,7 @@
                                 <p class="point-applied" id="pointAppliedInfo" style="display: none;">
                                     <i class="bi bi-check-circle-fill me-1"></i>
                                     <span id="appliedPointText">0 P</span> 적용됨
-                                    <button type="button" class="point-cancel-btn" onclick="cancelPoints()">취소</button>
+                                   	<button type="button" class="point-cancel-btn" onclick="cancelPoints()"> 취소</button>
                                 </p>
                             </div>
                         </div>
@@ -189,6 +189,7 @@
                                 <input type="checkbox" id="agreeAll" onchange="toggleAllAgree()">
                                 <span><strong>전체 동의</strong></span>
                             </label>
+                            <!-- 보기 모달 -->
                             <div class="agreement-divider">
 	                            <label class="agreement-item">
 	                                <input type="checkbox" class="agree-item" required>
@@ -267,6 +268,10 @@
                             <span class="summary-label">추가 요금</span>
                             <span class="summary-value" id="summaryExtra"></span>
                         </div>
+                        <div class="summary-row" id="pointDiscountRow" style="display: none;">
+                            <span class="summary-label">포인트 사용</span>
+                            <span class="summary-value text-primary" id="summaryPointDiscount">-0원</span>
+                        </div>
                         <div class="summary-row total">
                             <span class="summary-label">총 결제금액</span>
                             <span class="summary-value" id="totalAmount"> 원</span>
@@ -326,6 +331,7 @@ let basePrice = 0;
 let fuelSurcharge = 9900;
 let taxAndFees = 4000;
 let seatSelectionModal;
+let appliedPoints = 0;	// 적용할 포인트
 
 let currentSegmentSelection = 0; 	   // 0: 가는편, 1: 오는편
 let selectedSeatsBySegment = [[], []]; // 구간별 선택된 좌석 저장
@@ -378,8 +384,8 @@ async function main() {
 		body : JSON.stringify({memId : "${user.username}"})
 	});
 	
-	console.log("customData : ", customData);		// 이 정보로 입력, session에도 저장?
 	customData = await userData.json();				
+	console.log("customData : ", customData);		// 이 정보로 입력, session에도 저장?
 	
 	const bookerName = document.querySelector("#bookerName");
 	const bookerPhone = document.querySelector("#bookerPhone");
@@ -445,9 +451,9 @@ async function main() {
 		
 		sessionStorage.setItem("reservationList", JSON.stringify(reservationList));
 	    
-	    // 필수 약관 체크 확인 - 이것도 테이블에 담기
+	    // 필수 약관 체크 확인
 	    let allAgreed = true;
-	    document.querySelectorAll('.agree-item').forEach(function(agree) {
+	    document.querySelectorAll('.agree-item').forEach(agree => {
 	        if (!agree.checked) allAgreed = false;
 	    });
 
@@ -465,6 +471,8 @@ async function main() {
 				bookingData.flights[0].startDt + "_" + bookingData.flights[0].arrAirportNm + "_" + bookingData.flights[0].airlineNm
 				+ bookingData.flights[1].startDt + "_" + bookingData.flights[1].arrAirportNm + "_" + bookingData.flights[1].airlineNm
 				: "_" +bookingData.flights[0].startDt + "_" + bookingData.flights[0].arrAirportNm + "_" + bookingData.flights[0].airlineNm;
+		
+		// usePoint = appliedPoints // 정보 담아야 사용 포인트 적용 가능
 		
 		const timeStamp = Date.now();
 		await widgets.requestPayment({
@@ -497,6 +505,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     cabin.innerHTML = bookingData.flights[0].cabinClass;
     initFlightDisplay();
 	
+    console.log("초기 selectedSeatsBySegment[0] : ", selectedSeatsBySegment[0]);
+	console.log("초기 selectedSeatsBySegment[1] : ", selectedSeatsBySegment[1]);
+    
 	// 탑승객 정보 초기 세팅
 	passengerType.adult = bookingData.flights[0].adult;
     passengerType.child = bookingData.flights[0].child;
@@ -578,6 +589,11 @@ function createFlightCardHtml(flight, labelClass) {
 	             </div>
 	             <div class="flight-summary-details">
 	                 <span class="flight-airline">\${flight.airlineNm} (\${flight.flightSymbol})</span>
+					 <div class="flight-baggage">
+					 	<i class="bi bi-luggage-fill"></i>
+					 	<span>위탁 수하물 \${flight.checkedBaggage} kg</span>
+					 	<span> 기내 수하물 \${flight.carryOnBaggage} kg</span>
+					 </div>
 	                 <span class="flight-price">
 	                 	<div class="price-item adult">
 		                 	<span class="label">성인</span> 
@@ -596,9 +612,6 @@ function createFlightCardHtml(flight, labelClass) {
  	         </div>
  	     </div>`
  	     // 짐 표시할지 여부
-//     <div class="flight-baggage">
-// 	<i class="bi bi-luggage-fill"></i><span>\${data.checkedBaggage} kg</span>
-// </div>
 }
 
 // 사이드바 구간 HTML 생성
@@ -709,7 +722,7 @@ function ageCheck(userBirth, type){
 		 return userBirth.focus();
 	}
 	
-	if(type === "소아" && !(age < 2 || age >= 12)){
+	if(type === "소아" && (age < 2 || age >= 12)){
 		 showToast('소아는 탑승일 기준 만 2세~11세만 가능합니다.', 'warning');
 		 userBirth.value = "";
 		 return userBirth.focus();
@@ -854,6 +867,77 @@ function updateCountButtons() {
     if (passengerType.infant >= passengerType.adult) infantPlus.disabled = true;
 }
 
+function validPoints(point){
+	point.value = point.value.replace(/[^0-9]/g, '');	// 숫자만 가능하게
+	point.value = point.value.replace(/^0+/, '');		// 0으로 시작하는 것을 없앰
+	
+	if (point.value > customData.point){
+		point.focus();
+		point.select();
+        showToast('보유 포인트를 초과할 수 없습니다.', 'error');
+	}
+}
+
+// 전체 포인트 사용
+function useAllPoints() {
+	console.log("customData.point : ", customData.point);
+    document.getElementById('usePointInput').value = customData.point;
+}
+
+// 포인트 적용
+function applyPoints() {
+    var inputPoints = parseInt(document.getElementById('usePointInput').value) || 0;
+//     var subtotal = pricePerPerson * peopleCount;
+
+    // 유효성 검사
+    if (inputPoints < 0) {
+        showToast('올바른 포인트를 입력해주세요.', 'error');
+        return;
+    }
+
+    if (inputPoints > 0 && inputPoints < 1000) {
+        showToast('최소 1,000P 이상부터 사용 가능합니다.', 'warning');
+        return;
+    }
+
+    if (inputPoints > customData.point) {
+        showToast('보유 포인트를 초과할 수 없습니다.', 'error');
+        document.getElementById('usePointInput').value = customData.point;
+        return;
+    }
+
+    if (inputPoints > totalFlightPrice) {
+        showToast('결제 금액을 초과할 수 없습니다.', 'warning');
+        inputPoints = totalFlightPrice;
+        document.getElementById('usePointInput').value = inputPoints;
+    }
+
+    // 포인트 적용
+    appliedPoints = inputPoints;
+
+    if (appliedPoints > 0) {
+        // UI 업데이트
+        document.getElementById('pointAppliedInfo').style.display = 'flex';
+        document.getElementById('appliedPointText').textContent = appliedPoints.toLocaleString() + ' P';
+        document.getElementById('pointDiscountRow').style.display = 'flex';
+        document.getElementById('summaryPointDiscount').textContent = '-' + appliedPoints.toLocaleString() + '원';
+        showToast(appliedPoints.toLocaleString() + 'P가 적용되었습니다.', 'success');
+    } else {
+        cancelPoints();
+    }
+    calculateTotal();
+}
+
+// 포인트 적용 취소
+function cancelPoints (){
+	console.log("취소");
+	appliedPoints = 0;
+	// 적용 취소
+	calculateTotal();
+	document.getElementById('pointAppliedInfo').style.display = 'none';
+    document.getElementById('pointDiscountRow').style.display = 'none';
+}
+
 // 총 금액 계산
 function calculateTotal() {
 	let totalBaseFare = 0;	// 기본 요금 합산 금액
@@ -890,13 +974,16 @@ function calculateTotal() {
     
     totalFlightPrice = totalBaseFare + extraBaggageFee;		// 총 결제 금액
 
+    
     // 요금 표시 업데이트
     document.getElementById('summaryFare').textContent = totalBaseFare.toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryFuel').textContent = (fuelSurcharge * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     
-    document.getElementById('totalAmount').textContent = totalFlightPrice.toLocaleString() + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
-    document.getElementById('payBtnText').textContent = totalFlightPrice.toLocaleString();
+    
+    let pointAppliedPrice = appliedPoints !== 0 ? (totalFlightPrice - appliedPoints).toLocaleString() : totalFlightPrice.toLocaleString();
+    document.getElementById('totalAmount').textContent = pointAppliedPrice + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
+    document.getElementById('payBtnText').textContent = pointAppliedPrice;
     
     if (widgets) {
         widgets.setAmount({
@@ -925,6 +1012,7 @@ function openSeatSelection() {
     seatSelectionModal.show();
 }
 
+// 오는편 가는편에 따른 버튼 / 다음 실행할 함수
 function updateSeatModalTitle() {
     const title = currentSegmentSelection === 0 ? "가는 편 좌석 선택" : "오는 편 좌석 선택";
     document.querySelector('#seatSelectionModal .modal-title').textContent = title;
@@ -960,48 +1048,28 @@ async function getOccupiedSeats(){
     }
 }
 
-// 랜덤 좌석 할당
+// 랜덤 좌석 할당 - occupiedSeatsList - db에 점유된 좌석, selectedSeatsBySegment - 현재 좌석
 async function randomSeatAssignment(){
-	// type = infant 가 있을때로 확인해서 선택하기.
-	console.log("randomSeatAssignment 실행");
 	
-	// occupiedSeatsList - db에 점유된 좌석
-	// selectedSeatsBySegment - 현재 좌석
     const randColumns = ['A', 'B', 'C', 'D', 'E', 'F'];
-    const randRows = 20;
     
-    console.log("selectedSeatsBySegment size : ", selectedSeatsBySegment.size);
-    console.log("selectedSeatsBySegment 0 : ", selectedSeatsBySegment[0]);
-    console.log("selectedSeatsBySegment 1 : ", selectedSeatsBySegment[1]);
-    
-    console.log("occupiedSeatsList  size : ", occupiedSeatsList.size);
-    console.log("occupiedSeatsList 0 : ", occupiedSeatsList[0]);
-    console.log("occupiedSeatsList 1 : ", occupiedSeatsList[1]);
-    
-    // rand 숫자 -> 생성 (1 ~ 20) + (A ~ F) 사이
-    
-    let count = bookingData.totalSegments;	// 총 segment
-    
-//     if () 
-    // currentSegmentSelection = 1 (1번은 들어갔을떄) -> selectedSeatsBySegment[번호]의 길이가 totalPeople보다 작으면 그 수만큼 받아야됨
-    // currentSegmentSelection = 0 -> 2번해야됨 (totalPeople 수 만큼)
-    
-    randColumns.forEach(col => {
-	    
-	    for(let i = 1; i <= randRows; i++){
-	    	const seat = i + col;
-		    const randEng = parseInt(Math.random() * randColumns.length);
-		    const randNum = parseInt(Math.random() * 20) + 1;
-		    const randSeat = randNum + randEng;	// 랜덤수 
+    for (let i = 0; i < bookingData.flights.length; i++) {
+    	while (selectedSeatsBySegment[i].length < totalPeople) {
+	    	
+		    const randCode = randColumns[parseInt(Math.random() * randColumns.length)];
 		    
-	    	if (selectedSeatsBySegment[index].includes(randSeat) || occupiedSeatsList[index].includes(randSeat)){
-	    		
-	    	} else {
-	    		
-	    	}
-	    }
-    });
-	
+		    // 랜덤 좌석
+		    const randSeat = bookingData.flights[0].cabinClass === "일반석" 
+		    	? (parseInt(Math.random() * 17) + 4) + randCode
+	            : (parseInt(Math.random() * 3) + 1) + randCode;
+		   	
+		    // 좌석이 선점 안되었을때
+	    	if (!selectedSeatsBySegment[i].includes(randSeat) && !occupiedSeatsList[i].includes(randSeat)){
+	    		console.log("randSeat : ", randSeat);
+	    		selectedSeatsBySegment[i].push(randSeat);
+	    	} 
+    	}
+    }
 }
 
 // 좌석 배치 초기화

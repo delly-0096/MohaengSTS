@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.community.chat.service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -273,11 +274,10 @@ public class ChatServiceImpl implements IChatService{
 	@Override
 	public void updateLastReadMessage(Long chatId, String memId) {
 		chatMapper.updateLastReadMessage(chatId, memId);
-		
 	}
 
 	/**
-	 *	<p> 채팅방 파일 업로드  </p>
+	 *	<p> 채팅방 파일 업로드 </p>
 	 *	@date 2026.01.15
 	 *	@author kdrs
 	 *	@param chatId 채팅방 각각의 id
@@ -286,32 +286,26 @@ public class ChatServiceImpl implements IChatService{
 	@Override
 	@Transactional
 	public Map<String, Object> uploadChatFile(MultipartFile file, Long chatId, int memNo) {
-		Map<String, Object> result = new HashMap<>();
 		
-		try {
-			// 기존 파일 서비스의 saveFile 호출
-			int attachNo = fileService.saveFile(file, memNo);
-			
-			if (attachNo > 0) {
-				// 저장된 파일의 상세 정보 가져오기
-				AttachFileDetailVO detail = fileService.getProfileFile(attachNo);
-				
-				result.put("success", true);
-                result.put("fileUrl", "/upload" + detail.getFilePath()); // 브라우저 접근 경로
-                result.put("originName", detail.getFileOriginalName());
-                result.put("fileSize", detail.getFileSize());
-                result.put("fileExt", detail.getFileExt());
-                result.put("attachNo", attachNo);
-			} else {
-				result.put("success", false);
-			}
-			
-		} catch (Exception e) {
-            log.error("채팅 파일 업로드 중 에러: {}", e.getMessage());
-            result.put("success", false);
-            result.put("message", e.getMessage());
-		}
-		
-		return result;
+		int attachNo = fileService.saveFiles(Collections.singletonList(file), "chat", "CHAT", memNo);
+	    
+	    Map<String, Object> result = new HashMap<>();
+	    if (attachNo > 0) {
+	        // 2. 상세 정보 조회를 통해 DB에 저장된 실제 경로 가져오기
+	        List<AttachFileDetailVO> details = fileService.getAttachFileDetails(attachNo);
+	        if (details != null && !details.isEmpty()) {
+	            AttachFileDetailVO detail = details.get(0);
+	            
+	            result.put("success", true);
+	            result.put("fileUrl", "/upload" + detail.getFilePath()); 
+	            result.put("originName", detail.getFileOriginalName());
+	            result.put("fileSize", detail.getFileSize());
+	            result.put("fileExt", detail.getFileExt());
+	            result.put("attachNo", detail.getAttachNo()); 
+	        }
+	    } else {
+	        result.put("success", false);
+	    }
+	    return result;
 	}
 }

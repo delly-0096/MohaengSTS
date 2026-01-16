@@ -194,23 +194,25 @@
 	
 	<!-- 채팅 메시지 insert -->
 	<insert id="insertMessage" parameterType="kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO">
-    INSERT INTO CHAT (
-        CHAT_NO
-        , CHAT_ID
-        , CHAT_DESC
-        , CHAT_SENDER_ID
-        , CHAT_SENDTIME
-        , CHAT_TYPE
-        , CHAT_DEL
-    ) VALUES (
-        SEQ_CHAT_MSG.NEXTVAL
-        , #{chatId}
-		, #{message}
-        , #{memId}
-        , SYSDATE
-        , #{type}
-        , 'N'
-    )
+	    INSERT INTO CHAT (
+	        CHAT_NO
+	        , CHAT_ID
+	        , CHAT_DESC
+	        , CHAT_SENDER_ID
+	        , CHAT_SENDTIME
+	        , CHAT_TYPE
+	        , CHAT_ATCH
+	        , CHAT_DEL
+	    ) VALUES (
+	        SEQ_CHAT_MSG.NEXTVAL
+	        , #{chatId}
+			, #{message}
+	        , #{memId}
+	        , SYSDATE
+	        , #{type}
+	        , #{chatAtch}
+	        , 'N'
+	    )
 	</insert>
 	
 	<!-- 채팅방 과거 메시지 내역 가져오기 -->

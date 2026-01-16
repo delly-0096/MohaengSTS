@@ -1140,7 +1140,7 @@
 }
 
 .chat-message.mine .chat-file-name {
-    color: white;
+    color: #333;
 }
 
 .chat-file-size {
@@ -2048,7 +2048,7 @@ function createChatRoom() {
 		const chatId = data.chatId;
 
 	    joinChatRoom(chatId);
-	    connectChat(chatId);   // ✅ chatId 직접 전달
+	    connectChat(chatId);
 	    
 		// 서버 기준으로 채팅방 목록 다시 불러오기
 		loadChatRooms();
@@ -2087,9 +2087,9 @@ function connectChat(chatId) {
             }
             
             // 중복 렌더링 방지: 메시지 타입이 CHAT일 때만 렌더링
-            if(data.type === 'CHAT') {
+            if (data.type === 'CHAT' || data.type === 'IMAGE' || data.type === 'FILE') {
 		        renderChatMessage(data);
-		    } 
+		    }
 		    // 3. 시스템 메시지 (입장/퇴장)
 		    else if (data.type === 'ENTER' || data.type === 'LEAVE') {
 		        console.log("📢 시스템 메시지 처리:", data.type);
@@ -2127,21 +2127,24 @@ function connectChat(chatId) {
 
 //=================== 메시지 렌더링 ======================
 function renderChatMessage(data) {
-	const box = document.getElementById('chatMessages');
-	if (!box || data.type !== 'CHAT') return;
-	
-	 // 환영 메시지 제거
-	const welcomeMsg = box.querySelector('.chat-welcome-message');
-	if (welcomeMsg) welcomeMsg.remove();
-	
-	const isMine = (data.memId === currentUser.id);
-	const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-	
-	if (data.type === 'CHAT') {
-	    addChatMessage(data.sender, data.message, time, isMine);
-	} else {
-	    addSystemMessage(data.message);
-	 }
+    const box = document.getElementById('chatMessages');
+    if (!box) return;
+
+    const isMine = (data.memId === currentUser.id);
+    const time = data.sendTime || '시간미상';
+
+    if (data.type === 'IMAGE') {
+        addImageMessage(data.sender, data.message, time, isMine);
+    } else if (data.type === 'FILE') {
+        try {
+            // 💡 파일 정보는 data.message를 JSON.parse 해서 가져오는 거지, 
+            // files[0] 처럼 접근하는 게 아닙니다!
+            const fileData = JSON.parse(data.message);
+            addFileMessage(data.sender, fileData.fileName, fileData.fileSize, time, isMine, fileData.fileUrl);
+        } catch(e) { console.error("파일 파싱 에러", e); }
+    } else {
+        addChatMessage(data.sender, data.message, time, isMine);
+    }
 }
 
 
@@ -2174,6 +2177,9 @@ function joinChatRoom(chatId) {
      		showToast(data.message, 'warning');
      		return;
      	}
+     	
+     	 currentChatRoom = data.room;
+     	 currentChatId = chatId;
      	
      	 // 채팅 목록 닫기
      	 closeChatRoomList();
@@ -2329,27 +2335,19 @@ async function loadPreviousMessages(chatId) {
         console.log("받아온 이전 메시지들:", messages); 
 
         const chatMessagesEl = document.getElementById('chatMessages');
-        if (!chatMessagesEl) {
-        	console.error("❌ chatMessages 요소를 찾을 수 없습니다.");
-            return;
-        }
-
         chatMessagesEl.innerHTML = '';
             
         if (messages && messages.length > 0) {
             messages.forEach((msg, index) => {
-                try {
-			        const displayNickname = msg.memNickname || msg.memName || '익명';
-                    // 개별 메시지 렌더링 시도
+                try {                    
                     renderChatMessage({
-                        sender: displayNickname, 
-                        message: msg.chatDesc || '(내용 없음)',
-                        type: 'CHAT',
-                        memId: msg.chatSenderId || '',
-                        sendTime: typeof formatChatTime === 'function' ? formatChatTime(msg.chatSendtime) : '시간미상'
+                        sender: msg.memNickname || '익명', 
+                        message: msg.chatDesc, 
+                        type: msg.chatType,
+                        memId: msg.chatSenderId,
+                        sendTime: formatChatTime(msg.chatSendtime)
                     });
                 } catch (renderError) {
-                    // 특정 메시지(null 등)에서 에러가 나도 로그만 찍고 다음으로 넘어감
                     console.warn(`⚠️ ${index}번째 메시지 렌더링 실패:`, renderError);
                 }
             });
@@ -2475,25 +2473,33 @@ function toggleChatUserList() {
 }
 
 // ==================== 메시지 전송/수신 ====================
-function sendMessage() {
-    const input = document.getElementById('chatInput');
-    const content = input.value.trim();
-    if (!content) return;
-    
+function sendSocketMessage(chatData) {
     if (!stompClient || !currentChatId) {
         console.warn('❌ STOMP not connected', stompClient, currentChatId);
         showToast('채팅 서버에 연결되지 않았습니다.', 'warning');
         return;
     }
     
-    stompClient.send('/app/chat/send', {}, JSON.stringify({
+    const payload = {
         chatId: parseInt(currentChatId),
         sender: currentUser.nickname,
-        type: 'CHAT',
-        message: content,
         memId: currentUser.id,
-        memNo: currentUser.memNo 
-    }));
+        memNo: currentUser.memNo,
+        ...chatData // message, type, chatAtch 등이 여기서 덮어씌워짐
+    };
+
+    stompClient.send('/app/chat/send', {}, JSON.stringify(payload));
+}
+
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const content = input.value.trim();
+    if (!content) return;
+    
+    sendSocketMessage({
+        type: 'CHAT',
+        message: content
+    });
 
     input.value = '';
 }
@@ -2544,6 +2550,8 @@ function addChatMessage(sender, message, time, isMine) {
         updateUnreadBadge();
     }
 }
+
+
 
 // 시스템 메시지 추가
 function sendSystemMessage(action) {
@@ -2623,6 +2631,45 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// 시간 설정하기
+function formatChatTime(dateStr) {
+if (!dateStr) return '시간미상';
+    
+    // 1. 서버 날짜 객체 생성
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+
+    // 💡 2. 'now' 변수 선언 (이게 없어서 에러가 났던 겁니다!)
+    const now = new Date();
+    
+    // 3. 오늘인지 판별
+    const isToday = (
+        date.getFullYear() === now.getFullYear() &&
+        date.getMonth() === now.getMonth() &&
+        date.getDate() === now.getDate()
+    );
+
+    // 4. 시간 포맷팅 (오전/오후 HH:mm)
+    let hours = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const ampm = hours >= 12 ? '오후' : '오전';
+    hours = hours % 12 || 12;
+
+    const timeStr = ampm + ' ' + hours + ':' + minutes;
+
+    if (isToday) {
+        // 오늘이면: "오후 12:13"
+        return timeStr;
+    } else {
+        // 어제 이전이면: "26.01.15 오후 12:13"
+        const year = date.getFullYear().toString().slice(-2);
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day = date.getDate().toString().padStart(2, '0');
+        
+        return year + '.' + month + '.' + day + ' ' + timeStr;
+    }
+}
+
 // ==================== 채팅 파일/이미지 업로드 ====================
 
 // 이미지 업로드 열기
@@ -2663,18 +2710,22 @@ function handleImageUpload(event) {
     // 서버로 파일 업로드
     const formData = new FormData();
     formData.append('file', file);
-    formData.appen('chatId', currentChatId);	// 현재 참여중인 방 ID
+    formData.append('chatId', currentChatId);	// 현재 참여중인 방 ID
     
     fetch(api('/chat/upload'), {
     	method : 'POST',
-    	bodd : formData
+    	body : formData
     })
     .then(res => res.json())
     .then(data => {
-    	if(data.success {
-    		// 업로드 성공 시 소켓으로 파일 메시지 전송
-    		sendMessage('IMAGE', data.fileUrl);
-    		showToast('이미지가 전송되었습니다.' + 'success');
+    	if(data.success) {
+    		sendSocketMessage({
+                type: 'IMAGE',
+                message: data.fileUrl,
+                chatAtch: data.attachNo
+            });
+    		console.log("서버에서 받은 attachNo:", data.attachNo);
+    		showToast('이미지가 전송되었습니다.', 'success');
     	} else {
     		showToast('업로드 실패 : ' + data.message, 'error');
     	}
@@ -2686,54 +2737,54 @@ function handleImageUpload(event) {
 
 // 파일 업로드 처리
 function handleFileUpload(event) {
-    const file = event.target.files[0];
+	const file = event.target.files[0];
     if (!file) return;
 
-    // 파일 크기 확인 (10MB 제한)
-    if (file.size > 10 * 1024 * 1024) {
-        showToast('파일은 10MB 이하만 업로드 가능합니다.', 'warning');
-        return;
-    }
-
-    const formData = new formData();
+    const formData = new FormData(); // 💡 대문자 F 확인!
     formData.append('file', file);
     formData.append('chatId', currentChatId);
     
     fetch(api('/chat/upload'), {
-    	method : 'POST',
-    	body : formData
+        method : 'POST',
+        body : formData
     })
     .then(res => res.json())
     .then(data => {
-    	if(data.success) {
-    		// 파일은 파일명, 사이즈 등을 JSON 형태로 소켓 전송
-    		const fileInfo = JSON.stringify({
-    			fileName : data.originName,
-    			fileSize: data.fileSize,
-                fileUrl: data.fileUrls
-    		});
-    		sendMessage('FILE', fileInfo);
-    		showToast('파일이 전송되었습니다.', 'success');
-    	}
+        if(data.success) {
+            // 💡 서버가 준 originName을 fileName으로 확실히 매칭!
+            const fileInfo = JSON.stringify({
+                fileName : data.originName, 
+                fileSize : data.fileSize,
+                fileUrl  : data.fileUrl
+            });
+
+            sendSocketMessage({
+                type: 'FILE',
+                message: fileInfo,
+                chatAtch: data.attachNo
+            });
+
+            showToast('파일 전송 완료!', 'success');
+        }
     });
-   	
     event.target.value = '';
 }
 
 //소켓 메시지 수신부 
 function onMessageReceived(payload) {
-    const chat = JSON.parse(payload.body);
-    const isMine = (chat.senderId === currentUser.id);
-    const time = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+	try {
+        const chat = JSON.parse(payload.body);
+        console.log("수신된 데이터:", chat);
 
-    if (chat.type === 'IMAGE') {
-        addImageMessage(chat.senderName, chat.content, time, isMine);
-    } else if (chat.type === 'FILE') {
-        const fileData = JSON.parse(chat.content);
-        addFileMessage(chat.senderName, fileData.fileName, fileData.fileSize, time, isMine);
-    } else {
-        // 일반 텍스트 메시지 처리
-        addMessage(chat.senderName, chat.content, time, isMine);
+        renderChatMessage({
+            sender: msg.memNickname || '익명', 
+            message: msg.chatDesc, 
+            type: msg.chatType,
+            memId: msg.chatSenderId,
+            sendTime: formatChatTime(msg.chatSendtime)
+        });
+    } catch (e) {
+        console.error("메시지 수신 에러:", e);
     }
 }
 
@@ -2762,26 +2813,23 @@ function addImageMessage(sender, imageUrl, time, isMine) {
 }
 
 // 파일 메시지 추가
-function addFileMessage(sender, fileName, fileSize, time, isMine) {
-    const messagesEl = document.getElementById('chatMessages');
-
-    // 환영 메시지 제거
-    const welcomeMsg = messagesEl.querySelector('.chat-welcome-message');
-    if (welcomeMsg) welcomeMsg.remove();
-
-    const initial = sender.charAt(0).toUpperCase();
-    const fileSizeText = formatFileSize(fileSize);
-    const fileIcon = getFileIcon(fileName);
+function addFileMessage(sender, fileName, fileSize, time, isMine, fileUrl) {
+const messagesEl = document.getElementById('chatMessages');
+    
+    // 인자로 받은 fileName이 없을 때를 대비한 안전장치
+    const displayFileName = fileName || "알 수 없는 파일";
+    const fileSizeText = formatFileSize(fileSize); // 아까 고친 NaN 방어용 함수
+    const fileIcon = getFileIcon(displayFileName);
 
     const messageHtml =
         '<div class="chat-message' + (isMine ? ' mine' : '') + '">' +
-            '<div class="chat-message-avatar">' + initial + '</div>' +
+            '<div class="chat-message-avatar">' + sender.charAt(0).toUpperCase() + '</div>' +
             '<div class="chat-message-content">' +
                 '<span class="chat-message-sender">' + sender + '</span>' +
-                '<div class="chat-message-file" onclick="downloadFile(\'' + fileName + '\')">' +
+                '<div class="chat-message-file" style="cursor:pointer;" onclick="downloadFile(\'' + displayFileName + '\', \'' + fileUrl + '\')">' +
                     '<div class="chat-file-icon"><i class="bi ' + fileIcon + '"></i></div>' +
                     '<div class="chat-file-info">' +
-                        '<span class="chat-file-name">' + escapeHtml(fileName) + '</span>' +
+                        '<span class="chat-file-name">' + displayFileName + '</span>' +
                         '<span class="chat-file-size">' + fileSizeText + '</span>' +
                     '</div>' +
                 '</div>' +
@@ -2795,6 +2843,10 @@ function addFileMessage(sender, fileName, fileSize, time, isMine) {
 
 // 파일 크기 포맷
 function formatFileSize(bytes) {
+    if (bytes === 0) return '0 B';
+    // 숫자가 아니거나 값이 없으면 '0 B' 반환 (NaN 방지)
+    if (!bytes || isNaN(bytes)) return '0 B'; 
+    
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -2802,6 +2854,10 @@ function formatFileSize(bytes) {
 
 // 파일 아이콘 결정
 function getFileIcon(fileName) {
+	if (!fileName || typeof fileName !== 'string' || !fileName.includes('.')) {
+        return 'fa-file-alt'; // 기본 아이콘
+    }
+	try {
     const ext = fileName.split('.').pop().toLowerCase();
     const iconMap = {
         'pdf': 'bi-file-earmark-pdf',
@@ -2814,6 +2870,9 @@ function getFileIcon(fileName) {
         'mp4': 'bi-file-earmark-play', 'avi': 'bi-file-earmark-play', 'mov': 'bi-file-earmark-play'
     };
     return iconMap[ext] || 'bi-file-earmark';
+    } catch (e) {
+        return 'fa-file-alt';
+    }
 }
 
 // 이미지 미리보기
@@ -2843,10 +2902,24 @@ function closeImagePreview() {
     }
 }
 
-// 파일 다운로드 (데모)
-function downloadFile(fileName) {
-    showToast('"' + fileName + '" 다운로드를 시작합니다.', 'info');
-    // 실제로는 서버에서 파일을 다운로드하는 로직 구현
+// 파일 다운로드
+function downloadFile(fileName, fileUrl) {
+	// fileUrl이 없거나 JSON 형태({로 시작)면 실행 차단
+	if (!fileUrl || fileUrl.startsWith('{')) {
+        console.error("❌ 잘못된 파일 경로:", fileUrl);
+        showToast("파일 경로가 올바르지 않습니다.", "error");
+        return;
+    }
+    
+    // fileName이 없으면 기본값 설정
+    const downloadName = fileName || 'download_file';
+    
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.download = downloadName; 
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 //==================== 채팅 ESC로 닫기 ====================

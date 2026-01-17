@@ -29,8 +29,8 @@
 					  FROM COMMENTS
 					  WHERE CMNT_NO = #{parentCmntNo}
 					    AND TARGET_TYPE = 'TALK'
-					    AND TARGET_NO = #{targetNo}
-					</select>
+					    AND TARGET_NO = #{boardNo}
+				</select>
 
 
 				
@@ -64,7 +64,7 @@
 					SET CMNT_STATUS = 1,   
 					    MOD_DT = SYSDATE
 					WHERE CMNT_NO = #{value}
-					</update>
+					</update >
 										
 	</mapper>
 

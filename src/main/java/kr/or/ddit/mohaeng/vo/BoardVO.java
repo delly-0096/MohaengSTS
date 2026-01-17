@@ -37,6 +37,8 @@ public class BoardVO {
 	private List<BoardTagVO> boardTagList;
 	private List<BoardFileVO> boardFileList;
 	private List<MultipartFile> boardFile;
+	private List<CommentVO> commentList;
+	
 	
 	// 작성자 정보
 	private String writerId;        // MEM_USER.MEM_ID

@@ -2552,7 +2552,7 @@ function minimizeChat() {
     sessionStorage.setItem('activeChatId', currentChatId);
     sessionStorage.setItem('chatWindowState', 'MIN');
     }
-}
+
 
 //채팅 최대화
 function maximizeChat() {

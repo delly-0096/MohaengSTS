@@ -11,21 +11,43 @@
         , ACC_CAT_CD
         , STAR_GRADE
         , ZIP
+        , AREA_CODE
+        , SIGUNGU_CODE
         , ADDR1
         , ADDR2
         , TOTAL_ROOM_CNT
+        , ACC_NAME
+        , ACC_FILE_PATH
+        , MAPX
+        , MAPY
+        , LDONG_REGN_CD
+        , LDONG_SIGNGU_CD
     ) VALUES (
           SEQ_ACCOMMODATION.NEXTVAL
-        , #{tripProdNo}
+        , SEQ_TRIP_PROD_NO.NEXTVAL
         , #{apiContentId}
         , #{accCatCd}
         , #{starGrade}
         , #{zip}
+        , #{areaCode}
+        , #{sigunguCode}
         , #{addr1}
         , #{addr2}
         , #{totalRoomCnt}
+        , #{accName}
+        , #{accFilePath}
+        , #{mapx}
+        , #{mapy}
+        , #{ldongRegnCd}
+        , #{ldongSignguCd}
     )
 	</insert>
+	
+	<select id="checkDuplicate" parameterType="string" resultType="int">
+        SELECT COUNT(*)
+        FROM ACCOMMODATION
+        WHERE API_CONTENT_ID = #{contentId}
+    </select>
 
 	<!-- 숙소 상세 정보와 시설 정보 조인 -->
 	<select id="getAccommodationDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
@@ -42,6 +64,51 @@
 	    FROM ACCOMMODATION A
 	    LEFT JOIN ACC_FACILITY F ON A.ACC_NO = F.ACC_NO
 	    WHERE A.ACC_NO = #{accNo}
+	</select>
+	
+	<!-- 숙소 전체 목록 가져오기 -->
+	<select id="selectAccommodationList" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	    SELECT 
+	          A.ACC_NO
+	        , A.ACC_NAME
+	        , A.ADDR1
+	        , A.ACC_CAT_CD
+	        , A.ACC_FILE_NO
+	        , A.ACC_FILE_PATH
+	        , A.STAR_GRADE
+	        , A.TOTAL_ROOM_CNT
+	        , A.MAPX
+	        , A.MAPY
+	        , A.AREA_CODE
+	        , A.SIGUNGU_CODE
+	        , AF.WIFI_YN		
+			, AF.PARKING_YN
+			, AF.BREAKFAST_YN
+			, AF.POOL_YN
+			, AF.GYM_YN
+			, AF.SPA_YN
+			, AF.RESTAURANT_YN
+			, AF.BAR_YN
+			, AF.ROOM_SERVICE_YN
+			, AF.LAUNDRY_YN
+			, AF.SMOKING_AREA_YN
+			, AF.PET_FRIENDLY_YN
+	       , (SELECT MIN(PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MIN_PRICE
+	       , (SELECT MAX(DISCOUNT) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MAX_DISCOUNT
+	       , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) 
+           FROM ROOM_TYPE RT 
+           WHERE RT.ACC_NO = A.ACC_NO) AS FINAL_PRICE
+	    FROM ACCOMMODATION A
+	    LEFT OUTER JOIN ACC_FACILITY AF ON A.ACC_NO = AF.ACC_NO
+	    <where>
+	    	<if test="areaCode != null and areaCode != ''">
+	    		AND A.AREA_CODE = #{areaCode}
+	    	</if>
+	    	<if test="keyword != null and keyword != ''">
+	    		AND (A.ACC_NAME LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
+	    	</if>
+	    </where>
+	    ORDER BY ACC_NO DESC
 	</select>
 	
 </mapper>

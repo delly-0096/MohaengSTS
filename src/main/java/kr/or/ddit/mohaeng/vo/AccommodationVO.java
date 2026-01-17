@@ -64,9 +64,38 @@ public class AccommodationVO {
 	/**
 	 * 지역 코드
 	 */
-    private String areacode;	
+    private String areaCode;	
     /**
      * 시군구 코드
      */
-    private String sigungucode; 
+    private String sigunguCode; 
+    /**
+     * 법정동 코드
+     */
+    private String ldongRegnCd;
+    /**
+     * 법정동 시군구 코드
+     */
+    private String ldongSignguCd; 
+    
+    
+    // ACC_FACILITY
+    private String wifiYn; /* WiFi 제공 여부 */
+    private String parkingYn; /* 주차 가능 여부 */
+    private String breakfastYn; /* 조식 제공 여부 */
+    private String poolYn; /* 수영장 유무 */
+    private String gymYn; /* 헬스장/피트니스 유무 */
+    private String spaYn; /* 스파 시설 유무 */
+    private String restaurantYn; /* 내부 식당 유무 */
+    private String barYn; /* 바/라운지 유무 */
+    private String roomServiceYn; /* 룸서비스 가능 여부 */
+    private String laundryYn; /* 세탁 서비스 제공 여부 */
+    private String smokingAreaYn; /* 지정 흡연구역 유무 */
+    private String petFriendlyYn; /* 반려동물 입실 가능 여부 */
+    
+    // ROOM_TYPE
+    private int maxDiscount;
+    private int minPrice;    // 최저가
+    private int discount;    // 할인율
+    private int finalPrice;  // 할인 적용가
 }

@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.accommodation.mapper;
 
+import java.util.List;
+
 import org.apache.ibatis.annotations.Mapper;
 
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
@@ -14,5 +16,11 @@ public interface IAccommodationMapper {
 	public void insertAccommodation(AccommodationVO vo);
 
 	public int checkDuplicate(String contentid);
+
+	/**
+	 * 숙소 전체 목록 조회
+	 * @return
+	 */
+	public List<AccommodationVO> selectAccommodationList();
 
 }

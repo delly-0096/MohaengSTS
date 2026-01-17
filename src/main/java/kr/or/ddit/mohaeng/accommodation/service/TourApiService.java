@@ -2,13 +2,19 @@ package kr.or.ddit.mohaeng.accommodation.service;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
+
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.or.ddit.mohaeng.accommodation.dto.TourApiItemDTO;
 import kr.or.ddit.mohaeng.accommodation.dto.TourApiResponse;
@@ -29,47 +35,67 @@ public class TourApiService {
 	@Transactional
 	public void fetchAndSaveAccommodations() {
 		log.info("fetchAndSaveAccommodations() 실행==========");
+		log.info(serviceKey);
+		RestClient restClient = RestClient.create();
+		String url = "https://apis.data.go.kr/B551011/KorService2/searchStay2?MobileOS=WEB&MobileApp=Mohaeng"
+				+ "lDongRegnCd=11"
+				+ "&_type=json"
+				+ "&numOfRows=20"
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D&";
 		
-//		String url = "http://apis.data.go.kr/B551011/KorService1/searchStay1" + "?serviceKey=" + serviceKey + "&_type=json&MobileOS=ETC&MobileApp=Mohaeng&_type=json";
+		URI uri = URI.create(url);
 		
-		URI uri = UriComponentsBuilder.fromHttpUrl("http://apis.data.go.kr/B551011/KorService1/searchStay1")
-		        .queryParam("serviceKey", serviceKey)
-		        .queryParam("_type", "json")
-		        // ... 생략
-		        .build() // true를 넣지 않음!
-		        .toUri();
+		//json 형태로 응답값 받기
+		JsonNode responseNode = restClient.get()
+			    .uri(uri)
+			    .retrieve()
+			    .body(JsonNode.class);
 		
-		RestTemplate restTemplate = new RestTemplate();
+		ObjectMapper mapper = new ObjectMapper();
 		
-		try {
-			TourApiResponse response = restTemplate.getForObject(uri, TourApiResponse.class);
-			
-			if (response != null && response.getResponse().getBody().getItems() != null) {
-				List<TourApiItemDTO> apiItems = response.getResponse().getBody().getItems().getItem();
-				
-				for (TourApiItemDTO item : apiItems) {
-					if (accMapper.checkDuplicate(item.getContentid()) == 0) {
-						AccommodationVO vo = new AccommodationVO();
-						vo.setApiContentId(item.getContentid());
-						vo.setAccName(item.getTitle());
-						vo.setAccCatCd(item.getCat3());
-						vo.setAccFilePath(item.getFirstImage());
-						vo.setZip(item.getZipcode());
-						vo.setAddr1(item.getAddr1());
-						vo.setAddr2(item.getAddr2());
-						vo.setMapx(item.getMapx() != null ? item.getMapx() : "0");
-						vo.setMapy(item.getMapy() != null ? item.getMapy() : "0");
-						vo.setAreacode(item.getAreacode());
-						vo.setSigungucode(item.getSigungucode());
+		log.info("responseNode : {}", responseNode.toPrettyString());
+		
+		//json을 map으로
+		Map<String, Object> responseMap = mapper.convertValue(responseNode, Map.class);
+		
+		//json 값에서 item(응답리스트) 지정해서 새 json 객체로...
+		JsonNode itemsNode = responseNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item");
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+		
+		//itemsNode로 List<Map<String, String>>형태로 형변환
+		List<Map<String, String>> tourPlaceList = objectMapper.convertValue(itemsNode, new TypeReference<>() {});
+
+				for (Map<String, String> item : tourPlaceList) {
+					String apiContentId = item.get("contentid");
+					
+					if (accMapper.checkDuplicate(apiContentId) == 0) {
+				        AccommodationVO vo = new AccommodationVO();
+				        
+				        vo.setApiContentId(item.get("contentid"));
+						vo.setAccName(item.get("title"));
+						vo.setAccCatCd(item.get("cat3"));
+						vo.setAccFilePath(item.get("firstimage"));
+						vo.setAreaCode(item.get("areacode"));
+						vo.setSigunguCode(item.get("sigungucode"));
+						vo.setZip(item.get("zipcode"));
+						vo.setAddr1(item.get("addr1"));
+						vo.setAddr2(item.get("addr2"));
+						vo.setMapx(item.get("mapx"));
+						vo.setMapy(item.get("mapy"));
+						vo.setLdongRegnCd("lDongRegnCd");
+						vo.setLdongSignguCd("lDongSignguCd");
 						
 						accMapper.insertAccommodation(vo);
-						log.info("저장 완료: {}", item.getTitle());
-					}
+						log.info("저장 완료: {}", vo.getAccName());
+					} else {
+						log.info("중복된 데이터 건너뜀: {}", item.get("title"));
+					} 
 				}
-			}
-		} catch (Exception e) {
-			log.error("API 호출 중 에러 발생: ", e);
-        }
+
 	}
 	
 }

@@ -2,6 +2,43 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper">
 
+	<resultMap id="accMap" type="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	    <id property="accNo" column="ACC_NO"/>
+		<result property="apiContentId" column="API_CONTENT_ID"/>
+		<result property="accName" column="ACC_NAME"/>
+		<result property="accFilePath" column="ACC_FILE_PATH"/>
+		<result property="areaCode" column="AREA_CODE"/>
+		<result property="sigunguCode" column="SIGUNGU_CODE"/>
+		<result property="mapx" column="MAPX"/>
+		<result property="mapy" column="MAPY"/>
+		<result property="ldongRegnCd" column="LDONG_REGN_CD"/>
+		<result property="ldongSignguCd" column="LDONG_SIGNGU_CD"/>
+		<result property="tripProdNo" column="TRIP_PROD_NO"/>
+		<result property="accCatCd" column="ACC_CAT_CD"/>
+		<result property="accFileNo" column="ACC_FILE_NO"/>
+		<result property="starGrade" column="STAR_GRADE"/>
+		<result property="zip" column="ZIP"/>
+		<result property="addr1" column="ADDR1"/>
+		<result property="addr2" column="ADDR2"/>
+		<result property="minPrice" column="MIN_PRICE"/>
+    	<result property="maxDiscount" column="MAX_DISCOUNT"/>
+    	<result property="finalPrice" column="FINAL_PRICE"/>
+    <collection property="roomList" ofType="kr.or.ddit.mohaeng.vo.RoomTypeVO">
+		<result property="roomTypeNo" column="ROOM_TYPE_NO"/>
+		<result property="roomName" column="ROOM_NAME"/>
+		<result property="baseGuestCount" column="BASE_GUEST_COUNT"/>
+		<result property="maxGuestCount" column="MAX_GUEST_COUNT"/>
+		<result property="bedCount" column="BED_COUNT"/>
+		<result property="bedTypeCd" column="BED_TYPE_CD"/>
+		<result property="totalRoomCount" column="TOTAL_ROOM_COUNT"/>
+		<result property="price" column="PRICE"/>
+		<result property="discount" column="DISCOUNT"/>
+		<result property="extraGuestFee" column="EXTRA_GUEST_FEE"/>
+		<result property="roomSize" column="ROOM_SIZE"/>
+		<result property="breakfastYn" column="BREAKFAST_YN"/>
+    </collection>
+	</resultMap>
+
 	<!-- 숙소 API 정보 INSERT -->
 	<insert id="insertAccommodation" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO">
     INSERT INTO ACCOMMODATION (
@@ -48,26 +85,9 @@
         FROM ACCOMMODATION
         WHERE API_CONTENT_ID = #{contentId}
     </select>
-
-	<!-- 숙소 상세 정보와 시설 정보 조인 -->
-	<select id="getAccommodationDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
-	    SELECT 
-	          A.ACC_NO
-	        , A.ACC_CAT_CD
-	        , A.STAR_GRADE
-	        , A.ADDR1
-	        , A.ADDR2
-	        , F.WIFI_YN
-	        , F.PARKING_YN
-	        , F.BREAKFAST_YN
-	        , F.POOL_YN
-	    FROM ACCOMMODATION A
-	    LEFT JOIN ACC_FACILITY F ON A.ACC_NO = F.ACC_NO
-	    WHERE A.ACC_NO = #{accNo}
-	</select>
 	
 	<!-- 숙소 전체 목록 가져오기 -->
-	<select id="selectAccommodationList" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	<select id="selectAccommodationList" resultMap="accMap">
 	    SELECT 
 	          A.ACC_NO
 	        , A.ACC_NAME
@@ -93,6 +113,13 @@
 			, AF.LAUNDRY_YN
 			, AF.SMOKING_AREA_YN
 			, AF.PET_FRIENDLY_YN
+			, R.ROOM_TYPE_NO
+			, R.ROOM_NAME
+			, R.BASE_GUEST_COUNT
+			, R.TOTAL_ROOM_COUNT
+			, R.PRICE
+			, R.DISCOUNT
+			, R.ROOM_SIZE
 	       , (SELECT MIN(PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MIN_PRICE
 	       , (SELECT MAX(DISCOUNT) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MAX_DISCOUNT
 	       , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) 
@@ -100,6 +127,7 @@
            WHERE RT.ACC_NO = A.ACC_NO) AS FINAL_PRICE
 	    FROM ACCOMMODATION A
 	    LEFT OUTER JOIN ACC_FACILITY AF ON A.ACC_NO = AF.ACC_NO
+	    LEFT OUTER JOIN ROOM_TYPE R ON A.ACC_NO = R.ACC_NO
 	    <where>
 	    	<if test="areaCode != null and areaCode != ''">
 	    		AND A.AREA_CODE = #{areaCode}
@@ -108,7 +136,80 @@
 	    		AND (A.ACC_NAME LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
 	    	</if>
 	    </where>
-	    ORDER BY ACC_NO DESC
+	    ORDER BY ACC_NO, R.ROOM_NAME DESC
 	</select>
+	
+	<!-- 페이지 가져오기 -->
+	<select id="selectAccommodationListWithPaging" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultMap="accMap">
+	    SELECT * FROM (
+	        SELECT ROWNUM AS RNUM, T.* FROM (
+	            SELECT 
+	                  A.ACC_NO
+	                  , A.ACC_NAME
+	                  , A.ADDR1
+	                  , A.ACC_FILE_PATH
+	                  , A.STAR_GRADE
+	                , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) 
+	                   FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS FINAL_PRICE
+	            FROM ACCOMMODATION A
+	            <where>
+	                <if test="areaCode != null and areaCode != ''">
+	                    AND A.AREA_CODE = #{areaCode}
+	                </if>
+	                <if test="keyword != null and keyword != ''">
+	                    AND (A.ACC_NAME LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
+	                </if>
+	            </where>
+	            ORDER BY A.ACC_NO DESC
+	        ) T
+	        WHERE ROWNUM &lt;= #{endRow}
+	    ) WHERE RNUM &gt;= #{startRow}
+	</select>
+	
+	<!-- 전체 페이지 가져오기 -->
+	<select id="selectTotalCount" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultType="int">
+	    SELECT COUNT(*) FROM ACCOMMODATION
+	    <where>
+	        <if test="areaCode != null and areaCode != ''">
+	            AND AREA_CODE = #{areaCode}
+	        </if>
+	        <if test="keyword != null and keyword != ''">
+	            AND (ACC_NAME LIKE '%' || #{keyword} || '%' OR ADDR1 LIKE '%' || #{keyword} || '%')
+	        </if>
+	    </where>
+	</select>
+	
+	<!-- 상세 정보 가져오기 -->
+	<select id="getAccommodationDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+		SELECT 
+          	A.*
+          , AF.*
+	    FROM ACCOMMODATION A
+	    LEFT OUTER JOIN ACC_FACILITY AF ON A.ACC_NO = AF.ACC_NO
+	    WHERE A.ACC_NO = #{accNo}
+	</select>
+	
+	<!-- 객실 타입 가져오기 -->
+	<select id="getRoomList" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.RoomTypeVO">
+		SELECT
+			 ROOM_TYPE_NO
+			, ACC_NO
+			, ROOM_NAME
+			, BASE_GUEST_COUNT
+			, MAX_GUEST_COUNT
+			, BED_COUNT
+			, BED_TYPE_CD
+			, TOTAL_ROOM_COUNT
+			, PRICE
+			, DISCOUNT
+			, EXTRA_GUEST_FEE
+			, ROOM_SIZE
+			, BREAKFAST_YN
+		FROM ROOM_TYPE
+		WHERE ACC_NO = #{accNo}
+	
+	</select>
+	
+	
 	
 </mapper>

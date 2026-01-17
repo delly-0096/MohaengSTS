@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
+import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 
 @Mapper
 public interface IAccommodationMapper {
@@ -22,5 +23,13 @@ public interface IAccommodationMapper {
 	 * @return
 	 */
 	public List<AccommodationVO> selectAccommodationList();
+
+	public AccommodationVO getAccommodationDetail(int accNo);
+
+	public List<RoomTypeVO> getRoomList(int accNo);
+
+	public List<AccommodationVO> selectAccommodationListWithPaging(AccommodationVO acc);
+
+	public int selectTotalCount(AccommodationVO acc);
 
 }

@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:set var="pageTitle" value="숙박 검색" />
 <c:set var="pageCss" value="product" />
@@ -104,6 +105,7 @@
         <div class="flight-results">
             <div class="results-header">
                 <p class="results-count">
+                <!-- 이건 준혁님이 고치면 거기에 얹어가면 됨  -->
                     <strong>제주도</strong> 숙소 <strong>128</strong>개
                 </p>
             </div>
@@ -180,37 +182,31 @@
                     <div class="accommodation-booking-dropdown" id="accommodationDropdown${acc.accNo}">
                         <div class="booking-dropdown-content">
                             <div class="room-options">
+                            <c:set var="lastRoomName" value="" />
+                            <c:forEach items="${acc.roomList }" var="room">
+                            	<c:if test="${room.roomName ne lastRoomName}">
                                 <div class="room-option">
                                     <div class="room-option-info">
-                                        <h6>디럭스 더블룸</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 42㎡</p>
+                                        <h6>${room.roomName}</h6>
+                                        <c:set var="lastRoomName" value="${room.roomName}" />
+                                        <p><i class="bi bi-people"></i> ${room.baseGuestCount } / <i class="bi bi-arrows-angle-expand"></i> ${room.roomSize }㎡</p>
                                         <span class="room-stock available"><i class="bi bi-check-circle"></i> 잔여 5실</span>
                                     </div>
                                     <div class="room-option-price">
-                                        <span class="price">265,000원</span>
+                                        <span class="price"><fmt:formatNumber value="${room.price}" pattern="#,###"/>원</span>
                                         <span class="per-night">/ 1박</span>
                                     </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo}/booking?room=deluxe" class="btn btn-primary btn-sm">결제</a>
+                                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo}/booking?roomNo=${room.roomTypeNo}" class="btn btn-primary btn-sm">결제</a>
                                 </div>
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>스위트룸 (오션뷰)</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 65㎡</p>
-                                        <span class="room-stock low"><i class="bi bi-exclamation-circle"></i> 잔여 2실</span>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">420,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/1/booking?room=suite" class="btn btn-primary btn-sm">결제</a>
-                                </div>
+                                </c:if>
+                            </c:forEach>
                             </div>
                         </div>
                     </div>
                 </div>
               </c:forEach>
 
-<!--             로딩 인디케이터
+             <!-- 로딩 인디케이터 -->
             <div class="infinite-scroll-loader" id="accomScrollLoader">
                 <div class="loader-spinner">
                     <div class="spinner-border text-primary" role="status">
@@ -219,10 +215,11 @@
                 </div>
             </div>
 
-            더 이상 데이터 없음
+            <!-- 더 이상 데이터 없음 -->
             <div class="infinite-scroll-end" id="accomScrollEnd" style="display: none;">
                 <p>모든 숙소를 불러왔습니다</p>
-            </div> -->
+            </div> 
+            </div>
         </div>
     </div>
 </div>
@@ -433,235 +430,10 @@ a.accommodation-image:hover img {
     color: var(--primary-color);
 }
 </style>
-
-<script>
-// 숙소 드롭다운 토글
-function toggleAccommodationDropdown(e, accommodationId) {
-    e.stopPropagation();
-
-    const card = document.querySelector('.accommodation-card[data-accommodation-id="' + accommodationId + '"]');
-
-    // 다른 열린 드롭다운 닫기
-    document.querySelectorAll('.accommodation-card.active').forEach(function(activeCard) {
-        if (activeCard !== card) {
-            activeCard.classList.remove('active');
-        }
-    });
-
-    // 현재 카드 토글
-    card.classList.toggle('active');
-}
-
-// 외부 클릭 시 드롭다운 닫기
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.accommodation-card')) {
-        document.querySelectorAll('.accommodation-card.active').forEach(function(card) {
-            card.classList.remove('active');
-        });
-    }
-});
-
-// 결제 사이트 링크 클릭 시 이벤트 전파 방지
-document.querySelectorAll('.booking-site-item').forEach(function(item) {
-    item.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-});
-
-// 숙소 북마크 토글
-function toggleAccommodationBookmark(e, btn) {
-    e.stopPropagation();
-
-    if (!isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            window.location.href = '${pageContext.request.contextPath}/member/login';
-        }
-        return;
-    }
-
-    btn.classList.toggle('active');
-    const icon = btn.querySelector('i');
-
-    if (btn.classList.contains('active')) {
-        icon.className = 'bi bi-bookmark-fill';
-        showToast('북마크에 추가되었습니다.', 'success');
-    } else {
-        icon.className = 'bi bi-bookmark';
-        showToast('북마크가 해제되었습니다.', 'info');
-    }
-}
-
-// ==================== 인피니티 스크롤 ====================
-var accomCurrentPage = 1;
-var accomIsLoading = false;
-var accomHasMore = true;
-var accomTotalPages = 4;
-
-// 페이지 로드시 인피니티 스크롤 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    initAccomInfiniteScroll();
-});
-
-function initAccomInfiniteScroll() {
-    var loader = document.getElementById('accomScrollLoader');
-    if (!loader) return;
-
-    var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting && !accomIsLoading && accomHasMore) {
-                loadMore();
-            }
-        });
-    }, {
-        root: null,
-        rootMargin: '100px',
-        threshold: 0
-    });
-
-    observer.observe(loader);
-}
-
-function loadMore() {
-    if (accomIsLoading || !accomHasMore) return;
-
-    accomIsLoading = true;
-    document.getElementById('accomScrollLoader').style.display = 'flex';
-
-    setTimeout(function() {
-        accomCurrentPage++;
-
-        if (accomCurrentPage > accomTotalPages) {
-            accomHasMore = false;
-            document.getElementById('accomScrollLoader').style.display = 'none';
-            document.getElementById('accomScrollEnd').style.display = 'block';
-            accomIsLoading = false;
-            return;
-        }
-
-        var grid = document.querySelector('.accommodation-grid');
-        var accommodationsToAdd = getAccommodationsForPage(accomCurrentPage);
-
-        accommodationsToAdd.forEach(function(accom, index) {
-            var accomHtml = createAccommodationCard(accom);
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = accomHtml;
-            var newCard = tempDiv.firstElementChild;
-
-            newCard.style.opacity = '0';
-            newCard.style.transform = 'translateY(20px)';
-            grid.appendChild(newCard);
-
-            setTimeout(function() {
-                newCard.style.transition = 'all 0.4s ease';
-                newCard.style.opacity = '1';
-                newCard.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-
-        accomIsLoading = false;
-    }, 800);
-}
-
-function getAccommodationsForPage(page) {
-    var accommodations = [];
-    for (var i = 0; i < 3; i++) {
-        var dataIndex = ((page - 2) * 3 + i) % additionalAccommodations.length;
-        var accom = Object.assign({}, additionalAccommodations[dataIndex]);
-        accom.id = 6 + (page - 2) * 3 + i + 1;
-        accommodations.push(accom);
-    }
-    return accommodations;
-}
-
-function createAccommodationCard(data) {
-    var badgeHtml = data.originalPrice ? '<span class="accommodation-badge">특가</span>' : '';
-
-    return '<div class="accommodation-card" data-accommodation-id="' + data.id + '">' +
-        '<div class="accommodation-image">' +
-            '<img src="' + data.image + '" alt="' + data.name + '">' +
-            badgeHtml +
-            '<button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">' +
-                '<i class="bi bi-bookmark"></i>' +
-            '</button>' +
-        '</div>' +
-        '<div class="accommodation-body">' +
-            '<div class="accommodation-rating">' +
-                '<i class="bi bi-star-fill"></i>' +
-                '<span>' + data.rating + '</span>' +
-                '<span class="review-count">(' + data.reviews.toLocaleString() + ')</span>' +
-            '</div>' +
-            '<h3 class="accommodation-name">' + data.name + '</h3>' +
-            '<p class="accommodation-location">' +
-                '<i class="bi bi-geo-alt"></i> ' + data.location +
-            '</p>' +
-            '<div class="accommodation-amenities">' +
-                '<span class="amenity"><i class="bi bi-wifi"></i> 무료 와이파이</span>' +
-                '<span class="amenity"><i class="bi bi-p-circle"></i> 주차</span>' +
-            '</div>' +
-            '<div class="accommodation-price-row">' +
-                '<div class="accommodation-price">' +
-                    '<span class="price-label">최저가</span>' +
-                    '<span class="price">' + data.price.toLocaleString() + '원</span>' +
-                    '<span class="per-night">/ 1박</span>' +
-                '</div>' +
-                '<button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, ' + data.id + ')">' +
-                    '결제 <i class="bi bi-chevron-down"></i>' +
-                '</button>' +
-            '</div>' +
-        '</div>' +
-        '<div class="accommodation-booking-dropdown" id="accommodationDropdown' + data.id + '">' +
-            '<div class="booking-dropdown-content">' +
-                '<div class="room-options">' +
-                    '<div class="room-option">' +
-                        '<div class="room-option-info">' +
-                            '<h6>스탠다드룸</h6>' +
-                            '<p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 35㎡</p>' +
-                        '</div>' +
-                        '<div class="room-option-price">' +
-                            '<span class="price">' + data.price.toLocaleString() + '원</span>' +
-                            '<span class="per-night">/ 1박</span>' +
-                        '</div>' +
-                        '<a href="${pageContext.request.contextPath}/product/accommodation/' + data.id + '/booking?room=standard" class="btn btn-primary btn-sm">결제</a>' +
-                    '</div>' +
-                    '<div class="room-option">' +
-                        '<div class="room-option-info">' +
-                            '<h6>디럭스룸</h6>' +
-                            '<p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 45㎡</p>' +
-                        '</div>' +
-                        '<div class="room-option-price">' +
-                            '<span class="price">' + Math.round(data.price * 1.3).toLocaleString() + '원</span>' +
-                            '<span class="per-night">/ 1박</span>' +
-                        '</div>' +
-                        '<a href="${pageContext.request.contextPath}/product/accommodation/' + data.id + '/booking?room=deluxe" class="btn btn-primary btn-sm">결제</a>' +
-                    '</div>' +
-                '</div>' +
-            '</div>' +
-        '</div>' +
-    '</div>';
-}
-
-// 검색 폼 제출
-document.getElementById('accommodationSearchForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const destination = document.getElementById('destination').value;
-
-    if (!destination) {
-        showToast('목적지를 입력해주세요.', 'error');
-        return;
-    }
-
-    showToast('숙소를 검색하고 있습니다...', 'info');
-});
-
-
-// 검색창 인터랙션
-function doSearch() {
-    const keyword = document.querySelector('input[placeholder="도시, 지역 또는 숙소명"]').value;
-    
-    // 단순 페이지 이동 방식
-    location.href = "${pageContext.request.contextPath}/product/accommodation?keyword=" + encodeURIComponent(keyword);
-}
+<script>    
+    // 서버에서 보낸 리스트의 크기를 JS에 전달
+    const initialListSize = ${accList.size()};
 </script>
+<script src="${pageContext.request.contextPath}/resources/js/accommodation.js"></script>
 
 <%@ include file="../common/footer.jsp" %>

@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -78,6 +80,7 @@ public class AccommodationVO {
      */
     private String ldongSignguCd; 
     
+    private List<RoomTypeVO> roomList;
     
     // ACC_FACILITY
     private String wifiYn; /* WiFi 제공 여부 */
@@ -98,4 +101,13 @@ public class AccommodationVO {
     private int minPrice;    // 최저가
     private int discount;    // 할인율
     private int finalPrice;  // 할인 적용가
+    
+    //인피니티 스크롤을 위한 페이지 구성
+    private int page = 1;         // 현재 페이지 번호
+    private int pageSize = 12;    // 한 번에 가져올 개수
+    private int startRow;         // 쿼리용 시작 번호
+    private int endRow;           // 쿼리용 끝 번호
+    
+    // 검색어 필드
+    private String keyword;
 }

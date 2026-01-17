@@ -59,13 +59,13 @@
 						
 						<div class="form-group">
 							<label class="form-label">가는날</label> <input type="text"
-								class="form-control date-picker" id="departDate"
+								class="form-control" id="departDate"
 								placeholder="날짜 선택"/>
 						</div>
 						<div class="form-group" id="returnDateGroup">
 							<label class="form-label">오는날</label> <input type="text"
-								class="form-control date-picker" id="returnDate"
-								placeholder="날짜 선택"/>
+								class="form-control" id="returnDate"
+								placeholder="날짜 선택" />
 						</div>
 						<button type="submit" class="btn btn-primary btn-search">
 							<i class="bi bi-search me-2"></i>검색
@@ -196,13 +196,14 @@ let selectedFlights = []; 			// 선택된 항공편 목록
 let totalSegments = 2; 				// 총 선택해야 할 구간 수 (왕복: 2, 편도: 1)
 
 let storedData = null;				// storage에 저장된 정보
-let airportList = [];				// 항공 목록
+let airportList = [];				// 공항 목록
 
-const list = document.getElementById('selectedFlightsList');
+const list = document.querySelector("#selectedFlightsList");	// 선택된 항공권
 let currentSearchState = null;		// 현재 상태?
 let loader = null;		// 인피니티 스크롤
-let cabin = "";
+let cabin = "";			// 탑승 정보
 const result = document.querySelector('.flight-result'); // 항공권 출력란 
+
 // session데이터 가져오기 
 function restoreSearchForm() {
 //     const saved = sessionStorage.getItem('flightProduct');
@@ -394,6 +395,8 @@ function goToBooking() {
 // 승객 패널 토글
 function togglePassengerPanel() {
     document.getElementById('passengerPanel').classList.toggle('active');
+    // 여기서 여부 바꾸고 싶은데
+    // flightFullData이거 sorted 해서 renderFlightBatch
 }
 
 // 패널 외부 클릭 시 닫기
@@ -457,7 +460,6 @@ function initFlightInfiniteScroll() {
 
 // 항공권 생성 카드 호출
 function renderFlightBatch(){
-// 	if (flightIsLoading) return;	// 기본값이 false
     flightIsLoading = true;
 	
     const start = (flightCurrentPage - 1) * flightItemsPerPage;	// 처음에는 0
@@ -470,9 +472,11 @@ function renderFlightBatch(){
         html += createFlightCard(item, currentSearchData, cabin, start + i);
     });
     
-    result.insertAdjacentHTML('beforeend', html);
+    setTimeout(() => {
+	    result.insertAdjacentHTML('beforeend', html);
+    }, 2000);
     
-    flightIsLoading = false;	// 더 할거 없음
+    flightIsLoading = false;	// 더 할거 없을때 false조정
     
     if (end >= flightFullData.length) {
         flightHasMore = false;
@@ -571,15 +575,38 @@ document.querySelector('#destination').addEventListener("click", function(e){
 	}
 });
 
-// 날짜 필터
-document.querySelector('#returnDate').addEventListener("change", function(e){
-	let stDt = document.querySelector('#departDate').value.replaceAll("-","");
-	let edDt = document.querySelector('#returnDate').value.replaceAll("-","");
-	if(parseInt(stDt) > parseInt(edDt)){
-		document.querySelector('#returnDate').value = "";
-		showToast('오는날은 가는날 보다 빠를 수 없습니다.', 'error');
-	}
-});
+let departurePicker;
+let arrivalPicker;
+// 달력 보여주기위한 설정
+function dateChange(){
+	arrivalPicker = flatpickr("#returnDate", {
+		dateFormat: "Y-m-d",
+        minDate: "today",
+        locale: "ko"
+	});
+	
+	departurePicker = flatpickr("#departDate", {
+	    dateFormat: "Y-m-d",
+	    minDate: "today", // 오늘부터 선택 가능
+	    locale: "ko",
+	    onChange: function(selectedDates) {
+            if (selectedDates.length > 0) {
+            	const nextDay = new Date(selectedDates[0]);
+                nextDay.setDate(nextDay.getDate() + 1);
+
+                const arrDate = arrivalPicker.selectedDates[0];
+                
+                // [+] 기호를 붙이면 날짜가 숫자로 변환되어 '이전/당일' 비교가 정확해집니다.
+                if (arrDate && +arrDate < +nextDay) {
+                    showToast('오는날은 가는날 이후여야 합니다.', 'error');
+                	arrivalPicker.clear();
+                    arrivalPicker.open();
+                }
+                arrivalPicker.set("minDate", nextDay);	// set 작업이 무거움 그래서 미뤄나야지 적용이 된다
+            }
+        }
+	});
+}
 
 // 검색 폼 제출 (1번만 함)
 document.getElementById('flightSearchForm').addEventListener('submit', function(e) {
@@ -597,7 +624,6 @@ document.getElementById('flightSearchForm').addEventListener('submit', function(
 
 // 항공권 조회
 function searchFlights() {
-// 	const result = document.querySelector('.flight-result');
     result.innerHTML = ``;
     const searchCount = document.querySelector(".results-count");
     searchCount.innerHTML = ``;
@@ -740,9 +766,7 @@ function durationFormmater(depTime, arrTime, indentifer) {
 	}
 
 	else return depTimeFormmater + "split" + arrTimeFormmater;	//	split으로 분리	
-			
 }
-
 
 // 출발지, 도착지 검색
 function showSegmentAutocomplete(dropdown, query) {
@@ -751,15 +775,15 @@ function showSegmentAutocomplete(dropdown, query) {
 	const checkData = (dropdown.id === 'departureDropdown') ? 
 	document.querySelector('#destination').value : document.querySelector('#departure').value;
 	
-	const filteredData = airportList.filter(airport => {
+	const filteredAirportList = airportList.filter(airport => {
 		const isMatch = airport.airportNm.includes(query) || airport.cityName.includes(query) ;
 	    const isNotDuplicate = airport.airportNm !== checkData;
 	    return isMatch && isNotDuplicate;
 	});
 	
     let html = '';
-    if(filteredData.length > 0){
-        html += filteredData.map(function(airport) {
+    if(filteredAirportList.length > 0){
+        html += filteredAirportList.map(function(airport) {
             return createAutocompleteItemHtml(airport, query);
         }).join('');
     } else html = `<div class="autocomplete-empty"><i class="bi bi-search"></i>\${query}에 대한 검색 결과가 없습니다.</div>`;
@@ -768,7 +792,7 @@ function showSegmentAutocomplete(dropdown, query) {
     dropdown.classList.add('active');
     
     // 클릭 이벤트 바인딩
-    dropdown.querySelectorAll('.autocomplete-item').forEach(function(item) {
+    dropdown.querySelectorAll('.autocomplete-item').forEach((item) => {
         item.addEventListener('click', function() {
         	selectAirportItem(this, dropdown);
         });
@@ -821,7 +845,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     loader = document.querySelector("#flightScrollLoader");	// 인피니티 스크롤 객체
     initFlightInfiniteScroll();
-//     result = document.querySelector(".flight-result");
     const autoInputs = document.querySelectorAll('.airport-autocomplete');
     
     autoInputs.forEach(input => {
@@ -839,18 +862,9 @@ document.addEventListener('DOMContentLoaded', function() {
             showSegmentAutocomplete(dropdown, query);
         });
     });
-	
-    // 일반 검색 날짜 선택기 - flatpickr함수. 한번 선택하면 today를 아닌걸로 바꿀까?
-    if (typeof flatpickr !== 'undefined') {
-        flatpickr('.date-picker', {
-            dateFormat: 'Y-m-d',
-            minDate: 'today',
-            locale: 'ko'
-        });
-    }
-
+    
+    dateChange();	// 달력 설정
 });
-
 </script>
 
 <%@ include file="../common/footer.jsp"%>

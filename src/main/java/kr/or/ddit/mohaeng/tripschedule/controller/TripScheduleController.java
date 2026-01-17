@@ -30,6 +30,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import kr.or.ddit.mohaeng.community.travellog.comments.service.CommentsServiceImpl;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
+import kr.or.ddit.mohaeng.util.CommUtil;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
@@ -104,7 +105,7 @@ public class TripScheduleController {
 		model.addAttribute("schedule", schedule);
 		model.addAttribute("tourContentList", tourContentList);
 		
-		return "schedule/planner_edit";
+		return "schedule/planner-edit";
 	}
 	
 	@GetMapping("/view/{schdlNo}")
@@ -379,4 +380,37 @@ public class TripScheduleController {
 		return ResponseEntity.ok(1);
 	}
 	
+	@PostMapping("/rcmd-result")
+	public String mySchedule(String preferenceData, Model model) {
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+	    try {
+	        // 1. String으로 받은 JSON을 Map으로 변환
+//	        Map<String, Object> preferenceMap = objectMapper.readValue(preferenceData, new TypeReference<Map<String, Object>>(){});
+	        JsonNode preferenceNode = objectMapper.readTree(preferenceData);
+	        
+	        System.out.println("preferenceNode : " + preferenceNode.toPrettyString());
+	        
+	        String dateItem = preferenceNode.get("travelDates").asText();
+	        
+	        String dates[] = dateItem.split(" ~ ");
+	        
+	        int duration = CommUtil.calculateDaysBetween(dates[0], dates[1]) + 1;
+	        System.out.println("duration : "+duration);
+	        
+	        
+	        
+	        // 2. 비즈니스 로직 처리 (예: 서비스 호출)
+	        // service.getRecommendation(preferenceData);
+	        
+	        // 3. 모델에 담아 JSP 등으로 전달
+	        model.addAttribute("data", preferenceData);
+	        
+	    } catch (Exception e) {
+	        e.printStackTrace();
+//	        return "error-page";
+	    }
+		
+		return "schedule/rcmd-result";
+	}
 }

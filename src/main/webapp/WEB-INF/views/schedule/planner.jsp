@@ -1598,7 +1598,6 @@ function searchTourPlaceList(keyword, areaCode, page) {
         for(let i = 0; i < dataList.popularPlaceList.length; i++) {
         	popularList[i] = dataList.popularPlaceList[i].plcNo + "";
         }
-        console.log(popularList);
 
         let placeData = "";
         let popPlaceData = "";
@@ -1633,7 +1632,6 @@ function searchTourPlaceList(keyword, areaCode, page) {
                 outputCnt++;
 		    }
 
-            console.log(isPopular);
             if(isPopular) {
                 popPlaceData += `
                     <div class="place-autocomplete-item" onclick="selectPlace(\${tourPlace.contentid}, '\${ tourPlace.title }', '\${getContentTypeName(tourPlace.contenttypeid)}', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')" style="display: flex;">

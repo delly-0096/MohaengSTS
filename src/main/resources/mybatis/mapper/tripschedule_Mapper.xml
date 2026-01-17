@@ -103,6 +103,7 @@
 		<result property="regDt" column="REG_DT" />
 	</resultMap>
     
+    <!-- with로 바꾸기 -->
     <sql id="tripScheduleColumns">
     	 	  TS.SCHDL_NO
 		    , TS.MEM_NO

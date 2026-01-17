@@ -1080,9 +1080,20 @@ function submitPreference() {
 
     // 세션 스토리지에 저장
     sessionStorage.setItem('preferenceData', JSON.stringify(preferenceData));
+    
+    let rcmdForm = document.createElement("form");;
+    rcmdForm.setAttribute("method", "post");
+    rcmdForm.setAttribute("action", "${pageContext.request.contextPath}/schedule/rcmd-result");
+    document.body.appendChild(rcmdForm);
+    let input = document.createElement("input");
+    input.setAttribute("type", "hidden");
+    input.setAttribute("name", "preferenceData");
+    input.setAttribute("value", JSON.stringify(preferenceData));
+    rcmdForm.appendChild(input);
+    rcmdForm.submit();
 
     // 동일한 결과 페이지로 이동 (추천 유형에 따라 내용만 다르게 표시)
-    window.location.href = '${pageContext.request.contextPath}/schedule/ai-result';
+    // window.location.href = '${pageContext.request.contextPath}/schedule/rcmd-result';
 }
 
 // URL 파라미터 가져오기

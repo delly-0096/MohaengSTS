@@ -211,7 +211,8 @@
                 </div>
                 <div class="side-menu-section-content">
                     <sec:authorize access="hasRole('BUSINESS')">
-                        <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item">
+                    	<sec:authentication property="principal" var="comp" />
+                        <a href='${pageContext.request.contextPath}/product/manage/${comp.username}'  class="side-menu-item">
                             <i class="bi bi-gear me-2"></i>상품 관리
                         </a>
                     </sec:authorize>

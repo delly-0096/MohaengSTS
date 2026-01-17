@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <c:set var="pageTitle" value="상품 관리" />
 <c:set var="pageCss" value="product" />
 
@@ -36,7 +37,7 @@
                     <i class="bi bi-check-circle"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">10</span>
+                    <span class="stat-value">${totalCount}</span>
                     <span class="stat-label">판매중</span>
                 </div>
             </div>
@@ -63,6 +64,7 @@
         <!-- 필터 및 검색 -->
         <div class="filter-bar">
             <div class="filter-group">
+            	<!-- 바뀔때마다 해당 상품만 조회 -->
                 <select class="form-select" id="categoryFilter">
                     <option value="all">전체 카테고리</option>
                     <option value="tour">투어</option>
@@ -108,185 +110,111 @@
         </div>
 
         <!-- 상품 목록 -->
+        <!-- 활성화 = active 비활성화 = inactive -->
         <div class="product-list">
-            <!-- 상품 1 -->
-            <div class="product-manage-card" data-id="1" data-status="active">
-                <label class="product-checkbox">
-                    <input type="checkbox" class="product-select-checkbox" value="1" onchange="toggleProductSelect(this)">
-                </label>
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" alt="스쿠버다이빙">
-                    <span class="product-status active">판매중</span>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">액티비티</div>
-                    <h3 class="product-name">제주 스쿠버다이빙 체험</h3>
-                    <div class="product-meta">
-                        <span><i class="bi bi-geo-alt"></i> 제주 서귀포시</span>
-                        <span><i class="bi bi-star-fill text-warning"></i> 4.9 (328)</span>
-                    </div>
-                    <div class="product-period">
-                        <i class="bi bi-calendar-range"></i>
-                        <span>2024.03.01 ~ 2024.12.31</span>
-                    </div>
-                    <div class="product-price">
-                        <span class="original-price">85,000원</span>
-                        <span class="sale-price">68,000원</span>
-                        <span class="discount-rate">20% 할인</span>
-                    </div>
-                </div>
-                <div class="product-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">재고</span>
-                        <span class="stat-value stock-value">50개</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">조회수</span>
-                        <span class="stat-value">1,234</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">예약수</span>
-                        <span class="stat-value">45</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">매출</span>
-                        <span class="stat-value">3,060,000원</span>
-                    </div>
-                </div>
-                <div class="product-actions">
-                    <a href="${pageContext.request.contextPath}/product/tour/1" class="btn btn-outline btn-sm">
-                        <i class="bi bi-eye"></i> 상세보기
-                    </a>
-                    <button class="btn btn-outline btn-sm" onclick="editProduct(1)">
-                        <i class="bi bi-pencil"></i> 수정
-                    </button>
-                    <button class="btn btn-outline btn-sm" onclick="toggleProductStatus(1)">
-                        <i class="bi bi-pause"></i> 중지
-                    </button>
-                    <button class="btn btn-outline btn-sm text-danger" onclick="deleteProduct(1)">
-                        <i class="bi bi-trash"></i> 삭제
-                    </button>
-                </div>
-            </div>
-
-            <!-- 상품 2 -->
-            <div class="product-manage-card" data-id="2" data-status="active">
-                <label class="product-checkbox">
-                    <input type="checkbox" class="product-select-checkbox" value="2" onchange="toggleProductSelect(this)">
-                </label>
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1596178060671-7a80dc8059ea?w=200&h=150&fit=crop&q=80" alt="서핑 강습">
-                    <span class="product-status active">판매중</span>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">클래스/체험</div>
-                    <h3 class="product-name">양양 서핑 강습 (초급)</h3>
-                    <div class="product-meta">
-                        <span><i class="bi bi-geo-alt"></i> 강원 양양군</span>
-                        <span><i class="bi bi-star-fill text-warning"></i> 4.7 (156)</span>
-                    </div>
-                    <div class="product-period">
-                        <i class="bi bi-calendar-range"></i>
-                        <span>2024.05.01 ~ 2024.10.31</span>
-                    </div>
-                    <div class="product-price">
-                        <span class="sale-price">55,000원</span>
-                    </div>
-                </div>
-                <div class="product-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">재고</span>
-                        <span class="stat-value stock-value">30개</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">조회수</span>
-                        <span class="stat-value">892</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">예약수</span>
-                        <span class="stat-value">32</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">매출</span>
-                        <span class="stat-value">1,760,000원</span>
-                    </div>
-                </div>
-                <div class="product-actions">
-                    <a href="${pageContext.request.contextPath}/product/tour/2" class="btn btn-outline btn-sm">
-                        <i class="bi bi-eye"></i> 상세보기
-                    </a>
-                    <button class="btn btn-outline btn-sm" onclick="editProduct(2)">
-                        <i class="bi bi-pencil"></i> 수정
-                    </button>
-                    <button class="btn btn-outline btn-sm" onclick="toggleProductStatus(2)">
-                        <i class="bi bi-pause"></i> 중지
-                    </button>
-                    <button class="btn btn-outline btn-sm text-danger" onclick="deleteProduct(2)">
-                        <i class="bi bi-trash"></i> 삭제
-                    </button>
-                </div>
-            </div>
-
-            <!-- 상품 3 - 판매중지 -->
-            <div class="product-manage-card inactive" data-id="3" data-status="inactive">
-                <label class="product-checkbox">
-                    <input type="checkbox" class="product-select-checkbox" value="3" onchange="toggleProductSelect(this)">
-                </label>
-                <div class="product-image">
-                    <img src="https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=200&h=150&fit=crop&q=80" alt="글램핑">
-                    <span class="product-status inactive">판매중지</span>
-                </div>
-                <div class="product-info">
-                    <div class="product-category">투어</div>
-                    <h3 class="product-name">가평 럭셔리 글램핑</h3>
-                    <div class="product-meta">
-                        <span><i class="bi bi-geo-alt"></i> 경기 가평군</span>
-                        <span><i class="bi bi-star-fill text-warning"></i> 4.5 (89)</span>
-                    </div>
-                    <div class="product-period">
-                        <i class="bi bi-calendar-range"></i>
-                        <span>2024.04.01 ~ 2024.11.30</span>
-                    </div>
-                    <div class="product-price">
-                        <span class="sale-price">180,000원</span>
-                        <span class="text-muted">/박</span>
-                    </div>
-                </div>
-                <div class="product-stats">
-                    <div class="stat-item">
-                        <span class="stat-label">재고</span>
-                        <span class="stat-value stock-value stock-warning">5개</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">조회수</span>
-                        <span class="stat-value">567</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">예약수</span>
-                        <span class="stat-value">18</span>
-                    </div>
-                    <div class="stat-item">
-                        <span class="stat-label">매출</span>
-                        <span class="stat-value">3,240,000원</span>
-                    </div>
-                </div>
-                <div class="product-actions">
-                    <a href="${pageContext.request.contextPath}/product/tour/3" class="btn btn-outline btn-sm">
-                        <i class="bi bi-eye"></i> 상세보기
-                    </a>
-                    <button class="btn btn-outline btn-sm" onclick="editProduct(3)">
-                        <i class="bi bi-pencil"></i> 수정
-                    </button>
-                    <button class="btn btn-primary btn-sm" onclick="toggleProductStatus(3)">
-                        <i class="bi bi-play"></i> 재개
-                    </button>
-                    <button class="btn btn-outline btn-sm text-danger" onclick="deleteProduct(3)">
-                        <i class="bi bi-trash"></i> 삭제
-                    </button>
-                </div>
-            </div>
+        	<!-- 값이 있을때만 tpList이거는 묶어서 해보기 -->
+        	<c:set var="prodList" value="${tripProdList }" />
+        	<c:choose>
+        		<c:when test="${empty prodList }">
+        				<div class="no-results-msg">조회된 조건에 맞는 항공편이 없습니다.</div>
+        		</c:when>
+        		<c:otherwise>
+		        	<c:forEach items="${prodList}" var="prod" varStatus="vs">
+			        	<c:set var="status" value="${prod.approveStatus }"/>
+			        	<c:set var="dataStatus" value="active"/>
+			        	<c:if test="${status == '판매중지'}">
+				        	<c:set var="dataStatus" value="inactive"/>
+			        	</c:if>
+			            <div class="product-manage-card" data-id="${vs.count}" data-status="${dataStatus}">
+			                <label class="product-checkbox">
+			                    <input type="checkbox" class="product-select-checkbox" value="1" onchange="toggleProductSelect(this)">
+			                </label>
+			                <div class="product-image">
+			                    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" alt="스쿠버다이빙">
+			                    <span class="product-status ${dataStatus}">${status}</span>
+			                </div>
+			                <div class="product-info">
+			                    <div class="product-category">${prod.prodCtgryType}</div>
+			                    <h3 class="product-name">${prod.tripProdTitle}</h3>
+			                    <div class="product-meta">
+			                        <span><i class="bi bi-geo-alt"></i>${prod.ctyNm}</span>
+			                        <span><i class="bi bi-star-fill text-warning"></i> ${prod.avgRating} (${prod.reviewCount })</span>
+			                    </div>
+			                    <div class="product-period">
+			                        <i class="bi bi-calendar-range"></i>
+			                        <span>
+			                        <fmt:formatDate value="${prod.saleStartDt}" pattern="yyyy.MM.dd" /> ~ 
+			                        <fmt:formatDate value="${prod.saleEndDt}" pattern="yyyy.MM.dd" />
+			                        </span>
+			                    </div>
+			                    <div class="product-price">
+			                    <c:choose>
+			                    	<c:when test="${prod.discount > 0}">
+				                        <span class="original-price">
+				                        	<fmt:formatNumber value="${prod.netprc}" pattern="#,###"/>원
+				                        </span>
+				                        <span class="sale-price">
+				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+				                        </span>
+				                        <span class="discount-rate">${prod.discount}% 할인</span>
+			                    	</c:when>
+			                    	<c:otherwise>
+				                        <span class="sale-price">
+				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+				                        </span>
+			                    	</c:otherwise>
+			                    </c:choose>
+			                    </div>
+			                </div>
+			                <div class="product-stats">
+			                    <div class="stat-item">
+			                        <span class="stat-label">총 재고</span>
+			                        <span class="stat-value stock-value">${prod.totalStock}개</span>
+			                    </div>
+			                    <div class="stat-item">
+			                        <span class="stat-label">현재 재고</span>
+			                        <span class="stat-value stock-value">${prod.curStock}개</span>
+			                    </div>
+			                    <div class="stat-item">
+			                        <span class="stat-label">조회수</span>
+			                        <span class="stat-value">${prod.viewCnt}</span>
+			                    </div>
+			                    <div class="stat-item">
+			                        <span class="stat-label">예약수</span>
+			                        <span class="stat-value">${prod.totalStock - prod.curStock}</span>
+			                    </div>
+			                    <div class="stat-item">
+			                        <span class="stat-label">매출</span>
+			                        <span class="stat-value">
+			                        	<fmt:formatNumber value="${prod.price * (prod.totalStock - prod.curStock)}" pattern="#,###"/>원
+			                        </span>
+			                    </div>
+			                </div>
+			                <div class="product-actions">
+			                    <a href="/product/manage/tourDetail/${prod.tripProdNo}" class="btn btn-outline btn-sm">
+			                        <i class="bi bi-eye"></i> 상세보기
+			                    </a>
+			                    <button class="btn btn-outline btn-sm" onclick="editProduct(this)"
+			                    	data-id="${prod.tripProdNo}">
+			                        <i class="bi bi-pencil"></i> 수정
+			                    </button>
+			                    <button class="btn btn-outline btn-sm" onclick="toggleProductStatus(this)"
+			                    	data-id="${prod.tripProdNo}" data-status="${prod.approveStatus}">
+			                        <i class="bi bi-pause"></i> 
+			                        ${prod.approveStatus == '판매중' ? '중지' : '재개'}
+			                    </button>
+			                    <button class="btn btn-outline btn-sm text-danger" onclick="deleteProduct(this)"
+			                    	data-id="${prod.tripProdNo}">
+			                        <i class="bi bi-trash"></i> 삭제
+			                    </button>
+			                </div>
+			            </div>
+		            </c:forEach>
+        		</c:otherwise>
+        	</c:choose>
         </div>
 
+        <!-- 인피니티?? 할지 말지 -->
         <!-- 페이지네이션 -->
         <div class="pagination-container">
             <nav>
@@ -306,6 +234,7 @@
     </div>
 </div>
 
+<!-- accommodation -> -->
 <!-- 상품 등록/수정 모달 -->
 <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -828,7 +757,7 @@
                     </div><!-- /defaultPriceSection -->
 
                     <!-- 공통 판매 기간 (항공/숙박용) -->
-                    <div id="flightAccomDateSection" style="display: none;">
+                    <div id="accomDateSection" style="display: none;">
                         <div class="form-section-title">
                             <i class="bi bi-calendar-range me-2"></i>판매 기간
                         </div>
@@ -858,18 +787,22 @@
     </div>
 </div>
 
+<!-- 상세 조회도 모달로? -->
+
 <c:set var="hasInlineScript" value="true" />
 <%@ include file="../common/footer.jsp" %>
 
 <script>
-var startDatePicker;
-var endDatePicker;
+let modal = null;	// 모달 객체
+
+let startDatePicker;
+let endDatePicker;
 
 // 페이지 로드 완료 후 초기화
 $(document).ready(function() {
     // 날짜 선택기 초기화
-    var startDateInput = document.querySelector('input[name="startDate"]');
-    var endDateInput = document.querySelector('input[name="endDate"]');
+    const startDateInput = document.querySelector('input[name="startDate"]');
+    const endDateInput = document.querySelector('input[name="endDate"]');
 
     if (startDateInput && typeof flatpickr !== 'undefined') {
         startDatePicker = flatpickr(startDateInput, {
@@ -920,41 +853,57 @@ function setModalForNew() {
 }
 
 // 상품 수정 모달 설정
-function editProduct(id) {
+function editProduct(prodData) {
+	const { id } = prodData.dataset;
+	
     document.getElementById('productModalTitle').textContent = '상품 수정';
     // TODO: 상품 데이터 로드
-    var modal = new bootstrap.Modal(document.getElementById('productModal'));
+    // 해당 id select해서 가져오기
     modal.show();
 }
 
-// 상품 저장
+// 상품 저장 - insert
 function saveProduct() {
     // TODO: 상품 저장 API 호출
     if (typeof showToast === 'function') {
         showToast('상품이 저장되었습니다.', 'success');
     }
-    var modal = bootstrap.Modal.getInstance(document.getElementById('productModal'));
+    // insert문 
     if (modal) modal.hide();
 }
 
-// 상품 상태 변경
-function toggleProductStatus(id) {
+// 상품 상태 변경 - update
+function toggleProductStatus(prodData) {
+	const { id, status } = prodData.dataset;
+	
     if (confirm('상품 상태를 변경하시겠습니까?')) {
-        // TODO: 상태 변경 API 호출
-        if (typeof showToast === 'function') {
-            showToast('상품 상태가 변경되었습니다.', 'success');
-        }
+        axios.post(`/product/manage/changeProductStatus`, {
+        	tripProdNo : id,
+        	approveStatus : status
+        })
+        .then(res => {
+        	if (res.data.ok) showToast('상품 상태가 변경되었습니다.', 'success');
+        	else showToast('상품 상태가 변경되었습니다.', 'success');
+        }).catch(err => {
+        	console.log("error 발생 : ", error);
+        });
         location.reload();
     }
 }
 
 // 상품 삭제
-function deleteProduct(id) {
+function deleteProduct(prodData) {
+	const { id } = prodData.dataset;
     if (confirm('정말 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.')) {
-        // TODO: 삭제 API 호출
-        if (typeof showToast === 'function') {
-            showToast('상품이 삭제되었습니다.', 'success');
-        }
+        axios.post(`/product/manage/removeProduct`, {
+        	tripProdNo : id
+        })
+        .then(res => {
+        	if (res.data.ok) showToast('상품이 삭제되었습니다.', 'success');
+        	else showToast('상품이 삭제되지않았습니다.', 'error');
+        }).catch(err => {
+        	console.log("error 발생 : ", error);
+        });
         location.reload();
     }
 }
@@ -992,9 +941,7 @@ function addBookingTime() {
 
 // 시간 제거
 function removeBookingTime(time) {
-    bookingTimes = bookingTimes.filter(function(t) {
-        return t !== time;
-    });
+    bookingTimes = bookingTimes.filter(t => t !== time);
     renderBookingTimes();
 }
 
@@ -1002,9 +949,8 @@ function removeBookingTime(time) {
 function renderBookingTimes() {
     var container = document.getElementById('bookingTimeList');
 
-    if (bookingTimes.length === 0) {
-        container.innerHTML = '';
-    } else {
+    if (bookingTimes.length === 0) container.innerHTML = '';
+    else {
         var html = bookingTimes.map(function(time) {
             // 24시간 형식을 보기 좋게 변환
             var displayTime = formatTime(time);
@@ -1018,7 +964,6 @@ function renderBookingTimes() {
         }).join('');
         container.innerHTML = html;
     }
-
     // hidden input에 JSON으로 저장
     document.getElementById('bookingTimesInput').value = JSON.stringify(bookingTimes);
 }
@@ -1044,7 +989,7 @@ function addPresetTimes(type) {
     var times = presets[type] || [];
     var addedCount = 0;
 
-    times.forEach(function(time) {
+    times.forEach(time => {
         if (!bookingTimes.includes(time)) {
             bookingTimes.push(time);
             addedCount++;
@@ -1055,9 +1000,7 @@ function addPresetTimes(type) {
         bookingTimes.sort();
         renderBookingTimes();
         showToast(addedCount + '개의 시간이 추가되었습니다.', 'success');
-    } else {
-        showToast('추가할 새 시간이 없습니다.', 'info');
-    }
+    } else showToast('추가할 새 시간이 없습니다.', 'info');
 }
 
 // 주소 검색 (카카오 주소 API)
@@ -1083,18 +1026,14 @@ function searchAddress() {
 }
 
 // ===== 상품 선택 기능 =====
-
 // 전체 선택/해제
 function toggleSelectAll(checkbox) {
     var productCheckboxes = document.querySelectorAll('.product-select-checkbox');
-    productCheckboxes.forEach(function(cb) {
+    productCheckboxes.forEach((cb) => {
         cb.checked = checkbox.checked;
         var productCard = cb.closest('.product-manage-card');
-        if (checkbox.checked) {
-            productCard.classList.add('selected');
-        } else {
-            productCard.classList.remove('selected');
-        }
+        if (checkbox.checked) productCard.classList.add('selected');
+        else productCard.classList.remove('selected');
     });
     updateSelectedCount();
 }
@@ -1102,11 +1041,8 @@ function toggleSelectAll(checkbox) {
 // 개별 체크박스 클릭 시
 function toggleProductSelect(checkbox) {
     var productCard = checkbox.closest('.product-manage-card');
-    if (checkbox.checked) {
-        productCard.classList.add('selected');
-    } else {
-        productCard.classList.remove('selected');
-    }
+    if (checkbox.checked) productCard.classList.add('selected');
+    else productCard.classList.remove('selected');
 
     // 전체 선택 체크박스 상태 업데이트
     var allCheckboxes = document.querySelectorAll('.product-select-checkbox');
@@ -1136,37 +1072,30 @@ function updateSelectedCount() {
 
     // 액션 버튼 활성화/비활성화
     var actionButtons = document.querySelectorAll('#selectionActions .btn');
-    actionButtons.forEach(function(btn) {
-        btn.disabled = count === 0;
-    });
+    actionButtons.forEach(btn => btn.disabled = count === 0);
 }
 
 // 선택된 상품 ID 목록 가져오기
 function getSelectedProductIds() {
-    var checkedCheckboxes = document.querySelectorAll('.product-select-checkbox:checked');
-    var ids = [];
-    checkedCheckboxes.forEach(function(cb) {
-        ids.push(cb.value);
-    });
+	var checkedCheckboxes = document.querySelectorAll('.product-select-checkbox:checked');
+    const ids = [];
+    checkedCheckboxes.forEach(cb => ids.push(cb.value));
     return ids;
 }
 
 // 선택 상품 중지
 function pauseSelectedProducts() {
+	// status 바구기
     var selectedIds = getSelectedProductIds();
     if (selectedIds.length === 0) {
-        if (typeof showToast === 'function') {
-            showToast('선택된 상품이 없습니다.', 'warning');
-        }
+        if (typeof showToast === 'function') showToast('선택된 상품이 없습니다.', 'warning');
         return;
     }
 
-    if (!confirm(selectedIds.length + '개의 상품을 중지하시겠습니까?')) {
-        return;
-    }
+    if (!confirm(selectedIds.length + '개의 상품을 중지하시겠습니까?')) return;
 
     // 선택된 상품들의 상태를 중지로 변경 (UI 업데이트)
-    selectedIds.forEach(function(id) {
+    selectedIds.forEach( id => {
         var checkbox = document.querySelector('.product-select-checkbox[value="' + id + '"]');
         if (checkbox) {
             var productCard = checkbox.closest('.product-manage-card');
@@ -1183,9 +1112,7 @@ function pauseSelectedProducts() {
     // 선택 해제
     clearProductSelection();
 
-    if (typeof showToast === 'function') {
-        showToast(selectedIds.length + '개의 상품이 중지되었습니다.', 'success');
-    }
+    if (typeof showToast === 'function') showToast(selectedIds.length + '개의 상품이 중지되었습니다.', 'success');
 
     // 통계 업데이트
     updateProductStats();
@@ -1195,18 +1122,14 @@ function pauseSelectedProducts() {
 function resumeSelectedProducts() {
     var selectedIds = getSelectedProductIds();
     if (selectedIds.length === 0) {
-        if (typeof showToast === 'function') {
-            showToast('선택된 상품이 없습니다.', 'warning');
-        }
+        if (typeof showToast === 'function') showToast('선택된 상품이 없습니다.', 'warning');
         return;
     }
 
-    if (!confirm(selectedIds.length + '개의 상품을 재개하시겠습니까?')) {
-        return;
-    }
+    if (!confirm(selectedIds.length + '개의 상품을 재개하시겠습니까?')) return;
 
     // 선택된 상품들의 상태를 판매중으로 변경 (UI 업데이트)
-    selectedIds.forEach(function(id) {
+    selectedIds.forEach(id => {
         var checkbox = document.querySelector('.product-select-checkbox[value="' + id + '"]');
         if (checkbox) {
             var productCard = checkbox.closest('.product-manage-card');
@@ -1275,9 +1198,7 @@ function clearProductSelection() {
     allCheckboxes.forEach(function(cb) {
         cb.checked = false;
         var productCard = cb.closest('.product-manage-card');
-        if (productCard) {
-            productCard.classList.remove('selected');
-        }
+        if (productCard) productCard.classList.remove('selected');
     });
 
     var selectAllCheckbox = document.getElementById('selectAllProducts');
@@ -1325,13 +1246,13 @@ function toggleCategoryFields() {
     // 항공/숙박 섹션들
     var flightFields = document.getElementById('flightFields');
     var accommodationFields = document.getElementById('accommodationFields');
-    var flightAccomDateSection = document.getElementById('flightAccomDateSection');
+    var accomDateSection = document.getElementById('accomDateSection');
     var flightAccomImageField = document.getElementById('flightAccomImageField');
 
     // 모든 섹션 초기화 (숨기기)
     flightFields.style.display = 'none';
     accommodationFields.style.display = 'none';
-    flightAccomDateSection.style.display = 'none';
+    accomDateSection.style.display = 'none';
 
     if (category === 'flight') {
         // 항공 선택 시
@@ -1344,7 +1265,7 @@ function toggleCategoryFields() {
         defaultPriceSection.style.display = 'none';
 
         flightFields.style.display = 'block';
-        flightAccomDateSection.style.display = 'block';
+        accomDateSection.style.display = 'block';
         flightAccomImageField.style.display = 'none';
 
     } else if (category === 'accommodation') {
@@ -1358,7 +1279,7 @@ function toggleCategoryFields() {
         defaultPriceSection.style.display = 'none';
 
         accommodationFields.style.display = 'block';
-        flightAccomDateSection.style.display = 'block';
+        accomDateSection.style.display = 'block';
         flightAccomImageField.style.display = 'block';
 
     } else {
@@ -1604,6 +1525,11 @@ function updateAddonDeleteButtons() {
         }
     });
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+	modal = new bootstrap.Modal(document.getElementById('productModal'));
+});
+
 </script>
 </body>
 </html>

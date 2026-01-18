@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
+import java.util.List;
+
 import lombok.Data;
 
 @Data
@@ -57,4 +59,7 @@ public class RoomTypeVO {
 	 * 숙소 번호
 	 */
 	private int accNo;
+	
+	
+	private List<RoomFeatureVO> feature;
 }

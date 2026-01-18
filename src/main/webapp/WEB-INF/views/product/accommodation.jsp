@@ -20,7 +20,7 @@
     <div class="container">
         <!-- 검색 박스 -->
         <div class="search-box">
-            <form id="accommodationSearchForm">
+            <form id="accommodationSearchForm" action="${pageContext.request.contextPath}/product/accommodation" method="get">
                 <div class="search-form-row">
                     <div class="form-group">
                         <label class="form-label">목적지</label>
@@ -39,15 +39,18 @@
                         <input type="text" class="form-control date-picker" id="checkOut" placeholder="날짜 선택">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">객실 / 인원</label>
-                        <select class="form-control form-select" id="guests">
-                            <option value="1-2">객실 1, 성인 2명</option>
-                            <option value="1-1">객실 1, 성인 1명</option>
-                            <option value="1-3">객실 1, 성인 3명</option>
-                            <option value="1-4">객실 1, 성인 4명</option>
-                            <option value="2-4">객실 2, 성인 4명</option>
-                        </select>
-                    </div>
+					    <label class="form-label">인원</label>
+					    <div class="guest-counter-wrapper">
+					        <div class="counter-item">
+					            <div class="counter-controls">
+					            <small>성인 기준</small>
+					                <button type="button" class="btn-count minus" onclick="updateCount('adult', -1)">-</button>
+					                <input type="number" id="adultCount" name="adultCount" value="2" readonly>인
+					                <button type="button" class="btn-count plus" onclick="updateCount('adult', 1)">+</button>
+					            </div>
+					        </div>
+					        </div>
+					</div>
                     <button type="submit" class="btn btn-primary btn-search">
                         <i class="bi bi-search me-2"></i>검색
                     </button>
@@ -111,7 +114,7 @@
             </div>
 
             <div class="accommodation-grid">
-                <!-- 숙소 카드 1 -->
+                <!-- 숙소 카드 -->
                 <c:forEach items="${accList }" var="acc">
                 <div class="accommodation-card" data-accommodation-id="${acc.accNo}">
                     <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo }" class="accommodation-image">
@@ -190,10 +193,10 @@
                                         <h6>${room.roomName}</h6>
                                         <c:set var="lastRoomName" value="${room.roomName}" />
                                         <p><i class="bi bi-people"></i> ${room.baseGuestCount } / <i class="bi bi-arrows-angle-expand"></i> ${room.roomSize }㎡</p>
-                                        <span class="room-stock available"><i class="bi bi-check-circle"></i> 잔여 5실</span>
+                                        <span class="room-stock available"><i class="bi bi-check-circle"></i> 잔여 ${room.totalRoomCount }실</span>
                                     </div>
                                     <div class="room-option-price">
-                                        <span class="price"><fmt:formatNumber value="${room.price}" pattern="#,###"/>원</span>
+                                        <span class="price"><fmt:formatNumber value="${room.price * (100 - room.discount) / 100}" pattern="#,###"/>원</span>
                                         <span class="per-night">/ 1박</span>
                                     </div>
                                     <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo}/booking?roomNo=${room.roomTypeNo}" class="btn btn-primary btn-sm">결제</a>
@@ -429,11 +432,59 @@ a.accommodation-image:hover img {
 .accommodation-name-link:hover .accommodation-name {
     color: var(--primary-color);
 }
+
+/* 인원 선택 스타일 */
+.guest-counter-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--white-color);
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-size: 15px;
+}
+.counter-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+.btn-count {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--primary-color);
+    background: #fff;
+    color: var(--primary-color);
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn-count:hover {
+    background: var(--primary-color);
+    color: #fff;
+}
+#adultCount {
+    width: 30px;
+    border: none;
+    text-align: center;
+    font-weight: bold;
+}
+}
 </style>
-<script>    
-    // 서버에서 보낸 리스트의 크기를 JS에 전달
-    const initialListSize = ${accList.size()};
-</script>
 <script src="${pageContext.request.contextPath}/resources/js/accommodation.js"></script>
+<script>
+const isLoggedIn = <sec:authorize access="isAuthenticated()">true</sec:authorize><sec:authorize access="isAnonymous()">false</sec:authorize>;
+
+window.addEventListener('load', function() {
+    if (typeof initSearch === 'function') {
+        initSearch({
+            initialListSize: ${empty accList ? 0 : accList.size()},
+            totalCount: ${empty totalCount ? 0 : totalCount},
+            areaCode: '${param.areaCode}',
+            keyword: '${param.keyword}'
+        });
+    }
+});
+</script>
 
 <%@ include file="../common/footer.jsp" %>

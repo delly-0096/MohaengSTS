@@ -1,10 +1,13 @@
 package kr.or.ddit.mohaeng.accommodation.controller;
 
+import java.beans.Customizer;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import kr.or.ddit.mohaeng.accommodation.service.IAccommodationService;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
+import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +39,12 @@ public class AccommodationController {
 			@RequestParam(value="areaCode", required=false) String areaCode,
 			Model model) {
 		
+		// 날짜가 없으면 기본값(오늘~내일) 세팅 (권장)
+	    if(acc.getStartDate() == null) {
+	        acc.setStartDate(LocalDate.now().toString());
+	        acc.setEndDate(LocalDate.now().plusDays(1).toString());
+	    }
+		
 		acc.setPage(1);
 	    acc.setPageSize(12);
 	    acc.setStartRow(1);
@@ -47,8 +59,9 @@ public class AccommodationController {
 	    
 	    log.info("조회된 숙소 개수: {}", accList.size());
 	    model.addAttribute("accList", firstList);
-	    model.addAttribute("initialListSize", firstList.size()); // JS에서 체크용
+	    model.addAttribute("initialListSize", firstList.size());
 	    model.addAttribute("totalCount", totalCount);
+	    model.addAttribute("searchParam", acc);
 	    
 	    return "product/accommodation";
 
@@ -84,21 +97,47 @@ public class AccommodationController {
 	
 	// 숙박 상품 상세 페이지
 	@GetMapping("/product/accommodation/{accNo}")
-	public String accommodationDetail(@PathVariable("accNo") int accNo, Model model) {
+	public String accommodationDetail(
+			@PathVariable("accNo") int accNo,
+			@AuthenticationPrincipal  CustomUserDetails user,
+			Model model) {
+				
+		// 숙소 상세 정보
 		AccommodationVO detail = accService.getAccommodationDetail(accNo);
-		
-		// 해당 숙소의 객실(RoomType) 리스트 조회
+		// 숙소 객실 타입 정보
 		List<RoomTypeVO> rooms = accService.getRoomList(accNo);
+		// 숙소 보유시설 정보
+		AccFacilityVO facility = accService.getAccFacility(accNo);
+		
+		int compNo = detail.getCompNo();
+		// 판매자 정보
+        CompanyVO seller = accService.getSellerStatsByAccNo(detail.getCompNo());
 		
 		model.addAttribute("acc", detail);
 		model.addAttribute("rooms", rooms);
+	    model.addAttribute("facility", facility);
+        model.addAttribute("seller", seller);
 		
 		return "product/accommodation-detail";
 	}
 	
-	@GetMapping("/product/accommodation-booking")
-	public String accommodationBooking() {
-		return "product/accommodation-booking";
+	// 숙소 예약 페이지
+	@GetMapping("/product/accommodation/{accNo}/booking")
+	public String accommodationBooking(
+			@PathVariable("accNo") int accNo,
+			@RequestParam("roomNo") int roomTypeNo,
+	        @RequestParam Map<String, String> bookingData, // 날짜, 인원 등을 한 번에 맵으로 받기
+	        Model model) {
+	    
+		AccommodationVO acc = accService.getAccommodationDetail(accNo);
+        RoomTypeVO room = accService.getRoomTypeDetail(roomTypeNo);
+		
+	    // 넘어온 예약 데이터를 모델에 담아서 결제 화면에 뿌려주기
+        model.addAttribute("acc", acc);
+        model.addAttribute("room", room);
+	    model.addAttribute("bookingData", bookingData);
+	    
+	    return "product/accommodation-booking";
 	}
 
 	

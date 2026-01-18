@@ -1,5 +1,5 @@
 /**
- * 숙소 목록 페이지 전용 JS
+ * 숙소 목록 페이지 전용 스크립트
  * 기능: 인피니티 스크롤, 숙소 카드 동적 생성, 드롭다운 제어, 북마크
  */
 
@@ -209,29 +209,3 @@ function doSearch() {
     const keyword = document.querySelector('input[placeholder="도시, 지역 또는 숙소명"]').value;
     location.href = `${contextPath}/product/accommodation?keyword=` + encodeURIComponent(keyword);
 }
-
-//==================== 인원 수 조절 (검색바 전용) ====================
-window.updateCount = function(type, delta) {
-    // 1. input 요소 찾기
-    const input = document.getElementById(type + 'Count');
-    if (!input) {
-        console.error("adultCount input을 못 찾겠어!");
-        return;
-    }
-
-    // 2. 값 계산
-    let currentValue = parseInt(input.value) || 0;
-    let newValue = currentValue + delta;
-
-    // 3. 범위 제한 (성인 기준 최소 1명, 최대 8명)
-    if (newValue >= 1 && newValue <= 8) {
-        input.value = newValue;
-        // input이 바뀌었다는걸 브라우저에 알림 (필요시)
-        input.dispatchEvent(new Event('change'));
-    }
-};
-
-//==================== 검색 폼 제출 로직 ====================
-document.getElementById('accommodationSearchForm')?.addEventListener('submit', function(e) {
-    const adultCount = document.getElementById('adultCount').value;
-});

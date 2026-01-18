@@ -2,7 +2,9 @@ package kr.or.ddit.mohaeng.accommodation.service;
 
 import java.util.List;
 
+import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
+import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 
 public interface IAccommodationService {
@@ -21,5 +23,14 @@ public interface IAccommodationService {
 	
 	// 전체 개수 가져오기
 	public int selectTotalCount(AccommodationVO acc);
+
+	// 객실 보유 시설 가져오기
+	public AccFacilityVO getAccFacility(int accNo);
+
+	// 판매자 정보 가져오기
+	public CompanyVO getSellerStatsByAccNo(int compNo);
+
+	// 객실 상세 타입 가져오기
+	public RoomTypeVO getRoomTypeDetail(int roomTypeNo);
 
 }

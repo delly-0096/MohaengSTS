@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper;
+import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
+import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 
 @Service
@@ -20,11 +22,25 @@ public class AccommodationServiceImpl implements IAccommodationService{
 		return accMapper.selectAccommodationList();
 	}
 
+	/**
+	 *	<p> 숙소 정보 가져오기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
 	@Override
 	public AccommodationVO getAccommodationDetail(int accNo) {
 		return accMapper.getAccommodationDetail(accNo);
 	}
 
+	/**
+	 *	<p> 숙소 타입 가져오기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
 	@Override
 	public List<RoomTypeVO> getRoomList(int accNo) {
 		return accMapper.getRoomList(accNo);
@@ -38,6 +54,42 @@ public class AccommodationServiceImpl implements IAccommodationService{
 	@Override
 	public int selectTotalCount(AccommodationVO acc) {
 		return accMapper.selectTotalCount(acc);
+	}
+
+	/**
+	 *	<p> 숙소 보유 시설 가져오기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	@Override
+	public AccFacilityVO getAccFacility(int accNo) {
+		return accMapper.getAccFacility(accNo);
+	}
+
+	/**
+	 *	<p> 숙소 판매자 정보 가져오기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	@Override
+	public CompanyVO getSellerStatsByAccNo(int compNo) {
+		return accMapper.getSellerStatsByProdNo(compNo);
+	}
+
+	/**
+	 *	<p> 숙소 상세 타입 가져오기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	@Override
+	public RoomTypeVO getRoomTypeDetail(int roomTypeNo) {
+		return accMapper.getRoomTypeDetail(roomTypeNo);
 	}
 
 }

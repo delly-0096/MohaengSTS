@@ -210,6 +210,149 @@
 	
 	</select>
 	
+	<!-- DB 업데이트 -->
+	<select id="selectListForDetailUpdate" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	    SELECT 
+	        A.ACC_NO,
+	        A.API_CONTENT_ID,  A.ACC_NAME
+	    FROM ACCOMMODATION A
+	    WHERE A.OVERVIEW IS NULL 
+	       OR NOT EXISTS (
+	           SELECT 1 FROM ACC_FACILITY AF WHERE AF.ACC_NO = A.ACC_NO
+	       ) 
+	       AND ROWNUM <![CDATA[ <= ]]> 3
+	</select>
 	
+	<!-- 숙소 정보(설명, 전화번호) API 가져오기 -->
+	<update id="updateAccommodationDetail" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	    UPDATE ACCOMMODATION
+	    SET 
+	        OVERVIEW = #{overview},
+	        TEL = #{tel}
+	    WHERE ACC_NO = #{accNo}
+	</update>
 	
+	<!-- 숙소 정보(보유시설) API 가져오기 -->
+	<update id="upsertAccFacility" parameterType="kr.or.ddit.mohaeng.vo.AccFacilityVO">
+	    MERGE INTO ACC_FACILITY AF
+	    USING DUAL ON (AF.ACC_NO = #{accNo})
+	    WHEN MATCHED THEN
+	        UPDATE SET 
+	            WIFI_YN = #{wifiYn}
+	            , PARKING_YN = #{parkingYn}
+	            , BREAKFAST_YN = #{breakfastYn}
+	            , POOL_YN = #{poolYn}
+	            , GYM_YN = #{gymYn}
+	            , SPA_YN = #{spaYn}
+	            , RESTAURANT_YN = #{restaurantYn}
+	            , BAR_YN = #{barYn}
+	            , ROOM_SERVICE_YN = #{roomServiceYn}
+	            , LAUNDRY_YN = #{laundryYn}
+	            , SMOKING_AREA_YN = #{smokingAreaYn}
+	            , PET_FRIENDLY_YN = #{petFriendlyYn}
+	    WHEN NOT MATCHED THEN
+	        INSERT (
+	            ACC_NO
+	            , WIFI_YN
+	            , PARKING_YN
+	            , BREAKFAST_YN
+	            , POOL_YN
+	            , GYM_YN
+	            , SPA_YN
+	            , RESTAURANT_YN
+	            , BAR_YN
+	            , ROOM_SERVICE_YN
+	            , LAUNDRY_YN
+	            , SMOKING_AREA_YN
+	            , PET_FRIENDLY_YN
+	        ) VALUES (
+	            #{accNo}
+	            , #{wifiYn}
+	            , #{parkingYn}
+	            , #{breakfastYn}
+	            , #{poolYn}
+	            , #{gymYn}
+	            , #{spaYn}
+	            , #{restaurantYn}
+	            , #{barYn}
+	            , #{roomServiceYn}
+	            , #{laundryYn}
+	            , #{smokingAreaYn}
+	            , #{petFriendlyYn}
+	        )
+	</update>
+	
+	<!-- 숙소 정보(객실타입) API 가져오기 -->
+	<insert id="insertRoomType" parameterType="kr.or.ddit.mohaeng.vo.RoomTypeVO" 
+	        useGeneratedKeys="true" keyProperty="roomTypeNo" keyColumn="ROOM_TYPE_NO">
+	    INSERT INTO ROOM_TYPE (
+	        ACC_NO
+	        , ROOM_NAME
+	        , BASE_GUEST_COUNT
+	        , MAX_GUEST_COUNT
+	        , PRICE
+	        , ROOM_SIZE
+	        , DISCOUNT
+	    ) VALUES (
+	        #{accNo}
+	        , #{roomName}
+	        , #{baseGuestCount}
+	        , #{maxGuestCount}
+	        , #{price}
+	        , #{roomSize}
+	        , 0
+	    )
+	</insert>
+	
+	<!-- 숙소 정보(객실 내 시설) API 가져오기 -->
+	<insert id="insertRoomFacility" parameterType="kr.or.ddit.mohaeng.vo.RoomFacilityVO">
+	    INSERT INTO ROOM_FACILITY (
+	        ROOM_TYPE_NO
+	        , AIR_CON_YN
+	        , TV_YN
+	        , MINIBAR_YN
+	        , FRIDGE_YN
+	        , SAFE_BOX_YN
+	        , HAIR_DRYER_YN
+	        , BATHTUB_YN
+	        , TOILETRIES_YN
+	    ) VALUES (
+	        #{roomTypeNo}
+	        , #{airConYn}
+	        , #{tvYn}
+	        , 'N'
+	        , #{fridgeYn}
+	        , 'N'
+	        , #{hairDryerYn}
+	        , 'N'
+	        , #{toiletriesYn}
+	    )
+	</insert>
+	
+	<!-- 숙소 정보(객실 내 특징) API 가져오기 -->
+	<insert id="insertRoomFeature" parameterType="kr.or.ddit.mohaeng.vo.RoomFeatureVO">
+	    INSERT INTO ROOM_FEATURE (
+	        ROOM_TYPE_NO
+	        , FREE_CANCEL_YN
+	        , OCEAN_VIEW_YN
+	        , MOUNTAIN_VIEW_YN
+	        , CITY_VIEW_YN
+	        , LIVING_ROOM_YN
+	        , TERRACE_YN
+	        , NON_SMOKING_YN
+	        , KITCHEN_YN
+	    ) VALUES (
+	        #{roomTypeNo}
+	        , #{freeCancelYn}
+	        , #{oceanViewYn}
+	        , #{mountainViewYn}
+	        , #{cityViewYn}
+	        , #{livingRoomYn}
+	        , #{terraceYn}
+	        , #{nonSmokingYn}
+	        , #{kitchenYn}
+	    )
+	</insert>
+	
+
 </mapper>

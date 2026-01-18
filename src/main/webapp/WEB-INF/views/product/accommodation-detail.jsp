@@ -1,7 +1,9 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
-<c:set var="pageTitle" value="그랜드 하얏트 제주" />
+<c:set var="pageTitle" value="${accommodation.accName}" />
 <c:set var="pageCss" value="product" />
 
 <%@ include file="../common/header.jsp" %>
@@ -14,14 +16,14 @@
             <span class="mx-2">/</span>
             <a href="${pageContext.request.contextPath}/product/accommodation">숙박</a>
             <span class="mx-2">/</span>
-            <span>그랜드 하얏트 제주</span>
+            <span>${accommodation.accName}</span>
         </nav>
 
         <!-- 갤러리 -->
         <div class="accommodation-gallery">
             <div class="gallery-main">
-                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=500&fit=crop&q=80"
-                     alt="호텔 외관" id="mainImage">
+                <img src="${accommodation.accFilePath}"
+                     alt="${accommodation.accName}" id="mainImage">
                 <span class="gallery-badge"><i class="bi bi-images me-1"></i>1/12</span>
             </div>
             <div class="gallery-grid">
@@ -46,19 +48,26 @@
             <div class="accommodation-info">
                 <div class="d-flex justify-content-between align-items-start mb-2">
                     <div class="accommodation-badges">
-                        <span class="badge-type">호텔</span>
-                        <span class="badge-star"><i class="bi bi-star-fill"></i> 5성급</span>
+                        <span class="badge-type">
+                        ${accommodation.accCatCd eq 'B02010700' ? '호텔' : '숙박'}
+                        </span>
+                        <c:if test="${not empty accommodation.starGrade}">
+					        <span class="badge-star">
+					            <i class="bi bi-star-fill"></i> 
+					            ${accommodation.starGrade}성급
+					        </span>
+					    </c:if>
                     </div>
-                    <c:if test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
+                    <sec:authorize access="hasRole('MEMBER')">
                     <button class="report-btn" onclick="openReportModal('accommodation', '1', '그랜드 하얏트 제주')">
                         <i class="bi bi-flag"></i> 신고
                     </button>
-                    </c:if>
+                    </sec:authorize>
                 </div>
-                <h1>그랜드 하얏트 제주</h1>
+                <h1>${accommodation.accName}</h1>
 
                 <div class="accommodation-meta">
-                    <span><i class="bi bi-geo-alt"></i> 제주 서귀포시 중문관광로</span>
+                    <span><i class="bi bi-geo-alt"></i> ${accommodation.addr1}${not empty accommodation.addr2 ? ' ' : ''}${accommodation.addr2}</span>
                     <span><i class="bi bi-star-fill text-warning"></i> 4.8 (512 리뷰)</span>
                 </div>
 
@@ -84,60 +93,85 @@
                 <!-- 숙소 소개 -->
                 <div class="accommodation-section">
                     <h3>숙소 소개</h3>
-                    <p>
-                        제주도의 아름다운 중문 관광단지에 위치한 그랜드 하얏트 제주는
-                        최고급 시설과 서비스를 제공하는 5성급 럭셔리 호텔입니다.
-                    </p>
-                    <p>
-                        탁 트인 오션뷰와 함께 인피니티 풀, 스파, 피트니스 센터 등
-                        다양한 부대시설을 갖추고 있어 완벽한 휴식을 경험하실 수 있습니다.
-                    </p>
+                    <p style="white-space: pre-wrap; line-height: 1.8;">${accommodation.overview}</p>
                 </div>
 
                 <!-- 편의시설 -->
                 <div class="accommodation-section">
                     <h3>편의시설</h3>
                     <div class="amenities-list">
+                    <c:if test="${facility.wifiYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-wifi"></i>
                             <span>무료 WiFi</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.parkingYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-p-circle"></i>
                             <span>무료 주차</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.poolYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-water"></i>
                             <span>수영장</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.gymYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-heart-pulse"></i>
                             <span>피트니스</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.spaYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-droplet"></i>
                             <span>스파/사우나</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.breakfastYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-cup-hot"></i>
                             <span>조식 제공</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.restaurantYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-shop"></i>
                             <span>레스토랑</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.barYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-cup-straw"></i>
                             <span>바/라운지</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.roomServiceYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-bell"></i>
                             <span>룸서비스</span>
                         </div>
+                    </c:if>
+                    <c:if test="${facility.laundryYn eq 'Y'}">
                         <div class="amenity-item">
                             <i class="bi bi-basket"></i>
                             <span>세탁 서비스</span>
                         </div>
+					</c:if>
+                    <c:if test="${facility.smokingAreaYn eq 'Y'}">
+                        <div class="amenity-item">
+                            <i class="bi bi-basket"></i>
+                            <span>지정 흡연구역</span>
+                        </div>
+					</c:if>
+                    <c:if test="${facility.petFriendlyYn eq 'Y'}">
+                        <div class="amenity-item">
+                            <i class="bi bi-basket"></i>
+                            <span>반려동물 입실 가능</span>
+                        </div>
+					</c:if>
                     </div>
                 </div>
 
@@ -146,113 +180,77 @@
                     <h3>객실 선택</h3>
                     <div class="room-list">
                         <!-- 객실 1 -->
-                        <div class="room-card" data-room-id="1">
+                     <c:forEach var="room" items="${roomList}">
+                        <div class="room-card" data-room-id="${room.roomTypeNo}">
                             <div class="room-image">
-                                <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=300&h=200&fit=crop&q=80" alt="디럭스 더블">
+                                <img src="${empty room.roomImg ? '/resources/images/default-room.jpg' : room.roomImg}" alt="${room.roomName}">
                                 <button class="room-image-btn" onclick="openRoomGallery(1)">
                                     <i class="bi bi-images"></i>
                                 </button>
                             </div>
                             <div class="room-info">
-                                <h4>디럭스 더블</h4>
+                                <h4>${room.roomName}</h4>
                                 <div class="room-details">
-                                    <span><i class="bi bi-people"></i> 기준 2인 / 최대 3인</span>
-                                    <span><i class="bi bi-arrows-fullscreen"></i> 35㎡</span>
-                                    <span><i class="bi bi-moon"></i> 더블 베드 1개</span>
+                                    <span><i class="bi bi-people"></i> 기준 ${room.baseGuestCount}인 / 최대 ${room.maxGuestCount}인</span>
+                                    <span><i class="bi bi-arrows-fullscreen"></i> ${room.roomSize}㎡</span>
+                                    <span><i class="bi bi-moon"></i> 더블 베드 ${room.bedCount}개</span>
                                 </div>
                                 <div class="room-features">
-                                    <span class="feature"><i class="bi bi-cup-hot"></i> 조식 포함</span>
-                                    <span class="feature"><i class="bi bi-check"></i> 무료 취소</span>
-                                </div>
+								    <%-- 1. 전망 시리즈 --%>
+								    <c:if test="${room.feature.oceanViewYn eq 'Y'}">
+								        <span class="feature"><i class="bi bi-water"></i> 오션뷰</span>
+								    </c:if>
+								    <c:if test="${room.feature.mountainViewYn eq 'Y'}">
+								        <span class="feature"><i class="bi bi-mountain"></i> 마운틴뷰</span>
+								    </c:if>
+								    <c:if test="${room.feature.cityViewYn eq 'Y'}">
+								        <span class="feature"><i class="bi bi-building"></i> 시티뷰</span>
+								    </c:if>
+								
+								    <%-- 2. 객실 구성 시리즈 --%>
+								    <c:if test="${room.feature.livingRoomYn eq 'Y'}">
+								        <span class="feature"><i class="bi bi-door-open"></i> 거실 포함</span>
+								    </c:if>
+								    <c:if test="${room.feature.terraceYn eq 'Y'}">
+								        <span class="feature"><i class="bi bi-house-door"></i> 테라스</span>
+								    </c:if>
+								
+								    <%-- 3. 서비스/정책 시리즈 --%>
+								    <c:if test="${room.feature.kitchenYn eq 'Y'}">
+								        <span class="feature"><i class="bi bi-egg-fried"></i> 취사 가능</span>
+								    </c:if>
+								    <c:if test="${room.feature.nonSmokingYn eq 'Y'}">
+								        <span class="feature"><i class="bi bi-no-circle"></i> 금연 객실</span>
+								    </c:if>
+								    <c:if test="${room.feature.freeCancelYn eq 'Y'}">
+								        <span class="feature text-primary" style="background: #e0f2fe;">
+								            <i class="bi bi-check-circle"></i> 무료 취소
+								        </span>
+								    </c:if>
+								</div>
                                 <div class="room-stock available">
                                     <i class="bi bi-check-circle"></i> 잔여 5실
                                 </div>
                             </div>
                             <div class="room-price">
                                 <div class="price-info">
-                                    <span class="original-price">280,000원</span>
-                                    <span class="sale-price">220,000원</span>
+                                    <span class="original-price">
+										<fmt:formatNumber value="${room.price}" type="number"/>원
+									</span>
+                                    <span class="sale-price">
+                                    <fmt:formatNumber value="${room.finalPrice}" type="number"/>원
+                                    </span>
                                     <span class="per-night">/ 1박</span>
                                 </div>
                                 <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                                <button class="btn btn-primary btn-sm" onclick="selectRoom(1, '디럭스 더블', 220000)">
+                                <button class="btn btn-primary btn-sm" 
+                                onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${room.price})">
                                     객실 선택
                                 </button>
                                 </c:if>
                             </div>
                         </div>
-
-                        <!-- 객실 2 -->
-                        <div class="room-card" data-room-id="2">
-                            <div class="room-image">
-                                <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=300&h=200&fit=crop&q=80" alt="프리미엄 트윈">
-                                <button class="room-image-btn" onclick="openRoomGallery(2)">
-                                    <i class="bi bi-images"></i>
-                                </button>
-                            </div>
-                            <div class="room-info">
-                                <h4>프리미엄 트윈</h4>
-                                <div class="room-details">
-                                    <span><i class="bi bi-people"></i> 기준 2인 / 최대 4인</span>
-                                    <span><i class="bi bi-arrows-fullscreen"></i> 42㎡</span>
-                                    <span><i class="bi bi-moon"></i> 싱글 베드 2개</span>
-                                </div>
-                                <div class="room-features">
-                                    <span class="feature"><i class="bi bi-cup-hot"></i> 조식 포함</span>
-                                    <span class="feature"><i class="bi bi-eye"></i> 오션뷰</span>
-                                </div>
-                                <div class="room-stock low">
-                                    <i class="bi bi-exclamation-circle"></i> 잔여 2실
-                                </div>
-                            </div>
-                            <div class="room-price">
-                                <div class="price-info">
-                                    <span class="original-price">350,000원</span>
-                                    <span class="sale-price">290,000원</span>
-                                    <span class="per-night">/ 1박</span>
-                                </div>
-                                <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
-                                <button class="btn btn-primary btn-sm" onclick="selectRoom(2, '프리미엄 트윈', 290000)">
-                                    객실 선택
-                                </button>
-                                </c:if>
-                            </div>
-                        </div>
-
-                        <!-- 객실 3 -->
-                        <div class="room-card" data-room-id="3">
-                            <div class="room-image">
-                                <img src="https://images.unsplash.com/photo-1591088398332-8a7791972843?w=300&h=200&fit=crop&q=80" alt="스위트">
-                                <button class="room-image-btn" onclick="openRoomGallery(3)">
-                                    <i class="bi bi-images"></i>
-                                </button>
-                            </div>
-                            <div class="room-info">
-                                <h4>오션뷰 스위트</h4>
-                                <div class="room-details">
-                                    <span><i class="bi bi-people"></i> 기준 2인 / 최대 4인</span>
-                                    <span><i class="bi bi-arrows-fullscreen"></i> 65㎡</span>
-                                    <span><i class="bi bi-moon"></i> 킹 베드 1개</span>
-                                </div>
-                                <div class="room-features">
-                                    <span class="feature"><i class="bi bi-cup-hot"></i> 조식 포함</span>
-                                    <span class="feature"><i class="bi bi-eye"></i> 오션뷰</span>
-                                    <span class="feature"><i class="bi bi-door-open"></i> 거실 포함</span>
-                                </div>
-                                <div class="room-stock soldout">
-                                    <i class="bi bi-x-circle"></i> 매진
-                                </div>
-                            </div>
-                            <div class="room-price">
-                                <div class="price-info">
-                                    <span class="sale-price">450,000원</span>
-                                    <span class="per-night">/ 1박</span>
-                                </div>
-                                <button class="btn btn-outline btn-sm" disabled>
-                                    예약 마감
-                                </button>
-                            </div>
-                        </div>
+                        </c:forEach>
                     </div>
                 </div>
 
@@ -273,7 +271,9 @@
                     <div class="booking-price">
                         <span class="price-label">객실 최저가</span>
                         <div>
-                            <span class="price">220,000</span>
+                            <span class="price" id="minPriceDisplay">
+			                    <fmt:formatNumber value="${accommodation.minPrice}" type="number"/>
+			                </span>
                             <span class="per-person">원~ / 1박</span>
                         </div>
                     </div>
@@ -313,36 +313,37 @@
                             </div>
                         </div>
 
-                        <div class="selected-room-info" id="selectedRoomInfo" style="display: none;">
+                        <div class="selected-room-info" id="selectedRoomInfo" style="display: none; border: 2px solid var(--primary-color);">
                             <div class="selected-room-header">
                                 <span>선택한 객실</span>
                                 <button type="button" class="btn-remove-room" onclick="clearSelectedRoom()">
                                     <i class="bi bi-x"></i>
                                 </button>
                             </div>
-                            <div class="selected-room-name" id="selectedRoomName"></div>
+                            <div class="selected-room-name" id="selectedRoomName" style="color: var(--primary-color); font-size: 1.1rem;">></div>
                             <div class="selected-room-price" id="selectedRoomPrice"></div>
+                            <div id="nightStayCount" class="text-muted small mt-1"></div>
                         </div>
 
                         <div class="booking-total">
-                            <span class="booking-total-label">총 금액</span>
+                            <span class="booking-total-label">총 결제 금액</span>
                             <span class="booking-total-price" id="totalPrice">-</span>
                         </div>
 
                         <div class="booking-actions">
-                            <c:if test="${sessionScope.loginUser.userType ne 'BUSINESS'}">
+                            <sec:authorize access="hasRole('MEMBER')">
                             <button type="button" class="btn btn-outline w-100" onclick="addToBookmark()">
                                 <i class="bi bi-bookmark me-2"></i>북마크
                             </button>
                             <button type="submit" class="btn btn-primary w-100" id="bookingBtn" disabled>
                                 <i class="bi bi-credit-card me-2"></i>결제하기
                             </button>
-                            </c:if>
-                            <c:if test="${sessionScope.loginUser.userType eq 'BUSINESS'}">
+                            </sec:authorize>
+                            <sec:authorize access="hasRole('BUSINESS')">
                             <div class="business-notice mt-2">
                                 <small class="text-muted"><i class="bi bi-info-circle me-1"></i>기업회원은 예약이 불가합니다.</small>
                             </div>
-                            </c:if>
+                            </sec:authorize>
                         </div>
                     </form>
                 </div>
@@ -400,73 +401,6 @@
                     </div>
                     <div class="review-images">
                         <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=100&h=100&fit=crop&q=80" alt="리뷰 이미지">
-                        <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=100&h=100&fit=crop&q=80" alt="리뷰 이미지">
-                    </div>
-                </div>
-
-                <!-- 리뷰 2 -->
-                <div class="review-item">
-                    <div class="review-item-header">
-                        <div class="reviewer-info">
-                            <div class="reviewer-avatar">
-                                <i class="bi bi-person"></i>
-                            </div>
-                            <div>
-                                <span class="reviewer-name">jeju_trip</span>
-                                <span class="review-date">2024.03.08</span>
-                            </div>
-                        </div>
-                        <div class="review-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star"></i>
-                        </div>
-                    </div>
-                    <div class="review-room">
-                        <i class="bi bi-door-closed me-1"></i>프리미엄 트윈 | 2024.03.05 - 2024.03.07 (2박)
-                    </div>
-                    <div class="review-content">
-                        <p>
-                            전반적으로 좋았는데 체크인할 때 대기 시간이 좀 길었어요.
-                            그래도 객실은 깔끔하고 넓어서 편하게 쉴 수 있었습니다.
-                            수영장도 넓고 좋았어요.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- 리뷰 3 -->
-                <div class="review-item">
-                    <div class="review-item-header">
-                        <div class="reviewer-info">
-                            <div class="reviewer-avatar">
-                                <i class="bi bi-person"></i>
-                            </div>
-                            <div>
-                                <span class="reviewer-name">happy_family</span>
-                                <span class="review-date">2024.03.01</span>
-                            </div>
-                        </div>
-                        <div class="review-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                        </div>
-                    </div>
-                    <div class="review-room">
-                        <i class="bi bi-door-closed me-1"></i>오션뷰 스위트 | 2024.02.25 - 2024.02.28 (3박)
-                    </div>
-                    <div class="review-content">
-                        <p>
-                            가족여행으로 왔는데 아이들도 정말 좋아했어요!
-                            키즈 프로그램도 있고 수영장에서 아이들이 신나게 놀았습니다.
-                            스위트룸 거실에서 보는 바다 풍경이 정말 예뻤어요.
-                        </p>
-                    </div>
-                    <div class="review-images">
                         <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=100&h=100&fit=crop&q=80" alt="리뷰 이미지">
                     </div>
                 </div>
@@ -936,11 +870,20 @@
 }
 
 .room-features .feature {
-    font-size: 12px;
-    color: #10b981;
-    background: #ecfdf5;
-    padding: 2px 8px;
-    border-radius: 4px;
+/*     font-size: 12px; */
+/*     color: #10b981; */
+/*     background: #ecfdf5; */
+/*     padding: 2px 8px; */
+/*     border-radius: 4px; */
+	font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: #f1f5f9; /* 기본 배경색 */
+    color: #475569;      /* 기본 글자색 */
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .room-stock {
@@ -1869,12 +1812,14 @@ function calculateNights() {
 
 // 북마크 추가
 function addToBookmark() {
-    var isLoggedIn = ${not empty sessionScope.loginUser};
+	let isAnonymous = true;
+    <sec:authorize access="isAuthenticated()">
+        isAnonymous = false;
+    </sec:authorize>
 
-    if (!isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            sessionStorage.setItem('returnUrl', window.location.href);
-            window.location.href = '${pageContext.request.contextPath}/member/login';
+    if (isAnonymous) {
+        if (confirm('로그인이 필요한 서비스입니다. 로그인 페이지로 이동할까요?')) {
+            location.href = '${pageContext.request.contextPath}/login';
         }
         return;
     }

@@ -110,4 +110,10 @@ public class AccommodationVO {
     
     // 검색어 필드
     private String keyword;
+    
+    //숙박 상세정보
+    private String overview;	// 숙소 설명
+    private String tel;			// 숙소 전화번호
+    private String checkInTime;	// 숙소 체크인 시간
+    private String checkOutTime;// 숙소 체크아웃 시간
 }

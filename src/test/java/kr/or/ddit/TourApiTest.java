@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 import kr.or.ddit.mohaeng.accommodation.service.TourApiService;
+import kr.or.ddit.mohaeng.vo.AccommodationVO;
 
 @SpringBootTest
 public class TourApiTest {
@@ -15,7 +16,8 @@ public class TourApiTest {
     @Test
     void testApiSync() {
         // 이 메서드를 실행하면 실제로 API를 호출하고 DB에 insert를 시도해.
-        tourApiService.fetchAndSaveAccommodations();
+        // tourApiService.fetchAndSaveAccommodations(); // 숙소 api 가져오기
+        tourApiService.updateAccommodationDetails();
         System.out.println("동기화 작업 완료! DB를 확인해보세요.");
     }
 }

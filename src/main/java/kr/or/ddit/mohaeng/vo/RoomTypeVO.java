@@ -53,4 +53,8 @@ public class RoomTypeVO {
 	 * 객실가격
 	 */
 	private int price; 
+	/**
+	 * 숙소 번호
+	 */
+	private int accNo;
 }

@@ -26,17 +26,19 @@
                         <label class="form-label">목적지</label>
                         <div class="search-input-group">
                             <span class="input-icon"><i class="bi bi-geo-alt-fill"></i></span>
-                            <input type="text" class="form-control location-autocomplete" id="destination" placeholder="도시, 지역 또는 숙소명" autocomplete="off">
-                            <div class="autocomplete-dropdown" id="destinationDropdown"></div>
+                            <input type="text" class="form-control location-autocomplete" id="destination" 
+                            		name="keyword" placeholder="도시, 지역 또는 숙소명" autocomplete="off">
+                            <div class="auto-dropdown" id="destinationDropdown" style="display:none;"></div>
+                            <input type="hidden" name="areaCode" id="areaCode">
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">체크인</label>
-                        <input type="text" class="form-control date-picker" id="checkIn" placeholder="날짜 선택">
+                        <input type="text" class="form-control date-picker" id="checkIn" name="startDate" placeholder="날짜 선택">
                     </div>
                     <div class="form-group">
                         <label class="form-label">체크아웃</label>
-                        <input type="text" class="form-control date-picker" id="checkOut" placeholder="날짜 선택">
+                        <input type="text" class="form-control date-picker" id="checkOut" name="endDate" placeholder="날짜 선택">
                     </div>
                     <div class="form-group">
 					    <label class="form-label">인원</label>
@@ -106,15 +108,25 @@
 
         <!-- 검색 결과 -->
         <div class="flight-results">
-            <div class="results-header">
-                <p class="results-count">
-                <!-- 이건 준혁님이 고치면 거기에 얹어가면 됨  -->
-                    <strong>제주도</strong> 숙소 <strong>128</strong>개
-                </p>
-            </div>
-
+		    <div class="results-header">
+		        <p class="results-count"> <c:choose>
+		                <c:when test="${not empty keyword}">
+		                    <strong>${keyword}</strong>
+		                </c:when>
+		                <c:when test="${not empty searchParam.keyword}">
+		                    <strong>${searchParam.keyword}</strong>
+		                </c:when>
+		                <c:otherwise>
+		                    <strong>전체</strong>
+		                </c:otherwise>
+		            </c:choose>
+		            숙소 <strong>${totalCount}</strong>개
+		        </p>
+		    </div>
+		</div>
+	        
+            <!-- 숙소 카드 -->
             <div class="accommodation-grid">
-                <!-- 숙소 카드 -->
                 <c:forEach items="${accList }" var="acc">
                 <div class="accommodation-card" data-accommodation-id="${acc.accNo}">
                     <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo }" class="accommodation-image">
@@ -199,7 +211,8 @@
                                         <span class="price"><fmt:formatNumber value="${room.price * (100 - room.discount) / 100}" pattern="#,###"/>원</span>
                                         <span class="per-night">/ 1박</span>
                                     </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo}/booking?roomNo=${room.roomTypeNo}" class="btn btn-primary btn-sm">결제</a>
+                                    <button type="button" class="btn btn-primary btn-sm" 
+        								onclick="goBooking(${acc.accNo}, ${room.roomTypeNo})">결제</button>
                                 </div>
                                 </c:if>
                             </c:forEach>
@@ -228,6 +241,50 @@
 </div>
 
 <style>
+/* 검색 드롭다운 스타일 */
+/* 드롭다운 전체 박스 크기 조절 */
+.auto-dropdown {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    background: #fff;
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+}
+
+/* 개별 항목 글씨 크기 줄이기 */
+.auto-dropdown .list-group-item {
+    padding: 6px 10px !important; /* 상하 여백 줄임 */
+    font-size: 13px !important;    /* 리더가 원한 작은 글씨! */
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+}
+
+/* 아이콘 크기 조절 */
+.auto-dropdown .bi {
+    font-size: 11px;
+    margin-right: 5px;
+}
+.auto-dropdown .list-group-item {
+    padding: 8px 12px;     /* 상하 간격을 좁혀서 더 많이 보이게 */
+    font-size: 14px;       /* 기본보다 살짝 줄임 (원래 보통 16px) */
+    color: #333;           /* 글자색을 좀 더 깔끔하게 */
+    white-space: nowrap;   /* 글자가 길어도 줄바꿈 안 되게 */
+    overflow: hidden;
+    text-overflow: ellipsis; /* 너무 길면 ... 처리 */
+}
+
+.region-item strong {
+    pointer-events: none; /* 글씨를 눌러도 부모인 li가 이벤트를 받게 함 */
+}
+
+.auto-dropdown .bi-geo-alt-fill {
+    font-size: 12px;
+    margin-right: 8px;
+}
+
 /* 금액 영역 전체 컨테이너 */
 .accommodation-price-row {
     display: flex;
@@ -473,7 +530,6 @@ a.accommodation-image:hover img {
 </style>
 <script src="${pageContext.request.contextPath}/resources/js/accommodation.js"></script>
 <script>
-const isLoggedIn = <sec:authorize access="isAuthenticated()">true</sec:authorize><sec:authorize access="isAnonymous()">false</sec:authorize>;
 
 window.addEventListener('load', function() {
     if (typeof initSearch === 'function') {

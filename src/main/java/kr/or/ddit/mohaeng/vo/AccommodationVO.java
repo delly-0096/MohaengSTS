@@ -111,6 +111,7 @@ public class AccommodationVO {
     // 검색어 필드
     private String keyword;
     private Integer adultCount;
+    private Integer totalCount;
     
     //숙박 상세정보
     private String overview;	// 숙소 설명

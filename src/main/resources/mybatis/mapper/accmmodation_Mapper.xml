@@ -239,6 +239,34 @@
         </if>
         </where>
 	</select>
+	
+	<!-- 목적지로 검색하기 -->
+	<select id="searchLocation" parameterType="string" resultType="map">
+		SELECT "areaCode", "name" FROM (
+        SELECT 
+            TO_CHAR(RGN_NO) as "areaCode",
+            RGN_NM as "name",
+            1 as "sortOrder"
+        FROM REGION
+        WHERE RGN_NM LIKE '%' || #{keyword} || '%'
+           OR RGN_DETAIL LIKE '%' || #{keyword} || '%'
+        
+        UNION ALL
+        
+        SELECT 
+            TO_CHAR(ACC_NO) as "areaCode",
+            ACC_NAME as "name",
+            2 as "sortOrder"
+        FROM (
+            SELECT ACC_NO, ACC_NAME 
+            FROM ACCOMMODATION 
+            WHERE ACC_NAME LIKE '%' || #{keyword} || '%'
+            ORDER BY ACC_NAME ASC
+        )
+        WHERE ROWNUM &lt;= 5
+    )
+    ORDER BY "sortOrder" ASC, "name" ASC
+	</select>
 		
 	<!-- 상세 정보 가져오기 -->
 	<select id="getAccommodationDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">

@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.accommodation.service;
 
 import java.util.List;
+import java.util.Map;
 
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
@@ -32,5 +33,8 @@ public interface IAccommodationService {
 
 	// 객실 상세 타입 가져오기
 	public RoomTypeVO getRoomTypeDetail(int roomTypeNo);
+
+	// 목적지로 검색하기
+	public List<Map<String, Object>> searchLocation(String keyword);
 
 }

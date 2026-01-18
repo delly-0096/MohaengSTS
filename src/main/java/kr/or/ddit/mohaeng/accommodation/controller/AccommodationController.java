@@ -2,6 +2,7 @@ package kr.or.ddit.mohaeng.accommodation.controller;
 
 import java.beans.Customizer;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,11 +33,18 @@ public class AccommodationController {
 	@Autowired
 	private IAccommodationService accService;
 	
-	// 전체 목록 가져오기
+	/**
+	 * 전체 목록 가져오기
+	 * @param acc
+	 * @param areaCode
+	 * @param model
+	 * @return
+	 */
 	@GetMapping("/product/accommodation")
 	public String accommodationPage(
 			AccommodationVO acc,
 			@RequestParam(value="areaCode", required=false) String areaCode,
+			@RequestParam(value="keyword", required=false) String keyword,
 			Model model) {
 		
 		// 날짜가 없으면 기본값(오늘~내일) 세팅 (권장)
@@ -44,6 +52,9 @@ public class AccommodationController {
 	        acc.setStartDate(LocalDate.now().toString());
 	        acc.setEndDate(LocalDate.now().plusDays(1).toString());
 	    }
+	    
+	    acc.setAreaCode(areaCode);
+	    acc.setKeyword(keyword);
 		
 		acc.setPage(1);
 	    acc.setPageSize(12);
@@ -57,14 +68,30 @@ public class AccommodationController {
 		List<AccommodationVO> accList = accService.selectAccommodationList(areaCode);
 		int totalCount = accService.selectTotalCount(acc);
 	    
-	    log.info("조회된 숙소 개수: {}", accList.size());
+		log.info("필터링된 진짜 숙소 개수: {}", totalCount);
+	    log.info("넘어온 키워드: {}, 지역코드: {}", keyword, areaCode);
 	    model.addAttribute("accList", firstList);
 	    model.addAttribute("initialListSize", firstList.size());
 	    model.addAttribute("totalCount", totalCount);
+	    model.addAttribute("keyword", keyword);
 	    model.addAttribute("searchParam", acc);
 	    
 	    return "product/accommodation";
 
+	}
+	
+	/**
+	 * 목적지 자동 완성용 API
+	 */
+	@GetMapping("/product/accommodation/api/search-location")
+	@ResponseBody
+	public List<Map<String, Object>> searchLocation(@RequestParam("keyword") String keyword) {
+		if (keyword == null || keyword.trim().isEmpty()) {
+	        return new ArrayList<>();
+	    }
+		// 사용자가 입력한 키워드로 지역명 검색
+	    // 예: [{"areaCode": "39", "name": "제주도"}, {"areaCode": "1", "name": "서울"}]
+	    return accService.searchLocation(keyword);
 	}
 	
 	/**
@@ -95,7 +122,9 @@ public class AccommodationController {
 	    return result;
 	}
 	
-	// 숙박 상품 상세 페이지
+	/**
+	 * 숙박 상품 상세 페이지
+	 */
 	@GetMapping("/product/accommodation/{accNo}")
 	public String accommodationDetail(
 			@PathVariable("accNo") int accNo,
@@ -121,7 +150,9 @@ public class AccommodationController {
 		return "product/accommodation-detail";
 	}
 	
-	// 숙소 예약 페이지
+	/**
+	 * 숙소 예약 페이지
+	 */
 	@GetMapping("/product/accommodation/{accNo}/booking")
 	public String accommodationBooking(
 			@PathVariable("accNo") int accNo,

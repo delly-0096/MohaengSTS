@@ -210,6 +210,96 @@ function doSearch() {
     location.href = `${contextPath}/product/accommodation?keyword=` + encodeURIComponent(keyword);
 }
 
+/* =======================
+   목적지 선택 자동완성
+======================= */
+$(document).ready(function() {
+	const $input = $('#destination');
+    const $dropdown = $('#destinationDropdown');
+    const $areaCodeInput = $('#areaCode'); 
+
+    $input.on('input', function() {
+        const keyword = $(this).val().trim();
+        if (keyword.length < 1) { $dropdown.hide(); return; }
+
+        fetch(`${contextPath}/product/accommodation/api/search-location?keyword=${encodeURIComponent(keyword)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.length === 0) {
+                    $dropdown.html('<div class="p-2 text-muted">검색 결과가 없습니다.</div>').show();
+                    return;
+                }
+
+                let html = '<ul class="list-group shadow-sm">';
+                data.forEach(item => {
+                    // item.areaCode는 RGN_NO(예: 39), item.name은 RGN_NM(예: 제주도)
+                    html += `
+                        <li class="list-group-item list-group-item-action region-item" 
+                            data-code="${item.areaCode}" 
+                            style="cursor:pointer;">
+                            <i class="bi bi-geo-alt-fill me-2 text-success"></i><strong>${item.name}</strong>
+                        </li>`;
+                });
+                html += '</ul>';
+                $dropdown.html(html).show();
+            });
+    });
+
+	$(document).on('mousedown', '.region-item', function(e) {
+	    
+	    e.preventDefault(); // 이벤트 전파 방지
+		e.stopImmediatePropagation();
+
+		const selectedName = $(this).find('strong').text().trim() || $(this).text().trim();
+		const selectedCode = $(this).data('code');
+
+	    console.log("[선택 시도]", selectedName, selectedCode);
+
+	    if (selectedCode) {
+	        $('#destination').val(selectedName);
+	        $('#areaCode').val(selectedCode);
+
+	        $('#destinationDropdown').empty().hide();
+	        
+	        console.log("[선택 완료] areaCode에 저장된 값:", $('#areaCode').val());
+	    }
+	});
+
+	/* 검색 버튼 눌렀을 때 최종 체크 */
+	$('#accommodationSearchForm').on('submit', function(e) {
+	    const code = $('#areaCode').val();
+	    const dest = $('#destination').val();
+	    
+	    if(!dest) {
+	        alert("목적지를 입력하거나 선택해주세요!");
+	        e.preventDefault();
+	        return;
+	    }
+	    
+	    console.log("최종 검색 전송 -> 지역코드:", code, "키워드:", dest);
+	});
+});
+
+// =================== 체크인 / 체크아웃 ======================
+document.addEventListener('DOMContentLoaded', () => {
+    const common = { locale: 'ko', dateFormat: 'Y-m-d', minDate: 'today' };
+
+    const outPicker = flatpickr('#checkOut', {
+        ...common,
+        onChange: function(selectedDates) {
+            // 날짜 선택 시 로직 추가 가능
+        }
+    });
+
+    flatpickr('#checkIn', {
+        ...common,
+        onChange: function([date]) {
+            // 체크인 선택 시 체크아웃 최소 날짜를 다음날로 세정
+            outPicker.set('minDate', new Date(date.getTime() + 86400000));
+        }
+    });
+});
+
 //==================== 인원 수 조절 (검색바 전용) ====================
 window.updateCount = function(type, delta) {
     // 1. input 요소 찾기
@@ -235,3 +325,33 @@ window.updateCount = function(type, delta) {
 document.getElementById('accommodationSearchForm')?.addEventListener('submit', function(e) {
     const adultCount = document.getElementById('adultCount').value;
 });
+
+//==========================================================
+// 결제 버튼 클릭 시 검색바의 날짜와 인원을 들고 튀는 함수
+function goBooking(accNo, roomNo) {
+	// 1. 검색바에 입력된 값들 가져오기
+	    const startDate = document.getElementById('checkIn').value;
+	    const endDate = document.getElementById('checkOut').value;
+	    const adultCount = document.getElementById('adultCount').value;
+
+	    // 2. 날짜 선택 안 했으면 경고 (방어 로직)
+	    if (!startDate || !endDate) {
+	        alert("체크인과 체크아웃 날짜를 먼저 선택해 주세요!");
+	        document.getElementById('checkIn').focus();
+	        return;
+	    }
+
+	    // 3. 최종 결제 주소 생성 (우리가 만든 컨트롤러 주소와 매칭)
+	    // contextPath는 header.jsp에 있다고 했으니 그대로 사용!
+	    const url = contextPath + "/product/accommodation/" + accNo + "/booking" +
+	                "?roomNo=" + roomTypeNo +
+	                "&startDate=" + startDate +
+	                "&endDate=" + endDate +
+	                "&adultCount=" + adultCount;
+
+	    // 4. 이동!
+	    location.href = url;
+	}
+
+	// JSP에서 호출할 수 있게 window에 등록
+	window.goBooking = goBooking;

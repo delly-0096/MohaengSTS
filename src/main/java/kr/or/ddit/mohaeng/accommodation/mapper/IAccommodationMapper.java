@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.accommodation.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 
@@ -100,5 +101,14 @@ public interface IAccommodationMapper {
 	 *	@return 
 	 */
 	public RoomTypeVO getRoomTypeDetail(int roomTypeNo);
+
+	/**
+	 *	<p> 목적지 검색하기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	public List<Map<String, Object>> searchLocation(String keyword);
 
 }

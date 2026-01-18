@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.accommodation.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -90,6 +91,18 @@ public class AccommodationServiceImpl implements IAccommodationService{
 	@Override
 	public RoomTypeVO getRoomTypeDetail(int roomTypeNo) {
 		return accMapper.getRoomTypeDetail(roomTypeNo);
+	}
+
+	/**
+	 *	<p> 목적지로 검색하기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	@Override
+	public List<Map<String, Object>> searchLocation(String keyword) {
+		return accMapper.searchLocation(keyword);
 	}
 
 }

@@ -75,7 +75,7 @@ public class FlightController {
 	}
 	
 	/**
-	 * <p>예약페이지 이동 컨트롤러
+	 * <p>예약페이지 이동 컨트롤러</p>		-- 결제자 정보도 보내자
 	 * @author sdg
 	 * @return 예약페이지
 	 */

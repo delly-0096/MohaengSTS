@@ -1,7 +1,10 @@
 package kr.or.ddit.mohaeng.tour.vo;
 
 import java.util.Date;
+import java.util.List;
 
+import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
+import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import lombok.Data;
 
 @Data
@@ -63,4 +66,32 @@ public class TripProdVO {
     // 대표 이미지
     private String thumbImage;
     
+    
+    // 기업용으로 추가
+    // 1대1 위에 존재
+    private TripProdSaleVO prodSale;	// 상품 판매 정보
+    
+    // 1대1
+	private TripProdInfoVO prodInfo;
+    private String prodRuntime;     // 운영시간
+    private String prodDuration;    // 소요시간
+    private Integer prodMinPeople;  // 최소인원
+    private Integer prodMaxPeople;  // 최대인원
+    private String prodLimAge;      // 연령제한
+    private String prodInclude;     // 포함사항
+    private String prodExclude;     // 불포함사항
+    private String prodNotice;      // 유의사항
+	
+	
+	// 상품 이용 안내	-- 예약 가능시간이랑 1대1
+	private List<ProdTimeInfoVO> prodTimeList;			// 예약 가능 시간 
+	private List<ProdReviewVO> prodReviewList;			// 상품 리부 내역
+	private List<TripProdInquiryVO> prodInquiryList;	// 상품 문의 내역
+//    private 
+	
+	// 통계용 변수
+    private int totalCount;		// 총 상품 수
+    private int approveCount;	// 판매중인 상품 수
+    private int unapproveCount;	// 판매중지 상품 수
+    private int totalSales;		// 총 판매량
 }

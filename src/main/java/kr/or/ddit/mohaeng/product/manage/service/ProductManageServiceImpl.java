@@ -19,8 +19,13 @@ public class ProductManageServiceImpl implements IProductManageService {
 	private IProductManageMapper manageMapper;
 	
 	@Override
-	public List<TripProdVO> getProductlist(TripProdVO prodVO) {
-		return manageMapper.getProductlist(prodVO);
+	public List<TripProdVO> getProductlist(TripProdVO tripProd) {
+		return manageMapper.getProductlist(tripProd);
+	}
+	
+	@Override
+	public TripProdVO getProductAggregate(TripProdVO tripProd) {
+		return manageMapper.getProductAggregate(tripProd);
 	}
 	
 	@Override
@@ -29,16 +34,21 @@ public class ProductManageServiceImpl implements IProductManageService {
 	}
 	
 	@Override
-	public ServiceResult updateProductStatus(TripProdVO prodVO) {
+	public TripProdVO retrieveProductDetail(TripProdVO tripProd) {
+		return manageMapper.retrieveProductDetail(tripProd);
+	}
+	
+	@Override
+	public ServiceResult updateProductStatus(TripProdVO tripProd) {
 		ServiceResult result = null;
-		log.info("updateProductStatus 실행 : {}", prodVO);
-		if (prodVO.getApproveStatus().equals("판매중")) {
-			prodVO.setApproveStatus("판매중지");
+		log.info("updateProductStatus 실행 : {}", tripProd);
+		if (tripProd.getApproveStatus().equals("판매중")) {
+			tripProd.setApproveStatus("판매중지");
 		} else {
-			prodVO.setApproveStatus("판매중");
+			tripProd.setApproveStatus("판매중");
 		}
 		
-		int status = manageMapper.updateProductStatus(prodVO);
+		int status = manageMapper.updateProductStatus(tripProd);
 		log.info("status : {}", status);
 		if(status > 0) {
 			return result = ServiceResult.OK;
@@ -48,11 +58,11 @@ public class ProductManageServiceImpl implements IProductManageService {
 	}
 
 	@Override
-	public ServiceResult deleteProductStatus(TripProdVO prodVO) {
+	public ServiceResult deleteProductStatus(TripProdVO tripProd) {
 		ServiceResult result = null;
-		log.info("updateProductStatus 실행 : {}", prodVO);
+		log.info("updateProductStatus 실행 : {}", tripProd);
 		
-		int status = manageMapper.deleteProductStatus(prodVO);
+		int status = manageMapper.deleteProductStatus(tripProd);
 		log.info("status : {}", status);
 		if(status > 0) {
 			return result = ServiceResult.OK;
@@ -61,10 +71,4 @@ public class ProductManageServiceImpl implements IProductManageService {
 		}
 	}
 
-
-
-
-
-	
-	
 }

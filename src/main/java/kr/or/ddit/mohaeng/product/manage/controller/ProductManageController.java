@@ -46,10 +46,10 @@ public class ProductManageController {
 
 	
 	@Autowired
-    private ITripProdService tripProdService;
+    private ITripProdService tripProdService;	// 상품
     
     @Autowired
-    private ITripProdSaleService saleService;
+    private ITripProdSaleService saleService;	// 
     
     @Autowired
     private ITripProdInfoService infoService;
@@ -91,15 +91,15 @@ public class ProductManageController {
 		int memNo = customUser.getMember().getMemNo();
 		tripProd.setMemNo(memNo);	// memNo담기
 		 
-        List<TripProdVO> tripProdList = manageService.getProductlist(tripProd);
-        int totalCount = tripProdService.getTotalCount(tripProd);
+        List<TripProdVO> prodList = manageService.getProductlist(tripProd);	
+        TripProdVO prodAggregate = manageService.getProductAggregate(tripProd);
         
         // 인기 키워드 조회
 //        List<SearchLogVO> keywords = searchLogService.getKeywords();
         
-        model.addAttribute("tripProdList", tripProdList);
-        model.addAttribute("totalCount", totalCount);	// 이거없이 front에서 실행 하기
-        model.addAttribute("tripProd", tripProd);
+        model.addAttribute("prodList", prodList);
+        model.addAttribute("prodAggregate", prodAggregate);
+        model.addAttribute("tripProd", tripProd);	// memNo담김
 //        model.addAttribute("keywords", keywords);
         
 		return "product/manage";
@@ -115,10 +115,11 @@ public class ProductManageController {
 	 * @return 투어 상품 상세 페이지
 	 */
 	@GetMapping("/product/manage/tourDetail/{tripProdNo}")
-	public String productDetailPage(@PathVariable("tripProdNo") int tripProdNo, Model model, RedirectAttributes ra) {
-        TripProdVO tp = manageService.detailProduct(tripProdNo);
+	public String productDetailPage(@PathVariable int tripProdNo, Model model, RedirectAttributes ra) {
+        TripProdVO tripProd = manageService.detailProduct(tripProdNo);
         log.info("productDetailPage 집입 {}", tripProdNo);
-        if (tp == null) {
+        
+        if (tripProd == null) {
             ra.addFlashAttribute("message", "존재하지 않는 상품입니다.");
             return "redirect:/tour";
         }
@@ -137,22 +138,22 @@ public class ProductManageController {
         TripProdPlaceVO place = tripProdService.getPlace(tripProdNo);
         
         // 판매자 정보
-        CompanyVO seller = tripProdService.getSellerStats(tp.getCompNo());
+        CompanyVO seller = tripProdService.getSellerStats(tripProd.getCompNo());
         
         // 문의 목록
         List<TripProdInquiryVO> inquiry = inquiryService.getInquiryPaging(tripProdNo, 1, 5);
         int inquiryCount = inquiryService.getInquiryCount(tripProdNo);
         
         // 상품 이미지 목록
-        if (tp.getAttachNo() != null && tp.getAttachNo() > 0) {
-            List<AttachFileDetailVO> productImages = fileService.getAttachFileDetails(tp.getAttachNo());
+        if (tripProd.getAttachNo() != null && tripProd.getAttachNo() > 0) {
+            List<AttachFileDetailVO> productImages = fileService.getAttachFileDetails(tripProd.getAttachNo());
             model.addAttribute("productImages", productImages);
         }
         
         // 예약 가능 시간 조회
         List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
         
-        model.addAttribute("tp", tp);
+        model.addAttribute("tp", tripProd);
         model.addAttribute("sale", sale);
         model.addAttribute("info", info);
         model.addAttribute("review", review);
@@ -170,14 +171,14 @@ public class ProductManageController {
 	 * <p>상품 판매 상태 변경</p>
 	 * @author sdg
 	 * @date 2026-01-17
-	 * @param prodVO	tripProdNo, approveStatus
+	 * @param tripProd	tripProdNo, approveStatus
 	 * @return 상태 변화 리턴
 	 */
 	@ResponseBody
 	@PostMapping("/product/manage/changeProductStatus")
-	public ResponseEntity<String> changeProductStatus(@RequestBody TripProdVO prodVO) {
-		log.info("updateProductStatus : {}", prodVO);
-		ServiceResult result = manageService.updateProductStatus(prodVO);
+	public ResponseEntity<String> changeProductStatus(@RequestBody TripProdVO tripProd) {
+		log.info("updateProductStatus : {}", tripProd);
+		ServiceResult result = manageService.updateProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
@@ -189,19 +190,58 @@ public class ProductManageController {
 	 * <p>상품 삭제</p>
 	 * @author sdg
 	 * @date 2026-01-17
-	 * @param prodVO tripProdNo
+	 * @param tripProd tripProdNo
 	 * @return 상태 변화 리턴
 	 */
 	@ResponseBody
 	@PostMapping("/product/manage/removeProduct")
-	public ResponseEntity<String> removeProduct(@RequestBody TripProdVO prodVO){
-		log.info("deleteProduct : {}", prodVO);
-		ServiceResult result = manageService.deleteProductStatus(prodVO);
+	public ResponseEntity<String> removeProduct(@RequestBody TripProdVO tripProd){
+		log.info("deleteProduct : {}", tripProd);
+		ServiceResult result = manageService.deleteProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
 			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 		}
+	}
+	
+	// 그냥 위에꺼 쓸지 고민
+	@ResponseBody
+	@PostMapping("/product/manage/editProduct")
+	public ResponseEntity<String> editProduct(@RequestBody TripProdVO tripProd){
+		log.info("editProduct : {}", tripProd);
+		// modifyProduct(tripProd);
+		
+		
+		ServiceResult result = manageService.deleteProductStatus(tripProd);
+		if (result == ServiceResult.OK) {
+			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+		}
+	}
+	
+	/**
+	 * <p>투어상품 상세 조회</p>
+	 * @author sdg
+	 * @date 2026-01-18
+	 * @param tripProdNo	 상품 번호
+	 * @param model			
+	 * @param ra
+	 * @return 상품 상세 정보
+	 */
+	@ResponseBody
+	@PostMapping("/product/manage/productDetail")
+	public TripProdVO productDetail(@RequestBody TripProdVO tripProd){
+		log.info("productDetail : {}", tripProd);
+		// manageService.detailProduct(tripProd);
+		
+		// 정보 만든다 -- 1대1만 join해서 담기 상품, 상품 가격, 
+		TripProdVO product = manageService.retrieveProductDetail(tripProd);
+		
+		// 1 대 다는 여기다가
+		
+		return product;
 	}
 	
 }

@@ -2,22 +2,38 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.product.manage.mapper.IProductManageMapper">
 	
-	<!-- 본인 기업회원 상품 -->
+	<!-- 본인 기업회원 투어 상품 나중에 숙박도 추가해야됨 -->
 	<select id="getProductlist" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
         SELECT *
         FROM (
             SELECT ROWNUM AS rn, a.*
             FROM (
                 SELECT
-                    t.TRIP_PROD_NO, t.COMP_NO, t.MEM_NO
-                    , t.PROD_CTGRY_TYPE, t.APPROVE_STATUS, t.TRIP_PROD_TITLE
-                    , t.TRIP_PROD_CONTENT,t.SALE_START_DT, t.SALE_END_DT
-                    , t.ATTACH_NO, t.VIEW_CNT, t.REG_DT
-                    , t.MOD_DT, t.APRV_YN, t.DEL_YN
-                    , t.CTY_NM, s.PRICE, s.NETPRC
-                    , s.DISCOUNT, s.LEAD_TIME, s.TOTAL_STOCK
-                    , s.CUR_STOCK, r.AVG_RATING 
-                    , r.REVIEW_COUNT, r.RECOMMEND_COUNT,
+                    t.TRIP_PROD_NO
+                    , t.COMP_NO
+                    , t.MEM_NO
+                    , t.PROD_CTGRY_TYPE
+                    , t.APPROVE_STATUS
+                    , t.TRIP_PROD_TITLE
+                    , t.TRIP_PROD_CONTENT
+                    , t.SALE_START_DT
+                    , t.SALE_END_DT
+                    , t.ATTACH_NO
+                    , t.VIEW_CNT
+                    , t.REG_DT
+                    , t.MOD_DT
+                    , t.APRV_YN
+                    , t.DEL_YN
+                    , t.CTY_NM
+                    , s.PRICE
+                    , s.NETPRC
+                    , s.DISCOUNT
+                    , s.LEAD_TIME
+                    , s.TOTAL_STOCK
+                    , s.CUR_STOCK
+                    , r.AVG_RATING 
+                    , r.REVIEW_COUNT
+                    , r.RECOMMEND_COUNT,
 					(SELECT AFD.FILE_PATH 
 					 FROM ATTACH_FILE_DETAIL AFD 
 					 WHERE AFD.ATTACH_NO = t.ATTACH_NO 
@@ -36,86 +52,21 @@
                     GROUP BY TRIP_PROD_NO
                 ) r ON t.TRIP_PROD_NO = r.TRIP_PROD_NO
                 WHERE (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
-                AND t.COMP_NO IN (
-                	select C.COMP_NO
-                	   FROM COMPANY C
-                	   INNER JOIN MEMBER M ON(C.MEM_NO = M.MEM_NO)
-                	   WHERE M.MEM_NO = #{memNo})
+                AND t.MEM_NO = #{memNo}
                 <!-- 검색어 -->
                 <if test="keyword != null and keyword != ''">
                     AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%'
                          OR t.TRIP_PROD_CONTENT LIKE '%' || #{keyword} || '%')
                 </if>
-                <!-- 여행지 -->
-                <if test="destination != null and destination != ''">
-                    AND UPPER(t.CTY_NM) LIKE '%' || UPPER(#{destination}) || '%'
+                <!-- 판매여부 -->
+                <if test="approveStatus != null and approveStatus != ''">
+                	AND t.APPROVE_STATUS = #{approveStatus}
                 </if>
                 <!-- 카테고리 -->
-                <if test="category != null and category != ''">
-                    AND t.PROD_CTGRY_TYPE = #{category}
+                <if test="prodCtgryType != null and prodCtgryType !=''">
+                	AND t.PROD_CTGRY_TYPE = #{prodCtgryType}
                 </if>
-                <!-- 날짜 -->
-                <if test="tourDate != null and tourDate != ''">
-                    AND TO_DATE(#{tourDate}, 'YYYY-MM-DD') BETWEEN t.SALE_START_DT AND t.SALE_END_DT
-                </if>
-                <!-- 인원수 -->
-                <if test="people != null">
-                    AND #{people} BETWEEN NVL(i.PROD_MIN_PEOPLE, 1) AND NVL(i.PROD_MAX_PEOPLE, 99)
-                </if>
-                <!-- 가격대 -->
-                <if test="priceMin != null">
-                    <![CDATA[
-                    AND s.PRICE >= #{priceMin}
-                    ]]>
-                </if>
-                <if test="priceMax != null">
-                    <![CDATA[
-                    AND s.PRICE <= #{priceMax}
-                    ]]>
-                </if>
-                <!-- 소요시간 -->
-                <if test="leadTime != null">
-                    <choose>
-                        <when test="leadTime == 1">
-                        <![CDATA[
-                        AND s.LEAD_TIME <= 1
-                        ]]>
-                        </when>
-                        <when test="leadTime == 3">
-                        <![CDATA[
-                        AND s.LEAD_TIME > 1 AND s.LEAD_TIME <= 3
-                        ]]>
-                        </when>
-                        <when test="leadTime == 6">
-                        <![CDATA[
-                        AND s.LEAD_TIME > 3 AND s.LEAD_TIME <= 6
-                        ]]>
-                        </when>
-                        <when test="leadTime == 24">
-                        <![CDATA[
-                        AND s.LEAD_TIME > 6
-                        ]]>
-                        </when>
-                    </choose>
-                </if>
-                <!-- 정렬 -->
-                <choose>
-                    <when test="sortBy == 'popular'">
-                        ORDER BY t.VIEW_CNT DESC NULLS LAST, t.REG_DT DESC, t.TRIP_PROD_NO DESC
-                    </when>
-                    <when test="sortBy == 'price_low'">
-                        ORDER BY s.PRICE ASC NULLS LAST, t.REG_DT DESC, t.TRIP_PROD_NO DESC
-                    </when>
-                    <when test="sortBy == 'price_high'">
-                        ORDER BY s.PRICE DESC NULLS LAST, t.REG_DT DESC, t.TRIP_PROD_NO DESC
-                    </when>
-                    <when test="sortBy == 'rating'">
-                        ORDER BY r.AVG_RATING DESC NULLS LAST, r.REVIEW_COUNT DESC NULLS LAST, t.TRIP_PROD_NO DESC
-                    </when>
-                    <otherwise>
-                        ORDER BY r.RECOMMEND_COUNT DESC NULLS LAST, t.REG_DT DESC, t.TRIP_PROD_NO DESC
-                    </otherwise>
-                </choose>
+       			ORDER BY  t.TRIP_PROD_NO ASC
             ) a
             <![CDATA[
             WHERE ROWNUM <= #{page} * #{pageSize}
@@ -126,22 +77,91 @@
         ]]>
 	</select>
 	
-	<select id="detailProduct" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+	<!-- 상품 현황 통계 -->
+	<select id="getProductAggregate" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+		SELECT 
+			COUNT(*) AS totalCount
+			,COUNT(CASE WHEN TP.APPROVE_STATUS = '판매중' THEN TP.APPROVE_STATUS END) AS approveCount
+		    ,COUNT(CASE WHEN TP.APPROVE_STATUS = '판매중지' THEN TP.APPROVE_STATUS END) AS unapproveCount
+			,SUM(TPS.TOTAL_STOCK - TPS.CUR_STOCK) AS totalSales
+		FROM TRIP_PROD TP
+		INNER JOIN TRIP_PROD_SALE TPS ON (TP.TRIP_PROD_NO = TPS.TRIP_PROD_NO)
+		WHERE TP.MEM_NO = #{memNo}
+		AND (TP.DEL_YN = 'N' OR TP.DEL_YN IS NULL)
+	</select>
+	
+	<!-- 상품, 상품 이용안내, 상품 가격만 끌어올거야 -->
+	<select id="retrieveProductDetail" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+		SELECT
+               t.TRIP_PROD_NO
+               , t.COMP_NO
+               , t.MEM_NO
+               , t.PROD_CTGRY_TYPE
+               , t.APPROVE_STATUS
+               , t.TRIP_PROD_TITLE
+               , t.TRIP_PROD_CONTENT
+               , t.SALE_START_DT
+               , t.SALE_END_DT
+               , t.ATTACH_NO
+               , t.VIEW_CNT
+               , t.REG_DT
+               , t.MOD_DT
+               , t.APRV_YN
+               , t.DEL_YN
+               , t.CTY_NM
+               , s.PRICE
+               , s.NETPRC
+               , s.DISCOUNT
+               , s.LEAD_TIME
+               , s.TOTAL_STOCK
+               , s.CUR_STOCK
+               , i.PROD_RUNTIME
+			   , i.PROD_DURATION
+			   , i.PROD_MIN_PEOPLE
+			   , i.PROD_MAX_PEOPLE
+			   , i.PROD_LIM_AGE
+			   , i.PROD_INCLUDE
+			   , i.PROD_EXCLUDE
+			   , i.PROD_NOTICE
+			   , (SELECT AFD.FILE_PATH 
+				 FROM ATTACH_FILE_DETAIL AFD 
+				 WHERE AFD.ATTACH_NO = t.ATTACH_NO 
+				   AND AFD.USE_YN = 'Y' 
+				   AND ROWNUM = 1) AS THUMB_IMAGE
+           FROM TRIP_PROD t
+           LEFT JOIN TRIP_PROD_SALE s ON (t.TRIP_PROD_NO = s.TRIP_PROD_NO)
+           LEFT JOIN TRIP_PROD_INFO i ON (t.TRIP_PROD_NO = i.TRIP_PROD_NO)
+		WHERE t.TRIP_PROD_NO = #{tripProdNo}
+	</select>
+	
+	<!-- 상품 상세 정보 좀 손봐야됨 default를 N으로 지정할지 고민 -->
+	<select id="detailProduct" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
         SELECT
-            TRIP_PROD_NO, COMP_NO, MEM_NO, PROD_CTGRY_TYPE, APPROVE_STATUS,
-            TRIP_PROD_TITLE, TRIP_PROD_CONTENT, SALE_START_DT, SALE_END_DT,
-            ATTACH_NO, VIEW_CNT, REG_DT, MOD_DT, CTY_NM
+            TRIP_PROD_NO
+            , COMP_NO, MEM_NO
+            , PROD_CTGRY_TYPE
+            , APPROVE_STATUS
+            , TRIP_PROD_TITLE
+            , TRIP_PROD_CONTENT
+            , SALE_START_DT
+            , SALE_END_DT
+            , ATTACH_NO, VIEW_CNT
+            , REG_DT
+            , MOD_DT
+            , CTY_NM
         FROM TRIP_PROD
         WHERE TRIP_PROD_NO = #{tripProdNo}
           AND (DEL_YN = 'N' OR DEL_YN IS NULL)
     </select>
-	
+    
+	<!-- 상품 판매 정보 변경 -->
 	<update id="updateProductStatus" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
 		UPDATE TRIP_PROD
 		    SET APPROVE_STATUS = #{approveStatus}
 		    WHERE TRIP_PROD_NO = #{tripProdNo}
 	</update>
 
+	<!-- 판매 상품 삭제 -->
 	<update id="deleteProductStatus" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
 		UPDATE TRIP_PROD
 		    SET 

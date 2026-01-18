@@ -28,7 +28,7 @@
                     <i class="bi bi-box-seam"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">12</span>
+	                <span class="stat-value">${prodAggregate.totalCount}</span>
                     <span class="stat-label">전체 상품</span>
                 </div>
             </div>
@@ -37,7 +37,7 @@
                     <i class="bi bi-check-circle"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">${totalCount}</span>
+                    <span class="stat-value">${prodAggregate.approveCount}</span>
                     <span class="stat-label">판매중</span>
                 </div>
             </div>
@@ -46,7 +46,7 @@
                     <i class="bi bi-pause-circle"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">2</span>
+                    <span class="stat-value">${prodAggregate.unapproveCount}</span>
                     <span class="stat-label">판매중지</span>
                 </div>
             </div>
@@ -55,7 +55,7 @@
                     <i class="bi bi-cart-check"></i>
                 </div>
                 <div class="stat-info">
-                    <span class="stat-value">156</span>
+                    <span class="stat-value">${prodAggregate.totalSales}</span>
                     <span class="stat-label">총 판매건수</span>
                 </div>
             </div>
@@ -82,7 +82,7 @@
             <div class="search-group">
                 <div class="search-input-wrapper">
                     <i class="bi bi-search"></i>
-                    <input type="text" class="form-control" placeholder="상품명 검색" id="productSearch">
+                    <input type="text" class="form-control" placeholder="상품명 검색" id="productSearch" />
                 </div>
             </div>
         </div>
@@ -94,9 +94,10 @@
                     <input type="checkbox" id="selectAllProducts" onchange="toggleSelectAll(this)">
                     <span>전체 선택</span>
                 </label>
-                <span class="selected-count" id="selectedCount">0개 선택됨</span>
+                <span class="selected-count" id="selectedCount">개 선택됨</span>
             </div>
             <div class="selection-actions" id="selectionActions">
+            	<!-- 인자 넣고 data-set하기? -->
                 <button class="btn btn-outline btn-sm" onclick="pauseSelectedProducts()" title="선택한 상품 판매 중지">
                     <i class="bi bi-pause-circle me-1"></i>선택중지
                 </button>
@@ -112,22 +113,20 @@
         <!-- 상품 목록 -->
         <!-- 활성화 = active 비활성화 = inactive -->
         <div class="product-list">
-        	<!-- 값이 있을때만 tpList이거는 묶어서 해보기 -->
-        	<c:set var="prodList" value="${tripProdList }" />
         	<c:choose>
         		<c:when test="${empty prodList }">
-        				<div class="no-results-msg">조회된 조건에 맞는 항공편이 없습니다.</div>
+        				<div class="no-results-msg">상품이 존재하지 않습니다.</div>
         		</c:when>
         		<c:otherwise>
-		        	<c:forEach items="${prodList}" var="prod" varStatus="vs">
+		        	<c:forEach items="${prodList}" var="prod">
 			        	<c:set var="status" value="${prod.approveStatus }"/>
 			        	<c:set var="dataStatus" value="active"/>
 			        	<c:if test="${status == '판매중지'}">
 				        	<c:set var="dataStatus" value="inactive"/>
 			        	</c:if>
-			            <div class="product-manage-card" data-id="${vs.count}" data-status="${dataStatus}">
+			            <div class="product-manage-card" data-id="${prod.tripProdNo}" data-status="${dataStatus}">
 			                <label class="product-checkbox">
-			                    <input type="checkbox" class="product-select-checkbox" value="1" onchange="toggleProductSelect(this)">
+			                    <input type="checkbox" class="product-select-checkbox" value="${prod.tripProdNo}" onchange="toggleProductSelect(this)">
 			                </label>
 			                <div class="product-image">
 			                    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" alt="스쿠버다이빙">
@@ -248,7 +247,7 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">카테고리 <span class="text-danger">*</span></label>
-                            <select class="form-select" name="category" id="productCategory" required onchange="toggleCategoryFields()">
+                            <select class="form-select" name="prodCtgryType" id="productCategory" required onchange="toggleCategoryFields()">
                                 <option value="">선택하세요</option>
                                 <option value="tour">투어</option>
                                 <option value="activity">액티비티</option>
@@ -259,7 +258,7 @@
                         </div>
                         <div class="col-md-4" id="regionField">
                             <label class="form-label">지역 <span class="text-danger">*</span></label>
-                            <select class="form-select" name="region">
+                            <select class="form-select" name="ctyNm">
                                 <option value="">선택하세요</option>
                                 <optgroup label="수도권">
                                     <option value="seoul">서울</option>
@@ -294,7 +293,7 @@
                         </div>
                         <div class="col-md-4" id="durationField">
                             <label class="form-label">소요시간 <span class="text-danger">*</span></label>
-                            <select class="form-select" name="duration">
+                            <select class="form-select" name="prodDuration">
                                 <option value="">선택하세요</option>
                                 <option value="1">1시간 이내</option>
                                 <option value="3">1~3시간</option>
@@ -305,7 +304,7 @@
                     </div>
                     <div class="mb-3" id="productNameField">
                         <label class="form-label">상품명 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="productName" placeholder="상품명을 입력하세요" required>
+                        <input type="text" class="form-control" name="tripProdTitle" placeholder="상품명을 입력하세요" required>
                     </div>
                     <div class="mb-3" id="locationField">
                         <label class="form-label">위치 정보 <span class="text-danger">*</span></label>
@@ -325,7 +324,7 @@
                     </div>
                     <div class="mb-3" id="descriptionField">
                         <label class="form-label">상품 설명 <span class="text-danger">*</span></label>
-                        <textarea class="form-control" name="description" rows="4" placeholder="상품에 대한 상세 설명을 입력하세요"></textarea>
+                        <textarea class="form-control" name="tripProdContent" rows="4" placeholder="상품에 대한 상세 설명을 입력하세요"></textarea>
                     </div>
 
                     <!-- 이용 안내 섹션 (기본 상품용) -->
@@ -336,26 +335,26 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">운영 시간 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="operatingHours" placeholder="예: 09:00 ~ 18:00" required>
+                            <input type="text" class="form-control" name="prodRuntime" placeholder="예: 09:00 ~ 18:00" required>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">소요 시간 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="durationText" placeholder="예: 약 2시간 (실제 체험 40분)" required>
+                            <input type="text" class="form-control" name="prodDuration" placeholder="예: 약 2시간 (실제 체험 40분)" required>
                             <div class="form-text">고객에게 보여질 상세 소요시간을 입력하세요</div>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">연령 제한</label>
-                            <input type="text" class="form-control" name="ageLimit" placeholder="예: 만 10세 이상">
+                            <input type="text" class="form-control" name="prodLimAge" placeholder="예: 만 10세 이상">
                         </div>
                     </div>
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">최소 인원</label>
-                            <input type="number" class="form-control" name="minPeople" placeholder="1" min="1" value="1">
+                            <input type="number" class="form-control" name="prodMinPeople" placeholder="1" min="1" value="1">
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">최대 인원</label>
-                            <input type="number" class="form-control" name="maxPeople" placeholder="10" min="1">
+                            <input type="number" class="form-control" name="prodMaxPeople" placeholder="10" min="1">
                         </div>
                     </div>
 
@@ -387,16 +386,16 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">포함 사항</label>
-                            <textarea class="form-control" name="includes" rows="3" placeholder="포함되는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;전문 강사 1:1 지도&#10;장비 대여&#10;수중 사진 촬영"></textarea>
+                            <textarea class="form-control" name="prodInclude" rows="3" placeholder="포함되는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;전문 강사 1:1 지도&#10;장비 대여&#10;수중 사진 촬영"></textarea>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">불포함 사항</label>
-                            <textarea class="form-control" name="excludes" rows="3" placeholder="포함되지 않는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;픽업/샌딩 서비스&#10;개인 물품"></textarea>
+                            <textarea class="form-control" name="prodExclude" rows="3" placeholder="포함되지 않는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;픽업/샌딩 서비스&#10;개인 물품"></textarea>
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">유의 사항</label>
-                        <textarea class="form-control" name="notice" rows="3" placeholder="예약 및 이용 시 유의해야 할 사항을 입력하세요"></textarea>
+                        <textarea class="form-control" name="prodNotice" rows="3" placeholder="예약 및 이용 시 유의해야 할 사항을 입력하세요"></textarea>
                     </div>
                     </div><!-- /defaultInfoSection -->
 
@@ -476,7 +475,7 @@
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col-md-3">
-                                        <label class="form-label">1박 가격 <span class="text-danger">*</span></label>
+                                        <label class="form-label">1박 가격(PRICE) <span class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" name="roomPrice_0" placeholder="0">
                                             <span class="input-group-text">원</span>
@@ -490,14 +489,14 @@
                                         </div>
                                     </div>
                                     <div class="col-md-2">
-                                        <label class="form-label">잔여 객실 <span class="text-danger">*</span></label>
+                                        <label class="form-label">총 객실수<span class="text-danger">*</span></label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" name="roomStock_0" placeholder="0" min="0">
                                             <span class="input-group-text">실</span>
                                         </div>
                                     </div>
                                     <div class="col-md-2">
-                                        <label class="form-label">객실 크기</label>
+                                        <label class="form-label">객실 크기(방너비)</label>
                                         <div class="input-group">
                                             <input type="number" class="form-control" name="roomSize_0" placeholder="0">
                                             <span class="input-group-text">㎡</span>
@@ -718,23 +717,33 @@
                     <div class="row mb-3">
                         <div class="col-md-3">
                             <label class="form-label">정가</label>
-                            <input type="number" class="form-control" name="originalPrice" placeholder="0">
+                            <input type="number" class="form-control" name="netprc" placeholder="0">
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">판매가 <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="salePrice" placeholder="0" required>
+                            <input type="number" class="form-control" name="price" placeholder="0" required>
                         </div>
                         <div class="col-md-3">
                             <label class="form-label">할인율</label>
                             <div class="input-group">
-                                <input type="number" class="form-control" name="discountRate" placeholder="0" max="100">
+                                <input type="number" class="form-control" name="discount" placeholder="0" max="100">
                                 <span class="input-group-text">%</span>
                             </div>
                         </div>
                         <div class="col-md-3">
+                        <!-- 전체? 현재? -->
                             <label class="form-label">재고 수량 <span class="text-danger">*</span></label>
                             <div class="input-group">
-                                <input type="number" class="form-control" name="stock" placeholder="0" min="0" required>
+                                <input type="number" class="form-control" name="stototalStockck" placeholder="0" min="0" required>
+                                <span class="input-group-text">개</span>
+                            </div>
+                        </div>
+                        <!-- 전체? 현재? -->
+                        <!-- style="display:none;" -->
+                        <div class="col-md-3 curStock" >
+                            <label class="form-label">현재 수량 <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control" name="curStock" placeholder="0" min="0" readonly required>
                                 <span class="input-group-text">개</span>
                             </div>
                         </div>
@@ -742,11 +751,11 @@
                     <div class="row mb-3">
                         <div class="col-md-6">
                             <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control date-picker" name="startDate" placeholder="시작일 선택" required>
+                            <input type="text" class="form-control date-picker" name="saleStartDt" placeholder="시작일 선택" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control date-picker" name="endDate" placeholder="종료일 선택" required>
+                            <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택" required>
                         </div>
                     </div>
                     <div class="mb-3">
@@ -756,7 +765,7 @@
                     </div>
                     </div><!-- /defaultPriceSection -->
 
-                    <!-- 공통 판매 기간 (항공/숙박용) -->
+                    <!-- 공통 판매 기간 (숙박용) -->
                     <div id="accomDateSection" style="display: none;">
                         <div class="form-section-title">
                             <i class="bi bi-calendar-range me-2"></i>판매 기간
@@ -764,14 +773,14 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control date-picker" name="flightStartDate" placeholder="시작일 선택">
+                                <input type="text" class="form-control date-picker" name="accomStartDate" placeholder="시작일 선택">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control date-picker" name="flightEndDate" placeholder="종료일 선택">
+                                <input type="text" class="form-control date-picker" name="accomEndtDate" placeholder="종료일 선택">
                             </div>
                         </div>
-                        <div class="mb-3" id="flightAccomImageField">
+                        <div class="mb-3" id="accomImageField">
                             <label class="form-label">상품 이미지</label>
                             <input type="file" class="form-control" name="productImageAlt" accept="image/*" multiple>
                             <div class="form-text">숙소 대표 이미지를 등록하세요 (최대 5장)</div>
@@ -842,6 +851,7 @@ function setModalForNew() {
         endDatePicker.clear();
         endDatePicker.set('minDate', 'today');
     }
+    
     // 예약 시간 초기화
     bookingTimes = [];
     renderBookingTimes();
@@ -853,16 +863,60 @@ function setModalForNew() {
 }
 
 // 상품 수정 모달 설정
-function editProduct(prodData) {
+async function editProduct(prodData) {
 	const { id } = prodData.dataset;
 	
-    document.getElementById('productModalTitle').textContent = '상품 수정';
-    // TODO: 상품 데이터 로드
-    // 해당 id select해서 가져오기
-    modal.show();
+	// 정보를 불러와야지
+	try {
+        const response = await axios.post(`/product/manage/productDetail`, {
+        	tripProdNo: id
+        });
+        
+        const resData = response.data;
+		renderProductData(resData);
+        document.getElementById('productModalTitle').textContent = '상품 수정';
+
+        // 객체의 key로 이렇게 만듬
+        Object.keys(resData).forEach(key => {
+        	console.log("key : ", key);
+            const tag = document.querySelector(`[name="\${key}"]`);
+            if (tag) {
+                // 체크박스나 라디오 버튼인 경우 분기 처리
+                // 날짜일때 포맷 맞추기 - 2025-12-31T15:00:00.000+00:00
+                
+                if (tag.type === 'checkbox') {
+                	tag.checked = data[key] === 'Y';
+                } else if(key === "saleStartDt" || key === "saleEndDt"){
+                	console.log("asdfasdfd")
+                	let dateSet = resData[key].split("T");
+                	tag.value = dateSet[0];
+                } else {
+                	console.log("data[key] : ", resData[key]);
+                	tag.value = resData[key];
+                }
+                
+            }
+        });
+        // 데이터는 맞춰주기
+//         document.getElementById('prodNameInput').value = resData.prodName;
+        
+        // 1:1 관계인 상품 이용안내 매핑
+        
+        // 4. 데이터를 다 넣은 후 모달 표시 (사용자에게 완성된 화면 제공)
+        setTimeout(() => {
+	        modal.show();
+        }, 300)
+    } catch (error) {
+        console.error("데이터 로드 중 error 발생: ", error);
+    }
 }
 
-// 상품 저장 - insert
+// 데이터 세팅
+function renderProductData(prodData){
+	console.log("prodData : ", prodData);
+}
+
+// 상품 저장 - insert / update(문구에 따라서)
 function saveProduct() {
     // TODO: 상품 저장 API 호출
     if (typeof showToast === 'function') {
@@ -1071,15 +1125,19 @@ function updateSelectedCount() {
     document.getElementById('selectedCount').textContent = count + '개 선택됨';
 
     // 액션 버튼 활성화/비활성화
-    var actionButtons = document.querySelectorAll('#selectionActions .btn');
+    var actionButtons = document.querySelectorAll('#selectionActions .btn');	// 선택 상품 상태 변경, 삭제, 재게
     actionButtons.forEach(btn => btn.disabled = count === 0);
 }
 
 // 선택된 상품 ID 목록 가져오기
 function getSelectedProductIds() {
 	var checkedCheckboxes = document.querySelectorAll('.product-select-checkbox:checked');
-    const ids = [];
-    checkedCheckboxes.forEach(cb => ids.push(cb.value));
+    const ids = [];	// 
+    // approved 상태도 바꿔야될듯
+    checkedCheckboxes.forEach(cb => {
+	    console.log("getSelectedProductIds - foreach : id??", cb.value);
+    	ids.push(cb.value);
+    });
     return ids;
 }
 
@@ -1127,7 +1185,9 @@ function resumeSelectedProducts() {
     }
 
     if (!confirm(selectedIds.length + '개의 상품을 재개하시겠습니까?')) return;
-
+	// 변경함수 
+    
+    
     // 선택된 상품들의 상태를 판매중으로 변경 (UI 업데이트)
     selectedIds.forEach(id => {
         var checkbox = document.querySelector('.product-select-checkbox[value="' + id + '"]');
@@ -1243,32 +1303,16 @@ function toggleCategoryFields() {
     var productNameField = document.getElementById('productNameField');
     var locationField = document.getElementById('locationField');
 
-    // 항공/숙박 섹션들
-    var flightFields = document.getElementById('flightFields');
+    // 숙박 섹션들
     var accommodationFields = document.getElementById('accommodationFields');
     var accomDateSection = document.getElementById('accomDateSection');
-    var flightAccomImageField = document.getElementById('flightAccomImageField');
+    var accomImageField = document.getElementById('accomImageField');
 
     // 모든 섹션 초기화 (숨기기)
-    flightFields.style.display = 'none';
     accommodationFields.style.display = 'none';
     accomDateSection.style.display = 'none';
 
-    if (category === 'flight') {
-        // 항공 선택 시
-        productNameField.style.display = 'none';
-        locationField.style.display = 'none';
-        regionField.style.display = 'none';
-        durationField.style.display = 'none';
-        descriptionField.style.display = 'none';
-        defaultInfoSection.style.display = 'none';
-        defaultPriceSection.style.display = 'none';
-
-        flightFields.style.display = 'block';
-        accomDateSection.style.display = 'block';
-        flightAccomImageField.style.display = 'none';
-
-    } else if (category === 'accommodation') {
+    if (category === 'accommodation') {
         // 숙박 선택 시
         productNameField.style.display = 'block';
         locationField.style.display = 'block';
@@ -1280,7 +1324,7 @@ function toggleCategoryFields() {
 
         accommodationFields.style.display = 'block';
         accomDateSection.style.display = 'block';
-        flightAccomImageField.style.display = 'block';
+        accomImageField.style.display = 'block';
 
     } else {
         // 기본 상품 (투어, 액티비티 등)

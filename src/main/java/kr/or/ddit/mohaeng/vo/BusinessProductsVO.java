@@ -39,10 +39,14 @@ public class BusinessProductsVO {
     private String ctyNm;            // 지역
     
     // 1대1
-    private TripProdSaleVO prodSale;	// 상품 판매 정보
-	private TripProdInfoVO prodInfo;	// 상품 이용 안내	-- 예약 가능시간이랑 1대1
-	private TripProdPlaceVO prodPlace;	// 상품 상세 주소		
+    private TripProdSaleVO prodSale;		// 상품 판매 정보
+	private TripProdInfoVO prodInfo;		// 상품 이용 안내	-- 예약 가능시간이랑 1대1
+	private TripProdPlaceVO prodPlace;		// 상품 상세 주소		
+	private AccommodationVO accommodation;	// 숙소
+	private AccFacilityVO accFacility;		// 숙소 보유시설
 	
+	
+	// 1:n
 	private List<String> bookingTimes;					// jsp에서 받을 예약 가능 시간
 	private List<ProdTimeInfoVO> prodTimeList;			// 예약 가능 시간
 	
@@ -51,12 +55,18 @@ public class BusinessProductsVO {
     
 	private List<AttachFileDetailVO> imageList;			// 전체 사진 가져오기
 	
+	private List<AccOptionVO> optionList;				// 추가옵션 - 숙소와 1대n
+	private List<AccResvOptionVO> resOptionList;		// 숙소 예약옵션 - 추가옵션과 1대1
+	private List<AccResvVO> resList;					// 숙소 예약 - 숙소 예약옵션과 1대1, 객실타입과 1대n
 	
-	// 1:1
-	// 숙소 객체
-	// 숙소 보유시설
+	private List<RoomTypeVO> roomTpyeList;				// 객실타입 - 숙소 와 1대n
+	private List<RoomFacilityVO> roomFacilityList;		// 객실 내 시설 - 객싵타입과 1대1
+	private List<RoomFeatureVO> roomFeatureList;		// 객실 내 특징 - 객실 타입과 1대1
+	private List<RoomVO> roomList;						// 객실	- 객실타입과 1대n
 	
-	// 1:n
+	
+	
+	
 	// 추가옵션 list
 	// 객실 타입 list
 	// 객실 내 시설 list (객실타입과 1:1)

@@ -42,10 +42,11 @@ public class TripRecordApiController {
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String openScopeCd,
+            @RequestParam(defaultValue = "all") String filter, 
             Authentication authentication
     ) {
         Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        return ResponseEntity.ok(service.list(page, size, keyword, openScopeCd, loginMemNo));
+        return ResponseEntity.ok(service.list(page, size, keyword, openScopeCd, filter, loginMemNo));
     }
 
     // 상세: 누구나(단, 비공개글은 SQL에서 작성자만 보이게 필터링)

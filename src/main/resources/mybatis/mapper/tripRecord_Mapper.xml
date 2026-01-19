@@ -25,6 +25,10 @@
           <if test="openScopeCd != null and openScopeCd != ''">
             AND tr.OPEN_SCOPE_CD = #{openScopeCd}
           </if>
+          
+          <if test="filter == 'my-spot' and loginMemNo != null">
+		    AND tr.MEM_NO = #{loginMemNo}
+		  </if>
     </select>
 
     <!-- 목록 -->
@@ -149,7 +153,19 @@
 	        AND tr.OPEN_SCOPE_CD = #{openScopeCd}
 	      </if>
 	
-	    ORDER BY tr.RCD_NO DESC
+		  <if test="filter == 'my-spot' and loginMemNo != null">
+  		    AND tr.MEM_NO = #{loginMemNo}
+		  </if>
+	
+	    <choose>
+		  <when test="filter == 'popular-spot'">
+		    ORDER BY NVL(lk.like_cnt, 0) DESC, tr.RCD_NO DESC
+		  </when>
+		  <otherwise>
+		    ORDER BY tr.RCD_NO DESC
+		  </otherwise>
+		</choose>
+
 	    OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
 	</select>
 	
@@ -391,14 +407,22 @@
    #{path}, #{fileGbCd}, #{mimyType}, #{useYn}, #{regId}, SYSDATE)
 </insert>
 
-<insert id="insertHashtags">
-  INSERT ALL
-  <foreach collection="tags" item="tag">
-    INTO HASHTAG (HSTG_NO, RCD_NO, TAG_NAME, REG_DT)
-    VALUES (SEQ_HASHTAG.NEXTVAL, #{rcdNo}, #{tag}, SYSDATE)
-  </foreach>
-  SELECT 1 FROM DUAL
+<insert id="upsertHashtagText">
+  MERGE INTO HASHTAG h
+  USING (
+    SELECT #{rcdNo} AS RCD_NO,
+           #{tagText} AS TAG_TEXT
+    FROM DUAL
+  ) s
+  ON (h.RCD_NO = s.RCD_NO)
+  WHEN MATCHED THEN
+    UPDATE SET h.TAG_NAME = s.TAG_TEXT,
+               h.REG_DT   = SYSDATE
+  WHEN NOT MATCHED THEN
+    INSERT (HSTG_NO, RCD_NO, TAG_NAME, REG_DT)
+    VALUES (SEQ_HASHTAG.NEXTVAL, s.RCD_NO, s.TAG_TEXT, SYSDATE)
 </insert>
+
 
 
 <select id="selectTripRecordBlocks"

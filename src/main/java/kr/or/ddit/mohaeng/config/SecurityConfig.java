@@ -72,14 +72,14 @@ public class SecurityConfig {
 			"/member/find",
 			"/member/idCheck",
 			"/member/find",
+			"/member/find/id",
+			"/member/find/password",
+			"/member/sns/**",
 			"/mypage/profile",
 			"/mypage/business/profile",
 			"/mypage/profile/update",
 			"/mypage/profile/checkPassword",
 			"/mypage/profile/withdraw",
-			"/member/find/id",
-			"/member/find/password",
-			"/member/sns/**",
 			"/idCheck",
 			"/error",
 			"/api/chatbot",
@@ -88,9 +88,13 @@ public class SecurityConfig {
 			"/schedule/search",
 			"/schedule/planner",
 			"/schedule/common/**",
+			"/product/accmmodation",
+			"/product/accmmodation-booking",
+			"/product/accmmodation-detail",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
+			"/batch/load-acc-detail"
 	};
 
 	// 일반회원 허용 url test
@@ -99,6 +103,9 @@ public class SecurityConfig {
 			"/error",
 			"/mohaeng",
 			"/schedule/**",
+			"/product/accmmodation",
+			"/product/accmmodation-booking",
+			"/product/accmmodation-detail",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/oauth2/**",
 			"/login/oauth2/**"
@@ -227,6 +234,7 @@ public class SecurityConfig {
          )
         .formLogin(form -> form.disable())
         .httpBasic(hbasic -> hbasic.disable());
+	    http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
     http.exceptionHandling(exception ->
         exception.accessDeniedHandler(new CustomAccessDeniedHandler())

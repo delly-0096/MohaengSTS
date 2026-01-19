@@ -1,5 +1,8 @@
 package kr.or.ddit.mohaeng.community.travellog.record.controller;
 
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -9,8 +12,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import kr.or.ddit.mohaeng.community.travellog.record.security.AuthPrincipalExtractor;
 import kr.or.ddit.mohaeng.community.travellog.record.service.ITripRecordService;
+import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
 import kr.or.ddit.mohaeng.vo.TripRecordDetailVO;
+import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import lombok.RequiredArgsConstructor;
+
 
 @Controller
 @RequestMapping("/community")
@@ -19,17 +25,22 @@ public class TripRecordPageController {
 
     private final ITripRecordService tripRecordService;
 
+
+	@Autowired
+	ITripScheduleService tripScheduleService;
+
     @GetMapping("/travel-log")
     public String listPage(
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "12") int size,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String openScopeCd,
+            @RequestParam(defaultValue = "all") String filter,  
             Authentication authentication,
             Model model
     ) {
         Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication); // 비로그인이면 null
-        var paged = tripRecordService.list(page, size, keyword, openScopeCd, loginMemNo);
+        var paged = tripRecordService.list(page, size, keyword, openScopeCd, filter, loginMemNo);
 
         model.addAttribute("paged", paged);
         model.addAttribute("loginMemNo", loginMemNo);
@@ -48,6 +59,11 @@ public class TripRecordPageController {
     ) {
         Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
         model.addAttribute("loginMemNo", loginMemNo);
+        
+        int memNo = loginMemNo.intValue();
+        List<TripScheduleVO> scheduleList = tripScheduleService.selectTripScheduleList(memNo);
+
+        model.addAttribute("scheduleList", scheduleList);
 
         if (rcdNo != null) {
             TripRecordDetailVO detail = tripRecordService.detail(rcdNo, loginMemNo, false); // 조회수 증가 X

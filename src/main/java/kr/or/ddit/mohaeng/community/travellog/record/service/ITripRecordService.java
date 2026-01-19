@@ -12,7 +12,9 @@ import kr.or.ddit.mohaeng.vo.TripRecordListVO;
 
 public interface ITripRecordService {
 
-    PagedResponse<TripRecordListVO> list(int page, int size, String keyword, String openScopeCd, Long loginMemNo);
+//    PagedResponse<TripRecordListVO> list(int page, int size, String keyword, String openScopeCd, Long loginMemNo);
+	PagedResponse<TripRecordListVO> list(int page, int size, String keyword, String openScopeCd, String filter, Long loginMemNo);
+
 
     TripRecordDetailVO detail(long rcdNo, Long loginMemNo, boolean increaseView);
 

@@ -1139,5 +1139,28 @@ async function deleteSchedule() {
 }
 </script>
 
+
+<div id="schedulePayload" data-b64="${fn:escapeXml(scheduleJsonB64)}" style="display:none;"></div>
+<script>
+(function(){
+  try {
+    const el = document.getElementById('schedulePayload');
+    const b64 = el ? el.dataset.b64 : '';
+    const safeB64 = (b64 || '').replace(/ /g, '+');
+
+    // ✅ base64 -> bytes -> utf-8 string
+    const bin = atob(safeB64);
+    const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+    const jsonText = new TextDecoder('utf-8').decode(bytes);
+
+    window.__SCHEDULE__ = JSON.parse(jsonText);
+  } catch(e) {
+    console.error('[schedule/view] failed to init __SCHEDULE__', e);
+    window.__SCHEDULE__ = null;
+  }
+})();
+</script>
+
+
 <c:set var="pageJs" value="schedule" />
 <%@ include file="../common/footer.jsp" %>

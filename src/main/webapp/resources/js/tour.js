@@ -617,5 +617,5 @@ function checkout() {
     }
 
     sessionStorage.setItem('tourCartCheckout', JSON.stringify(cart));
-    window.location.href = contextPath + '/booking/tour/checkout';
+    window.location.href = contextPath + '/tour/payment?type=cart';
 }

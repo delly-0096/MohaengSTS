@@ -302,7 +302,7 @@
                         <option value="REGION">지역별 채팅</option>
                         <option value="THEME">테마별 채팅</option>
                     </select>
-                    <input type="number" class="form-control" id="newRoomMaxUsers" placeholder="최대 인원 (기본 30명)" min="2" max="100" value="30">
+                    <input type="number" class="form-control" id="newRoomMaxUsers" placeholder="최대 인원 (기본 10명)" min="2" max="100" value="10">
                     <div class="create-room-actions">
                         <button class="btn btn-outline" onclick="cancelCreateRoom()">취소</button>
                         <button class="btn btn-primary" onclick="createChatRoom()">만들기</button>
@@ -512,6 +512,24 @@
     padding: 20px;
     overflow-y: auto;
     flex: 1;
+}
+
+/* 이미지 미리보기 */
+#imagePreviewOverlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 0, 0, 0.9) !important;
+    z-index: 100000 !important; /* 💡 채팅창 z-index보다 훨씬 크게! */
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+
+#imagePreviewOverlay.active {
+    display: flex !important; /* 💡 active 붙으면 무조건 등장 */
 }
 
 /* 채팅방 생성 */
@@ -1231,9 +1249,11 @@
 }
 
 .image-preview-overlay img {
-    max-width: 90%;
+	max-width: 90%;
     max-height: 90%;
+    object-fit: contain;
     border-radius: 8px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
 }
 
 .image-preview-close {
@@ -2193,7 +2213,7 @@ function renderChatMessage(data) {
     const isMine = (data.memId === currentUser.id);
 
     if (data.type === 'IMAGE') {
-        addImageMessage(data.sender, data.message, displayTime, isMine);
+    	addImageMessage(data.sender, data.message, displayTime, isMine);
     } else if (data.type === 'FILE') {
     	try {
             // 이미 객체면 그대로 쓰고, 문자열이면 파싱
@@ -2548,16 +2568,13 @@ function minimizeChat() {
     // 읽음 처리 알림
     sendReadUpdate();
     
-    // 💡 [핵심] 세션에 '나 지금 최소화야'라고 확실히 기록
     sessionStorage.setItem('activeChatId', currentChatId);
     sessionStorage.setItem('chatWindowState', 'MIN');
     }
-}
 
 //채팅 최대화
 function maximizeChat() {
 	const savedId = sessionStorage.getItem('activeChatId');
-    // 💡 여기서만 'MAX'라고 확실히 저장해줍니다.
     sessionStorage.setItem('chatWindowState', 'MAX'); 
     openChatWindow(savedId);
 }
@@ -2577,14 +2594,14 @@ async function leaveChat() {
     
     if (confirm('채팅방에서 나가시겠습니까?')) {
         try {
-            // 💡 3. 서버에 퇴장 알림 (아직 세션 안 지웠으니 currentChatId 사용 가능)
+            // 서버에 퇴장 알림 (아직 세션 안 지웠으니 currentChatId 사용 가능)
             const response = await fetch(api('/chat/room/' + currentChatId + '/leave'), {
                 method: 'POST'
             });
             const result = await response.json();
 
             if (result.success) {
-                // 💡 4. 소켓으로 퇴장 메시지 전송
+                // 소켓으로 퇴장 메시지 전송
                 if (stompClient && stompClient.connected) {
                     stompClient.send('/app/chat/system', {}, JSON.stringify({
                         chatId: parseInt(currentChatId),
@@ -2593,7 +2610,7 @@ async function leaveChat() {
                     }));
                 }
 
-                // 💡 5. 모든 통신이 끝난 '후'에 데이터를 삭제
+                // 모든 통신이 끝난 '후'에 데이터를 삭제
                 sessionStorage.removeItem('activeChatId');
                 sessionStorage.removeItem('chatWindowState');
                 currentChatId = null;
@@ -2981,17 +2998,24 @@ function addImageMessage(sender, imageUrl, time, isMine) {
     const welcomeMsg = messagesEl.querySelector('.chat-welcome-message');
     if (welcomeMsg) welcomeMsg.remove();
 
-    const initial = sender.charAt(0).toUpperCase();
+    const initial = sender ? sender.charAt(0).toUpperCase() : '?';
 
-    const messageHtml =
-        '<div class="chat-message' + (isMine ? ' mine' : '') + '">' +
-            '<div class="chat-message-avatar">' + initial + '</div>' +
-            '<div class="chat-message-content">' +
-                '<span class="chat-message-sender">' + sender + '</span>' +
-                '<img src="' + imageUrl + '" class="chat-message-image" onclick="previewImage(\'' + imageUrl + '\')" alt="이미지">' +
-                '<span class="chat-message-time">' + time + '</span>' +
-            '</div>' +
-        '</div>';
+    const messageHtml = `
+        <div class="chat-message ${isMine ? 'mine' : ''}">
+            <div class="chat-message-avatar">\${initial}</div>
+            <div class="chat-message-content">
+                <span class="chat-message-sender">\${sender}</span>
+                <div class="chat-message-bubble image-bubble" style="padding: 5px; background: none;">
+                    <img src="\${imageUrl}" 
+                         class="chat-message-image" 
+                         style="cursor: pointer; max-width: 200px; border-radius: 8px; display: block;" 
+                         onclick="previewImage('\${imageUrl}')" 
+                         alt="채팅 이미지">
+                </div>
+                <span class="chat-message-time">${time}</span>
+            </div>
+        </div>
+    `;
 
     messagesEl.insertAdjacentHTML('beforeend', messageHtml);
     messagesEl.scrollTop = messagesEl.scrollHeight;
@@ -3064,28 +3088,37 @@ function getFileIcon(fileName) {
 
 // 이미지 미리보기
 function previewImage(imageUrl) {
+	console.log("📸 이미지 확대 시도:", imageUrl);
     // 기존 미리보기 제거
-    let overlay = document.getElementById('imagePreviewOverlay');
+   let overlay = document.getElementById('imagePreviewOverlay');
+    
+    // 오버레이 엘리먼트가 없으면 생성
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'imagePreviewOverlay';
         overlay.className = 'image-preview-overlay';
-        overlay.onclick = closeImagePreview;
-        overlay.innerHTML = '<button class="image-preview-close"><i class="bi bi-x-lg"></i></button><img src="" alt="미리보기">';
+        overlay.onclick = closeImagePreview; 
+        overlay.innerHTML = `
+            <button class="image-preview-close" onclick="closeImagePreview()">
+                <i class="bi bi-x-lg" style="color:white; font-size: 2rem;"></i>
+            </button>
+            <img src="" alt="미리보기" style="cursor: zoom-out;">
+        `;
         document.body.appendChild(overlay);
     }
 
-    overlay.querySelector('img').src = imageUrl;
+    const img = overlay.querySelector('img');
+    img.src = imageUrl;
     overlay.classList.add('active');
-    document.body.style.overflow = 'hidden';
+    document.body.style.overflow = 'hidden'; // 스크롤 방지
 }
 
 // 이미지 미리보기 닫기
 function closeImagePreview() {
-    const overlay = document.getElementById('imagePreviewOverlay');
+	const overlay = document.getElementById('imagePreviewOverlay');
     if (overlay) {
         overlay.classList.remove('active');
-        document.body.style.overflow = '';
+        document.body.style.overflow = ''; // 스크롤 복구
     }
 }
 

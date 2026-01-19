@@ -52,7 +52,7 @@
         </div>
 
         <!-- 여행기록 그리드 -->
-        <div class="travellog-grid" id="travellogGrid">
+        <div class="travellog-grid" id="travellogGrid" data-page="1" data-size="12" data-filter="all">
 
 	    <c:if test="${empty paged.content}">
 	        <div style="grid-column: 1 / -1; text-align:center; padding:40px 0;">
@@ -143,7 +143,7 @@
 
 					<!-- 대표 이미지: 지금 attachNo만 있어서 실제 이미지 경로가 없으니 임시 고정 -->
 					<div class="travellog-card-image"
-						onclick="location.href='${pageContext.request.contextPath}/community/travel-log/detail?rcdNo=${row.rcdNo}'">
+						onclick="location.href='\${pageContext.request.contextPath}/community/travel-log/detail?rcdNo=\${row.rcdNo}'">
 						<c:choose>
 							<c:when test="${not empty row.coverPath}">
 								<img
@@ -230,13 +230,13 @@
 	        
 
         <!-- 로딩 인디케이터 -->
-        <!-- <div class="infinite-scroll-loader" id="scrollLoader">
+        <div class="infinite-scroll-loader" id="scrollLoader">
             <div class="loader-spinner">
                 <div class="spinner-border text-primary" role="status">
                     <span class="visually-hidden">Loading...</span>
                 </div>
             </div>
-        </div> -->
+        </div>
 
         <!-- 더 이상 데이터 없음 -->
         <div class="infinite-scroll-end" id="scrollEnd" style="display: none;">
@@ -871,34 +871,7 @@ function escapeHtml(text) {
 }
 var travellogModal = null;
 
-// 페이지 로드 시 모달 인스턴스 생성
-/* document.addEventListener('DOMContentLoaded', function() {
-    var modalElement = document.getElementById('travellogModal');
-    if (modalElement) {
-        travellogModal = new bootstrap.Modal(modalElement);
-    }
-}); */
-// document.addEventListener('DOMContentLoaded', function () {
-// 	  // 기업회원이면 액션버튼 비활성 + 클릭 막기
-// 	  if (isBusiness) {
-// 	    document.querySelectorAll('.travellog-card-actions .travellog-action-btn').forEach(btn => {
-// 	      // 공유 버튼(맨 오른쪽)은 제외하고 싶으면 아래 조건 추가 가능
-// 	      // if (btn.querySelector('.bi-send')) return;
-
-// 	      if (btn.querySelector('.bi-send')) return;
-	      
-// 	      btn.disabled = true;
-// 	      btn.classList.add('action-disabled');
-// 	      btn.setAttribute('aria-disabled', 'true');
-// 	    });
-// 	  }
-
-// 	  // 오버레이 안쪽 클릭은 닫히지 않게(배경 클릭만 닫히도록)
-// 	  const overlayContent = document.querySelector('#loginOverlay .login-overlay-content');
-// 	  overlayContent?.addEventListener('click', function(e){ e.stopPropagation(); });
-// 	});
-
-document.addEventListener('DOMContentLoaded', function () {
+/* document.addEventListener('DOMContentLoaded', function () {
 	  if (isBusiness) {
 	    // 공유 버튼도 통일감 있게 "비활성 UI" 처리
 	    document.querySelectorAll('.travellog-card-actions .btn-share').forEach(btn => {
@@ -916,7 +889,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// 오버레이 안쪽 클릭은 닫히지 않게(배경 클릭만 닫히도록)
 	  const overlayContent = document.querySelector('#loginOverlay .login-overlay-content');
 	  overlayContent?.addEventListener('click', function(e){ e.stopPropagation(); });
-	});
+	}); */
 
 
 
@@ -957,6 +930,10 @@ function toggleListLike(btn, rcdNo) {
   .then(data => {
     icon.className = data.liked ? 'bi bi-heart-fill' : 'bi bi-heart';
     count.textContent = data.likeCount;
+    
+ 	// ✅ 카드 dataset.like 갱신 (정렬/표시 일관성)
+    const card = btn.closest('.travellog-card');
+    if (card) card.dataset.like = String(data.likeCount);
   })
   .catch(err => {
     console.error(err);
@@ -1088,12 +1065,12 @@ function showLoginOverlay() {
 
 // ==================== 인피니티 스크롤 ====================
 var currentPage = 1;
-var isLoadingMore = false;
-var hasMoreData = true;
-var totalPages = 5; // 데모: 총 5페이지
+// var isLoadingMore = false;
+// var hasMoreData = true;
+// var totalPages = 5; // 데모: 총 5페이지
 
 // 추가 데모 데이터
-var additionalCards = [
+/* var additionalCards = [
     {
         id: 7,
         username: 'sunset_chaser',
@@ -1130,10 +1107,10 @@ var additionalCards = [
         text: '전주 한옥마을에서의 하루. 한복 입고 거리 산책하니 시간여행 온 기분!',
         date: '4주 전'
     }
-];
+]; */
 
 // 페이지 로드시 인피니티 스크롤 초기화
-document.addEventListener('DOMContentLoaded', function() {
+/* document.addEventListener('DOMContentLoaded', function() {
 	  // 최초 순서 저장(없으면 자동 부여)
 	  document.querySelectorAll('#travellogGrid .travellog-card').forEach((card, idx) => {
 	    if (!card.dataset.index) card.dataset.index = String(idx);
@@ -1143,10 +1120,10 @@ document.addEventListener('DOMContentLoaded', function() {
 	  applyFilter('all', LOGIN_MEM_ID);
 	  
     initInfiniteScroll();
-});
+}); */
 
 // 인피니티 스크롤 초기화
-function initInfiniteScroll() {
+/* function initInfiniteScroll() {
     var loader = document.getElementById('scrollLoader');
     if (!loader) return;
 
@@ -1164,24 +1141,24 @@ function initInfiniteScroll() {
     });
 
     observer.observe(loader);
-}
+} */
 
 // 더 많은 여행기록 불러오기
-function loadMoreTravellogs() {
-    if (isLoadingMore || !hasMoreData) return;
+// function loadMoreTravellogs() {
+//     if (isLoadingMore || !hasMoreData) return;
 
-    // 비로그인 상태에서는 일정 페이지 이상 제한
-    if (!isLoggedIn && currentPage >= 2) {
-        showLoginOverlay();
-        document.getElementById('scrollLoader').style.display = 'none';
-        return;
-    }
+//     // 비로그인 상태에서는 일정 페이지 이상 제한
+//     if (!isLoggedIn && currentPage >= 2) {
+//         showLoginOverlay();
+//         document.getElementById('scrollLoader').style.display = 'none';
+//         return;
+//     }
 
-    isLoadingMore = true;
-    document.getElementById('scrollLoader').style.display = 'block';
+//     isLoadingMore = true;
+//     document.getElementById('scrollLoader').style.display = 'block';
 
     // 서버 요청 시뮬레이션 (실제 구현시 AJAX 호출)
-    setTimeout(function() {
+/*     setTimeout(function() {
         currentPage++;
 
         if (currentPage > totalPages) {
@@ -1194,10 +1171,10 @@ function loadMoreTravellogs() {
 
         // 새 카드 추가
         var grid = document.getElementById('travellogGrid');
-        var cardsToAdd = getCardsForPage(currentPage);
+//         var cardsToAdd = getCardsForPage(currentPage);
 
         cardsToAdd.forEach(function(card, index) {
-            var cardHtml = createTravellogCard(card);
+//             var cardHtml = createTravellogCard(card);
             var tempDiv = document.createElement('div');
             tempDiv.innerHTML = cardHtml;
             var newCard = tempDiv.firstElementChild;
@@ -1216,8 +1193,8 @@ function loadMoreTravellogs() {
         });
 
         isLoadingMore = false;
-    }, 800);
-}
+    }, 800); */
+// }
 
 // 페이지별 카드 데이터 반환
 /* function getCardsForPage(page) {
@@ -1280,6 +1257,455 @@ function loadMoreTravellogs() {
 //         '</div>' +
 //     '</div>';
 // }
+
+
+//==================== 인피니티 스크롤 + 서버 로딩 ====================
+let isLoadingMore = false;
+let hasMoreData = true;
+
+// ✅ 서버 API 엔드포인트(네 프로젝트에 맞춰 수정)
+const LIST_API = cp + '/api/travel-log/records'; 
+// 만약 실제가 /api/community/travel-log/records 이면 여기만 바꿔줘
+
+function getLoginMemId() {
+  return '${loginName != null ? loginName : ""}';
+}
+
+function getGrid() {
+  return document.getElementById('travellogGrid');
+}
+
+function getActiveFilter() {
+  return document.querySelector('.travellog-filter.active')?.dataset?.filter || 'all';
+}
+
+// ✅ 최초 1페이지(서버렌더) 카드들도 index 부여
+function ensureInitialIndex() {
+  const grid = getGrid();
+  if (!grid) return;
+  grid.querySelectorAll('.travellog-card').forEach((card, idx) => {
+    if (!card.dataset.index) card.dataset.index = String(idx);
+  });
+}
+
+// ✅ 필터 클릭 → 서버 기준으로 "새로 로드"
+function applyFilter(filter) {
+  const grid = getGrid();
+  if (!grid) return;
+
+  grid.dataset.filter = filter;
+  grid.dataset.page = '1';
+  hasMoreData = true;
+
+  // ✅ 서버렌더 카드 전부 비우고(필터에 맞는 1페이지를 다시 받음)
+  grid.innerHTML = '';
+
+  // loader/end UI 초기화
+  document.getElementById('scrollEnd').style.display = 'none';
+  document.getElementById('scrollLoader').style.display = 'block';
+
+  // ✅ 첫 페이지 다시 로딩
+  loadMoreTravellogs(true);
+}
+
+// ✅ IntersectionObserver 초기화
+function initInfiniteScroll() {
+  const loader = document.getElementById('scrollLoader');
+  if (!loader) return;
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      if (isLoadingMore || !hasMoreData) return;
+      loadMoreTravellogs(false);
+    });
+  }, {
+    root: null,
+    rootMargin: '150px',
+    threshold: 0
+  });
+
+  observer.observe(loader);
+}
+
+// ✅ 서버에서 목록 가져와서 카드 append
+async function loadMoreTravellogs(isFirstPage) {
+  const grid = getGrid();
+  if (!grid) return;
+
+  // 비로그인 제한: 2페이지부터 차단(기존 정책 유지)
+  const currentPage = Number(grid.dataset.page || '1');
+  if (!isLoggedIn && currentPage >= 2) {
+    showLoginOverlay();
+    document.getElementById('scrollLoader').style.display = 'none';
+    return;
+  }
+
+  if (isLoadingMore || !hasMoreData) return;
+  isLoadingMore = true;
+
+  const loader = document.getElementById('scrollLoader');
+  loader.style.display = 'block';
+
+  const size = Number(grid.dataset.size || '12');
+  const filter = grid.dataset.filter || 'all';
+
+  // ✅ 다음에 가져올 page 계산
+  const nextPage = isFirstPage ? 1 : (currentPage + 1);
+
+  // ✅ 서버 요청 URL 구성
+  const url = new URL(LIST_API, window.location.origin);
+  url.searchParams.set('page', String(nextPage));
+  url.searchParams.set('size', String(size));
+  url.searchParams.set('filter', filter); // all / popular-spot / my-spot
+
+  try {
+    const res = await fetch(url.toString(), { credentials: 'include' });
+    if (!res.ok) throw new Error('list api failed: ' + res.status);
+
+    /** @type {{page:number,size:number,total:number,items:any[]}} */
+    const data = await res.json();
+
+    const items = data.content || [];
+    const total = Number(data.totalElements || 0);
+    const totalPages = Number(data.totalPages || 0);
+
+    // ✅ 더 없음 처리
+    if (items.length === 0 || nextPage > totalPages) {
+      hasMoreData = false;
+      loader.style.display = 'none';
+      document.getElementById('scrollEnd').style.display = 'block';
+      return;
+    }
+
+    // ✅ 카드 생성 + append
+    const startIndex = grid.querySelectorAll('.travellog-card').length;
+    items.forEach((row, i) => {
+      const cardEl = buildCardElement(row, startIndex + i);
+      grid.appendChild(cardEl);
+    });
+
+    // ✅ page 업데이트
+    grid.dataset.page = String(nextPage);
+
+    // ✅ 마지막 페이지면 종료 표시
+    if (nextPage >= totalPages) {
+      hasMoreData = false;
+      loader.style.display = 'none';
+      document.getElementById('scrollEnd').style.display = 'block';
+    }
+
+    // ✅ 기업회원 버튼 비활성 UI 유지(추가된 카드에도)
+    if (isBusiness) {
+      grid.querySelectorAll('.travellog-card-actions .travellog-action-btn').forEach(btn => {
+        btn.classList.add('is-disabled');
+        btn.setAttribute('aria-disabled', 'true');
+      });
+    }
+
+  } catch (e) {
+    console.error(e);
+    // 실패해도 재시도 가능하게 로더만 켜둠
+  } finally {
+    isLoadingMore = false;
+    loader.style.display = hasMoreData ? 'block' : 'none';
+  }
+}
+
+// ✅ 카드 DOM 만들기 (JSP 카드 구조 최대한 동일하게)
+/* function buildCardElement(row, index) {
+  const rcdNo = Number(row.rcdNo);
+  const likeCount = Number(row.likeCount || 0);
+  const commentCount = Number(row.commentCount || 0);
+  const myLiked = Number(row.myLiked || 0);
+  const memId = row.memId || '';
+  const nickname = row.nickname || '';
+  const locName = row.locName || '';
+  const title = row.rcdTitle || '';
+  const regDt = row.regDt ? formatDate(row.regDt) : '';
+
+  // 프로필/커버 fallback
+  const profilePath = row.profilePath;
+  const profileUrl = (profilePath && profilePath !== 'null')
+    ? (cp + '/upload' + profilePath)
+    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';
+
+  const coverPath = row.coverPath;
+  const coverUrl = (coverPath && coverPath !== 'null')
+    ? (cp + '/files' + coverPath)
+    : 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=600&fit=crop&q=80';
+
+  const displayName = nickname ? `${escapeHtml(nickname)}(${escapeHtml(memId)})` : escapeHtml(memId);
+
+  const card = document.createElement('div');
+  card.className = 'travellog-card';
+  card.dataset.index = String(index);
+  card.dataset.id = String(rcdNo);
+  card.dataset.writer = memId;
+  card.dataset.like = String(likeCount);
+  card.onclick = () => goDetail(rcdNo);
+
+  card.innerHTML = `
+    <div class="travellog-card-header">
+      <img src="${profileUrl}" class="travellog-avatar" alt="프로필"
+           onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';" />
+      <div class="travellog-user-info">
+        <span class="travellog-username">${displayName}</span>
+        <span class="travellog-location">${escapeHtml(locName)}</span>
+      </div>
+      <div class="travellog-more-wrapper">
+        <div class="travellog-card-menu"></div>
+      </div>
+    </div>
+
+    <div class="travellog-card-image" onclick="event.stopPropagation(); goDetail(${rcdNo});">
+      <img src="${coverUrl}" alt="여행사진">
+    </div>
+
+    <div class="travellog-card-actions">
+      <button class="travellog-action-btn"
+              onclick="event.stopPropagation(); toggleListLike(this, ${rcdNo});">
+        <i class="bi ${myLiked == 1 ? 'bi-heart-fill' : 'bi-heart'}"></i>
+        <span>${likeCount}</span>
+      </button>
+
+      <button class="travellog-action-btn"
+              onclick="event.stopPropagation(); goComment(${rcdNo});">
+        <i class="bi bi-chat"></i>
+        <span>${commentCount}</span>
+      </button>
+
+      <button class="travellog-action-btn btn-share" style="margin-left:auto;"
+              onclick="handleShare(event, ${rcdNo});">
+        <i class="bi bi-send"></i>
+      </button>
+    </div>
+
+    <div class="travellog-card-content">
+      <p class="travellog-text">${escapeHtml(title)}</p>
+      <p class="travellog-date">${escapeHtml(regDt)}</p>
+    </div>
+  `;
+
+  return card;
+} */
+//✅ 카드 DOM 만들기 (JSP EL 충돌 방지 버전: 템플릿리터럴/ ${ } 사용 안 함)
+function buildCardElement(row, index) {
+  const rcdNo = Number(row.rcdNo);
+  const likeCount = Number(row.likeCount || 0);
+  const commentCount = Number(row.commentCount || 0);
+  const myLiked = Number(row.myLiked || 0);
+  const memId = row.memId || '';
+  const nickname = row.nickname || '';
+  const locName = row.locName || '';
+  const title = row.rcdTitle || '';
+  const regDt = row.regDt ? formatDate(row.regDt) : '';
+
+  // 프로필/커버 fallback
+  const profilePath = row.profilePath;
+  const profileUrl = (profilePath && profilePath !== 'null')
+    ? (cp + '/upload' + profilePath)
+    : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';
+
+  const coverPath = row.coverPath;
+  const coverUrl = (coverPath && coverPath !== 'null')
+    ? (cp + '/files' + coverPath)
+    : 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=600&fit=crop&q=80';
+
+  const displayName = nickname
+    ? (escapeHtml(nickname) + '(' + escapeHtml(memId) + ')')
+    : escapeHtml(memId);
+
+  // ====== root card ======
+  const card = document.createElement('div');
+  card.className = 'travellog-card';
+  card.dataset.index = String(index);
+  card.dataset.id = String(rcdNo);
+  card.dataset.writer = memId;
+  card.dataset.like = String(likeCount);
+
+  card.addEventListener('click', function () {
+    goDetail(rcdNo);
+  });
+
+  // ====== header ======
+  const header = document.createElement('div');
+  header.className = 'travellog-card-header';
+
+  const avatar = document.createElement('img');
+  avatar.className = 'travellog-avatar';
+  avatar.alt = '프로필';
+  avatar.src = profileUrl;
+  avatar.onerror = function () {
+    this.onerror = null;
+    this.src = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';
+  };
+
+  const userInfo = document.createElement('div');
+  userInfo.className = 'travellog-user-info';
+
+  const usernameSpan = document.createElement('span');
+  usernameSpan.className = 'travellog-username';
+  usernameSpan.innerHTML = displayName;
+
+  const locSpan = document.createElement('span');
+  locSpan.className = 'travellog-location';
+  locSpan.textContent = locName;
+
+  userInfo.appendChild(usernameSpan);
+  userInfo.appendChild(locSpan);
+
+  const moreWrap = document.createElement('div');
+  moreWrap.className = 'travellog-more-wrapper';
+  const menu = document.createElement('div');
+  menu.className = 'travellog-card-menu';
+  moreWrap.appendChild(menu);
+
+  header.appendChild(avatar);
+  header.appendChild(userInfo);
+  header.appendChild(moreWrap);
+
+  // ====== image ======
+  const imgWrap = document.createElement('div');
+  imgWrap.className = 'travellog-card-image';
+  imgWrap.addEventListener('click', function (e) {
+    e.stopPropagation();
+    goDetail(rcdNo);
+  });
+
+  const coverImg = document.createElement('img');
+  coverImg.alt = '여행사진';
+  coverImg.src = coverUrl;
+
+  imgWrap.appendChild(coverImg);
+
+  // ====== actions ======
+  const actions = document.createElement('div');
+  actions.className = 'travellog-card-actions';
+
+  // 좋아요 버튼
+  const likeBtn = document.createElement('button');
+  likeBtn.className = 'travellog-action-btn';
+  likeBtn.type = 'button';
+  likeBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    toggleListLike(likeBtn, rcdNo);
+  });
+
+  const likeIcon = document.createElement('i');
+  likeIcon.className = (myLiked === 1) ? 'bi bi-heart-fill' : 'bi bi-heart';
+
+  const likeSpan = document.createElement('span');
+  likeSpan.textContent = String(likeCount);
+
+  likeBtn.appendChild(likeIcon);
+  likeBtn.appendChild(likeSpan);
+
+  // 댓글 버튼
+  const cBtn = document.createElement('button');
+  cBtn.className = 'travellog-action-btn';
+  cBtn.type = 'button';
+  cBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    goComment(rcdNo);
+  });
+
+  const cIcon = document.createElement('i');
+  cIcon.className = 'bi bi-chat';
+  const cSpan = document.createElement('span');
+  cSpan.textContent = String(commentCount);
+
+  cBtn.appendChild(cIcon);
+  cBtn.appendChild(cSpan);
+
+  // 공유 버튼
+  const shareBtn = document.createElement('button');
+  shareBtn.className = 'travellog-action-btn btn-share';
+  shareBtn.type = 'button';
+  shareBtn.style.marginLeft = 'auto';
+  shareBtn.addEventListener('click', function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    handleShare(e, rcdNo);
+  });
+
+  const sIcon = document.createElement('i');
+  sIcon.className = 'bi bi-send';
+  shareBtn.appendChild(sIcon);
+
+  actions.appendChild(likeBtn);
+  actions.appendChild(cBtn);
+  actions.appendChild(shareBtn);
+
+  // ====== content ======
+  const content = document.createElement('div');
+  content.className = 'travellog-card-content';
+
+  const textP = document.createElement('p');
+  textP.className = 'travellog-text';
+  textP.textContent = title;
+
+  const dateP = document.createElement('p');
+  dateP.className = 'travellog-date';
+  dateP.textContent = regDt;
+
+  content.appendChild(textP);
+  content.appendChild(dateP);
+
+  // ====== assemble ======
+  card.appendChild(header);
+  card.appendChild(imgWrap);
+  card.appendChild(actions);
+  card.appendChild(content);
+
+  // 기업회원 비활성 UI 적용(추가카드도)
+  if (isBusiness) {
+    card.querySelectorAll('.travellog-card-actions .travellog-action-btn').forEach(function (btn) {
+      btn.classList.add('is-disabled');
+      btn.setAttribute('aria-disabled', 'true');
+    });
+  }
+
+  return card;
+}
+
+
+
+
+// ✅ 서버에서 내려오는 regDt가 문자열/타임스탬프일 수 있으니 유연하게
+function formatDate(value) {
+  // 1) 숫자면 epoch(ms)로 가정
+  if (typeof value === 'number') {
+    const d = new Date(value);
+    return `\${d.getFullYear()}-\${pad2(d.getMonth() + 1)}-\${pad2(d.getDate())}`;
+  }
+  // 2) 문자열이면 Date로 파싱 시도
+  const d = new Date(value);
+  if (!isNaN(d.getTime())) {
+    return `\${d.getFullYear()}-\${pad2(d.getMonth() + 1)}-\${pad2(d.getDate())}`;
+  }
+  // 3) 못 파싱하면 원문
+  return String(value);
+}
+function pad2(n){ return (n < 10 ? '0' : '') + n; }
+
+// ✅ 좋아요 토글 후 dataset.like도 갱신(인기정렬/표시 일관성)
+const _origToggleListLike = toggleListLike;
+toggleListLike = function(btn, rcdNo){
+  _origToggleListLike(btn, rcdNo);
+  // _origToggleListLike 안의 fetch가 끝난 뒤에 dataset 갱신해야 정확함
+  // 그래서 기존 fetch then 안에서 같이 처리하도록 아래처럼 약간만 고쳐주는 게 베스트.
+};
+
+
+
+
+
+
+
+
+
+
 
 //카드 HTML 생성 (인피니티로 추가되는 카드에도 동일 정책 적용)
 function createTravellogCard(data) {
@@ -1491,7 +1917,7 @@ function showLoginOverlay() {
 		  <sec:authentication property="name" var="loginName"/>
 		</sec:authorize>
 		
-		document.addEventListener('DOMContentLoaded', function () {
+/* 		document.addEventListener('DOMContentLoaded', function () {
 
 			  // 로그인 아이디(ROLE_MEMBER일 때만 의미 있음)
 			   const LOGIN_MEM_ID = '${loginName != null ? loginName : ""}';
@@ -1509,9 +1935,34 @@ function showLoginOverlay() {
 
 			  // 페이지 첫 진입 시 기본 all 적용(선택사항)
 			  applyFilter('all', LOGIN_MEM_ID);
-			});
+			}); */
+			
+			document.addEventListener('DOMContentLoaded', function () {
+				  ensureInitialIndex();
 
-		function applyFilter(filter, LOGIN_MEM_ID) {
+				  // ✅ 탭 클릭 이벤트
+				  document.querySelectorAll('.travellog-filter').forEach(tab => {
+				    tab.addEventListener('click', function () {
+				      document.querySelectorAll('.travellog-filter').forEach(t => t.classList.remove('active'));
+				      this.classList.add('active');
+
+				      applyFilter(this.dataset.filter); // 서버 재조회
+				    });
+				  });
+
+				  // ✅ 최초: 서버렌더 1페이지가 이미 보이므로, grid 상태만 맞춰두고 무한스크롤 시작
+				  const grid = getGrid();
+				  if (grid) {
+				    grid.dataset.filter = 'all';
+				    grid.dataset.page = '1';
+				  }
+
+				  initInfiniteScroll();
+				});
+
+			
+
+/* 		function applyFilter(filter, LOGIN_MEM_ID) {
 			  const grid = document.getElementById('travellogGrid');
 			  const cards = Array.from(grid.querySelectorAll('.travellog-card'));
 
@@ -1542,7 +1993,7 @@ function showLoginOverlay() {
 			      parseInt(a.dataset.index) - parseInt(b.dataset.index)
 			    )
 			    .forEach(card => grid.appendChild(card));
-			}
+			} */
 
 
 			function sortCards(grid, cards, type) {
@@ -1555,8 +2006,7 @@ function showLoginOverlay() {
 			  }).forEach(card => grid.appendChild(card));
 			}
 			
-			console.log('LOGIN_MEM_ID', LOGIN_MEM_ID);
-			console.log('first writer', document.querySelector('.travellog-card')?.dataset.writer);
+			
 
 
 

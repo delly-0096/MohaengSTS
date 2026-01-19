@@ -26,6 +26,7 @@ import kr.or.ddit.mohaeng.vo.FlightResvAgreeVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import kr.or.ddit.mohaeng.vo.PaymentInfoVO;
 import kr.or.ddit.mohaeng.vo.PaymentVO;
+import kr.or.ddit.mohaeng.vo.TripProdListVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -187,6 +188,13 @@ public class PaymentServiceImpl implements IPaymentService {
 					String infantInfo = "유아 " + infant + "명";
 					responseBody.put("infant", infantInfo);
 				}
+			} else if(paymentVO.getProductType().equals("tour")) {
+				result = tourPayConfirm(paymentVO);
+			    log.info("tour pay : {}", result);
+			    
+			    // 투어 인원 정보 추가
+			    int quantity = paymentVO.getTripProdList().get(0).getQuantity();
+			    responseBody.put("quantity", quantity + "명");
 			}
 
 			return responseBody;
@@ -289,6 +297,29 @@ public class PaymentServiceImpl implements IPaymentService {
 		int result = productResult + reservationResult + reservationAgreeResult + passengersResult;
 		
 		return result;
+	}
+
+	/**
+	 * 투어 상품 결제
+	 */
+	private int tourPayConfirm(PaymentVO paymentVO) {
+		int result = 0;
+	    
+	    // TRIP_PROD_LIST 테이블에 저장
+	    List<TripProdListVO> tripProdList = paymentVO.getTripProdList();
+	    for (TripProdListVO item : tripProdList) {
+	        item.setPayNo(paymentVO.getPayNo());
+	        result = payMapper.insertTripProdList(item);
+	        log.info("insertTripProdList : {}", result);
+	    }
+	    
+	    // 마케팅 동의 업데이트 (N → Y인 경우만)
+	    if ("Y".equals(paymentVO.getMktAgreeYn())) {
+	        int mktResult = payMapper.updateMktAgree(paymentVO.getMemNo());
+	        log.info("updateMktAgree : {}", mktResult);
+	    }
+	    
+	    return result;
 	}
 
 }

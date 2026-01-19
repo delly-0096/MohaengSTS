@@ -39,6 +39,7 @@
     
     <result property="writerNickname" column="WRITER_NICKNAME"/>
 	<result property="writerId" column="WRITER_ID"/>
+    <result property="commentCnt" column="COMMENT_CNT"/>
     
 
     <!-- 첨부파일 리스트 -->
@@ -70,13 +71,21 @@
   <!-- =========================
        1) 상세 조회 (파일 포함)
        ========================= -->
-  <select id="selectTalk" parameterType="int" resultMap="boardMap">
+<select id="selectTalk" parameterType="int" resultMap="boardMap">
     SELECT
       b.BOARD_NO, b.BOARD_CTGRY_CD, b.WRITER_NO, b.ATTACH_NO,
       b.BOARD_TITLE, b.BOARD_CONTENT,
       b.VIEW_CNT, b.LIKE_CNT,
       b.NOTICE_YN, b.PIN_YN,
       b.DEL_YN, b.DEL_DT, b.REG_DT, b.MOD_DT,
+      (SELECT NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = b.WRITER_NO) AS WRITER_NICKNAME,
+      (SELECT MEM_ID FROM MEMBER m WHERE m.MEM_NO = b.WRITER_NO) AS WRITER_ID,
+      (SELECT COUNT(*) FROM COMMENTS c
+       WHERE c.TARGET_TYPE = 'TALK'
+       AND c.TARGET_NO = b.BOARD_NO
+       AND c.CMNT_STATUS = 0
+       ) AS COMMENT_CNT,
+    
       afd.FILE_NO, afd.FILE_NAME, afd.FILE_ORIGINAL_NAME, afd.FILE_EXT,
       afd.FILE_SIZE, afd.FILE_PATH, afd.FILE_GB_CD, afd.MIMY_TYPE, afd.USE_YN, afd.REG_ID
     FROM BOARD b
@@ -85,6 +94,8 @@
     WHERE b.BOARD_NO = #{value}
       AND b.DEL_YN = 'N'
   </select>
+
+
 
   <!-- 조회수 증가 -->
   <update id="incrementHit" parameterType="int">
@@ -168,7 +179,14 @@
     WHERE 1=1
     <include refid="searchBoard"/>
   </select>
-
+  <select id="selectTalkCommentCount" parameterType="int" resultType="int"> 
+		SELECT COUNT(*)
+		 FROM COMMENTS
+		  WHERE TARGET_TYPE = 'TALK'
+		   AND TARGET_NO = #{boardNo}
+		   AND CMNT_STATUS = 0
+ </select>
+ 
    <select id="selectTalkList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.BoardVO" resultMap="boardMap">
     SELECT b.*
     FROM (
@@ -180,8 +198,13 @@
       ) rnum
       FROM (
         SELECT 
-        	(SELECT NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = b.WRITER_NO) AS  writerNickname
-          , (SELECT MEM_ID FROM MEMBER m WHERE m.MEM_NO = b.WRITER_NO) AS writerId
+        	(SELECT NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = b.WRITER_NO) AS WRITER_NICKNAME
+		  , (SELECT MEM_ID FROM MEMBER m WHERE m.MEM_NO = b.WRITER_NO) AS WRITER_ID
+		  , (SELECT COUNT(*)  FROM COMMENTS c
+              WHERE c.TARGET_TYPE = 'TALK'
+               AND c.TARGET_NO = b.BOARD_NO
+               AND c.CMNT_STATUS = 0
+             ) AS COMMENT_CNT
           , b.BOARD_NO          
           , b.BOARD_CTGRY_CD  
           , b.WRITER_NO

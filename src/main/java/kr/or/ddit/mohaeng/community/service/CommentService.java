@@ -8,7 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 import kr.or.ddit.mohaeng.community.mapper.ICommentMapper;
 import kr.or.ddit.mohaeng.vo.CommentVO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -24,6 +26,8 @@ public class CommentService {
     @Transactional
     public void addTalkComment(int boardNo, int writerNo, String content, Integer parentCmntNo) {
 
+    	 log.info("addTalkComment parentCmntNo {}", parentCmntNo);
+    	 
         // 대댓글이면: 부모가 같은 게시글(TALK, boardNo)에 존재하는지 검증
         if (parentCmntNo != null && parentCmntNo != 0) {
             int cnt = commentMapper.countValidParentInSameBoard(parentCmntNo, boardNo);
@@ -40,7 +44,8 @@ public class CommentService {
         vo.setWriterNo(writerNo);
         vo.setParentCmntNo(parentCmntNo);
         vo.setCmntContent(content);
-
+        
+        log.info("vo : {}", vo);
         commentMapper.insertTalkComment(vo);
     }
 

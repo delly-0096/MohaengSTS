@@ -85,43 +85,34 @@ public class TalkController {
 	}
 
 	// 게시판 상세화면
+	
+	  @GetMapping("/detail") public String talkDetail(@RequestParam int
+	  boardNo,Model model) { //talkDetail boardNo : 11
+	  log.info("talkDetail boardNo : {}", boardNo); //상세화면
+	  
+	  BoardVO boardVO = talkService.selectBoard(boardNo);
+	  
+	  log.info("talkDetail boardVO : {}", boardVO); //상세화면
+	  
+	  model.addAttribute("boardVO",boardVO); List<CommentVO> comments =
+	  commentService.getTalkComments(boardNo); model.addAttribute("comments",
+	  comments);
+	  
+	  return "community/talk"; }
+	 
 	/*
-	 * @GetMapping("/detail") public String talkDetail(@RequestParam int
-	 * boardNo,Model model) { //talkDetail boardNo : 11
-	 * log.info("talkDetail boardNo : {}", boardNo); //상세화면
+	 * @GetMapping("/detail") public String talkDetail(@RequestParam int boardNo,
+	 * Model model) {
 	 * 
-	 * BoardVO boardVO = talkService.selectBoard(boardNo);
+	 * BoardVO boardVO = talkService.selectTalk(boardNo); // 너희 상세 조회 로직
+	 * model.addAttribute("boardVO", boardVO);
 	 * 
-	 * BoardVO(boardNo=11, boardCtgryCd=free, writerNo=1, attachNo=0,
-	 * boardTitle=uuyuu, boardContent=uuuuu, viewCnt=4, likeCnt=0, noticeYn=N,
-	 * pinYn=N , delYn=N, delDt=null, regDt=Tue Jan 13 19:18:10 KST 2026,
-	 * modDt=null, regId=null, modId=null, boardTagList=null , boardFileList=[
-	 * BoardFileVO(item=null, fileNo=0, fileName=null, fileSize=0,
-	 * fileFancysize=null, fileSavepath=null, fileDowncount=0, attachNo=0 ,
-	 * fileSaveName=null, fileOriginalName=null, fileExt=null, filePath=null,
-	 * fileGbCd=null, mimeType=null, regId=0, regDt=2026-01-13 19:18:10, useYn=null)
-	 * ], boardFile=null, writerId=null, writerNickname=null)
+	 * // ✅ 댓글 목록 조회 List<CommentVO> commentList =
+	 * commentService.getTalkComments(boardNo); model.addAttribute("commentList",
+	 * commentList);
 	 * 
-	 * log.info("talkDetail boardVO : {}", boardVO); //상세화면
-	 * 
-	 * model.addAttribute("boardVO",boardVO); List<CommentVO> comments =
-	 * commentService.getTalkComments(boardNo); model.addAttribute("comments",
-	 * comments);
-	 * 
-	 * return "community/talk"; }
+	 * return "community/comment"; // 너희 JSP 경로 }
 	 */
-	@GetMapping("/detail")
-	public String talkDetail(@RequestParam int boardNo, Model model) {
-
-		BoardVO boardVO = talkService.selectTalk(boardNo); // 너희 상세 조회 로직
-		model.addAttribute("boardVO", boardVO);
-
-		// ✅ 댓글 목록 조회
-		List<CommentVO> commentList = commentService.getTalkComments(boardNo);
-		model.addAttribute("commentList", commentList);
-
-		return "community/comment"; // 너희 JSP 경로
-	}
 
 	// 글 작성폼 페이지 이동
 	@GetMapping("/write")

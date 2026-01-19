@@ -19,10 +19,10 @@ public class CommentVO {
 	    private String modDt;
 	    
 	    
-	    int commentNo;
-	    String commentContent;
-	    String writerNickname;
-	    
+	    private int commentNo;
+	    private String commentContent;
+	    private  String writerNickname;
+	    private String writerId;
 
 	    List<CommentVO> replyList; // 대댓글
 	    

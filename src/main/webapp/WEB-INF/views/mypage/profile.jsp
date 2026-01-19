@@ -13,7 +13,7 @@
     <div class="container">
         <div class="mypage-container no-sidebar">
             <!-- 메인 콘텐츠 -->
-            <div class="mypage-content full-width">
+            <div class="mypage-content-con full-width">
                 <div class="mypage-header">
                     <h1>회원 정보 수정</h1>
                     <p>개인정보를 안전하게 관리하세요</p>

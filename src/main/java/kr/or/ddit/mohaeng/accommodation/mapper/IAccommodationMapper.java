@@ -66,6 +66,7 @@ public interface IAccommodationMapper {
 	/**
 	 * 시설 정보 MERGE INTO 실행
 	 * @param facilityVO
+	 * 
 	 */
 	public void upsertAccFacility(AccFacilityVO facilityVO);
 

@@ -338,6 +338,8 @@
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">운영 시간 <span class="text-danger">*</span></label>
+<!--                             <input type="time" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required> -->
+							<!-- text를 time으로 변경해서 해볼지?? -->
                             <input type="text" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required>
                         </div>
                         <div class="col-md-4">
@@ -764,8 +766,8 @@
                     <div class="mb-3">
                         <label class="form-label">상품 이미지</label>
                         <!--  multipart, 선택한 이미지 보여주기. attachNo에 맞는게 대표이미지. 이거에 뭔가 걸어야겠다. -->
-                        <input type="file" class="form-control" name="productImage" accept="image/*" multiple="multiple"/>
-                        
+                        <input type="file" class="form-control" name="productImage" accept="image/*"  onchange="renderImageList(this)" multiple="multiple"/>
+                        <div class="productImageList"></div>
                         <div class="form-text">권장 크기: 800x600px, 최대 5MB</div>
                     </div>
                     </div><!-- /defaultPriceSection -->
@@ -805,7 +807,10 @@
 <!-- 상세 조회도 모달로? -->
 
 <c:set var="hasInlineScript" value="true" />
+<!-- 다음 주소 검색 -->
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <%@ include file="../common/footer.jsp" %>
+
 
 <script>
 let modal = null;	// 모달 객체
@@ -882,10 +887,11 @@ async function editProduct(prodData) {
         	bookingTimes = prodData.prodTimeList.map(time => time.rsvtAvailableTime);
         	renderBookingTimes();
         }
-        
-        if(prodData.imageList > 0 ){
+        if(prodData.imageList.length > 0 ){
         	console.log("사진 조회용 : ", prodData.imageList );
         	imageList = [...prodData.imageList];	// 여기서 꺼내서 쓰자
+	        console.log("prodData.imageList : ", prodData.imageList);
+        	console.log("imageList : ", imageList);
         	renderImageList();
         }
 		renderProductData(prodData);
@@ -900,28 +906,35 @@ async function editProduct(prodData) {
 // 수정할 상품 사진 modal에 세팅 - imageData는 선택시 썸네일 보여주려고
 function renderImageList(imageData = ""){
 	// imageList = 5개까지만 가능
-   	console.log("imageList : ", imageList);
-	
-	const imageContainer = document.getElementById('imageList');
+	console.log("imageData : ", imageData.value);
+	const imageContainer = document.querySelector(".productImageList");	// imageList = 숙박 전용
+	let html = ``;
+	if(imageList.length >= 5){
+		showToast("사진은 5개까지만 가능합니다!!", "error");
+		return;
+	}
 	
 	if(imageData !== "" && imageList.length < 5) imageList.push(imageData);
 	
-    if (imageList.length === 0) imageContainer.innerHTML = '';
-    else {
-        var html = imageList.map((image, index) => {
-        	console.log("")
-            return `<img src="\${pageContext.request.contextPath}/upload/product/\${image[0].filePath}" 
-                alt="\${image.tripProdTitle}" data-id="\${index}" id="mainImage">`
-        }).join('');
-        imageContainer.innerHTML = html;
-    }
+		
+// 	imageContainer.innerHTML = '';
+//     if (imageList.length === 0) {
+//     	html = `<div>사진이 없습니다</div>`; 
+//     	return imageContainer.innerHTML = html;
+//     }
+//     else {
+//         html = imageList.map((image, index) => {
+        	
+//             return `<img src="${pageContext.request.contextPath}/upload/product/\${image.filePath}" 
+//                 alt="\${image.tripProdTitle}" data-attachNo="\${image.attachNo}" id="image\${index}">`
+//         }).join('');
+//         imageContainer.innerHTML += html;
+//     }
     // hidden input에 JSON으로 저장
     console.log("JSON.stringify(imageList) : ", JSON.stringify(imageList));
 //     document.getElementById('bookingTimesInput').value = JSON.stringify(imageList);
 // 사진정보는 어떻게 hidden 에 넣어말어
 }
-	
-
 
 // 수정할 상품 정보 modal에 세팅
 function renderProductData(prodData, prefix = ""){
@@ -955,9 +968,7 @@ function renderProductData(prodData, prefix = ""){
 function saveProduct(data) {
     // TODO: 상품 저장 API 호출
     console.log("svae data : ", data.innerText);	// 이거에 따른 등록 수정 여부
-    if (typeof showToast === 'function') {
-        showToast('상품이 저장되었습니다.', 'success');
-    }
+	showToast('상품이 저장되었습니다.', 'success');
     // insert문 
     if (modal) modal.hide();
 }
@@ -972,12 +983,14 @@ function toggleProductStatus(prodData) {
         	approveStatus : status
         })
         .then(res => {
-        	if (res.data.ok) showToast('상품 상태가 변경되었습니다.', 'success');
+        	if (res.data.ok) {
+        		showToast('상품 상태가 변경되었습니다.', 'success');
+		        location.reload();
+        	}
         	else showToast('상품 상태가 변경되었습니다.', 'success');
         }).catch(err => {
-        	console.log("error 발생 : ", error);
+        	console.log("error 발생 : ", err);
         });
-        location.reload();
     }
 }
 
@@ -989,12 +1002,14 @@ function deleteProduct(prodData) {
         	tripProdNo : id
         })
         .then(res => {
-        	if (res.data.ok) showToast('상품이 삭제되었습니다.', 'success');
+        	if (res.data.ok) {
+        		showToast('상품이 삭제되었습니다.', 'success');
+		        location.reload();
+        	}
         	else showToast('상품이 삭제되지않았습니다.', 'error');
         }).catch(err => {
-        	console.log("error 발생 : ", error);
+        	console.log("error 발생 : ", err);
         });
-        location.reload();
     }
 }
 
@@ -1075,10 +1090,17 @@ function addPresetTimes(type) {
         'afternoon': ['13:00', '14:00', '15:00', '16:00'],
         'hourly': ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     };
-
+	
+    let runTime = document.querySelector("input[name='prodInfo.prodRuntime']");
+    console.log("runTime : ", runTime.value);
+    
+    
     var times = presets[type] || [];
     var addedCount = 0;
-
+	
+    times.filter(time => {
+    	
+    });
     times.forEach(time => {
         if (!bookingTimes.includes(time)) {
             bookingTimes.push(time);
@@ -1101,16 +1123,19 @@ function searchAddress() {
             var address = data.roadAddress || data.jibunAddress;
             document.getElementById('productAddress').value = address;
 
-            // 좌표 검색 (카카오 맵 API)
-            if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
-                var geocoder = new kakao.maps.services.Geocoder();
-                geocoder.addressSearch(address, function(result, status) {
-                    if (status === kakao.maps.services.Status.OK) {
-                        document.getElementById('productLatitude').value = result[0].y;
-                        document.getElementById('productLongitude').value = result[0].x;
-                    }
-                });
-            }
+            // 좌표 검색 (카카오 맵 API) - 이건 천천히
+//             if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
+//                 var geocoder = new kakao.maps.services.Geocoder();
+//                 geocoder.addressSearch(address, function(result, status) {
+//                     if (status === kakao.maps.services.Status.OK) {
+//                         document.getElementById('productLatitude').value = result[0].y;
+//                         document.getElementById('productLongitude').value = result[0].x;
+//                     }
+//                 });
+//             }
+            
+            
+            
         }
     }).open();
 }
@@ -1592,7 +1617,6 @@ function updateAddonDeleteButtons() {
 document.addEventListener('DOMContentLoaded', function() {
 	modal = new bootstrap.Modal(document.getElementById('productModal'));
 });
-
 </script>
 </body>
 </html>

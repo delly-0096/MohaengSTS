@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="kr.or.ddit.mohaeng.product.manage.mapper.IProductManageMapper">
+<mapper namespace="kr.or.ddit.mohaeng.business.mapper.IBusinessProductMapper">
 	
 	<!-- 본인 기업회원 투어 상품 나중에 숙박도 추가해야됨 -->
 	<select id="getProductlist" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">

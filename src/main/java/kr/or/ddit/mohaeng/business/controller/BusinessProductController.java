@@ -16,11 +16,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import kr.or.ddit.mohaeng.ServiceResult;
+import kr.or.ddit.mohaeng.business.service.IBusinessProductService;
 import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.login.service.IMemberService;
 import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
-import kr.or.ddit.mohaeng.product.manage.service.IProductManageService;
 import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
 import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
@@ -30,14 +30,12 @@ import kr.or.ddit.mohaeng.tour.service.ITripProdInfoService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdSaleService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdService;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
-import kr.or.ddit.mohaeng.tour.vo.SearchLogVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
-import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -73,7 +71,7 @@ public class BusinessProductController {
 	private IMemberService memberService;
 	
 	@Autowired
-	private IProductManageService manageService;
+	private IBusinessProductService businessService;
 	
 	/**
 	 * <p>기업 상품 관리 페이지</p>
@@ -91,8 +89,8 @@ public class BusinessProductController {
 		int memNo = customUser.getMember().getMemNo();
 		tripProd.setMemNo(memNo);	// memNo담기
 		 
-        List<TripProdVO> prodList = manageService.getProductlist(tripProd);	
-        TripProdVO prodAggregate = manageService.getProductAggregate(tripProd);
+        List<TripProdVO> prodList = businessService.getProductlist(tripProd);	
+        TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
         
         // 인기 키워드 조회
 //        List<SearchLogVO> keywords = searchLogService.getKeywords();
@@ -102,7 +100,7 @@ public class BusinessProductController {
         model.addAttribute("tripProd", tripProd);	// memNo담김
 //        model.addAttribute("keywords", keywords);
         
-		return "product/manage";
+		return "product/business";
 	}
 	
 	/**
@@ -116,7 +114,7 @@ public class BusinessProductController {
 	 */
 	@GetMapping("/business/product/tourDetail/{tripProdNo}")
 	public String productDetailPage(@PathVariable int tripProdNo, Model model, RedirectAttributes ra) {
-        TripProdVO tripProd = manageService.detailProduct(tripProdNo);
+        TripProdVO tripProd = businessService.detailProduct(tripProdNo);
         log.info("productDetailPage 집입 {}", tripProdNo);
         
         if (tripProd == null) {
@@ -178,7 +176,7 @@ public class BusinessProductController {
 	@PostMapping("/business/product/changeProductStatus")
 	public ResponseEntity<String> changeProductStatus(@RequestBody TripProdVO tripProd) {
 		log.info("updateProductStatus : {}", tripProd);
-		ServiceResult result = manageService.updateProductStatus(tripProd);
+		ServiceResult result = businessService.updateProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
@@ -197,7 +195,7 @@ public class BusinessProductController {
 	@PostMapping("/business/product/removeProduct")
 	public ResponseEntity<String> removeProduct(@RequestBody TripProdVO tripProd){
 		log.info("deleteProduct : {}", tripProd);
-		ServiceResult result = manageService.deleteProductStatus(tripProd);
+		ServiceResult result = businessService.deleteProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
@@ -213,7 +211,7 @@ public class BusinessProductController {
 		// modifyProduct(tripProd);
 		
 		
-		ServiceResult result = manageService.deleteProductStatus(tripProd);
+		ServiceResult result = businessService.deleteProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
@@ -234,10 +232,10 @@ public class BusinessProductController {
 	@PostMapping("/business/product/productDetail")
 	public TripProdVO productDetail(@RequestBody TripProdVO tripProd){
 		log.info("productDetail : {}", tripProd);
-		// manageService.detailProduct(tripProd);
+		// businessService.detailProduct(tripProd);
 		
 		// 정보 만든다 -- 1대1만 join해서 담기 상품, 상품 가격, 
-		TripProdVO product = manageService.retrieveProductDetail(tripProd);
+		TripProdVO product = businessService.retrieveProductDetail(tripProd);
 		
 		// 1 대 다는 여기다가
 		

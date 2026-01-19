@@ -4,6 +4,7 @@ import java.util.List;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
+import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
 
 public interface IBusinessProductService {
 	
@@ -28,20 +29,11 @@ public interface IBusinessProductService {
 	/**
 	 * <p>본인 상품 상세 조회</p>
 	 * @author sdg
-	 * @date 2026-01-17
-	 * @param tripProdNo
-	 * @return 해당 id의 상품
-	 */
-	public TripProdVO detailProduct(int tripProdNo);
-	
-	/**
-	 * <p>본인 상품 상세 조회</p>
-	 * @author sdg
 	 * @date 2026-01-18
-	 * @param tripProd 상품 id
+	 * @param businessProducts 상품 정보
 	 * @return 해당 상품의 정보
 	 */
-	public TripProdVO retrieveProductDetail(TripProdVO tripProd);
+	public BusinessProductsVO retrieveProductDetail(BusinessProductsVO businessProducts);
 	
 	/**
 	 * <p>상품 판매 상태 변경</p>

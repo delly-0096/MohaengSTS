@@ -7,6 +7,7 @@ import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
 import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
+import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import lombok.Data;
 
@@ -39,13 +40,18 @@ public class BusinessProductsVO {
     
     // 1대1
     private TripProdSaleVO prodSale;	// 상품 판매 정보
-	private TripProdInfoVO prodInfo;					// 상품 이용 안내	-- 예약 가능시간이랑 1대1
+	private TripProdInfoVO prodInfo;	// 상품 이용 안내	-- 예약 가능시간이랑 1대1
+	private TripProdPlaceVO prodPlace;	// 상품 상세 주소		
 	
+	private List<String> bookingTimes;					// jsp에서 받을 예약 가능 시간
 	private List<ProdTimeInfoVO> prodTimeList;			// 예약 가능 시간
 	
 	private List<ProdReviewVO> prodReviewList;			// 상품 리부 내역
 	private List<TripProdInquiryVO> prodInquiryList;	// 상품 문의 내역
     
+	private List<AttachFileDetailVO> imageList;			// 전체 사진 가져오기
+	
+	
 	// 1:1
 	// 숙소 객체
 	// 숙소 보유시설

@@ -35,6 +35,7 @@ import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
+import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -95,12 +96,31 @@ public class BusinessProductController {
         // 인기 키워드 조회
 //        List<SearchLogVO> keywords = searchLogService.getKeywords();
         
-        model.addAttribute("prodList", prodList);
+        model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
         model.addAttribute("prodAggregate", prodAggregate);
         model.addAttribute("tripProd", tripProd);	// memNo담김
 //        model.addAttribute("keywords", keywords);
         
 		return "product/business";
+	}
+	
+	/**
+	 * <p>투어상품 상세 조회</p>
+	 * @author sdg
+	 * @date 2026-01-18
+	 * @param tripProdNo	 상품 번호
+	 * @param model			
+	 * @param ra
+	 * @return 상품 상세 정보
+	 */
+	@ResponseBody
+	@PostMapping("/business/product/productDetail")
+	public BusinessProductsVO productDetail(@RequestBody BusinessProductsVO businessProducts){
+		log.info("productDetail : {}", businessProducts);
+		
+		BusinessProductsVO product = businessService.retrieveProductDetail(businessProducts);
+		log.info("product : {}", product);
+		return product;
 	}
 	
 	/**
@@ -114,7 +134,7 @@ public class BusinessProductController {
 	 */
 	@GetMapping("/business/product/tourDetail/{tripProdNo}")
 	public String productDetailPage(@PathVariable int tripProdNo, Model model, RedirectAttributes ra) {
-        TripProdVO tripProd = businessService.detailProduct(tripProdNo);
+        TripProdVO tripProd = null;
         log.info("productDetailPage 집입 {}", tripProdNo);
         
         if (tripProd == null) {
@@ -203,43 +223,26 @@ public class BusinessProductController {
 		}
 	}
 	
-	// 그냥 위에꺼 쓸지 고민
+	/**
+	 * <p>투어상품 상세 수정</p>
+	 * @author sdg
+	 * @date 2026-01-18
+	 * @param tripProd 수정한 상품 정보
+	 * @return 성공 여부
+	 */
 	@ResponseBody
 	@PostMapping("/business/product/editProduct")
 	public ResponseEntity<String> editProduct(@RequestBody TripProdVO tripProd){
 		log.info("editProduct : {}", tripProd);
 		// modifyProduct(tripProd);
 		
-		
-		ServiceResult result = businessService.deleteProductStatus(tripProd);
+		// businessService.deleteProductStatus(tripProd);
+		ServiceResult result = null;
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
 			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 		}
-	}
-	
-	/**
-	 * <p>투어상품 상세 조회</p>
-	 * @author sdg
-	 * @date 2026-01-18
-	 * @param tripProdNo	 상품 번호
-	 * @param model			
-	 * @param ra
-	 * @return 상품 상세 정보
-	 */
-	@ResponseBody
-	@PostMapping("/business/product/productDetail")
-	public TripProdVO productDetail(@RequestBody TripProdVO tripProd){
-		log.info("productDetail : {}", tripProd);
-		// businessService.detailProduct(tripProd);
-		
-		// 정보 만든다 -- 1대1만 join해서 담기 상품, 상품 가격, 
-		TripProdVO product = businessService.retrieveProductDetail(tripProd);
-		
-		// 1 대 다는 여기다가
-		
-		return product;
 	}
 	
 }

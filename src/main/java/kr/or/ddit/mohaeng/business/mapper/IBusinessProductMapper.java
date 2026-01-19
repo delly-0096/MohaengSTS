@@ -4,7 +4,10 @@ import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
+import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
+import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
 
 @Mapper
 public interface IBusinessProductMapper {
@@ -30,20 +33,29 @@ public interface IBusinessProductMapper {
 	/**
 	 * <p>본인 판매 상품 목록 상세</p>
 	 * @author sdg
-	 * @date 2026-01-17
-	 * @param tripProd
-	 * @return 본인 상품
+	 * @date 2026-01-18
+	 * @param businessProducts 상품 일련번호
+	 * @return 상품 정보, 상품 이용안내, 상품 가격, 상품 관광지
 	 */
-	public TripProdVO detailProduct(int tripProdNo);
+	public BusinessProductsVO retrieveProductDetail(BusinessProductsVO businessProducts);
 	
 	/**
 	 * <p>본인 판매 상품 목록 상세</p>
 	 * @author sdg
-	 * @date 2026-01-18
-	 * @param tripProd
-	 * @return 본인 상품
+	 * @date 2026-01-19
+	 * @param businessProducts 상품 일련번호
+	 * @return 상품 예약 가능 시간
 	 */
-	public TripProdVO retrieveProductDetail(TripProdVO tripProd);
+	public List<ProdTimeInfoVO> retrieveProdTimeList(BusinessProductsVO businessProducts);
+	
+	/**
+	 * <p>본인 판매 상품 사진 목록</p>
+	 * @author sdg
+	 * @date 2026-01-19
+	 * @param tripProd 대표이미지 
+	 * @return 상품 사진 목록
+	 */
+	public List<AttachFileDetailVO> retrieveProdImages(BusinessProductsVO businessProducts);
 
 	
 	/**

@@ -72,6 +72,7 @@
                     <option value="ticket">입장권/티켓</option>
                     <option value="class">클래스/체험</option>
                     <option value="transfer">교통/이동</option>
+                    <option value="accommodation">숙박</option>
                 </select>
                 <select class="form-select" id="statusFilter">
                     <option value="all">전체 상태</option>
@@ -253,12 +254,14 @@
                                 <option value="activity">액티비티</option>
                                 <option value="ticket">입장권/티켓</option>
                                 <option value="class">클래스/체험</option>
+                                <option value="transfer">교통/이동</option>
                                 <option value="accommodation">숙박</option>
                             </select>
                         </div>
                         <div class="col-md-4" id="regionField">
                             <label class="form-label">지역 <span class="text-danger">*</span></label>
                             <select class="form-select" name="ctyNm">
+                            	<!-- 일단 나중에 상의 -->
                                 <option value="">선택하세요</option>
                                 <optgroup label="수도권">
                                     <option value="seoul">서울</option>
@@ -293,12 +296,12 @@
                         </div>
                         <div class="col-md-4" id="durationField">
                             <label class="form-label">소요시간 <span class="text-danger">*</span></label>
-                            <select class="form-select" name="prodDuration">
+                            <select class="form-select" name="leadTime">
                                 <option value="">선택하세요</option>
                                 <option value="1">1시간 이내</option>
                                 <option value="3">1~3시간</option>
                                 <option value="6">3~6시간</option>
-                                <option value="day">하루 이상</option>
+                                <option value="24">하루 이상</option>
                             </select>
                         </div>
                     </div>
@@ -868,7 +871,7 @@ async function editProduct(prodData) {
 	
 	// 정보를 불러와야지
 	try {
-        const response = await axios.post(`/product/manage/productDetail`, {
+        const response = await axios.post(`/business/product/productDetail`, {
         	tripProdNo: id
         });
         
@@ -931,7 +934,7 @@ function toggleProductStatus(prodData) {
 	const { id, status } = prodData.dataset;
 	
     if (confirm('상품 상태를 변경하시겠습니까?')) {
-        axios.post(`/product/manage/changeProductStatus`, {
+        axios.post(`/business/product/changeProductStatus`, {
         	tripProdNo : id,
         	approveStatus : status
         })
@@ -949,7 +952,7 @@ function toggleProductStatus(prodData) {
 function deleteProduct(prodData) {
 	const { id } = prodData.dataset;
     if (confirm('정말 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.')) {
-        axios.post(`/product/manage/removeProduct`, {
+        axios.post(`/business/product/removeProduct`, {
         	tripProdNo : id
         })
         .then(res => {

@@ -14,7 +14,7 @@ import lombok.Data;
  * 기업용 상품 vo 클래스
  */
 @Data
-public class CompProdVO {
+public class BusinessProductsVO {
 	
 	private int tripProdNo;          // 여행상품일련키 (PK)
     private int compNo;              // 회사키
@@ -37,13 +37,12 @@ public class CompProdVO {
     private Date delDt;              // 삭제일자
     private String ctyNm;            // 지역
     
+    // 1대1
     private TripProdSaleVO prodSale;	// 상품 판매 정보
-    
 	private TripProdInfoVO prodInfo;					// 상품 이용 안내	-- 예약 가능시간이랑 1대1
 	
+	private List<ProdTimeInfoVO> prodTimeList;			// 예약 가능 시간
 	
-	
-	private List<ProdTimeInfoVO> prodTimeList;			// 예약 가능 시간 
 	private List<ProdReviewVO> prodReviewList;			// 상품 리부 내역
 	private List<TripProdInquiryVO> prodInquiryList;	// 상품 문의 내역
     

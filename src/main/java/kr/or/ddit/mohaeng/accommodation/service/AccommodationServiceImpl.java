@@ -18,11 +18,6 @@ public class AccommodationServiceImpl implements IAccommodationService{
 	@Autowired
 	private IAccommodationMapper accMapper;
 
-	@Override
-	public List<AccommodationVO> selectAccommodationList(String areaCode) {
-		return accMapper.selectAccommodationList();
-	}
-
 	/**
 	 *	<p> 숙소 정보 가져오기 </p>
 	 *	@date 2026.01.18

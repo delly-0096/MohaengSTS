@@ -61,5 +61,10 @@ public class RoomTypeVO {
 	private int accNo;
 	
 	
-	private List<RoomFeatureVO> feature;
+	private RoomFeatureVO feature;
+    private RoomFacilityVO facility;
+    
+    private int maxDiscount;
+    private int minPrice;    // 최저가
+    private int finalPrice;  // 할인 적용가
 }

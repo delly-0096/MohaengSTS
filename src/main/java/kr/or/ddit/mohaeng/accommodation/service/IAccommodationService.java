@@ -10,8 +10,6 @@ import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 
 public interface IAccommodationService {
 
-	// DB에서 데이터 리스트 가져오기
-	public List<AccommodationVO> selectAccommodationList(String areaCode);
 
 	// 상세 페이지 불러오기
 	public AccommodationVO getAccommodationDetail(int accNo);

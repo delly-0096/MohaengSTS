@@ -80,6 +80,7 @@ public class AccommodationVO {
      */
     private String ldongSignguCd; 
     
+    private AccFacilityVO accFacility;
     private List<RoomTypeVO> roomList;
     
     // ACC_FACILITY

@@ -70,8 +70,6 @@ public class AccommodationController {
 		List<AccommodationVO> list = accService.selectAccommodationListWithPaging(acc);
 		int totalCount = accService.selectTotalCount(acc);
 	    
-		log.info("필터링된 진짜 숙소 개수: {}", totalCount);
-	    log.info("넘어온 키워드: {}, 지역코드: {}", keyword, areaCode);
 	    model.addAttribute("accList", list);
 	    model.addAttribute("totalCount", totalCount);
 	    model.addAttribute("keyword", keyword);
@@ -143,14 +141,14 @@ public class AccommodationController {
 	 */
 	@GetMapping("/product/accommodation/{accNo}")
 	public String accommodationDetail(
-			@PathVariable("accNo") int accNo,
+			@PathVariable("accNo") Integer accNo,
 			@AuthenticationPrincipal  CustomUserDetails user,
 			Model model) {
 				
 		// 숙소 상세 정보
 		AccommodationVO detail = accService.getAccommodationDetail(accNo);
 		// 숙소 객실 타입 정보
-		List<RoomTypeVO> rooms = accService.getRoomList(accNo);
+		List<RoomTypeVO> roomList = accService.getRoomList(accNo);
 		// 숙소 보유시설 정보
 		AccFacilityVO facility = accService.getAccFacility(accNo);
 		
@@ -159,7 +157,7 @@ public class AccommodationController {
         CompanyVO seller = accService.getSellerStatsByAccNo(detail.getCompNo());
 		
 		model.addAttribute("acc", detail);
-		model.addAttribute("rooms", rooms);
+		model.addAttribute("roomList", roomList);
 	    model.addAttribute("facility", facility);
         model.addAttribute("seller", seller);
 		

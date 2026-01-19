@@ -1,5 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 
 <c:set var="pageTitle" value="숙박 결제" />
 <c:set var="pageCss" value="product" />
@@ -1203,5 +1206,30 @@ document.getElementById('accommodationBookingForm').addEventListener('submit', f
     }, 1500);
 });
 </script>
+<sec:authorize access="isAuthenticated()">
+    <%-- principal 객체 자체를 꺼내서 'user' 변수에 담기 --%>
+    <sec:authentication property="principal" var="user" />
+    
+    <script>
+        initDetail({
+        	contextPath: '${pageContext.request.contextPath}',
+            accNo: '${acc.accNo}',
+            accName: '${acc.accName}',
+            isLoggedIn: ${isLoggedIn},
+            isBusiness: ${isBusiness}
+        });
 
+// 문의 모달 열기 함수 (JSP에 있는 데이터 사용 시 편리)
+function openEditInquiryModal(id, ctgry, content, secret) {
+    document.getElementById('editInquiryId').value = id;
+    document.getElementById('editInquiryType').value = ctgry;
+    document.getElementById('editInquiryContent').value = content;
+    document.getElementById('editInquirySecret').checked = (secret === 'Y');
+    
+    const modal = new bootstrap.Modal(document.getElementById('editInquiryModal'));
+    modal.show();
+}
+
+</script>
+</sec:authorize>
 <%@ include file="../common/footer.jsp" %>

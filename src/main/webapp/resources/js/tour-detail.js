@@ -389,7 +389,7 @@ function checkout() {
     sessionStorage.setItem('tourCartCheckout', JSON.stringify(cart));
 
     // 결제 페이지로 이동
-    window.location.href = CONTEXT_PATH + '/booking/tour/checkout';
+    window.location.href = CONTEXT_PATH + '/tour/payment?type=cart';
 }
 
 // ESC 키로 장바구니 닫기

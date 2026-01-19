@@ -176,75 +176,8 @@
                     <a href="${pageContext.request.contextPath}/member/register" class="btn btn-primary btn-sm">회원가입</a>
                 </div>
             </sec:authorize>
-
-
-        <div class="side-menu-body">
-            <!-- 일정 계획 (기업회원은 표시하지 않음) -->
-                <div class="side-menu-section">
-                	<sec:authorize access="!isAuthenticated() or hasRole('MEMBER')">
-                    <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
-                        <span><i class="bi bi-calendar3 me-2"></i>일정 계획</span>
-                        <i class="bi bi-chevron-down"></i>
-                    </div>
-                    <div class="side-menu-section-content">
-                        <a href="${pageContext.request.contextPath}/schedule/search" class="side-menu-item">
-                            <i class="bi bi-calendar-plus me-2"></i>일정 계획
-                        </a>
-	            <sec:authorize access="hasRole('MEMBER')">
-                            <a href="${pageContext.request.contextPath}/schedule/my" class="side-menu-item">
-                                <i class="bi bi-calendar-check me-2"></i>내 일정
-                            </a>
-                            <a href="${pageContext.request.contextPath}/schedule/bookmark" class="side-menu-item">
-                                <i class="bi bi-bookmark me-2"></i>내 북마크
-                            </a>
-                        </sec:authorize>
-                    </div>
-                    </sec:authorize>
-                </div>
-
-
-            <!-- 관광 상품 -->
-            <div class="side-menu-section">
-                <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
-                    <span><i class="bi bi-bag me-2"></i>관광 상품</span>
-                    <i class="bi bi-chevron-down"></i>
-                </div>
-                <div class="side-menu-section-content">
-                    <sec:authorize access="hasRole('BUSINESS')">
-                        <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item">
-                            <i class="bi bi-gear me-2"></i>상품 관리
-                        </a>
-                    </sec:authorize>
-                    <a href="${pageContext.request.contextPath}/product/flight" class="side-menu-item">
-                        <i class="bi bi-airplane me-2"></i>항공
-                    </a>
-                    <a href="${pageContext.request.contextPath}/product/accommodation" class="side-menu-item">
-                        <i class="bi bi-building me-2"></i>숙박
-                    </a>
-                    <a href="${pageContext.request.contextPath}/tour" class="side-menu-item">
-                        <i class="bi bi-ticket-perforated me-2"></i>투어/체험/티켓
-                    </a>
-                </div>
-            </div>
-
-            <!-- 커뮤니티 -->
-            <div class="side-menu-section">
-                <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
-                    <span><i class="bi bi-people me-2"></i>커뮤니티</span>
-                    <i class="bi bi-chevron-down"></i>
-                </div>
-                <div class="side-menu-section-content">
-                     <sec:authorize access="hasRole('MEMBER')">
-                        <a href="${pageContext.request.contextPath}/community/talk" class="side-menu-item">
-                            <i class="bi bi-chat-dots me-2"></i>여행톡
-                        </a>
-                    </sec:authorize>
-                    <a href="${pageContext.request.contextPath}/community/travel-log" class="side-menu-item">
-                        <i class="bi bi-journal-richtext me-2"></i>여행기록
-                    </a>
-                </div>
-            </div>
-
+            
+            <div class="side-menu-body">
             <!-- 마이페이지 (로그인 회원만) -->
             <sec:authorize access="isAuthenticated()">
                 <div class="side-menu-section">
@@ -302,6 +235,73 @@
                     </div>
                 </div>
             </sec:authorize>
+            
+            <!-- 관광 상품 -->
+            <div class="side-menu-section">
+                <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
+                    <span><i class="bi bi-bag me-2"></i>관광 상품</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="side-menu-section-content">
+                    <sec:authorize access="hasRole('BUSINESS')">
+                        <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item">
+                            <i class="bi bi-gear me-2"></i>상품 관리
+                        </a>
+                    </sec:authorize>
+                    <a href="${pageContext.request.contextPath}/product/flight" class="side-menu-item">
+                        <i class="bi bi-airplane me-2"></i>항공
+                    </a>
+                    <a href="${pageContext.request.contextPath}/product/accommodation" class="side-menu-item">
+                        <i class="bi bi-building me-2"></i>숙박
+                    </a>
+                    <a href="${pageContext.request.contextPath}/tour" class="side-menu-item">
+                        <i class="bi bi-ticket-perforated me-2"></i>투어/체험/티켓
+                    </a>
+                </div>
+            </div>
+
+        
+            <!-- 일정 계획 (기업회원은 표시하지 않음) -->
+                <div class="side-menu-section">
+                	<sec:authorize access="!isAuthenticated() or hasRole('MEMBER')">
+                    <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
+                        <span><i class="bi bi-calendar3 me-2"></i>일정 계획</span>
+                        <i class="bi bi-chevron-down"></i>
+                    </div>
+                    <div class="side-menu-section-content">
+                        <a href="${pageContext.request.contextPath}/schedule/search" class="side-menu-item">
+                            <i class="bi bi-calendar-plus me-2"></i>일정 계획
+                        </a>
+	            <sec:authorize access="hasRole('MEMBER')">
+                            <a href="${pageContext.request.contextPath}/schedule/my" class="side-menu-item">
+                                <i class="bi bi-calendar-check me-2"></i>내 일정
+                            </a>
+                            <a href="${pageContext.request.contextPath}/schedule/bookmark" class="side-menu-item">
+                                <i class="bi bi-bookmark me-2"></i>내 북마크
+                            </a>
+                        </sec:authorize>
+                    </div>
+                    </sec:authorize>
+                </div>
+
+            <!-- 커뮤니티 -->
+            <div class="side-menu-section">
+                <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
+                    <span><i class="bi bi-people me-2"></i>커뮤니티</span>
+                    <i class="bi bi-chevron-down"></i>
+                </div>
+                <div class="side-menu-section-content">
+                     <sec:authorize access="hasRole('MEMBER')">
+                        <a href="${pageContext.request.contextPath}/community/talk" class="side-menu-item">
+                            <i class="bi bi-chat-dots me-2"></i>여행톡
+                        </a>
+                    </sec:authorize>
+                    <a href="${pageContext.request.contextPath}/community/travel-log" class="side-menu-item">
+                        <i class="bi bi-journal-richtext me-2"></i>여행기록
+                    </a>
+                </div>
+            </div>
+
 
             <!-- 고객지원 -->
             <div class="side-menu-section">

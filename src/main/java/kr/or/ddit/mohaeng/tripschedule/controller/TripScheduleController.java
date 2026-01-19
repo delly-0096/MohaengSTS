@@ -35,6 +35,8 @@ import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Controller
@@ -109,21 +111,30 @@ public class TripScheduleController {
 	
 	@GetMapping("/view/{schdlNo}")
 	public String plannerView(
-			@AuthenticationPrincipal CustomUserDetails customUser,
-			@PathVariable int schdlNo,
-			Model model
-			) {
-		int memNo = customUser.getMember().getMemNo();
-		TripScheduleVO params = new TripScheduleVO();
-		params.setSchdlNo(schdlNo);
-		params.setMemNo(memNo);
-		TripScheduleVO schedule = tripScheduleService.selectTripSchedule(params);
-		
-		System.out.println("schedule :" + schedule);
-		
-		model.addAttribute("schedule", schedule);
-		
-		return "schedule/view";
+	        @AuthenticationPrincipal CustomUserDetails customUser,
+	        @PathVariable int schdlNo,
+	        Model model
+	) throws Exception {
+	    int memNo = customUser.getMember().getMemNo();
+
+	    TripScheduleVO params = new TripScheduleVO();
+	    params.setSchdlNo(schdlNo);
+	    params.setMemNo(memNo);
+
+	    TripScheduleVO schedule = tripScheduleService.selectTripSchedule(params);
+	    
+	    System.out.println("schedule :" + schedule);
+	    
+	    model.addAttribute("schedule", schedule);
+
+	    //일정 전체(일차/장소 포함) JSON을 함께 내려준다
+	    ObjectMapper om = new ObjectMapper();
+
+	    String scheduleJson = om.writeValueAsString(schedule);
+	    String scheduleJsonB64 = Base64.getEncoder().encodeToString(scheduleJson.getBytes(StandardCharsets.UTF_8));
+	    model.addAttribute("scheduleJsonB64", scheduleJsonB64);
+
+	    return "schedule/view";
 	}
 	
 	@ResponseBody

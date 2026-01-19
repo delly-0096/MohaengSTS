@@ -105,6 +105,9 @@ public interface ITripRecordMapper {
         @Param("attachNo") Long attachNo,
         @Param("desc") String desc
     );
+    
+    void upsertHashtagText(@org.apache.ibatis.annotations.Param("rcdNo") long rcdNo,
+            @org.apache.ibatis.annotations.Param("tagText") String tagText);
 
     List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO> selectTripRecordBlocks(@Param("rcdNo") long rcdNo);
 

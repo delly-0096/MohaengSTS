@@ -34,4 +34,7 @@ public class PaymentVO {
 	private String paymentType;	// 결제 타입
 	private long amount; 		// 가격
 	private String orderId;		// 주문 - 결제키로 사용됨
+	
+	private List<TripProdListVO> tripProdList;	// 투어 상품 목록
+	private String mktAgreeYn;					// 마케팅 동의
 }

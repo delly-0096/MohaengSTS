@@ -63,4 +63,9 @@ public interface ITripScheduleMapper {
 
 	public List<TourPlaceVO> selectPopularPlaceList(List<Map<String, String>> tourPlaceList);
 
+	public List<TourPlaceVO> searchTourPlaceList(int rgnNo);
+	
+	public List<Params> selectTripStyleList(String[] tripStyleCatList);
+
+	public List<TourPlaceVO> selectTargetPlaceList();
 }

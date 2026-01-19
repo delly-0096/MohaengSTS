@@ -105,6 +105,7 @@
 		<result property="regDt" column="REG_DT" />
 	</resultMap>
     
+    <!-- with로 바꾸기 -->
     <sql id="tripScheduleColumns">
     	 	  TS.SCHDL_NO
 		    , TS.MEM_NO
@@ -597,6 +598,74 @@
 		   AND PLC_NO IN
 		<foreach item="tourPlace" collection="tourPlaceList" open="(" separator="," close=")">
 			#{tourPlace.contentid}
+		</foreach>
+	</select>
+	
+	<select id="searchTourPlaceList" parameterType="int" resultMap="tourPlaceResultMap">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+		  FROM TOUR_PLACE TP
+		 WHERE RGN_NO = #{rgnNo}
+		   AND PLC_DESC != null
+		   AND (SELECT COUNT(*) FROM TOUR_PLACE_KEYWORD K WHERE TP.PLC_NO = K.PLC_NO) > 0
+	</select>
+	
+	<select id="selectTargetPlaceList" resultMap="tourPlaceResultMap">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+		  FROM TOUR_PLACE TP
+		 WHERE PLC_DESC IS NULL
+	</select>
+	
+	<select id="selectTripStyleList" resultType="kr.or.ddit.util.Params">
+		SELECT C2.CD_NAME AS STYLE_CAT
+		     , TSTY.STYLE_CAT_CD
+		     , C1.CD_NAME AS STYLE
+		     , TSTY.STYLE_CD
+		  FROM TRIP_STYLE TSTY
+		 INNER JOIN CODE C1
+			ON TSTY.STYLE_CD = C1.CD
+		 INNER JOIN CODE C2
+			ON TSTY.STYLE_CAT_CD = C2.CD
+		 WHERE STYLE_CAT_CD IN
+		<foreach item="tripStyleCat" collection="tripStyleCatList" open="(" separator="," close=")">
+			#{tripStyleCat}
 		</foreach>
 	</select>
 </mapper>

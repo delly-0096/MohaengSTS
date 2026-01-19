@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,9 +29,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
-import kr.or.ddit.mohaeng.community.travellog.comments.service.CommentsServiceImpl;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.tripschedule.enums.RegionCode;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
+import kr.or.ddit.mohaeng.util.CommUtil;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
@@ -42,15 +45,18 @@ import java.nio.charset.StandardCharsets;
 @Controller
 @RequestMapping("/schedule")
 public class TripScheduleController {
-
-    private final CommentsServiceImpl commentsServiceImpl;
+    
+	private final ChatClient chatClient;
 	
 	@Autowired
 	ITripScheduleService tripScheduleService;
 
-    TripScheduleController(CommentsServiceImpl commentsServiceImpl) {
-        this.commentsServiceImpl = commentsServiceImpl;
+    TripScheduleController(ChatClient.Builder builder) {
+        this.chatClient = builder.build();
     }
+    
+	public record Recommendation(String title, String description, String reason) {
+	}
 	
 	@GetMapping("/search")
 	public String search(Model model) {
@@ -106,7 +112,7 @@ public class TripScheduleController {
 		model.addAttribute("schedule", schedule);
 		model.addAttribute("tourContentList", tourContentList);
 		
-		return "schedule/planner_edit";
+		return "schedule/planner-edit";
 	}
 	
 	@GetMapping("/view/{schdlNo}")
@@ -390,4 +396,92 @@ public class TripScheduleController {
 		return ResponseEntity.ok(1);
 	}
 	
+	@PostMapping("/rcmd-result")
+	public String mySchedule(String preferenceData, Model model) {
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+	    try {
+	    	// 1. String으로 받은 JSON을 Map으로 변환
+//	        Map<String, Object> preferenceMap = objectMapper.readValue(preferenceData, new TypeReference<Map<String, Object>>(){});
+	        JsonNode preferenceNode = objectMapper.readTree(preferenceData);
+	        
+	        System.out.println("preferenceNode : " + preferenceNode.toPrettyString());
+	        
+	        String dateItem = preferenceNode.get("travelDates").asText();
+	        
+	        String dates[] = dateItem.split(" ~ ");
+	        
+	        String tripStyleCatList[] = objectMapper.convertValue(
+	        		preferenceNode.get("tripStyleCatList"), 
+	        	    new TypeReference<String[]>() {}
+	        	);
+	        
+	        List<Params> tripStyleList = tripScheduleService.selectTripStyleList(tripStyleCatList);
+	        System.out.println("tripStyleList : " + tripStyleList);
+	        
+	        int duration = CommUtil.calculateDaysBetween(dates[0], dates[1]);
+	        System.out.println("duration : "+duration);
+	        
+	        // 2. 비즈니스 로직 처리 (예: 서비스 호출)
+	        // service.getRecommendation(preferenceData);
+	        
+	        // 3. 모델에 담아 JSP 등으로 전달
+	        model.addAttribute("data", preferenceData);
+	        
+	        int destinationcode = Integer.parseInt(preferenceNode.get("destinationcode").asText());
+	        
+			// 1. DB에서 데이터 조회 (MyBatis)
+	        List<TourPlaceVO> dbList = tripScheduleService.searchTourPlaceList(destinationcode);
+	        
+	        // 2. 조회한 데이터를 문자열로 변환 (AI에게 먹여줄 '참고자료')
+	        String dbContext = dbList.toString();
+	        
+	        String region = RegionCode.getNameByNo(destinationcode);
+	        
+	        // 3. 프롬프트 작성 (RAG 패턴)
+	        String message = String.format("""
+	            사용자가 '%s' 여행지를 찾고 있어.
+	            
+	            [참고할 여행 키워드 분류항목 테이블 데이터]
+	            %s
+	            
+	            [참고할 관광지 DB 데이터]
+	            %s
+	            
+	            위 [참고 데이터]를 바탕으로 여행지별로 색인붙여줘.
+	            데이터에 정보가 부족하면 너의 지식을 섞어서 보충해.
+	            결과는 PLC_NO 기준으로 해당 관광지 styleCd 값들을 배열형태로 배치해하여 JSON으로 줘.
+	            예시형태 rgnNo : 100, styles : [WATER_SPORTS, HIKING] 
+	            """, region, tripStyleList, dbContext);
+
+//	        // 3. 프롬프트 작성 (RAG 패턴)
+//	        String message = String.format("""
+//	            사용자가 '%s' 여행지를 찾고 있어.
+//	            
+//	            [참고할 여행 키워드 분류항목 테이블 데이터]
+//	            %s
+//	            
+//	            [참고할 우리 DB 데이터]
+//	            %s
+//	            
+//	            위 [참고 데이터]를 바탕으로 추천 장소 3곳을 선정해줘.
+//	            데이터에 정보가 부족하면 너의 지식을 섞어서 보충해.
+//	            결과는 제목, 설명, 추천 이유 필드를 가진 JSON으로 줘.
+//	            """, "서울", dbContext);
+//	        
+	        // 4. AI 호출
+	        List<Map<String, Object>> result = chatClient.prompt()
+	                .user(message)
+	                .call()
+	                .entity(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+//	        
+	        System.out.println("result : " + result);
+	        
+	    } catch (Exception e) {
+	        e.printStackTrace();
+//	        return "error-page";
+	    }
+		
+		return "schedule/rcmd-result";
+	}
 }

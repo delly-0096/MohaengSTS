@@ -86,6 +86,7 @@ public class SecurityConfig {
 			"/tour",
 			"/tour/**",
 			"/schedule/search",
+			"/schedule/rcmd-result",
 			"/schedule/planner",
 			"/schedule/common/**",
 			"/product/accmmodation",

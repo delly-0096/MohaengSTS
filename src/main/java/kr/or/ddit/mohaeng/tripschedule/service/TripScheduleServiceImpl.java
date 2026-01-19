@@ -6,7 +6,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -24,6 +26,12 @@ import kr.or.ddit.util.Params;
 
 @Service
 public class TripScheduleServiceImpl implements ITripScheduleService {
+	
+	private final ChatClient chatClient;
+	
+	public TripScheduleServiceImpl(ChatClient.Builder builder) {
+		this.chatClient = builder.build();
+	}
 	
 	@Autowired
 	ITripScheduleMapper iTripScheduleMapper;
@@ -353,10 +361,44 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		
 		String plcDesc = detailItemNode.get("overview")+"";
 		String plcNm = detailItemNode.get("title")+"";
-		String operationHours = introItemNode.get(params.getString("operationhours"))+"";
-		String plcPrice = introItemNode.get(params.getString("plcprice"))+"";
 		String defaultImg = detailItemNode.get("firstimage")+"";
 		String plcAddr1 = detailItemNode.get("addr1")+"";
+		
+		String operationHours = null;
+		String plcPrice = null;
+		
+		if(!detailNode.path("response").path("body").path("totalCount").equals("0")) {
+			operationHours = introItemNode.get(params.getString("operationhours"))+"";
+			plcPrice = introItemNode.get(params.getString("plcprice"))+"";
+		} else {
+	        String message = String.format("""
+		            관광지 정보를 찾고 있어.
+		            [관광지키]
+		            %s
+		            
+		            [관광지이름]
+		            %s
+		            
+		            [관광지 소개]
+		            %s
+		            
+		            내가 필요한 [관광지이름]과 [관광지 소개]정보야
+		            해당 관광지의 운영시간과 비용에대한 정보를 알고싶어.
+		            [관광지키]는 한국관광관련 TourApi에서 사용하는 key값이야
+		            배열형태로 배치해하여 0번째 인덱스는 운영시간, 1번째 인덱스는 비용에 대한 정보를 JSON으로 줘.
+		            검색하여 정보를 찾는 행위허용
+		            예시형태 [운영시간, 비용] 
+		            """, contentId,plcNm, plcDesc);
+	        
+	        String[] result = chatClient.prompt()
+	                .user(message)
+	                .call()
+	                .entity(new ParameterizedTypeReference<String[]>() {});
+	        System.out.println("result:  " + result);
+	        
+	        operationHours = result[0];
+	        plcPrice = result[1];
+		}
 		
 		TourPlaceVO tourPlaceVO = new TourPlaceVO();
 		tourPlaceVO.setPlcNo(contentId);
@@ -506,12 +548,52 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		//어떤 키값에 비용과 이용시간 정보가 있는건지 체킹 후 params 에 넣음
 		contentIdCheck(params);
 		
-		System.out.println("		JsonNode detailItemNode : "+ detailItemNode);
-		
 		String plcDesc = detailItemNode.get("overview")+"";
 		String plcNm = detailItemNode.get("title")+"";
-		String operationHours = introItemNode.get(params.getString("operationhours"))+"";
-		String plcPrice = introItemNode.get(params.getString("plcprice"))+"";
+		
+//		if(params.get("operationhours") != null && introItemNode.get(params.getString("operationhours")) != null) {
+//			operationHours = introItemNode.get(params.getString("operationhours"))+"";
+//		}
+		
+		String operationHours = null;
+		String plcPrice = null;
+		
+		if(introItemNode != null) {
+			System.out.println("detailNode.path(\"response\").path(\"body\").path(\"totalCount\").equals(\"0\") : " + detailNode.path("response").path("body").path("totalCount").equals("0"));
+			operationHours = introItemNode.get(params.getString("operationhours"))+"";
+			plcPrice = introItemNode.get(params.getString("plcprice"))+"";
+		} else {
+//	        String message = String.format("""
+//		            관광지 정보를 찾고 있어.
+//		            [관광지키]
+//		            %s
+//		            
+//		            [관광지이름]
+//		            %s
+//		            
+//		            [관광지 소개]
+//		            %s
+//		            
+//		            내가 필요한 [관광지이름]과 [관광지 소개]정보야
+//		            해당 관광지의 운영시간과 비용에대한 정보를 알고싶어.
+//		            [관광지키]는 한국관광관련 TourApi에서 사용하는 key값이야
+//		            배열형태로 배치해하여 0번째 인덱스는 운영시간, 1번째 인덱스는 비용에 대한 정보를 JSON으로 줘.
+//		            검색하여 정보를 찾는 행위허용
+//		            예시형태 [운영시간, 비용] 
+//		            """, contentId,plcNm, plcDesc);
+//	        
+//	        String[] result = chatClient.prompt()
+//	                .user(message)
+//	                .call()
+//	                .entity(new ParameterizedTypeReference<String[]>() {});
+//	        System.out.println("result:  " + result);
+//	        
+//	        if(result != null) {
+//		        operationHours = result[0];
+//		        plcPrice = result[1];
+//	        }
+		}
+		
 		String defaultImg = detailItemNode.get("firstimage")+"";
 		String plcAddr1 = detailItemNode.get("addr1")+"";
 		
@@ -519,7 +601,9 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		tourPlaceVO.setPlcNo(contentId);
 		tourPlaceVO.setPlcNm(plcNm);
 		tourPlaceVO.setPlcDesc(plcDesc.replace("\"", ""));
-		tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
+		if(operationHours != null && !operationHours.equals("")) {
+			tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
+		}
 		tourPlaceVO.setPlcPrice(plcPrice.replace("\"", ""));
 		tourPlaceVO.setDefaultImg(defaultImg.replace("\"", ""));
 		tourPlaceVO.setPlcAddr1(plcAddr1.replace("\"", ""));
@@ -534,6 +618,59 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		List<TourPlaceVO> popularTourPlaceList = iTripScheduleMapper.selectPopularPlaceList(tourPlaceList);
 		return popularTourPlaceList;
 	}
+
+	@Override
+	public List<TourPlaceVO> searchTourPlaceList(int rgnNo) {
+		
+		List<TourPlaceVO> tourPlaceVO = iTripScheduleMapper.searchTourPlaceList(rgnNo);
+		
+		return tourPlaceVO;
+	}
+	
+	public String formatStyleCatList(List<Params> dbList) {
+	    if (dbList == null || dbList.isEmpty()) {
+	        return "관련된 장소 정보가 없습니다.";
+	    }
+
+	    StringBuilder sb = new StringBuilder();
+	    
+	    for (Params params : dbList) {
+	        // 1. 필요한 정보만 쏙쏙 뽑기 (null 처리도 안전하게)
+	        String title = String.valueOf(params.get("TITLE")); // 제목
+	        String addr = String.valueOf(params.get("ADDR1"));  // 주소
+	        // String tel = String.valueOf(params.get("TEL")); // 전화번호 필요하면 추가
+
+	        // 2. AI가 이해하기 쉬운 라벨 붙이기
+	        sb.append("- 장소명: ").append(title).append("\n");
+	        sb.append("  주소: ").append(addr).append("\n");
+	        // sb.append("  설명: ...").append("\n"); // 설명 컬럼이 있다면 추가
+	        
+	        sb.append("\n"); // 가독성을 위해 한 줄 띄우기
+	    }
+	    
+	    return sb.toString();
+	}
+
+	@Override
+	public List<Params> selectTripStyleList(String[] tripStyleCatList) {
+		List<Params> tripStyleList = iTripScheduleMapper.selectTripStyleList(tripStyleCatList);
+		
+		return tripStyleList;
+	}
+
+	@Override
+	public void updateTourPlaceInfo() {
+		
+		List<TourPlaceVO> updateDataList = iTripScheduleMapper.selectTargetPlaceList();
+		
+		for(TourPlaceVO place : updateDataList) {
+			Params params = new Params();
+			params.put("content_Id", place.getPlcNo());
+			params.put("contenttype_Id", place.getPlaceType());
+			updatePlaceDetail(params);
+		}
+		
+	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)
 //	private String cleanText(String input) {
@@ -541,5 +678,5 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 //	    // HTML 태그 제거 (<br> -> 줄바꿈 등) 처리가 필요할 수 있음
 //	    return input.replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "").trim();
 //	}
-
+	
 }

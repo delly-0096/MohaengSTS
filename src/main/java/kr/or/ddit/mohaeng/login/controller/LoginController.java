@@ -19,6 +19,8 @@ import org.springframework.security.web.authentication.RememberMeServices;
 import org.springframework.security.web.authentication.logout.SecurityContextLogoutHandler;
 import org.springframework.security.web.authentication.rememberme.TokenBasedRememberMeServices;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.savedrequest.RequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -61,6 +63,9 @@ public class LoginController {
 
 	@Autowired
 	private IMemberMapper memberMapper;
+	
+	@Autowired
+	private RequestCache requestCache;
 
 	/* 로그인 화면 */
 	@GetMapping("/login")
@@ -208,6 +213,14 @@ public class LoginController {
 	        return "redirect:/mypage/profile"; // 내 정보 수정 페이지
 	    }
 		
+	    SavedRequest savedRequest = requestCache.getRequest(request, response);
+	    
+	    if (savedRequest != null) {
+	        String targetUrl = savedRequest.getRedirectUrl();
+	        log.info("로그인 성공! 원래 가려던 페이지로 복구: " + targetUrl);
+	        return "redirect:" + targetUrl; 
+	    }
+	    
 		return "redirect:/";
 	}
 

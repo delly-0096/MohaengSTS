@@ -83,7 +83,7 @@
 						    <div class="post-meta">
 						      <span class="writer">
 						        ${board.writerNickname}
-						        <small>(${board.writerId})</small>
+						        <small>${board.writerId}</small>
 						      </span>
 						      <span>${board.regDt}</span>
 						    </div>
@@ -132,7 +132,6 @@
 											  <a href="${pageContext.request.contextPath}/community/talk/detail?boardNo=${board.boardNo}">
 											    ${board.boardTitle}
 											  </a>
-											  <small style="color:red;">[${board.boardNo}]</small>
 											</h4>
 
 				                        <div class="post-meta">

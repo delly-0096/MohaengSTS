@@ -23,49 +23,48 @@
 </div>
 
 <script>
-const BOARD_NO = '${boardVO.boardNo}';  // ✅ JSP가 41로 치환해줌
-
 function talkSubmitComment(e){
-  if(e) e.preventDefault();
+	  if(e) e.preventDefault();
 
-  const boardNo = (BOARD_NO || '').trim();
-  console.log("BOARD_NO =", boardNo);
+	  const boardNo = (document.getElementById("commentSection")?.dataset.boardNo || '').trim();
 
-  if(!boardNo){
-    alert("boardNo 비었음! boardVO.boardNo 모델 확인");
-    return;
-  }
+	  console.log("BOARD_NO =", boardNo);
 
-  const ta = document.getElementById("commentContentAuth");
-  const content = (ta?.value || "").trim();
-	console.log("content : " + content)
-  if(!content){
-    alert("댓글을 입력하세요");
-    ta?.focus();
-    return;
-  }
+	  if(!boardNo){
+	    alert("boardNo 비었음! boardVO.boardNo 모델 확인");
+	    return;
+	  }
 
-  const url = `/api/talk/\${boardNo}/comments`;
-  console.log("POST URL =", url);
+	  const ta = document.getElementById("commentContentAuth");
+	  const content = (ta?.value || "").trim();
+		console.log("content : " + content)
+	  if(!content){
+	    alert("댓글을 입력하세요");
+	    ta?.focus();
+	    return;
+	  }
 
-  fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ cmntContent: content })
-  })
-  .then(async (res) => {
-    if(!res.ok){
-      const msg = await res.text().catch(()=> "");
-      alert("댓글 등록 실패: " + res.status + "\n" + msg);
-      return;
-    }
-    ta.value = "";
-    if (typeof talkLoadComments === "function") talkLoadComments();
-    if (typeof loadComments === "function") loadComments();
-  });
-}
+	  const url = `/api/talk/\${boardNo}/comments`;
+	  console.log("POST URL =", url);
 
-window.talkSubmitComment = talkSubmitComment;
+	  fetch(url, {
+	    method: "POST",
+	    headers: { "Content-Type": "application/json" },
+	    body: JSON.stringify({ cmntContent: content })
+	  })
+	  .then(async (res) => {
+	    if(!res.ok){
+	      const msg = await res.text().catch(()=> "");
+	      alert("댓글 등록 실패: " + res.status + "\n" + msg);
+	      return;
+	    }
+	    ta.value = "";
+	    if (typeof talkLoadComments === "function") talkLoadComments();
+	    if (typeof loadComments === "function") loadComments();
+	  });
+	}
+
+	window.talkSubmitComment = talkSubmitComment;
 </script>
 
 

@@ -11,6 +11,10 @@
 				  c.TARGET_TYPE AS targetType,
 				  c.TARGET_NO AS targetNo,
 				  c.WRITER_NO AS writerNo,
+				  
+				 (SELECT m.MEM_ID FROM MEMBER m WHERE m.MEM_NO = c.WRITER_NO) AS writerId,
+ 				 (SELECT mu.NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = c.WRITER_NO) AS writerNickname,
+ 				 
 				  c.PARENT_CMNT_NO AS parentCmntNo,
 				  c.CMNT_CONTENT AS cmntContent,
 				  c.CMNT_STATUS AS cmntStatus,
@@ -42,7 +46,7 @@
 					  SEQ_COMMENTS.NEXTVAL,
 					  'TALK',
 					  #{targetNo},
-					  #{writerNo},
+					  #{writerNo},  
 					  <choose>
 					    <when test="parentCmntNo == null or parentCmntNo == 0">NULL</when>
 					    <otherwise>#{parentCmntNo}</otherwise>

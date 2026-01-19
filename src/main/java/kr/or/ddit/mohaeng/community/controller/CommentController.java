@@ -49,7 +49,7 @@ public class CommentController {
             return ResponseEntity.badRequest()
                     .body(Map.of("success", false, "message", "내용을 입력하세요."));
         }
-
+   
         int writerNo = user.getMember().getMemNo();
 
         Integer parent = (body.get("parentCmntNo") == null)

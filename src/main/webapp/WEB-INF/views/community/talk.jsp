@@ -498,18 +498,19 @@
 				
 					<div class="post-detail-body">
 		            	<h2 class="post-detail-title" id="postDetailTitle">${boardVO.boardTitle}</h2>
-		            		<div class="post-detail-meta">
-		            			<a href="${pageContext.request.contextPath}/community/talk?boardNo=${boardVO.boardNo}"></a>
-			                <div class="post-author">
-			                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80" alt="프로필" id="postAuthorAvatar">
-			                    <div class="author-info">
-			                        <span class="author-name" id="postAuthorName"> ${boardVO.writerNickname}<small>(${boardVO.writerId})</small> </span>
-			                        <span class="post-date" id="postDate">${boardVO.regDt}</span>
-			                    </div>
-			                </div>
+	            		<div class="post-detail-meta">
+	            			<a href="${pageContext.request.contextPath}/community/talk?boardNo=${boardVO.boardNo}"></a>
+		                <div class="post-author" style="width:50%;">
+		                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80" alt="프로필" id="postAuthorAvatar">
+		                    <div class="author-info">
+		                        <span class="author-name" id="postAuthorName"> ${boardVO.writerNickname}<small>(${boardVO.writerId})</small> </span>
+		                        <span class="post-date" id="postDate">${boardVO.regDt}</span>
+		                    </div>
+		                </div>
+		                <div class="post-detail" style="width:100%; display:flex;"></div>
 		                <div class="post-detail-stats">
 		                    <span><i class="bi bi-eye"></i> <span id="postViews">${boardVO.viewCnt}</span></span>
-		                    <span><i class="bi bi-chat"></i> <span id="postCommentCount">0</span></span>
+		                    <span><i class="bi bi-chat"></i> <span id="postCommentCount">${boardVO.commentCnt}</span></span>
 		                    <span><i class="bi bi-heart"></i> <span id="postLikes">0</span></span>
 		                </div>
 		            </div>
@@ -609,93 +610,73 @@
 				  </div>
 				</c:if>
 			
-<%--         <div class="post-comments-section">
-            <h4 class="comments-title"><i class="bi bi-chat-dots me-2"></i>댓글 <span id="commentsCount">0</span>개</h4>
-            <div class="comments-list" id="commentsList">
-                <!-- 댓글 목록 -->
-            </div>
-            <sec:authorize access="isAuthenticated()">
-            <div class="comment-write">
-                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80" alt="내 프로필" class="comment-avatar">
-                <div class="comment-input-wrapper">
-                    <textarea class="comment-input" id="commentInput" placeholder="댓글을 작성해주세요..." rows="1" oninput="autoResizeTextarea(this)"></textarea>
-                    <button class="comment-submit-btn" onclick="modalSubmitComment()">
 
-                        <i class="bi bi-send-fill"></i>
-                    </button>
-                </div>
-            </div>
-            </sec:authorize>
-            <sec:authorize access="isAnonymous()">
-            <div class="comment-login-notice">
-                <p><i class="bi bi-info-circle me-2"></i>댓글을 작성하려면 <a href="${pageContext.request.contextPath}/member/login">로그인</a>이 필요합니다.</p>
-            </div>
-            </sec:authorize>
-        </div> --%>
-    </div>
-</div>
+
 
 <script type="text/javascript">
 
 
-
 function getBoardNo(){
-	  const section = document.getElementById("commentSection");
-	  return section ? section.dataset.boardNo : null;
-	}
+  const section = document.getElementById("commentSection");
+  return section ? section.dataset.boardNo : null;
+}
 
-	async function loadComments(){
-	  const boardNo = getBoardNo();
-	  if(!boardNo){
-	    console.error("boardNo 못 가져옴");
-	    return;
-	  }
+async function loadComments(){
+  const boardNo = getBoardNo();
+  if(!boardNo){
+    console.error("boardNo 못 가져옴");
+    return;
+  }
 
-	  const res = await fetch(`/api/talk/\${boardNo}/comments`);
-	  if(!res.ok){
-	    console.error("댓글 조회 실패", res.status);
-	    return;
-	  }
+  const res = await fetch(`/api/talk/\${boardNo}/comments`);
+  if(!res.ok){
+    console.error("댓글 조회 실패", res.status);
+    return;
+  }
 
-	  const list = await res.json();
-	  document.getElementById("comment-count").textContent = "(" + list.length + ")";
+  const list = await res.json();
+  document.getElementById("comment-count").textContent = "(" + list.length + ")";
+  console.log(list[0])
+  const root = document.getElementById("comment-list");
+  root.innerHTML = "";
 
-	  const root = document.getElementById("comment-list");
-	  root.innerHTML = "";
+  list.forEach(c => {
+    const isReply = (c.depth && c.depth > 0);
+    const writer = (c.writerNickname && c.writerNickname.trim())
+    ? c.writerNickname
+    : (c.writerId || "익명");
 
-	  list.forEach(c => {
-	    const isReply = (c.depth && c.depth > 0);
+    
 
-	    const writer = c.writerNickname ? c.writerNickname : "익명";
-	    const date = c.regDt ? c.regDt : "";
-	    const content = c.cmntContent ? c.cmntContent : "";
+    const date = c.regDt ? c.regDt : "";
+    const content = c.cmntContent ? c.cmntContent : "";
 
-	    const div = document.createElement("div");
-	    div.className = "border rounded p-3 mb-2" + (isReply ? " ms-4 bg-light" : "");
+    const div = document.createElement("div");
+    div.className = "border rounded p-3 mb-2" + (isReply ? " ms-4 bg-light" : "");
 
-	   
-	    let html = "";
-	    html += '<div class="d-flex justify-content-between">';
-	    html += '  <strong>' + writer + '</strong>';
-	    html += '  <small class="text-muted">' + date + '</small>';
-	    html += '</div>';
-	    html += '<div class="mt-2" style="white-space: pre-wrap;">' + content + '</div>';
+   
+    let html = "";
+    html += '<div class="d-flex justify-content-between">';
+    html += '  <strong>' + writer + '</strong>';
+    html += '  <small class="text-muted">' + date + '</small>';
+    html += '</div>';
+    html += '<div class="mt-2" style="white-space: pre-wrap;">' + content + '</div>';
 
-	    if(!isReply){
-	      html += '<div class="mt-2">';
-	      html += '  <button class="btn btn-sm btn-link" type="button" onclick="toggleReplyForm(' + c.cmntNo + ')">답글</button>';
-	      html += '</div>';
+    if(!isReply){
+      html += '<div class="mt-2">';
+      html += '  <button class="btn btn-sm btn-link" type="button" onclick="toggleReplyForm(' + c.cmntNo + ')">답글</button>';
+      html += '</div>';
 
-	      html += '<div id="replyForm-' + c.cmntNo + '" class="mt-2 d-none">';
-	      html += '  <textarea id="replyContent-' + c.cmntNo + '" class="form-control mb-2" rows="2" placeholder="답글을 입력하세요"></textarea>';
-	      html += '  <button class="btn btn-sm btn-primary" type="button" onclick="submitReply(' + c.cmntNo + ')">등록</button>';
-	      html += '</div>';
-	    }
+      html += '<div id="replyForm-' + c.cmntNo + '" class="mt-2 d-none">';
+      html += '  <textarea id="replyContent-' + c.cmntNo + '" class="form-control mb-2" rows="2" placeholder="답글을 입력하세요"></textarea>';
+      html += '  <button class="btn btn-sm btn-primary" type="button" onclick="submitReply(' + c.cmntNo + ')">등록</button>';
+      html += '</div>';
+    }
 
-	    div.innerHTML = html;
-	    root.appendChild(div);
-	  });
-	}
+    div.innerHTML = html;
+    root.appendChild(div);
+  });
+}
 
 	function toggleReplyForm(cmntNo){
 	  const el = document.getElementById("replyForm-" + cmntNo);
@@ -1060,29 +1041,25 @@ function togglePostBookmark() {
 }
 
 // 게시글 공유
-function sharePost() {
-    const post = postsData[currentPostId];
-    if (!post) return;
+function sharePost(){
+  const boardNo = document.getElementById("commentSection")?.dataset.boardNo;
 
-    // 현재 URL 복사
-    const url = window.location.origin + window.location.pathname + '?postId=' + currentPostId;
+  if(!boardNo){
+    alert("boardNo 없음");
+    return;
+  }
 
-    if (navigator.share) {
-        // 모바일 공유 기능 사용
-        navigator.share({
-            title: post.title,
-            text: post.title + ' - 모행 여행톡',
-            url: url
-        }).catch(() => {});
-    } else {
-        // 클립보드에 복사
-        navigator.clipboard.writeText(url).then(() => {
-            showToast('링크가 복사되었습니다.', 'success');
-        }).catch(() => {
-            showToast('링크 복사에 실패했습니다.', 'error');
-        });
-    }
+  const url = location.origin + location.pathname + "?boardNo=" + encodeURIComponent(boardNo);
+
+  if (navigator.share) {
+    navigator.share({ title: "여행톡", url: url }).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(url);
+    alert("링크 복사됨!");
+  }
 }
+
+
 
 // 댓글 작성
 function modalSubmitComment() {
@@ -1099,6 +1076,9 @@ function modalSubmitComment() {
         return;
     }
 
+    
+    
+    
     // 새 댓글 추가 (데모용)
     const post = postsData[currentPostId];
     if (post) {

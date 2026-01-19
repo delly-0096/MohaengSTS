@@ -10,7 +10,7 @@ public class AccommodationVO {
 	/**
 	 * 숙소키
 	 */
-	private int accNo; 
+	private Integer accNo; 
 	/**
 	 * 여행 상품 일련키
 	 */

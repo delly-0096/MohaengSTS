@@ -111,4 +111,14 @@ public interface IAccommodationMapper {
 	 */
 	public List<Map<String, Object>> searchLocation(String keyword);
 
+	/**
+	 *	<p> 실 객실 저장 </p>
+	 *	@date 2026.01.19
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	public void insertRoom(int roomTypeNo);
+
+
 }

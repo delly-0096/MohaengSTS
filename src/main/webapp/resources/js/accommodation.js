@@ -214,13 +214,17 @@ function doSearch() {
    목적지 선택 자동완성
 ======================= */
 $(document).ready(function() {
-	const $input = $('#destination');
+    const $input = $('#destination');
     const $dropdown = $('#destinationDropdown');
     const $areaCodeInput = $('#areaCode'); 
+    const $accNoInput = $('#accNo');
 
     $input.on('input', function() {
         const keyword = $(this).val().trim();
-        if (keyword.length < 1) { $dropdown.hide(); return; }
+        if (keyword.length < 1) { 
+            $dropdown.hide(); 
+            return; 
+        }
 
         fetch(`${contextPath}/product/accommodation/api/search-location?keyword=${encodeURIComponent(keyword)}`)
             .then(res => res.json())
@@ -231,55 +235,67 @@ $(document).ready(function() {
                 }
 
                 let html = '<ul class="list-group shadow-sm">';
-                data.forEach(item => {
-                    // item.areaCode는 RGN_NO(예: 39), item.name은 RGN_NM(예: 제주도)
-                    html += `
-                        <li class="list-group-item list-group-item-action region-item" 
-                            data-code="${item.areaCode}" 
-                            style="cursor:pointer;">
-                            <i class="bi bi-geo-alt-fill me-2 text-success"></i><strong>${item.name}</strong>
-                        </li>`;
+				data.forEach(item => {
+				    const icon = item.TYPE === 'REGION'
+				        ? '<i class="bi bi-geo-alt-fill me-2 text-success"></i>'
+				        : '<i class="bi bi-house-door-fill me-2 text-primary"></i>';
+
+				    const cssClass = item.TYPE === 'REGION' ? 'region-item' : 'acc-item';
+
+				    html += `
+				        <li class="list-group-item list-group-item-action ${cssClass}" 
+				            data-id="${item.ID}" 
+				            data-type="${item.TYPE}"
+				            style="cursor:pointer;">
+				            ${icon}<strong>${item.NAME}</strong>
+				        </li>`;
                 });
                 html += '</ul>';
                 $dropdown.html(html).show();
             });
     });
 
-	$(document).on('mousedown', '.region-item', function(e) {
-	    
-	    e.preventDefault(); // 이벤트 전파 방지
-		e.stopImmediatePropagation();
+    // 자동완성 클릭 처리
+    $(document).on('mousedown', '.region-item, .acc-item', function(e) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
 
-		const selectedName = $(this).find('strong').text().trim() || $(this).text().trim();
-		const selectedCode = $(this).data('code');
+        const selectedName = $(this).find('strong').text().trim();
+        const selectedId = $(this).data('id');
+        const selectedType = $(this).data('type');
 
-	    console.log("[선택 시도]", selectedName, selectedCode);
+        console.log("[선택]", selectedName, selectedId, selectedType);
 
-	    if (selectedCode) {
-	        $('#destination').val(selectedName);
-	        $('#areaCode').val(selectedCode);
+        $('#destination').val(selectedName);
 
-	        $('#destinationDropdown').empty().hide();
-	        
-	        console.log("[선택 완료] areaCode에 저장된 값:", $('#areaCode').val());
-	    }
-	});
+        if (selectedType === 'REGION') {
+            $areaCodeInput.val(selectedId);
+            $accNoInput.val('');
+        } else if (selectedType === 'ACCOMMODATION') {
+            $accNoInput.val(selectedId);
+            $areaCodeInput.val('');
+        }
 
-	/* 검색 버튼 눌렀을 때 최종 체크 */
-	$('#accommodationSearchForm').on('submit', function(e) {
-	    const code = $('#areaCode').val();
-	    const dest = $('#destination').val();
-	    
-	    if(!dest) {
-	        alert("목적지를 입력하거나 선택해주세요!");
-	        e.preventDefault();
-	        return;
-	    }
-	    
-	    console.log("최종 검색 전송 -> 지역코드:", code, "키워드:", dest);
-	});
+        $dropdown.empty().hide();
+
+        console.log("[저장 상태] areaCode:", $areaCodeInput.val(), "accNo:", $accNoInput.val());
+    });
+
+    // 검색 버튼 눌렀을 때 검증
+    $('#accommodationSearchForm').on('submit', function(e) {
+        const areaCode = $areaCodeInput.val();
+        const accNo = $accNoInput.val();
+        const dest = $('#destination').val();
+
+        if (!dest) {
+            alert("목적지를 입력하거나 선택해주세요!");
+            e.preventDefault();
+            return;
+        }
+
+        console.log("최종 검색 전송 -> areaCode:", areaCode, "accNo:", accNo, "keyword:", dest);
+    });
 });
-
 // =================== 체크인 / 체크아웃 ======================
 document.addEventListener('DOMContentLoaded', () => {
     const common = { locale: 'ko', dateFormat: 'Y-m-d', minDate: 'today' };

@@ -94,6 +94,7 @@ public class SecurityConfig {
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
+			"/batch/load-acc-detail"
 	};
 
 	// 일반회원 허용 url test

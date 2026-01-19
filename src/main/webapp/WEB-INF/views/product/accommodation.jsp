@@ -29,8 +29,8 @@
                             <input type="text" class="form-control location-autocomplete" id="destination" 
                             		name="keyword" placeholder="도시, 지역 또는 숙소명" autocomplete="off">
                             <div class="auto-dropdown" id="destinationDropdown" style="display:none;"></div>
-                            <input type="hidden" name="areaCode" id="areaCode">
-                        </div>
+                            <input type="hidden" name="areaCode" id="areaCode"><input type="hidden" name="accNo" id="accNo">
+                            </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">체크인</label>

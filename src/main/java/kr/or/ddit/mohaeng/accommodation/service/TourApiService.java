@@ -1,5 +1,6 @@
 package kr.or.ddit.mohaeng.accommodation.service;
 
+
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,10 +22,12 @@ import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.RoomFacilityVO;
 import kr.or.ddit.mohaeng.vo.RoomFeatureVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class TourApiService {
 
 	@Autowired
@@ -31,6 +35,8 @@ public class TourApiService {
 	
 	@Value("${tour.api.key}")
     private String serviceKey;
+	
+	private final RestClient restClient = RestClient.create();
 	
 	@Transactional
     public void fetchAndSaveAccommodations() {
@@ -112,47 +118,63 @@ public class TourApiService {
         log.info("모든 지역 데이터 수집 완료!");
     }
 	
-	@Transactional
+	
+	// 1. 안전하게 아이템 가져오는 헬퍼 메소드 추가
+	private JsonNode getFirstItem(JsonNode res) {
+	    JsonNode items = res.path("response").path("body").path("items").path("item");
+	    if (items.isArray() && items.size() > 0) {
+	        return items.get(0);
+	    }
+	    return null; // 데이터 없으면 null 반환해서 터지는 거 방지!
+	}
+	
+
 	public void updateAccommodationDetails() {
 	    // 1. 상세 정보가 비어있는 숙소 리스트를 DB에서 가져오기
 	    List<AccommodationVO> targetList = accMapper.selectListForDetailUpdate();
-	    
 	    RestClient restClient = RestClient.create();
-        ObjectMapper mapper = new ObjectMapper();
 
 	    for (AccommodationVO acc : targetList) {
-	    	try {
-	    		Thread.sleep(2000);
-	        // 2. 상세 정보 API URL 생성 (detailCommon1)
-	        String commonUrl = "https://apis.data.go.kr/B551011/KorService1/detailCommon1?"
-	                + "serviceKey=" + serviceKey
-	                + "&contentId=" + acc.getApiContentId() // 저장해둔 API용 ID
-	                + "&defaultYN=Y&overviewYN=Y&telNoYN=Y&_type=json&MobileOS=ETC&MobileApp=AppTest"; // 필요한 정보들 다 Y!
+	        try {
+	        	
+	            // [STEP 1] URL 조립 시 UriComponentsBuilder 사용 (인코딩 자동 해결)
+	            String commonUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailCommon1")
+	                    .queryParam("serviceKey", serviceKey)
+	                    .queryParam("contentId", acc.getApiContentId())
+	                    .queryParam("defaultYN", "Y")
+	                    .queryParam("overviewYN", "Y")
+	                    .queryParam("telNoYN", "Y")
+	                    .queryParam("_type", "json")
+	                    .queryParam("MobileOS", "ETC")
+	                    .queryParam("MobileApp", "AppTest")
+	                    .build().toUriString();
 
-	        JsonNode commonRes = restClient.get().uri(URI.create(commonUrl)).retrieve().body(JsonNode.class);
-            JsonNode commonItem = commonRes.path("response").path("body").path("items").path("item").get(0);
+	            JsonNode commonRes = restClient.get().uri(URI.create(commonUrl)).retrieve().body(JsonNode.class);
+	            JsonNode commonItem = getFirstItem(commonRes); // .get(0) 대신 안전
             
             if (commonItem != null) {
                 acc.setOverview(commonItem.path("overview").asText());
-                acc.setTel(commonItem.path("infocenterlodging").asText()); // 숙박은 infocenterlodging이 전화번호인 경우가 많아!
-                acc.setCheckInTime(commonItem.path("checkintime").asText("15:00")); 
-                acc.setCheckOutTime(commonItem.path("checkouttime").asText("11:00"));
+                acc.setTel(commonItem.path("infocenterlodging").asText());
                 accMapper.updateAccommodationDetail(acc); // 설명/전화번호 업데이트
                 
             }
 
 
-            String introUrl = "https://apis.data.go.kr/B551011/KorService1/detailIntro1?"
-                    + "serviceKey=" + serviceKey
-                    + "&contentId=" + acc.getApiContentId()
-                    + "&contentTypeId=32&_type=json&MobileOS=ETC&MobileApp=AppTest"; // 숙박 타입(32) 지정
+            String introUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailIntro1")
+                    .queryParam("serviceKey", serviceKey)
+                    .queryParam("contentId", acc.getApiContentId())
+                    .queryParam("contentTypeId", "32")
+                    .queryParam("_type", "json")
+                    .queryParam("MobileOS", "ETC")
+                    .queryParam("MobileApp", "AppTest")
+                    .build().toUriString();
 
             JsonNode introRes = restClient.get().uri(URI.create(introUrl)).retrieve().body(JsonNode.class);
-            JsonNode introItem = introRes.path("response").path("body").path("items").path("item").get(0);
+            JsonNode introItem = getFirstItem(introRes);
             
             if (introItem != null) {
-            	acc.setCheckInTime(commonItem.path("checkintime").asText("15:00")); 
-            	acc.setCheckOutTime(commonItem.path("checkouttime").asText("11:00"));
+            	acc.setCheckInTime(introItem.path("checkintime").asText("15:00"));
+            	acc.setCheckOutTime(introItem.path("checkouttime").asText("11:00"));
             	
                 AccFacilityVO facilityVO = new AccFacilityVO();
                 facilityVO.setAccNo(acc.getAccNo());
@@ -167,7 +189,6 @@ public class TourApiService {
                 facilityVO.setPoolYn(sub.contains("수영장") ? "Y" : "N");
                 facilityVO.setBreakfastYn(introItem.path("breakfastlodging").asText("").contains("가능") ? "Y" : "N");
                 facilityVO.setPetFriendlyYn(introItem.path("petlodging").asText("").contains("가능") ? "Y" : "N");
-                facilityVO.setPoolYn(sub.contains("수영장") ? "Y" : "N");
                 facilityVO.setGymYn((sub.contains("헬스장") || sub.contains("피트니스") || sub.contains("체력단련")) ? "Y" : "N");
                 facilityVO.setSpaYn((sub.contains("스파") || sub.contains("사우나") || sub.contains("욕조") || sub.contains("마사지")) ? "Y" : "N");
                 facilityVO.setLaundryYn((sub.contains("세탁") || sub.contains("코인세탁") || sub.contains("드라이클리닝")) ? "Y" : "N");
@@ -201,16 +222,21 @@ public class TourApiService {
 	public void updateRoomDetails(AccommodationVO acc, RestClient restClient) {
 	    try {
 	        // 1. detailInfo1 호출 (객실 정보 조회)
-	        String roomUrl = "https://apis.data.go.kr/B551011/KorService1/detailInfo1?"
-	                + "serviceKey=" + serviceKey
-	                + "&contentId=" + acc.getApiContentId()
-	                + "&contentTypeId=32&_type=json&MobileOS=ETC&MobileApp=AppTest";
+	    	String roomUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailInfo1")
+	                .queryParam("serviceKey", serviceKey)
+	                .queryParam("contentId", acc.getApiContentId())
+	                .queryParam("contentTypeId", "32")
+	                .queryParam("_type", "json")
+	                .queryParam("MobileOS", "ETC")
+	                .queryParam("MobileApp", "AppTest")
+	                .build().toUriString();
 
 	        JsonNode roomRes = restClient.get().uri(URI.create(roomUrl)).retrieve().body(JsonNode.class);
 	        JsonNode roomItems = roomRes.path("response").path("body").path("items").path("item");
 
-	        // 객실이 여러 개일 수 있으니 반복문 시작!
-	        for (JsonNode room : roomItems) {
+	        // ★ 객실 데이터가 배열로 정상적으로 올 때만 반복문 실행!
+	        if (roomItems.isArray() && roomItems.size() > 0) {
+	            for (JsonNode room : roomItems) {
 	            RoomTypeVO roomType = new RoomTypeVO();
 	            roomType.setAccNo(acc.getAccNo());
 	            roomType.setRoomName(room.path("roomtitle").asText("기본 객실"));
@@ -264,10 +290,11 @@ public class TourApiService {
 
 	            // DB에 쑤셔넣기 (Insert 실행)
 	            accMapper.insertRoomFeature(feature);
+	            }
 	        }
-	       
 	    } catch (Exception e) {
 	        log.error("객실 정보 업데이트 중 에러 (ID:{}): {}", acc.getAccNo(), e.getMessage());
 	    }
-	}
+	} 
 }
+

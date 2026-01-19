@@ -43,18 +43,21 @@ public class AccommodationController {
 	@GetMapping("/product/accommodation")
 	public String accommodationPage(
 			AccommodationVO acc,
+			@RequestParam(value="accNo", required=false) Integer accNo,
 			@RequestParam(value="areaCode", required=false) String areaCode,
 			@RequestParam(value="keyword", required=false) String keyword,
 			Model model) {
 		
-		// 날짜가 없으면 기본값(오늘~내일) 세팅 (권장)
-	    if(acc.getStartDate() == null) {
+		log.info("검색 객체 확인: " + acc);
+	    // 날짜 기본 세팅
+	    if(acc.getStartDate() == null || acc.getStartDate().isEmpty()) {
 	        acc.setStartDate(LocalDate.now().toString());
 	        acc.setEndDate(LocalDate.now().plusDays(1).toString());
 	    }
 	    
 	    acc.setAreaCode(areaCode);
 	    acc.setKeyword(keyword);
+	    acc.setAccNo(accNo);
 		
 		acc.setPage(1);
 	    acc.setPageSize(12);
@@ -64,17 +67,19 @@ public class AccommodationController {
 		AccommodationVO vo = new AccommodationVO();
 		vo.setAreaCode(areaCode);
 		
-		List<AccommodationVO> firstList = accService.selectAccommodationListWithPaging(acc);
-		List<AccommodationVO> accList = accService.selectAccommodationList(areaCode);
+		List<AccommodationVO> list = accService.selectAccommodationListWithPaging(acc);
 		int totalCount = accService.selectTotalCount(acc);
 	    
 		log.info("필터링된 진짜 숙소 개수: {}", totalCount);
 	    log.info("넘어온 키워드: {}, 지역코드: {}", keyword, areaCode);
-	    model.addAttribute("accList", firstList);
-	    model.addAttribute("initialListSize", firstList.size());
+	    model.addAttribute("accList", list);
 	    model.addAttribute("totalCount", totalCount);
 	    model.addAttribute("keyword", keyword);
 	    model.addAttribute("searchParam", acc);
+	    
+	    log.info("필터링된 진짜 숙소 개수: {}", totalCount);
+	    log.info("넘어온 키워드: {}, 지역코드: {}, 숙소번호: {}", keyword, areaCode, accNo);
+	    
 	    
 	    return "product/accommodation";
 
@@ -99,7 +104,11 @@ public class AccommodationController {
 	 */
 	@GetMapping("/product/accommodation/more")
 	@ResponseBody // 리턴값을 페이지가 아닌 JSON 데이터로 쏴줌!
-	public Map<String, Object> loadMore(AccommodationVO acc) {
+	public Map<String, Object> loadMore(
+			AccommodationVO acc,
+			@RequestParam(value="accNo", required=false) Integer accNo, 
+	        @RequestParam(value="areaCode", required=false) String areaCode
+			) {
 	    // 1. 페이징 계산 (AccommodationVO에 page와 pageSize 필드가 있다고 가정)
 	    // 만약 VO에 없다면 파라미터로 따로 받아도 돼!
 	    int startRow = (acc.getPage() - 1) * acc.getPageSize() + 1;
@@ -107,6 +116,13 @@ public class AccommodationController {
 	    
 	    acc.setStartRow(startRow);
 	    acc.setEndRow(endRow);
+	    
+	    acc.setAreaCode(areaCode);
+	    if (accNo != null) {
+	        acc.setAccNo(accNo);
+	    } else {
+	        acc.setAccNo(0); 
+	    }
 
 	    // 2. DB에서 해당 페이지 데이터와 전체 개수 가져오기
 	    List<AccommodationVO> accList = accService.selectAccommodationListWithPaging(acc);

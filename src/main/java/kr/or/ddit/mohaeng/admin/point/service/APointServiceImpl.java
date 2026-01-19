@@ -10,8 +10,9 @@ import kr.or.ddit.mohaeng.admin.point.mapper.IAPointMapper;
 import kr.or.ddit.mohaeng.vo.PointDetailsVO;
 import kr.or.ddit.mohaeng.vo.PointSearchVO;
 import kr.or.ddit.mohaeng.vo.PointSummaryVO;
+import lombok.extern.slf4j.Slf4j;
 
-
+@Slf4j
 @Service
 public class APointServiceImpl implements IAPointService {
 
@@ -31,9 +32,9 @@ public class APointServiceImpl implements IAPointService {
 	}
 
 	@Override
-	public List<PointSummaryVO> memberPointSummary(PointSummaryVO summaryVO) {
+	public List<PointSummaryVO> memberPointSummaryList(PointSummaryVO summaryVO) {
 		// 페이징과 검색이 적용된 회원별 포인트 요약 리스트
-		return aPointMapper.memberPointSummary(summaryVO);
+		return aPointMapper.memberPointSummaryList(summaryVO);
 	}
 
 	@Override

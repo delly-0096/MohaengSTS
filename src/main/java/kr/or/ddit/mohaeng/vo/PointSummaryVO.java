@@ -11,15 +11,15 @@ public class PointSummaryVO {
 
 	//member테이블과 조인
 	private String memName; // 회원명
-	private String memEamil; // 회원 이메일
-	private int totalPoint; //총 보유 포인트 (MEMBER.POINT)
+	private String memEmail; // 회원 이메일
+	private int totalPoints; //총 보유 포인트 (MEMBER.POINT)
 
 	//가공 또는 집계 데이터(sql의 계산 데이터)
-	private int earnMonthPoint; //이번달 적립 포인트 : 이번 달에 얼마나 활발히 활동(적립)했는지 보여주는 지표
-	private int useMonthPoint; //이번달 사용 포인트
+	private int earnedThisMonth; //이번달 적립 포인트 : 이번 달에 얼마나 활발히 활동(적립)했는지 보여주는 지표
+	private int usedThisMonth; //이번달 사용 포인트
 	private int expireSoonPoint; //만료예정 포인트(이번달)
-	private int totalEarn; //누적 적립 포인트 : 회원의 **'충성도'**
-	private int totalUse; //누적 사용 포인트 : 실질적인 **'소비력'**을 의미
+	private int totalEarned; //누적 적립 포인트 : 회원의 **'충성도'**
+	private int totalUsed; //누적 사용 포인트 : 실질적인 **'소비력'**을 의미
 
 	//검색용(파라미터)
 	private String searchKeyword; // 이름이나 이메일로 특정 회원을 찾기 위한 검색어

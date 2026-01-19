@@ -16,7 +16,7 @@ public interface IAPointMapper {
 
 	int memberPointSummaryCount(PointSummaryVO summaryVO);
 
-	List<PointSummaryVO> memberPointSummary(PointSummaryVO summaryVO);
+	List<PointSummaryVO> memberPointSummaryList(PointSummaryVO summaryVO);
 
 	int allPointHistoryCount(PointSearchVO searchVO);
 

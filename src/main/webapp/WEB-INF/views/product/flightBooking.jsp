@@ -340,7 +340,8 @@ let reservationList = [];			   // 예약정보 테이블
 
 // 항공편 예약 데이터
 let bookingData = null;
-let totalFlightPrice = 0;
+let totalFlightPrice = 0;	// 항공권, 추가 짐 요금
+// let finalPayPrice = 0;		// 쿠폰 적용 금액
 let amount = 0;
 let totalPeople = 0;
 
@@ -472,8 +473,6 @@ async function main() {
 				+ bookingData.flights[1].startDt + "_" + bookingData.flights[1].arrAirportNm + "_" + bookingData.flights[1].airlineNm
 				: "_" +bookingData.flights[0].startDt + "_" + bookingData.flights[0].arrAirportNm + "_" + bookingData.flights[0].airlineNm;
 		
-		// usePoint = appliedPoints // 정보 담아야 사용 포인트 적용 가능
-		
 		const timeStamp = Date.now();
 		await widgets.requestPayment({
 			orderId: "FLT-" + bookingData.flights[0].startDt + "-" + customData.memNo + "-" + timeStamp,			// 예약번호
@@ -483,7 +482,11 @@ async function main() {
 			failUrl: window.location.origin + "/product/payment/error",		// 실패 위치 - 같은곳으로 보내자
 			customerEmail: customData.memEmail,								// 결제자 이메일
 			customerName: customData.memName,								// 결제자 이름
-			customerMobilePhone: customData.tel								// 결제자 전화번호
+			customerMobilePhone: customData.tel,								// 결제자 전화번호
+			// 포인트용 // 다른 정보 담아도 됨. string타입만 담을수 있음
+			metadata: {
+		        usedPoints: appliedPoints.toString() // 포인트를 여기에 실어 보냅니다.
+		    }
 		});
 	});
 }
@@ -557,13 +560,11 @@ function initFlightDisplay() {
 
     cardsContainer.innerHTML = cardsHtml;
     segmentsContainer.innerHTML = segmentsHtml;
-    // 기본 가격 업데이트
 }
 
 // 항공편 카드 HTML 생성
 function createFlightCardHtml(flight, labelClass) {
 	
-	// 처음에만 할것 들
 	passengerType.adult = bookingData.flights[0].adult;
     passengerType.child = bookingData.flights[0].child;
     passengerType.infant = bookingData.flights[0].infant;
@@ -611,12 +612,10 @@ function createFlightCardHtml(flight, labelClass) {
  	             </div>
  	         </div>
  	     </div>`
- 	     // 짐 표시할지 여부
 }
 
 // 사이드바 구간 HTML 생성
 function createSummarySegmentHtml(flight, labelClass) {
-	// 가격은 클래스에 따라서 바꿈 - 가격은 calculate에서 넣어줄겨
     return `<div class="summary-segment-item">
 		    	<div class="summary-segment-label">
 		        	<span class="summary-segment-badge \${labelClass}">\${flight.segmentLabel}</span>
@@ -703,6 +702,22 @@ function createPassengerCard(type, num){
 	    </div> 
 	</div>`;
 }
+
+// 이름 유효성
+passengersContainer.addEventListener('input', function(e) {
+    if (e.target.name.includes('lastName') || e.target.name.includes('firstName')) {
+        e.target.value = e.target.value.replace(/[^ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g, '');
+        
+        if (e.target.name.includes('lastName') && e.target.value.length > 2) {
+        	e.target.value = e.target.value.slice(0, 2);
+			 showToast('성은 2글자까지만 입력가능합니다.', 'warning');
+        }
+        if (e.target.name.includes('firstName') && e.target.value.length > 5) {
+        	e.target.value = e.target.value.slice(0, 5);
+			showToast('이름은 5글자까지만 입력가능합니다.', 'warning');
+        }
+    }
+});
 
 // 나이 확인
 function ageCheck(userBirth, type){
@@ -964,6 +979,7 @@ function calculateTotal() {
     const summaryExtra = document.querySelector("#summaryExtra");
     let extraBaggageFee = 0;
     document.querySelectorAll('select[name^="extraBaggage"]').forEach(select => {
+    	console.log("select : ", select.name);
         const weight = parseInt(select.value);
         if (weight === 5) extraBaggageFee += 10000;
         else if (weight === 10) extraBaggageFee += 20000;
@@ -972,8 +988,8 @@ function calculateTotal() {
     if (extraBaggageFee !== 0) extraFeeView.style.display = 'flex';
     summaryExtra.innerHTML = extraBaggageFee.toLocaleString() + '원';
     
-    totalFlightPrice = totalBaseFare + extraBaggageFee;		// 총 결제 금액
-
+    totalFlightPrice = totalBaseFare + extraBaggageFee - appliedPoints;		// 총 결제 금액
+    
     
     // 요금 표시 업데이트
     document.getElementById('summaryFare').textContent = totalBaseFare.toLocaleString() + '원 x ' + totalPeople + '명';
@@ -981,21 +997,16 @@ function calculateTotal() {
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     
     
-    let pointAppliedPrice = appliedPoints !== 0 ? (totalFlightPrice - appliedPoints).toLocaleString() : totalFlightPrice.toLocaleString();
-    document.getElementById('totalAmount').textContent = pointAppliedPrice + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
-    document.getElementById('payBtnText').textContent = pointAppliedPrice;
-    
+    document.getElementById('totalAmount').textContent = totalFlightPrice.toLocaleString() + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
+    document.getElementById('payBtnText').textContent = totalFlightPrice.toLocaleString();
+     
     if (widgets) {
-        widgets.setAmount({
+    	widgets.setAmount({
             currency: "KRW",
-            value: totalFlightPrice,
-        }).then(() => {
-            console.log("위젯 금액 업데이트 완료: ", totalFlightPrice);
-        }).catch(err => {
-            console.error("위젯 금액 업데이트 실패: ", err);
+            value: totalFlightPrice, 
         });
     }
-     
+    
     // 탑승객 정보 업데이트 - 이것 또한
     var passengerText = [];
     if (passengerType.adult > 0) passengerText.push('성인 ' + passengerType.adult + '명');

@@ -51,7 +51,7 @@ public interface IPointMapper {
 	PointDetailsVO usedPoint(@Param("memNo")int memNo, @Param("payNo")int payNo);
 
 	//환불을 위한 원래 포인트 목록 조회 (FIFO)
-	List<PointDetailsVO> originPointsForRefund(@Param("memNo")int memNo, @Param("regDt")Date regDt);
+	List<PointDetailsVO> originPointsForRefund(@Param("memNo")int memNo, @Param("usedDate")Date usedDate);
 
 	//결제로 적립된 포인트 조회
 	PointDetailsVO earnPoint(@Param("memNo")int memNo, @Param("payNo")int payNo);

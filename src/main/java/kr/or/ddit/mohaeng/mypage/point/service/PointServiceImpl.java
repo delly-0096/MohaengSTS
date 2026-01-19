@@ -65,7 +65,7 @@ public class PointServiceImpl implements IPointService {
 		// 2. 포인트 내역 생성
 		PointDetailsVO pointVO = new PointDetailsVO();
 		pointVO.setMemNo(memNo);
-		pointVO.setPointType("+");    // 포인트 증감유형
+		pointVO.setPointType("P");    // 포인트 증감유형
 		pointVO.setPointAmt(amount);  // 변동 포인트
 		pointVO.setPointDesc(desc);
 		pointVO.setPointTarget(target);  // 포인트 발생 테이블명
@@ -142,7 +142,7 @@ public class PointServiceImpl implements IPointService {
 		//5. 사용 내역 기록
 		PointDetailsVO useVO = new PointDetailsVO();
 		useVO.setMemNo(memNo);
-		useVO.setPointType("-");
+		useVO.setPointType("M");
 		useVO.setPointAmt(-useAmount); //음수로 저장
 		useVO.setPointDesc("포인트 사용(결제)");
 		useVO.setPointTarget("PAYMENT");
@@ -198,7 +198,7 @@ public class PointServiceImpl implements IPointService {
 				//[형식상 복구 기록만 남김(+)]
 				PointDetailsVO restoreVO = new PointDetailsVO();
 				restoreVO.setMemNo(memNo);
-				restoreVO.setPointType("+");
+				restoreVO.setPointType("P");
 				restoreVO.setPointAmt(origin.getRemainPoint());
 				restoreVO.setPointDesc("환불로 인한 포인트 복구 (즉시 소멸)");
 				restoreVO.setPointTarget("REFUND_LOG");
@@ -210,7 +210,7 @@ public class PointServiceImpl implements IPointService {
 				//[복구하자마자 바로 소멸기록 남김(-)]
 				PointDetailsVO expireVO = new PointDetailsVO();
 				expireVO.setMemNo(memNo);
-				expireVO.setPointType("-");
+				expireVO.setPointType("M");
 				expireVO.setPointAmt(-origin.getRemainPoint());// 다시 뺏기
 				expireVO.setPointDesc("유효기간 만료");
 				expireVO.setRemainPoint(0);
@@ -229,7 +229,7 @@ public class PointServiceImpl implements IPointService {
 			//[진짜 복구 기록 남기기(+)]
 			PointDetailsVO restoreVO = new PointDetailsVO();
 			restoreVO.setMemNo(memNo);
-			restoreVO.setPointType("+");
+			restoreVO.setPointType("P");
 			restoreVO.setPointAmt(restoreAmount);
 			restoreVO.setPointDesc("환불로 인한 포인트 복구");
 			restoreVO.setPointTarget("REFUND_LOG");
@@ -282,7 +282,7 @@ public class PointServiceImpl implements IPointService {
 			//---[전액 회수 가능시]---
 			PointDetailsVO retrieveVO = new PointDetailsVO();
 			retrieveVO.setMemNo(memNo);
-			retrieveVO.setPointType("-");
+			retrieveVO.setPointType("M");
 			retrieveVO.setPointAmt(-earnAmount);
 			retrieveVO.setPointDesc("환불로 인한 포인트 회수");
 			retrieveVO.setPointTarget("REFUND_LOG");
@@ -294,7 +294,7 @@ public class PointServiceImpl implements IPointService {
 			pointMapper.updateMemberPoint(memNo, -earnAmount);
 
 			result.put("success", true);
-			result.put("retrievedPoint", earnPoint);// 회수 성공한 금액
+			result.put("retrievedPoint", earnAmount);// 회수 성공한 금액
 			result.put("deductCash", 0);// 포인트로 다 해결됐으니 현금 차감은 0원
 
 		} else {
@@ -309,7 +309,7 @@ public class PointServiceImpl implements IPointService {
 			if (retrievePoint > 0) {
 				PointDetailsVO retrieveVO = new PointDetailsVO();
 				retrieveVO.setMemNo(memNo);
-				retrieveVO.setPointType("-");
+				retrieveVO.setPointType("M");
 				retrieveVO.setPointAmt(-retrievePoint);
 				retrieveVO.setPointDesc("환불로 인한 포인트 회수(일부분)");
 				retrieveVO.setPointTarget("REFUND_LOG");

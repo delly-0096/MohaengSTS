@@ -87,7 +87,7 @@ public class AdminPointController {
 			summaryVO.setPaginationVO(pagingVO);
 
 			//6. 조회
-			List<PointSummaryVO> summaryList = pointService.memberPointSummary(summaryVO);
+			List<PointSummaryVO> summaryList = pointService.memberPointSummaryList(summaryVO);
 
 			//7. 계산기 속 dataList에 보관
 			pagingVO.setDataList(summaryList);

@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.point.mapper.IAPointMapper">
+
+ <!-- ==================== 통계 조회 ==================== -->
+
+	 <!-- 관리자 대시보드 통계 -->
+
+	 <select id="aPointStats" resultType="map">
+	 	WITH point_stats AS (
+	 		SELECT
+	 			SUM(CASE WHEN POINT_TYPE = 'P' THEN POINT_AMT ELSE 0 END) AS totalEarned
+	 			,SUM(CASE WHEN POINT_TYPE = 'M' AND POINT_TARGET = 'PAYMENT' THEN ABS(POINT_AMT) ELSE 0 END) AS totalUsed
+	 			,SUM(CASE WHEN POINT_TYPE = 'M' AND POINT_DESC LIKE '%만료%' THEN ABS(POINT_AMT) ELSE 0 END) AS totalExpired
+	 	FROM POINT_DETAILS
+	 	)
+	 	SELECT
+	 		NVL(ps.totalEarned, 0) AS total_earned
+	 		,NVL(ps.totalUsed, 0)   AS total_used
+	 		,NVL(ps.totalExpired, 0) AS total_expired
+	 		,NVL((SELECT SUM(POINT) FROM MEMBER), 0) AS total_balance
+	 	FROM point_stats ps
+	 </select>
+
+
+
+ <!-- ==================== 회원별 포인트 현황 ==================== -->
+
+
+	 <!-- 검색어에 맞춘 회원수 조회 -->
+
+	 <select id="memberPointSummaryCount" parameterType="kr.or.ddit.mohaeng.vo.PointSummaryVO" resultType="int">
+	 	SELECT COUNT(*)
+	 	FROM MEMBER
+		WHERE 1=1
+		<if test="searchKeyword !=null and searchKeyword != ''">
+			AND (MEM_NAME LIKE '%' || #{searchKeyword} || '%' OR MEM_EMAIL LIKE '%' || #{searchKeyword} || '%')
+		</if>
+	 </select>
+
+
+	 <!-- 회원별 포인트 현황 목록 -->
+
+	 <select id="memberPointSummaryList" parameterType="kr.or.ddit.mohaeng.vo.PointSummaryVO" resultType="kr.or.ddit.mohaeng.vo.PointSummaryVO">
+	 	<!--[STEP 1] member_points라는 가상 장부를 먼저 만들자  -->
+	 	WITH member_points AS (
+	 		SELECT
+	 			pd.MEM_NO
+	 			,SUM(CASE
+                	WHEN pd.POINT_TYPE = 'P'
+                 	AND pd.REG_DT >= TRUNC(SYSDATE, 'MM')
+                 	 AND pd.REG_DT <![CDATA[<]]> ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+                	THEN pd.POINT_AMT
+                	ELSE 0
+            	END) AS earnedThisMonth
+            	,SUM(CASE
+                    WHEN pd.POINT_TYPE = 'M'
+                     AND pd.POINT_TARGET = 'PAYMENT'
+                     AND pd.REG_DT >= TRUNC(SYSDATE, 'MM')
+                     AND pd.REG_DT <![CDATA[<]]> ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+                    THEN ABS(pd.POINT_AMT)
+                    ELSE 0
+                END) AS usedThisMonth
+                ,SUM(CASE
+                    WHEN pd.POINT_TYPE = 'P'
+                     AND pd.REMAIN_POINT > 0
+                     AND pd.PNT_EXPIRE_DT >= TRUNC(SYSDATE, 'MM')
+                     AND pd.PNT_EXPIRE_DT <![CDATA[<]]> ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+                    THEN pd.REMAIN_POINT
+                    ELSE 0
+                END) AS expireSoonPoint
+                ,SUM(CASE WHEN pd.POINT_TYPE = 'P' THEN pd.POINT_AMT ELSE 0 END) AS totalEarned
+                ,SUM(CASE
+	                    WHEN pd.POINT_TYPE = 'M' AND pd.POINT_TARGET = 'PAYMENT'
+	                    THEN ABS(pd.POINT_AMT)
+	                    ELSE 0
+                END) AS totalUsed
+            FROM POINT_DETAILS pd
+            GROUP BY pd.MEM_NO
+         )
+
+	 	<!--[STEP 2] 가상장부 실제로 써먹기. 계산된 통계(mp)를 회원 기본 정보(m)와 합치고 순서 정하기  -->
+	 	SELECT *
+		FROM (
+			SELECT ROWNUM rnum, A.* FROM (
+				SELECT
+					m.MEM_NO AS memNo
+					,m.MEM_NAME AS memName
+					,m.MEM_EMAIL AS memEmail
+					,NVL(m.POINT, 0) AS totalPoints
+					,NVL(mp.earnedThisMonth, 0) AS earnedThisMonth
+					,NVL(mp.usedThisMonth, 0) AS usedThisMonth
+					,NVL(mp.expireSoonPoint, 0) AS expireSoonPoint
+					,NVL(mp.totalEarned, 0) AS totalEarned
+					,NVL(mp.totalUsed, 0) AS totalUsed
+				FROM MEMBER m
+				LEFT JOIN member_points mp ON m.MEM_NO = mp.MEM_NO
+				WHERE 1=1
+				<if test="searchKeyword != null and searchKeyword != ''">
+		            AND (m.MEM_NAME LIKE '%' || #{searchKeyword} || '%'
+		              OR m.MEM_EMAIL LIKE '%' || #{searchKeyword} || '%')
+		        </if>
+		        ORDER BY m.MEM_NO DESC
+			)A
+		)
+
+	 	<!--[STEP 3] 페이징 처리: 딱 필요한 만큼만(예: 1~10번까지) 끊어서 가져오기  -->
+	 	<![CDATA[
+	 	WHERE rnum >= #{paginationVO.startRow}
+		  AND rnum <= #{paginationVO.endRow}
+		]]>
+	 </select>
+
+
+
+ <!-- ==================== 전체 포인트 내역 ==================== -->
+
+
+	 <!-- 전체 포인트 내역 개수 : 검색 결과가 총 몇 건인가? -->
+
+	<select id="allPointHistoryCount" parameterType="kr.or.ddit.mohaeng.vo.PointSearchVO" resultType="int">
+		SELECT COUNT(*)
+		FROM POINT_DETAILS pd
+		JOIN MEMBER m ON pd.MEM_NO = m.MEM_NO
+		WHERE 1=1
+
+		<if test="searchKeyword != null and searchKeyword != ''">
+	        AND (m.MEM_NAME LIKE '%' || #{searchKeyword} || '%'
+	          OR m.MEM_EMAIL LIKE '%' || #{searchKeyword} || '%'
+	          OR pd.POINT_DESC LIKE '%' || #{searchKeyword} || '%')
+	    </if>
+	    <if test="pointType != null and pointType != ''">
+	        AND pd.POINT_TYPE = #{pointType}
+	    </if>
+	    <if test="pointTarget != null and pointTarget != ''">
+	        AND pd.POINT_TARGET = #{pointTarget}
+	    </if>
+	   		 <!--날짜필터 : 시작일  -->
+	    <if test="startDate != null and startDate != ''">
+	        AND pd.REG_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	    </if>
+	    	<!--날짜필터 : 종료일  (만약 2024-05-20을 선택했다면, 20일 밤 11시 데이터도 나와야 함.그래서 날짜에 +1을 더해서 '21일 00:00:00 미만'으로 범위를 잡음)-->
+	    <if test="endDate != null and endDate != ''">
+	        AND pd.REG_DT <![CDATA[<]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	    </if>
+	</select>
+
+
+	 <!-- 전체 포인트 내역 목록 -->
+
+	<select id="allPointHistory" resultType="kr.or.ddit.mohaeng.vo.PointDetailsVO" parameterType="kr.or.ddit.mohaeng.vo.PointSearchVO">
+		<!--[STEP 3] 최종적으로 번호표(rnum)를 보고 10개(혹은 설정한 개수)씩 끊어서 가져오기  -->
+		SELECT *
+    	FROM (
+    		<!--[STEP 2] 정렬된 데이터에 1번부터 차례대로 순번(ROWNUM) 매기기  -->
+    		SELECT ROWNUM rnum, A.*
+    		FROM(
+    			<!--[STEP 1] 진짜 데이터 가져오기 (조인 + 필터 + 정렬)  -->
+    			SELECT
+    				<!--POINT_DETAILS 테이블 컬럼들  -->
+    				pd.POINT_DETAILS_NO
+    				,pd.MEM_NO
+    				,pd.POINT_POL_NO
+    				,pd.POINT_TYPE
+    				,pd.POINT_AMT
+    				,pd.POINT_DESC
+    				,pd.POINT_TARGET
+    				,pd.POINT_TARGET_ID
+    				,pd.REMAIN_POINT
+    				,pd.PNT_EXPIRE_DT
+    				,pd.REG_DT
+    				<!--MEMBER 테이블에서 가져온 회원 정보  -->
+    				,m.MEM_NAME
+    				,m.MEM_EMAIL
+    				,m.POINT AS currentBalance
+    			FROM POINT_DETAILS pd
+    			JOIN MEMBER m ON pd.MEM_NO = m.MEM_NO
+    			WHERE 1=1
+    			<if test="searchKeyword != null and searchKeyword != ''">
+	                AND (m.MEM_NAME LIKE '%' || #{searchKeyword} || '%'
+	                  OR m.MEM_EMAIL LIKE '%' || #{searchKeyword} || '%'
+	                  OR pd.POINT_DESC LIKE '%' || #{searchKeyword} || '%')
+	            </if>
+	            <if test="pointType != null and pointType != ''">
+	                AND pd.POINT_TYPE = #{pointType}
+	            </if>
+	            <if test="pointTarget != null and pointTarget != ''">
+	                AND pd.POINT_TARGET = #{pointTarget}
+	            </if>
+	            <if test="startDate != null and startDate != ''">
+	                AND pd.REG_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+	            </if>
+	            <if test="endDate != null and endDate != ''">
+	                AND pd.REG_DT <![CDATA[<]]> TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	            </if>
+	            ORDER BY pd.REG_DT DESC, pd.POINT_DETAILS_NO DESC
+    		)A
+    	)
+	   	<![CDATA[
+	    WHERE rnum >= #{paginationVO.startRow}
+	      AND rnum <= #{paginationVO.endRow}
+	    ]]>
+	</select>
+</mapper>

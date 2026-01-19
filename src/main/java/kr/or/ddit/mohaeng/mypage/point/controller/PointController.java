@@ -20,7 +20,7 @@ import kr.or.ddit.mohaeng.vo.PointSearchVO;
 import kr.or.ddit.mohaeng.vo.PointSummaryVO;
 
 @Controller
-@RequestMapping("/mypage/point")
+@RequestMapping("/mypage/points")
 public class PointController {
 
 	@Autowired
@@ -29,7 +29,7 @@ public class PointController {
 	/**
 	 * 포인트 내역 페이지
 	 */
-	@GetMapping("/list")
+	@GetMapping("")
 	public String pointList(HttpSession session, Model model) {
 
 		// 1. 세션에서 로그인 정보 꺼내기 (로그인 체크 겸 데이터 확보!)
@@ -42,7 +42,7 @@ public class PointController {
 		}
 
 		//3. 아무것도 안담고 그냥 화면(JSP)로 보냄.-> "나머지 데이터는 화면이 뜬 다음에 AJAX 네가 알아서 가져와!"
-		return "mypage/pointList";
+		return "mypage/points";
 	}
 
 	/**
@@ -105,7 +105,7 @@ public class PointController {
 
 		Map<String, Object> result = new HashMap<>();
 
-		@SuppressWarnings("/unchecked")
+		@SuppressWarnings("unchecked")
 		Map<String, Object> loginMember = (Map<String, Object>) session.getAttribute("loginMember");
 
 		if (loginMember == null) {
@@ -130,7 +130,7 @@ public class PointController {
 			int totalCount = pointService.pointHistoryCount(searchVO);
 
 			//4. 페이지 계산기
-			PaginationInfoVO<PointDetailsVO> pagingVO = new PaginationInfoVO<>();
+			PaginationInfoVO<PointDetailsVO> pagingVO = new PaginationInfoVO<>(5,5); //여기 바꾸면 되~ 원하는대로
 			pagingVO.setTotalRecord(totalCount); //계산기에게 전체 개수 입력
 			pagingVO.setCurrentPage(page); //EX)"전체가 100개니까 총 10페이지가 필요하겠군!" 자동 계산
 

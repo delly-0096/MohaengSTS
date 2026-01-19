@@ -36,6 +36,15 @@ public interface IBusinessProductService {
 	public BusinessProductsVO retrieveProductDetail(BusinessProductsVO businessProducts);
 	
 	/**
+	 * <p>판매 상품 정보 수정</p>
+	 * @author sdg
+	 * @date 2026-01-17
+	 * @param tripProd 상품 정보
+	 * @return ok, badRequest
+	 */
+	public ServiceResult modifyProduct(BusinessProductsVO businessProducts);
+	
+	/**
 	 * <p>상품 판매 상태 변경</p>
 	 * @author sdg
 	 * @date 2026-01-17
@@ -52,5 +61,8 @@ public interface IBusinessProductService {
 	 * @return ok, badRequest
 	 */
 	public ServiceResult deleteProductStatus(TripProdVO tripProd);
+
+	
+
 	
 }

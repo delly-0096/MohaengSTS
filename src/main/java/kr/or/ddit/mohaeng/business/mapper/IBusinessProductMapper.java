@@ -57,6 +57,34 @@ public interface IBusinessProductMapper {
 	 */
 	public List<AttachFileDetailVO> retrieveProdImages(BusinessProductsVO businessProducts);
 
+	/**
+	 * <p>판매중인 상품, 상품 이용안내, 상품 가격, 상품 장소, 숙소 정보, 숙소 보유시설 정보 변경</p>
+	 * @author sdg
+	 * @date 2026-01-19
+	 * @param tripProd
+	 * @return 결과 0, 1
+	 */
+	public int modifyProduct(BusinessProductsVO businessProducts);
+
+	
+	/**
+	 * <p>예약 가능 시간 삭제</p>
+	 * @author sdg
+	 * @date 2026-01-19
+	 * @param tripProd	pk
+	 * @return 결과 0, 1
+	 */
+	public int deleteProdTimeInfo(BusinessProductsVO businessProducts);
+
+	/**
+	 * <p>예약 가능 시간 추가</p>
+	 * @author sdg
+	 * @date 2026-01-19
+	 * @param tripProd	pk
+	 * @return 결과 0, 1
+	 */
+	public int insertProdTimeInfo(List<ProdTimeInfoVO> prodTimeInfoVO);
+
 	
 	/**
 	 * <p>상품 판매 상태 변경</p>
@@ -75,6 +103,9 @@ public interface IBusinessProductMapper {
 	 * @return 결과 0, 1
 	 */
 	public int deleteProductStatus(TripProdVO tripProd);
+
+
+
 
 	
 }

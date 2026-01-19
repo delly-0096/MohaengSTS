@@ -49,7 +49,6 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 			log.info("prod setProdTimeList : {}", prodVO.getProdTimeList());
 		}
 		
-		
 		// 상품 사진
 		List<AttachFileDetailVO> productImages = new ArrayList<>();
 		
@@ -64,8 +63,45 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 		
 		
 		// 숙소 정보
-		
 		return prodVO;
+	}
+	
+	@Override
+//	@Transactional
+	public ServiceResult modifyProduct(BusinessProductsVO businessProducts) {
+		ServiceResult result = null;
+		
+		// 변수 바뀔수도, 1대1관계들 update -> 상품, 상품 이용안내, 상품 가격, 상품 장소
+		int productstatus = 0;	// 1 , 0
+		productstatus = businessMapper.modifyProduct(businessProducts);
+		log.info("productstatus : {}", productstatus);
+		
+		
+		// 예약가능시간(예약 가능 시간)
+		int productTimetatus = 0;	
+		productTimetatus = businessMapper.deleteProdTimeInfo(businessProducts);
+		log.info("deleteProdInfo : {}", productTimetatus);
+		
+		// bookingTimes를 다 세팅해야됨 잊지말자
+		List<ProdTimeInfoVO> prodTimeInfoVO = businessProducts.getProdTimeList();
+		
+		log.info("prodTimeInfoVO.길이 : {}", prodTimeInfoVO.size());
+		if (productTimetatus != 0) {
+			productTimetatus = 0;
+			productstatus = businessMapper.insertProdTimeInfo(prodTimeInfoVO);
+			log.info("insertProdTimeInfo : {}", productstatus);
+		}
+		
+		if(productstatus == 1 && productTimetatus == prodTimeInfoVO.size()) {
+			return result = ServiceResult.OK;
+		}else {
+			return result = ServiceResult.FAILED;
+		}
+		
+		// 숙소 정보는 나중에
+//		int accomStatus = 0;
+		
+//		return null;
 	}
 	
 	@Override

@@ -224,8 +224,70 @@
 	     AND USE_YN = 'Y'
 	   ORDER BY FILE_NO
 	</select>
+
+	<!-- 판매중인 상품, 상품 이용안내, 상품 가격, 상품 장소, 숙소 정보, 숙소 보유시설 정보 변경 -->
+	<!-- 숙소 정보, 숙소 보유시설은 나중에 변경 -->
+	<update id="modifyProduct" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
+		UPDATE TRIP_PRODUCT t
+	    INNER JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
+	    INNER JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
+	    INNER JOIN TRIP_PROD_PLACE p ON t.TRIP_PROD_NO = p.TRIP_PROD_NO
+	    <set>
+		    t.PROD_CTGRY_TYPE = #{prodCtgryType}
+		    , t.APPROVE_STATUS = '판매중지'
+		    , t.TRIP_PROD_TITLE = #{tripProdTitle}
+		    , t.TRIP_PROD_CONTENT = #{tripProdContent}
+		    , t.SALE_START_DT = #{saleStartDt}
+	        , t.SALE_END_DT = #{saleEndDt}
+		    <if test="attachNo != null" >, t.ATTACH_NO = #{attachNo}</if>
+		    , t.MOD_DT = sysdate
+		    , t.APRV_YN = 'N'
+		    , t.CTY_NM = #{ctyNm}
+	        , t.MOD_DT = sysdate 
+			
+			, s.PRICE             = #{price}
+	        , s.NETPRC            = #{netprc}
+	        , s.DISCOUNT          = #{discount}
+	        , s.LEAD_TIME         = #{leadTime}
+	        , s.TOTAL_STOCK       = #{totalStock}
+	        
+	        , i.PROD_RUNTIME      = #{prodRuntime}
+	        , i.PROD_DURATION     = #{prodDuration}
+	        , i.PROD_MIN_PEOPLE   = #{prodMinPeople}
+	        , i.PROD_MAX_PEOPLE   = #{prodMaxPeople}
+	        , i.PROD_LIM_AGE      = #{prodLimAge}
+	        , i.PROD_INCLUDE	  = #{prodInclude}
+		    , i.PROD_EXCLUDE      = #{prodExclude}
+		    , i.PROD_NOTICE		  = #{prodNotice}
+		    
+	        , p.ADDR1             = #{addr1}
+	        , p.ADDR2             = #{addr2}
+	    </set>
+	    WHERE t.TRIP_PROD_NO = #{tripProdNo}
+	</update>
 	
+	<!--  -->
+	<delete id="deleteProdTimeInfo" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
+		DELETE FROM PROD_TIME_INFO 
+     	 WHERE TRIP_PROD_NO = #{tripProdNo}
+	</delete>
 	
+	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
+		INSERT INTO PROD_TIME_INFO (
+	          TIME_INFO_NO
+	        , TRIP_PROD_NO
+	        , RSVT_AVAILABLE_TIME
+	    )
+	    SELECT SEQ_PROD_TIME_INFO.NEXTVAL, A.*
+	    FROM (
+	        <foreach collection="list" item="time" separator="UNION ALL">
+	            SELECT 
+	                  #{time.tripProdNo}
+	                , #{time.rsvtAvailableTime}
+	            FROM DUAL
+	        </foreach>
+	    ) A
+	</insert>
 	
 	<!-- 상품 판매 정보 변경 -->
 	<update id="updateProductStatus" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">

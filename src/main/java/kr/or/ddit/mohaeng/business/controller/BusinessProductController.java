@@ -98,7 +98,7 @@ public class BusinessProductController {
         
         model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
         model.addAttribute("prodAggregate", prodAggregate);
-        model.addAttribute("tripProd", tripProd);	// memNo담김
+//        model.addAttribute("tripProd", tripProd);	// memNo담김
 //        model.addAttribute("keywords", keywords);
         
 		return "product/business";
@@ -119,7 +119,7 @@ public class BusinessProductController {
 		log.info("productDetail : {}", businessProducts);
 		
 		BusinessProductsVO product = businessService.retrieveProductDetail(businessProducts);
-		log.info("product : {}", product);
+//		log.info("product : {}", product);
 		return product;
 	}
 	
@@ -232,12 +232,10 @@ public class BusinessProductController {
 	 */
 	@ResponseBody
 	@PostMapping("/business/product/editProduct")
-	public ResponseEntity<String> editProduct(@RequestBody TripProdVO tripProd){
-		log.info("editProduct : {}", tripProd);
-		// modifyProduct(tripProd);
-		
-		// businessService.deleteProductStatus(tripProd);
-		ServiceResult result = null;
+	public ResponseEntity<String> editProduct(@RequestBody BusinessProductsVO businessProducts){
+		log.info("editProduct : {}", businessProducts);
+		 
+		ServiceResult result = businessService.modifyProduct(businessProducts);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {

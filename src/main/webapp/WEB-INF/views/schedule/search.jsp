@@ -240,8 +240,8 @@
             <p class="preference-subtitle">나의 여행 스타일을 선택해주세요 (복수 선택 가능)</p>
 
             <div class="style-grid">
-                <div class="style-card" onclick="toggleStyle(this, 'healing')">
-                    <input type="checkbox" name="travelStyle" value="healing" hidden>
+                <div class="style-card" onclick="toggleStyle(this, 'HEALING')">
+                    <input type="checkbox" name="tripStyleCat" value="HEALING" hidden>
                     <div class="style-card-icon">
                         <i class="bi bi-tree"></i>
                     </div>
@@ -254,8 +254,8 @@
                     </div>
                 </div>
 
-                <div class="style-card" onclick="toggleStyle(this, 'activity')">
-                    <input type="checkbox" name="travelStyle" value="activity" hidden>
+                <div class="style-card" onclick="toggleStyle(this, 'ACTIVITY')">
+                    <input type="checkbox" name="tripStyleCat" value="ACTIVITY" hidden>
                     <div class="style-card-icon">
                         <i class="bi bi-bicycle"></i>
                     </div>
@@ -268,8 +268,8 @@
                     </div>
                 </div>
 
-                <div class="style-card" onclick="toggleStyle(this, 'food')">
-                    <input type="checkbox" name="travelStyle" value="food" hidden>
+                <div class="style-card" onclick="toggleStyle(this, 'FOODTOUR')">
+                    <input type="checkbox" name="tripStyleCat" value="FOODTOUR" hidden>
                     <div class="style-card-icon">
                         <i class="bi bi-cup-hot"></i>
                     </div>
@@ -282,8 +282,8 @@
                     </div>
                 </div>
 
-                <div class="style-card" onclick="toggleStyle(this, 'culture')">
-                    <input type="checkbox" name="travelStyle" value="culture" hidden>
+                <div class="style-card" onclick="toggleStyle(this, 'CULTURE')">
+                    <input type="checkbox" name="tripStyleCat" value="CULTURE" hidden>
                     <div class="style-card-icon">
                         <i class="bi bi-bank"></i>
                     </div>
@@ -296,8 +296,8 @@
                     </div>
                 </div>
 
-                <div class="style-card" onclick="toggleStyle(this, 'nature')">
-                    <input type="checkbox" name="travelStyle" value="nature" hidden>
+                <div class="style-card" onclick="toggleStyle(this, 'NATURE')">
+                    <input type="checkbox" name="tripStyleCat" value="NATURE" hidden>
                     <div class="style-card-icon">
                         <i class="bi bi-sunrise"></i>
                     </div>
@@ -310,8 +310,8 @@
                     </div>
                 </div>
 
-                <div class="style-card" onclick="toggleStyle(this, 'photo')">
-                    <input type="checkbox" name="travelStyle" value="photo" hidden>
+                <div class="style-card" onclick="toggleStyle(this, 'PHOTO')">
+                    <input type="checkbox" name="tripStyleCat" value="PHOTO" hidden>
                     <div class="style-card-icon">
                         <i class="bi bi-camera"></i>
                     </div>
@@ -324,8 +324,8 @@
                     </div>
                 </div>
 
-                <div class="style-card" onclick="toggleStyle(this, 'shopping')">
-                    <input type="checkbox" name="travelStyle" value="shopping" hidden>
+                <div class="style-card" onclick="toggleStyle(this, 'SHOPPING')">
+                    <input type="checkbox" name="tripStyleCat" value="SHOPPING" hidden>
                     <div class="style-card-icon">
                         <i class="bi bi-bag"></i>
                     </div>
@@ -338,8 +338,8 @@
                     </div>
                 </div>
 
-                <div class="style-card" onclick="toggleStyle(this, 'romance')">
-                    <input type="checkbox" name="travelStyle" value="romance" hidden>
+                <div class="style-card" onclick="toggleStyle(this, 'ROMANTIC')">
+                    <input type="checkbox" name="tripStyleCat" value="ROMANTIC" hidden>
                     <div class="style-card-icon">
                         <i class="bi bi-heart"></i>
                     </div>
@@ -1035,21 +1035,21 @@ function updateSummary() {
     document.getElementById('summaryRecommendType').textContent = recommendTypeText;
 
     // 선택된 스타일
-    var selectedStyles = [];
+    var tripStyleCatList = [];
     var styleCards = document.querySelectorAll('.style-card.selected .style-card-title');
     for (var i = 0; i < styleCards.length; i++) {
-        selectedStyles.push(styleCards[i].textContent);
+        tripStyleCatList.push(styleCards[i].textContent);
     }
-    document.getElementById('summaryStyles').textContent = selectedStyles.join(', ') || '-';
+    document.getElementById('summaryStyles').textContent = tripStyleCatList.join(', ') || '-';
 }
 
 // 선호도 제출
 function submitPreference() {
     // 선호도 데이터 수집
-    var selectedStyles = [];
+    var tripStyleCatList = [];
     var styleInputs = document.querySelectorAll('.style-card.selected input');
     for (var i = 0; i < styleInputs.length; i++) {
-        selectedStyles.push(styleInputs[i].value);
+        tripStyleCatList.push(styleInputs[i].value);
     }
 
     var selectedAccommodations = [];
@@ -1066,12 +1066,14 @@ function submitPreference() {
 
     var preferenceData = {
         departure: document.getElementById('departure').value,
+        departurecode : document.getElementById('departure').dataset.code,
         destination: document.getElementById('destination').value,
+        destinationcode : document.getElementById('destination').dataset.code,
         travelDates: document.getElementById('travelDates').value,
         travelers: travelerCount,
         planMethod: planMethod,
         recommendType: recommendType,
-        travelStyles: selectedStyles,
+        tripStyleCatList: tripStyleCatList,
         pace: paceEl ? paceEl.value : 'moderate',
         budget: budgetEl ? budgetEl.value : 'medium',
         accommodation: selectedAccommodations,

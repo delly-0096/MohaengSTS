@@ -54,4 +54,10 @@ public interface ITripScheduleService {
 	public TourPlaceVO updatePlaceDetail(Params params);
 
 	public List<TourPlaceVO> selectPopularPlaceList(List<Map<String, String>> tourPlaceList);
+
+	public List<TourPlaceVO> searchTourPlaceList(int rgnNo);
+	
+	public List<Params> selectTripStyleList(String[] tripStyleCatList);
+
+	public void updateTourPlaceInfo();
 }

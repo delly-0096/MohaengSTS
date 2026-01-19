@@ -36,6 +36,7 @@
 			<input type="hidden" id="orderId" value="${orderId }"/>	
 			<input type="hidden" id="paymentKey" value="${paymentKey }"/>	
 			<input type="hidden" id="amount" value="${amount }"/>	
+			<input type="hidden" id="productType" value="${productType}"/>
 		</c:if>
 		
 		<div id="payment-loading" class="text-center py-5">
@@ -151,6 +152,7 @@ let paymentKey = null;
 let orderId = null;
 let amount = 0;
 let paymentType = null;
+let productType = null;
 
 // 예약 세션 스토리지 가져올 객체 
 let storedData = null;
@@ -164,6 +166,7 @@ document.addEventListener("DOMContentLoaded", async function(){
 	orderId = document.querySelector("#orderId");
 	amount = document.querySelector("#amount");
 	paymentType = document.querySelector("#paymentType");
+	productType = document.querySelector("#productType");
 	loading = document.querySelector("#payment-loading");
 	
 	// db에 넣을 정보
@@ -199,105 +202,114 @@ document.addEventListener("DOMContentLoaded", async function(){
 		console.log("customData : ", customData);
 		
 	    memEmail.innerHTML = customData.memEmail;	// 결제자 이메일 정보 
+	    
+		// 상품 타입 분기
+		const pType = productType ? productType.value : "flight";
 
-		if(flightProduct) flightProduct = JSON.parse(flightProduct); 
-		
-		if(passengers) passengers = JSON.parse(passengers);
-		
-		if(reservationList) reservationList = JSON.parse(reservationList);
-		
-		if(reserveAgree) reserveAgree = JSON.parse(reserveAgree);
-		
-		const requestData = {
-	        paymentKey: paymentKey.value,
-	        orderId: orderId.value,
-	        amount: amount.value,
-	        paymentType : paymentType.value,
-	        memNo : customData.memNo,
-	        flightProductList : flightProduct != null ? flightProduct.flights : null,
-	        flightPassengersList : passengers != null ? passengers : null,
-       		flightReservationList : reservationList != null ? reservationList : null,
-       		flightResvAgree : reserveAgree != null ? reserveAgree : null,
-    		productType : "flight"
-	    };
-		
-		console.log("requestData ", requestData);
-		
-		const response = await fetch("/product/payment/confirm", {
-			method : "post",
-			headers : {"Content-Type" : "application/json"},
-			body : JSON.stringify(requestData)
-		});
-		
-		console.log("response : ", response);
-		
-	    const resultData = await response.json(); 
-		if (response.ok) {
-		    console.log("서버에서 받은 API 결과값:", resultData);
-		    
-			payNo.innerHTML = resultData.orderId;
-			orderName.innerHTML = resultData.orderName;
-
-			// 시간 
-			const date = new Date(resultData.approvedAt);
-			const formattedDate = new Intl.DateTimeFormat('ko-KR', {
-			  year: 'numeric',
-			  month: 'long',
-			  day: 'numeric',
-			  weekday: 'long',
-			  hour: '2-digit',
-			  minute: '2-digit',
-			  hour12: true
-			}).format(date);
-
-			console.log(formattedDate);
-			payDt.innerHTML = formattedDate;
-			
-			let personParts = [];
-
-			if (resultData.adult) personParts.push(resultData.adult);
-			if (resultData.child) personParts.push(resultData.child);
-			if (resultData.infant) personParts.push(resultData.infant);
-
-			let personCount = personParts.join(", ");
-		    person.innerHTML = personCount;
-		    
-			totalAmount.innerHTML = (resultData.totalAmount).toLocaleString();
-			
-			if (resultData.method == '간편결제'){
-				method.innerHTML = resultData.easyPay.provider;
-			} else{
-				method.innerHTML = resultData.method;
-			}
-			document.querySelector(".payment-complete").style.display = "block";
-			
-			// 성공하면 세션 삭제하기
-			sessionStorage.removeItem("flightProduct");
-			sessionStorage.removeItem("passengers");
-			sessionStorage.removeItem("reservationList");
-			sessionStorage.removeItem("reserveAgree");
-			sessionStorage.removeItem("@tosspayments/session-id");
+		if (pType === "tour") {
+			// 투어 상품 결제
+			await processTourPayment(customData, payNo, orderName, payDt, person, totalAmount, method, message);
 		} else {
-			try {
-			    const msgSplit = resultData.message.split(': "');
-			    const jsonStr = msgSplit[msgSplit.length - 1].replace(/"$/, ''); // 마지막 따옴표 제거
-
-			    const errorDetail = JSON.parse(jsonStr);
-
-			    console.log("에러 메세지:", errorDetail.message);  // 이미 처리된 결제 입니다.
-				message.innerHTML = errorDetail.message;
-				document.querySelector("#orderFailName").innerHTML = orderId.value;		// 주문 번호
+			if(flightProduct) flightProduct = JSON.parse(flightProduct); 
+			
+			if(passengers) passengers = JSON.parse(passengers);
+			
+			if(reservationList) reservationList = JSON.parse(reservationList);
+			
+			if(reserveAgree) reserveAgree = JSON.parse(reserveAgree);
+			
+			const requestData = {
+		        paymentKey: paymentKey.value,
+		        orderId: orderId.value,
+		        amount: amount.value,
+		        paymentType : paymentType.value,
+		        memNo : customData.memNo,
+		        flightProductList : flightProduct != null ? flightProduct.flights : null,
+		        flightPassengersList : passengers != null ? passengers : null,
+	       		flightReservationList : reservationList != null ? reservationList : null,
+	       		flightResvAgree : reserveAgree != null ? reserveAgree : null,
+	    		productType : "flight"
+		    };
+			
+			console.log("requestData ", requestData);
+			
+			const response = await fetch("/product/payment/confirm", {
+				method : "post",
+				headers : {"Content-Type" : "application/json"},
+				body : JSON.stringify(requestData)
+			});
+			
+			console.log("response : ", response);
+			
+		    const resultData = await response.json(); 
+			if (response.ok) {
+			    console.log("서버에서 받은 API 결과값:", resultData);
 			    
-// 			    console.log("에러 코드:", errorDetail.code);       // ALREADY_PROCESSED_PAYMENT
-// 				failCode.innerHTML = errorDetail.code; // 에러 코드
-				document.querySelector(".payment-fail").style.display = "block";
-// 				document.querySelector(".payment-complete").style.display = "none";
-			} catch (e) {
-			    console.error("파싱 실패:", e);
+				payNo.innerHTML = resultData.orderId;
+				orderName.innerHTML = resultData.orderName;
+	
+				// 시간 
+				const date = new Date(resultData.approvedAt);
+				const formattedDate = new Intl.DateTimeFormat('ko-KR', {
+				  year: 'numeric',
+				  month: 'long',
+				  day: 'numeric',
+				  weekday: 'long',
+				  hour: '2-digit',
+				  minute: '2-digit',
+				  hour12: true
+				}).format(date);
+	
+				console.log(formattedDate);
+				payDt.innerHTML = formattedDate;
+				
+				let personParts = [];
+	
+				if (resultData.adult) personParts.push(resultData.adult);
+				if (resultData.child) personParts.push(resultData.child);
+				if (resultData.infant) personParts.push(resultData.infant);
+	
+				let personCount = personParts.join(", ");
+			    person.innerHTML = personCount;
+			    
+				totalAmount.innerHTML = (resultData.totalAmount).toLocaleString();
+				
+				if (resultData.method == '간편결제'){
+					method.innerHTML = resultData.easyPay.provider;
+				} else{
+					method.innerHTML = resultData.method;
+				}
+				document.querySelector(".payment-complete").style.display = "block";
+				
+				// 성공하면 세션 삭제하기
+				sessionStorage.removeItem("flightProduct");
+				sessionStorage.removeItem("passengers");
+				sessionStorage.removeItem("reservationList");
+				sessionStorage.removeItem("reserveAgree");
+				sessionStorage.removeItem("@tosspayments/session-id");
+			} else {
+				try {
+				    const msgSplit = resultData.message.split(': "');
+				    const jsonStr = msgSplit[msgSplit.length - 1].replace(/"$/, ''); // 마지막 따옴표 제거
+	
+				    const errorDetail = JSON.parse(jsonStr);
+	
+				    console.log("에러 메세지:", errorDetail.message);  // 이미 처리된 결제 입니다.
+					message.innerHTML = errorDetail.message;
+					document.querySelector("#orderFailName").innerHTML = orderId.value;		// 주문 번호
+				    
+	// 			    console.log("에러 코드:", errorDetail.code);       // ALREADY_PROCESSED_PAYMENT
+	// 				failCode.innerHTML = errorDetail.code; // 에러 코드
+					document.querySelector(".payment-fail").style.display = "block";
+	// 				document.querySelector(".payment-complete").style.display = "none";
+				} catch (e) {
+				    console.error("파싱 실패:", e);
+				}
+				console.log("resultData : ", resultData);
+				console.log("resultData.message : ", resultData);
 			}
-			console.log("resultData : ", resultData);
-			console.log("resultData.message : ", resultData);
 		}
+		
 		loading.style.display = "none";
 		
 	}else{
@@ -306,6 +318,81 @@ document.addEventListener("DOMContentLoaded", async function(){
 		loading.style.display = "none";
 	}
 });
+
+// 투어 상품 결제
+async function processTourPayment(customData, payNo, orderName, payDt, person, totalAmount, method, message) {
+	let tourPaymentData = sessionStorage.getItem("tourPaymentData");
+	tourPaymentData = JSON.parse(tourPaymentData);
+	console.log("tourPaymentData:", tourPaymentData);
+	
+	const requestData = {
+		paymentKey: paymentKey.value,
+		orderId: orderId.value,
+		amount: amount.value,
+		paymentType: paymentType.value,
+		productType: "tour",
+		memNo: customData.memNo,
+		usePoint: tourPaymentData.usePoint || 0,
+		tripProdList: tourPaymentData.tripProdList,
+		mktAgreeYn: tourPaymentData.mktAgreeYn
+	};
+	
+	console.log("투어 결제 요청 데이터:", requestData);
+	
+	try {
+		const response = await fetch("/product/payment/confirm", {
+			method: "post",
+			headers: {"Content-Type": "application/json"},
+			body: JSON.stringify(requestData)
+		});
+		
+		const resultData = await response.json();
+		
+		if (response.ok) {
+			console.log("투어 결제 승인 성공:", resultData);
+			
+			payNo.innerHTML = resultData.orderId;
+			orderName.innerHTML = resultData.orderName;
+			
+			// 이용 예정일
+		    const resvDt = tourPaymentData.tripProdList[0].resvDt;
+		    const useTime = tourPaymentData.tripProdList[0].useTime;
+		    payDt.innerHTML = resvDt + " " + useTime;
+		    
+		    person.innerHTML = tourPaymentData.tripProdList[0].quantity + "명";
+		    totalAmount.innerHTML = resultData.totalAmount.toLocaleString();
+		    
+		    if (resultData.method === '간편결제') {
+		        method.innerHTML = resultData.easyPay.provider;
+		    } else {
+		        method.innerHTML = resultData.method;
+		    }
+		    
+		    document.querySelector(".payment-complete").style.display = "block";
+		    
+		    sessionStorage.removeItem("tourPaymentData");
+		    sessionStorage.removeItem("@tosspayments/session-id");
+		} else {
+			try {
+				const msgSplit = resultData.message.split(': "');
+				const jsonStr = msgSplit[msgSplit.length - 1].replace(/"$/, '');
+				const errorDetail = JSON.parse(jsonStr);
+				
+				message.innerHTML = errorDetail.message;
+				document.querySelector("#orderFailName").innerHTML = orderId.value;
+				document.querySelector(".payment-fail").style.display = "block";
+			} catch (e) {
+				console.error("파싱 실패:", e);
+				message.innerHTML = "결제 처리 중 오류가 발생했습니다.";
+				document.querySelector(".payment-fail").style.display = "block";
+			}
+		}
+	} catch (error) {
+		console.error("결제 처리 오류:", error);
+		message.innerHTML = "결제 처리 중 오류가 발생했습니다.";
+		document.querySelector(".payment-fail").style.display = "block";
+	}
+}
 </script>
 
 <%-- <c:set var="pageJs" value="product" /> --%>

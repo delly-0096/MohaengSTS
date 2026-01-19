@@ -889,44 +889,36 @@ async function main() {
 	bookingForm.addEventListener("submit", async function(e){
 		e.preventDefault();
 
-		// 예약 정보
-		reservationList.push({
-			totalPrice : totalPrice,
-			memNo: "${tp.memNo}"
-		});
-		
-		sessionStorage.setItem("reservationList", JSON.stringify(reservationList));
-		
-	    
-	    // 필수 약관 체크 확인 - 이것도 테이블에 담기
-	    let allAgreed = true;
-	    document.querySelectorAll('.agree-item').forEach(function(agree) {
-	        if (!agree.checked) allAgreed = false;
-	    });
+	    // 투어 상품 결제 데이터
+	    const tourPaymentData = {
+	        memNo: ${member.memNo},
+	        usePoint: appliedPoints,
+	        tripProdList: [{
+	            tripProdNo: ${tp.tripProdNo},
+	            unitPrice: pricePerPerson,
+	            quantity: peopleCount,
+	            discountAmt: 0,
+	            payPrice: totalPrice,
+	            resvDt: document.getElementById('useDate').value,
+	            useTime: document.getElementById('useTime').value,
+	            rsvMemo: document.getElementById('requests').value
+	        }],
+	        mktAgreeYn: document.getElementById('agreeMarketing').checked ? 'Y' : null
+	    };
 
-	    if (!allAgreed) {
-	        showToast('필수 약관에 동의해주세요.', 'error');
-	        return;
-	    }
-	    
-	    const reserveAgree = {
-	    	mktRecvAgreeYn : (document.getElementById('agreeMarketing').checked) ? 'Y' : 'N' 
-	    }
-	    
-	    console.log("reserveAgree : ", reserveAgree);
-		sessionStorage.setItem("reserveAgree", JSON.stringify(reserveAgree));
+	    sessionStorage.setItem("tourPaymentData", JSON.stringify(tourPaymentData));
 		
 		const timeStamp = Date.now();
 		
 		await widgets.requestPayment({
-			orderId: "TOUR-" + ${tp.tripProdNo} + "-" + ${member.memNo} + "-" + timeStamp,			// 예약번호
+			orderId: "TOUR-" + ${tp.tripProdNo} + "-" + ${member.memNo} + "-" + timeStamp,			// 결제번호
 			orderName: "${tp.tripProdTitle}",
 			// paymentKey, paymentType, amount는 기본적으로 포함되어 있음
-			successUrl: window.location.origin + "/product/payment/flight",	// 성공 위치 - 리다이렉트로 이동
+			successUrl: window.location.origin + "/product/payment/tour",	// 성공 위치 - 리다이렉트로 이동
 			failUrl: window.location.origin + "/product/payment/error",		// 실패 위치 - 같은곳으로 보내자
-			customerEmail: "${member.memEmail}",								// 결제자 이메일
+			customerEmail: "${member.memEmail}",							// 결제자 이메일
 			customerName: "${member.memName}",								// 결제자 이름
-			customerMobilePhone: "${memUser.tel}"								// 결제자 전화번호
+			customerMobilePhone: "${memUser.tel}".replace(/-/g, '')			// 결제자 전화번호
 		});
 	});
 }

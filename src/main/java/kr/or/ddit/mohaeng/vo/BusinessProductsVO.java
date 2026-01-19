@@ -3,6 +3,8 @@ package kr.or.ddit.mohaeng.vo;
 import java.util.Date;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
+
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
 import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
@@ -24,7 +26,9 @@ public class BusinessProductsVO {
     private String approveStatus;    // 여행상품상태 (판매중, 판매중지)
     private String tripProdTitle;    // 상품제목
     private String tripProdContent;  // 상품 설명
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date saleStartDt;        // 상품판매시작일
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
     private Date saleEndDt;          // 상품판매종료일
     private Integer attachNo;        // 대표이미지 (첨부파일 고유아이디)
     private Integer viewCnt;         // 조회수
@@ -38,13 +42,15 @@ public class BusinessProductsVO {
     private Date delDt;              // 삭제일자
     private String ctyNm;            // 지역
     
+    // 대표 이미지
+    private String thumbImage;
+    
     // 1대1
     private TripProdSaleVO prodSale;		// 상품 판매 정보
 	private TripProdInfoVO prodInfo;		// 상품 이용 안내	-- 예약 가능시간이랑 1대1
 	private TripProdPlaceVO prodPlace;		// 상품 상세 주소		
 	private AccommodationVO accommodation;	// 숙소
 	private AccFacilityVO accFacility;		// 숙소 보유시설
-	
 	
 	// 1:n
 	private List<String> bookingTimes;					// jsp에서 받을 예약 가능 시간

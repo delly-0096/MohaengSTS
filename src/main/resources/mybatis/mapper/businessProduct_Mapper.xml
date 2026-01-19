@@ -225,6 +225,7 @@
 	   ORDER BY FILE_NO
 	</select>
 
+	<!-- update join은 오라클에서 불가 -->
 	<!-- 판매중인 상품, 상품 이용안내, 상품 가격, 상품 장소, 숙소 정보, 숙소 보유시설 정보 변경 -->
 	<!-- 숙소 정보, 숙소 보유시설은 나중에 변경 -->
 	<update id="modifyProduct" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
@@ -233,45 +234,45 @@
 	    INNER JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
 	    INNER JOIN TRIP_PROD_PLACE p ON t.TRIP_PROD_NO = p.TRIP_PROD_NO
 	    <set>
-		    t.PROD_CTGRY_TYPE = #{prodCtgryType}
-		    , t.APPROVE_STATUS = '판매중지'
+		    <if test="prodCtgryType != null and prodCtgryType != ''" >t.PROD_CTGRY_TYPE = #{prodCtgryType},</if>
+		    t.APPROVE_STATUS = '판매중지'
 		    , t.TRIP_PROD_TITLE = #{tripProdTitle}
 		    , t.TRIP_PROD_CONTENT = #{tripProdContent}
 		    , t.SALE_START_DT = #{saleStartDt}
 	        , t.SALE_END_DT = #{saleEndDt}
-		    <if test="attachNo != null" >, t.ATTACH_NO = #{attachNo}</if>
-		    , t.MOD_DT = sysdate
+		    <if test="attachNo != null and attachNo != ''" >, t.ATTACH_NO = #{attachNo}</if>
 		    , t.APRV_YN = 'N'
-		    , t.CTY_NM = #{ctyNm}
+		    <if test="attachNo != null and attachNo != ''" >, t.CTY_NM = #{ctyNm}</if>
 	        , t.MOD_DT = sysdate 
 			
-			, s.PRICE             = #{price}
-	        , s.NETPRC            = #{netprc}
-	        , s.DISCOUNT          = #{discount}
-	        , s.LEAD_TIME         = #{leadTime}
-	        , s.TOTAL_STOCK       = #{totalStock}
+			, s.PRICE             = #{prodSale.price}
+	        , s.NETPRC            = #{prodSale.netprc}
+	        , s.DISCOUNT          = #{prodSale.discount}
+	        , s.LEAD_TIME         = #{prodSale.leadTime}
+	        , s.TOTAL_STOCK       = #{prodSale.totalStock}
 	        
-	        , i.PROD_RUNTIME      = #{prodRuntime}
-	        , i.PROD_DURATION     = #{prodDuration}
-	        , i.PROD_MIN_PEOPLE   = #{prodMinPeople}
-	        , i.PROD_MAX_PEOPLE   = #{prodMaxPeople}
-	        , i.PROD_LIM_AGE      = #{prodLimAge}
-	        , i.PROD_INCLUDE	  = #{prodInclude}
-		    , i.PROD_EXCLUDE      = #{prodExclude}
-		    , i.PROD_NOTICE		  = #{prodNotice}
+	        , i.PROD_RUNTIME      = #{prodInfo.prodRuntime}
+	        , i.PROD_DURATION     = #{prodInfo.prodDuration}
+	        , i.PROD_MIN_PEOPLE   = #{prodInfo.prodMinPeople}
+	        , i.PROD_MAX_PEOPLE   = #{prodInfo.prodMaxPeople}
+	        , i.PROD_LIM_AGE      = #{prodInfo.prodLimAge}
+	        , i.PROD_INCLUDE	  = #{prodInfo.prodInclude}
+		    , i.PROD_EXCLUDE      = #{prodInfo.prodExclude}
+		    , i.PROD_NOTICE		  = #{prodInfo.prodNotice}
 		    
-	        , p.ADDR1             = #{addr1}
-	        , p.ADDR2             = #{addr2}
+	        , p.ADDR1             = #{prodPlace.addr1}
+	        , p.ADDR2             = #{prodPlace.addr2}
 	    </set>
 	    WHERE t.TRIP_PROD_NO = #{tripProdNo}
 	</update>
 	
-	<!--  -->
+	<!-- 예약 가능 시간 삭제 -->
 	<delete id="deleteProdTimeInfo" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
 		DELETE FROM PROD_TIME_INFO 
      	 WHERE TRIP_PROD_NO = #{tripProdNo}
 	</delete>
 	
+	<!-- 예약 가능 시간 추가(수정, 등록 같이 사용) -->
 	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
 		INSERT INTO PROD_TIME_INFO (
 	          TIME_INFO_NO

@@ -69,9 +69,6 @@ public class BusinessProductController {
 	private IProdTimeInfoService timeInfoService;
 	
 	@Autowired
-	private IMemberService memberService;
-	
-	@Autowired
 	private IBusinessProductService businessService;
 	
 	/**
@@ -232,7 +229,7 @@ public class BusinessProductController {
 	 */
 	@ResponseBody
 	@PostMapping("/business/product/editProduct")
-	public ResponseEntity<String> editProduct(@RequestBody BusinessProductsVO businessProducts){
+	public ResponseEntity<String> editProduct(BusinessProductsVO businessProducts){
 		log.info("editProduct : {}", businessProducts);
 		 
 		ServiceResult result = businessService.modifyProduct(businessProducts);

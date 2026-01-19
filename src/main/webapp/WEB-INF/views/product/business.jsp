@@ -242,6 +242,7 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="productModalTitle">새 상품 등록</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <input type="hidden" name="tripProdNo"/>
             </div>
             <div class="modal-body">
                 <form id="productForm">
@@ -332,76 +333,76 @@
 
                     <!-- 이용 안내 섹션 (기본 상품용) -->
                     <div id="defaultInfoSection">
-                    <div class="form-section-title">
-                        <i class="bi bi-info-circle me-2"></i>이용 안내
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">운영 시간 <span class="text-danger">*</span></label>
-<!--                             <input type="time" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required> -->
-							<!-- text를 time으로 변경해서 해볼지?? -->
-                            <input type="text" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">소요 시간 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="prodInfo.prodDuration" placeholder="예: 약 2시간 (실제 체험 40분)" required>
-                            <div class="form-text">고객에게 보여질 상세 소요시간을 입력하세요</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">연령 제한</label>
-                            <input type="text" class="form-control" name="prodInfo.prodLimAge" placeholder="예: 만 10세 이상">
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">최소 인원</label>
-                            <input type="number" class="form-control" name="prodInfo.prodMinPeople" placeholder="1" min="1" value="1">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">최대 인원</label>
-                            <input type="number" class="form-control" name="prodInfo.prodMaxPeople" placeholder="10" min="1">
-                        </div>
-                    </div>
-
-                    <!-- 예약 가능 시간 설정 -->
-                    <div class="mb-3">
-                        <label class="form-label">예약 가능 시간 <span class="text-danger">*</span></label>
-                        <div class="form-text mb-2">고객이 선택할 수 있는 예약 시간대를 설정하세요</div>
-                        <div class="booking-times-container" id="bookingTimesContainer">
-                            <div class="booking-time-list" id="bookingTimeList">
-                                <!-- 동적으로 시간 슬롯 추가 -->
-                            </div>
-                            <div class="booking-time-add">
-                                <div class="input-group">
-                                    <input type="time" class="form-control" id="newBookingTime"><!--  -->
-                                    <button type="button" class="btn btn-outline" onclick="addBookingTime()">
-                                        <i class="bi bi-plus-lg"></i> 시간 추가
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="booking-time-presets mt-2">
-                                <span class="text-muted small me-2">빠른 추가:</span>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('morning')">오전 타임</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('afternoon')">오후 타임</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('hourly')">1시간 단위</button>
-                            </div>
-                        </div>
-                        <input type="hidden" name="bookingTimes" id="bookingTimesInput">	<!-- 시간 정보 저장 -->
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">포함 사항</label>
-                            <textarea class="form-control" name="prodInfo.prodInclude" rows="3" placeholder="포함되는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;전문 강사 1:1 지도&#10;장비 대여&#10;수중 사진 촬영"></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">불포함 사항</label>
-                            <textarea class="form-control" name="prodInfo.prodExclude" rows="3" placeholder="포함되지 않는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;픽업/샌딩 서비스&#10;개인 물품"></textarea>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">유의 사항</label>
-                        <textarea class="form-control" name="prodInfo.prodNotice" rows="3" placeholder="예약 및 이용 시 유의해야 할 사항을 입력하세요"></textarea>
-                    </div>
+	                    <div class="form-section-title">
+	                        <i class="bi bi-info-circle me-2"></i>이용 안내
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-4">
+	                            <label class="form-label">운영 시간 <span class="text-danger">*</span></label>
+	<!--                             <input type="time" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required> -->
+								<!-- text를 time으로 변경해서 해볼지?? -->
+	                            <input type="text" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required>
+	                        </div>
+	                        <div class="col-md-4">
+	                            <label class="form-label">소요 시간 <span class="text-danger">*</span></label>
+	                            <input type="text" class="form-control" name="prodInfo.prodDuration" placeholder="예: 약 2시간 (실제 체험 40분)" required>
+	                            <div class="form-text">고객에게 보여질 상세 소요시간을 입력하세요</div>
+	                        </div>
+	                        <div class="col-md-4">
+	                            <label class="form-label">연령 제한</label>
+	                            <input type="text" class="form-control" name="prodInfo.prodLimAge" placeholder="예: 만 10세 이상">
+	                        </div>
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-4">
+	                            <label class="form-label">최소 인원</label>
+	                            <input type="number" class="form-control" name="prodInfo.prodMinPeople" placeholder="1" min="1" value="1">
+	                        </div>
+	                        <div class="col-md-4">
+	                            <label class="form-label">최대 인원</label>
+	                            <input type="number" class="form-control" name="prodInfo.prodMaxPeople" placeholder="10" min="1">
+	                        </div>
+	                    </div>
+	
+	                    <!-- 예약 가능 시간 설정 -->
+	                    <div class="mb-3">
+	                        <label class="form-label">예약 가능 시간 <span class="text-danger">*</span></label>
+	                        <div class="form-text mb-2">고객이 선택할 수 있는 예약 시간대를 설정하세요</div>
+	                        <div class="booking-times-container" id="bookingTimesContainer">
+	                            <div class="booking-time-list" id="bookingTimeList">
+	                                <!-- 동적으로 시간 슬롯 추가 -->
+	                            </div>
+	                            <div class="booking-time-add">
+	                                <div class="input-group">
+	                                    <input type="time" class="form-control" id="newBookingTime"><!--  -->
+	                                    <button type="button" class="btn btn-outline" onclick="addBookingTime()">
+	                                        <i class="bi bi-plus-lg"></i> 시간 추가
+	                                    </button>
+	                                </div>
+	                            </div>
+	                            <div class="booking-time-presets mt-2">
+	                                <span class="text-muted small me-2">빠른 추가:</span>
+	                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('morning')">오전 타임</button>
+	                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('afternoon')">오후 타임</button>
+	                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('hourly')">1시간 단위</button>
+	                            </div>
+	                        </div>
+	                        <input type="hidden" name="bookingTimes" id="bookingTimesInput">	<!-- 시간 정보 저장 -->
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-6">
+	                            <label class="form-label">포함 사항</label>
+	                            <textarea class="form-control" name="prodInfo.prodInclude" rows="3" placeholder="포함되는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;전문 강사 1:1 지도&#10;장비 대여&#10;수중 사진 촬영"></textarea>
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label">불포함 사항</label>
+	                            <textarea class="form-control" name="prodInfo.prodExclude" rows="3" placeholder="포함되지 않는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;픽업/샌딩 서비스&#10;개인 물품"></textarea>
+	                        </div>
+	                    </div>
+	                    <div class="mb-3">
+	                        <label class="form-label">유의 사항</label>
+	                        <textarea class="form-control" name="prodInfo.prodNotice" rows="3" placeholder="예약 및 이용 시 유의해야 할 사항을 입력하세요"></textarea>
+	                    </div>
                     </div><!-- /defaultInfoSection -->
 
 
@@ -716,60 +717,61 @@
 
                     <!-- 가격 정보 섹션 (기본 상품용) -->
                     <div id="defaultPriceSection">
-                    <div class="form-section-title">
-                        <i class="bi bi-currency-dollar me-2"></i>가격 및 재고 정보
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label class="form-label">정가</label>
-                            <input type="number" class="form-control" name="prodSale.netprc" placeholder="0">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">판매가 <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="prodSale.price" placeholder="0" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">할인율</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="prodSale.discount" placeholder="0" max="100">
-                                <span class="input-group-text">%</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                        <!-- 전체? 현재? -->
-                            <label class="form-label">재고 수량 <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="prodSale.totalStock" placeholder="0" min="0" required>
-                                <span class="input-group-text">개</span>
-                            </div>
-                        </div>
-                        <!-- 전체? 현재? -->
-                        <!-- style="display:none;" -->
-                        <div class="col-md-3 curStock" >
-                            <label class="form-label">현재 수량 <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="prodSale.curStock" placeholder="0" min="0" readonly required>
-                                <span class="input-group-text">개</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control date-picker" name="saleStartDt" placeholder="시작일 선택" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">상품 이미지</label>
-                        <!--  multipart, 선택한 이미지 보여주기. attachNo에 맞는게 대표이미지. 이거에 뭔가 걸어야겠다. -->
-                        <input type="file" class="form-control" name="productImage" accept="image/*"  onchange="renderImageList(this)" multiple="multiple"/>
-                        <div class="productImageList"></div>
-                        <div class="form-text">권장 크기: 800x600px, 최대 5MB</div>
-                    </div>
+	                    <div class="form-section-title">
+	                        <i class="bi bi-currency-dollar me-2"></i>가격 및 재고 정보
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-3">
+	                            <label class="form-label">정가</label>
+	                            <input type="number" class="form-control" name="prodSale.netprc" placeholder="0">
+	                        </div>
+	                        <div class="col-md-3">
+	                            <label class="form-label">판매가 <span class="text-danger">*</span></label>
+	                            <input type="number" class="form-control" name="prodSale.price" placeholder="0" required>
+	                        </div>
+	                        <div class="col-md-3">
+	                            <label class="form-label">할인율</label>
+	                            <div class="input-group">
+	                                <input type="number" class="form-control" name="prodSale.discount" placeholder="0" max="100">
+	                                <span class="input-group-text">%</span>
+	                            </div>
+	                        </div>
+	                        <div class="col-md-3">
+	                        <!-- 전체? 현재? -->
+	                            <label class="form-label">재고 수량 <span class="text-danger">*</span></label>
+	                            <div class="input-group">
+	                                <input type="number" class="form-control" name="prodSale.totalStock" placeholder="0" min="0" required>
+	                                <span class="input-group-text">개</span>
+	                            </div>
+	                        </div>
+	                        <!-- 전체? 현재? -->
+	                        <!-- style="display:none;" -->
+	                        <div class="col-md-3 curStock" >
+	                            <label class="form-label">현재 수량 <span class="text-danger">*</span></label>
+	                            <div class="input-group">
+	                                <input type="number" class="form-control" name="prodSale.curStock" placeholder="0" min="0" readonly required>
+	                                <span class="input-group-text">개</span>
+	                            </div>
+	                        </div>
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-6">
+	                            <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
+	                            <input type="text" class="form-control date-picker" name="saleStartDt" placeholder="시작일 선택" required>
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
+	                            <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택" required>
+	                        </div>
+	                    </div>
+	                    <div class="mb-3">
+	                        <label class="form-label">상품 이미지</label>
+	                        <!--  multipart, 선택한 이미지 보여주기. attachNo에 맞는게 대표이미지. 이거에 뭔가 걸어야겠다. -->
+	                        <input type="file" class="form-control" name="productImage" accept="image/*"  onchange="renderImageList(this)" multiple/>
+	                        <input type="hidden" name="image.attachNo" /><!-- 상품 이미지 -->
+	                        <div class="productImageList"></div>
+	                        <div class="form-text">권장 크기: 800x600px, 최대 5MB</div>
+	                    </div>
                     </div><!-- /defaultPriceSection -->
 
                     <!-- 공통 판매 기간 (숙박용) -->
@@ -790,6 +792,7 @@
                         <div class="mb-3" id="accomImageField">
                             <label class="form-label">상품 이미지</label>
                             <input type="file" class="form-control" name="productImageAlt" accept="image/*" multiple>
+                            <!--  숙소 이미지 -->
                             <div class="form-text" id="imageList">숙소 대표 이미지를 등록하세요 (최대 5장)</div>
                         </div>
                     </div>
@@ -797,8 +800,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
-                <button type="button" class="btn btn-primary register" onclick="saveProduct(this)">등록</button>
-                <button type="button" class="btn btn-primary edit" onclick="saveProduct()" style="display: none;">수정</button>
+                <button type="button" class="btn btn-primary" id="register" onclick="saveProduct(this)">등록</button>
+                <button type="button" class="btn btn-primary" id="update" onclick="saveProduct(this)" style="display: none;">수정</button>
             </div>
         </div>
     </div>
@@ -856,7 +859,11 @@ $(document).ready(function() {
 // 새 상품 등록 모달 설정
 function setModalForNew() {
     document.getElementById('productModalTitle').textContent = '새 상품 등록';
+	document.querySelector("#register").style.display = "block";
+	document.querySelector("#update").style.display = "none";
+	
     document.getElementById('productForm').reset();
+    
     if (startDatePicker) startDatePicker.clear();
     if (endDatePicker) {
         endDatePicker.clear();
@@ -895,8 +902,12 @@ async function editProduct(prodData) {
         	renderImageList();
         }
 		renderProductData(prodData);
-        document.getElementById('productModalTitle').textContent = '상품 수정';
 		
+        document.getElementById('productModalTitle').textContent = '상품 수정';
+		document.querySelector("#update").style.display = "block";
+		document.querySelector("#register").style.display = "none";
+		// update/register
+        
         setTimeout(() => {modal.show()}, 300);
     } catch (error) {
         console.error("데이터 로드 중 error 발생: ", error);
@@ -965,13 +976,25 @@ function renderProductData(prodData, prefix = ""){
 
 // 상품 저장 - insert / update(문구에 따라서)
 // function registerProduct() {
-function saveProduct(data) {
+async function saveProduct(data) {
     // TODO: 상품 저장 API 호출
     console.log("svae data : ", data.innerText);	// 이거에 따른 등록 수정 여부
-	showToast('상품이 저장되었습니다.', 'success');
+    
+    const form = document.getElementById('productForm');
+    // 1. FormData 객체 생성 (기본 텍스트 데이터 자동 포함)
+    const formData = new FormData(form);	// key value 구조
+
+    if(data.innerText === "수정"){
+		const res = await axios.post(`/business/product/editProduct`, formData);
+   		console.log("saveProduct res.data : " + res.data);
+   		
+    } else{
+    	console.log("등록하나요?")
+    }
     // insert문 
     if (modal) modal.hide();
 }
+
 
 // 상품 상태 변경 - update
 function toggleProductStatus(prodData) {

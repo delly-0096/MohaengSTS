@@ -76,7 +76,6 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 		productstatus = businessMapper.modifyProduct(businessProducts);
 		log.info("productstatus : {}", productstatus);
 		
-		
 		// 예약가능시간(예약 가능 시간)
 		int productTimetatus = 0;	
 		productTimetatus = businessMapper.deleteProdTimeInfo(businessProducts);

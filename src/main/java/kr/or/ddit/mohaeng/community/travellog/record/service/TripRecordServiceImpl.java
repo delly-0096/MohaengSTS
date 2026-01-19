@@ -29,11 +29,73 @@ public class TripRecordServiceImpl implements ITripRecordService {
     private final IAttachService attachService;
 
     
+	/*
+	 * @Override public PagedResponse<TripRecordListVO> list(int page, int size,
+	 * String keyword, String openScopeCd, Long loginMemNo) { int safePage =
+	 * Math.max(page, 1); int safeSize = Math.min(Math.max(size, 1), 50); int offset
+	 * = (safePage - 1) * safeSize;
+	 * 
+	 * Map<String, Object> param = new HashMap<>(); param.put("keyword", keyword);
+	 * param.put("openScopeCd", openScopeCd); param.put("loginMemNo", loginMemNo);
+	 * param.put("offset", offset); param.put("size", safeSize);
+	 * 
+	 * long total = mapper.selectTripRecordListCount(param); List<TripRecordListVO>
+	 * list = mapper.selectTripRecordList(param);
+	 * 
+	 * int totalPages = (int) Math.ceil((double) total / safeSize); return new
+	 * PagedResponse<>(list, total, safePage, safeSize, totalPages); }
+	 */
+    
+	/*
+	 * @Override public PagedResponse<TripRecordListVO> list( int page, int size,
+	 * String keyword, String openScopeCd, String filter, Long loginMemNo ) { // ✅
+	 * 기본값/범위 보정 if (page < 1) page = 1; if (size < 1) size = 12; if (size > 50)
+	 * size = 50;
+	 * 
+	 * // ✅ filter 정규화 filter = normalizeFilter(filter);
+	 * 
+	 * // ✅ my-spot은 로그인 없으면 빈 결과(정책) if ("my-spot".equals(filter) && loginMemNo ==
+	 * null) { return emptyPaged(page, size); }
+	 * 
+	 * int offset = (page - 1) * size;
+	 * 
+	 * java.util.Map<String, Object> param = new java.util.HashMap<>();
+	 * param.put("page", page); param.put("size", size); param.put("offset",
+	 * offset);
+	 * 
+	 * param.put("keyword", keyword); param.put("openScopeCd", openScopeCd);
+	 * param.put("loginMemNo", loginMemNo);
+	 * 
+	 * // ✅ 추가된 필터 param.put("filter", filter);
+	 * 
+	 * long total = mapper.selectTripRecordListCount(param);
+	 * 
+	 * java.util.List<TripRecordListVO> content = (total > 0) ?
+	 * mapper.selectTripRecordList(param) : java.util.List.of();
+	 * 
+	 * return new PagedResponse<>(page, size, total, content); }
+	 */
+    
     @Override
-    public PagedResponse<TripRecordListVO> list(int page, int size, String keyword, String openScopeCd, Long loginMemNo) {
+    public PagedResponse<TripRecordListVO> list(
+            int page,
+            int size,
+            String keyword,
+            String openScopeCd,
+            String filter,
+            Long loginMemNo
+    ) {
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 50);
         int offset = (safePage - 1) * safeSize;
+
+        // ✅ filter 정규화
+        filter = normalizeFilter(filter);
+
+        // ✅ my-spot은 로그인 없으면 빈 결과
+        if ("my-spot".equals(filter) && loginMemNo == null) {
+            return new PagedResponse<>(List.of(), 0L, safePage, safeSize, 0);
+        }
 
         Map<String, Object> param = new HashMap<>();
         param.put("keyword", keyword);
@@ -42,12 +104,37 @@ public class TripRecordServiceImpl implements ITripRecordService {
         param.put("offset", offset);
         param.put("size", safeSize);
 
+        // ✅ 추가된 필터
+        param.put("filter", filter);
+
         long total = mapper.selectTripRecordListCount(param);
-        List<TripRecordListVO> list = mapper.selectTripRecordList(param);
+        List<TripRecordListVO> list = (total > 0) ? mapper.selectTripRecordList(param) : List.of();
 
         int totalPages = (int) Math.ceil((double) total / safeSize);
+
+        // ✅ 너 프로젝트 PagedResponse 생성자에 맞춘 형태
         return new PagedResponse<>(list, total, safePage, safeSize, totalPages);
     }
+
+
+    // ====== 아래 유틸 메소드 2개 추가 ======
+    private String normalizeFilter(String filter) {
+        if (filter == null || filter.isBlank()) return "all";
+        switch (filter) {
+            case "all":
+            case "popular-spot":
+            case "my-spot":
+                return filter;
+            default:
+                return "all";
+        }
+    }
+
+	/*
+	 * private PagedResponse<TripRecordListVO> emptyPaged(int page, int size) {
+	 * return new PagedResponse<>(page, size, 0L, java.util.List.of()); }
+	 */
+
 
     @Override
     @Transactional
@@ -84,11 +171,10 @@ public class TripRecordServiceImpl implements ITripRecordService {
         System.out.println("[DEBUG] rcdNo=" + rcdNo + ", tags=" + tags);
 
         List<String> cleaned = java.util.Collections.emptyList();
-
         if (tags != null && !tags.isEmpty()) {
             cleaned = tags.stream()
                 .filter(t -> t != null && !t.trim().isEmpty())
-                .map(t -> t.trim().replace("#", ""))  // # 제거
+                .map(t -> t.trim().replace("#", ""))
                 .distinct()
                 .toList();
         }
@@ -96,8 +182,10 @@ public class TripRecordServiceImpl implements ITripRecordService {
         System.out.println("[DEBUG] cleaned=" + cleaned);
 
         if (!cleaned.isEmpty()) {
-            mapper.insertHashtags(rcdNo, cleaned);
+        	String tagText = String.join(",", cleaned); // ✅ 표시용 저장
+            mapper.upsertHashtagText(rcdNo, tagText);
         }
+
 
 
         return rcdNo;
@@ -279,6 +367,14 @@ public class TripRecordServiceImpl implements ITripRecordService {
 
                 // ✅ 핵심: targetPk는 "connNo 문자열"로 저장 (PK 못 받아도 됨)
                 String targetPk = String.valueOf(connNo);
+                
+                if ("text".equals(type)) {
+                    String content = b.getContent();
+                    if (content == null || content.trim().isEmpty()) {
+                        // 파일도 없고(텍스트용), 내용도 없으면 그냥 스킵
+                        continue;
+                    }
+                }
 
                 switch (type) {
                     case "image": {
@@ -309,13 +405,9 @@ public class TripRecordServiceImpl implements ITripRecordService {
                     }
 
                     case "day-header": {
-                        // day-header는 TEXT로 저장(빠른 방식)
-                        String day = (b.getDay() == null) ? "" : b.getDay().trim();
-                        String date = (b.getDate() == null) ? "" : b.getDate().trim();
-                        String text = (day + " " + date).trim();
-
+                        String json = writeJsonSafe(b);
                         mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
-                        mapper.insertTripRecordTxt(connNo, text);
+                        mapper.insertTripRecordTxt(connNo, json);
                         break;
                     }
 
@@ -329,9 +421,14 @@ public class TripRecordServiceImpl implements ITripRecordService {
 
                     case "text":
                     default: {
-                        String text = (b.getContent() == null) ? "" : b.getContent();
+                        String text = (b.getContent() == null) ? "" : b.getContent().trim();
+
+                        // ✅ content가 비어있으면(=일정 불러오기 블록이거나 구조형 블록일 가능성)
+                        // 원본 형태 유지 위해 JSON으로 저장
+                        String toSave = text.isEmpty() ? writeJsonSafe(b) : text;
+
                         mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
-                        mapper.insertTripRecordTxt(connNo, text);
+                        mapper.insertTripRecordTxt(connNo, toSave);
                         break;
                     }
                 }
@@ -347,7 +444,10 @@ public class TripRecordServiceImpl implements ITripRecordService {
                     .distinct()
                     .toList();
 
-            if (!cleaned.isEmpty()) mapper.insertHashtags(rcdNo, cleaned);
+            if (!cleaned.isEmpty()) {
+            	String tagText = String.join(",", cleaned);
+                mapper.upsertHashtagText(rcdNo, tagText);
+            }
         }
 
         return rcdNo;

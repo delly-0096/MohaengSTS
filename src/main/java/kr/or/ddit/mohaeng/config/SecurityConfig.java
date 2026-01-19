@@ -234,6 +234,7 @@ public class SecurityConfig {
          )
         .formLogin(form -> form.disable())
         .httpBasic(hbasic -> hbasic.disable());
+	    http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
     http.exceptionHandling(exception ->
         exception.accessDeniedHandler(new CustomAccessDeniedHandler())

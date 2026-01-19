@@ -39,6 +39,12 @@ public class TripScheduleVO {
 	private List<String> displayPlaceNames;
 	private String thumbnail;
 	
+	private Long rgnNo;
+	private Long rgnNm;
+	
+	
+	public Long getRgnNo() { return rgnNo; }
+	public void setRgnNo(Long rgnNo) { this.rgnNo = rgnNo; }
 	/***
 	 * 관리자에서 사용됨
 	 */

@@ -2300,6 +2300,10 @@
     color: white;
 }
 
+.schedule-modal-badge.ongoing {
+  background: #10b981;
+  color: #ffffff;
+}
 .schedule-modal-info {
     flex: 1;
     min-width: 0;

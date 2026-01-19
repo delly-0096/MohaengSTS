@@ -1011,6 +1011,17 @@
 								<c:out value="${detail.openScopeCd}" />
 							</span>
 						</c:if>
+						<c:if test="${not empty detail.tagName}">
+							<div class="meta-tags">
+								<i class="bi bi-hash"></i>
+
+								<c:forEach var="t" items="${fn:split(detail.tagName, ',')}">
+									<c:if test="${not empty t}">
+										<span class="tag-pill">#<c:out value="${t}" /></span>
+									</c:if>
+								</c:forEach>
+							</div>
+						</c:if>
 					</div>
 
 					<!-- 본문 -->
@@ -1587,6 +1598,16 @@ async function loadComments(rcdNo) {
 
 	  // ===== 댓글 렌더 =====
 	  function renderOneComment(c, rcdNo, isReply) {
+		  
+		// ===== 작성자 표시: 닉네임(아이디) =====
+		  const nick = (c.nickname || '').trim();
+		  const id   = (c.writerId || '').trim();
+
+		  let authorText = 'unknown';
+		  if (nick && id) authorText = nick + '(' + id + ')';
+		  else if (nick) authorText = nick;
+		  else if (id) authorText = id;
+		  
 	    const contentRaw = (c.cmntContent ?? '');
 
 	    const cmntNo = getNo(c);
@@ -1613,16 +1634,16 @@ async function loadComments(rcdNo) {
 	      (c.profilePath && String(c.profilePath).trim() !== '' && String(c.profilePath).trim() !== 'null');
 
 	    const profilePath = hasProfile ? String(c.profilePath).trim() : '';
-// 	    const normalized = (profilePath && profilePath.startsWith('/')) ? profilePath : ('/' + profilePath);
-// 	    const avatar = hasProfile ? (CTX + '/files' + normalized) : DEFAULT_AVATAR;
-// const avatar = hasProfile ? (CTX + '/upload' + normalized) : DEFAULT_AVATAR;
-
-let normalized = profilePath.startsWith('/') ? profilePath : ('/' + profilePath);
-
-// 이미 /upload 로 시작하면 그대로 사용
-const avatar = hasProfile
-  ? (normalized.startsWith('/upload') ? (CTX + normalized) : (CTX + '/upload' + normalized))
-  : DEFAULT_AVATAR;
+		// 	    const normalized = (profilePath && profilePath.startsWith('/')) ? profilePath : ('/' + profilePath);
+		// 	    const avatar = hasProfile ? (CTX + '/files' + normalized) : DEFAULT_AVATAR;
+		// const avatar = hasProfile ? (CTX + '/upload' + normalized) : DEFAULT_AVATAR;
+		
+		let normalized = profilePath.startsWith('/') ? profilePath : ('/' + profilePath);
+		
+		// 이미 /upload 로 시작하면 그대로 사용
+		const avatar = hasProfile
+		  ? (normalized.startsWith('/upload') ? (CTX + normalized) : (CTX + '/upload' + normalized))
+		  : DEFAULT_AVATAR;
 
 	    // ===== 버튼들 =====
 	    const iconCls = myLiked ? 'bi-heart-fill' : 'bi-heart';
@@ -1675,8 +1696,8 @@ const avatar = hasProfile
 	        'onerror="this.onerror=null;this.src=\'' + DEFAULT_AVATAR + '\';" />' +
 	      '<div class="detail-comment-content">' +
 	        '<div class="detail-comment-header">' +
-	          '<span class="detail-comment-author">' + (c.nickname || c.writerId || 'unknown') + '</span>' +
-	          '<span class="detail-comment-time">' + formatCommentDt(c.regDt || c.reg_dt) + '</span>' +
+	        '<span class="detail-comment-author">' + escapeHtml(authorText) + '</span>' +
+	        '<span class="detail-comment-time">' + formatCommentDt(c.regDt || c.reg_dt) + '</span>' +
 	        '</div>' +
 	        '<p class="detail-comment-text">' + contentHtml + '</p>' +
 	        '<div class="detail-comment-actions">' +
@@ -1741,7 +1762,7 @@ const avatar = hasProfile
 
 	    wrap.appendChild(group);
 	  });
-	}
+}
 
 
 
@@ -1755,7 +1776,7 @@ function toggleReplyBox(cmntNo) {
 	  if (!box) return;
 
 	  box.style.display = (box.style.display === "none" ? "block" : "none");
-	}
+}
 
 
 async function submitComment(rcdNo) {

@@ -1,6 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <c:set var="pageTitle" value="여행기록 작성" />
 <c:set var="pageCss" value="community" />
@@ -201,7 +202,7 @@
                         <div class="setting-input-area" id="tagInputArea">
                             <input type="text" class="form-control" id="tagInput" placeholder="태그 입력 후 Enter" onkeypress="addTag(event)">
                             <div class="tag-list" id="tagList"></div>
-                            <div class="popular-tags">
+                            <!-- <div class="popular-tags">
                                 <span class="popular-tag-label">인기 태그</span>
                                 <div class="popular-tag-list">
                                     <span class="popular-tag" onclick="addPopularTag('여행스타그램')">#여행스타그램</span>
@@ -211,7 +212,7 @@
                                     <span class="popular-tag" onclick="addPopularTag('여행사진')">#여행사진</span>
                                     <span class="popular-tag" onclick="addPopularTag('힐링여행')">#힐링여행</span>
                                 </div>
-                            </div>
+                            </div> -->
                         </div>
                     </div>
 
@@ -278,95 +279,142 @@
             <div class="modal-body">
                 <!-- 필터 탭 -->
                 <div class="schedule-modal-tabs">
-                    <button class="schedule-modal-tab active" data-filter="all" onclick="filterScheduleModal('all')">전체</button>
-                    <button class="schedule-modal-tab" data-filter="completed" onclick="filterScheduleModal('completed')">완료된 여행</button>
-                    <button class="schedule-modal-tab" data-filter="upcoming" onclick="filterScheduleModal('upcoming')">예정된 여행</button>
-                </div>
+				  <button class="schedule-modal-tab active" data-filter="all" onclick="filterScheduleModal('all')">전체</button>
+				  <button class="schedule-modal-tab" data-filter="completed" onclick="filterScheduleModal('completed')">완료된 여행</button>
+				  <button class="schedule-modal-tab" data-filter="ongoing" onclick="filterScheduleModal('ongoing')">진행중</button>
+				  <button class="schedule-modal-tab" data-filter="upcoming" onclick="filterScheduleModal('upcoming')">예정된 여행</button>
+				</div>
 
                 <!-- 일정 목록 -->
-                <div class="schedule-modal-list" id="scheduleModalList">
-                    <!-- 완료된 여행 - 제주도 (상세 일정 포함) -->
-                    <div class="schedule-modal-item" data-status="completed" data-schedule-id="1">
-                        <div class="schedule-modal-image">
-                            <img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=120&h=90&fit=crop&q=80" alt="제주도">
-                            <span class="schedule-modal-badge completed">완료</span>
-                        </div>
-                        <div class="schedule-modal-info">
-                            <h4>제주도 힐링 여행</h4>
-                            <div class="schedule-modal-meta">
-                                <span><i class="bi bi-calendar3"></i> 2024.03.15 - 2024.03.18</span>
-                                <span><i class="bi bi-geo-alt"></i> 제주도</span>
-                            </div>
-                            <div class="schedule-modal-places">
-                                <span class="place-chip">성산일출봉</span>
-                                <span class="place-chip">우도</span>
-                                <span class="place-chip">협재해수욕장</span>
-                                <span class="place-chip more">+2</span>
-                            </div>
-                        </div>
-                        <div class="schedule-modal-select">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                    </div>
+				<div class="schedule-modal-list" id="scheduleModalList">
 
-                    <!-- 완료된 여행 - 부산 -->
-                    <div class="schedule-modal-item" data-status="completed" data-schedule-id="2">
-                        <div class="schedule-modal-image">
-                            <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=120&h=90&fit=crop&q=80" alt="부산">
-                            <span class="schedule-modal-badge completed">완료</span>
-                        </div>
-                        <div class="schedule-modal-info">
-                            <h4>부산 휴양 여행</h4>
-                            <div class="schedule-modal-meta">
-                                <span><i class="bi bi-calendar3"></i> 2024.01.10 - 2024.01.14</span>
-                                <span><i class="bi bi-geo-alt"></i> 부산</span>
-                            </div>
-                            <div class="schedule-modal-places">
-                                <span class="place-chip">해운대</span>
-                                <span class="place-chip">광안리</span>
-                                <span class="place-chip">감천문화마을</span>
-                            </div>
-                        </div>
-                        <div class="schedule-modal-select">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                    </div>
+					<c:choose>
+						<c:when test="${empty scheduleList}">
+							<div class="schedule-modal-empty" id="scheduleModalEmpty">
+								<i class="bi bi-calendar-x"></i>
+								<p>저장된 일정이 없습니다</p>
+							</div>
+						</c:when>
 
-                    <!-- 예정된 여행 - 강릉 -->
-                    <div class="schedule-modal-item" data-status="upcoming" data-schedule-id="3">
-                        <div class="schedule-modal-image">
-                            <img src="https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=120&h=90&fit=crop&q=80" alt="강릉">
-                            <span class="schedule-modal-badge upcoming">D-21</span>
-                        </div>
-                        <div class="schedule-modal-info">
-                            <h4>강릉 맛집 투어</h4>
-                            <div class="schedule-modal-meta">
-                                <span><i class="bi bi-calendar3"></i> 2024.04.05 - 2024.04.08</span>
-                                <span><i class="bi bi-geo-alt"></i> 강릉</span>
-                            </div>
-                            <div class="schedule-modal-places">
-                                <span class="place-chip">정동진</span>
-                                <span class="place-chip">경포대</span>
-                                <span class="place-chip">주문진</span>
-                            </div>
-                        </div>
-                        <div class="schedule-modal-select">
-                            <i class="bi bi-check-circle"></i>
-                        </div>
-                    </div>
+						<c:otherwise>
+							<c:forEach var="s" items="${scheduleList}">
+								<%-- 상태: schdlStatus가 완료/예정 값이 뭐로 오는지 몰라서 일단 D-Day로 판단 --%>
+								<c:set var="dday" value="${s.DDay}" />
+								<c:set var="dur" value="${s.tripDuration}" />
+								<c:set var="endDiff" value="${dday + dur}" />  <%-- ✅ 종료일까지 남은 일수 --%>
+								
+								<c:set var="status" value="${dday gt 0 ? 'upcoming' : (endDiff lt 0 ? 'completed' : 'ongoing')}" />
+								
+								<c:set var="scheduleThumb">
+								  <c:choose>
+								    <c:when test="${not empty s.attachFile and not empty s.attachFile.filePath}">
+								      ${pageContext.request.contextPath}/file/searchthumbnail?path=${s.attachFile.filePath}
+								    </c:when>
+								    <c:when test="${not empty s.linkThumbnail}">
+								      ${s.linkThumbnail}
+								    </c:when>
+								    <c:otherwise></c:otherwise>
+								  </c:choose>
+								</c:set>
+								
+								<div class="schedule-modal-item" 
+									data-status="${status}"
+									data-schedule-no="${s.schdlNo}"
+									data-title="${fn:escapeXml(s.schdlNm)}"
+									data-start="${s.schdlStartDt}" data-end="${s.schdlEndDt}"
+									data-location="${fn:escapeXml(s.rgnNm)}"
+									data-thumbnail="${fn:escapeXml(s.thumbnail)}"
+									data-link-thumbnail="${fn:escapeXml(s.linkThumbnail)}"
+									data-location-code="${s.rgnNo}">
+									
 
-                    <!-- 빈 상태 -->
-                    <div class="schedule-modal-empty" id="scheduleModalEmpty" style="display: none;">
-                        <i class="bi bi-calendar-x"></i>
-                        <p>해당하는 일정이 없습니다</p>
-                    </div>
-                </div>
-            </div>
+									<div class="schedule-modal-image">
+										<c:choose>
+										  <%-- 1순위: 일정 첨부파일 썸네일 --%>
+										  <c:when test="${not empty s.attachFile and not empty s.attachFile.filePath}">
+										    <img src="${pageContext.request.contextPath}/file/searchthumbnail?path=${s.attachFile.filePath}"
+										         alt="${fn:escapeXml(s.schdlNm)}">
+										  </c:when>
+										
+										  <%-- 2순위: linkThumbnail --%>
+										  <c:when test="${not empty s.linkThumbnail}">
+										    <img src="${s.linkThumbnail}"
+										         alt="${fn:escapeXml(s.schdlNm)}">
+										  </c:when>
+										
+										  <%-- 3순위: 기본 이미지 --%>
+										  <c:otherwise>
+										    <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=120&h=90&fit=crop&q=80"
+										         alt="일정">
+										  </c:otherwise>
+										</c:choose>
+
+
+										<span class="schedule-modal-badge ${status}">
+										  <c:choose>
+										    <c:when test="${status eq 'completed'}">완료</c:when>
+										    <c:when test="${status eq 'ongoing'}">진행중</c:when>
+										    <c:otherwise>
+										      <c:choose>
+										        <c:when test="${dday eq 0}">D-DAY</c:when>
+										        <c:otherwise>D-${dday}</c:otherwise>
+										      </c:choose>
+										    </c:otherwise>
+										  </c:choose>
+										</span>
+									</div>
+
+									<div class="schedule-modal-info">
+										<h4>
+											<c:out value="${s.schdlNm}" />
+										</h4>
+
+										<div class="schedule-modal-meta">
+											<span> <i class="bi bi-calendar3"></i> <c:out
+													value="${s.schdlStartDt}" /> - <c:out
+													value="${s.schdlEndDt}" />
+											</span> <span> <i class="bi bi-geo-alt"></i> <c:out
+													value="${s.rgnNm}" />
+											</span>
+										</div>
+
+										<div class="schedule-modal-places">
+											<c:choose>
+												<c:when test="${not empty s.displayPlaceNames}">
+													<c:forEach var="p" items="${s.displayPlaceNames}"
+														varStatus="st">
+														<c:if test="${st.index lt 3}">
+															<span class="place-chip"><c:out value="${p}" /></span>
+														</c:if>
+													</c:forEach>
+													<c:if test="${fn:length(s.displayPlaceNames) gt 3}">
+														<span class="place-chip more">+${fn:length(s.displayPlaceNames) - 3}</span>
+													</c:if>
+												</c:when>
+												<c:otherwise>
+													<span class="place-chip">일정 선택</span>
+												</c:otherwise>
+											</c:choose>
+										</div>
+									</div>
+
+									<div class="schedule-modal-select">
+										<i class="bi bi-check-circle"></i>
+									</div>
+
+								</div>
+							</c:forEach>
+						</c:otherwise>
+					</c:choose>
+
+				</div>
+
+			</div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
-                <a href="${pageContext.request.contextPath}/schedule/search" class="btn btn-secondary">
+                <%-- <a href="${pageContext.request.contextPath}/schedule/search" class="btn btn-secondary">
                     <i class="bi bi-plus-lg me-1"></i>새 일정 만들기
-                </a>
+                </a> --%>
             </div>
         </div>
     </div>
@@ -435,6 +483,7 @@
         </div>
     </div>
 </div>
+<iframe id="scheduleLoader" style="display:none;"></iframe>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 let travelStartDate = null; // Date 객체
@@ -454,6 +503,233 @@ let selectedLocationName = ''; // 화면 표시용 (RGN_NM)
 let selectedLocationCode = ''; // 저장용 (RGN_NO 문자열)
 let bodyImageFiles = [];
 let __locJustOpened = false;
+
+
+
+
+function applyScheduleToEditor(schedule) {
+	  // ✅ 배열이 아니면 빈 배열로 강제
+	  const detailsRaw = schedule && schedule.tripScheduleDetailsList;
+	  const details = Array.isArray(detailsRaw) ? detailsRaw.filter(Boolean) : [];
+
+	  if (details.length === 0) {
+	    showToast('이 일정에는 일차별 데이터가 없습니다.', 'info');
+	    return;
+	  }
+
+	  resetEditorKeepFirstTextBlock();
+
+	  details.forEach((d, idx) => {
+	    if (!d) return;
+
+	    const dayNo = d.schdlDt || (idx + 1);
+	    const dateStr = d.schdlStartDt || '';
+
+	    addDayHeaderBlock(dayNo, dateStr);
+
+	    const placesRaw = d.tripSchedulePlaceList;
+	    const places = Array.isArray(placesRaw) ? placesRaw.filter(Boolean) : [];
+
+	    places.forEach(p => {
+	      const info = extractPlaceInfo(p);   // ✅ 이제 null-safe
+	      addPlaceBlockFromSchedule(info);
+	    });
+	  });
+	}
+
+
+function resetEditorKeepFirstTextBlock() {
+	  const editor = document.getElementById('blogEditor');
+	  if (!editor) return;
+
+	  const blocks = Array.from(editor.querySelectorAll('.editor-block'));
+	  if (blocks.length === 0) return;
+
+	  // 첫 text-block만 남기고 지우기
+	  const first = blocks[0];
+	  editor.innerHTML = '';
+	  editor.appendChild(first);
+
+	  // 첫 블록 textarea 비우고 포커스
+	  const ta = first.querySelector('textarea');
+	  if (ta) ta.value = '';
+	}
+
+//✅ 전역 현재 일자 컨텍스트
+let __CURRENT_DAY_NO__ = null;
+let __CURRENT_DAY_DATE__ = null;
+
+function addDayHeaderBlock(dayNo, dateStr) {
+	  blockIdCounter++;
+	  const currentId = blockIdCounter;
+
+	  const editor = document.getElementById('blogEditor');
+	  const block = document.createElement('div');
+	  block.className = 'editor-block day-header-block';
+	  block.dataset.blockId = currentId;
+	  
+	  block.dataset.fromSchedule = "1";
+	  
+	  // ✅ day/date를 dataset으로 저장
+	  block.dataset.dayNo = String(dayNo ?? '');
+	  block.dataset.dateStr = String(dateStr ?? '');
+
+	  // ✅ 현재 컨텍스트 갱신
+	  __CURRENT_DAY_NO__ = dayNo ?? null;
+	  __CURRENT_DAY_DATE__ = dateStr ?? null;
+
+	  block.innerHTML =
+	    '<div class="block-actions">' +
+	      '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
+	      '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + currentId + ')"><i class="bi bi-chevron-down"></i></button>' +
+	      '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + currentId + ')"><i class="bi bi-trash"></i></button>' +
+	    '</div>' +
+	    '<div class="day-header">' +
+	      '<span class="day-badge">DAY ' + dayNo + '</span>' +
+	      '<span class="day-date">' + (dateStr || '') + '</span>' +
+	    '</div>';
+
+	  editor.appendChild(block);
+	}
+
+function extractPlaceInfo(placeVO) {
+	  placeVO = placeVO || {};               // ✅ null-safe
+	  const tp = (placeVO.tourPlace || {});
+
+	  const plcNo = tp.plcNo || placeVO.placeId || placeVO.destId || null;
+
+	  const name =
+	    tp.plcNm ||
+	    placeVO.plcNm ||
+	    tp.placeName ||
+	    '장소';
+
+	  const addr1 = tp.plcAddr1 || '';
+	  const addr2 = tp.plcAddr2 || '';
+	  const address = (addr1 + ' ' + addr2).trim();
+
+	  const imageUrl =
+	    tp.defaultImg ||
+	    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300&h=200&fit=crop&q=80';
+
+	  return { plcNo, name, address, imageUrl };
+	}
+
+
+function addPlaceBlockFromSchedule(info) {
+	  blockIdCounter++;
+	  const currentId = blockIdCounter;
+
+	  const editor = document.getElementById('blogEditor');
+	  const block = document.createElement('div');
+	  block.className = 'editor-block place-block';
+	  block.dataset.blockId = currentId;
+	  
+	  block.dataset.fromSchedule = "1";
+
+	  //저장용 plcNo 세팅
+	  if (info.plcNo != null) {
+	    block.dataset.plcNo = String(info.plcNo);
+	  }
+	  
+	//일자/날짜 + 장소정보를 dataset에 저장
+	  block.dataset.day = (__CURRENT_DAY_NO__ != null ? String(__CURRENT_DAY_NO__) : '');
+	  block.dataset.date = (__CURRENT_DAY_DATE__ || '');
+
+	  block.dataset.name = info.name || '';
+	  block.dataset.address = info.address || '';
+	  block.dataset.image = info.imageUrl || '';
+
+	  block.innerHTML =
+	    '<div class="block-actions">' +
+	      '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
+	      '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + currentId + ')"><i class="bi bi-chevron-down"></i></button>' +
+	      '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + currentId + ')"><i class="bi bi-trash"></i></button>' +
+	    '</div>' +
+	    '<div class="place-block-content">' +
+	      '<img src="' + info.imageUrl + '" alt="' + escapeHtml(info.name) + '">' +
+	      '<div class="place-block-info">' +
+	        '<h4><i class="bi bi-geo-alt-fill"></i> ' + escapeHtml(info.name) + '</h4>' +
+	        '<p>' + escapeHtml(info.address || '') + '</p>' +
+	        '<div class="place-rating" data-block-id="' + currentId + '">' +
+	          '<span class="rating-label">별점</span>' +
+	          '<div class="star-rating">' +
+	            '<i class="bi bi-star" data-rating="1" onclick="setPlaceRating(' + currentId + ', 1)"></i>' +
+	            '<i class="bi bi-star" data-rating="2" onclick="setPlaceRating(' + currentId + ', 2)"></i>' +
+	            '<i class="bi bi-star" data-rating="3" onclick="setPlaceRating(' + currentId + ', 3)"></i>' +
+	            '<i class="bi bi-star" data-rating="4" onclick="setPlaceRating(' + currentId + ', 4)"></i>' +
+	            '<i class="bi bi-star" data-rating="5" onclick="setPlaceRating(' + currentId + ', 5)"></i>' +
+	          '</div>' +
+	          '<span class="rating-value">0.0</span>' +
+	        '</div>' +
+	      '</div>' +
+	    '</div>' +
+	    '<textarea class="block-textarea" placeholder="이 장소에 대한 이야기를 작성하세요..." oninput="autoResize(this)"></textarea>';
+
+	  editor.appendChild(block);
+	}
+
+
+function escapeHtml(s) {
+	  return String(s ?? '')
+	    .replaceAll('&', '&amp;')
+	    .replaceAll('<', '&lt;')
+	    .replaceAll('>', '&gt;')
+	    .replaceAll('"', '&quot;')
+	    .replaceAll("'", '&#39;');
+	}
+
+function removeScheduleBlocksOnly() {
+	  const editor = document.getElementById('blogEditor');
+	  if (!editor) return;
+
+	  // 일정에서 생성된 블록만 제거
+	  editor.querySelectorAll('.editor-block[data-from-schedule="1"]').forEach(el => el.remove());
+
+	  // 컨텍스트 초기화
+	  __CURRENT_DAY_NO__ = null;
+	  __CURRENT_DAY_DATE__ = null;
+	}
+
+	function resetLinkedScheduleUI() {
+	  // UI 원복
+	  linkedSchedule = null;
+	  document.getElementById('scheduleLinkBanner').style.display = 'flex';
+	  document.getElementById('linkedScheduleCard').style.display = 'none';
+
+	  // 커버: 일정에서 자동 세팅한 경우만 제거
+	  if (coverImageData && coverImageData.fromSchedule) {
+	    removeCoverImage();   // 기존 함수 그대로 사용
+	  }
+
+	  // 위치 원복
+	  selectedLocationName = '';
+	  selectedLocationCode = '';
+	  document.getElementById('locationValue').textContent = '위치를 추가하세요';
+	  const locInput = document.getElementById('locationInput');
+	  if (locInput) locInput.value = '';
+
+	  // 날짜 원복
+	  travelStartDate = null;
+	  travelEndDate = null;
+	  document.getElementById('dateValue').textContent = '날짜를 선택하세요';
+
+	  const fp = document.getElementById('travelDateRange')?._flatpickr;
+	  if (fp) fp.clear(); // 날짜 선택값 제거
+	  
+	  const titleInput = document.getElementById('blogTitle');
+	  if (titleInput) {
+	    if (titleInput.dataset.autoFromSchedule === "1") {
+	      titleInput.value = '';
+	    }
+	    // 플래그 초기화
+	    titleInput.dataset.autoFromSchedule = "0";
+	    titleInput.dataset.autoTitleValue = '';
+	  }
+	  
+	}
+
+
 
 // 모달 인스턴스
 let scheduleModal, placeBlockModal, previewModal;
@@ -596,6 +872,7 @@ if (dateInput && typeof flatpickr !== 'undefined') {
 	
 	
 // 플러스
+// 플러스
 function collectBlocksForSave() {
   const result = [];
   const blocks = document.querySelectorAll('#blogEditor .editor-block');
@@ -608,7 +885,8 @@ function collectBlocksForSave() {
       result.push({
         type: 'TEXT',
         order,
-        text: block.querySelector('textarea')?.value || ''
+        // ✅ 서버가 기대하는 키로 통일
+        content: block.querySelector('textarea')?.value || ''
       });
       return;
     }
@@ -618,8 +896,10 @@ function collectBlocksForSave() {
       result.push({
         type: 'IMAGE',
         order,
-        fileIndex: Number(block.dataset.fileIdx), // 여기서 매칭
-        desc: block.querySelector('.image-caption')?.value || ''
+        // ✅ 서버에서 fileIdx로 받는 흔적이 있어서 맞춤
+        fileIdx: Number(block.dataset.fileIdx),
+        // ✅ 서버에 caption(또는 content)로 받는 경우가 많아서 caption으로 맞춤
+        caption: block.querySelector('.image-caption')?.value || ''
       });
       return;
     }
@@ -637,20 +917,33 @@ function collectBlocksForSave() {
       result.push({
         type: 'TEXT',
         order,
-        text: (day + ' ' + date).trim()
+        // ✅ 여기서도 content로
+        content: (day + ' ' + date).trim()
       });
       return;
     }
 
-    // PLACE  (중요: plcNo가 있어야 DB 저장 가능)
+    // PLACE
     if (block.classList.contains('place-block')) {
       const rating = block.querySelector('.place-rating')?.dataset?.rating || '0';
+
       result.push({
         type: 'PLACE',
         order,
-        plcNo: block.dataset.plcNo || null,          // ⚠️ 지금 너 코드는 plcNo가 없음
+
+        plcNo: block.dataset.plcNo ? Number(block.dataset.plcNo) : null,
+
+        day: block.dataset.day ? Number(block.dataset.day) : null,
+        date: block.dataset.date || null,
+
+        name: block.dataset.name || null,
+        address: block.dataset.address || null,
+        image: block.dataset.image || null,
+
         rating: Number(rating),
-        review: block.querySelector('textarea')?.value || ''
+
+        // ✅ 핵심: place textarea는 review가 아니라 content로 보내야 서버가 저장함
+        content: block.querySelector('textarea')?.value || ''
       });
       return;
     }
@@ -911,15 +1204,84 @@ function autoResize(textarea) {
 // 일정 모달 열기
 function openScheduleModal() {
     scheduleModal.show();
-
-    // 일정 아이템 클릭 이벤트 등록
-    document.querySelectorAll('.schedule-modal-item').forEach(function(item) {
-        item.onclick = function() {
-            const scheduleId = item.dataset.scheduleId;
-            loadScheduleDetail(scheduleId);
-        };
-    });
 }
+
+document.addEventListener('click', function(e){
+	  const item = e.target.closest('.schedule-modal-item');
+	  if (!item) return;
+
+	  const modalEl = document.getElementById('scheduleModal');
+	  if (!modalEl || !modalEl.contains(item)) return;
+
+	  const schedule = {
+	    schdlNo: Number(item.dataset.scheduleNo),
+	    title: item.dataset.title || '',
+	    location: item.dataset.location || '',
+	    locationCode: item.dataset.locationCode || '',
+	    start: item.dataset.start || '',
+	    end: item.dataset.end || '',
+	    dates: (item.dataset.start && item.dataset.end) ? (item.dataset.start + ' - ' + item.dataset.end) : '',
+	    coverImage: item.dataset.thumbnail || null
+	  };
+
+	  selectScheduleFromList(schedule);
+});
+
+
+function selectScheduleFromList(schedule) {
+	  linkedSchedule = schedule;
+
+	  // 연결된 일정 카드 표시
+	  document.getElementById('scheduleLinkBanner').style.display = 'none';
+	  document.getElementById('linkedScheduleCard').style.display = 'block';
+
+	  document.getElementById('linkedScheduleTitle').textContent = schedule.title || '제목 없음';
+	  document.getElementById('linkedScheduleDates').textContent = schedule.dates || '';
+	  document.getElementById('linkedScheduleLocation').textContent = schedule.location || '';
+
+	  // 장소칩은 목록 데이터에 없을 수 있으니 안내만
+	  const placesContainer = document.getElementById('linkedSchedulePlaces');
+
+	  // 위치 자동 세팅
+	  document.getElementById('locationValue').textContent = schedule.location || '위치를 추가하세요';
+	  selectedLocationName = schedule.location || '';
+	  selectedLocationCode = schedule.locationCode || '';
+
+	  // 날짜 자동 세팅 (schdlStartDt/schdlEndDt는 YYYY-MM-DD 문자열이라 Date로 바로 가능)
+	  if (schedule.start && schedule.end) {
+	    travelStartDate = new Date(schedule.start);
+	    travelEndDate   = new Date(schedule.end);
+
+	    document.getElementById('dateValue').textContent = schedule.start + ' ~ ' + schedule.end;
+
+	    const fp = document.getElementById('travelDateRange')?._flatpickr;
+	    if (fp) fp.setDate([travelStartDate, travelEndDate], true);
+	  }
+
+	  // 제목 자동(비어있을 때만)
+	  // 제목 자동(비어있을 때만)
+const titleInput = document.getElementById('blogTitle');
+if (titleInput && !titleInput.value.trim()) {
+  titleInput.value = (schedule.title || '') + ' 여행기';
+
+  // ✅ "일정 연결로 자동 채움" 표시
+  titleInput.dataset.autoFromSchedule = "1";
+  titleInput.dataset.autoTitleValue = titleInput.value; // (선택) 참고용
+}
+
+	  // 커버 자동(비어있을 때만) - URL이면 dataUrl로 저장해도 preview는 가능
+	  if (!coverImageData && schedule.coverImage) {
+	    document.getElementById('coverImg').src = schedule.coverImage;
+	    document.getElementById('coverPlaceholder').style.display = 'none';
+	    document.getElementById('coverPreview').style.display = 'block';
+	    coverImageData = { dataUrl: schedule.coverImage, fromSchedule: true };
+	  }
+
+	  scheduleModal.hide();
+	  showToast('일정이 연결되었습니다!', 'success');
+	  loadScheduleFull(schedule.schdlNo);
+	}
+
 
 // 일정 필터링
 function filterScheduleModal(filter) {
@@ -941,323 +1303,21 @@ function filterScheduleModal(filter) {
     });
 
     // 빈 상태 표시
-    document.getElementById('scheduleModalEmpty').style.display = visibleCount === 0 ? 'block' : 'none';
+    const emptyEl = document.getElementById('scheduleModalEmpty');
+    if (emptyEl) emptyEl.style.display = (visibleCount === 0 ? 'block' : 'none');
 }
 
-// 데모 일정 상세 데이터 (실제로는 서버에서 가져옴)
-const scheduleDetailData = {
-    1: {
-        id: 1,
-        title: '제주도 힐링 여행',
-        dates: '2024.03.15 - 2024.03.18',
-        location: '제주도',
-        coverImage: 'https://images.unsplash.com/photo-1590650046871-92c887180603?w=800&h=400&fit=crop&q=80',
-        days: [
-            {
-                day: 1,
-                date: '3월 15일 (금)',
-                places: [
-                    { name: '성산일출봉', address: '제주 서귀포시 성산읍', category: '관광지', image: 'https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=300&h=200&fit=crop&q=80', startTime: '06:00', endTime: '08:00' },
-                    { name: '해녀의집', address: '제주 서귀포시 성산읍', category: '맛집', image: 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=300&h=200&fit=crop&q=80', startTime: '12:00', endTime: '13:30' },
-                    { name: '우도', address: '제주 제주시 우도면', category: '관광지', image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&h=200&fit=crop&q=80', startTime: '14:30', endTime: '18:00' }
-                ]
-            },
-            {
-                day: 2,
-                date: '3월 16일 (토)',
-                places: [
-                    { name: '협재해수욕장', address: '제주 제주시 한림읍', category: '관광지', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&h=200&fit=crop&q=80', startTime: '09:00', endTime: '12:00' },
-                    { name: '한림공원', address: '제주 제주시 한림읍', category: '관광지', image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=300&h=200&fit=crop&q=80', startTime: '14:00', endTime: '17:00' }
-                ]
-            },
-            {
-                day: 3,
-                date: '3월 17일 (일)',
-                places: [
-                    { name: '흑돼지거리', address: '제주 제주시 연동', category: '맛집', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?w=300&h=200&fit=crop&q=80', startTime: '12:00', endTime: '14:00' },
-                    { name: '동문시장', address: '제주 제주시 동문로', category: '쇼핑', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=300&h=200&fit=crop&q=80', startTime: '15:00', endTime: '18:00' }
-                ]
-            },
-            {
-                day: 4,
-                date: '3월 18일 (월)',
-                places: [
-                    { name: '제주공항', address: '제주 제주시 공항로', category: '교통', image: 'https://images.unsplash.com/photo-1436491865332-7a61a109cc05?w=300&h=200&fit=crop&q=80', startTime: '10:00', endTime: '12:00' }
-                ]
-            }
-        ]
-    },
-    2: {
-        id: 2,
-        title: '부산 휴양 여행',
-        dates: '2024.01.10 - 2024.01.14',
-        location: '부산',
-        coverImage: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=800&h=400&fit=crop&q=80',
-        days: [
-            {
-                day: 1,
-                date: '1월 10일 (수)',
-                places: [
-                    { name: '해운대해수욕장', address: '부산 해운대구', category: '관광지', image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=300&h=200&fit=crop&q=80', startTime: '10:00', endTime: '13:00' },
-                    { name: '광안리해수욕장', address: '부산 수영구', category: '관광지', image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=300&h=200&fit=crop&q=80', startTime: '15:00', endTime: '18:00' }
-                ]
-            },
-            {
-                day: 2,
-                date: '1월 11일 (목)',
-                places: [
-                    { name: '감천문화마을', address: '부산 사하구', category: '관광지', image: 'https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=300&h=200&fit=crop&q=80', startTime: '09:00', endTime: '12:00' },
-                    { name: '자갈치시장', address: '부산 중구', category: '시장', image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=300&h=200&fit=crop&q=80', startTime: '13:00', endTime: '15:00' }
-                ]
-            },
-            {
-                day: 3,
-                date: '1월 12일 (금)',
-                places: [
-                    { name: '태종대', address: '부산 영도구', category: '관광지', image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=300&h=200&fit=crop&q=80', startTime: '10:00', endTime: '14:00' }
-                ]
-            }
-        ]
-    },
-    3: {
-        id: 3,
-        title: '강릉 맛집 투어',
-        dates: '2024.04.05 - 2024.04.08',
-        location: '강릉',
-        coverImage: 'https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=800&h=400&fit=crop&q=80',
-        days: [
-            {
-                day: 1,
-                date: '4월 5일 (금)',
-                places: [
-                    { name: '정동진', address: '강원도 강릉시', category: '관광지', image: 'https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=300&h=200&fit=crop&q=80', startTime: '05:30', endTime: '08:00' },
-                    { name: '정동진해변', address: '강원도 강릉시', category: '해변', image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&h=200&fit=crop&q=80', startTime: '09:00', endTime: '11:00' }
-                ]
-            },
-            {
-                day: 2,
-                date: '4월 6일 (토)',
-                places: [
-                    { name: '경포대', address: '강원도 강릉시', category: '관광지', image: 'https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=300&h=200&fit=crop&q=80', startTime: '10:00', endTime: '12:30' },
-                    { name: '주문진수산시장', address: '강원도 강릉시', category: '시장', image: 'https://images.unsplash.com/photo-1555529669-e69e7aa0ba9a?w=300&h=200&fit=crop&q=80', startTime: '13:00', endTime: '15:00' }
-                ]
-            },
-            {
-                day: 3,
-                date: '4월 7일 (일)',
-                places: [
-                    { name: '안목해변커피거리', address: '강원도 강릉시', category: '카페거리', image: 'https://images.unsplash.com/photo-1559496417-e7f25cb247f3?w=300&h=200&fit=crop&q=80', startTime: '14:00', endTime: '17:00' }
-                ]
-            }
-        ]
-    }
-};
 
-// 일정 상세 로드
-function loadScheduleDetail(scheduleId) {
-    // 실제로는 AJAX로 서버에서 가져옴
-    const schedule = scheduleDetailData[scheduleId];
-    if (!schedule) {
-        showToast('일정을 불러올 수 없습니다.', 'error');
-        return;
-    }
-
-    selectSchedule(schedule);
-}
-
-// 일정 선택 및 에디터에 내용 추가
-function selectSchedule(schedule) {
-    linkedSchedule = schedule;
-
-    // 연결된 일정 표시
-    document.getElementById('scheduleLinkBanner').style.display = 'none';
-    document.getElementById('linkedScheduleCard').style.display = 'block';
-    document.getElementById('linkedScheduleTitle').textContent = schedule.title;
-    document.getElementById('linkedScheduleDates').textContent = schedule.dates;
-    document.getElementById('linkedScheduleLocation').textContent = schedule.location;
-
-    // 장소 표시 (모든 일차의 장소들)
-    const allPlaces = [];
-    schedule.days.forEach(function(day) {
-        day.places.forEach(function(place) {
-            if (allPlaces.indexOf(place.name) === -1) {
-                allPlaces.push(place.name);
-            }
-        });
-    });
-    const placesContainer = document.getElementById('linkedSchedulePlaces');
-    const displayPlaces = allPlaces.slice(0, 4);
-    let placesHtml = displayPlaces.map(function(place) { return '<span class="place-chip">' + place + '</span>'; }).join('');
-    if (allPlaces.length > 4) {
-        placesHtml += '<span class="place-chip more">+' + (allPlaces.length - 4) + '</span>';
-    }
-    placesContainer.innerHTML = placesHtml;
-
-// 위치
-document.getElementById('locationValue').textContent = schedule.location;
-// selectedLocation = schedule.location;
-selectedLocationName = schedule.location;
-selectedLocationCode = '';
-
-// 날짜 (schedule.dates: "2024.03.15 - 2024.03.18")
-if (schedule.dates && schedule.dates.includes(' - ')) {
-
-  const parts = schedule.dates.split(' - ');
-  const startStr = parts[0].trim().replace(/\./g, '-'); // 2024-03-15
-  const endStr   = parts[1].trim().replace(/\./g, '-'); // 2024-03-18
-
-  travelStartDate = new Date(startStr);
-  travelEndDate   = new Date(endStr);
-
-  console.log('schedule parsed dates =>', travelStartDate, travelEndDate);
-
-  document.getElementById('dateValue').textContent = startStr + ' ~ ' + endStr;
-
-  // flatpickr 동기화
-  const fp = document.getElementById('travelDateRange')?._flatpickr;
-  if (fp) {
-    fp.setDate([travelStartDate, travelEndDate], true);
-  }
-}
-
-// =================================================
-
-
-    
-//     document.getElementById('dateValue').textContent = schedule.dates;
-
-    // 제목 자동 설정 (비어있는 경우)
-    const titleInput = document.getElementById('blogTitle');
-    if (!titleInput.value.trim()) {
-        titleInput.value = schedule.title + ' 여행기';
-    }
-
-    // 커버 이미지 자동 설정 (비어있는 경우)
-    if (!coverImageData && schedule.coverImage) {
-        document.getElementById('coverImg').src = schedule.coverImage;
-        document.getElementById('coverPlaceholder').style.display = 'none';
-        document.getElementById('coverPreview').style.display = 'block';
-        coverImageData = { dataUrl: schedule.coverImage, fromSchedule: true };
-    }
-
-    // 에디터에 일차별 블록 추가
-    addScheduleBlocksToEditor(schedule);
-
-    scheduleModal.hide();
-    showToast('일정이 연결되었습니다. 각 장소에 여행 이야기를 작성해주세요!', 'success');
-}
-
-// 일정 블록들을 에디터에 추가
-function addScheduleBlocksToEditor(schedule) {
-    const editor = document.getElementById('blogEditor');
-
-    // 기존 첫번째 텍스트 블록이 비어있으면 삭제
-    const firstBlock = editor.querySelector('.editor-block');
-    if (firstBlock && firstBlock.classList.contains('text-block')) {
-        const textarea = firstBlock.querySelector('textarea');
-        if (!textarea.value.trim()) {
-            firstBlock.remove();
-        }
-    }
-
-    // 인트로 텍스트 블록 추가
-    blockIdCounter++;
-    const introBlock = document.createElement('div');
-    introBlock.className = 'editor-block text-block';
-    introBlock.dataset.blockId = blockIdCounter;
-    introBlock.innerHTML =
-        '<div class="block-actions">' +
-            '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + blockIdCounter + ')"><i class="bi bi-chevron-up"></i></button>' +
-            '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + blockIdCounter + ')"><i class="bi bi-chevron-down"></i></button>' +
-            '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + blockIdCounter + ')"><i class="bi bi-trash"></i></button>' +
-        '</div>' +
-        '<textarea class="block-textarea" placeholder="여행을 시작하며... 이번 여행의 계기나 기대했던 점을 적어보세요." oninput="autoResize(this)"></textarea>';
-    editor.appendChild(introBlock);
-
-    // 각 일차별로 블록 추가
-    schedule.days.forEach(function(day) {
-        // 일차 헤더 (구분선 + 제목)
-        blockIdCounter++;
-        const dayHeaderBlock = document.createElement('div');
-        dayHeaderBlock.className = 'editor-block day-header-block';
-        dayHeaderBlock.dataset.blockId = blockIdCounter;
-        dayHeaderBlock.innerHTML =
-            '<div class="block-actions">' +
-                '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + blockIdCounter + ')"><i class="bi bi-chevron-up"></i></button>' +
-                '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + blockIdCounter + ')"><i class="bi bi-chevron-down"></i></button>' +
-                '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + blockIdCounter + ')"><i class="bi bi-trash"></i></button>' +
-            '</div>' +
-            '<div class="day-header-content">' +
-                '<span class="day-badge">DAY ' + day.day + '</span>' +
-                '<span class="day-date">' + day.date + '</span>' +
-            '</div>';
-        editor.appendChild(dayHeaderBlock);
-
-        // 해당 일차의 장소들
-        day.places.forEach(function(place) {
-            blockIdCounter++;
-            const currentId = blockIdCounter;
-            const placeBlock = document.createElement('div');
-            placeBlock.className = 'editor-block place-block';
-            placeBlock.dataset.blockId = currentId;
-
-            // 시간 정보 표시
-            var timeInfo = '';
-            if (place.startTime && place.endTime) {
-                timeInfo = '<div class="place-time-info"><i class="bi bi-clock"></i> ' + place.startTime + ' ~ ' + place.endTime + '</div>';
-            }
-
-            placeBlock.innerHTML =
-                '<div class="block-actions">' +
-                    '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
-                    '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + currentId + ')"><i class="bi bi-chevron-down"></i></button>' +
-                    '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + currentId + ')"><i class="bi bi-trash"></i></button>' +
-                '</div>' +
-                '<div class="place-block-content">' +
-                    '<img src="' + place.image + '" alt="' + place.name + '">' +
-                    '<div class="place-block-info">' +
-                        '<h4><i class="bi bi-geo-alt-fill"></i> ' + place.name + '</h4>' +
-                        '<p>' + place.address + ' · ' + place.category + '</p>' +
-                        timeInfo +
-                        '<div class="place-rating" data-block-id="' + currentId + '">' +
-                            '<span class="rating-label">별점</span>' +
-                            '<div class="star-rating">' +
-                                '<i class="bi bi-star" data-rating="1" onclick="setPlaceRating(' + currentId + ', 1)"></i>' +
-                                '<i class="bi bi-star" data-rating="2" onclick="setPlaceRating(' + currentId + ', 2)"></i>' +
-                                '<i class="bi bi-star" data-rating="3" onclick="setPlaceRating(' + currentId + ', 3)"></i>' +
-                                '<i class="bi bi-star" data-rating="4" onclick="setPlaceRating(' + currentId + ', 4)"></i>' +
-                                '<i class="bi bi-star" data-rating="5" onclick="setPlaceRating(' + currentId + ', 5)"></i>' +
-                            '</div>' +
-                            '<span class="rating-value">0.0</span>' +
-                        '</div>' +
-                    '</div>' +
-                '</div>' +
-                '<textarea class="block-textarea" placeholder="' + place.name + '에서의 경험을 작성해주세요... 어떤 점이 좋았나요?" oninput="autoResize(this)"></textarea>';
-            editor.appendChild(placeBlock);
-        });
-    });
-
-    // 마무리 텍스트 블록 추가
-    blockIdCounter++;
-    const outroBlock = document.createElement('div');
-    outroBlock.className = 'editor-block text-block';
-    outroBlock.dataset.blockId = blockIdCounter;
-    outroBlock.innerHTML =
-        '<div class="block-actions">' +
-            '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + blockIdCounter + ')"><i class="bi bi-chevron-up"></i></button>' +
-            '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + blockIdCounter + ')"><i class="bi bi-chevron-down"></i></button>' +
-            '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + blockIdCounter + ')"><i class="bi bi-trash"></i></button>' +
-        '</div>' +
-        '<textarea class="block-textarea" placeholder="여행을 마치며... 이번 여행에서 가장 기억에 남는 순간이나 느낀 점을 적어보세요." oninput="autoResize(this)"></textarea>';
-    editor.appendChild(outroBlock);
-}
 
 // 일정 연결 해제
 function unlinkSchedule() {
-    linkedSchedule = null;
-    document.getElementById('scheduleLinkBanner').style.display = 'flex';
-    document.getElementById('linkedScheduleCard').style.display = 'none';
-    showToast('일정 연결이 해제되었습니다.', 'info');
+	 // 1) 일정으로 생성된 블록만 삭제
+	  removeScheduleBlocksOnly();
+
+	  // 2) 연결 UI/자동세팅 값들 원복
+	  resetLinkedScheduleUI();
+
+	  showToast('일정 연결이 해제되었고, 불러온 일정 블록이 삭제되었습니다.', 'info');
 }
 
 // 설정 입력 영역 토글
@@ -1778,7 +1838,7 @@ function submitTravellog() {
 	  const base = window.__CTX__;
 	  
 	  const req = {
-	    schdlNo: null,                 // ✅ 일정 연결 지금 안함
+		schdlNo: linkedSchedule ? linkedSchedule.schdlNo : null,                 // ✅ 일정 연결 지금 안함
 	    rcdTitle: title,               // ✅ RCD_TITLE
 	    rcdContent: mainContent,       // ✅ RCD_CONTENT (첫 텍스트만)
 	    tripDaysCd: null,
@@ -1879,6 +1939,36 @@ function initTravelDatePickerForce() {
 	  });
 	}
 
+
+async function loadScheduleFull(schdlNo) {
+	  const frame = document.getElementById('scheduleLoader');
+	  if (!frame) return;
+
+	  const url = window.__CTX__ + '/schedule/view/' + schdlNo;
+
+	  frame.onload = function() {
+	    try {
+	      const data = frame.contentWindow && frame.contentWindow.__SCHEDULE__;
+	      if (!data) {
+	        showToast('일정 데이터를 불러오지 못했습니다.', 'error');
+	        return;
+	      }
+
+	      applyScheduleToEditor(data);
+	      showToast('일차별 일정이 불러와졌어요!', 'success');
+	    } catch (e) {
+	      console.error('[schedule apply error]', e);
+
+	      // ✅ 에러 메시지 노출(원인 즉시 파악)
+	      const msg = (e && (e.message || e.toString())) ? (e.message || e.toString()) : 'unknown error';
+	      showToast('일정 적용 오류: ' + msg, 'error');
+	    } finally {
+	      frame.onload = null;
+	    }
+	  };
+
+	  frame.src = url;
+	}
 
 
 

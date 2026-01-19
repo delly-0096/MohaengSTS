@@ -24,6 +24,8 @@
         <result property="regDt"            column="TS_REG_DT" />
         <result property="modDt"            column="TS_MOD_DT" />
         <result property="bkmkYn"           column="BKMK_YN" />
+        <result property="rgnNo" column="rgnNo"/>
+ 		<result property="rgnNm" column="rgnNm"/>
 
 		<association property="attachFile" resultMap="attachFileDetailMap" />
 		
@@ -106,6 +108,7 @@
     <sql id="tripScheduleColumns">
     	 	  TS.SCHDL_NO
 		    , TS.MEM_NO
+		    , TP.RGN_NO AS rgnNo
 		    , TS.PREF_NO
 		    , TS.START_PLACE_TYPE
 		    , TS.START_PLACE_ID
@@ -181,6 +184,8 @@
 		    ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
 		  LEFT JOIN TOUR_PLACE TP
 		    ON TSP.PLACE_ID = TP.PLC_NO
+		  LEFT JOIN REGION RG 
+		  	ON RG.RGN_NO = TP.RGN_NO
 		 WHERE TS.MEM_NO = #{memNo}
 		   AND TS.DEL_YN != 'Y'
 		 ORDER BY TS.REG_DT DESC

@@ -6,6 +6,9 @@
 <%@ taglib uri="http://www.springframework.org/security/tags"
 	prefix="sec"%>
 
+
+<%@ include file="../common/header.jsp"%>
+
 <!-- 현재 로그인/권한 상태를 JS가 읽어가게 심어둠 -->
 <span id="authRole" style="display: none;"> <sec:authorize
 		access="hasAuthority('ROLE_MEMBER')">ROLE_MEMBER</sec:authorize> <sec:authorize
@@ -16,13 +19,63 @@
 <c:set var="pageTitle" value="여행기록 상세" />
 <c:set var="pageCss" value="community" />
 
-<%@ include file="../common/header.jsp"%>
+
 
 <meta name="_csrf" content="${_csrf.token}" />
 <meta name="_csrf_header" content="${_csrf.headerName}" />
 
 <!-- ==================== DETAIL 전용 스타일(인라인) ==================== -->
 <style>
+/* ==================== DAY 배지(아이콘 느낌) ==================== */
+/* ==================== DAY 배지 ==================== */
+.day-header{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start; /* ✅ space-between 제거 */
+  gap: 12px;
+  margin: 18px 0 10px;
+}
+
+.day-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  padding: 8px 14px;
+  width: fit-content;          /* ✅ 내용만큼만 */
+
+
+  color:#111827;
+  font-weight: 900;
+  font-size: 13px;
+  line-height: 1;
+  letter-spacing: .2px;
+}
+
+.day-badge .day-dot{
+  height: 28px;
+  padding: 0 12px;        /* ✅ 글자 들어갈 자리 */
+  border-radius: 999px;   /* ✅ 원형/필 형태 */
+  background: #107070;
+  color:#fff;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex: 0 0 auto;
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: .2px;
+}
+
+.day-badge .day-date{
+  margin-left: 0;              /* ✅ gap으로 충분해서 0 */
+  font-weight: 800;
+  color:#64748b;
+  font-size: 12px;
+}
+
+
 /* 전체 래퍼(리스트 톤 유지) */
 .travellog-page {
 	background: transparent;
@@ -700,33 +753,34 @@
 }
 
 /* ===== 대댓글(스레드) UI ===== */
-.detail-comment.is-reply{
-  margin-left: 56px;        /* 들여쓰기 */
-  position: relative;
+.detail-comment.is-reply {
+	margin-left: 56px; /* 들여쓰기 */
+	position: relative;
 }
 
 /* (선택) 왼쪽 연결선 ㄴ 느낌 */
-.detail-comment.is-reply::before{
-  content:"";
-  position:absolute;
-  left:-18px;
-  top: 10px;
-  bottom: 10px;
-  width: 2px;
-  background:#e2e8f0;
-  border-radius: 2px;
-  opacity: .9;
+.detail-comment.is-reply::before {
+	content: "";
+	position: absolute;
+	left: -18px;
+	top: 10px;
+	bottom: 10px;
+	width: 2px;
+	background: #e2e8f0;
+	border-radius: 2px;
+	opacity: .9;
 }
-.detail-comment.is-reply::after{
-  content:"";
-  position:absolute;
-  left:-18px;
-  top: 28px;
-  width: 14px;
-  height: 2px;
-  background:#e2e8f0;
-  border-radius: 2px;
-  opacity: .9;
+
+.detail-comment.is-reply::after {
+	content: "";
+	position: absolute;
+	left: -18px;
+	top: 28px;
+	width: 14px;
+	height: 2px;
+	background: #e2e8f0;
+	border-radius: 2px;
+	opacity: .9;
 }
 
 /* 대댓글 아바타는 살짝 작게 */
@@ -824,6 +878,187 @@
 	padding: 9px 11px;
 }
 
+/* ===== 본문 블록 렌더링 ===== */
+.travellog-block {
+	margin: 14px 0;
+}
+
+.travellog-block-text {
+	white-space: pre-wrap;
+	line-height: 1.8;
+	font-size: 15px;
+	color: #334155;
+}
+
+.travellog-block-divider {
+	height: 1px;
+	background: #e2e8f0;
+	margin: 18px 0;
+	opacity: .9;
+}
+
+/* 이미지 블록 */
+.travellog-block-image {
+	border: 1px solid #e2e8f0;
+	border-radius: 16px;
+	overflow: hidden;
+	background: #fff;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
+}
+
+.travellog-block-image img {
+	width: 100%;
+	display: block;
+	max-height: 520px;
+	object-fit: cover;
+}
+
+.travellog-block-image .caption {
+	padding: 10px 12px;
+	font-size: 13px;
+	color: #64748b;
+	border-top: 1px solid #e2e8f0;
+	background: #f8fafc;
+}
+
+/* PLACE 카드 */
+.place-card {
+	display: flex;
+	gap: 14px;
+	border: 1px solid #e2e8f0;
+	border-radius: 16px;
+	overflow: hidden;
+	background: #fff;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
+	
+	height: 160px;  
+  align-items: stretch;/* ✅ 오른쪽이 늘어나면 왼쪽도 같이 늘어남 */
+}
+
+
+/* PLACE 카드 썸네일: 스샷처럼 꽉 차게 */
+.place-thumb{
+  width: 180px;
+  min-width: 180px;
+
+  background: #f1f5f9;
+  overflow: hidden;
+
+  /* ✅ padding 제거: cover는 여백 있으면 이상해짐 */
+  padding: 0;
+  display: block;
+  
+  align-self: stretch;
+}
+
+.place-thumb img{
+  width: 100%;
+  height: 100%;
+
+  /* ✅ 핵심: 다시 cover */
+  object-fit: cover;
+  object-position: center;
+
+  display: block;
+}
+
+.place-body {
+	flex: 1;
+	padding: 12px 12px 12px 0;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.place-title {
+	font-weight: 900;
+	font-size: 15px;
+	color: #0f172a;
+	line-height: 1.2;
+}
+
+.place-addr {
+	font-size: 12.5px;
+	color: #64748b;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.place-addr i {
+	color: var(--primary-color);
+}
+
+.place-rating {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 12.5px;
+	color: #334155;
+	font-weight: 800;
+}
+
+.place-stars {
+	letter-spacing: 1px;
+	color: #f59e0b;
+	font-size: 13px;
+}
+
+.place-review {
+	margin-top: 4px;
+	font-size: 13.5px;
+	line-height: 1.6;
+	color: #334155;
+	background: #f8fafc;
+	border: 1px solid #e2e8f0;
+	border-radius: 14px;
+	padding: 10px 12px;
+}
+
+
+@media ( max-width : 768px) {
+	.place-card {
+		flex-direction: column;
+	}
+	.place-thumb {
+		width: 100%;
+		min-width: 100%;
+		height: 200px;
+	}
+	.place-body {
+		padding: 12px;
+	}
+}
+
+/* ===== 태그 영역 ===== */
+.meta-tags{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top: 6px;
+}
+.meta-tags i{
+  color: var(--primary-color);
+  font-size: 15px;
+}
+.tag-pill{
+  display:inline-flex;
+  align-items:center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #e8fbf6;
+  border: 1px solid #bff1e5;
+  color:#0f172a;
+  font-weight: 800;
+  font-size: 12.5px;
+  line-height: 1;
+}
+.tag-pill:hover{
+  filter: brightness(.98);
+}
+
+
 @media ( max-width : 768px) {
 	.travellog-detail-cover {
 		height: 200px;
@@ -883,59 +1118,28 @@
 				<div class="travellog-detail-body">
 					<!-- 작성자 영역 -->
 					<div class="travellog-detail-author">
-<%-- 						<c:choose>
-							<c:when test="${empty detail.profilePath or detail.profilePath == 'null'}">
-  <img class="travellog-detail-avatar"
-       src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
-       alt="avatar">
-</c:when>
+						<c:set var="pp" value="${detail.profilePath}" />
+						<c:choose>
+							<c:when test="${not empty pp and pp != 'null'}">
+								<c:choose>
+									<c:when test="${fn:startsWith(pp, '/upload')}">
+										<img class="travellog-detail-avatar"
+											src="<c:url value='${pp}'/>" alt="avatar"
+											onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
+									</c:when>
+									<c:otherwise>
+										<img class="travellog-detail-avatar"
+											src="<c:url value='/upload${pp}'/>" alt="avatar"
+											onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
+									</c:otherwise>
+								</c:choose>
+							</c:when>
 							<c:otherwise>
-							  <img class="travellog-detail-avatar"
-							       src="${pageContext.request.contextPath}/files${detail.profilePath}"
-							       alt="avatar"
-							       onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
+								<img class="travellog-detail-avatar"
+									src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+									alt="avatar">
 							</c:otherwise>
-							
-						</c:choose> --%>
-
-<%-- <c:choose>
-  <c:when test="${not empty detail.profilePath and detail.profilePath != 'null'}">
-    <img class="travellog-detail-avatar"
-         src="<c:url value='/upload${detail.profilePath}'/>"
-         alt="avatar"
-         onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
-  </c:when>
-  <c:otherwise>
-    <img class="travellog-detail-avatar"
-         src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
-         alt="avatar">
-  </c:otherwise>
-</c:choose> --%>
-
-<c:set var="pp" value="${detail.profilePath}" />
-<c:choose>
-  <c:when test="${not empty pp and pp != 'null'}">
-    <c:choose>
-      <c:when test="${fn:startsWith(pp, '/upload')}">
-        <img class="travellog-detail-avatar"
-             src="<c:url value='${pp}'/>"
-             alt="avatar"
-             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
-      </c:when>
-      <c:otherwise>
-        <img class="travellog-detail-avatar"
-             src="<c:url value='/upload${pp}'/>"
-             alt="avatar"
-             onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';">
-      </c:otherwise>
-    </c:choose>
-  </c:when>
-  <c:otherwise>
-    <img class="travellog-detail-avatar"
-         src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
-         alt="avatar">
-  </c:otherwise>
-</c:choose>
+						</c:choose>
 
 
 
@@ -964,6 +1168,12 @@
 
 						<c:if test="${isWriter}">
 							<div class="travellog-detail-actions-right">
+								
+								<span class="meta-pill">
+							      <i class="bi bi-globe2"></i> 공개:
+							      <c:out value="${detail.openScopeCd}" />
+							    </span>
+							
 								<button type="button" class="btn btn-outline-secondary btn-sm"
 									onclick="goEdit(${detail.rcdNo})">수정</button>
 
@@ -999,35 +1209,44 @@
 
 					<!-- 여행 메타 -->
 					<div class="travellog-detail-meta">
-						<span class="meta-pill"> <i class="bi bi-geo-alt"></i>
-							<c:out value="${detail.locName}" />
+						<span class="meta-pill"> <i class="bi bi-geo-alt"></i> <c:out
+								value="${detail.locName}" />
 						</span> <span class="meta-pill"> <i class="bi bi-calendar-range"></i>
 							일정: <fmt:formatDate value="${detail.startDt}"
 								pattern="yyyy년 M월 d일" /> ~ <fmt:formatDate
 								value="${detail.endDt}" pattern="yyyy년 M월 d일" />
 						</span>
-						<c:if test="${not empty isWriter and isWriter}">
-							<span class="meta-pill"> <i class="bi bi-globe2"></i> 공개:
-								<c:out value="${detail.openScopeCd}" />
-							</span>
-						</c:if>
+						
 						<c:if test="${not empty detail.tagName}">
-							<div class="meta-tags">
-								<i class="bi bi-hash"></i>
-
-								<c:forEach var="t" items="${fn:split(detail.tagName, ',')}">
-									<c:if test="${not empty t}">
-										<span class="tag-pill">#<c:out value="${t}" /></span>
-									</c:if>
-								</c:forEach>
-							</div>
+						  <div class="meta-tags">
+						
+						    <c:forEach var="t" items="${fn:split(detail.tagName, ',')}">
+						      <c:set var="tag" value="${fn:trim(t)}"/>
+						      <c:if test="${not empty tag}">
+						        <c:choose>
+						          <c:when test="${fn:startsWith(tag, '#')}">
+						            <span class="tag-pill"><c:out value="${tag}"/></span>
+						          </c:when>
+						          <c:otherwise>
+						            <span class="tag-pill">#<c:out value="${tag}"/></span>
+						          </c:otherwise>
+						        </c:choose>
+						      </c:if>
+						    </c:forEach>
+						  </div>
 						</c:if>
 					</div>
 
 					<!-- 본문 -->
-					<div class="travellog-detail-content">
+					<!-- 본문(블록 렌더링) -->
+					<div id="recordBlocks" class="travellog-detail-content"></div>
+
+					<!-- (옵션) 예전 rcdContent fallback: blocks 로딩 실패 시에만 보여주고 싶으면 숨겨두기 -->
+					<div id="recordContentFallback" class="travellog-detail-content"
+						style="display: none;">
 						<c:out value="${detail.rcdContent}" />
 					</div>
+
 
 					<!-- 액션 바 (반드시 래퍼로 감싸야 간격/구분선 적용됨) -->
 					<div class="travellog-detail-actionbar">
@@ -1765,6 +1984,156 @@ async function loadComments(rcdNo) {
 }
 
 
+//===== 블록 렌더링 =====
+const BLOCKS_API = CTX + '/api/travel-log/records/' + encodeURIComponent(CURRENT_RCD_NO) + '/blocks';
+
+
+function safeText(v){ return (v == null) ? '' : String(v); }
+
+function starString(rating){
+  const r = Number(rating || 0);
+  const full = Math.max(0, Math.min(5, Math.floor(r)));
+  const empty = 5 - full;
+  return '★'.repeat(full) + '☆'.repeat(empty);
+}
+
+function resolvePlaceImg(block){
+  // 1) 첨부 이미지 경로 (DB에서 뽑은 ATTACH_FILE_DETAIL.FILE_PATH)
+  const p = (block.placeImgPath || '').trim();
+  if (p) {
+    // 너희 파일 서빙 규칙이 "/files{path}" 형태였지 (cover에서 사용)
+    return CTX + '/files' + p;
+  }
+
+  // 2) 기본 이미지(URL 형태로 저장되어 있을 가능성)
+  const d = (block.defaultImg || '').trim();
+  if (d) return d;
+
+  // 3) fallback
+  return 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80';
+}
+
+function renderBlock(block){
+  const type = (block.blockType || '').toUpperCase();
+
+  if (type === 'DIVIDER') {
+    const div = document.createElement('div');
+    div.className = 'travellog-block travellog-block-divider';
+    return div;
+  }
+
+  if (type === 'TEXT') {
+	  const text = safeText(block.text).trim();
+
+	  // ✅ "DAY 1 2026-01-18" / "DAY 2" / "DAY2 2026-01-18" 등도 대응
+	  const m = text.match(/^DAY\s*([0-9]+)\s*(\d{4}-\d{2}-\d{2})?\s*$/i);
+
+	  // ✅ DAY 패턴이면 "배지"로 렌더링
+	  if (m) {
+	    const dayNo = m[1];
+	    const dateStr = m[2] || '';
+
+	    const wrap = document.createElement('div');
+	    wrap.className = 'travellog-block day-header';
+	    wrap.innerHTML =
+	    	  '<span class="day-badge">' +
+	    	  '<span class="day-dot">DAY ' + escapeHtml(dayNo) + '</span>' +
+	    	    (dateStr ? ('<span class="day-date">' + escapeHtml(dateStr) + '</span>') : '') +
+	    	  '</span>';
+
+	    return wrap;
+	  }
+
+	  // ✅ 일반 텍스트 블록은 기존대로
+	  const div = document.createElement('div');
+	  div.className = 'travellog-block travellog-block-text';
+	  div.innerHTML = escapeHtml(text);
+	  return div;
+}
+
+
+  if (type === 'IMAGE') {
+    const wrap = document.createElement('div');
+    wrap.className = 'travellog-block travellog-block-image';
+
+    const imgPathRaw = (block.imgPath || '').trim();
+    const imgSrc = imgPathRaw ? (CTX + '/files' + imgPathRaw) : '';
+
+    wrap.innerHTML =
+      '<img src="' + escapeHtml(imgSrc) + '" alt="image" onerror="this.style.display=\'none\';" />' +
+      (block.desc ? ('<div class="caption">' + escapeHtml(block.desc) + '</div>') : '');
+
+    return wrap;
+  }
+
+  if (type === 'PLACE') {
+    const imgSrc = resolvePlaceImg(block);
+
+    const addr1 = safeText(block.plcAddr1).trim();
+    const addr2 = safeText(block.plcAddr2).trim();
+    const addr = (addr1 + (addr2 ? (' ' + addr2) : '')).trim();
+
+    const rating = (block.rating == null ? '' : String(block.rating));
+    const stars = starString(block.rating);
+
+    const card = document.createElement('div');
+    card.className = 'travellog-block';
+
+    card.innerHTML =
+      '<div class="place-card">' +
+        '<div class="place-thumb">' +
+          '<img src="' + escapeHtml(imgSrc) + '" alt="place" onerror="this.onerror=null;this.src=\'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80\';" />' +
+        '</div>' +
+        '<div class="place-body">' +
+          '<div class="place-title">' + escapeHtml(safeText(block.plcNm || '장소')) + '</div>' +
+          (addr ? ('<div class="place-addr"><i class="bi bi-geo-alt"></i>' + escapeHtml(addr) + '</div>') : '') +
+          '<div class="place-rating">' +
+            '<span class="place-stars">' + escapeHtml(stars) + '</span>' +
+            (rating ? ('<span>' + escapeHtml(rating) + '</span>') : '') +
+          '</div>' +
+          (block.reviewConn ? ('<div class="place-review">' + escapeHtml(block.reviewConn) + '</div>') : '') +
+        '</div>' +
+      '</div>';
+
+    return card;
+  }
+
+  // 알 수 없는 타입은 TEXT처럼 출력
+  const fallback = document.createElement('div');
+  fallback.className = 'travellog-block travellog-block-text';
+  fallback.innerHTML = escapeHtml(JSON.stringify(block));
+  return fallback;
+}
+
+async function loadBlocks(rcdNo){
+  const container = document.getElementById('recordBlocks');
+  const fallback  = document.getElementById('recordContentFallback');
+  if (!container) return;
+
+  try{
+    const res = await fetch(BLOCKS_API, { credentials:'same-origin' });
+    if (!res.ok) throw new Error('blocks fetch failed: ' + res.status);
+
+    const blocks = await res.json();
+    container.innerHTML = '';
+
+    if (!Array.isArray(blocks) || blocks.length === 0){
+      // 블록이 없으면 기존 rcdContent를 보여주자(옵션)
+      if (fallback) fallback.style.display = 'block';
+      return;
+    }
+
+    (fallback && (fallback.style.display = 'none'));
+
+    blocks.forEach(b => container.appendChild(renderBlock(b)));
+  }catch(e){
+    console.error(e);
+    // 실패하면 fallback 텍스트라도 보여주기
+    if (fallback) fallback.style.display = 'block';
+  }
+}
+
+
 
 function toggleReplyBox(cmntNo) {
 	  // 다른 입력칸 닫기
@@ -1916,9 +2285,9 @@ async function toggleCommentLike(cmntNo, btn) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  	loadComments(CURRENT_RCD_NO);
+	  loadBlocks(CURRENT_RCD_NO);
+	  loadComments(CURRENT_RCD_NO);
 });
-
 </script>
 
 <%@ include file="../common/footer.jsp"%>

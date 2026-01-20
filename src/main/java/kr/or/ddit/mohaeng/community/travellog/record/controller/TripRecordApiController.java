@@ -60,6 +60,24 @@ public class TripRecordApiController {
         Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
         return ResponseEntity.ok(service.detail(rcdNo, loginMemNo, increaseView));
     }
+    
+    
+    // 블록 목록: 누구나(단, 비공개 글은 detail 필터를 통과한 경우만)
+    @PreAuthorize("permitAll()")
+    @GetMapping("/{rcdNo}/blocks")
+    public ResponseEntity<List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO>> blocks(
+            @PathVariable long rcdNo,
+            Authentication authentication
+    ) {
+        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+
+        // ✅ 접근 가능한 글인지 검증 (비공개면 작성자만 통과)
+        TripRecordDetailVO d = service.detail(rcdNo, loginMemNo, false);
+        if (d == null) return ResponseEntity.notFound().build();
+
+        return ResponseEntity.ok(service.blocks(rcdNo));
+    }
+
 
     // 작성: MEMBER만
 	/*

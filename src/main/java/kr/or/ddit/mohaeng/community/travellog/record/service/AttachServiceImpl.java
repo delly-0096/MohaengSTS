@@ -22,7 +22,7 @@ public class AttachServiceImpl implements IAttachService {
     private final ITripRecordMapper mapper;
 
     // ✅ 기존 properties 그대로 사용
-    @Value("${kr.or.ddit.upload.path}")
+    @Value("${kr.or.ddit.mohaeng.upload.path}")
     private String uploadRoot; // 예: C:/upload/
 
     @Override

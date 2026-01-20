@@ -5,6 +5,10 @@
 
 <c:set var="pageTitle" value="여행기록 작성" />
 <c:set var="pageCss" value="community" />
+
+<%@ include file="../common/header.jsp" %>
+
+
 <sec:authorize access="hasAnyRole('ROLE_ADMIN', 'ROLE_BUSINESS')">
     <script>
         alert('일반회원만 여행기록을 작성할 수 있습니다.');
@@ -13,7 +17,7 @@
 </sec:authorize>
 
 
-<%@ include file="../common/header.jsp" %>
+
 
 <style>
 #locationSuggestions .location-item{
@@ -313,7 +317,12 @@
 								    <c:when test="${not empty s.linkThumbnail}">
 								      ${s.linkThumbnail}
 								    </c:when>
-								    <c:otherwise></c:otherwise>
+								    <c:when test="${not empty s.thumbnail}">
+								      ${s.thumbnail}
+								    </c:when>
+								    <c:otherwise>
+								      https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=120&h=90&fit=crop&q=80
+								    </c:otherwise>
 								  </c:choose>
 								</c:set>
 								
@@ -325,7 +334,11 @@
 									data-location="${fn:escapeXml(s.rgnNm)}"
 									data-thumbnail="${fn:escapeXml(s.thumbnail)}"
 									data-link-thumbnail="${fn:escapeXml(s.linkThumbnail)}"
-									data-location-code="${s.rgnNo}">
+									data-location-code="${s.rgnNo}"
+									data-cover="${fn:escapeXml(scheduleThumb)}"
+									data-attach-no="${s.attachNo}"
+									data-attach-path="${not empty s.attachFile ? fn:escapeXml(s.attachFile.filePath) : ''}"
+									>
 									
 
 									<div class="schedule-modal-image">
@@ -586,6 +599,7 @@ function addDayHeaderBlock(dayNo, dateStr) {
 	    '</div>' +
 	    '<div class="day-header">' +
 	      '<span class="day-badge">DAY ' + dayNo + '</span>' +
+	      ' ' +
 	      '<span class="day-date">' + (dateStr || '') + '</span>' +
 	    '</div>';
 
@@ -1221,7 +1235,8 @@ document.addEventListener('click', function(e){
 	    start: item.dataset.start || '',
 	    end: item.dataset.end || '',
 	    dates: (item.dataset.start && item.dataset.end) ? (item.dataset.start + ' - ' + item.dataset.end) : '',
-	    coverImage: item.dataset.thumbnail || null
+	    coverAttachNo: item.dataset.attachNo ? Number(item.dataset.attachNo) : null,
+	    coverAttachPath: item.dataset.attachPath || null
 	  };
 
 	  selectScheduleFromList(schedule);
@@ -1259,23 +1274,36 @@ function selectScheduleFromList(schedule) {
 	  }
 
 	  // 제목 자동(비어있을 때만)
-	  // 제목 자동(비어있을 때만)
-const titleInput = document.getElementById('blogTitle');
-if (titleInput && !titleInput.value.trim()) {
-  titleInput.value = (schedule.title || '') + ' 여행기';
+		const titleInput = document.getElementById('blogTitle');
+		if (titleInput && !titleInput.value.trim()) {
+		  titleInput.value = (schedule.title || '') + ' 여행기';
+		
+		  // ✅ "일정 연결로 자동 채움" 표시
+		  titleInput.dataset.autoFromSchedule = "1";
+		  titleInput.dataset.autoTitleValue = titleInput.value; // (선택) 참고용
+		}
 
-  // ✅ "일정 연결로 자동 채움" 표시
-  titleInput.dataset.autoFromSchedule = "1";
-  titleInput.dataset.autoTitleValue = titleInput.value; // (선택) 참고용
-}
+		// 커버 자동(비어있을 때만) - ✅ attach 기반일 때만
+		if (!coverImageData) {
+		  // 1) attachPath가 있으면 이걸로 썸네일 URL 만들기(가장 확실)
+		  if (schedule.coverAttachPath) {
+		    const coverUrl = window.__CTX__ + '/file/searchthumbnail?path=' + encodeURIComponent(schedule.coverAttachPath);
 
-	  // 커버 자동(비어있을 때만) - URL이면 dataUrl로 저장해도 preview는 가능
-	  if (!coverImageData && schedule.coverImage) {
-	    document.getElementById('coverImg').src = schedule.coverImage;
-	    document.getElementById('coverPlaceholder').style.display = 'none';
-	    document.getElementById('coverPreview').style.display = 'block';
-	    coverImageData = { dataUrl: schedule.coverImage, fromSchedule: true };
-	  }
+		    document.getElementById('coverImg').src = coverUrl;
+		    document.getElementById('coverPlaceholder').style.display = 'none';
+		    document.getElementById('coverPreview').style.display = 'block';
+
+		    coverImageData = {
+		      fromSchedule: true,
+		      attachNo: schedule.coverAttachNo || null,
+		      attachPath: schedule.coverAttachPath,
+		      dataUrl: coverUrl   // 프리뷰용
+		    };
+		  }
+		  // 2) attachNo만 있고 attachPath가 없으면 (엔드포인트가 attachNo 지원할 때만 사용)
+		  // else if (schedule.coverAttachNo) { ... }
+		}
+
 
 	  scheduleModal.hide();
 	  showToast('일정이 연결되었습니다!', 'success');
@@ -1806,14 +1834,19 @@ function submitTravellog() {
 
   // 2) 일정에서 자동 세팅된 coverImageData(이미지 URL)도 인정할지 여부
   //    -> "진짜 업로드만 허용"이면 hasCoverFile만 체크하면 됨
-  const hasCoverData = !!(coverImageData && coverImageData.dataUrl);
+// ✅ 일정에서 자동세팅된 건 'attachPath or attachNo'가 있을 때만 인정
+const hasScheduleCover = !!(
+  coverImageData &&
+  coverImageData.fromSchedule &&
+  (coverImageData.attachNo || coverImageData.attachPath)
+);
 
-  if (!hasCoverFile && !hasCoverData) {
-    showToast('커버 이미지를 추가해주세요.', 'error');
-    // 커버 선택창 열어주기(UX)
-    document.getElementById('coverPlaceholder')?.click();
-    return;
-  }
+
+	if (!hasCoverFile && !hasScheduleCover) {
+	  showToast('커버 이미지를 추가해주세요.', 'error');
+	  document.getElementById('coverPlaceholder')?.click();
+	  return;
+	}
 
   if (!selectedLocationCode) {
 	  showToast('위치를 선택해주세요.', 'error');
@@ -1853,7 +1886,9 @@ function submitTravellog() {
 	    replyEnblYn: document.getElementById('allowComments').checked ? 'Y' : 'N', // ✅ REPLY_ENBL_YN
 	    // attachNo는 ✅ 서버가 coverFile 저장 후 생성해서 TRIP_RECORD.ATTACH_NO에 넣는 구조 권장
 	    
-	    tags: tags
+	    tags: tags,
+	    
+	    coverAttachNo: (!hasCoverFile && hasScheduleCover && coverImageData.attachNo) ? Number(coverImageData.attachNo) : null
 	  };
 
 	  console.log('REQ JSON =>', req);

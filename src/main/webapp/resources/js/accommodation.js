@@ -45,19 +45,25 @@ function loadMore() {
 
     accomIsLoading = true;
     const loader = document.getElementById('accomScrollLoader');
+	const endDiv = document.getElementById('accomScrollEnd');
     if(loader) loader.style.display = 'flex';
 
     const urlParams = new URLSearchParams(window.location.search);
     const areaCode = urlParams.get('areaCode') || '';
 
-    fetch(`${contextPath}/product/accommodation/more?page=${accomCurrentPage + 1}&areaCode=${areaCode}`)        .then(res => res.json())
-        .then(data => {
-			const list = data.accList;
+    fetch(`${contextPath}/product/accommodation/more?page=${accomCurrentPage + 1}&areaCode=${areaCode}`)        
+	.then(res => res.json())
+    .then(data => {
+			console.log("서버 응답 전체 데이터:", data); // 여기가 명당이야!
+			    const list = data.accList;
+			    console.log("숙소 리스트만:", list);
 			
 			if (!list || list.length === 0) {
 			    accomHasMore = false;
                 if(loader) loader.style.display = 'none';
-                document.getElementById('accomScrollEnd').style.display = 'block';
+				if (accomCurrentPage > 1 && endDiv) {
+				                    endDiv.style.display = 'block';
+				}
                 return;
             }
 
@@ -80,12 +86,18 @@ function loadMore() {
                 }, index * 100);
             });
 
-			const loader = document.getElementById('accomScrollLoader');
+			loader = document.getElementById('accomScrollLoader');
 			            const endDiv = document.getElementById('accomScrollEnd');
 			            grid.appendChild(loader); // 로더를 맨 아래로 다시 이동
 			            grid.appendChild(endDiv); // 종료 메시지도 맨 아래로 이동
 
             accomHasMore = data.hasMore;
+			
+			if (!accomHasMore && endDiv) {
+			                if(loader) loader.style.display = 'none';
+			                endDiv.style.display = 'block';
+			}
+			
             accomCurrentPage++;
 			
 			setTimeout(() => {
@@ -100,9 +112,14 @@ function loadMore() {
 
 // ==================== 카드 생성 함수 ====================
 function createAccommodationCard(data) {
+	console.log("들어온 데이터:", data);
     const priceText = new Intl.NumberFormat().format(data.finalPrice || 0);
     const rating = data.starGrade || '0.0';
     const reviews = 124; 
+	const rPrice = room.price || room.PRICE || 0;
+	const rDiscount = room.discount || room.DISCOUNT || 0;
+	const finalRoomPrice = rPrice * (100 - rDiscount) / 100;
+	
 
     let roomsHtml = '';
     if (data.roomList && data.roomList.length > 0) {
@@ -115,10 +132,20 @@ function createAccommodationCard(data) {
                             <h6>${room.roomName}</h6>
                             <p><i class="bi bi-people"></i> ${room.baseGuestCount}인 / <i class="bi bi-arrows-angle-expand"></i> ${room.roomSize}㎡</p>
                         </div>
-                        <div class="room-option-price">
-                            <span class="price">${new Intl.NumberFormat().format(room.price)}원</span>
-                            <span class="per-night">/ 1박</span>
-                        </div>
+						<div class="room-option-price" style="text-align: right;">
+						            ${rDiscount > 0 ? `
+						                <div style="margin-bottom: -5px;">
+						                    <span style="color: #ff5a5f; font-weight: bold; font-size: 0.85rem;">${rDiscount}%</span>
+						                    <span style="text-decoration: line-through; color: #bbb; font-size: 0.8rem; margin-left: 3px;">
+						                        ${new Intl.NumberFormat().format(rPrice)}
+						                    </span>
+						                </div>
+						            ` : ''}
+						            <div style="font-size: 1.1rem; font-weight: 700; color: #333;">
+						                ${new Intl.NumberFormat().format(finalRoomPrice)}원
+						                <span style="font-size: 0.75rem; color: #888; font-weight: normal;">/ 1박</span>
+						            </div>
+						        </div>
                         <a href="${contextPath}/product/accommodation/${data.accNo}/booking?roomNo=${room.roomTypeNo}" class="btn btn-primary btn-sm">결제</a>
                     </div>`;
                 lastRoomName = room.roomName;
@@ -128,7 +155,6 @@ function createAccommodationCard(data) {
         roomsHtml = '<div class="p-3 text-center text-muted">예약 가능한 객실이 없습니다.</div>';
     }
 
-    // data-accommodation-id의 오타 수정 및 최종 조립
     return `
     <div class="accommodation-card" data-accommodation-id="${data.accNo}">
         <div class="accommodation-image">
@@ -344,11 +370,12 @@ document.getElementById('accommodationSearchForm')?.addEventListener('submit', f
 
 //==========================================================
 // 결제 버튼 클릭 시 검색바의 날짜와 인원을 들고 튀는 함수
-function goBooking(accNo, roomNo) {
+function goBooking(accNo, roomTypeNo) {
+		const urlParams = new URLSearchParams(window.location.search);
 	// 1. 검색바에 입력된 값들 가져오기
-	    const startDate = document.getElementById('checkIn').value;
-	    const endDate = document.getElementById('checkOut').value;
-	    const adultCount = document.getElementById('adultCount').value;
+		const startDate = urlParams.get('startDate') || document.getElementById('checkIn').value;
+	    const endDate = urlParams.get('endDate') || document.getElementById('checkOut').value;
+	    const adultCount = urlParams.get('adultCount') || document.getElementById('adultCount').value || 2;
 
 	    // 2. 날짜 선택 안 했으면 경고 (방어 로직)
 	    if (!startDate || !endDate) {

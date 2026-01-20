@@ -199,7 +199,7 @@
                             <div class="room-options">
                             <c:set var="lastRoomName" value="" />
                             <c:forEach items="${acc.roomList }" var="room">
-                            	<c:if test="${room.roomName ne lastRoomName}">
+                            	<c:if test="${room.roomName ne lastRoomName}"/>
                             	<div class="room-option" style="padding: 15px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center;">
 								    <div class="room-option-info" style="flex: 1;">
 								        <h6 style="margin: 0; font-weight: 600; color: #333;">${room.roomName}</h6>
@@ -230,9 +230,8 @@
 								    </div>
 								
 								    <button type="button" class="btn btn-primary btn-sm" style="border-radius: 6px; padding: 6px 15px;"
-								            onclick="goBooking(${acc.accNo}, ${room.roomTypeNo})">예약</button>
+								            onclick="goBooking(${acc.accNo}, ${room.roomTypeNo})">결제</button>
 								</div>
-                                </c:if>
                             </c:forEach>
                             </div>
                         </div>
@@ -250,13 +249,26 @@
             </div>
 
             <!-- 더 이상 데이터 없음 -->
-            <div class="infinite-scroll-end" id="accomScrollEnd" style="display: none;">
-                <p>모든 숙소를 불러왔습니다</p>
-            </div> 
+            <c:if test="${not empty accList}">
+			    <div class="infinite-scroll-end text-center py-4 w-100" id="accomScrollEnd" style="display: none; text-align: center; padding: 20px;">
+			        <hr class="my-4" style="width: 50%; margin: 0 auto; border-top: 1px dashed #ccc;">
+    				<p class="text-muted">✨ 모든 숙소를 불러왔습니다 ✨</p>
+			    </div>
+			</c:if>
             </div>
         </div>
+		     <!-- 검색 결과 없음 -->
+		     <c:if test="${empty accList}">
+			    <div class="no-result-wrapper text-center">
+			        <i class="bi bi-search" style="font-size: 4rem; color: #dee2e6;"></i>
+			        <h3 class="mt-4 fw-bold">검색 결과가 없습니다</h3>
+			        <p class="text-muted">다른 지역이나 키워드로 검색해보시겠어요?</p>
+			        <a href="${contextPath}/product/accommodation" class="btn btn-primary btn-lg mt-3 shadow-sm">
+			            <i class="bi bi-arrow-clockwise"></i> 검색 초기화
+			        </a>
+			    </div>
+			</c:if>
     </div>
-</div>
 
 <style>
 /* 검색 드롭다운 스타일 */
@@ -544,7 +556,16 @@ a.accommodation-image:hover img {
     text-align: center;
     font-weight: bold;
 }
-}
+
+/* 검색 결과가 없을 경우 */
+.no-result-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;  /* 가로 중앙 */
+        justify-content: center; /* 세로 중앙 (필요시) */
+        min-height: 400px;    /* 너무 딱 붙어있지 않게 높이 확보 */
+        width: 100%;
+    }
 </style>
 <script src="${pageContext.request.contextPath}/resources/js/accommodation.js"></script>
 <script>

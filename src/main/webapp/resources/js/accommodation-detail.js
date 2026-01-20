@@ -119,6 +119,10 @@ window.calculateNights = calculateNights;
 
 function updateTotalPrice() {
     const totalEl = document.getElementById('totalPrice');
+	if (state.nights <= 0 || state.selectedRooms.length === 0) {
+	        totalElement.innerText = '0'; // 또는 '객실을 선택해주세요'
+	        return;
+	    }
     const nightEl = document.getElementById('nightStayCount');
     
     if (state.selectedRooms.length === 0 || state.nights <= 0) {

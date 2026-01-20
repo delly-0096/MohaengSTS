@@ -268,7 +268,7 @@
 							
 							    <sec:authorize access="hasRole('MEMBER')" var="isUser">
 							        <button class="btn btn-primary btn-sm" 
-							                onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${calculatedFinalPrice})">
+							                onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${calculatedFinalPrice}, ${room.baseGuestCount}, ${room.extraGuestFee})">
 							            객실 선택
 							        </button>
 							    </sec:authorize>
@@ -299,7 +299,7 @@
 			                    <span class="price" id="minPriceDisplay">
 								    <c:choose>
 								        <c:when test="${not empty acc.minPrice and acc.minPrice > 0}">
-								            <fmt:formatNumber value="${acc.minPrice}" type="number"/>
+								            <fmt:formatNumber value="${acc.finalPrice}" type="number"/>
 								        </c:when>
 								        <c:otherwise>
 								            판매중지
@@ -315,13 +315,13 @@
 			            <div class="form-group">
 			                <label class="form-label">체크인</label>
 			                <input type="text" class="form-control date-picker" id="checkInDate"
-			                       placeholder="체크인 날짜" required>
+			                       placeholder="체크인 날짜" onchange="calculateNights()" required>
 			            </div>
 			
 			            <div class="form-group">
 			                <label class="form-label">체크아웃</label>
 			                <input type="text" class="form-control date-picker" id="checkOutDate"
-			                       placeholder="체크아웃 날짜" required>
+			                       placeholder="체크아웃 날짜" onchange="calculateNights()" required>
 			            </div>
 			
 			            <div class="form-group">

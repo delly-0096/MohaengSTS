@@ -2,17 +2,22 @@ package kr.or.ddit.mohaeng.accommodation.controller;
 
 import java.beans.Customizer;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -20,6 +25,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import kr.or.ddit.mohaeng.accommodation.service.IAccommodationService;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
+import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
@@ -169,22 +175,76 @@ public class AccommodationController {
 	 */
 	@GetMapping("/product/accommodation/{accNo}/booking")
 	public String accommodationBooking(
+			@AuthenticationPrincipal CustomUserDetails user,
 			@PathVariable("accNo") int accNo,
 			@RequestParam("roomNo") int roomTypeNo,
 	        @RequestParam Map<String, String> bookingData, // 날짜, 인원 등을 한 번에 맵으로 받기
 	        Model model) {
+		
+		log.info("결제 시도 - 숙소번호: {}, 방번호: {}", accNo, roomTypeNo);
 	    
+		// 숙소와 객실 정보 가져오기
 		AccommodationVO acc = accService.getAccommodationDetail(accNo);
         RoomTypeVO room = accService.getRoomTypeDetail(roomTypeNo);
+        
+        // 방어 로직: 정보가 없으면 목록으로 튕겨내기
+        if (acc == null || room == null) {
+            log.error("숙소 또는 방 정보를 찾을 수 없습니다.");
+            return "redirect:/product/accommodation";
+        }
+        
+        // 숙박 박수(nights) 계산
+        long nights = 1;
+        try {
+        	// null 체크 추가
+            String startStr = bookingData.get("startDate");
+            String endStr = bookingData.get("endDate");
+            
+            if (startStr != null && endStr != null) {
+                LocalDate start = LocalDate.parse(startStr);
+                LocalDate end = LocalDate.parse(endStr);
+                nights = ChronoUnit.DAYS.between(start, end);
+                if (nights <= 0) nights = 1; // 최소 1박 보장
+            }
+        } catch (Exception e) {
+            log.error("날짜 파싱 에러: {}", e.getMessage());
+        }
+        
+        // 총 객실 요금 계산
+        long totalPayAmount = (long) room.getFinalPrice() * nights;
 		
 	    // 넘어온 예약 데이터를 모델에 담아서 결제 화면에 뿌려주기
         model.addAttribute("acc", acc);
         model.addAttribute("room", room);
 	    model.addAttribute("bookingData", bookingData);
+	    model.addAttribute("nights", nights);
+	    model.addAttribute("totalPayAmount", totalPayAmount); // 최종가 전달!
 	    
 	    return "product/accommodation-booking";
 	}
 
+	
+	/**
+	 * 숙소 예약 프로세스
+	 */
+	@PostMapping("/product/accommodation/{accNo}/booking")
+	public ResponseEntity<String> bookingProcess(
+			@RequestBody AccResvVO resvVO,
+			@AuthenticationPrincipal CustomUserDetails user
+			){
+		
+		// 로그인한 유저 PK 세팅 
+	    resvVO.setResvMemNo(user.getMember().getMemNo());
+	    
+	    // 서비스 호출 (예약 완료 처리)
+	    int result = accService.registReservation(resvVO);
+	    
+	    if(result > 0) {
+	        return ResponseEntity.ok("success");
+	    } else {
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("fail");
+	    }
+	}
 	
 }
 

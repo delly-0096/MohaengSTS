@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
+import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
@@ -34,5 +35,8 @@ public interface IAccommodationService {
 
 	// 목적지로 검색하기
 	public List<Map<String, Object>> searchLocation(String keyword);
+
+	// 예약하기 프로세스
+	public int registReservation(AccResvVO resvVO);
 
 }

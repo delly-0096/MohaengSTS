@@ -8,10 +8,6 @@ import lombok.Data;
 public class AccResvVO {
 
 	/**
-	 * 예약인원
-	 */
-	private int resvCnt; /*  */
-	/**
 	 * 예약일시
 	 */	
 	private Date regDt; 
@@ -43,4 +39,20 @@ public class AccResvVO {
 	 * 예약상태
 	 */
 	private String ResvStatus;
+	/**
+	 * 예상 도착 시간
+	 */
+	private String arriveTime;
+	/**
+	 * 성인 인원
+	 */
+	private int adultCnt;
+	/**
+	 * 아동 인원
+	 */
+	private int childCnt;
+	/**
+	 * 유아 인원
+	 */
+	private int infantCnt;
 }

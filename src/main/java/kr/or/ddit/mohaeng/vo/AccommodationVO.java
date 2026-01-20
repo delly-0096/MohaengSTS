@@ -124,9 +124,10 @@ public class AccommodationVO {
     private String endDate;
     private int guestCount;
     
-    // 업체 번호
-    private int compNo;
+    private int compNo; // 업체 번호
+    private int memNo; // 멤버 번호
     
-    // 멤버 번호
-    private int memNo;
+    private String saleStartDt; // 상품 판매 시작일
+    private String saleEndDt;   // 상품 판매 종료일
+    private String approveStatus; // 판매중, 판매중지 상태
 }

@@ -140,110 +140,19 @@
                         <a href="${pageContext.request.contextPath}/schedule/view/${schedule.schdlNo}" class="btn btn-outline btn-sm">
                             상세보기
                         </a>
-                        <a href="${pageContext.request.contextPath}/schedule/planner/${schedule.schdlNo}" class="btn btn-primary btn-sm">
-                            수정하기
-                        </a>
+                        <c:if test="${scheduleStatus ne 'completed'}">
+                            <a href="${pageContext.request.contextPath}/schedule/planner/${schedule.schdlNo}" class="btn btn-primary btn-sm">
+                                수정하기
+                            </a>
+                        </c:if>
+                        <c:if test="${scheduleStatus eq 'completed'}">
+                            <a href="${pageContext.request.contextPath}/community/travel-log/write?schedule=${schedule.schdlNo}" class="btn btn-secondary btn-sm">
+                                여행기록 작성
+                            </a>
+                        </c:if>
                     </div>
                 </div>
             </c:forEach>
-
-
-
-
-            <div class="schedule-card" data-status="upcoming">
-                <div class="schedule-card-image">
-                    <img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=300&fit=crop&q=80" alt="제주도">
-                    <span class="schedule-card-status upcoming">D-8</span>
-                    <button class="schedule-card-bookmark active" onclick="toggleScheduleBookmark(this)">
-                        <i class="bi bi-bookmark-fill"></i>
-                    </button>
-                </div>
-                <div class="schedule-card-body">
-                    <h3 class="schedule-card-title">제주도 힐링 여행</h3>
-                    <div class="schedule-card-dates">
-                        <i class="bi bi-calendar3"></i>
-                        <span>2026.01.01 - 2026.01.04</span>
-                        <span class="text-muted">(3박 4일)</span>
-                    </div>
-                    <div class="schedule-card-places">
-                        <span class="place-tag">성산일출봉</span>
-                        <span class="place-tag">우도</span>
-                        <span class="place-tag">+5</span>
-                    </div>
-                </div>
-                <div class="schedule-card-footer">
-                    <a href="${pageContext.request.contextPath}/schedule/view/1" class="btn btn-outline btn-sm">
-                        상세보기
-                    </a>
-                    <a href="${pageContext.request.contextPath}/schedule/planner?id=1" class="btn btn-primary btn-sm">
-                        수정하기
-                    </a>
-                </div>
-            </div>
-
-            <!-- 다가오는 여행 2 -->
-            <div class="schedule-card" data-status="upcoming">
-                <div class="schedule-card-image">
-                    <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop&q=80" alt="오사카">
-                    <span class="schedule-card-status upcoming">D-22</span>
-                    <button class="schedule-card-bookmark" onclick="toggleScheduleBookmark(this)">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="schedule-card-body">
-                    <h3 class="schedule-card-title">오사카 맛집 투어</h3>
-                    <div class="schedule-card-dates">
-                        <i class="bi bi-calendar3"></i>
-                        <span>2026.01.15 - 2026.01.18</span>
-                        <span class="text-muted">(3박 4일)</span>
-                    </div>
-                    <div class="schedule-card-places">
-                        <span class="place-tag">도톤보리</span>
-                        <span class="place-tag">구로몬시장</span>
-                        <span class="place-tag">+8</span>
-                    </div>
-                </div>
-                <div class="schedule-card-footer">
-                    <a href="${pageContext.request.contextPath}/schedule/view/2" class="btn btn-outline btn-sm">
-                        상세보기
-                    </a>
-                    <a href="${pageContext.request.contextPath}/schedule/planner?id=2" class="btn btn-primary btn-sm">
-                        수정하기
-                    </a>
-                </div>
-            </div>
-
-            <!-- 완료된 여행 -->
-            <div class="schedule-card" data-status="completed">
-                <div class="schedule-card-image">
-                    <img src="https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=400&h=300&fit=crop&q=80" alt="방콕">
-                    <span class="schedule-card-status completed">완료</span>
-                    <button class="schedule-card-bookmark" onclick="toggleScheduleBookmark(this)">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="schedule-card-body">
-                    <h3 class="schedule-card-title">방콕 휴양 여행</h3>
-                    <div class="schedule-card-dates">
-                        <i class="bi bi-calendar3"></i>
-                        <span>2025.12.10 - 2025.12.14</span>
-                        <span class="text-muted">(4박 5일)</span>
-                    </div>
-                    <div class="schedule-card-places">
-                        <span class="place-tag">왓아룬</span>
-                        <span class="place-tag">카오산로드</span>
-                        <span class="place-tag">+6</span>
-                    </div>
-                </div>
-                <div class="schedule-card-footer">
-                    <a href="${pageContext.request.contextPath}/schedule/view/3" class="btn btn-outline btn-sm">
-                        상세보기
-                    </a>
-                    <a href="${pageContext.request.contextPath}/community/travel-log/write?schedule=3" class="btn btn-secondary btn-sm">
-                        여행기록 작성
-                    </a>
-                </div>
-            </div>
         </div>
 
         <!-- 빈 상태 (일정이 없을 때) -->

@@ -13,7 +13,9 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController.ThumbnailData;
@@ -82,6 +84,10 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		}
 		
 		iTripScheduleMapper.mergeSearchTourPlace(tourPlaceList);
+		
+		updateTourPlaceInfo();
+		
+		aiInsertStyleKeyword();
 	}
 	
 	@Override
@@ -601,10 +607,10 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		tourPlaceVO.setPlcNo(contentId);
 		tourPlaceVO.setPlcNm(plcNm);
 		tourPlaceVO.setPlcDesc(plcDesc.replace("\"", ""));
-		if(operationHours != null && !operationHours.equals("")) {
-			tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
-		}
-		tourPlaceVO.setPlcPrice(plcPrice.replace("\"", ""));
+		
+		if(operationHours != null && !operationHours.equals("")) tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
+		if(plcPrice != null) tourPlaceVO.setPlcPrice(plcPrice.replace("\"", ""));
+		
 		tourPlaceVO.setDefaultImg(defaultImg.replace("\"", ""));
 		tourPlaceVO.setPlcAddr1(plcAddr1.replace("\"", ""));
 		
@@ -670,6 +676,52 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			updatePlaceDetail(params);
 		}
 		
+	}
+	
+	@Async("asyncTaskExecutor")
+	@Override
+	public void aiInsertStyleKeyword() {
+		
+		String tripStyleCatList[] = null;
+		
+        List<Params> tripStyleList = selectTripStyleList(tripStyleCatList);
+        System.out.println("tripStyleList : " + tripStyleList);
+        
+		// 1. DB에서 데이터 조회 (MyBatis)
+        List<Params> dbList = iTripScheduleMapper.searchEmptyStyleKeywordPlace();
+        
+        // 2. 조회한 데이터를 문자열로 변환 (AI에게 먹여줄 '참고자료')
+        String dbContext = dbList.toString();
+		
+        // 3. 프롬프트 작성 (RAG 패턴)
+        String message = String.format("""
+            [참고할 여행 키워드 분류항목 테이블 데이터]
+            %s
+            
+            [참고할 관광지 DB 데이터]
+            %s
+            
+            [참고 데이터]를 바탕으로 여행지별로 색인붙여줘.
+            [참고 데이터]의 정보가 부족하면 너의 지식을 섞어서 보충하거나
+            인터넷에서 검색해서 보충해줘.
+            결과는 PLC_NO 기준으로 해당 관광지 styleCd 값들을 배열형태로 배치해하여 JSON으로 줘.
+            예시형태 plcNo : 100, styles : [WATER_SPORTS, HIKING] 
+            """, tripStyleList, dbContext);
+        
+        // 4. AI 호출
+        List<Map<String, Object>> resultList = chatClient.prompt()
+                .user(message)
+                .call()
+                .entity(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+        
+        System.out.println("resultList: " + resultList);
+        
+        iTripScheduleMapper.insertTourKeywords(resultList);
+	}
+
+	@Override
+	public List<TourPlaceVO> selectStyleMatchPlace(Params params) {
+		return iTripScheduleMapper.selectStyleMatchPlace(params);
 	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)

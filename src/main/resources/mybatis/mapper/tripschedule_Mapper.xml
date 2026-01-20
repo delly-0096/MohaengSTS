@@ -663,9 +663,93 @@
 			ON TSTY.STYLE_CD = C1.CD
 		 INNER JOIN CODE C2
 			ON TSTY.STYLE_CAT_CD = C2.CD
+		<if test='tripStyleCatList != null'>
 		 WHERE STYLE_CAT_CD IN
-		<foreach item="tripStyleCat" collection="tripStyleCatList" open="(" separator="," close=")">
-			#{tripStyleCat}
-		</foreach>
+			<foreach item="tripStyleCat" collection="tripStyleCatList" open="(" separator="," close=")">
+				#{tripStyleCat}
+			</foreach>
+		</if>
+	</select>
+	
+	<select id="searchEmptyStyleKeywordPlace" resultType="kr.or.ddit.util.Params">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+		  FROM TOUR_PLACE P
+		 WHERE (select COUNT(*) FROM TOUR_PLACE_KEYWORD PK WHERE P.PLC_NO = PK.PLC_NO) = 0
+		   AND PLC_DESC != '-'
+	</select>
+	
+	<insert id="insertTourKeywords" parameterType="java.util.List">
+	    INSERT INTO TOUR_PLACE_KEYWORD (
+	        PLC_KWD_NO, 
+	        PLC_NO, 
+	        PLC_KWD_CD, 
+	        REG_DT
+	    )
+	    SELECT SQL_TOUR_PLACE_KEYWORD.NEXTVAL, TPK.*
+	    FROM (
+	        <foreach collection="list" item="item" separator="UNION ALL">
+	            <foreach collection="item.styles" item="style" separator="UNION ALL">
+	                SELECT 
+	                    #{item.plcNo} AS PLC_NO, 
+	                    #{style} AS PLC_KWD_CD, 
+	                    SYSDATE AS REG_DT 
+	                FROM DUAL
+	            </foreach>
+	        </foreach>
+	    ) TPK
+	</insert>
+	
+	<select id="selectStyleMatchPlace" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO" parameterType="kr.or.ddit.util.Params">
+		SELECT P.PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , (SELECT C.CD_NAME FROM CODE C WHERE C.CD  = P.PLACE_TYPE) AS PLACE_TYPE_NAME
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+		  FROM TOUR_PLACE P
+         WHERE RGN_NO = #{rgnNo}
+           AND	(SELECT COUNT(*) FROM TOUR_PLACE_KEYWORD TPK
+                 INNER JOIN TRIP_STYLE TSTY
+                    ON TPK.PLC_KWD_CD = TSTY.STYLE_CD
+                 WHERE P.PLC_NO = TPK.PLC_NO
+                   AND TSTY.STYLE_CAT_CD IN 
+					<if test="tripStyleCatList != null and tripStyleCatList.length > 0">
+					    <foreach item="tripStyleCat" collection="tripStyleCatList" open="(" separator="," close=")">
+					        #{tripStyleCat}
+					    </foreach>
+					</if>
+					<if test="tripStyleCatList == null or tripStyleCatList.length == 0">
+					    ('')
+					</if>
+            	) > 0
 	</select>
 </mapper>

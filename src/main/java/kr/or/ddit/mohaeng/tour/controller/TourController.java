@@ -1003,6 +1003,29 @@ public class TourController {
     	
     	return "product/booking";
     }
+    
+    /**
+     * 장바구니 결제 페이지
+     */
+    @GetMapping("/cart/booking")
+    public String cartBooking(Model model, HttpSession session, RedirectAttributes ra) {
+        // 로그인 체크
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            ra.addFlashAttribute("message", "로그인이 필요합니다.");
+            return "redirect:/member/login";
+        }
+        
+        // 회원 정보 조회 (결제자 정보용)
+        MemberVO member = memberService.selectByMemNo(memNo);
+        MemUserVO memUser = memberService.selectMemUserByMemNo(memNo);
+        
+        model.addAttribute("member", member);
+        model.addAttribute("memUser", memUser);
+        model.addAttribute("type", "cart");
+        
+        return "product/booking";
+    }
 
     @GetMapping("/complete/{tripProdNo}")
     public String complete(@PathVariable int tripProdNo) {

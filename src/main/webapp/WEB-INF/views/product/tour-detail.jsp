@@ -898,6 +898,7 @@ const currentProduct = {
     id: '${tp.tripProdNo}',
     name: '${tp.tripProdTitle}',
     price: ${sale != null ? sale.price : 0},
+    location: '${tp.ctyNm}',
     image: <c:choose>
         <c:when test="${not empty productImages}">'${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}'</c:when>
         <c:otherwise>'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80'</c:otherwise>

@@ -423,3 +423,20 @@
     font-size: 18px;
     margin: 0;
 }
+
+/* 장바구니 최소 인원 표시 */
+.cart-item-min-people {
+    font-size: 11px;
+    color: #856404;
+    background: #fff3cd;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin: 4px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.cart-item-min-people i {
+    font-size: 12px;
+}

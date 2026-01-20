@@ -78,6 +78,29 @@ public class PaymentController {
 	}
 	
 	/**
+	 * 투어 상품 장바구니 결제 페이지
+	 */
+	@GetMapping("/product/payment/cart")
+	public String cartPayment(
+			@RequestParam String paymentType,
+			@RequestParam String orderId,
+			@RequestParam String paymentKey,
+			@RequestParam Long amount,
+			Model model
+			) {
+		
+		log.info("결제  : " + paymentType + ",  " +  orderId + ", " + paymentKey + ", " + amount);
+
+		model.addAttribute("paymentType", paymentType);
+		model.addAttribute("orderId", orderId);
+		model.addAttribute("paymentKey", paymentKey);
+		model.addAttribute("amount", amount);
+	    model.addAttribute("productType", "tour");
+		model.addAttribute("success", "success");	// 연결 성공 했을때만 전송
+		return "product/payment";
+	}
+	
+	/**
 	 * <p>결제 서버 접근 실패시 이동 페이지</p>
 	 * @date 2025.01.07
 	 * @author sdg

@@ -200,7 +200,7 @@ function addToCartFromDetail() {
         return;
     }
     
-    var people = parseInt(peopleValue) || 1;
+    var people = parseInt(peopleValue) || minPeople;
 
     // 이미 장바구니에 있는지 확인
     var existingItem = cart.find(function(item) {
@@ -208,17 +208,30 @@ function addToCartFromDetail() {
     });
 
     if (existingItem) {
-        existingItem.quantity += people;
-        showToast('장바구니에 ' + people + '개 추가되었습니다', 'success');
+		var newQuantity = existingItem.quantity + people;
+	    if (newQuantity > 4) {
+	        showToast('5명 이상 단체 예약은 판매자에게 문의해주세요', 'warning');
+	        return;
+	    }
+	    existingItem.quantity = newQuantity;
+	    showToast('장바구니에 ' + people + '명 추가되었습니다', 'success');
     } else {
         cart.push({
             id: currentProduct.id,
             name: currentProduct.name,
             price: currentProduct.price,
             image: currentProduct.image,
-            quantity: people
+			location: currentProduct.location,
+			minPeople: minPeople,
+            quantity: people,
+			saleEndDt: saleEndDt
         });
-        showToast('장바구니에 담겼습니다 (' + people + '개)', 'success');
+		
+		if (minPeople > 1) {
+            showToast('장바구니에 담겼습니다 (최소 ' + minPeople + '명)', 'success');
+        } else {
+            showToast('장바구니에 담겼습니다 (' + people + '명)', 'success');
+        }
     }
 
     saveCart();
@@ -249,13 +262,21 @@ function updateQuantity(id, delta) {
     });
 
     if (item) {
-        item.quantity += delta;
+		var newQuantity = item.quantity + delta;
+		var itemMinPeople = item.minPeople || 1;
+		var maxPeople = 4;
 
-        if (item.quantity <= 0) {
-            removeFromCart(id);
+		if (newQuantity < itemMinPeople) {
+            showToast('최소 인원은 ' + itemMinPeople + '명입니다', 'warning');
+            return;
+        }
+		
+		if (newQuantity > maxPeople) {
+            showToast('5명 이상 단체 예약은 판매자에게 문의해주세요', 'warning');
             return;
         }
 
+		item.quantity = newQuantity;
         saveCart();
         updateCartUI();
         renderCart();
@@ -322,12 +343,19 @@ function renderCart() {
     var html = '';
     cart.forEach(function(item) {
         var itemTotal = item.price * item.quantity;
+		var itemMinPeople = item.minPeople || 1;
+		
+		var minPeopleHtml = itemMinPeople > 1 
+            ? '<div class="cart-item-min-people"><i class="bi bi-people"></i> 최소 ' + itemMinPeople + '명</div>' 
+            : '';
+		
         html += '<div class="cart-item" data-id="' + item.id + '">' +
             '<div class="cart-item-image">' +
                 '<img src="' + item.image + '" alt="' + item.name + '">' +
             '</div>' +
             '<div class="cart-item-info">' +
                 '<div class="cart-item-name">' + item.name + '</div>' +
+				minPeopleHtml +
                 '<div class="cart-item-price">' + itemTotal.toLocaleString() + '원</div>' +
                 '<div class="cart-item-quantity">' +
                     '<button class="quantity-btn" onclick="updateQuantity(\'' + item.id + '\', -1)">' +
@@ -389,7 +417,7 @@ function checkout() {
     sessionStorage.setItem('tourCartCheckout', JSON.stringify(cart));
 
     // 결제 페이지로 이동
-    window.location.href = CONTEXT_PATH + '/tour/payment?type=cart';
+    window.location.href = CONTEXT_PATH + '/tour/cart/booking';
 }
 
 // ESC 키로 장바구니 닫기

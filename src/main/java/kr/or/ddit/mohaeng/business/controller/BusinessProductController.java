@@ -88,13 +88,19 @@ public class BusinessProductController {
 		log.info("productManage tripProd {}", tripProd);
 		int memNo = customUser.getMember().getMemNo();
 		tripProd.setMemNo(memNo);	// memNo담기
-		 
+		
+		
         // 투어상품 정보
 		List<TripProdVO> prodList = businessService.getProductlist(tripProd);	// 숙박 상품도 담기긴 함. 그런데
 		
+		// 숙박 정보
+		BusinessProductsVO businessProd = new BusinessProductsVO();
+		businessProd.setMemNo(memNo);
+		
+		List<AccommodationVO> accommodationList = businessService.getAccommodationList(businessProd);
+		log.info("accommodationList : {}", accommodationList);
 		// 숙박 상품을 따로 담을지? 이래야 조건 걸어서 해줄수 있을수도?
 		// 회원 번호와 맞는 객실
-//		List<AccommodationVO> accommodationList = businessService.getAccommodationList(tripProd);
 		
         TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
         
@@ -103,7 +109,6 @@ public class BusinessProductController {
         
         model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
         model.addAttribute("prodAggregate", prodAggregate);
-//        model.addAttribute("accommodation", );
         
 //        model.addAttribute("tripProd", tripProd);	// memNo담김
 //        model.addAttribute("keywords", keywords);

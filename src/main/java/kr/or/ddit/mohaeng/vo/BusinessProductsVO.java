@@ -58,6 +58,9 @@ public class BusinessProductsVO {
     private int unapproveCount;	// 판매중지 상품 수
     private int totalSales;		// 총 판매량
 
+    // 화면에 뿌려줄 가격
+    private Integer displayPrice;
+    
     // 평점, 리뷰수, 추천수
     private Double avgRating;
     private Integer reviewCount;

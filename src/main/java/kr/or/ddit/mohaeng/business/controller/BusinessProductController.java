@@ -81,34 +81,36 @@ public class BusinessProductController {
 	@GetMapping("/business/product")
 	public String productManage(
 			@AuthenticationPrincipal CustomUserDetails customUser, 
-//			BusinessProductsVO businessProducts, Model model) {
-		TripProdVO tripProd, Model model) {
+			BusinessProductsVO businessProducts, 
+			TripProdVO tripProd, Model model) {
 		
 		log.info("productManage customUser {}", customUser.getMember().getMemNo());
-		log.info("productManage tripProd {}", tripProd);
 		int memNo = customUser.getMember().getMemNo();
 		tripProd.setMemNo(memNo);	// memNo담기
 		
-		
+		businessProducts.setMemNo(memNo);
+		log.info("businessProducts : {}", businessProducts);
         // 투어상품 정보
-		List<TripProdVO> prodList = businessService.getProductlist(tripProd);	// 숙박 상품도 담기긴 함. 그런데
+		List<BusinessProductsVO> prodList = businessService.getProductlist(businessProducts);	// 숙박 상품도 담기긴 함. 그런데
+		log.info("prodList : {}", prodList);
+		
 		
 		// 숙박 정보
-		BusinessProductsVO businessProd = new BusinessProductsVO();
-		businessProd.setMemNo(memNo);
-		
-		List<AccommodationVO> accommodationList = businessService.getAccommodationList(businessProd);
-		log.info("accommodationList : {}", accommodationList);
+//		BusinessProductsVO businessProd = new BusinessProductsVO();
+//		businessProd.setMemNo(memNo);
+//		
+//		List<AccommodationVO> accommodationList = businessService.getAccommodationList(businessProd);
+//		log.info("accommodationList : {}", accommodationList);
 		// 숙박 상품을 따로 담을지? 이래야 조건 걸어서 해줄수 있을수도?
 		// 회원 번호와 맞는 객실
 		
-        TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
+//        TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
         
         // 인기 키워드 조회
 //        List<SearchLogVO> keywords = searchLogService.getKeywords();
         
-        model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
-        model.addAttribute("prodAggregate", prodAggregate);
+//        model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
+//        model.addAttribute("prodAggregate", prodAggregate);
         
 //        model.addAttribute("tripProd", tripProd);	// memNo담김
 //        model.addAttribute("keywords", keywords);

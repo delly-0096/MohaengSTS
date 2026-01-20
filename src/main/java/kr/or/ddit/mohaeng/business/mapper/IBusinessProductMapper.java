@@ -29,7 +29,11 @@ public interface IBusinessProductMapper {
 	 * @param product 회원id
 	 * @return 본인 상품
 	 */
-	public List<TripProdVO> getProductlist(TripProdVO product);
+//	public List<TripProdVO> getProductlist(TripProdVO product);
+	
+	
+	
+	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts);
 	
 	/**
 	 * <p>본인 판매 숙박상품 조회</p>

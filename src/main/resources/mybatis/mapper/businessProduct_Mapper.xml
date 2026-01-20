@@ -30,6 +30,9 @@
 	    <result property="reviewCount" column="REVIEW_COUNT" />
 	    <result property="recommendCount" column="RECOMMEND_COUNT" />
 	    <result property="thumbImage" column="THUMB_IMAGE" />
+	    
+	    <!-- 화면에 보여줄 가격 -->
+	    <result property="displayPrice" column="DISPLAY_PRICE" />
 		
 		<!-- 숙박 -->
 		<association property="accommodation" 
@@ -131,11 +134,11 @@
                 END AS DISPLAY_PRICE,
 	
 	
-	
+	resultType="tr"
 	 -->
 	<!-- 본인 기업회원 투어 상품 나중에 숙박도 추가해야됨 -->
 	<!-- 지역 정보 받으려면 tourProdPlace -->
-	<select id="getProductlist" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+	<select id="getProductlist" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="tripPordMap">
         SELECT *
         FROM (
             SELECT ROWNUM AS rn, a.*
@@ -143,7 +146,17 @@
                 SELECT
                     <include refid="tripProdColumns" />
                     , <include refid="prodSaleColumns"/>
+                    , <include refid="prodInfoColumns"/>
                     <!-- 숙소 -->
+                    
+                    , acc.ACC_NO
+	                , acc.ACC_NAME
+	                , acc.STAR_GRADE
+	                , CASE 
+	                    WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
+	                    THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
+	                    ELSE s.PRICE 
+	                END AS DISPLAY_PRICE
                     , r.AVG_RATING 
                     , r.REVIEW_COUNT
                     , r.RECOMMEND_COUNT,
@@ -153,6 +166,7 @@
 					   AND AFD.USE_YN = 'Y' 
 					   AND ROWNUM = 1) AS THUMB_IMAGE
                 FROM TRIP_PROD t
+                LEFT JOIN ACCOMMODATION acc ON t.TRIP_PROD_NO = acc.TRIP_PROD_NO
                 LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
                 LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
                 LEFT JOIN (

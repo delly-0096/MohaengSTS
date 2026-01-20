@@ -28,8 +28,8 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 	private IBusinessProductMapper businessMapper;
 	
 	@Override
-	public List<TripProdVO> getProductlist(TripProdVO tripProd) {
-		return businessMapper.getProductlist(tripProd);
+	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts) {
+		return businessMapper.getProductlist(businessProducts);
 	}
 	
 	@Override

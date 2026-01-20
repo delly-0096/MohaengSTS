@@ -202,6 +202,7 @@
 			                        		</c:when>
 			                        		<c:otherwise>
 	<%-- 				                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원 --%>
+													<!--  -->
 												<div>아직 안불러옴</div>
 			                        		</c:otherwise>
 			                        	</c:choose>
@@ -903,6 +904,9 @@ function setModalForNew() {
 // 상품 수정 모달 설정
 async function editProduct(prodData) {
 	const { id } = prodData.dataset;
+	const container = document.getElementById('bookingTimeList');
+	container.innerHTML = ``;
+	bookingTimes = [];
 	
 	// 정보를 불러와야지
 	try {
@@ -1118,7 +1122,7 @@ function renderBookingTimes() {
     }
     // hidden input에 JSON으로 저장
     console.log("JSON.stringify(bookingTimes) : ", JSON.stringify(bookingTimes));
-    document.getElementById('bookingTimesInput').value = JSON.stringify(bookingTimes);
+    document.getElementById('bookingTimesInput').value = bookingTimes.join(',');
     // JSON.stringify(bookingTimes) 시간 정보만 담김 -> rsvtAvailableTime이거에 매칭 시켜야됨
 }
 

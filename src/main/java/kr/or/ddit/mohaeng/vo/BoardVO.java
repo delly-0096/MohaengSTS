@@ -33,6 +33,7 @@ public class BoardVO {
 	private int regId;
 	private String modId;
 
+	private int likes;	// 좋아요가 있으면 값이 likes_key 값이 들어옴, 없으면 0
 	
 	private List<BoardTagVO> boardTagList;
 	private List<BoardFileVO> boardFileList;

@@ -4,7 +4,8 @@ import lombok.Data;
 
 @Data
 public class LikesVO {
-    private Long likesKey;        // 대상키 (RCD_NO)
+    private int likesKey;        // 대상키 (RCD_NO)
     private String likesCatCd;    // 'TRIP_RECORD'
-    private Long memNo;
+    private int memNo;
+    private boolean status;
 }

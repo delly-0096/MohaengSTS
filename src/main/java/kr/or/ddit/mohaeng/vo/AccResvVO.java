@@ -38,7 +38,7 @@ public class AccResvVO {
 	/**
 	 * 예약상태
 	 */
-	private String ResvStatus;
+	private String resvStatus;
 	/**
 	 * 예상 도착 시간
 	 */
@@ -55,4 +55,8 @@ public class AccResvVO {
 	 * 유아 인원
 	 */
 	private int infantCnt;
+	/**
+	 * 요청 사항
+	 */
+	private String resvRequest;
 }

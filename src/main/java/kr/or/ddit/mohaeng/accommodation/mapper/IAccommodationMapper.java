@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
+import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomFacilityVO;
@@ -117,6 +118,15 @@ public interface IAccommodationMapper {
 	 *	@return 
 	 */
 	public void insertRoom(int roomTypeNo);
+
+	/**
+	 *	<p> 숙박 예약하기 </p>
+	 *	@date 2026.01.19
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	public int insertAccommodationReservaion(AccResvVO resvVO);
 
 
 }

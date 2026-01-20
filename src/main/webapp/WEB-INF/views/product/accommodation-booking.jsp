@@ -184,7 +184,7 @@
                                 <div class="form-group">
                                     <label class="form-label">연락처 <span class="text-danger">*</span></label>
                                     <input type="tel" class="form-control" id="bookerPhone"
-                                           value="${user.member.memUser.tel}" placeholder="010-0000-0000" maxlength="11" required>
+                                           value="${user.member.memUser.tel}" placeholder="- 제외 연락처를 입력하세요" maxlength="11" required>
                                 </div>
                             </div>
                             <div class="col-12">
@@ -202,7 +202,7 @@
                     <div class="booking-section">
                         <h3><i class="bi bi-people me-2"></i>투숙객 정보</h3>
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-6 d-flex flex-column">
                                 <div class="form-group">
 								    <label class="form-label">투숙객 선택 <span class="text-danger">*</span></label>
 								        <div class="guest-selector-container p-3 border rounded bg-light">
@@ -243,13 +243,26 @@
 								    </div>
 								</div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">예상 도착 시간</label>
-                                    <select class="form-control form-select" id="arrivalTime">
-                                    </select>
-                                </div>
-                            </div>
+                            <div class="col-md-6 d-flex flex-column">
+							    <div class="form-group"> 
+							    	<label class="form-label">예상 도착 시간</label>
+							        <div class="arrival-time-container p-3 border rounded bg-light"> <div class="mb-3">
+							                <span class="fw-bold">체크인 예정</span>
+							                <small class="text-muted d-block">${acc.checkInTime} 이후 입실 가능</small>
+							            </div>
+							            
+							            <select class="form-control form-select shadow-sm" id="arrivalTime">
+							                </select>
+							            
+							            <div class="mt-3">
+							                <small class="text-muted d-block" style="font-size: 13px; line-height: 1.5;">
+							                    <i class="bi bi-info-circle me-1"></i>
+							                    22:00 이후 도착 시 <br> 숙소에 반드시 사전 연락 부탁드립니다.
+							                </small>
+							            </div>
+							        </div>
+							    </div>
+							</div>
                         </div>
                     </div>
 
@@ -257,53 +270,85 @@
                     <div class="booking-section">
                         <h3><i class="bi bi-plus-circle me-2"></i>추가 옵션 <span class="optional-badge">선택사항</span></h3>
                         <div class="additional-services">
-                            <label class="service-option">
-                                <input type="checkbox" name="breakfast" value="breakfast" data-price="25000">
-                                <div class="service-option-content">
-                                    <div class="service-info">
-                                        <div>
-                                            <span class="service-name">조식 뷔페 (1인)</span>
-                                            <span class="service-desc">매일 07:00 - 10:00</span>
-                                        </div>
-                                    </div>
-                                    <span class="service-price">+25,000원</span>
-                                </div>
-                            </label>
-                            <label class="service-option">
-                                <input type="checkbox" name="latecheckout" value="latecheckout" data-price="50000">
-                                <div class="service-option-content">
-                                    <div class="service-info">
-                                        <div>
-                                            <span class="service-name">레이트 체크아웃</span>
-                                            <span class="service-desc">14:00까지 객실 이용 가능</span>
-                                        </div>
-                                    </div>
-                                    <span class="service-price">+50,000원</span>
-                                </div>
-                            </label>
-                            <label class="service-option">
-                                <input type="checkbox" name="spa" value="spa" data-price="80000">
-                                <div class="service-option-content">
-                                    <div class="service-info">
-                                        <div>
-                                            <span class="service-name">스파 패키지 (2인)</span>
-                                            <span class="service-desc">아로마 마사지 60분</span>
-                                        </div>
-                                    </div>
-                                    <span class="service-price">+80,000원</span>
-                                </div>
-                            </label>
-                            <label class="service-option">
-                                <input type="checkbox" name="parking" value="parking" data-price="15000">
-                                <div class="service-option-content">
-                                    <div class="service-info">
-                                        <div>
-                                            <span class="service-name">발렛파킹</span>
-                                            <span class="service-desc">1박 기준</span>
-                                        </div>
-                                    </div>
-                                    <span class="service-price">+15,000원</span>
-                                </div>
+							    <div class="additional-services">
+								    <%-- 1. 조식 --%>
+								    <c:if test="${acc.accFacility.breakfastYn eq 'Y'}">
+								        <label class="service-option">
+								            <input type="checkbox" name="breakfast" value="breakfast" data-price="25000">
+								            <div class="service-option-content">
+								                <div class="service-info">
+								                    <div>
+								                        <span class="service-name">조식 뷔페 (1인)</span>
+								                        <span class="service-desc">매일 07:00 - 10:00</span>
+								                    </div>
+								                </div>
+								                <span class="service-price">+25,000원</span>
+								            </div>
+								        </label>
+								    </c:if>
+								
+								    <%-- 2. 스파 --%>
+								    <c:if test="${acc.accFacility.spaYn eq 'Y'}">
+								        <label class="service-option">
+								            <input type="checkbox" name="spa" value="spa" data-price="80000">
+								            <div class="service-option-content">
+								                <div class="service-info">
+								                    <div>
+								                        <span class="service-name">스파 패키지 (2인)</span>
+								                        <span class="service-desc">아로마 마사지 60분</span>
+								                    </div>
+								                </div>
+								                <span class="service-price">+80,000원</span>
+								            </div>
+								        </label>
+								    </c:if>
+								
+								    <%-- 3. 주차 --%>
+								    <c:if test="${acc.accFacility.parkingYn eq 'Y'}">
+								        <label class="service-option">
+								            <input type="checkbox" name="parking" value="parking" data-price="15000">
+								            <div class="service-option-content">
+								                <div class="service-info">
+								                    <div>
+								                        <span class="service-name">발렛파킹</span>
+								                        <span class="service-desc">1박 기준</span>
+								                    </div>
+								                </div>
+								                <span class="service-price">+15,000원</span>
+								            </div>
+								        </label>
+								    </c:if>
+								    
+								    <%-- 3. 주차 --%>
+								    <c:if test="${acc.accFacility.petFriendlyYn eq 'Y'}">
+								        <label class="service-option">
+								            <input type="checkbox" name="petFriendly" value="petFriendly" data-price="70000">
+								            <div class="service-option-content">
+								                <div class="service-info">
+								                    <div>
+								                        <span class="service-name">반려동물 입실</span>
+								                        <span class="service-desc">1박 기준</span>
+								                    </div>
+								                </div>
+								                <span class="service-price">+70,000원</span>
+								            </div>
+								        </label>
+								    </c:if>
+								
+								    <%-- 레이트 체크아웃 (상시 노출) --%>
+								    <label class="service-option">
+								        <input type="checkbox" name="latecheckout" value="latecheckout" data-price="50000">
+								        <div class="service-option-content">
+								            <div class="service-info">
+								                <div>
+								                    <span class="service-name">레이트 체크아웃</span>
+								                    <span class="service-desc">14:00까지 객실 이용 가능</span>
+								                </div>
+								            </div>
+								            <span class="service-price">+50,000원</span>
+								        </div>
+								    </label>
+								</div>
                             </label>
                         </div>
                     </div>
@@ -312,7 +357,7 @@
                     <div class="booking-section">
                         <h3><i class="bi bi-chat-text me-2"></i>요청사항</h3>
                         <div class="form-group mb-3">
-                            <textarea class="form-control" id="requests" rows="3"
+                            <textarea class="form-control" id="resvRequest" name="resvRequest" rows="3"
                                       placeholder="숙소에 전달할 요청사항을 입력해주세요. (선택)"></textarea>
                         </div>
                         <div class="quick-requests">
@@ -325,38 +370,11 @@
                     </div>
 
                     <!-- 결제 수단 -->
-                    <div class="booking-section">
+                    <div class="booking-section" style="position: relative;">
                         <h3><i class="bi bi-credit-card me-2"></i>결제 수단</h3>
-                        <div class="payment-methods">
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="card" checked>
-                                <div class="payment-method-content">
-                                    <i class="bi bi-credit-card"></i>
-                                    <span>신용/체크카드</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="kakao">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-chat-fill" style="color: #FEE500;"></i>
-                                    <span>카카오페이</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="naver">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-n-circle" style="color: #03C75A;"></i>
-                                    <span>네이버페이</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="bank">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-bank"></i>
-                                    <span>계좌이체</span>
-                                </div>
-                            </label>
-                        </div>
+                        <div class="payment-container">
+						    <div id="payment-method"></div>
+						</div>
                     </div>
 
                     <!-- 약관 동의 -->
@@ -391,7 +409,7 @@
                     </div>
 
                     <button type="submit" class="btn btn-primary btn-lg w-100 pay-btn">
-                        <i class="bi bi-lock me-2"></i><span id="payBtnText">530,000원 결제하기</span>
+                        <i class="bi bi-lock me-2"></i><span id="payBtnText"></span>
                     </button>
                 </form>
             </div>
@@ -402,29 +420,35 @@
                     <h4>결제 정보</h4>
 
                     <div class="summary-accommodation-image">
-                        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=200&fit=crop&q=80" alt="숙소">
+                        <img src="${pageContext.request.contextPath}${acc.accFilePath}" alt="${acc.accName}">
                     </div>
 
                     <div class="summary-details">
                         <div class="summary-row">
                             <span class="summary-label">숙소</span>
-                            <span class="summary-value" id="summaryAccommodation">제주 신라호텔</span>
+                            <span class="summary-value" id="summaryAccommodation">${acc.accName }</span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">객실</span>
-                            <span class="summary-value" id="summaryRoom">디럭스 더블룸</span>
+                            <span class="summary-value" id="summaryRoom">${room.roomName }
+                            </span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">숙박 기간</span>
-                            <span class="summary-value" id="summaryPeriod">3/15 - 3/17 (2박)</span>
+                            <span class="summary-value" id="summaryPeriod">
+                            ${fn:substring(bookingData.startDate, 5, 10)} - ${fn:substring(bookingData.endDate, 5, 10)} (${nights}박)
+                			</span>
+                            </span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">투숙객</span>
-                            <span class="summary-value" id="summaryGuests">성인 2명</span>
+                            <span class="summary-value" id="summaryGuests">성인 ${bookingData.adultCount}명</span>
                         </div>
                         <div class="summary-row">
                             <span class="summary-label">객실 요금</span>
-                            <span class="summary-value" id="summaryRoomPrice">265,000원 x 2박</span>
+                            <span class="summary-value" id="summaryRoomPrice">
+                            <fmt:formatNumber value="${room.finalPrice}" pattern="#,###"/>원 x ${nights}박
+                            </span>
                         </div>
                         <div class="summary-row" id="summaryExtraGuestRow" style="display: none;">
                             <span class="summary-label">추가 인원</span>
@@ -436,7 +460,7 @@
                         </div>
                         <div class="summary-row total">
                             <span class="summary-label">총 결제금액</span>
-                            <span class="summary-value" id="totalAmount">530,000원</span>
+                            <span class="summary-value" id="totalAmount">0원</span>
                         </div>
                     </div>
 
@@ -463,6 +487,8 @@
 <script src="${pageContext.request.contextPath}/resources/js/accommodation-booking.js"></script>
 
 <script>
+let widgets = null; // 전역 변수로 위젯 관리
+
 document.addEventListener('DOMContentLoaded', function() {
     // 1. 로그인 여부 체크
     const isLoggedIn = <sec:authorize access="isAuthenticated()">true</sec:authorize>
@@ -474,8 +500,40 @@ document.addEventListener('DOMContentLoaded', function() {
     <c:forEach items="${user.authorities}" var="auth">
         if("${auth.authority}" === 'ROLE_BUSINESS') isBusiness = true;
     </c:forEach>
+    
+    
+    async function initTossPayments(){
+    	const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm"; 
+        const customerKey = "MyKgi0HwDJKFeRDGmc_wM"; 
+        
+        const tossPayments = TossPayments(clientKey);
+        // ------ 위젯 인스턴스 초기화 ------
+        widgets = tossPayments.widgets({ customerKey });
+        
+     	// 객실 총 가격 (방값 * 박수)
+        const roomTotal = bookingConfig.roomPricePerNight * bookingConfig.nights;
+        // 추가 인원 요금 (아까 updateGuestPriceWithPolicy에서 계산된 값)
+        const extraFee = bookingConfig.currentExtraFee || 0;
+        // 최종 결제 금액
+        const finalAmount = roomTotal + extraFee + (bookingConfig.addonsTotal || 0);
+        
+        console.log("토스 전송 금액 확인:", finalAmount);
+
+    	 // ------ 주문의 결제 금액 설정 ------
+        await widgets.setAmount({
+            currency: "KRW",
+            value: finalAmount
+        });
+
+     	// ------ 결제 UI 렌더링 ------
+        await widgets.renderPaymentMethods({
+            selector: "#payment-method",
+            variantKey: "DEFAULT"
+        });
+    }
 
     initBooking({
+    	roomNo: ${room.roomTypeNo},
         roomPricePerNight: ${room.finalPrice},
         nights: ${nights},
         extraGuestPrice: ${room.extraGuestFee},
@@ -487,9 +545,10 @@ document.addEventListener('DOMContentLoaded', function() {
         isLoggedIn: isLoggedIn,
         
         // 날짜 & 이미지 데이터 주입
-        startDate: '${bookingData.startDate}',
-        endDate: '${bookingData.endDate}',
-        roomImages: ['${acc.accFilePath}', '${room.accFileNo}']
+		startDt: '${bookingData.startDate}', 
+		endDt: '${bookingData.endDate}',
+        roomImages: ['${acc.accFilePath}', '${room.accFileNo}'],
+        accNo: ${accNo} // [추가] URL 경로용
     });
 
     // 🚦 권한별 통제 로직
@@ -501,7 +560,9 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         initAgreementEvents();
         initBookingForm();
+        
+        initTossPayments().catch(err => console.error("토스 로딩 실패:", err));
     }
-});
+})
 </script>
 <%@ include file="../common/footer.jsp" %>

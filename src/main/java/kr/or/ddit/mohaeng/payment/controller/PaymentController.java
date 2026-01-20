@@ -101,6 +101,32 @@ public class PaymentController {
 	}
 	
 	/**
+	 * <p> 숙박 상품 결제 성공 시 이동 페이지 </p>
+	 * @date 2025.01.20
+	 * @author kdrs
+	 */
+	@GetMapping("/product/payment/success")
+	public String accommodationPayment(
+	        @RequestParam String paymentType,
+	        @RequestParam String orderId,
+	        @RequestParam String paymentKey,
+	        @RequestParam Long amount,
+	        Model model
+	        ) {
+	    
+	    log.info("숙박 결제 성공 진입 : " + paymentType + ", " + orderId + ", " + paymentKey + ", " + amount);
+
+	    model.addAttribute("paymentType", paymentType);
+	    model.addAttribute("orderId", orderId);
+	    model.addAttribute("paymentKey", paymentKey);
+	    model.addAttribute("amount", amount);
+	    model.addAttribute("productType", "accommodation");
+	    model.addAttribute("success", "success");
+	    
+	    return "product/payment";
+	}
+	
+	/**
 	 * <p>결제 서버 접근 실패시 이동 페이지</p>
 	 * @date 2025.01.07
 	 * @author sdg

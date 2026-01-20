@@ -221,29 +221,36 @@ public class AccommodationController {
 	    model.addAttribute("totalPayAmount", totalPayAmount); // 최종가 전달!
 	    
 	    return "product/accommodation-booking";
-	}
+	} 
 
 	
 	/**
 	 * 숙소 예약 프로세스
 	 */
+	@ResponseBody
 	@PostMapping("/product/accommodation/{accNo}/booking")
-	public ResponseEntity<String> bookingProcess(
+	public Map<String, Object> bookingProcess(
 			@RequestBody AccResvVO resvVO,
 			@AuthenticationPrincipal CustomUserDetails user
 			){
+		log.info("예약 요청 데이터: {}", resvVO);
+		
+		Map<String, Object> response = new HashMap<>();
 		
 		// 로그인한 유저 PK 세팅 
 	    resvVO.setResvMemNo(user.getMember().getMemNo());
 	    
 	    // 서비스 호출 (예약 완료 처리)
-	    int result = accService.registReservation(resvVO);
-	    
-	    if(result > 0) {
-	        return ResponseEntity.ok("success");
-	    } else {
-	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("fail");
+	    try {
+	    	int result = accService.registReservation(resvVO);
+	    	
+	    	response.put("status", "success");
+	    	response.put("message", "예약이 성공적으로 접수되었습니다.");
+	    } catch (Exception e) {
+	    	response.put("status", "error");
+	    	response.put("message", "예약 처리 중 오류가 발생했습니다.");
 	    }
+	    return response;
 	}
 	
 }

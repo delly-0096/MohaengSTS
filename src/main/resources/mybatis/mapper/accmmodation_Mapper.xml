@@ -632,7 +632,7 @@
 	    )
 	</insert>
 	
-	<insert id="insertAccommodationReservation" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
+	<insert id="insertAccommodationReservaion" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
 	    <selectKey keyProperty="accResvNo" resultType="int" order="BEFORE">
 	        SELECT SEQ_ACC_RESV.NEXTVAL FROM DUAL
 	    </selectKey>
@@ -645,11 +645,12 @@
 	        , END_DT 
 	        , STAY_DAYS 
 	        , ARRIVE_TIME
-	        , REG_DT 
-	        , RESV_STATUS
 	        , ADULT_CNT
 	        , CHILD_CNT
 	        , INFANT_CNT
+	        , RESV_REQUEST
+	        , REG_DT 
+	        , RESV_STATUS
 	    ) VALUES (
 	        #{accResvNo} 
 	        , #{roomTypeNo} 
@@ -657,11 +658,11 @@
 	        , #{startDt}
 	        , #{endDt} 
 	        , #{stayDays} 
-	        , #{resvCnt}
 	        , #{arriveTime}
 	        , #{adultCnt}
 	        , #{childCnt}
 	        , #{infantCnt} 
+	        , #{resvRequest}
 	        , SYSDATE 
 	        , '결제완료'
 	    )

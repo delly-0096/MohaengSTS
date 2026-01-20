@@ -209,6 +209,9 @@ document.addEventListener("DOMContentLoaded", async function(){
 		if (pType === "tour") {
 			// 투어 상품 결제
 			await processTourPayment(customData, payNo, orderName, payDt, person, totalAmount, method, message);
+		} else if (pType === "accommodation") {\
+			// 숙박 상품 결제
+		    await processAccommodationPayment(customData, payNo, orderName, payDt, person, totalAmount, method, message);
 		} else {
 			if(flightProduct) flightProduct = JSON.parse(flightProduct); 
 			
@@ -392,6 +395,46 @@ async function processTourPayment(customData, payNo, orderName, payDt, person, t
 		message.innerHTML = "결제 처리 중 오류가 발생했습니다.";
 		document.querySelector(".payment-fail").style.display = "block";
 	}
+}
+
+// 숙박 상품 결제
+async function processAccommodationPayment(customData, payNo, orderName, payDt, person, totalAmount, method, message) {
+    let pendingBooking = JSON.parse(sessionStorage.getItem("pendingBooking"));
+    console.log("숙소 대기 데이터:", pendingBooking);
+    
+    const requestData = {
+        paymentKey: paymentKey.value,
+        orderId: orderId.value,
+        amount: amount.value,
+        paymentType: paymentType.value,
+        productType: "accommodation",
+        memNo: customData.memNo,
+        accResvVO: pendingBooking 
+    };
+
+    const response = await fetch("/product/payment/confirm", {
+        method: "post",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(requestData)
+    });
+    
+    const resultData = await response.json();
+    
+    if (response.ok) {
+        // UI 업데이트
+        payNo.innerHTML = resultData.orderId;
+        orderName.innerHTML = resultData.orderName;
+        payDt.innerHTML = pendingBooking.startDt + " ~ " + pendingBooking.endDt;
+        person.innerHTML = `성인 ${pendingBooking.adultCnt}, 아동 ${pendingBooking.childCnt}`;
+        totalAmount.innerHTML = resultData.totalAmount.toLocaleString();
+        method.innerHTML = resultData.method === '간편결제' ? resultData.easyPay.provider : resultData.method;
+        
+        document.querySelector(".payment-complete").style.display = "block";
+        sessionStorage.removeItem("pendingBooking"); // 성공했으니 세션 삭제
+    } else {
+        // 실패 처리 로직...
+        document.querySelector(".payment-fail").style.display = "block";
+    }
 }
 </script>
 

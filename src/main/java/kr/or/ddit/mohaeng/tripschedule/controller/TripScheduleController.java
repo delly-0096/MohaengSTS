@@ -427,17 +427,10 @@ public class TripScheduleController {
 	        int duration = CommUtil.calculateDaysBetween(dates[0], dates[1]);
 	        String durationStr = duration + "박"+ (duration+1) +"일";
 	        
-//	        // 2. 비즈니스 로직 처리 (예: 서비스 호출)
-//	        // service.getRecommendation(preferenceData);
-	        
-	        // 3. 모델에 담아 JSP 등으로 전달
-	        model.addAttribute("data", preferenceData);
-	        
 	        int destinationcode = Integer.parseInt(preferenceNode.get("destinationcode").asText());
-	        
 	        String region = RegionCode.getNameByNo(destinationcode);
 	        
-	        // 3. 프롬프트 작성 (RAG 패턴)
+//	        // 3. 프롬프트 작성 (RAG 패턴)
 //	        String message = String.format("""
 //	            사용자가 '%s' 여행지를 찾고 있어.
 //	            
@@ -446,8 +439,6 @@ public class TripScheduleController {
 //	            
 //	            [여행페이스]
 //	            %s
-//              
-//              
 //              
 //	            [참고할 관광지 DB 데이터]
 //	            %s
@@ -481,6 +472,8 @@ public class TripScheduleController {
 ////	        
 //	        System.out.println("result : " + result);
 	        
+	        // 3. 모델에 담아 JSP 등으로 전달
+	        model.addAttribute("data", preferenceData);
 	    } catch (Exception e) {
 	        e.printStackTrace();
 //	        return "error-page";

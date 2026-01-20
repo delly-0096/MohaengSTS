@@ -599,6 +599,7 @@ function addDayHeaderBlock(dayNo, dateStr) {
 	    '</div>' +
 	    '<div class="day-header">' +
 	      '<span class="day-badge">DAY ' + dayNo + '</span>' +
+	      ' ' +
 	      '<span class="day-date">' + (dateStr || '') + '</span>' +
 	    '</div>';
 

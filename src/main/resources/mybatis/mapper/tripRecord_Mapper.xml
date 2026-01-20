@@ -200,6 +200,12 @@
 	        tr.MAP_DISP_YN   AS mapDispYn,
 	        tr.REPLY_ENBL_YN AS replyEnblYn,
 	        RG.RGN_NM        AS locName,
+	        (
+			  SELECT h.TAG_NAME
+			  FROM HASHTAG h
+			  WHERE h.RCD_NO = tr.RCD_NO
+			    AND ROWNUM = 1
+			) AS tagName,
 	
 	        CASE
 			  WHEN afd.FILE_PATH IS NULL THEN NULL

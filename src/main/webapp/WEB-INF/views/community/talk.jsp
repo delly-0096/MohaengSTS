@@ -9,6 +9,7 @@
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 
+
 <style>
 
 .thumb-wrap {
@@ -511,7 +512,7 @@
 		                <div class="post-detail-stats">
 		                    <span><i class="bi bi-eye"></i> <span id="postViews">${boardVO.viewCnt}</span></span>
 		                    <span><i class="bi bi-chat"></i> <span id="postCommentCount">${boardVO.commentCnt}</span></span>
-		                    <span><i class="bi bi-heart"></i> <span id="postLikes">0</span></span>
+		                    <span><i class="bi bi-heart"></i> <span id="postLikes">${boardVO.likeCnt }</span></span>
 		                </div>
 		            </div>
 				
@@ -579,25 +580,35 @@
 				        </div>
 				      </c:if>
 				      
-				      <div class="post-detail-actions">
-		                <button class="post-action-btn" onclick="togglePostLike()">
-		                    <i class="bi bi-heart" id="postLikeIcon"></i>
+				      <div class="post-detail-actions ">
+				      	<c:set value="bi bi-heart" var="icon"/>
+				      	<c:set value="" var="active"/>
+				      	<c:set value="" var="color"/>
+				      	<c:set value="N" var="stat"/>
+				      	<c:if test="${not empty boardVO.likes and boardVO.likes > 0 }">
+					      	<c:set value="bi bi-heart-fill" var="icon"/>
+					      	<c:set value="active" var="active"/>
+				      		<c:set value="color:#ef4444" var="color"/>
+				      		<c:set value="Y" var="stat"/>
+				      	</c:if>
+		                <button class="post-action-btn ${active }" onclick="togglePostLike(this)" data-status=${stat }>
+		                    <i class="${icon }" id="postLikeIcon" style="${color}"></i>
 		                    <span>좋아요</span>
-		                </button>
-		                <button class="post-action-btn" onclick="togglePostBookmark()">
-		                    <i class="bi bi-bookmark" id="postBookmarkIcon"></i>
-		                    <span>북마크</span>
 		                </button>
 		                <button class="post-action-btn" onclick="sharePost()">
 		                    <i class="bi bi-share"></i>
 		                    <span>공유</span>
 		                </button>
-		                <sec:authorize access="hasRole('MEMBER')">
-		                <button class="post-action-btn report" onclick="reportCurrentPost()">
-		                    <i class="bi bi-flag"></i>
-		                    <span>신고</span>
-		                </button>
-		                </sec:authorize>
+		           <sec:authorize access="hasRole('MEMBER')">
+						  <button type="button"
+						          class="btn btn-outline-danger btn-sm"
+						          data-board-no="${boardVO.boardNo}"
+						          data-board-title="${fn:escapeXml(boardVO.boardTitle)}"
+						          onclick="openReportModal('post', this.dataset.boardNo, this.dataset.boardTitle)">신고
+						  </button>
+						</sec:authorize>
+
+
 		            </div>
 				
 					  <!-- 댓글 붙이기 --> 
@@ -662,6 +673,14 @@ async function loadComments(){
     html += '</div>';
     html += '<div class="mt-2" style="white-space: pre-wrap;">' + content + '</div>';
 
+    // ✅ 여기! 댓글 신고 버튼 (로그인한 회원만 노출)
+    if (isLoggedIn) {
+      html += '<div class="mt-2 d-flex justify-content-end">';
+      html += '  <button type="button" class="btn btn-sm btn-outline-danger" '
+           +  'onclick="openReportModal(\\\'comment\\\', ' + c.cmntNo + ', \\\'\\\')">신고</button>';
+      html += '</div>';
+    }
+
     if(!isReply){
       html += '<div class="mt-2">';
       html += '  <button class="btn btn-sm btn-link" type="button" onclick="toggleReplyForm(' + c.cmntNo + ')">답글</button>';
@@ -675,6 +694,7 @@ async function loadComments(){
 
     div.innerHTML = html;
     root.appendChild(div);
+
   });
 }
 
@@ -740,9 +760,9 @@ const api = (...parts) => {
 	console.log(base + '/' + path);
 	  return base + '/' + path;
 	};
-
+ 
 // 현재 선택된 카테고리
-let currentCategory = 'all';
+ let currentCategory = 'all';
 
 // 카테고리별 표시 텍스트 매핑
 const categoryMap = {
@@ -953,6 +973,7 @@ function closePostDetail() {
 }
 
 // 댓글 렌더링
+
 function renderComments(comments) {
     const listEl = document.getElementById('commentsList');
     document.getElementById('commentsCount').textContent = comments.length;
@@ -986,8 +1007,9 @@ function renderComments(comments) {
 }
 
 // 좋아요 토글
-function togglePostLike() {
-    if (!currentUser.isLoggedIn) {
+function togglePostLike(ele) {
+	let status = false;
+    if (!isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
             sessionStorage.setItem('returnUrl', window.location.href);
             window.location.href = '${pageContext.request.contextPath}/member/login';
@@ -1000,45 +1022,43 @@ function togglePostLike() {
     const likesEl = document.getElementById('postLikes');
     let likes = parseInt(likesEl.textContent);
 
-    if (isPostLiked) {
+    // 현재 좋아요의 상태(눌려있는지, 꺼져있는지)
+    let currentStatus = ele.dataset.status;
+    console.log("현재 좋아요 눌린 상태 : " + currentStatus);
+    if (currentStatus == "N") {
         icon.className = 'bi bi-heart-fill';
         icon.style.color = '#ef4444';
         likesEl.textContent = likes + 1;
         showToast('좋아요를 눌렀습니다.', 'success');
+        icon.closest('.post-action-btn').classList.add("active");
+        status = true;
     } else {
         icon.className = 'bi bi-heart';
         icon.style.color = '';
         likesEl.textContent = likes - 1;
+        icon.closest('.post-action-btn').classList.remove("active");
+        status = false;
     }
 
     // 버튼 액티브 상태 토글
-    icon.closest('.post-action-btn').classList.toggle('active', isPostLiked);
+    // icon.closest('.post-action-btn').classList.toggle('active', isPostLiked);
+    
+    console.log("좋아요 클릭 상태 : " + status);
+    // 서버로 전송해서 좋아요 기능 요청
+    axios.post(`/community/talk/${boardVO.boardNo}/like`, {
+    	status: status,
+    	likesCatCd: 'talk',
+    	likesKey: ${boardVO.boardNo}
+    })
+    .then(res => {
+    	console.log("좋아요 처리 완 : " + res.data);
+    }).catch(err => {
+    	console.log("error 발생 : ", error);
+    });
+    //const prodData = response.data;
+    
 }
 
-// 북마크 토글
-function togglePostBookmark() {
-    if (!currentUser.isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            sessionStorage.setItem('returnUrl', window.location.href);
-            window.location.href = '${pageContext.request.contextPath}/member/login';
-        }
-        return;
-    }
-
-    isPostBookmarked = !isPostBookmarked;
-    const icon = document.getElementById('postBookmarkIcon');
-
-    if (isPostBookmarked) {
-        icon.className = 'bi bi-bookmark-fill';
-        showToast('게시글을 북마크했습니다.', 'success');
-    } else {
-        icon.className = 'bi bi-bookmark';
-        showToast('북마크를 해제했습니다.', 'info');
-    }
-
-    // 버튼 액티브 상태 토글
-    icon.closest('.post-action-btn').classList.toggle('active', isPostBookmarked);
-}
 
 // 게시글 공유
 function sharePost(){
@@ -1142,17 +1162,9 @@ if (typeof showToast !== 'function') {
 }
 
 // ==================== 신고 기능 ====================
-
-// 현재 게시글 신고
-function reportCurrentPost() {
-    if (!currentPostId) return;
-    var post = postsData[currentPostId];
-    if (!post) return;
-    openReportModal('post', currentPostId, post.title);
-}
-
 // 댓글 신고
 function reportComment(commentId, commentText) {
+	
     openReportModal('comment', commentId, commentText);
 }
 

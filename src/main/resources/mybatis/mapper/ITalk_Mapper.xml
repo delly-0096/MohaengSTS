@@ -41,6 +41,7 @@
 	<result property="writerId" column="WRITER_ID"/>
     <result property="commentCnt" column="COMMENT_CNT"/>
     
+    <result property="likes" column="likes_key"/>
 
     <!-- 첨부파일 리스트 -->
     <collection property="boardFileList" resultMap="attachFileDetailMap"/>
@@ -87,7 +88,8 @@
        ) AS COMMENT_CNT,
     
       afd.FILE_NO, afd.FILE_NAME, afd.FILE_ORIGINAL_NAME, afd.FILE_EXT,
-      afd.FILE_SIZE, afd.FILE_PATH, afd.FILE_GB_CD, afd.MIMY_TYPE, afd.USE_YN, afd.REG_ID
+      afd.FILE_SIZE, afd.FILE_PATH, afd.FILE_GB_CD, afd.MIMY_TYPE, afd.USE_YN, afd.REG_ID,
+      (select likes_key from likes where likes_key = b.board_no and likes_cat_cd = 'talk' and mem_no = WRITER_NO) as likes_key
     FROM BOARD b
       LEFT JOIN ATTACH_FILE af ON (b.ATTACH_NO = af.ATTACH_NO)
       LEFT JOIN ATTACH_FILE_DETAIL afd ON (af.ATTACH_NO = afd.ATTACH_NO AND afd.USE_YN = 'Y')
@@ -95,7 +97,49 @@
       AND b.DEL_YN = 'N'
   </select>
 
+<!-- 좋아요 여부 확인
 
+  <select id="existsLike" parameterType="map" resultType="int">
+  SELECT COUNT(*)
+  FROM BOARD_LIKE
+  WHERE BOARD_NO = #{boardNo}
+    AND MEM_NO   = #{memNo}
+</select>
+ 
+ 좋아요 추가
+  <insert id="insertLike" parameterType="map">
+  INSERT INTO BOARD_LIKE (BOARD_NO, MEM_NO)
+  VALUES (#{boardNo}, #{memNo})
+</insert>
+  
+  좋아요 삭제
+  <delete id="deleteLike" parameterType="map">
+  DELETE FROM BOARD_LIKE
+  WHERE BOARD_NO = #{boardNo}
+    AND MEM_NO   = #{memNo}
+</delete>
+
+ 좋아요 증감
+<update id="increaseLikeCnt" parameterType="int">
+  UPDATE BOARD
+  SET LIKE_CNT = NVL(LIKE_CNT,0) + 1
+  WHERE BOARD_NO = #{boardNo}
+</update>
+
+<update id="decreaseLikeCnt" parameterType="int">
+  UPDATE BOARD
+  SET LIKE_CNT = CASE
+    WHEN NVL(LIKE_CNT,0) > 0 THEN LIKE_CNT - 1 ELSE 0 END
+  WHERE BOARD_NO = #{boardNo}
+</update>
+
+<select id="selectLikeCnt" parameterType="int" resultType="int">
+  SELECT NVL(LIKE_CNT,0)
+  FROM BOARD
+  WHERE BOARD_NO = #{value}
+</select>
+ -->
+  
 
   <!-- 조회수 증가 -->
   <update id="incrementHit" parameterType="int">
@@ -294,5 +338,43 @@
     ) A
 </insert>
  
+ 
+	<!-- 2026.01.20 HJ -좋아요 -->
+	<select id="selectTalkLike" parameterType="kr.or.ddit.mohaeng.vo.LikesVO" resultType="kr.or.ddit.mohaeng.vo.LikesVO">
+		select * from likes
+		where likes_key = #{likesKey}
+		and mem_no = #{memNo}
+		and likes_cat_cd = 'talk'
+	</select>
+	
+	<insert id="insertTalkLike" parameterType="kr.or.ddit.mohaeng.vo.LikesVO">
+		insert into likes(
+			likes_key, likes_cat_cd, mem_no
+		)values(
+			#{likesKey}, #{likesCatCd}, #{memNo}
+		)
+	</insert>
+	
+	<update id="incrementTalkLikeCnt" parameterType="int">
+		update board
+		set
+			like_cnt = like_cnt + 1
+		where board_no = #{likesKey}
+	</update>
+	 
+	<delete id="deleteTalkLike" parameterType="kr.or.ddit.mohaeng.vo.LikesVO">
+		delete from likes
+		where likes_key = #{likesKey}
+		and likes_cat_cd = 'talk'
+		and mem_no = #{memNo}
+	</delete>
+	
+	<update id="decrementTalkLikeCnt" parameterType="int">
+		update board
+		set
+			like_cnt = like_cnt - 1
+		where board_no = #{likesKey}
+	</update>
+	<!-- 2026.01.20 HJ -좋아요 End --> 
 
 </mapper>

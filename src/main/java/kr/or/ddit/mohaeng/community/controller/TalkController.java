@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,13 +29,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.community.service.CommentService;
 import kr.or.ddit.mohaeng.community.service.ITalkService;
+import kr.or.ddit.mohaeng.mailapi.controller.MailController;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.BoardFileVO;
 import kr.or.ddit.mohaeng.vo.BoardVO;
 import kr.or.ddit.mohaeng.vo.CommentVO;
+import kr.or.ddit.mohaeng.vo.LikesVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,6 +46,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @RequestMapping("/community/talk")
 public class TalkController {
+
+    private final MailController mailController;
 
 	@Autowired
 	private ITalkService talkService;
@@ -52,7 +58,11 @@ public class TalkController {
 	String uploadPath;
 
 	@Autowired
-	private CommentService commentService;
+	private CommentService commentService;	
+
+    TalkController(MailController mailController) {
+        this.mailController = mailController;
+    }
 
 	@RequestMapping
 	public String communityForm(@RequestParam(name = "page", required = false, defaultValue = "1") int currentPage,
@@ -189,6 +199,30 @@ public class TalkController {
 		}
 		return entity;
 	}
+	
+	//좋아요 
+	@PostMapping("/{boardNo}/like")
+	public ResponseEntity<?> toggleLike(
+	        @PathVariable int boardNo, @RequestBody LikesVO likesVO,
+	        @AuthenticationPrincipal CustomUserDetails user
+	) {
+		ResponseEntity<String> entity = null;
+	    if (user == null) return ResponseEntity.status(401).body("LOGIN_REQUIRED");
+	    int memNo = user.getMember().getMemNo();
+	    
+	    likesVO.setMemNo(memNo);
+    	ServiceResult result = talkService.toggleLike(likesVO);
+    	if(result.equals(ServiceResult.OK)) { // 좋아요 처리 완료
+    		// on/off에 따른 좋아요 처리가 정상적으로 처리되었을 때
+    		entity = ResponseEntity.ok(result.toString());
+    	}else {
+    		// 정상 처리 되지 않았을 때
+    		entity = ResponseEntity.badRequest().build();
+    	}
+	    
+	    return entity;
+	}
+
 
 	@GetMapping("/preview/{fileNo}")
 	public ResponseEntity<byte[]> preview(@PathVariable int fileNo) {

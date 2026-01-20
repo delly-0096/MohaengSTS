@@ -827,6 +827,133 @@
 	padding: 9px 11px;
 }
 
+/* ===== 본문 블록 렌더링 ===== */
+.travellog-block {
+  margin: 14px 0;
+}
+
+.travellog-block-text {
+  white-space: pre-wrap;
+  line-height: 1.8;
+  font-size: 15px;
+  color: #334155;
+}
+
+.travellog-block-divider {
+  height: 1px;
+  background: #e2e8f0;
+  margin: 18px 0;
+  opacity: .9;
+}
+
+/* 이미지 블록 */
+.travellog-block-image {
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+}
+
+.travellog-block-image img {
+  width: 100%;
+  display: block;
+  max-height: 520px;
+  object-fit: cover;
+}
+
+.travellog-block-image .caption {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: #64748b;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+/* PLACE 카드 */
+.place-card {
+  display: flex;
+  gap: 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 6px 18px rgba(0,0,0,.06);
+}
+
+.place-thumb {
+  width: 180px;
+  min-width: 180px;
+  height: 132px;
+  background: #f1f5f9;
+  overflow: hidden;
+}
+
+.place-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.place-body {
+  flex: 1;
+  padding: 12px 12px 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.place-title {
+  font-weight: 900;
+  font-size: 15px;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
+.place-addr {
+  font-size: 12.5px;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.place-addr i { color: var(--primary-color); }
+
+.place-rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  color: #334155;
+  font-weight: 800;
+}
+
+.place-stars {
+  letter-spacing: 1px;
+  color: #f59e0b;
+  font-size: 13px;
+}
+
+.place-review {
+  margin-top: 4px;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: #334155;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 10px 12px;
+}
+
+@media (max-width: 768px){
+  .place-card { flex-direction: column; }
+  .place-thumb { width: 100%; min-width: 100%; height: 200px; }
+  .place-body { padding: 12px; }
+}
+
+
 @media ( max-width : 768px) {
 	.travellog-detail-cover {
 		height: 200px;
@@ -1028,9 +1155,14 @@
 					</div>
 
 					<!-- 본문 -->
-					<div class="travellog-detail-content">
-						<c:out value="${detail.rcdContent}" />
+					<!-- 본문(블록 렌더링) -->
+					<div id="recordBlocks" class="travellog-detail-content"></div>
+					
+					<!-- (옵션) 예전 rcdContent fallback: blocks 로딩 실패 시에만 보여주고 싶으면 숨겨두기 -->
+					<div id="recordContentFallback" class="travellog-detail-content" style="display:none;">
+					  <c:out value="${detail.rcdContent}" />
 					</div>
+					
 
 					<!-- 액션 바 (반드시 래퍼로 감싸야 간격/구분선 적용됨) -->
 					<div class="travellog-detail-actionbar">
@@ -1768,6 +1900,133 @@ async function loadComments(rcdNo) {
 }
 
 
+//===== 블록 렌더링 =====
+const BLOCKS_API = CTX + '/api/travel-log/records/' + encodeURIComponent(CURRENT_RCD_NO) + '/blocks';
+
+
+function safeText(v){ return (v == null) ? '' : String(v); }
+
+function starString(rating){
+  const r = Number(rating || 0);
+  const full = Math.max(0, Math.min(5, Math.floor(r)));
+  const empty = 5 - full;
+  return '★'.repeat(full) + '☆'.repeat(empty);
+}
+
+function resolvePlaceImg(block){
+  // 1) 첨부 이미지 경로 (DB에서 뽑은 ATTACH_FILE_DETAIL.FILE_PATH)
+  const p = (block.placeImgPath || '').trim();
+  if (p) {
+    // 너희 파일 서빙 규칙이 "/files{path}" 형태였지 (cover에서 사용)
+    return CTX + '/files' + p;
+  }
+
+  // 2) 기본 이미지(URL 형태로 저장되어 있을 가능성)
+  const d = (block.defaultImg || '').trim();
+  if (d) return d;
+
+  // 3) fallback
+  return 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80';
+}
+
+function renderBlock(block){
+  const type = (block.blockType || '').toUpperCase();
+
+  if (type === 'DIVIDER') {
+    const div = document.createElement('div');
+    div.className = 'travellog-block travellog-block-divider';
+    return div;
+  }
+
+  if (type === 'TEXT') {
+    const div = document.createElement('div');
+    div.className = 'travellog-block travellog-block-text';
+    div.innerHTML = escapeHtml(safeText(block.text));
+    return div;
+  }
+
+  if (type === 'IMAGE') {
+    const wrap = document.createElement('div');
+    wrap.className = 'travellog-block travellog-block-image';
+
+    const imgPathRaw = (block.imgPath || '').trim();
+    const imgSrc = imgPathRaw ? (CTX + '/files' + imgPathRaw) : '';
+
+    wrap.innerHTML =
+      '<img src="' + escapeHtml(imgSrc) + '" alt="image" onerror="this.style.display=\'none\';" />' +
+      (block.desc ? ('<div class="caption">' + escapeHtml(block.desc) + '</div>') : '');
+
+    return wrap;
+  }
+
+  if (type === 'PLACE') {
+    const imgSrc = resolvePlaceImg(block);
+
+    const addr1 = safeText(block.plcAddr1).trim();
+    const addr2 = safeText(block.plcAddr2).trim();
+    const addr = (addr1 + (addr2 ? (' ' + addr2) : '')).trim();
+
+    const rating = (block.rating == null ? '' : String(block.rating));
+    const stars = starString(block.rating);
+
+    const card = document.createElement('div');
+    card.className = 'travellog-block';
+
+    card.innerHTML =
+      '<div class="place-card">' +
+        '<div class="place-thumb">' +
+          '<img src="' + escapeHtml(imgSrc) + '" alt="place" onerror="this.onerror=null;this.src=\'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80\';" />' +
+        '</div>' +
+        '<div class="place-body">' +
+          '<div class="place-title">' + escapeHtml(safeText(block.plcNm || '장소')) + '</div>' +
+          (addr ? ('<div class="place-addr"><i class="bi bi-geo-alt"></i>' + escapeHtml(addr) + '</div>') : '') +
+          '<div class="place-rating">' +
+            '<span class="place-stars">' + escapeHtml(stars) + '</span>' +
+            (rating ? ('<span>' + escapeHtml(rating) + '</span>') : '') +
+          '</div>' +
+          (block.reviewConn ? ('<div class="place-review">' + escapeHtml(block.reviewConn) + '</div>') : '') +
+        '</div>' +
+      '</div>';
+
+    return card;
+  }
+
+  // 알 수 없는 타입은 TEXT처럼 출력
+  const fallback = document.createElement('div');
+  fallback.className = 'travellog-block travellog-block-text';
+  fallback.innerHTML = escapeHtml(JSON.stringify(block));
+  return fallback;
+}
+
+async function loadBlocks(rcdNo){
+  const container = document.getElementById('recordBlocks');
+  const fallback  = document.getElementById('recordContentFallback');
+  if (!container) return;
+
+  try{
+    const res = await fetch(BLOCKS_API, { credentials:'same-origin' });
+    if (!res.ok) throw new Error('blocks fetch failed: ' + res.status);
+
+    const blocks = await res.json();
+    container.innerHTML = '';
+
+    if (!Array.isArray(blocks) || blocks.length === 0){
+      // 블록이 없으면 기존 rcdContent를 보여주자(옵션)
+      if (fallback) fallback.style.display = 'block';
+      return;
+    }
+
+    (fallback && (fallback.style.display = 'none'));
+
+    blocks.forEach(b => container.appendChild(renderBlock(b)));
+  }catch(e){
+    console.error(e);
+    // 실패하면 fallback 텍스트라도 보여주기
+    if (fallback) fallback.style.display = 'block';
+  }
+}
+
+
 
 function toggleReplyBox(cmntNo) {
 	  // 다른 입력칸 닫기
@@ -1919,9 +2178,9 @@ async function toggleCommentLike(cmntNo, btn) {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-  	loadComments(CURRENT_RCD_NO);
+	  loadBlocks(CURRENT_RCD_NO);
+	  loadComments(CURRENT_RCD_NO);
 });
-
 </script>
 
 <%@ include file="../common/footer.jsp"%>

@@ -27,54 +27,6 @@ public class TripRecordServiceImpl implements ITripRecordService {
     private final ITripRecordMapper mapper;
     private final ObjectMapper objectMapper;
     private final IAttachService attachService;
-
-    
-	/*
-	 * @Override public PagedResponse<TripRecordListVO> list(int page, int size,
-	 * String keyword, String openScopeCd, Long loginMemNo) { int safePage =
-	 * Math.max(page, 1); int safeSize = Math.min(Math.max(size, 1), 50); int offset
-	 * = (safePage - 1) * safeSize;
-	 * 
-	 * Map<String, Object> param = new HashMap<>(); param.put("keyword", keyword);
-	 * param.put("openScopeCd", openScopeCd); param.put("loginMemNo", loginMemNo);
-	 * param.put("offset", offset); param.put("size", safeSize);
-	 * 
-	 * long total = mapper.selectTripRecordListCount(param); List<TripRecordListVO>
-	 * list = mapper.selectTripRecordList(param);
-	 * 
-	 * int totalPages = (int) Math.ceil((double) total / safeSize); return new
-	 * PagedResponse<>(list, total, safePage, safeSize, totalPages); }
-	 */
-    
-	/*
-	 * @Override public PagedResponse<TripRecordListVO> list( int page, int size,
-	 * String keyword, String openScopeCd, String filter, Long loginMemNo ) { // ✅
-	 * 기본값/범위 보정 if (page < 1) page = 1; if (size < 1) size = 12; if (size > 50)
-	 * size = 50;
-	 * 
-	 * // ✅ filter 정규화 filter = normalizeFilter(filter);
-	 * 
-	 * // ✅ my-spot은 로그인 없으면 빈 결과(정책) if ("my-spot".equals(filter) && loginMemNo ==
-	 * null) { return emptyPaged(page, size); }
-	 * 
-	 * int offset = (page - 1) * size;
-	 * 
-	 * java.util.Map<String, Object> param = new java.util.HashMap<>();
-	 * param.put("page", page); param.put("size", size); param.put("offset",
-	 * offset);
-	 * 
-	 * param.put("keyword", keyword); param.put("openScopeCd", openScopeCd);
-	 * param.put("loginMemNo", loginMemNo);
-	 * 
-	 * // ✅ 추가된 필터 param.put("filter", filter);
-	 * 
-	 * long total = mapper.selectTripRecordListCount(param);
-	 * 
-	 * java.util.List<TripRecordListVO> content = (total > 0) ?
-	 * mapper.selectTripRecordList(param) : java.util.List.of();
-	 * 
-	 * return new PagedResponse<>(page, size, total, content); }
-	 */
     
     @Override
     public PagedResponse<TripRecordListVO> list(
@@ -129,11 +81,6 @@ public class TripRecordServiceImpl implements ITripRecordService {
                 return "all";
         }
     }
-
-	/*
-	 * private PagedResponse<TripRecordListVO> emptyPaged(int page, int size) {
-	 * return new PagedResponse<>(page, size, 0L, java.util.List.of()); }
-	 */
 
 
     @Override
@@ -329,13 +276,45 @@ public class TripRecordServiceImpl implements ITripRecordService {
                         break;
                     }
 
-                    case "day-header":
-                    case "place": {
+                    case "day-header": {
                         String json = writeJsonSafe(b);
                         mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
                         mapper.insertTripRecordTxt(connNo, json);
                         break;
                     }
+
+                    case "place": {
+                        // ✅ plcNo 없으면(수동으로 추가한 place-block 등) 일단 기존처럼 TEXT로 저장만 하고 스킵
+                        if (b.getPlcNo() == null || b.getPlcNo() <= 0) {
+                            String json = writeJsonSafe(b);
+                            mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+                            mapper.insertTripRecordTxt(connNo, json);
+                            break;
+                        }
+
+                        // 1) 리뷰 PK 생성
+                        long prvSeq = mapper.nextTourPlaceReviewSeq();
+                        String placeReviewNo = makePlaceReviewNo(prvSeq);
+
+                        // 2) 리뷰 insert
+                        String reviewConn = (b.getContent() == null) ? null : b.getContent().trim();
+                        double rating = safeRating(b.getRating());
+
+                        mapper.insertTourPlaceReview(
+                            placeReviewNo,
+                            connNo,     // ✅ 리뷰는 이 블록 connNo에 연결
+                            memNo,      // 로그인 사용자
+                            b.getPlcNo(),
+                            reviewConn,
+                            rating
+                        );
+
+                        // 3) SEQ insert (PLACE)
+                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "PLACE", placeReviewNo);
+
+                        break;
+                    }
+
 
                     case "text":
                     default: {
@@ -368,19 +347,23 @@ public class TripRecordServiceImpl implements ITripRecordService {
         return rcdNo;
     }
 
-
-	/*
-	 * private MultipartFile getFileByIndex(List<MultipartFile> files, int idx) { if
-	 * (files == null || files.isEmpty()) return null; if (idx < 0 || idx >=
-	 * files.size()) return null; return files.get(idx); }
-	 */
-
     private String writeJsonSafe(Object o) {
         try {
             return objectMapper.writeValueAsString(o);
         } catch (Exception e) {
             return String.valueOf(o);
         }
+    }
+    
+    private String makePlaceReviewNo(long seq) {
+        return "PRV" + String.format("%010d", seq);
+    }
+
+    private double safeRating(Double r) {
+        if (r == null) return 0.0;
+        if (r < 0) return 0.0;
+        if (r > 5) return 5.0;
+        return r;
     }
     
     @Override

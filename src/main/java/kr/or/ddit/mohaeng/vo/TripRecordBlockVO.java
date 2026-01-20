@@ -4,15 +4,28 @@ import lombok.Data;
 
 @Data
 public class TripRecordBlockVO {
-    private Integer order;      // RCD_ORDER
-    private String blockType;   // TEXT/IMAGE/DIVIDER
-    private String targetPk;    // 지금은 TO_CHAR(RCD_CONN_NO) 들어있음
+    private int order;
+    private String blockType;
+    private String targetPk;
 
     // TEXT
     private String text;
 
     // IMAGE
     private String desc;
-    private String imgPath;     // FILE_PATH
-    // 필요하면 imgName도 추가 가능
+    private String imgPath;
+
+    // PLACE (리뷰)
+    private String placeReviewNo;
+    private Long plcNo;
+    private Double rating;
+    private String reviewConn;
+
+    // PLACE (장소 정보)
+    private String plcNm;
+    private String plcAddr1;
+    private String plcAddr2;
+    private String defaultImg;
+    private Long placeAttachNo;   // TOUR_PLACE.ATTACH_NO
+    private String placeImgPath;  // 첨부 이미지 1장(있으면)
 }

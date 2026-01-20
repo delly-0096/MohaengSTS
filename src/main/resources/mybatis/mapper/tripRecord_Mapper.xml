@@ -389,6 +389,34 @@
   VALUES (RAWTOHEX(SYS_GUID()), #{connNo}, #{attachNo}, #{desc})
 </insert>
 
+<!-- ===== TOUR_PLACE_REVIEW PK 시퀀스 ===== -->
+<select id="nextTourPlaceReviewSeq" resultType="long">
+  SELECT SEQ_TOUR_PLACE_REVIEW.NEXTVAL FROM DUAL
+</select>
+
+<!-- ===== TOUR_PLACE_REVIEW INSERT ===== -->
+<insert id="insertTourPlaceReview">
+  INSERT INTO TOUR_PLACE_REVIEW (
+    PLACE_REVIEW_NO,
+    RCD_CONN_NO,
+    MEM_NO,
+    PLC_NO,
+    REVIEW_CONN,
+    RATING,
+    REG_DT
+  ) VALUES (
+    #{placeReviewNo},
+    #{rcdConnNo},
+    #{memNo},
+    #{plcNo},
+    #{reviewConn},
+    #{rating},
+    SYSDATE
+  )
+</insert>
+
+
+
 <!-- 커버 attachNo -->
 <update id="updateCoverAttachNo">
   UPDATE TRIP_RECORD
@@ -442,21 +470,39 @@
         resultType="kr.or.ddit.mohaeng.vo.TripRecordBlockVO">
 
   SELECT
-    s.RCD_ORDER   AS "order",
-    s.BLOCK_TYPE  AS "blockType",
-    s.TARGET_PK   AS "targetPk",
+    s.RCD_ORDER          AS "order",
+    s.BLOCK_TYPE         AS "blockType",
+    s.TARGET_PK          AS "targetPk",
 
-    t.TXT_CONN    AS "text",
+    /* ===== TEXT ===== */
+    t.TXT_CONN           AS "text",
 
-    i.RCD_IMG_DESC AS "desc",
-    afd.FILE_PATH  AS "imgPath"
+    /* ===== IMAGE ===== */
+    i.RCD_IMG_DESC       AS "desc",
+    afd.FILE_PATH        AS "imgPath",
+
+    /* ===== PLACE (리뷰) ===== */
+    pr.PLACE_REVIEW_NO   AS "placeReviewNo",
+    pr.PLC_NO            AS "plcNo",
+    pr.RATING            AS "rating",
+    pr.REVIEW_CONN       AS "reviewConn",
+
+    /* ===== PLACE (장소) ===== */
+    p.PLC_NM             AS "plcNm",
+    p.PLC_ADDR1          AS "plcAddr1",
+    p.PLC_ADDR2          AS "plcAddr2",
+    p.DEFAULT_IMG        AS "defaultImg",
+    p.ATTACH_NO          AS "placeAttachNo",
+    pafd.FILE_PATH       AS "placeImgPath"
 
   FROM TRIP_RECORD_SEQ s
 
+  /* ===== TEXT ===== */
   LEFT JOIN TRIP_RECORD_TXT t
     ON s.BLOCK_TYPE = 'TEXT'
    AND s.TARGET_PK  = TO_CHAR(t.RCD_CONN_NO)
 
+  /* ===== IMAGE ===== */
   LEFT JOIN TRIP_RECORD_IMG i
     ON s.BLOCK_TYPE = 'IMAGE'
    AND s.TARGET_PK  = TO_CHAR(i.RCD_CONN_NO)
@@ -464,7 +510,7 @@
   LEFT JOIN (
     SELECT attach_no, MIN(file_no) AS file_no
     FROM ATTACH_FILE_DETAIL
-    WHERE use_yn='Y'
+    WHERE use_yn = 'Y'
       AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
     GROUP BY attach_no
   ) pick
@@ -475,10 +521,34 @@
    AND afd.file_no   = pick.file_no
    AND afd.use_yn    = 'Y'
 
+  /* ===== PLACE ===== */
+  LEFT JOIN TOUR_PLACE_REVIEW pr
+    ON s.BLOCK_TYPE = 'PLACE'
+   AND s.TARGET_PK  = TO_CHAR(pr.PLACE_REVIEW_NO)
+
+  LEFT JOIN TOUR_PLACE p
+    ON p.PLC_NO = pr.PLC_NO
+
+  /* 장소 대표 이미지 1장 */
+  LEFT JOIN (
+    SELECT attach_no, MIN(file_no) AS file_no
+    FROM ATTACH_FILE_DETAIL
+    WHERE use_yn = 'Y'
+    GROUP BY attach_no
+  ) p_pick
+    ON p_pick.attach_no = p.ATTACH_NO
+
+  LEFT JOIN ATTACH_FILE_DETAIL pafd
+    ON pafd.attach_no = p_pick.attach_no
+   AND pafd.file_no   = p_pick.file_no
+   AND pafd.use_yn    = 'Y'
+
   WHERE s.RCD_NO = #{rcdNo}
   ORDER BY s.RCD_ORDER ASC
 
 </select>
+
+
 
 
 

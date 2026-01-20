@@ -137,7 +137,7 @@
 			                    <div class="product-category">${prod.prodCtgryType}</div>
 			                    <h3 class="product-name">${prod.tripProdTitle}</h3>
 			                    <div class="product-meta">
-			                        <span><i class="bi bi-geo-alt"></i>${prod.ctyNm}</span>
+			                        <span><i class="bi bi-geo-alt"></i>${prod.ctyNm}</span><!-- 지역 코드 -->
 			                        <span><i class="bi bi-star-fill text-warning"></i> ${prod.avgRating} (${prod.reviewCount })</span>
 			                    </div>
 			                    <div class="product-period">
@@ -158,15 +158,24 @@
 				                        </span>
 				                        <span class="discount-rate">${prod.discount}% 할인</span>
 			                    	</c:when>
+			                    	<c:when test="${prod.netprc > 0 and empty prod.discount}">
+				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+			                    	</c:when>
 			                    	<c:otherwise>
 				                        <span class="sale-price">
-				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+<%-- 				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원 --%>
+											아직 안불러옴
 				                        </span>
 			                    	</c:otherwise>
 			                    </c:choose>
 			                    </div>
 			                </div>
 			                <div class="product-stats">
+			                	<!-- 여기도 값이 없을때 처리 해줘야됨
+			                		price가 2개 있음
+			                		숙소 = price
+			                		다른 거는 여러 price
+			                	 -->
 			                    <div class="stat-item">
 			                        <span class="stat-label">총 재고</span>
 			                        <span class="stat-value stock-value">${prod.totalStock}개</span>
@@ -186,12 +195,21 @@
 			                    <div class="stat-item">
 			                        <span class="stat-label">매출</span>
 			                        <span class="stat-value">
-			                        	<fmt:formatNumber value="${prod.price * (prod.totalStock - prod.curStock)}" pattern="#,###"/>원
+			                        	<c:choose>
+			                        		<c:when test="${not empty prod.price and prod.price > 0}">
+					                        	<c:set var="price" value="${prod.price * (prod.totalStock - prod.curStock)}"/>
+					                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원
+			                        		</c:when>
+			                        		<c:otherwise>
+	<%-- 				                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원 --%>
+												<div>아직 안불러옴</div>
+			                        		</c:otherwise>
+			                        	</c:choose>
 			                        </span>
 			                    </div>
 			                </div>
 			                <div class="product-actions">
-			                    <a href="/product/manage/tourDetail/${prod.tripProdNo}" class="btn btn-outline btn-sm">
+			                    <a href="/business/product/tourDetail/${prod.tripProdNo}" class="btn btn-outline btn-sm">
 			                        <i class="bi bi-eye"></i> 상세보기
 			                    </a>
 			                    <button class="btn btn-outline btn-sm" onclick="editProduct(this)"
@@ -203,6 +221,7 @@
 			                        <i class="bi bi-pause"></i> 
 			                        ${prod.approveStatus == '판매중' ? '중지' : '재개'}
 			                    </button>
+			                    <!-- prod.aprvYn == 'Y' ? '승인' : 'wait = 대기' / 'N = 불허' -->
 			                    <button class="btn btn-outline btn-sm text-danger" onclick="deleteProduct(this)"
 			                    	data-id="${prod.tripProdNo}">
 			                        <i class="bi bi-trash"></i> 삭제
@@ -245,6 +264,7 @@
             </div>
             <div class="modal-body">
                 <form id="productForm">
+	                <input type="hidden" name="tripProdNo"/>
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">카테고리 <span class="text-danger">*</span></label>
@@ -264,33 +284,33 @@
                             	<!-- 일단 나중에 상의 -->
                                 <option value="">선택하세요</option>
                                 <optgroup label="수도권">
-                                    <option value="seoul">서울</option>
-                                    <option value="gyeonggi">경기</option>
-                                    <option value="incheon">인천</option>
+                                    <option value="1">서울</option>
+                                    <option value="31">경기</option>
+                                    <option value="2">인천</option>
                                 </optgroup>
                                 <optgroup label="강원권">
-                                    <option value="gangwon">강원</option>
+                                    <option value="32">강원</option>
                                 </optgroup>
                                 <optgroup label="충청권">
-                                    <option value="daejeon">대전</option>
-                                    <option value="sejong">세종</option>
-                                    <option value="chungbuk">충북</option>
-                                    <option value="chungnam">충남</option>
+                                    <option value="3">대전</option>
+                                    <option value="8">세종</option>
+                                    <option value="33">충북</option>
+                                    <option value="34">충남</option>
                                 </optgroup>
                                 <optgroup label="전라권">
-                                    <option value="gwangju">광주</option>
-                                    <option value="jeonbuk">전북</option>
-                                    <option value="jeonnam">전남</option>
+                                    <option value="5">광주</option>
+                                    <option value="37">전북</option>
+                                    <option value="38">전남</option>
                                 </optgroup>
                                 <optgroup label="경상권">
-                                    <option value="busan">부산</option>
-                                    <option value="daegu">대구</option>
-                                    <option value="ulsan">울산</option>
-                                    <option value="gyeongbuk">경북</option>
-                                    <option value="gyeongnam">경남</option>
+                                    <option value="6">부산</option>
+                                    <option value="4">대구</option>
+                                    <option value="7">울산</option>
+                                    <option value="35">경북</option>
+                                    <option value="36">경남</option>
                                 </optgroup>
                                 <optgroup label="제주권">
-                                    <option value="jeju">제주</option>
+                                    <option value="39">제주</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -332,74 +352,76 @@
 
                     <!-- 이용 안내 섹션 (기본 상품용) -->
                     <div id="defaultInfoSection">
-                    <div class="form-section-title">
-                        <i class="bi bi-info-circle me-2"></i>이용 안내
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">운영 시간 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">소요 시간 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control" name="prodInfo.prodDuration" placeholder="예: 약 2시간 (실제 체험 40분)" required>
-                            <div class="form-text">고객에게 보여질 상세 소요시간을 입력하세요</div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">연령 제한</label>
-                            <input type="text" class="form-control" name="prodInfo.prodLimAge" placeholder="예: 만 10세 이상">
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label">최소 인원</label>
-                            <input type="number" class="form-control" name="prodInfo.prodMinPeople" placeholder="1" min="1" value="1">
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">최대 인원</label>
-                            <input type="number" class="form-control" name="prodInfo.prodMaxPeople" placeholder="10" min="1">
-                        </div>
-                    </div>
-
-                    <!-- 예약 가능 시간 설정 -->
-                    <div class="mb-3">
-                        <label class="form-label">예약 가능 시간 <span class="text-danger">*</span></label>
-                        <div class="form-text mb-2">고객이 선택할 수 있는 예약 시간대를 설정하세요</div>
-                        <div class="booking-times-container" id="bookingTimesContainer">
-                            <div class="booking-time-list" id="bookingTimeList">
-                                <!-- 동적으로 시간 슬롯 추가 -->
-                            </div>
-                            <div class="booking-time-add">
-                                <div class="input-group">
-                                    <input type="time" class="form-control" id="newBookingTime"><!--  -->
-                                    <button type="button" class="btn btn-outline" onclick="addBookingTime()">
-                                        <i class="bi bi-plus-lg"></i> 시간 추가
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="booking-time-presets mt-2">
-                                <span class="text-muted small me-2">빠른 추가:</span>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('morning')">오전 타임</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('afternoon')">오후 타임</button>
-                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('hourly')">1시간 단위</button>
-                            </div>
-                        </div>
-                        <input type="hidden" name="bookingTimes" id="bookingTimesInput">	<!-- 시간 정보 저장 -->
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">포함 사항</label>
-                            <textarea class="form-control" name="prodInfo.prodInclude" rows="3" placeholder="포함되는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;전문 강사 1:1 지도&#10;장비 대여&#10;수중 사진 촬영"></textarea>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">불포함 사항</label>
-                            <textarea class="form-control" name="prodInfo.prodExclude" rows="3" placeholder="포함되지 않는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;픽업/샌딩 서비스&#10;개인 물품"></textarea>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">유의 사항</label>
-                        <textarea class="form-control" name="prodInfo.prodNotice" rows="3" placeholder="예약 및 이용 시 유의해야 할 사항을 입력하세요"></textarea>
-                    </div>
+	                    <div class="form-section-title">
+	                        <i class="bi bi-info-circle me-2"></i>이용 안내
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-4">
+	                            <label class="form-label">운영 시간 <span class="text-danger">*</span></label>
+	<!--                             <input type="time" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required> -->
+								<!-- text를 time으로 변경해서 해볼지?? -->
+	                            <input type="text" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required>
+	                        </div>
+	                        <div class="col-md-4">
+	                            <label class="form-label">소요 시간 <span class="text-danger">*</span></label>
+	                            <input type="text" class="form-control" name="prodInfo.prodDuration" placeholder="예: 약 2시간 (실제 체험 40분)" required>
+	                            <div class="form-text">고객에게 보여질 상세 소요시간을 입력하세요</div>
+	                        </div>
+	                        <div class="col-md-4">
+	                            <label class="form-label">연령 제한</label>
+	                            <input type="text" class="form-control" name="prodInfo.prodLimAge" placeholder="예: 만 10세 이상">
+	                        </div>
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-4">
+	                            <label class="form-label">최소 인원</label>
+	                            <input type="number" class="form-control" name="prodInfo.prodMinPeople" placeholder="1" min="1" value="1">
+	                        </div>
+	                        <div class="col-md-4">
+	                            <label class="form-label">최대 인원</label>
+	                            <input type="number" class="form-control" name="prodInfo.prodMaxPeople" placeholder="10" min="1">
+	                        </div>
+	                    </div>
+	
+	                    <!-- 예약 가능 시간 설정 -->
+	                    <div class="mb-3">
+	                        <label class="form-label">예약 가능 시간 <span class="text-danger">*</span></label>
+	                        <div class="form-text mb-2">고객이 선택할 수 있는 예약 시간대를 설정하세요</div>
+	                        <div class="booking-times-container" id="bookingTimesContainer">
+	                            <div class="booking-time-list" id="bookingTimeList">
+	                                <!-- 동적으로 시간 슬롯 추가 -->
+	                            </div>
+	                            <div class="booking-time-add">
+	                                <div class="input-group">
+	                                    <input type="time" class="form-control" id="newBookingTime"><!--  -->
+	                                    <button type="button" class="btn btn-outline" onclick="addBookingTime()">
+	                                        <i class="bi bi-plus-lg"></i> 시간 추가
+	                                    </button>
+	                                </div>
+	                            </div>
+	                            <div class="booking-time-presets mt-2">
+	                                <span class="text-muted small me-2">빠른 추가:</span>
+	                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('morning')">오전 타임</button>
+	                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('afternoon')">오후 타임</button>
+	                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('hourly')">1시간 단위</button>
+	                            </div>
+	                        </div>
+	                        <input type="hidden" name="bookingTimes" id="bookingTimesInput">	<!-- 시간 정보 저장 -->
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-6">
+	                            <label class="form-label">포함 사항</label>
+	                            <textarea class="form-control" name="prodInfo.prodInclude" rows="3" placeholder="포함되는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;전문 강사 1:1 지도&#10;장비 대여&#10;수중 사진 촬영"></textarea>
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label">불포함 사항</label>
+	                            <textarea class="form-control" name="prodInfo.prodExclude" rows="3" placeholder="포함되지 않는 항목을 줄바꿈으로 구분하여 입력하세요&#10;예:&#10;픽업/샌딩 서비스&#10;개인 물품"></textarea>
+	                        </div>
+	                    </div>
+	                    <div class="mb-3">
+	                        <label class="form-label">유의 사항</label>
+	                        <textarea class="form-control" name="prodInfo.prodNotice" rows="3" placeholder="예약 및 이용 시 유의해야 할 사항을 입력하세요"></textarea>
+	                    </div>
                     </div><!-- /defaultInfoSection -->
 
 
@@ -714,60 +736,61 @@
 
                     <!-- 가격 정보 섹션 (기본 상품용) -->
                     <div id="defaultPriceSection">
-                    <div class="form-section-title">
-                        <i class="bi bi-currency-dollar me-2"></i>가격 및 재고 정보
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-3">
-                            <label class="form-label">정가</label>
-                            <input type="number" class="form-control" name="prodSale.netprc" placeholder="0">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">판매가 <span class="text-danger">*</span></label>
-                            <input type="number" class="form-control" name="prodSale.price" placeholder="0" required>
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">할인율</label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="prodSale.discount" placeholder="0" max="100">
-                                <span class="input-group-text">%</span>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                        <!-- 전체? 현재? -->
-                            <label class="form-label">재고 수량 <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="prodSale.totalStock" placeholder="0" min="0" required>
-                                <span class="input-group-text">개</span>
-                            </div>
-                        </div>
-                        <!-- 전체? 현재? -->
-                        <!-- style="display:none;" -->
-                        <div class="col-md-3 curStock" >
-                            <label class="form-label">현재 수량 <span class="text-danger">*</span></label>
-                            <div class="input-group">
-                                <input type="number" class="form-control" name="prodSale.curStock" placeholder="0" min="0" readonly required>
-                                <span class="input-group-text">개</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control date-picker" name="saleStartDt" placeholder="시작일 선택" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택" required>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">상품 이미지</label>
-                        <!--  multipart, 선택한 이미지 보여주기. attachNo에 맞는게 대표이미지. 이거에 뭔가 걸어야겠다. -->
-                        <input type="file" class="form-control" name="productImage" accept="image/*" multiple="multiple"/>
-                        
-                        <div class="form-text">권장 크기: 800x600px, 최대 5MB</div>
-                    </div>
+	                    <div class="form-section-title">
+	                        <i class="bi bi-currency-dollar me-2"></i>가격 및 재고 정보
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-3">
+	                            <label class="form-label">정가</label>
+	                            <input type="number" class="form-control" name="prodSale.netprc" placeholder="0">
+	                        </div>
+	                        <div class="col-md-3">
+	                            <label class="form-label">판매가 <span class="text-danger">*</span></label>
+	                            <input type="number" class="form-control" name="prodSale.price" placeholder="0" required>
+	                        </div>
+	                        <div class="col-md-3">
+	                            <label class="form-label">할인율</label>
+	                            <div class="input-group">
+	                                <input type="number" class="form-control" name="prodSale.discount" placeholder="0" max="100">
+	                                <span class="input-group-text">%</span>
+	                            </div>
+	                        </div>
+	                        <div class="col-md-3">
+	                        <!-- 전체? 현재? -->
+	                            <label class="form-label">재고 수량 <span class="text-danger">*</span></label>
+	                            <div class="input-group">
+	                                <input type="number" class="form-control" name="prodSale.totalStock" placeholder="0" min="0" required>
+	                                <span class="input-group-text">개</span>
+	                            </div>
+	                        </div>
+	                        <!-- 전체? 현재? -->
+	                        <!-- style="display:none;" -->
+	                        <div class="col-md-3 curStock" >
+	                            <label class="form-label">현재 수량 <span class="text-danger">*</span></label>
+	                            <div class="input-group">
+	                                <input type="number" class="form-control" name="prodSale.curStock" placeholder="0" min="0" readonly required>
+	                                <span class="input-group-text">개</span>
+	                            </div>
+	                        </div>
+	                    </div>
+	                    <div class="row mb-3">
+	                        <div class="col-md-6">
+	                            <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
+	                            <input type="text" class="form-control date-picker" name="saleStartDt" placeholder="시작일 선택" required>
+	                        </div>
+	                        <div class="col-md-6">
+	                            <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
+	                            <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택" required>
+	                        </div>
+	                    </div>
+	                    <div class="mb-3">
+	                        <label class="form-label">상품 이미지</label>
+	                        <!--  multipart, 선택한 이미지 보여주기. attachNo에 맞는게 대표이미지. 이거에 뭔가 걸어야겠다. -->
+	                        <input type="file" class="form-control" name="productImage" accept="image/*"  onchange="renderImageList(this)" multiple/>
+	                        <input type="hidden" name="image.attachNo" /><!-- 상품 이미지 -->
+	                        <div class="productImageList"></div>
+	                        <div class="form-text">권장 크기: 800x600px, 최대 5MB</div>
+	                    </div>
                     </div><!-- /defaultPriceSection -->
 
                     <!-- 공통 판매 기간 (숙박용) -->
@@ -788,6 +811,7 @@
                         <div class="mb-3" id="accomImageField">
                             <label class="form-label">상품 이미지</label>
                             <input type="file" class="form-control" name="productImageAlt" accept="image/*" multiple>
+                            <!--  숙소 이미지 -->
                             <div class="form-text" id="imageList">숙소 대표 이미지를 등록하세요 (최대 5장)</div>
                         </div>
                     </div>
@@ -795,8 +819,8 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
-                <button type="button" class="btn btn-primary register" onclick="saveProduct(this)">등록</button>
-                <button type="button" class="btn btn-primary edit" onclick="saveProduct()" style="display: none;">수정</button>
+                <button type="button" class="btn btn-primary" id="register" onclick="saveProduct(this)">등록</button>
+                <button type="button" class="btn btn-primary" id="update" onclick="saveProduct(this)" style="display: none;">수정</button>
             </div>
         </div>
     </div>
@@ -805,7 +829,10 @@
 <!-- 상세 조회도 모달로? -->
 
 <c:set var="hasInlineScript" value="true" />
+<!-- 다음 주소 검색 -->
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 <%@ include file="../common/footer.jsp" %>
+
 
 <script>
 let modal = null;	// 모달 객체
@@ -821,6 +848,7 @@ $(document).ready(function() {
     const startDateInput = document.querySelector('input[name="startDate"]');
     const endDateInput = document.querySelector('input[name="endDate"]');
 
+    // endDate는 그걸로
     if (startDateInput && typeof flatpickr !== 'undefined') {
         startDatePicker = flatpickr(startDateInput, {
             locale: 'ko',
@@ -851,7 +879,11 @@ $(document).ready(function() {
 // 새 상품 등록 모달 설정
 function setModalForNew() {
     document.getElementById('productModalTitle').textContent = '새 상품 등록';
+	document.querySelector("#register").style.display = "block";
+	document.querySelector("#update").style.display = "none";
+	
     document.getElementById('productForm').reset();
+    
     if (startDatePicker) startDatePicker.clear();
     if (endDatePicker) {
         endDatePicker.clear();
@@ -878,19 +910,24 @@ async function editProduct(prodData) {
         
         const prodData = response.data;
         // 예약정보 담기
-        if(prodData.prodTimeList.length > 0){
+        if(prodData.prodTimeList != null && prodData.prodTimeList.length > 0){
         	bookingTimes = prodData.prodTimeList.map(time => time.rsvtAvailableTime);
         	renderBookingTimes();
         }
-        
-        if(prodData.imageList > 0 ){
+        if(prodData.imageList != null && prodData.imageList.length > 0 ){
         	console.log("사진 조회용 : ", prodData.imageList );
         	imageList = [...prodData.imageList];	// 여기서 꺼내서 쓰자
+	        console.log("prodData.imageList : ", prodData.imageList);
+        	console.log("imageList : ", imageList);
         	renderImageList();
         }
 		renderProductData(prodData);
-        document.getElementById('productModalTitle').textContent = '상품 수정';
+		toggleCategoryFields();	// value에 따라 duratino나오는게 달라짐
 		
+        document.getElementById('productModalTitle').textContent = '상품 수정';
+		document.querySelector("#update").style.display = "block";
+		document.querySelector("#register").style.display = "none";
+        
         setTimeout(() => {modal.show()}, 300);
     } catch (error) {
         console.error("데이터 로드 중 error 발생: ", error);
@@ -900,28 +937,35 @@ async function editProduct(prodData) {
 // 수정할 상품 사진 modal에 세팅 - imageData는 선택시 썸네일 보여주려고
 function renderImageList(imageData = ""){
 	// imageList = 5개까지만 가능
-   	console.log("imageList : ", imageList);
-	
-	const imageContainer = document.getElementById('imageList');
+	console.log("imageData : ", imageData.value);
+	const imageContainer = document.querySelector(".productImageList");	// imageList = 숙박 전용
+	let html = ``;
+	if(imageList.length >= 5){
+		showToast("사진은 5개까지만 가능합니다!!", "error");
+		return;
+	}
 	
 	if(imageData !== "" && imageList.length < 5) imageList.push(imageData);
 	
-    if (imageList.length === 0) imageContainer.innerHTML = '';
+		
+	imageContainer.innerHTML = '';
+    if (imageList.length === 0) {
+    	html = `<div>사진이 없습니다</div>`; 
+    	return imageContainer.innerHTML = html;
+    }
     else {
-        var html = imageList.map((image, index) => {
-        	console.log("")
-            return `<img src="\${pageContext.request.contextPath}/upload/product/\${image[0].filePath}" 
-                alt="\${image.tripProdTitle}" data-id="\${index}" id="mainImage">`
+        html = imageList.map((image, index) => {
+            return `<img src="${pageContext.request.contextPath}/upload/product/\${image.filePath}" 
+                alt="\${image.tripProdTitle}" id="image\${index}">`
         }).join('');
-        imageContainer.innerHTML = html;
+        if (imageList[0].attachNo !== null) document.querySelector("input[name='image.attachNo']").value = imageList[0].attachNo;
+        imageContainer.innerHTML += html;
     }
     // hidden input에 JSON으로 저장
     console.log("JSON.stringify(imageList) : ", JSON.stringify(imageList));
 //     document.getElementById('bookingTimesInput').value = JSON.stringify(imageList);
 // 사진정보는 어떻게 hidden 에 넣어말어
 }
-	
-
 
 // 수정할 상품 정보 modal에 세팅
 function renderProductData(prodData, prefix = ""){
@@ -951,16 +995,32 @@ function renderProductData(prodData, prefix = ""){
 }
 
 // 상품 저장 - insert / update(문구에 따라서)
-// function registerProduct() {
-function saveProduct(data) {
-    // TODO: 상품 저장 API 호출
+async function saveProduct(data) {
     console.log("svae data : ", data.innerText);	// 이거에 따른 등록 수정 여부
-    if (typeof showToast === 'function') {
-        showToast('상품이 저장되었습니다.', 'success');
+    
+    const form = document.getElementById('productForm');
+    
+    const formData = new FormData(form);	// key value 구조
+	
+    // update
+    if(data.innerText === "수정"){
+		const res = await axios.post(`/business/product/editProduct`, formData);
+   		console.log("saveProduct res.data : " + res.data);
+   		if(res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
+   		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
+    } 
+    
+    // insert
+    else {
+		const res = await axios.post(`/business/product/insert`, formData);
+   		console.log("saveProduct res.data : " + res.data);
+   		if(res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
+   		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
     }
     // insert문 
     if (modal) modal.hide();
 }
+
 
 // 상품 상태 변경 - update
 function toggleProductStatus(prodData) {
@@ -972,12 +1032,14 @@ function toggleProductStatus(prodData) {
         	approveStatus : status
         })
         .then(res => {
-        	if (res.data.ok) showToast('상품 상태가 변경되었습니다.', 'success');
+        	if (res.data.ok) {
+        		showToast('상품 상태가 변경되었습니다.', 'success');
+		        location.reload();
+        	}
         	else showToast('상품 상태가 변경되었습니다.', 'success');
         }).catch(err => {
-        	console.log("error 발생 : ", error);
+        	console.log("error 발생 : ", err);
         });
-        location.reload();
     }
 }
 
@@ -989,12 +1051,14 @@ function deleteProduct(prodData) {
         	tripProdNo : id
         })
         .then(res => {
-        	if (res.data.ok) showToast('상품이 삭제되었습니다.', 'success');
+        	if (res.data.ok) {
+        		showToast('상품이 삭제되었습니다.', 'success');
+		        location.reload();
+        	}
         	else showToast('상품이 삭제되지않았습니다.', 'error');
         }).catch(err => {
-        	console.log("error 발생 : ", error);
+        	console.log("error 발생 : ", err);
         });
-        location.reload();
     }
 }
 
@@ -1075,10 +1139,15 @@ function addPresetTimes(type) {
         'afternoon': ['13:00', '14:00', '15:00', '16:00'],
         'hourly': ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
     };
-
+	
+    let runTime = document.querySelector("input[name='prodInfo.prodRuntime']");
+    console.log("runTime : ", runTime.value);
+    
     var times = presets[type] || [];
     var addedCount = 0;
-
+	
+    // 운영 시간 내의 유효 시간만 담기
+//     times.filter(time => { });
     times.forEach(time => {
         if (!bookingTimes.includes(time)) {
             bookingTimes.push(time);
@@ -1101,16 +1170,16 @@ function searchAddress() {
             var address = data.roadAddress || data.jibunAddress;
             document.getElementById('productAddress').value = address;
 
-            // 좌표 검색 (카카오 맵 API)
-            if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
-                var geocoder = new kakao.maps.services.Geocoder();
-                geocoder.addressSearch(address, function(result, status) {
-                    if (status === kakao.maps.services.Status.OK) {
-                        document.getElementById('productLatitude').value = result[0].y;
-                        document.getElementById('productLongitude').value = result[0].x;
-                    }
-                });
-            }
+            // 좌표 검색 (카카오 맵 API) - 이건 천천히
+//             if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
+//                 var geocoder = new kakao.maps.services.Geocoder();
+//                 geocoder.addressSearch(address, function(result, status) {
+//                     if (status === kakao.maps.services.Status.OK) {
+//                         document.getElementById('productLatitude').value = result[0].y;
+//                         document.getElementById('productLongitude').value = result[0].x;
+//                     }
+//                 });
+//             }
         }
     }).open();
 }
@@ -1189,7 +1258,7 @@ function pauseSelectedProducts() {
     if (!confirm(selectedIds.length + '개의 상품을 중지하시겠습니까?')) return;
 
     // 선택된 상품들의 상태를 중지로 변경 (UI 업데이트)
-    selectedIds.forEach( id => {
+    selectedIds.forEach(id => {
         var checkbox = document.querySelector('.product-select-checkbox[value="' + id + '"]');
         if (checkbox) {
             var productCard = checkbox.closest('.product-manage-card');
@@ -1592,7 +1661,6 @@ function updateAddonDeleteButtons() {
 document.addEventListener('DOMContentLoaded', function() {
 	modal = new bootstrap.Modal(document.getElementById('productModal'));
 });
-
 </script>
 </body>
 </html>

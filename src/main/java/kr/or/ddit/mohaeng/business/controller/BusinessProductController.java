@@ -34,6 +34,7 @@ import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
+import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
@@ -69,9 +70,6 @@ public class BusinessProductController {
 	private IProdTimeInfoService timeInfoService;
 	
 	@Autowired
-	private IMemberService memberService;
-	
-	@Autowired
 	private IBusinessProductService businessService;
 	
 	/**
@@ -83,14 +81,21 @@ public class BusinessProductController {
 	@GetMapping("/business/product")
 	public String productManage(
 			@AuthenticationPrincipal CustomUserDetails customUser, 
-			TripProdVO tripProd, Model model) {
+//			BusinessProductsVO businessProducts, Model model) {
+		TripProdVO tripProd, Model model) {
 		
 		log.info("productManage customUser {}", customUser.getMember().getMemNo());
 		log.info("productManage tripProd {}", tripProd);
 		int memNo = customUser.getMember().getMemNo();
 		tripProd.setMemNo(memNo);	// memNo담기
 		 
-        List<TripProdVO> prodList = businessService.getProductlist(tripProd);	
+        // 투어상품 정보
+		List<TripProdVO> prodList = businessService.getProductlist(tripProd);	// 숙박 상품도 담기긴 함. 그런데
+		
+		// 숙박 상품을 따로 담을지? 이래야 조건 걸어서 해줄수 있을수도?
+		// 회원 번호와 맞는 객실
+//		List<AccommodationVO> accommodationList = businessService.getAccommodationList(tripProd);
+		
         TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
         
         // 인기 키워드 조회
@@ -98,7 +103,9 @@ public class BusinessProductController {
         
         model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
         model.addAttribute("prodAggregate", prodAggregate);
-        model.addAttribute("tripProd", tripProd);	// memNo담김
+//        model.addAttribute("accommodation", );
+        
+//        model.addAttribute("tripProd", tripProd);	// memNo담김
 //        model.addAttribute("keywords", keywords);
         
 		return "product/business";
@@ -119,12 +126,12 @@ public class BusinessProductController {
 		log.info("productDetail : {}", businessProducts);
 		
 		BusinessProductsVO product = businessService.retrieveProductDetail(businessProducts);
-		log.info("product : {}", product);
+//		log.info("product : {}", product);
 		return product;
 	}
 	
 	/**
-	 * <p>투어상품 상세 조회</p>
+	 * <p>투어상품 상세 조회</p> -> /tour/상세로 이동
 	 * @author sdg
 	 * @date 2026-01-17
 	 * @param tripProdNo	투어 상품 번호
@@ -134,10 +141,12 @@ public class BusinessProductController {
 	 */
 	@GetMapping("/business/product/tourDetail/{tripProdNo}")
 	public String productDetailPage(@PathVariable int tripProdNo, Model model, RedirectAttributes ra) {
-        TripProdVO tripProd = null;
+		BusinessProductsVO product = null;
         log.info("productDetailPage 집입 {}", tripProdNo);
         
-        if (tripProd == null) {
+        // tripProd설정
+        
+        if (product == null) {
             ra.addFlashAttribute("message", "존재하지 않는 상품입니다.");
             return "redirect:/tour";
         }
@@ -156,22 +165,22 @@ public class BusinessProductController {
         TripProdPlaceVO place = tripProdService.getPlace(tripProdNo);
         
         // 판매자 정보
-        CompanyVO seller = tripProdService.getSellerStats(tripProd.getCompNo());
+        CompanyVO seller = tripProdService.getSellerStats(product.getCompNo());
         
         // 문의 목록
         List<TripProdInquiryVO> inquiry = inquiryService.getInquiryPaging(tripProdNo, 1, 5);
         int inquiryCount = inquiryService.getInquiryCount(tripProdNo);
         
         // 상품 이미지 목록
-        if (tripProd.getAttachNo() != null && tripProd.getAttachNo() > 0) {
-            List<AttachFileDetailVO> productImages = fileService.getAttachFileDetails(tripProd.getAttachNo());
+        if (product.getAttachNo() != null && product.getAttachNo() > 0) {
+            List<AttachFileDetailVO> productImages = fileService.getAttachFileDetails(product.getAttachNo());
             model.addAttribute("productImages", productImages);
         }
         
         // 예약 가능 시간 조회
         List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
         
-        model.addAttribute("tp", tripProd);
+        model.addAttribute("tp", product);
         model.addAttribute("sale", sale);
         model.addAttribute("info", info);
         model.addAttribute("review", review);
@@ -232,12 +241,10 @@ public class BusinessProductController {
 	 */
 	@ResponseBody
 	@PostMapping("/business/product/editProduct")
-	public ResponseEntity<String> editProduct(@RequestBody TripProdVO tripProd){
-		log.info("editProduct : {}", tripProd);
-		// modifyProduct(tripProd);
-		
-		// businessService.deleteProductStatus(tripProd);
-		ServiceResult result = null;
+	public ResponseEntity<String> editProduct(BusinessProductsVO businessProducts){
+		log.info("editProduct : {}", businessProducts);
+		 
+		ServiceResult result = businessService.modifyProduct(businessProducts);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {

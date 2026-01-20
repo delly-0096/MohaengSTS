@@ -43,12 +43,14 @@ public class BusinessProductsVO {
     private Date delDt;              // 삭제일자
     private String ctyNm;            // 지역
 
+    
+    ////////////////////////////////
     // 대표 이미지
     private String thumbImage;
     private String keyword;			// 검색어
 
-    private int page = 1;        	// 현재 페이지
-    private int pageSize = 12;   	// 페이지당 개수
+    private int page = 1;       // 현재 페이지
+    private int pageSize = 12;  // 페이지당 개수
     
 	// 통계용 변수
     private int totalCount;		// 총 상품 수
@@ -60,6 +62,8 @@ public class BusinessProductsVO {
     private Double avgRating;
     private Integer reviewCount;
     private Integer recommendCount;
+    /////////////////
+    
     
     // 1대1
     private TripProdSaleVO prodSale;		// 상품 판매 정보
@@ -71,19 +75,22 @@ public class BusinessProductsVO {
 	// 1:n
 	private List<ProdTimeInfoVO> prodTimeList;			// 예약 가능 시간
 
-	private List<String> bookingTimes;					// jsp에서 받을 예약 가능 시간
-	// jsp 에서 받은 값은 시간 정보만 있어서 그 값을 세팅함
-	public void setBookingTimes(List<String> bookingTimes) {
+	private String bookingTimes;					// jsp에서 받을 예약 가능 시간
+	public void setBookingTimes(String bookingTimes) {
         this.bookingTimes = bookingTimes;
         
-        // 시간 문자열 리스트가 들어오면 TripProdTimeVO 리스트로 변환하여 세팅
         if (bookingTimes != null && !bookingTimes.isEmpty()) {
             this.prodTimeList = new ArrayList<>();
-            for (String time : bookingTimes) {
-                ProdTimeInfoVO timeVO = new ProdTimeInfoVO();
-                timeVO.setRsvtAvailableTime(time); // 시간 값 세팅
-                timeVO.setTripProdNo(this.tripProdNo);
-                this.prodTimeList.add(timeVO);
+            
+            String[] timeArray = bookingTimes.split(",");
+            
+            for (String time : timeArray) {
+                String trimmedTime = time.trim();
+                if(!trimmedTime.isEmpty()) {
+                    ProdTimeInfoVO timeVO = new ProdTimeInfoVO();
+                    timeVO.setRsvtAvailableTime(trimmedTime);
+                    this.prodTimeList.add(timeVO);
+                }
             }
         }
     }

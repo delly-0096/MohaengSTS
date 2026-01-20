@@ -1,5 +1,6 @@
 package kr.or.ddit.mohaeng.admin.memUser.controller;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,6 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.admin.memUser.service.IGeneralService;
 import kr.or.ddit.mohaeng.vo.MemberVO;
@@ -31,6 +34,22 @@ public class AdminGeneralController {
 
 	@Autowired
 	private IGeneralService generalService;
+
+	/**
+     * [추가] 화면 초기 로드 시 필요한 공통 코드 및 설정 데이터 조회
+     * GET /api/admin/members/general/setup
+     */
+    @GetMapping("/setup")
+    public ResponseEntity<Map<String, Object>> getSetupData() {
+        log.info("회원 관리 설정 데이터 조회 (공통 코드 등)");
+        Map<String, Object> setupData = new HashMap<>();
+
+        // MEMBER_STATUS 그룹의 코드 목록을 가져옴 (서비스에 해당 메서드 구현 필요)
+        // 예: [{cd: 'ACTIVE', cdName: '정상'}, {cd: 'DORMANT', cdName: '휴면'} ...]
+        setupData.put("statusCodes", generalService.getCodeListByGroup("MEMBER_STATUS"));
+
+        return ResponseEntity.ok(setupData);
+    }
 
     /**
      * 일반회원 목록 조회 (페이징, 검색, 필터)
@@ -86,6 +105,12 @@ public class AdminGeneralController {
 				response.put("message", "아이디는 필수 입력 항목입니다.");
 				return ResponseEntity.badRequest().body(response);
 			}
+
+			// [추가] 공통 코드 고려: 회원 상태 기본값 설정 (만약 클라이언트에서 보내온 상태값이 없다면 'ACTIVE'를 기본값으로 세팅)
+			if (member.getMemStatus() == null || member.getMemStatus().isEmpty()) {
+				member.setMemStatus("ACTIVE");
+			}
+
 			// (B) 비밀번호 검사: 대소문자 영문, 숫자, 특수문자 포함 8자 이상이어야 통과!
 			String passwordPattern = "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@$!%*#?&])[A-Za-z\\d@$!%*#?&]{8,}$";
 			if (member.getMemPassword() == null || !member.getMemPassword().matches(passwordPattern)) {
@@ -234,5 +259,26 @@ public class AdminGeneralController {
 		return ResponseEntity.ok(response);
 	}
 
+	/**
+	 * 일반회원 목록 엑셀 다운로드
+	 * GET /api/admin/members/general/excel?searchWord=&searchType=all
+	 */
+	@GetMapping("/excel")
+	public void downloadExcel(
+			HttpServletResponse response,
+			@RequestParam(defaultValue = "") String searchWord,
+			@RequestParam(defaultValue = "all") String searchType) throws IOException{
+		log.info("회원 목록 엑셀 다운로드 - searchWord: {}, searchType: {}", searchWord, searchType);
 
+		response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"); //보내는 데이터가 엑셀이라는거 알려주기
+		response.setCharacterEncoding("UTF-8");
+		response.setHeader("Content-Disposition", "attachment; filename=" + java.net.URLEncoder.encode(
+				"일반회원목록_" + new java.text.SimpleDateFormat("yyyyMMdd").format(new java.util.Date()) + ".xlsx","UTF-8"));
+		PaginationInfoVO<MemberVO> pagInfoVO = new PaginationInfoVO<>(); //새 공책을 만들고,
+		pagInfoVO.setSearchWord(searchWord); //그 공책에 무엇을 찾고 싶은지 적는다.
+		if (!"all".equals(searchType)) {
+			pagInfoVO.setSearchType(searchType);
+		}
+	 	generalService.downloadMemberExcel(response.getOutputStream(),pagInfoVO);
+	}
 }

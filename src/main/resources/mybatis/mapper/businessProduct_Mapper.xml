@@ -25,6 +25,9 @@
 	    <result property="delDt" column="DEL_DT" />
 	    <result property="ctyNm" column="CTY_NM" />
 		
+		<!-- 숙박 -->
+		<association property="accommodation" 
+                 resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accMap"/>
 		<association property="prodSale" resultMap="prodSaleMap"/>
 		<association property="prodInfo" resultMap="prodInfoMap"/>
 		<association property="prodPlace" resultMap="prodPlaceMap"/>
@@ -111,8 +114,10 @@
 	    , p.ADDR2
 	</sql>
 	
+<!-- 	<select id="" resultMap=""></select> -->
 	
 	<!-- 본인 기업회원 투어 상품 나중에 숙박도 추가해야됨 -->
+	<!-- 지역 정보 받으려면 tourProdPlace -->
 	<select id="getProductlist" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
         SELECT *
         FROM (
@@ -121,6 +126,7 @@
                 SELECT
                     <include refid="tripProdColumns" />
                     , <include refid="prodSaleColumns"/>
+<!--                     , <include refid=""></include> -->
                     , r.AVG_RATING 
                     , r.REVIEW_COUNT
                     , r.RECOMMEND_COUNT,
@@ -167,14 +173,25 @@
 	<select id="getProductAggregate" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
 		SELECT 
 			COUNT(*) AS totalCount
-			,COUNT(CASE WHEN TP.APPROVE_STATUS = '판매중' THEN TP.APPROVE_STATUS END) AS approveCount
-		    ,COUNT(CASE WHEN TP.APPROVE_STATUS = '판매중지' THEN TP.APPROVE_STATUS END) AS unapproveCount
-			,SUM(TPS.TOTAL_STOCK - TPS.CUR_STOCK) AS totalSales
+			, COUNT(CASE WHEN TP.APPROVE_STATUS = '판매중' THEN TP.APPROVE_STATUS END) AS approveCount
+		    , COUNT(CASE WHEN TP.APPROVE_STATUS = '판매중지' THEN TP.APPROVE_STATUS END) AS unapproveCount
+			, SUM(TPS.TOTAL_STOCK - TPS.CUR_STOCK) AS totalSales
 		FROM TRIP_PROD TP
 		INNER JOIN TRIP_PROD_SALE TPS ON (TP.TRIP_PROD_NO = TPS.TRIP_PROD_NO)
 		WHERE TP.MEM_NO = #{memNo}
 		AND (TP.DEL_YN = 'N' OR TP.DEL_YN IS NULL)
 	</select>
+	
+	<!-- 상세 페이지 이동시, 숙소는 포함 안됨 -->	
+<!-- 	<select id="detail" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+        SELECT
+            TRIP_PROD_NO, COMP_NO, MEM_NO, PROD_CTGRY_TYPE, APPROVE_STATUS,
+            TRIP_PROD_TITLE, TRIP_PROD_CONTENT, SALE_START_DT, SALE_END_DT,
+            ATTACH_NO, VIEW_CNT, REG_DT, MOD_DT, CTY_NM
+        FROM TRIP_PROD
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+          AND (DEL_YN = 'N' OR DEL_YN IS NULL)
+    </select> -->
 	
 	<!-- 상품, 상품 이용안내, 상품 가격, 상품 장소 -->
 	<select id="retrieveProductDetail" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="tripPordMap">
@@ -225,47 +242,99 @@
 	   ORDER BY FILE_NO
 	</select>
 
-	<!-- update join은 오라클에서 불가 -->
 	<!-- 판매중인 상품, 상품 이용안내, 상품 가격, 상품 장소, 숙소 정보, 숙소 보유시설 정보 변경 -->
-	<!-- 숙소 정보, 숙소 보유시설은 나중에 변경 -->
-	<update id="modifyProduct" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
-		UPDATE TRIP_PRODUCT t
-	    INNER JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
-	    INNER JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
-	    INNER JOIN TRIP_PROD_PLACE p ON t.TRIP_PROD_NO = p.TRIP_PROD_NO
-	    <set>
-		    <if test="prodCtgryType != null and prodCtgryType != ''" >t.PROD_CTGRY_TYPE = #{prodCtgryType},</if>
-		    t.APPROVE_STATUS = '판매중지'
-		    , t.TRIP_PROD_TITLE = #{tripProdTitle}
-		    , t.TRIP_PROD_CONTENT = #{tripProdContent}
-		    , t.SALE_START_DT = #{saleStartDt}
-	        , t.SALE_END_DT = #{saleEndDt}
-		    <if test="attachNo != null and attachNo != ''" >, t.ATTACH_NO = #{attachNo}</if>
-		    , t.APRV_YN = 'N'
-		    <if test="attachNo != null and attachNo != ''" >, t.CTY_NM = #{ctyNm}</if>
-	        , t.MOD_DT = sysdate 
-			
-			, s.PRICE             = #{prodSale.price}
-	        , s.NETPRC            = #{prodSale.netprc}
-	        , s.DISCOUNT          = #{prodSale.discount}
-	        , s.LEAD_TIME         = #{prodSale.leadTime}
-	        , s.TOTAL_STOCK       = #{prodSale.totalStock}
-	        
-	        , i.PROD_RUNTIME      = #{prodInfo.prodRuntime}
-	        , i.PROD_DURATION     = #{prodInfo.prodDuration}
-	        , i.PROD_MIN_PEOPLE   = #{prodInfo.prodMinPeople}
-	        , i.PROD_MAX_PEOPLE   = #{prodInfo.prodMaxPeople}
-	        , i.PROD_LIM_AGE      = #{prodInfo.prodLimAge}
-	        , i.PROD_INCLUDE	  = #{prodInfo.prodInclude}
-		    , i.PROD_EXCLUDE      = #{prodInfo.prodExclude}
-		    , i.PROD_NOTICE		  = #{prodInfo.prodNotice}
-		    
-	        , p.ADDR1             = #{prodPlace.addr1}
-	        , p.ADDR2             = #{prodPlace.addr2}
-	    </set>
-	    WHERE t.TRIP_PROD_NO = #{tripProdNo}
+	<!-- 판매중인 상품 정보 변경 -->
+	<update id="modifyTripProduct" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
+	    UPDATE TRIP_PROD
+	    SET 
+	        APPROVE_STATUS = '판매중지'
+	        <if test="prodCtgryType != null and prodCtgryType != ''">
+	        , PROD_CTGRY_TYPE = #{prodCtgryType}
+	        </if>
+	        , TRIP_PROD_TITLE = #{tripProdTitle}
+	        , TRIP_PROD_CONTENT = #{tripProdContent}
+	        , SALE_START_DT = #{saleStartDt}
+	        , SALE_END_DT = #{saleEndDt}
+	        <if test="attachNo != null and attachNo != ''">
+	        , ATTACH_NO = #{attachNo}
+	        </if>
+	        <if test="ctyNm != null and ctyNm != ''">
+	        , CTY_NM = #{ctyNm}
+	        </if>
+	        , APRV_YN = 'N'
+	        , MOD_DT = SYSDATE
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
 	</update>
 	
+	<!-- 상품 가격 정보 변경 -->
+	<update id="modifyProdSale" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO">
+	    UPDATE TRIP_PROD_SALE
+	    SET 
+	        PRICE = #{price}
+	        , NETPRC = #{netprc}
+	        , DISCOUNT = #{discount}
+	        , LEAD_TIME = #{leadTime}
+	        , TOTAL_STOCK = #{totalStock}
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 상품 이용안내 정보 변경 -->
+	<update id="modifyProdInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO">
+	    UPDATE TRIP_PROD_INFO
+	    SET 
+	        PROD_RUNTIME = #{prodRuntime}
+	        , PROD_DURATION = #{prodDuration}
+	        , PROD_MIN_PEOPLE = #{prodMinPeople}
+	        , PROD_MAX_PEOPLE = #{prodMaxPeople}
+	        , PROD_LIM_AGE = #{prodLimAge}
+	        , PROD_INCLUDE = #{prodInclude}
+	        , PROD_EXCLUDE = #{prodExclude}
+	        , PROD_NOTICE = #{prodNotice}
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 상품 장소, 숙소 정보, 숙소 보유시설 정보 변경 -->
+	<update id="modifyProdPlace" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO">
+	    UPDATE TRIP_PROD_PLACE
+	    SET 
+	        ADDR1 = #{addr1}
+	        , ADDR2 = #{addr2}
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 숙소 정보 변경 () -->
+	<update id="modifyAccommodation" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	    UPDATE ACCOMMODATION
+	    SET
+	        ACC_CAT_CD = #{accCatCd}
+	        , ACC_FILE_NO = #{accFileNo}
+	        , STAR_GRADE = #{starGrade}
+	        , ZIP = #{zip}
+	        , ADDR1 = #{addr1}
+	        , ADDR2 = #{addr2}
+	        , TOTAL_ROOM_CNT = #{totalRoomCnt}
+	        , API_CONTENT_ID = #{apiContentId}
+	        , ACC_NAME = #{accName}
+	        , ACC_FILE_PATH = #{accFilePath}
+	        , AREA_CODE = #{areaCode}
+	        , SIGUNGU_CODE = #{sigunguCode}
+	        , MAPX = #{mapx}
+	        , MAPY = #{mapy}
+	        , LDONG_REGN_CD = #{ldongRegnCd}
+	        , LDONG_SIGNGU_CD = #{ldongSignguCd}
+	        , OVERVIEW = #{overview}
+	        , TEL = #{tel}
+	        , CHECK_IN_TIME = #{checkInTime}
+	        , CHECK_OUT_TIME = #{checkOutTime}
+	    WHERE
+	        ACC_NO = #{accNo}
+	</update>
+	
+	
+	<!-- 숙소 보유시설 정보 변경 -->
+
+
+
 	<!-- 예약 가능 시간 삭제 -->
 	<delete id="deleteProdTimeInfo" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
 		DELETE FROM PROD_TIME_INFO 
@@ -289,6 +358,10 @@
 	        </foreach>
 	    ) A
 	</insert>
+	
+	
+	
+	
 	
 	<!-- 상품 판매 정보 변경 -->
 	<update id="updateProductStatus" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">

@@ -137,7 +137,7 @@
 			                    <div class="product-category">${prod.prodCtgryType}</div>
 			                    <h3 class="product-name">${prod.tripProdTitle}</h3>
 			                    <div class="product-meta">
-			                        <span><i class="bi bi-geo-alt"></i>${prod.ctyNm}</span>
+			                        <span><i class="bi bi-geo-alt"></i>${prod.ctyNm}</span><!-- 지역 코드 -->
 			                        <span><i class="bi bi-star-fill text-warning"></i> ${prod.avgRating} (${prod.reviewCount })</span>
 			                    </div>
 			                    <div class="product-period">
@@ -158,15 +158,24 @@
 				                        </span>
 				                        <span class="discount-rate">${prod.discount}% 할인</span>
 			                    	</c:when>
+			                    	<c:when test="${prod.netprc > 0 and empty prod.discount}">
+				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+			                    	</c:when>
 			                    	<c:otherwise>
 				                        <span class="sale-price">
-				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+<%-- 				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원 --%>
+											아직 안불러옴
 				                        </span>
 			                    	</c:otherwise>
 			                    </c:choose>
 			                    </div>
 			                </div>
 			                <div class="product-stats">
+			                	<!-- 여기도 값이 없을때 처리 해줘야됨
+			                		price가 2개 있음
+			                		숙소 = price
+			                		다른 거는 여러 price
+			                	 -->
 			                    <div class="stat-item">
 			                        <span class="stat-label">총 재고</span>
 			                        <span class="stat-value stock-value">${prod.totalStock}개</span>
@@ -186,12 +195,21 @@
 			                    <div class="stat-item">
 			                        <span class="stat-label">매출</span>
 			                        <span class="stat-value">
-			                        	<fmt:formatNumber value="${prod.price * (prod.totalStock - prod.curStock)}" pattern="#,###"/>원
+			                        	<c:choose>
+			                        		<c:when test="${not empty prod.price and prod.price > 0}">
+					                        	<c:set var="price" value="${prod.price * (prod.totalStock - prod.curStock)}"/>
+					                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원
+			                        		</c:when>
+			                        		<c:otherwise>
+	<%-- 				                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원 --%>
+												<div>아직 안불러옴</div>
+			                        		</c:otherwise>
+			                        	</c:choose>
 			                        </span>
 			                    </div>
 			                </div>
 			                <div class="product-actions">
-			                    <a href="/product/manage/tourDetail/${prod.tripProdNo}" class="btn btn-outline btn-sm">
+			                    <a href="/business/product/tourDetail/${prod.tripProdNo}" class="btn btn-outline btn-sm">
 			                        <i class="bi bi-eye"></i> 상세보기
 			                    </a>
 			                    <button class="btn btn-outline btn-sm" onclick="editProduct(this)"
@@ -203,6 +221,7 @@
 			                        <i class="bi bi-pause"></i> 
 			                        ${prod.approveStatus == '판매중' ? '중지' : '재개'}
 			                    </button>
+			                    <!-- prod.aprvYn == 'Y' ? '승인' : 'wait = 대기' / 'N = 불허' -->
 			                    <button class="btn btn-outline btn-sm text-danger" onclick="deleteProduct(this)"
 			                    	data-id="${prod.tripProdNo}">
 			                        <i class="bi bi-trash"></i> 삭제
@@ -242,10 +261,10 @@
             <div class="modal-header">
                 <h5 class="modal-title" id="productModalTitle">새 상품 등록</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                <input type="hidden" name="tripProdNo"/>
             </div>
             <div class="modal-body">
                 <form id="productForm">
+	                <input type="hidden" name="tripProdNo"/>
                     <div class="row mb-3">
                         <div class="col-md-4">
                             <label class="form-label">카테고리 <span class="text-danger">*</span></label>
@@ -265,33 +284,33 @@
                             	<!-- 일단 나중에 상의 -->
                                 <option value="">선택하세요</option>
                                 <optgroup label="수도권">
-                                    <option value="seoul">서울</option>
-                                    <option value="gyeonggi">경기</option>
-                                    <option value="incheon">인천</option>
+                                    <option value="1">서울</option>
+                                    <option value="31">경기</option>
+                                    <option value="2">인천</option>
                                 </optgroup>
                                 <optgroup label="강원권">
-                                    <option value="gangwon">강원</option>
+                                    <option value="32">강원</option>
                                 </optgroup>
                                 <optgroup label="충청권">
-                                    <option value="daejeon">대전</option>
-                                    <option value="sejong">세종</option>
-                                    <option value="chungbuk">충북</option>
-                                    <option value="chungnam">충남</option>
+                                    <option value="3">대전</option>
+                                    <option value="8">세종</option>
+                                    <option value="33">충북</option>
+                                    <option value="34">충남</option>
                                 </optgroup>
                                 <optgroup label="전라권">
-                                    <option value="gwangju">광주</option>
-                                    <option value="jeonbuk">전북</option>
-                                    <option value="jeonnam">전남</option>
+                                    <option value="5">광주</option>
+                                    <option value="37">전북</option>
+                                    <option value="38">전남</option>
                                 </optgroup>
                                 <optgroup label="경상권">
-                                    <option value="busan">부산</option>
-                                    <option value="daegu">대구</option>
-                                    <option value="ulsan">울산</option>
-                                    <option value="gyeongbuk">경북</option>
-                                    <option value="gyeongnam">경남</option>
+                                    <option value="6">부산</option>
+                                    <option value="4">대구</option>
+                                    <option value="7">울산</option>
+                                    <option value="35">경북</option>
+                                    <option value="36">경남</option>
                                 </optgroup>
                                 <optgroup label="제주권">
-                                    <option value="jeju">제주</option>
+                                    <option value="39">제주</option>
                                 </optgroup>
                             </select>
                         </div>
@@ -829,6 +848,7 @@ $(document).ready(function() {
     const startDateInput = document.querySelector('input[name="startDate"]');
     const endDateInput = document.querySelector('input[name="endDate"]');
 
+    // endDate는 그걸로
     if (startDateInput && typeof flatpickr !== 'undefined') {
         startDatePicker = flatpickr(startDateInput, {
             locale: 'ko',
@@ -890,11 +910,11 @@ async function editProduct(prodData) {
         
         const prodData = response.data;
         // 예약정보 담기
-        if(prodData.prodTimeList.length > 0){
+        if(prodData.prodTimeList != null && prodData.prodTimeList.length > 0){
         	bookingTimes = prodData.prodTimeList.map(time => time.rsvtAvailableTime);
         	renderBookingTimes();
         }
-        if(prodData.imageList.length > 0 ){
+        if(prodData.imageList != null && prodData.imageList.length > 0 ){
         	console.log("사진 조회용 : ", prodData.imageList );
         	imageList = [...prodData.imageList];	// 여기서 꺼내서 쓰자
 	        console.log("prodData.imageList : ", prodData.imageList);
@@ -902,11 +922,11 @@ async function editProduct(prodData) {
         	renderImageList();
         }
 		renderProductData(prodData);
+		toggleCategoryFields();	// value에 따라 duratino나오는게 달라짐
 		
         document.getElementById('productModalTitle').textContent = '상품 수정';
 		document.querySelector("#update").style.display = "block";
 		document.querySelector("#register").style.display = "none";
-		// update/register
         
         setTimeout(() => {modal.show()}, 300);
     } catch (error) {
@@ -928,19 +948,19 @@ function renderImageList(imageData = ""){
 	if(imageData !== "" && imageList.length < 5) imageList.push(imageData);
 	
 		
-// 	imageContainer.innerHTML = '';
-//     if (imageList.length === 0) {
-//     	html = `<div>사진이 없습니다</div>`; 
-//     	return imageContainer.innerHTML = html;
-//     }
-//     else {
-//         html = imageList.map((image, index) => {
-        	
-//             return `<img src="${pageContext.request.contextPath}/upload/product/\${image.filePath}" 
-//                 alt="\${image.tripProdTitle}" data-attachNo="\${image.attachNo}" id="image\${index}">`
-//         }).join('');
-//         imageContainer.innerHTML += html;
-//     }
+	imageContainer.innerHTML = '';
+    if (imageList.length === 0) {
+    	html = `<div>사진이 없습니다</div>`; 
+    	return imageContainer.innerHTML = html;
+    }
+    else {
+        html = imageList.map((image, index) => {
+            return `<img src="${pageContext.request.contextPath}/upload/product/\${image.filePath}" 
+                alt="\${image.tripProdTitle}" id="image\${index}">`
+        }).join('');
+        if (imageList[0].attachNo !== null) document.querySelector("input[name='image.attachNo']").value = imageList[0].attachNo;
+        imageContainer.innerHTML += html;
+    }
     // hidden input에 JSON으로 저장
     console.log("JSON.stringify(imageList) : ", JSON.stringify(imageList));
 //     document.getElementById('bookingTimesInput').value = JSON.stringify(imageList);
@@ -975,21 +995,27 @@ function renderProductData(prodData, prefix = ""){
 }
 
 // 상품 저장 - insert / update(문구에 따라서)
-// function registerProduct() {
 async function saveProduct(data) {
-    // TODO: 상품 저장 API 호출
     console.log("svae data : ", data.innerText);	// 이거에 따른 등록 수정 여부
     
     const form = document.getElementById('productForm');
-    // 1. FormData 객체 생성 (기본 텍스트 데이터 자동 포함)
+    
     const formData = new FormData(form);	// key value 구조
-
+	
+    // update
     if(data.innerText === "수정"){
 		const res = await axios.post(`/business/product/editProduct`, formData);
    		console.log("saveProduct res.data : " + res.data);
-   		
-    } else{
-    	console.log("등록하나요?")
+   		if(res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
+   		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
+    } 
+    
+    // insert
+    else {
+		const res = await axios.post(`/business/product/insert`, formData);
+   		console.log("saveProduct res.data : " + res.data);
+   		if(res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
+   		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
     }
     // insert문 
     if (modal) modal.hide();
@@ -1117,13 +1143,11 @@ function addPresetTimes(type) {
     let runTime = document.querySelector("input[name='prodInfo.prodRuntime']");
     console.log("runTime : ", runTime.value);
     
-    
     var times = presets[type] || [];
     var addedCount = 0;
 	
-    times.filter(time => {
-    	
-    });
+    // 운영 시간 내의 유효 시간만 담기
+//     times.filter(time => { });
     times.forEach(time => {
         if (!bookingTimes.includes(time)) {
             bookingTimes.push(time);
@@ -1156,9 +1180,6 @@ function searchAddress() {
 //                     }
 //                 });
 //             }
-            
-            
-            
         }
     }).open();
 }
@@ -1237,7 +1258,7 @@ function pauseSelectedProducts() {
     if (!confirm(selectedIds.length + '개의 상품을 중지하시겠습니까?')) return;
 
     // 선택된 상품들의 상태를 중지로 변경 (UI 업데이트)
-    selectedIds.forEach( id => {
+    selectedIds.forEach(id => {
         var checkbox = document.querySelector('.product-select-checkbox[value="' + id + '"]');
         if (checkbox) {
             var productCard = checkbox.closest('.product-manage-card');

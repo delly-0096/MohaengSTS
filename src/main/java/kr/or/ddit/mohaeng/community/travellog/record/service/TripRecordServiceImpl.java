@@ -253,78 +253,6 @@ public class TripRecordServiceImpl implements ITripRecordService {
             // 예: fileService.replaceCover(rcdNo, coverFile, loginMemNo);
         }
     }
-
-	/*
-	 * @Override
-	 * 
-	 * @Transactional public long createWithBlocks( TripRecordCreateReq req, Long
-	 * memNo, MultipartFile coverFile, List<MultipartFile> bodyFiles,
-	 * List<TripRecordBlockReq> blocks ) {
-	 * 
-	 * if (memNo == null) throw new RuntimeException("로그인 정보가 없습니다.");
-	 * 
-	 * // 기본값 if (req.getOpenScopeCd() == null) req.setOpenScopeCd("PUBLIC"); if
-	 * (req.getMapDispYn() == null) req.setMapDispYn("Y"); if (req.getReplyEnblYn()
-	 * == null) req.setReplyEnblYn("Y");
-	 * 
-	 * // 1) 커버 파일 저장 -> attachNo 세팅 if (coverFile != null && !coverFile.isEmpty())
-	 * { Long coverAttachNo = attachService.saveAndReturnAttachNo(coverFile, memNo);
-	 * req.setAttachNo(coverAttachNo); }
-	 * 
-	 * // 2) TRIP_RECORD insert (너 XML은 parameterType=map 구조) int cnt =
-	 * mapper.insertTripRecord(req, memNo); if (cnt != 1) throw new
-	 * RuntimeException("여행기록 등록 실패");
-	 * 
-	 * Long rcdNoObj = req.getRcdNo(); if (rcdNoObj == null || rcdNoObj <= 0) {
-	 * throw new RuntimeException("RCD_NO 생성 실패(Mapper selectKey 확인 필요)"); } long
-	 * rcdNo = rcdNoObj;
-	 * 
-	 * // 3) blocks 저장 (없으면 스킵) if (blocks != null && !blocks.isEmpty()) { int order
-	 * = 1;
-	 * 
-	 * for (TripRecordBlockReq b : blocks) { String type = (b.getType() == null ? ""
-	 * : b.getType().trim().toLowerCase());
-	 * 
-	 * long connNo = mapper.nextConnNo();
-	 * 
-	 * // 기본: targetPk는 null 가능하게 처리 (테이블이 NOT NULL이면 알려줘!) Long targetPk = null;
-	 * 
-	 * // (A) image 블록: bodyFiles[fileIdx] 저장 -> attachNo -> TRIP_RECORD_IMG if
-	 * ("image".equals(type)) { Integer fileIdx = b.getFileIdx(); if (fileIdx ==
-	 * null) { // fileIdx가 없으면 JSON 저장으로 fallback String json = writeJsonSafe(b);
-	 * mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", null);
-	 * mapper.insertTripRecordTxt(connNo, json); continue; }
-	 * 
-	 * MultipartFile bodyFile = getFileByIndex(bodyFiles, fileIdx); if (bodyFile ==
-	 * null || bodyFile.isEmpty()) { // 파일이 없으면 JSON 저장으로 fallback String json =
-	 * writeJsonSafe(b); mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT",
-	 * null); mapper.insertTripRecordTxt(connNo, json); continue; }
-	 * 
-	 * Long attachNo = attachService.saveAndReturnAttachNo(bodyFile, memNo);
-	 * targetPk = attachNo;
-	 * 
-	 * mapper.insertTripRecordSeq(connNo, rcdNo, order++, "IMAGE", targetPk);
-	 * mapper.insertTripRecordImg(connNo, attachNo, b.getCaption()); continue; }
-	 * 
-	 * // (B) 나머지는 전부 TEXT로 저장(구조 유지를 위해 JSON으로 저장 권장) String textToSave; if
-	 * ("text".equals(type)) { textToSave = (b.getContent() == null ? "" :
-	 * b.getContent()); } else if ("divider".equals(type)) { // divider도 형태를 보존하려고
-	 * JSON 저장 textToSave = writeJsonSafe(b); } else if ("day-header".equals(type)
-	 * || "place".equals(type)) { textToSave = writeJsonSafe(b); } else { // 알 수 없는
-	 * 타입도 JSON으로 저장 textToSave = writeJsonSafe(b); }
-	 * 
-	 * mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", null);
-	 * mapper.insertTripRecordTxt(connNo, textToSave); } }
-	 * 
-	 * // 4) 해시태그 저장(기존 create() 로직 그대로 가져옴) List<String> tags = req.getTags(); if
-	 * (tags != null && !tags.isEmpty()) { List<String> cleaned = tags.stream()
-	 * .filter(t -> t != null && !t.trim().isEmpty()) .map(t ->
-	 * t.trim().replace("#", "")) .distinct() .toList();
-	 * 
-	 * if (!cleaned.isEmpty()) { mapper.insertHashtags(rcdNo, cleaned); } }
-	 * 
-	 * return rcdNo; }
-	 */
     
     @Override
     @Transactional
@@ -342,13 +270,15 @@ public class TripRecordServiceImpl implements ITripRecordService {
         if (req.getMapDispYn() == null) req.setMapDispYn("Y");
         if (req.getReplyEnblYn() == null) req.setReplyEnblYn("Y");
 
-        // 1) 커버 저장 -> attachNo 세팅
+        // ✅ 1) 커버 attachNo 결정 (insert 전에 딱 1번만!)
         if (coverFile != null && !coverFile.isEmpty()) {
             Long attachNo = attachService.saveAndReturnAttachNo(coverFile, memNo);
             req.setAttachNo(attachNo);
+        } else if (req.getCoverAttachNo() != null && req.getCoverAttachNo() > 0) {
+            req.setAttachNo(req.getCoverAttachNo());
         }
 
-        // 2) TRIP_RECORD INSERT (selectKey로 rcdNo 세팅됨)
+        // ✅ 2) TRIP_RECORD INSERT
         int cnt = mapper.insertTripRecord(req, memNo);
         if (cnt != 1) throw new RuntimeException("여행기록 등록 실패");
 
@@ -364,14 +294,12 @@ public class TripRecordServiceImpl implements ITripRecordService {
                 String type = (b.getType() == null) ? "" : b.getType().trim().toLowerCase();
 
                 long connNo = mapper.nextConnNo();
-
-                // ✅ 핵심: targetPk는 "connNo 문자열"로 저장 (PK 못 받아도 됨)
                 String targetPk = String.valueOf(connNo);
-                
+
+                // (여기에는 커버 세팅 로직 절대 넣지 마!)
                 if ("text".equals(type)) {
                     String content = b.getContent();
                     if (content == null || content.trim().isEmpty()) {
-                        // 파일도 없고(텍스트용), 내용도 없으면 그냥 스킵
                         continue;
                     }
                 }
@@ -386,11 +314,9 @@ public class TripRecordServiceImpl implements ITripRecordService {
 
                         if (img != null && !img.isEmpty()) {
                             Long attachNo = attachService.saveAndReturnAttachNo(img, memNo);
-
                             mapper.insertTripRecordSeq(connNo, rcdNo, order++, "IMAGE", targetPk);
                             mapper.insertTripRecordImg(connNo, attachNo, b.getCaption());
                         } else {
-                            // 파일 매칭 실패하면 텍스트로 저장(깨지지 않게)
                             String fallback = writeJsonSafe(b);
                             mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
                             mapper.insertTripRecordTxt(connNo, fallback);
@@ -399,20 +325,12 @@ public class TripRecordServiceImpl implements ITripRecordService {
                     }
 
                     case "divider": {
-                        // 구분선은 targetPk NULL
                         mapper.insertTripRecordSeq(connNo, rcdNo, order++, "DIVIDER", null);
                         break;
                     }
 
-                    case "day-header": {
-                        String json = writeJsonSafe(b);
-                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
-                        mapper.insertTripRecordTxt(connNo, json);
-                        break;
-                    }
-
+                    case "day-header":
                     case "place": {
-                        // 아직 plcNo 연동 전이면 JSON으로 TEXT 저장 추천
                         String json = writeJsonSafe(b);
                         mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
                         mapper.insertTripRecordTxt(connNo, json);
@@ -422,9 +340,6 @@ public class TripRecordServiceImpl implements ITripRecordService {
                     case "text":
                     default: {
                         String text = (b.getContent() == null) ? "" : b.getContent().trim();
-
-                        // ✅ content가 비어있으면(=일정 불러오기 블록이거나 구조형 블록일 가능성)
-                        // 원본 형태 유지 위해 JSON으로 저장
                         String toSave = text.isEmpty() ? writeJsonSafe(b) : text;
 
                         mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
@@ -435,7 +350,7 @@ public class TripRecordServiceImpl implements ITripRecordService {
             }
         }
 
-        // 4) 해시태그 저장 (기존 create() 로직과 동일)
+        // 4) 해시태그 저장
         List<String> tags = req.getTags();
         if (tags != null && !tags.isEmpty()) {
             List<String> cleaned = tags.stream()
@@ -445,13 +360,14 @@ public class TripRecordServiceImpl implements ITripRecordService {
                     .toList();
 
             if (!cleaned.isEmpty()) {
-            	String tagText = String.join(",", cleaned);
+                String tagText = String.join(",", cleaned);
                 mapper.upsertHashtagText(rcdNo, tagText);
             }
         }
 
         return rcdNo;
     }
+
 
 	/*
 	 * private MultipartFile getFileByIndex(List<MultipartFile> files, int idx) { if

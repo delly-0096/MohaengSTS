@@ -58,7 +58,13 @@
 
 	
 	        tr.ATTACH_NO     AS attachNo,
-	        afd.FILE_PATH    AS coverPath,
+	        
+	        CASE
+			  WHEN afd.FILE_PATH IS NULL THEN NULL
+			  WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
+			  WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
+			  ELSE afd.FILE_PATH || afd.FILE_NAME
+			END AS coverPath,
 	
 	        NVL(lk.like_cnt, 0)   AS likeCount,
 	        NVL(cm.cmnt_cnt, 0)   AS commentCount,
@@ -104,7 +110,7 @@
 	        SELECT attach_no, MIN(file_no) AS file_no
 	        FROM ATTACH_FILE_DETAIL
 	        WHERE use_yn = 'Y'
-	          AND file_gb_cd = 'ATTACH'
+	          AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
 	        GROUP BY attach_no
 	    ) afd_pick
 	      ON afd_pick.attach_no = tr.ATTACH_NO
@@ -195,7 +201,13 @@
 	        tr.REPLY_ENBL_YN AS replyEnblYn,
 	        RG.RGN_NM        AS locName,
 	
-	        afd.FILE_PATH    AS coverPath,
+	        CASE
+			  WHEN afd.FILE_PATH IS NULL THEN NULL
+			  WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
+			  WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
+			  ELSE afd.FILE_PATH || afd.FILE_NAME
+			END AS coverPath,
+			
 	        mu.NICKNAME      AS nickname,
 	
 	        -- ✅ 프로필 경로
@@ -260,7 +272,7 @@
 	        SELECT attach_no, MIN(file_no) AS file_no
 	        FROM ATTACH_FILE_DETAIL
 	        WHERE use_yn = 'Y'
-	          AND file_gb_cd = 'ATTACH'
+	          AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
 	        GROUP BY attach_no
 	    ) afd_pick
 	      ON afd_pick.attach_no = tr.ATTACH_NO
@@ -453,7 +465,7 @@
     SELECT attach_no, MIN(file_no) AS file_no
     FROM ATTACH_FILE_DETAIL
     WHERE use_yn='Y'
-      AND file_gb_cd='ATTACH'
+      AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
     GROUP BY attach_no
   ) pick
     ON pick.attach_no = i.RCD_IMG

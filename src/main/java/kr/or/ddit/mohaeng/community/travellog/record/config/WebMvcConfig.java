@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebMvcConfig implements WebMvcConfigurer {
 
-    @Value("${kr.or.ddit.upload.path}")
+    @Value("${kr.or.ddit.mohaeng.upload.path}")
     private String uploadRoot;
 
     @Override

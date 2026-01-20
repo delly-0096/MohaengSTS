@@ -6,6 +6,9 @@
 <%@ taglib uri="http://www.springframework.org/security/tags"
 	prefix="sec"%>
 
+
+<%@ include file="../common/header.jsp"%>
+
 <!-- 현재 로그인/권한 상태를 JS가 읽어가게 심어둠 -->
 <span id="authRole" style="display: none;"> <sec:authorize
 		access="hasAuthority('ROLE_MEMBER')">ROLE_MEMBER</sec:authorize> <sec:authorize
@@ -16,7 +19,7 @@
 <c:set var="pageTitle" value="여행기록 상세" />
 <c:set var="pageCss" value="community" />
 
-<%@ include file="../common/header.jsp"%>
+
 
 <meta name="_csrf" content="${_csrf.token}" />
 <meta name="_csrf_header" content="${_csrf.headerName}" />

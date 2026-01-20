@@ -50,5 +50,6 @@ public class MemberVO {
 	private AlarmConfigVO alarmConfig;
 	private MemberTermsAgreeVO termsAgree;
 	private MarketingConsentVO marketingConsent;
+	private String memStatusName; // DB 조인을 통해 '정상', '휴면' 등의 한글명을 담을 필드
 
 }

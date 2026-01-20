@@ -284,7 +284,7 @@ public class TripRecordServiceImpl implements ITripRecordService {
                     }
 
                     case "place": {
-                        // ✅ plcNo 없으면(수동으로 추가한 place-block 등) 일단 기존처럼 TEXT로 저장만 하고 스킵
+                        // plcNo 없으면 저장 불가 → TEXT fallback(너 정책 유지)
                         if (b.getPlcNo() == null || b.getPlcNo() <= 0) {
                             String json = writeJsonSafe(b);
                             mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
@@ -292,28 +292,34 @@ public class TripRecordServiceImpl implements ITripRecordService {
                             break;
                         }
 
-                        // 1) 리뷰 PK 생성
-                        long prvSeq = mapper.nextTourPlaceReviewSeq();
-                        String placeReviewNo = makePlaceReviewNo(prvSeq);
+                        // ✅ 1) 리뷰 PK (NUMBER) 생성
+                        Long placeReviewNo = mapper.nextTourPlaceReviewSeq();
 
-                        // 2) 리뷰 insert
+                        // ✅ 2) 리뷰 insert (RCD_CONN_NO = connNo)
                         String reviewConn = (b.getContent() == null) ? null : b.getContent().trim();
-                        double rating = safeRating(b.getRating());
+                        double rating = (b.getRating() == null) ? 0.0 : safeRating(b.getRating());
 
                         mapper.insertTourPlaceReview(
-                            placeReviewNo,
-                            connNo,     // ✅ 리뷰는 이 블록 connNo에 연결
-                            memNo,      // 로그인 사용자
-                            b.getPlcNo(),
-                            reviewConn,
-                            rating
+                            placeReviewNo,   // NUMBER
+                            connNo,          // RCD_CONN_NO
+                            memNo,           // MEM_NO
+                            b.getPlcNo(),    // PLC_NO
+                            reviewConn,      // REVIEW_CONN
+                            rating           // RATING
                         );
 
-                        // 3) SEQ insert (PLACE)
-                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "PLACE", placeReviewNo);
+                        // ✅ 3) SEQ insert (TARGET_PK = placeReviewNo)
+                        mapper.insertTripRecordSeq(
+                            connNo,
+                            rcdNo,
+                            order++,
+                            "PLACE",
+                            String.valueOf(placeReviewNo)   // JOIN이 TO_CHAR(pr.PLACE_REVIEW_NO)라서 문자열로
+                        );
 
                         break;
                     }
+
 
 
                     case "text":
@@ -355,9 +361,7 @@ public class TripRecordServiceImpl implements ITripRecordService {
         }
     }
     
-    private String makePlaceReviewNo(long seq) {
-        return "PRV" + String.format("%010d", seq);
-    }
+
 
     private double safeRating(Double r) {
         if (r == null) return 0.0;

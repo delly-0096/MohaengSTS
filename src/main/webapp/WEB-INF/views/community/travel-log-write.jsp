@@ -447,27 +447,10 @@
                     <input type="text" id="placeSearchInput" placeholder="장소 이름 검색" onkeyup="searchPlaceForBlock(event)">
                 </div>
                 <div class="place-search-results" id="placeSearchResults">
-                    <div class="place-search-item" onclick="addPlaceToEditor('성산일출봉', '제주 서귀포시 성산읍', 'https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=300&h=200&fit=crop&q=80')">
-                        <img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=80&h=60&fit=crop&q=80" alt="성산일출봉">
-                        <div class="place-search-info">
-                            <span class="place-name">성산일출봉</span>
-                            <span class="place-address">제주 서귀포시 성산읍</span>
-                        </div>
-                    </div>
-                    <div class="place-search-item" onclick="addPlaceToEditor('협재해수욕장', '제주 제주시 한림읍', 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=300&h=200&fit=crop&q=80')">
-                        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=80&h=60&fit=crop&q=80" alt="협재해수욕장">
-                        <div class="place-search-info">
-                            <span class="place-name">협재해수욕장</span>
-                            <span class="place-address">제주 제주시 한림읍</span>
-                        </div>
-                    </div>
-                    <div class="place-search-item" onclick="addPlaceToEditor('우도', '제주 제주시 우도면', 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&h=200&fit=crop&q=80')">
-                        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=80&h=60&fit=crop&q=80" alt="우도">
-                        <div class="place-search-info">
-                            <span class="place-name">우도</span>
-                            <span class="place-address">제주 제주시 우도면</span>
-                        </div>
-                    </div>
+                    
+                    
+                    
+                    
                 </div>
             </div>
         </div>
@@ -886,7 +869,6 @@ if (dateInput && typeof flatpickr !== 'undefined') {
 	
 	
 // 플러스
-// 플러스
 function collectBlocksForSave() {
   const result = [];
   const blocks = document.querySelectorAll('#blogEditor .editor-block');
@@ -1087,43 +1069,62 @@ function addPlaceBlock() {
 }
 
 // 장소 블록을 에디터에 추가
-function addPlaceToEditor(name, address, imageUrl) {
-    blockIdCounter++;
-    const currentId = blockIdCounter;
-    const editor = document.getElementById('blogEditor');
-    const block = document.createElement('div');
-    block.className = 'editor-block place-block';
-    block.dataset.blockId = currentId;
-    block.innerHTML =
-        '<div class="block-actions">' +
-            '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
-            '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + currentId + ')"><i class="bi bi-chevron-down"></i></button>' +
-            '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + currentId + ')"><i class="bi bi-trash"></i></button>' +
-        '</div>' +
-        '<div class="place-block-content">' +
-            '<img src="' + imageUrl + '" alt="' + name + '">' +
-            '<div class="place-block-info">' +
-                '<h4><i class="bi bi-geo-alt-fill"></i> ' + name + '</h4>' +
-                '<p>' + address + '</p>' +
-                '<div class="place-rating" data-block-id="' + currentId + '">' +
-                    '<span class="rating-label">별점</span>' +
-                    '<div class="star-rating">' +
-                        '<i class="bi bi-star" data-rating="1" onclick="setPlaceRating(' + currentId + ', 1)"></i>' +
-                        '<i class="bi bi-star" data-rating="2" onclick="setPlaceRating(' + currentId + ', 2)"></i>' +
-                        '<i class="bi bi-star" data-rating="3" onclick="setPlaceRating(' + currentId + ', 3)"></i>' +
-                        '<i class="bi bi-star" data-rating="4" onclick="setPlaceRating(' + currentId + ', 4)"></i>' +
-                        '<i class="bi bi-star" data-rating="5" onclick="setPlaceRating(' + currentId + ', 5)"></i>' +
-                    '</div>' +
-                    '<span class="rating-value">0.0</span>' +
-                '</div>' +
-            '</div>' +
-        '</div>' +
-        '<textarea class="block-textarea" placeholder="이 장소에 대한 이야기를 작성하세요..." oninput="autoResize(this)"></textarea>';
-    editor.appendChild(block);
-    placeBlockModal.hide();
+// ✅ 장소 블록을 에디터에 추가 (plcNo 포함 버전)
+function addPlaceToEditor(plcNo, name, address, imageUrl) {
+  blockIdCounter++;
+  const currentId = blockIdCounter;
+  const editor = document.getElementById('blogEditor');
+  const block = document.createElement('div');
+  block.className = 'editor-block place-block';
+  block.dataset.blockId = currentId;
 
-    block.querySelector('textarea').focus();
+  // ✅ 저장용 plcNo 세팅 (가장 중요)
+  if (plcNo != null && plcNo !== '') {
+    block.dataset.plcNo = String(plcNo);
+  }
+
+  // (선택) 수동 추가 장소는 day/date가 없으니 비워둬도 됨
+  block.dataset.day = '';
+  block.dataset.date = '';
+
+  // 보기용/프리뷰용 데이터도 저장해두면 좋음
+  block.dataset.name = name || '';
+  block.dataset.address = address || '';
+  block.dataset.image = imageUrl || '';
+
+  block.innerHTML =
+    '<div class="block-actions">' +
+      '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
+      '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + currentId + ')"><i class="bi bi-chevron-down"></i></button>' +
+      '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + currentId + ')"><i class="bi bi-trash"></i></button>' +
+    '</div>' +
+    '<div class="place-block-content">' +
+      '<img src="' + imageUrl + '" alt="' + escapeHtml(name) + '">' +
+      '<div class="place-block-info">' +
+        '<h4><i class="bi bi-geo-alt-fill"></i> ' + escapeHtml(name) + '</h4>' +
+        '<p>' + escapeHtml(address || '') + '</p>' +
+        '<div class="place-rating" data-block-id="' + currentId + '">' +
+          '<span class="rating-label">별점</span>' +
+          '<div class="star-rating">' +
+            '<i class="bi bi-star" data-rating="1" onclick="setPlaceRating(' + currentId + ', 1)"></i>' +
+            '<i class="bi bi-star" data-rating="2" onclick="setPlaceRating(' + currentId + ', 2)"></i>' +
+            '<i class="bi bi-star" data-rating="3" onclick="setPlaceRating(' + currentId + ', 3)"></i>' +
+            '<i class="bi bi-star" data-rating="4" onclick="setPlaceRating(' + currentId + ', 4)"></i>' +
+            '<i class="bi bi-star" data-rating="5" onclick="setPlaceRating(' + currentId + ', 5)"></i>' +
+          '</div>' +
+          '<span class="rating-value">0.0</span>' +
+        '</div>' +
+      '</div>' +
+    '</div>' +
+    '<textarea class="block-textarea" placeholder="이 장소에 대한 이야기를 작성하세요..." oninput="autoResize(this)"></textarea>';
+
+  editor.appendChild(block);
+
+  // 모달 닫고 포커스
+  placeBlockModal.hide();
+  block.querySelector('textarea')?.focus();
 }
+
 
 // 장소 별점 설정
 function setPlaceRating(blockId, rating) {
@@ -1607,16 +1608,106 @@ function removeTag(index) {
     renderTags();
 }
 
-// 장소 검색 (블록용)
-function searchPlaceForBlock(event) {
-    const query = event.target.value.trim().toLowerCase();
-    const items = document.querySelectorAll('.place-search-item');
+let placeAbortController = null;
+let placeDebounceTimer = null;
 
-    items.forEach(function(item) {
-        const name = item.querySelector('.place-name').textContent.toLowerCase();
-        item.style.display = name.includes(query) || query === '' ? 'flex' : 'none';
-    });
+function debouncePlaceSearch(q) {
+  if (placeDebounceTimer) clearTimeout(placeDebounceTimer);
+  placeDebounceTimer = setTimeout(() => fetchAndRenderPlaces(q), 300);
 }
+
+async function fetchAndRenderPlaces(keyword) {
+  const box = document.getElementById('placeSearchResults');
+  if (!box) return;
+
+  // 이전 요청 취소
+  if (placeAbortController) placeAbortController.abort();
+  placeAbortController = new AbortController();
+
+  const base = (window.__CTX__ ?? '');
+  const q = (keyword || '').trim();
+
+  // (추천) 지역 선택했으면 rgnNo 같이 보내기
+  const rgnNo = (selectedLocationCode || '').trim();
+
+  const url =
+    base +
+    '/api/community/travel-log/places?keyword=' + encodeURIComponent(q) +
+    (rgnNo ? ('&rgnNo=' + encodeURIComponent(rgnNo)) : '') +
+    '&size=20';
+
+  // 로딩 UI
+  box.innerHTML =
+    '<div class="location-empty" style="padding:12px;color:#6b7280;">검색 중...</div>';
+
+  try {
+    const res = await fetch(url, {
+      method: 'GET',
+      credentials: 'include',
+      signal: placeAbortController.signal
+    });
+
+    if (!res.ok) throw new Error('장소 검색 실패');
+
+    const list = await res.json();
+
+    box.innerHTML = '';
+
+    if (!Array.isArray(list) || list.length === 0) {
+      box.innerHTML =
+        '<div class="location-empty" style="padding:12px;color:#6b7280;">검색 결과가 없습니다</div>';
+      return;
+    }
+
+    list.forEach(p => {
+      const plcNo = p.plcNo;
+      const name = p.plcNm || '장소';
+      const addr = ((p.plcAddr1 || '') + ' ' + (p.plcAddr2 || '')).trim();
+      const img = p.defaultImg || 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80';
+
+      const item = document.createElement('div');
+      item.className = 'place-search-item';
+      item.style.cursor = 'pointer';
+
+      item.innerHTML =
+        '<img src="' + img + '" alt="' + escapeHtml(name) + '">' +
+        '<div class="place-search-info">' +
+          '<span class="place-name">' + escapeHtml(name) + '</span>' +
+          '<span class="place-address">' + escapeHtml(addr) + '</span>' +
+        '</div>';
+
+      item.addEventListener('click', function () {
+        addPlaceToEditor(plcNo, name, addr, img);
+      });
+
+      box.appendChild(item);
+    });
+
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    console.error(e);
+    box.innerHTML =
+      '<div class="location-empty" style="padding:12px;color:#6b7280;">오류가 발생했습니다</div>';
+  }
+}
+
+// ✅ 기존 searchPlaceForBlock을 서버 검색으로 교체
+function searchPlaceForBlock(event) {
+  const q = (event.target.value || '').trim();
+  debouncePlaceSearch(q);
+}
+
+// ✅ 모달 열릴 때도 기본 로딩(지역 선택되어 있으면 그 지역 인기/전체)
+function addPlaceBlock() {
+  placeBlockModal.show();
+  const input = document.getElementById('placeSearchInput');
+  if (input) {
+    input.focus();
+    input.select();
+  }
+  fetchAndRenderPlaces(input ? input.value : '');
+}
+
 
 // 미리보기
 function previewTravellog() {

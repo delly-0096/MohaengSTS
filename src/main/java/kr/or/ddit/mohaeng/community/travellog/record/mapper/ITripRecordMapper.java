@@ -65,13 +65,14 @@ public interface ITripRecordMapper {
 
     long nextTourPlaceReviewSeq();
 
-    int insertTourPlaceReview(@Param("placeReviewNo") String placeReviewNo,
-            @Param("rcdConnNo") long rcdConnNo,
-            @Param("memNo") long memNo,
-            @Param("plcNo") Long plcNo,
-            @Param("reviewConn") String reviewConn,
-            @Param("rating") double rating
-    );
+    int insertTourPlaceReview(
+    	    @Param("placeReviewNo") long placeReviewNo,   
+    	    @Param("rcdConnNo") long rcdConnNo,
+    	    @Param("memNo") long memNo,
+    	    @Param("plcNo") Long plcNo,
+    	    @Param("reviewConn") String reviewConn,
+    	    @Param("rating") double rating
+    	);
     
     int insertTripRecordTxt(
         @Param("connNo") long connNo,

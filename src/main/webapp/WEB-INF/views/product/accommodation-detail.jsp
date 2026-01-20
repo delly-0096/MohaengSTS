@@ -9,6 +9,7 @@
 
 <%@ include file="../common/header.jsp" %>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/accommodation-detail.css">
+<sec:authorize access="isAuthenticated()"><sec:authentication property="principal" var="user" /></sec:authorize>
 
 <div class="accommodation-detail-page">
     <div class="container">
@@ -61,9 +62,9 @@
 					    </c:if>
                     </div>
                     <sec:authorize access="hasRole('MEMBER')" var="isUser">
-                    <button class="report-btn" onclick="openReportModal('accommodation', '1', '그랜드 하얏트 제주')">
-                        <i class="bi bi-flag"></i> 신고
-                    </button>
+                    <button class="report-btn" onclick="reportAccommodation()">
+					    <i class="bi bi-flag"></i> 신고
+					</button>
                     </sec:authorize>
                 </div>
                 <h1>${acc.accName}</h1>
@@ -79,7 +80,7 @@
                         <i class="bi bi-box-arrow-in-right"></i>
                         <div>
                             <span class="label">체크인</span>
-                            <span class="time">15:00</span>
+                            <span class="time">${acc.checkInTime }</span>
                         </div>
                     </div>
                     <div class="checkin-divider"></div>
@@ -87,7 +88,7 @@
                         <i class="bi bi-box-arrow-right"></i>
                         <div>
                             <span class="label">체크아웃</span>
-                            <span class="time">11:00</span>
+                            <span class="time">${acc.checkOutTime }</span>
                         </div>
                     </div>
                 </div>
@@ -181,14 +182,20 @@
                 <div class="acc-section">
                     <h3>객실 선택</h3>
                     <div class="room-list">
-                        <!-- 객실 1 -->
                      <c:forEach var="room" items="${roomList}">
                         <div class="room-card" data-room-id="${room.roomTypeNo}">
                             <div class="room-image">
-                                <img src="${empty room.roomImg ? '/resources/images/default-room.jpg' : room.roomImg}" alt="${room.roomName}">
-                                <button class="room-image-btn" onclick="openRoomGallery(1)">
-                                    <i class="bi bi-images"></i>
-                                </button>
+                                <c:choose>
+							        <c:when test="${fn:contains(room.roomName, '스위트')}">
+							            <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=500" alt="스위트룸">
+							        </c:when>
+							        <c:when test="${fn:contains(room.roomName, '디럭스')}">
+							            <img src="https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=500" alt="디럭스룸">
+							        </c:when>
+							        <c:otherwise>
+							            <img src="${acc.accFilePath}" alt="일반객실">
+							        </c:otherwise>
+							    </c:choose>
                             </div>
                             <div class="room-info">
                                 <h4>${room.roomName}</h4>
@@ -235,22 +242,37 @@
                                 </div>
                             </div>
                             <div class="room-price">
-                                <div class="price-info">
-                                    <span class="original-price">
-										<fmt:formatNumber value="${room.price}" type="number"/>원
-									</span>
-                                    <span class="sale-price">
-                                    <fmt:formatNumber value="${room.finalPrice}" type="number"/>원
-                                    </span>
-                                    <span class="per-night">/ 1박</span>
-                                </div>
-                               <sec:authorize access="hasRole('MEMBER')" var="isUser">
-                                <button class="btn btn-primary btn-sm" 
-                                onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${room.price})">
-                                    객실 선택
-                                </button>
-                                </sec:authorize>
-                            </div>
+							    <div class="price-info">
+							        <c:set var="calculatedFinalPrice" value="${room.price * (100 - room.discount) / 100}" />
+							        <c:choose>
+							            <%-- 2. 할인이 있을 때 (discount > 0) --%>
+							            <c:when test="${room.discount > 0}">
+							                <span class="original-price" style="text-decoration: line-through; color: #999; font-size: 0.9em;">
+							                    <fmt:formatNumber value="${room.price}" type="number"/>원
+							                </span>
+							                <span class="sale-price" style="color: #ff5a5f; font-weight: bold; font-size: 1.2em;">
+							                    <fmt:formatNumber value="${calculatedFinalPrice}" type="number"/>원
+							                </span>
+							            </c:when>
+							
+							            <%-- 3. 할인이 없을 때 (0원이거나 null일 때) --%>
+							            <c:otherwise>
+							                <span class="sale-price" style="color: #333; font-weight: bold; font-size: 1.2em;">
+							                    <fmt:formatNumber value="${room.price}" type="number"/>원
+							                </span>
+							            </c:otherwise>
+							        </c:choose>
+							
+							        <span class="per-night">/ 1박</span>
+							    </div>
+							
+							    <sec:authorize access="hasRole('MEMBER')" var="isUser">
+							        <button class="btn btn-primary btn-sm" 
+							                onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${calculatedFinalPrice}, ${room.baseGuestCount}, ${room.extraGuestFee})">
+							            객실 선택
+							        </button>
+							    </sec:authorize>
+							</div>
                         </div>
                         </c:forEach>
                     </div>
@@ -269,87 +291,92 @@
 
             <!-- 예약 사이드바 -->
             <aside class="booking-sidebar">
-                <div class="booking-card">
-                    <div class="booking-price">
-                        <span class="price-label">객실 최저가</span>
-                        <div>
-                            <span class="price" id="minPriceDisplay">
-			                    <fmt:formatNumber value="${acc.minPrice}" type="number"/>
+			    <div class="booking-card">
+			        <div class="booking-price">
+			            <span class="price-label">객실 최저가</span>
+			            <div>
+			                <span class="price" id="minPriceDisplay">
+			                    <span class="price" id="minPriceDisplay">
+								    <c:choose>
+								        <c:when test="${not empty acc.minPrice and acc.minPrice > 0}">
+								            <fmt:formatNumber value="${acc.finalPrice}" type="number"/>
+								        </c:when>
+								        <c:otherwise>
+								            판매중지
+								        </c:otherwise>
+								    </c:choose>
+								</span>
 			                </span>
-                            <span class="per-person">원~ / 1박</span>
-                        </div>
-                    </div>
-
-                    <form class="booking-form" id="bookingForm" onsubmit="handleBookingSubmit(event)">
-                        <div class="form-group">
-                            <label class="form-label">체크인</label>
-                            <input type="text" class="form-control date-picker" id="checkInDate"
-                                   placeholder="체크인 날짜" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">체크아웃</label>
-                            <input type="text" class="form-control date-picker" id="checkOutDate"
-                                   placeholder="체크아웃 날짜" required>
-                        </div>
-
-                        <div class="form-group">
-                            <label class="form-label">인원</label>
-                            <div class="guest-selector">
-                                <div class="guest-row">
-                                    <span>성인</span>
-                                    <div class="guest-counter">
-                                        <button type="button" onclick="updateGuest('adult', -1)">-</button>
-                                        <span id="adultCount">2</span>
-                                        <button type="button" onclick="updateGuest('adult', 1)">+</button>
-                                    </div>
-                                </div>
-                                <div class="guest-row">
-                                    <span>아동</span>
-                                    <div class="guest-counter">
-                                        <button type="button" onclick="updateGuest('child', -1)">-</button>
-                                        <span id="childCount">0</span>
-                                        <button type="button" onclick="updateGuest('child', 1)">+</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="selected-room-info" id="selectedRoomInfo" style="display: none; border: 2px solid var(--primary-color);">
-                            <div class="selected-room-header">
-                                <span>선택한 객실</span>
-                                <button type="button" class="btn-remove-room" onclick="clearSelectedRoom()">
-                                    <i class="bi bi-x"></i>
-                                </button>
-                            </div>
-                            <div class="selected-room-name" id="selectedRoomName" style="color: var(--primary-color); font-size: 1.1rem;">></div>
-                            <div class="selected-room-price" id="selectedRoomPrice"></div>
-                            <div id="nightStayCount" class="text-muted small mt-1"></div>
-                        </div>
-
-                        <div class="booking-total">
-                            <span class="booking-total-label">총 결제 금액</span>
-                            <span class="booking-total-price" id="totalPrice">-</span>
-                        </div>
-
-                        <div class="booking-actions">
-                            <sec:authorize access="hasRole('MEMBER')" var="isUser">
-                            <button type="button" class="btn btn-outline w-100" onclick="addToBookmark()">
-                                <i class="bi bi-bookmark me-2"></i>북마크
-                            </button>
-                            <button type="submit" class="btn btn-primary w-100" id="bookingBtn" disabled>
-                                <i class="bi bi-credit-card me-2"></i>결제하기
-                            </button>
-                            </sec:authorize>
-                            <sec:authorize access="hasRole('BUSINESS')" var="isBusiness">
-                            <div class="business-notice mt-2">
-                                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>기업회원은 예약이 불가합니다.</small>
-                            </div>
-                            </sec:authorize>
-                        </div>
-                    </form>
-                </div>
-            </aside>
+			                <span class="per-person">원~ / 1박</span>
+			            </div>
+			        </div>
+			
+			        <form class="booking-form" id="bookingForm" onsubmit="handleBookingSubmit(event)">
+			            <div class="form-group">
+			                <label class="form-label">체크인</label>
+			                <input type="text" class="form-control date-picker" id="checkInDate"
+			                       placeholder="체크인 날짜" onchange="calculateNights()" required>
+			            </div>
+			
+			            <div class="form-group">
+			                <label class="form-label">체크아웃</label>
+			                <input type="text" class="form-control date-picker" id="checkOutDate"
+			                       placeholder="체크아웃 날짜" onchange="calculateNights()" required>
+			            </div>
+			
+			            <div class="form-group">
+			                <label class="form-label">인원</label>
+			                <div class="guest-selector">
+			                    <div class="guest-row">
+			                        <span>성인</span>
+			                        <div class="guest-counter">
+			                            <button type="button" onclick="updateGuest('adult', -1)">-</button>
+			                            <span id="adultCount">2</span>
+			                            <button type="button" onclick="updateGuest('adult', 1)">+</button>
+			                        </div>
+			                    </div>
+			                    <div class="guest-row">
+			                        <span>아동</span>
+			                        <div class="guest-counter">
+			                            <button type="button" onclick="updateGuest('child', -1)">-</button>
+			                            <span id="childCount">0</span>
+			                            <button type="button" onclick="updateGuest('child', 1)">+</button>
+			                        </div>
+			                    </div>
+			                </div>
+			            </div>
+			
+			            <div class="selected-room-info" id="selectedRoomInfo" style="display: none; border: 2px solid var(--primary-color); padding: 10px; border-radius: 8px;">
+			                <div class="selected-room-header" style="margin-bottom: 10px; border-bottom: 1px solid #eee; padding-bottom: 5px;">
+			                    <strong>선택한 객실</strong>
+			                </div>
+			                <div id="selectedRoomList"></div>
+			                <div id="nightStayCount" class="text-muted small mt-2" style="text-align: right;"></div>
+			            </div>
+			
+			            <div class="booking-total">
+			                <span class="booking-total-label">총 결제 금액</span>
+			                <span class="booking-total-price" id="totalPrice">-</span>
+			            </div>
+			
+			            <div class="booking-actions">
+			                <sec:authorize access="hasRole('MEMBER')" var="isUser">
+			                    <button type="button" class="btn btn-outline w-100 mb-2" onclick="addToBookmark()">
+			                        <i class="bi bi-bookmark me-2"></i>북마크
+			                    </button>
+			                    <button type="submit" class="btn btn-primary w-100" id="bookingBtn" disabled>
+			                        <i class="bi bi-credit-card me-2"></i>결제하기
+			                    </button>
+			                </sec:authorize>
+			                <sec:authorize access="hasRole('BUSINESS')" var="isBusiness">
+			                    <div class="business-notice mt-2 text-center">
+			                        <small class="text-muted"><i class="bi bi-info-circle me-1"></i>기업회원은 예약이 불가합니다.</small>
+			                    </div>
+			                </sec:authorize>
+			            </div>
+			        </form>
+			    </div>
+			</aside>
         </div>
 
         <!-- 리뷰 섹션 -->
@@ -838,32 +865,30 @@
 </div>
 </c:if>
 </sec:authorize>
-<sec:authorize access="isAuthenticated()">
-    <%-- principal 객체 자체를 꺼내서 'user' 변수에 담기 --%>
-    <sec:authentication property="principal" var="user" />
-    
-    <script>
+
+<script src="${pageContext.request.contextPath}/resources/js/accommodation-detail.js"></script>
+<script>
+    const cp = document.querySelector('meta[name="context-path"]')?.content || '${pageContext.request.contextPath}';
+
     initDetail({
-        contextPath: contextPath,
+        contextPath: cp,
         accNo: '${acc.accNo}',
         accName: '${acc.accName}',
-        isLoggedIn: ${isLoggedIn ? 'true' : 'false'}, // 요렇게 안전하게!
-        isBusiness: ${isBusiness ? 'true' : 'false'}
+        isLoggedIn: ${not empty loginMember ? 'true' : 'false'}, 
+        isBusiness: ${not empty loginMember and loginMember.memType eq 'BUSINESS' ? 'true' : 'false'}
     });
 
-// 문의 모달 열기 함수 (JSP에 있는 데이터 사용 시 편리)
-function openEditInquiryModal(id, ctgry, content, secret) {
-    document.getElementById('editInquiryId').value = id;
-    document.getElementById('editInquiryType').value = ctgry;
-    document.getElementById('editInquiryContent').value = content;
-    document.getElementById('editInquirySecret').checked = (secret === 'Y');
-    
-    const modal = new bootstrap.Modal(document.getElementById('editInquiryModal'));
-    modal.show();
-}
+    function openEditInquiryModal(id, ctgry, content, secret) {
+        document.getElementById('editInquiryId').value = id;
+        document.getElementById('editInquiryType').value = ctgry;
+        document.getElementById('editInquiryContent').value = content;
+        document.getElementById('editInquirySecret').checked = (secret === 'Y');
+        
+        const modal = new bootstrap.Modal(document.getElementById('editInquiryModal'));
+        modal.show();
+    }
 
 </script>
-</sec:authorize>
-<script src="${pageContext.request.contextPath}/resources/js/accommodation-detail.js"></script>
+
 
 <%@ include file="../common/footer.jsp" %>

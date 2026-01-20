@@ -142,12 +142,14 @@
 
 /* 체크인/아웃 정보 */
 .checkin-info {
-    display: flex;
+display: flex;
+    justify-content: space-around; /* 요소를 균등하게 배치 */
     align-items: center;
-    gap: 24px;
-    padding: 20px;
-    background: #f0f9ff;
-    border-radius: 12px;
+    padding: 24px;
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); /* 은은한 그림자 */
     margin-bottom: 32px;
 }
 
@@ -184,17 +186,38 @@
 /* 섹션 */
 .accommodation-section {
     padding-bottom: 24px;
-    margin-bottom: 24px;
+    margin-bottom: 30px;
     border-bottom: 1px solid #eee;
 }
 
 .accommodation-section h3 {
-    font-size: 18px;
     font-weight: 700;
     margin-bottom: 16px;
     display: flex;
     align-items: center;
 }
+
+.acc-section {
+	padding-bottom: 24px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.acc-section h3 {
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.acc-meta {
+	display: flex;
+    justify-content: space-between; /* 양 끝으로 요소를 배치 */
+    align-items: center;
+	padding-bottom: 24px;
+    margin-bottom: 3px;
+}
+
 
 /* 편의시설 */
 .amenities-list {

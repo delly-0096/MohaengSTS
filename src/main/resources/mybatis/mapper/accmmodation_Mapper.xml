@@ -4,7 +4,6 @@
 
 	<resultMap id="accMap" type="kr.or.ddit.mohaeng.vo.AccommodationVO">
 	    <id property="accNo" column="ACC_NO"/>
-		<result property="apiContentId" column="API_CONTENT_ID"/>
 		<result property="accName" column="ACC_NAME"/>
 		<result property="accFilePath" column="ACC_FILE_PATH"/>
 		<result property="areaCode" column="AREA_CODE"/>
@@ -13,6 +12,11 @@
 		<result property="mapy" column="MAPY"/>
 		<result property="ldongRegnCd" column="LDONG_REGN_CD"/>
 		<result property="ldongSignguCd" column="LDONG_SIGNGU_CD"/>
+		<result property="overview" column="OVERVIEW"/>
+		<result property="tel" column="TEL"/>
+		<result property="checkInTime" column="CHECK_IN_TIME"/>
+		<result property="checkOutTime" column="CHECK_OUT_TIME"/>
+		<result property="accNo" column="ACC_NO"/>
 		<result property="tripProdNo" column="TRIP_PROD_NO"/>
 		<result property="accCatCd" column="ACC_CAT_CD"/>
 		<result property="accFileNo" column="ACC_FILE_NO"/>
@@ -20,51 +24,89 @@
 		<result property="zip" column="ZIP"/>
 		<result property="addr1" column="ADDR1"/>
 		<result property="addr2" column="ADDR2"/>
-		<result property="minPrice" column="MIN_PRICE"/>
-    	<result property="maxDiscount" column="MAX_DISCOUNT"/>
-    	<result property="finalPrice" column="FINAL_PRICE"/>
-    	<result property="wifiYn" column="WIFI_YN"/>
-		<result property="parkingYn" column="PARKING_YN"/>
-		<result property="breakfastYn" column="BREAKFAST_YN"/>
-		<result property="poolYn" column="POOL_YN"/>
-		<result property="gymYn" column="GYM_YN"/>
-		<result property="spaYn" column="SPA_YN"/>
-		<result property="restaurantYn" column="RESTAURANT_YN"/>
-		<result property="barYn" column="BAR_YN"/>
-		<result property="roomServiceYn" column="ROOM_SERVICE_YN"/>
-		<result property="laundryYn" column="LAUNDRY_YN"/>
-		<result property="smokingAreaYn" column="SMOKING_AREA_YN"/>
-		<result property="petFriendlyYn" column="PET_FRIENDLY_YN"/>
-    <collection property="roomList" ofType="kr.or.ddit.mohaeng.vo.RoomTypeVO">
-		<result property="roomTypeNo" column="ROOM_TYPE_NO"/>
-		<result property="roomName" column="ROOM_NAME"/>
-		<result property="baseGuestCount" column="BASE_GUEST_COUNT"/>
-		<result property="maxGuestCount" column="MAX_GUEST_COUNT"/>
-		<result property="bedCount" column="BED_COUNT"/>
-		<result property="bedTypeCd" column="BED_TYPE_CD"/>
-		<result property="totalRoomCount" column="TOTAL_ROOM_COUNT"/>
-		<result property="price" column="PRICE"/>
-		<result property="discount" column="DISCOUNT"/>
-		<result property="extraGuestFee" column="EXTRA_GUEST_FEE"/>
-		<result property="roomSize" column="ROOM_SIZE"/>
-		<result property="breakfastYn" column="BREAKFAST_YN"/>
-    </collection>
+		<result property="totalRoomCnt" column="TOTAL_ROOM_CNT"/>
+	    <result property="minPrice" column="MIN_PRICE"/>
+	    <result property="finalPrice" column="FINAL_PRICE"/>
+	    <result property="maxDiscount" column="MAX_DISCOUNT"/>
+	    
+	    <association property="accFacility" javaType="kr.or.ddit.mohaeng.vo.AccFacilityVO">
+	        <id property="accNo" column="ACC_NO"/>
+	        <result property="wifiYn" column="WIFI_YN"/>
+	        <result property="parkingYn" column="PARKING_YN"/>
+	        <result property="breakfastYn" column="BREAKFAST_YN"/>
+	        <result property="poolYn" column="POOL_YN"/>
+	        <result property="gymYn" column="GYM_YN"/>
+	        <result property="spaYn" column="SPA_YN"/>
+	        <result property="restaurantYn" column="RESTAURANT_YN"/>
+	        <result property="barYn" column="BAR_YN"/>
+	        <result property="roomServiceYn" column="ROOM_SERVICE_YN"/>
+	        <result property="laundryYn" column="LAUNDRY_YN"/>
+	        <result property="smokingAreaYn" column="SMOKING_AREA_YN"/>
+	        <result property="petFriendlyYn" column="PET_FRIENDLY_YN"/>
+	    </association>
+			
+	    <collection property="roomList" ofType="kr.or.ddit.mohaeng.vo.RoomTypeVO">
+	        <id property="roomTypeNo" column="ROOM_TYPE_NO"/>
+			<result property="roomName" column="ROOM_NAME"/>
+			<result property="baseGuestCount" column="BASE_GUEST_COUNT"/>
+			<result property="maxGuestCount" column="MAX_GUEST_COUNT"/>
+			<result property="bedCount" column="BED_COUNT"/>
+			<result property="bedTypeCd" column="BED_TYPE_CD"/>
+			<result property="totalRoomCount" column="TOTAL_ROOM_COUNT"/>
+			<result property="price" column="PRICE"/>
+			<result property="discount" column="DISCOUNT"/>
+			<result property="extraGuestFee" column="EXTRA_GUEST_FEE"/>
+			<result property="roomSize" column="ROOM_SIZE"/>
+	        
+	        <association property="feature" javaType="kr.or.ddit.mohaeng.vo.RoomFeatureVO">
+	            <id property="roomTypeNo" column="ROOM_TYPE_NO"/>
+	            <result property="oceanViewYn" column="OCEAN_VIEW_YN"/>
+	            <result property="mountainViewYn" column="MOUNTAIN_VIEW_YN"/>
+	            <result property="cityViewYn" column="CITY_VIEW_YN"/>
+	            <result property="livingRoomYn" column="LIVING_ROOM_YN"/>
+	            <result property="terraceYn" column="TERRACE_YN"/>
+	            <result property="nonSmokingYn" column="NON_SMOKING_YN"/>
+	            <result property="kitchenYn" column="KITCHEN_YN"/>
+	            <result property="freeCancelYn" column="FREE_CANCEL_YN"/>
+	        </association>
+	
+	        <association property="facility" javaType="kr.or.ddit.mohaeng.vo.RoomFacilityVO">
+	            <id property="roomTypeNo" column="ROOM_TYPE_NO"/>
+	            <result property="airConYn" column="AIR_CON_YN"/>
+	            <result property="tvYn" column="TV_YN"/>
+	            <result property="minibarYn" column="MINIBAR_YN"/>
+	            <result property="fridgeYn" column="FRIDGE_YN"/>
+	            <result property="safeBoxYn" column="SAFE_BOX_YN"/>
+	            <result property="hairDryerYn" column="HAIR_DRYER_YN"/>
+	            <result property="bathtubYn" column="BATHTUB_YN"/>
+	            <result property="toiletriesYn" column="TOILETRIES_YN"/>
+	        </association>
+	    </collection>
 	</resultMap>
 	
-	<resultMap id="roomMap" type="kr.or.ddit.mohaeng.vo.RoomTypeVO">
-	    <id property="roomTypeNo" column="ROOM_TYPE_NO"/>
-	    <result property="roomName" column="ROOM_NAME"/>
-	    <result property="price" column="PRICE"/>
-	    <association property="feature" javaType="kr.or.ddit.mohaeng.vo.RoomFeatureVO">
-	        <result property="oceanViewYn" column="OCEAN_VIEW_YN"/>
-	        <result property="mountainViewYn" column="MOUNTAIN_VIEW_YN"/>
-	        <result property="cityViewYn" column="CITY_VIEW_YN"/>
-	        <result property="livingRoomYn" column="LIVING_ROOM_YN"/>
-	        <result property="terraceYn" column="TERRACE_YN"/>
-	        <result property="nonSmokingYn" column="NON_SMOKING_YN"/>
-	        <result property="kitchenYn" column="KITCHEN_YN"/>
-	        <result property="freeCancelYn" column="FREE_CANCEL_YN"/>
+	<resultMap id="tripProdMap" type="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+			<id property="tripProdNo" column="TRIP_PROD_NO"/>
+		    <result property="tripProdTitle" column="TRIP_PROD_TITLE"/>
+		    <result property="ctyNm" column="CTY_NM"/>
+		    <result property="prodCtgryType" column="PROD_CTGRY_TYPE"/>
+		    <result property="thumbImage" column="THUMB_IMAGE"/>
+	    
+	    <association property="prodSale" javaType="kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO">
+	        <id property="tripProdNo" column="TRIP_PROD_NO"/>
+	        <result property="price" column="PRICE"/>
+	        <result property="netprc" column="NETPRC"/>
+	        <result property="discount" column="DISCOUNT"/>
+	        <result property="curStock" column="CUR_STOCK"/>
+	        <result property="totalStock" column="TOTAL_STOCK"/>
 	    </association>
+	
+	    <collection property="prodReviewList" ofType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
+	        <id property="prodRvNo" column="PROD_RV_NO"/>
+			<result property="prodReview" column="PROD_REVIEW"/>
+		    <result property="rating" column="RATING"/>
+		    <result property="nickname" column="NICKNAME"/>
+	    </collection>
+	    
 	</resultMap>
 
 	<!-- 숙소 API 정보 INSERT -->
@@ -114,148 +156,134 @@
         WHERE API_CONTENT_ID = #{contentId}
     </select>
 	
-	<!-- 숙소 전체 목록 가져오기 -->
-	<select id="selectAccommodationList" resultMap="accMap">
-	    SELECT 
-	          A.ACC_NO
-	        , A.ACC_NAME
-	        , A.ADDR1
-	        , A.ACC_CAT_CD
-	        , A.ACC_FILE_NO
-	        , A.ACC_FILE_PATH
-	        , A.STAR_GRADE
-	        , A.TOTAL_ROOM_CNT
-	        , A.MAPX
-	        , A.MAPY
-	        , A.AREA_CODE
-	        , A.SIGUNGU_CODE
-	        , AF.WIFI_YN		
-			, AF.PARKING_YN
-			, AF.BREAKFAST_YN
-			, AF.POOL_YN
-			, AF.GYM_YN
-			, AF.SPA_YN
-			, AF.RESTAURANT_YN
-			, AF.BAR_YN
-			, AF.ROOM_SERVICE_YN
-			, AF.LAUNDRY_YN
-			, AF.SMOKING_AREA_YN
-			, AF.PET_FRIENDLY_YN
-			, R.ROOM_TYPE_NO
-			, R.ROOM_NAME
-			, R.BASE_GUEST_COUNT
-			, R.TOTAL_ROOM_COUNT
-			, R.PRICE
-			, R.DISCOUNT
-			, R.ROOM_SIZE
-	       , (SELECT MIN(PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MIN_PRICE
-	       , (SELECT MAX(DISCOUNT) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MAX_DISCOUNT
-	       , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) 
-           FROM ROOM_TYPE RT 
-           WHERE RT.ACC_NO = A.ACC_NO) AS FINAL_PRICE
-	    FROM ACCOMMODATION A
-	    LEFT OUTER JOIN ACC_FACILITY AF ON A.ACC_NO = AF.ACC_NO
-	    LEFT OUTER JOIN ROOM_TYPE R ON A.ACC_NO = R.ACC_NO
-	    <where>
-	    	<if test="areaCode != null and areaCode != ''">
-	    		AND A.AREA_CODE = #{areaCode}
-	    	</if>
-	    	<if test="keyword != null and keyword != ''">
-	    		AND (A.ACC_NAME LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
-	    	</if>
-	    </where>
-	    ORDER BY ACC_NO, R.ROOM_NAME DESC
-	</select>
-	
-	<!-- 페이지 가져오기 -->
+	<!-- 목록 페이지 가져오기 -->
 	<select id="selectAccommodationListWithPaging" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultMap="accMap">
-	   SELECT * FROM (
-        SELECT ROWNUM AS RN, PAGING.* FROM (
-            SELECT 
-                  A.ACC_NO
-                  , A.ACC_NAME
-                  , A.ADDR1
-                  , A.ACC_CAT_CD
-                  , A.ACC_FILE_PATH
-                  , A.STAR_GRADE
-                , AF.WIFI_YN
-                , AF.PARKING_YN
-                , AF.BREAKFAST_YN
-                , AF.POOL_YN
-                , AF.GYM_YN
-                , AF.SPA_YN
-                , AF.RESTAURANT_YN
-                , AF.BAR_YN
-                , AF.ROOM_SERVICE_YN
-                , AF.LAUNDRY_YN
-                , AF.SMOKING_AREA_YN
-                , AF.PET_FRIENDLY_YN
-                , R.ROOM_TYPE_NO
-                , R.ROOM_NAME
-                , R.BASE_GUEST_COUNT
-                , R.PRICE
-                , R.DISCOUNT
-                , R.ROOM_SIZE
-                , (SELECT MIN(PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MIN_PRICE
-                , (SELECT MAX(DISCOUNT) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MAX_DISCOUNT
-                , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS FINAL_PRICE
-            FROM ACCOMMODATION A
-            LEFT OUTER JOIN ACC_FACILITY AF ON A.ACC_NO = AF.ACC_NO
-            LEFT OUTER JOIN ROOM_TYPE R ON A.ACC_NO = R.ACC_NO
-           	<where>
-			    <if test="accNo != null and accNo > 0">
-			        AND A.ACC_NO = #{accNo}
-			    </if>
-			
-			    <if test="accNo == null or accNo == 0">
-			        <if test="areaCode != null and areaCode != ''">
-			            AND A.AREA_CODE = #{areaCode}
-			        </if>
-			        <if test="keyword != null and keyword != ''">
-			            AND (A.ACC_NAME LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
-			        </if>
-			    </if>
-			
-			    <if test="adultCount != null and adultCount > 0">
-			        AND EXISTS (
-			            SELECT 1 FROM ROOM_TYPE RT 
-			            WHERE RT.ACC_NO = A.ACC_NO 
-			            AND RT.MAX_GUEST_COUNT >= #{adultCount}
-			        )
-			    </if>
-			</where>
-            ORDER BY A.ACC_NO DESC, (R.PRICE * (100 - NVL(R.DISCOUNT, 0))/100) ASC, R.ROOM_TYPE_NO ASC
-        ) PAGING
-    ) 
-    WHERE RN BETWEEN #{startRow} AND #{endRow}
-	</select>
+	    SELECT 
+	          T_LIST.*
+	        , R.ROOM_TYPE_NO
+	        , R.ROOM_NAME
+	        , R.PRICE
+	        , R.DISCOUNT
+	        , R.MAX_GUEST_COUNT
+	        , R.BASE_GUEST_COUNT
+	    FROM (
+	        SELECT *
+	        FROM (
+	            SELECT ROWNUM AS rn, a.*
+	            FROM (
+	                SELECT
+	                    t.TRIP_PROD_NO
+	                    , t.TRIP_PROD_TITLE AS ACC_NAME
+	                    , t.SALE_START_DT
+	                    , t.SALE_END_DT
+	                    , t.CTY_NM AS AREA_CODE
+	                    , t.APPROVE_STATUS
+	                    
+	                    , acc.ACC_NO
+	                    , acc.ADDR1
+	                    , acc.ACC_FILE_PATH
+	                    , acc.STAR_GRADE
+	                    
+	                     , AF.WIFI_YN
+				          , AF.PARKING_YN
+				          , AF.BREAKFAST_YN
+				          , AF.POOL_YN
+				          , AF.GYM_YN
+				          , AF.SPA_YN
+				          , AF.RESTAURANT_YN
+				          , AF.BAR_YN
+				          , AF.ROOM_SERVICE_YN
+				          , AF.LAUNDRY_YN
+				          , AF.SMOKING_AREA_YN
+				          , AF.PET_FRIENDLY_YN
+				          
+						  , (SELECT MAX(DISCOUNT) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) AS MAX_DISCOUNT
+	                      , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) AS FINAL_PRICE
+	                      , (SELECT MIN(PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) AS MIN_PRICE
+	                      , (SELECT COUNT(*) FROM PROD_REVIEW PR WHERE PR.TRIP_PROD_NO = t.TRIP_PROD_NO) AS REVIEW_COUNT
+	                FROM TRIP_PROD t
+	                JOIN ACCOMMODATION acc ON t.TRIP_PROD_NO = acc.TRIP_PROD_NO
+	                LEFT OUTER JOIN ACC_FACILITY AF ON acc.ACC_NO = AF.ACC_NO
+	                
+	                <where>
+				        AND t.PROD_CTGRY_TYPE = 'accommodation'
+				        AND (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
+				        AND t.APPROVE_STATUS = '판매중'
+				    
+				        <choose>
+				            <when test="accNo != null and accNo > 0">
+				                AND acc.ACC_NO = #{accNo}
+				            </when>
+				            <otherwise>
+				                <choose>
+				                    <when test="areaCode != null and areaCode != ''">
+				                        AND t.CTY_NM = #{areaCode}
+				                    </when>
+				                    <otherwise>
+				                        <if test="keyword != null and keyword != ''">
+				                            AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%' OR acc.ADDR1 LIKE '%' || #{keyword} || '%')
+				                        </if>
+				                    </otherwise>
+				                </choose>
+				            </otherwise>
+				        </choose>
+	                
+	                <if test="adultCount != null and adultCount > 0">
+					    AND EXISTS (
+					        SELECT 1 FROM ROOM_TYPE RT 
+					        WHERE RT.ACC_NO = acc.ACC_NO 
+					        AND RT.MAX_GUEST_COUNT >= #{adultCount}
+					    )
+					</if>
+					</where>
 	
+	                ORDER BY FINAL_PRICE ASC, t.REG_DT DESC
+	            ) a
+	            <![CDATA[ WHERE ROWNUM <= #{page} * #{pageSize} ]]>
+	        )
+	        <![CDATA[ WHERE rn > (#{page} - 1) * #{pageSize} ]]>
+	    ) T_LIST
+	    LEFT JOIN ROOM_TYPE R ON T_LIST.ACC_NO = R.ACC_NO
+	    ORDER BY T_LIST.rn ASC, R.PRICE ASC
+	</select>
+		
 	<!-- 검색 필터링  -->
 	<select id="selectTotalCount" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultType="int">
 	    SELECT COUNT(*) 
-        FROM ACCOMMODATION A
-    	<where>
-		    <if test="accNo != null and accNo > 0">
-		        AND A.ACC_NO = #{accNo}
-		    </if>
+		    FROM ACCOMMODATION A
+		    JOIN TRIP_PROD T ON A.TRIP_PROD_NO = T.TRIP_PROD_NO
+		    
+		    <where>
+		        AND T.PROD_CTGRY_TYPE = 'accommodation'
+		        AND T.APPROVE_STATUS = '판매중'
+		        AND (T.DEL_YN = 'N' OR T.DEL_YN IS NULL)
 		
-		    <if test="accNo == null or accNo == 0">
-		        <if test="areaCode != null and areaCode != ''">
-		            AND A.AREA_CODE = #{areaCode}
-		        </if>
-		        <if test="keyword != null and keyword != ''">
-		            AND (A.ACC_NAME LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
-		        </if>
-		    </if>
-		
-		    <if test="adultCount != null and adultCount > 0">
-		        AND EXISTS (
-		            SELECT 1 FROM ROOM_TYPE RT 
-		            WHERE RT.ACC_NO = A.ACC_NO 
-		            AND RT.MAX_GUEST_COUNT >= #{adultCount}
-		        )
-		    </if>
-		</where>
+		        <choose>
+		            <when test="accNo != null and accNo > 0">
+		                AND A.ACC_NO = #{accNo}
+		            </when>
+		            <otherwise>
+		                <choose>
+		                    <when test="areaCode != null and areaCode != ''">
+		                        AND T.CTY_NM = #{areaCode}
+		                    </when>
+		                    <otherwise>
+		                        <if test="keyword != null and keyword != ''">
+		                            AND (T.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
+		                        </if>
+		                    </otherwise>
+		                </choose>
+		            </otherwise>
+		        </choose>
+	
+	        <if test="adultCount != null and adultCount > 0">
+	            AND EXISTS (
+	                SELECT 1 FROM ROOM_TYPE RT 
+	                WHERE RT.ACC_NO = A.ACC_NO 
+	                AND RT.MAX_GUEST_COUNT >= #{adultCount}
+	            )
+	        </if>
+	    </where>
 	</select>
 	
 	<!-- 목적지로 검색하기 -->
@@ -287,48 +315,83 @@
     )
     ORDER BY sortOrder ASC, name ASC
 	</select>
-		
-	<!-- 상세 정보 가져오기 -->
-	<select id="getAccommodationDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	
+	<!-- 상품 상세 페이지 정보 가져오기 -->
+	<select id="getAccommodationDetail" parameterType="int" resultMap="accMap">
 			SELECT 
-	          A.API_CONTENT_ID
-	        , A.ACC_NAME
-	        , A.ACC_FILE_PATH
-	        , A.AREA_CODE
-	        , A.SIGUNGU_CODE
-	        , A.MAPX
-	        , A.MAPY
-	        , A.OVERVIEW
-	        , A.TEL
-	        , A.CHECK_IN_TIME
-	        , A.CHECK_OUT_TIME
-	        , A.ACC_NO
-	        , A.TRIP_PROD_NO
-	        , A.ACC_CAT_CD
-	        , A.ACC_FILE_NO
-	        , A.STAR_GRADE
-	        , A.ZIP
-	        , A.ADDR1
-	        , A.ADDR2
-	        , A.TOTAL_ROOM_CNT
-	        , AF.WIFI_YN
-	        , AF.PARKING_YN
-	        , AF.BREAKFAST_YN
-	        , AF.POOL_YN
-	        , AF.GYM_YN
-	        , AF.SPA_YN
-	        , AF.RESTAURANT_YN
-	        , AF.BAR_YN
-	        , AF.ROOM_SERVICE_YN
-	        , AF.LAUNDRY_YN
-	        , AF.SMOKING_AREA_YN
-	        , AF.PET_FRIENDLY_YN
-	        , T.COMP_NO 
-	        , T.MEM_NO
-	    FROM ACCOMMODATION A 
-	    LEFT OUTER JOIN TRIP_PROD T ON (A.TRIP_PROD_NO = T.TRIP_PROD_NO) 
-   		LEFT OUTER JOIN ACC_FACILITY AF ON (A.ACC_NO = AF.ACC_NO)
+          A.ACC_NO
+          , A.ACC_NAME
+          , A.ADDR1
+          , A.ADDR2
+          , A.ACC_CAT_CD
+          , A.ACC_FILE_NO
+          , A.ACC_FILE_PATH
+          , A.STAR_GRADE
+          , A.OVERVIEW
+          , A.TOTAL_ROOM_CNT
+          , A.MAPX
+          , A.MAPY
+          , A.AREA_CODE
+          , A.SIGUNGU_CODE
+          , A.TEL
+          , A.CHECK_IN_TIME
+          , A.CHECK_OUT_TIME
+          , A.ZIP
+          , A.TRIP_PROD_NO
+        
+          , AF.WIFI_YN
+          , AF.PARKING_YN
+          , AF.BREAKFAST_YN
+          , AF.POOL_YN
+          , AF.GYM_YN
+          , AF.SPA_YN
+          , AF.RESTAURANT_YN
+          , AF.BAR_YN
+          , AF.ROOM_SERVICE_YN
+          , AF.LAUNDRY_YN
+          , AF.SMOKING_AREA_YN
+          , AF.PET_FRIENDLY_YN
+        
+          , R.ROOM_TYPE_NO
+          , R.ROOM_NAME
+          , R.BASE_GUEST_COUNT
+          , R.TOTAL_ROOM_COUNT
+          , R.PRICE
+          , R.DISCOUNT
+          , R.ROOM_SIZE
+          , R.BED_COUNT
+        
+          , RF.AIR_CON_YN
+          , RF.TV_YN
+          , RF.MINIBAR_YN
+          , RF.FRIDGE_YN
+          , RF.SAFE_BOX_YN
+          , RF.HAIR_DRYER_YN
+          , RF.BATHTUB_YN
+          , RF.TOILETRIES_YN
+        
+          , RFT.FREE_CANCEL_YN
+          , RFT.OCEAN_VIEW_YN
+          , RFT.MOUNTAIN_VIEW_YN
+          , RFT.CITY_VIEW_YN
+          , RFT.LIVING_ROOM_YN
+          , RFT.TERRACE_YN
+          , RFT.NON_SMOKING_YN
+          , RFT.KITCHEN_YN
+        
+          , (SELECT MIN(PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MIN_PRICE
+          , (SELECT MAX(DISCOUNT) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MAX_DISCOUNT
+          , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) 
+             FROM ROOM_TYPE RT 
+             WHERE RT.ACC_NO = A.ACC_NO) AS FINAL_PRICE
+    
+	    FROM ACCOMMODATION A
+	    LEFT OUTER JOIN ACC_FACILITY AF ON A.ACC_NO = AF.ACC_NO
+	    LEFT OUTER JOIN ROOM_TYPE R ON A.ACC_NO = R.ACC_NO
+	    LEFT OUTER JOIN ROOM_FACILITY RF ON R.ROOM_TYPE_NO = RF.ROOM_TYPE_NO
+	    LEFT OUTER JOIN ROOM_FEATURE RFT ON R.ROOM_TYPE_NO = RFT.ROOM_TYPE_NO
 	    WHERE A.ACC_NO = #{accNo}
+	    ORDER BY R.PRICE ASC, R.ROOM_TYPE_NO ASC
 	</select>
 	
 	<!-- 숙소 보유 시설 가져오기 -->
@@ -354,6 +417,7 @@
 			, BREAKFAST_YN
 		FROM ROOM_TYPE
 		WHERE ACC_NO = #{accNo}
+		ORDER BY PRICE ASC
 	</select>
 	
 	<!-- DB 업데이트 -->
@@ -551,11 +615,12 @@
 			, TOTAL_ROOM_COUNT
 			, PRICE
 			, DISCOUNT
+			, (PRICE * (100 - NVL(DISCOUNT, 0)) / 100) AS finalPrice
 			, EXTRA_GUEST_FEE
 			, ROOM_SIZE
 			, BREAKFAST_YN
 		FROM ROOM_TYPE
-		WHERE ACC_NO = #{accNo}
+		WHERE ROOM_TYPE_NO = #{roomTypeNo}
 	</select>
 	
 	<!-- ROOM(실 객실) 추가 -->
@@ -564,6 +629,41 @@
 	        ROOM_INFO_NO, ROOM_TYPE_NO, USE_YN
 	    ) VALUES (
 	        SEQ_ROOM.NEXTVAL, #{roomTypeNo}, 'Y'
+	    )
+	</insert>
+	
+	<insert id="insertAccommodationReservation" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
+	    <selectKey keyProperty="accResvNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_ACC_RESV.NEXTVAL FROM DUAL
+	    </selectKey>
+	
+	    INSERT INTO ACC_RESV (
+	        ACC_RESV_NO
+	        , ROOM_TYPE_NO 
+	        , RESV_MEM_NO
+	        , START_DT 
+	        , END_DT 
+	        , STAY_DAYS 
+	        , ARRIVE_TIME
+	        , REG_DT 
+	        , RESV_STATUS
+	        , ADULT_CNT
+	        , CHILD_CNT
+	        , INFANT_CNT
+	    ) VALUES (
+	        #{accResvNo} 
+	        , #{roomTypeNo} 
+	        , #{resvMemNo} 
+	        , #{startDt}
+	        , #{endDt} 
+	        , #{stayDays} 
+	        , #{resvCnt}
+	        , #{arriveTime}
+	        , #{adultCnt}
+	        , #{childCnt}
+	        , #{infantCnt} 
+	        , SYSDATE 
+	        , '결제완료'
 	    )
 	</insert>
 </mapper>

@@ -20,7 +20,7 @@ public class RoomTypeVO {
 	 */
 	private int roomSize; 
 	/**
-	 *  Y / N
+	 *  조식 포함 Y / N
 	 */
 	private String breakfastYn; 
 	/**
@@ -61,5 +61,13 @@ public class RoomTypeVO {
 	private int accNo;
 	
 	
-	private List<RoomFeatureVO> feature;
+	private RoomFeatureVO feature;
+    private RoomFacilityVO facility;
+    
+    private int maxDiscount;
+    private int minPrice;    // 최저가
+    private int finalPrice;  // 할인 적용가
+    
+	private int accFileNo; //이미지 번호
+	private String accFilePath; // 이미지 경로
 }

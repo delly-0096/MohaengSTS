@@ -22,15 +22,8 @@ public interface IAccommodationMapper {
 	public void insertAccommodation(AccommodationVO vo);
 
 	public int checkDuplicate(String contentid);
-
 	/**
-	 * 숙소 전체 목록 조회
-	 * @return
-	 */
-	public List<AccommodationVO> selectAccommodationList();
-
-	/**
-	 *	<p> 숙소 정보 가져오기 </p>
+	 *	<p> 숙소 상세 페이지 정보 가져오기 </p>
 	 *	@date 2026.01.18
 	 *	@author kdrs
 	 *	@param 
@@ -47,6 +40,10 @@ public interface IAccommodationMapper {
 	 */
 	public List<RoomTypeVO> getRoomList(int accNo);
 
+	/**
+	 * 숙소 전체 목록 조회
+	 * @return
+	 */
 	public List<AccommodationVO> selectAccommodationListWithPaging(AccommodationVO acc);
 
 	public int selectTotalCount(AccommodationVO acc);

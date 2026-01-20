@@ -150,18 +150,18 @@
                             <i class="bi bi-geo-alt"></i> ${acc.addr1}
                         </p>
                         <div class="accommodation-amenities" style="display: flex; flex-wrap: wrap; gap: 8px;">
-                            <c:if test="${acc.wifiYn eq 'Y'}"><span class="amenity"><i class="bi bi-wifi"></i> WiFi</span></c:if>
-						    <c:if test="${acc.parkingYn eq 'Y'}"><span class="amenity"><i class="bi bi-p-circle"></i> 주차</span></c:if>
-						    <c:if test="${acc.breakfastYn eq 'Y'}"><span class="amenity"><i class="bi bi-cup-hot"></i> 조식</span></c:if>
-						    <c:if test="${acc.poolYn eq 'Y'}"><span class="amenity"><i class="bi bi-water"></i> 수영장</span></c:if>
-						    <c:if test="${acc.gymYn eq 'Y'}"><span class="amenity"><i class="bi bi-heart-pulse"></i> 피트니스</span></c:if>
-						    <c:if test="${acc.spaYn eq 'Y'}"><span class="amenity"><i class="bi bi-magic"></i> 스파</span></c:if>
-						    <c:if test="${acc.restaurantYn eq 'Y'}"><span class="amenity"><i class="bi bi-egg-fried"></i> 식당</span></c:if>
-						    <c:if test="${acc.barYn eq 'Y'}"><span class="amenity"><i class="bi bi-glass-cocktail"></i> 바</span></c:if>
-						    <c:if test="${acc.roomServiceYn eq 'Y'}"><span class="amenity"><i class="bi bi-bell"></i> 룸서비스</span></c:if>
-						    <c:if test="${acc.laundryYn eq 'Y'}"><span class="amenity"><i class="bi bi-wind"></i> 세탁</span></c:if>
-						    <c:if test="${acc.smokingAreaYn eq 'Y'}"><span class="amenity"><i class="bi bi-cursor"></i> 흡연구역</span></c:if>
-						    <c:if test="${acc.petFriendlyYn eq 'Y'}"><span class="amenity"><i class="bi bi-dog"></i> 반려동물</span></c:if>
+                            <c:if test="${acc.accFacility.wifiYn eq 'Y'}"><span class="amenity"><i class="bi bi-wifi"></i> WiFi</span></c:if>
+						    <c:if test="${acc.accFacility.parkingYn eq 'Y'}"><span class="amenity"><i class="bi bi-p-circle"></i> 주차</span></c:if>
+						    <c:if test="${acc.accFacility.breakfastYn eq 'Y'}"><span class="amenity"><i class="bi bi-cup-hot"></i> 조식</span></c:if>
+						    <c:if test="${acc.accFacility.poolYn eq 'Y'}"><span class="amenity"><i class="bi bi-water"></i> 수영장</span></c:if>
+						    <c:if test="${acc.accFacility.gymYn eq 'Y'}"><span class="amenity"><i class="bi bi-heart-pulse"></i> 피트니스</span></c:if>
+						    <c:if test="${acc.accFacility.spaYn eq 'Y'}"><span class="amenity"><i class="bi bi-magic"></i> 스파</span></c:if>
+						    <c:if test="${acc.accFacility.restaurantYn eq 'Y'}"><span class="amenity"><i class="bi bi-egg-fried"></i> 식당</span></c:if>
+						    <c:if test="${acc.accFacility.barYn eq 'Y'}"><span class="amenity"><i class="bi bi-glass-cocktail"></i> 바</span></c:if>
+						    <c:if test="${acc.accFacility.roomServiceYn eq 'Y'}"><span class="amenity"><i class="bi bi-bell"></i> 룸서비스</span></c:if>
+						    <c:if test="${acc.accFacility.laundryYn eq 'Y'}"><span class="amenity"><i class="bi bi-wind"></i> 세탁</span></c:if>
+						    <c:if test="${acc.accFacility.smokingAreaYn eq 'Y'}"><span class="amenity"><i class="bi bi-cursor"></i> 흡연구역</span></c:if>
+						    <c:if test="${acc.accFacility.petFriendlyYn eq 'Y'}"><span class="amenity"><i class="bi bi-dog"></i> 반려동물</span></c:if>
 						</div>
                			<div class="discount-row">
                				<p class="discount-badge" style="font-size: 0.5em;">${acc.maxDiscount }% OFF</p>
@@ -189,7 +189,7 @@
                             </div>
                            
                             <button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, ${acc.accNo})">
-                                결제 <i class="bi bi-chevron-down"></i>
+                                예약 <i class="bi bi-chevron-down"></i>
                             </button>
                         </div>
                     </div>
@@ -199,22 +199,39 @@
                             <div class="room-options">
                             <c:set var="lastRoomName" value="" />
                             <c:forEach items="${acc.roomList }" var="room">
-                            	<c:if test="${room.roomName ne lastRoomName}">
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>${room.roomName}</h6>
-                                        <c:set var="lastRoomName" value="${room.roomName}" />
-                                        <p><i class="bi bi-people"></i> ${room.baseGuestCount } / <i class="bi bi-arrows-angle-expand"></i> ${room.roomSize }㎡</p>
-                                        <span class="room-stock available"><i class="bi bi-check-circle"></i> 잔여 ${room.totalRoomCount }실</span>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price"><fmt:formatNumber value="${room.price * (100 - room.discount) / 100}" pattern="#,###"/>원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <button type="button" class="btn btn-primary btn-sm" 
-        								onclick="goBooking(${acc.accNo}, ${room.roomTypeNo})">결제</button>
-                                </div>
-                                </c:if>
+                            	<c:if test="${room.roomName ne lastRoomName}"/>
+                            	<div class="room-option" style="padding: 15px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center;">
+								    <div class="room-option-info" style="flex: 1;">
+								        <h6 style="margin: 0; font-weight: 600; color: #333;">${room.roomName}</h6>
+								        <p style="font-size: 0.8rem; color: #888; margin: 4px 0;">
+								            기준 ${room.baseGuestCount}인 · 잔여 ${room.totalRoomCount}실
+								        </p>
+								    </div>
+								
+								    <div class="room-option-price" style="text-align: right; margin-right: 15px;">
+								        <c:choose>
+								            <c:when test="${room.discount > 0}">
+								                <div style="font-size: 0.75rem;">
+								                    <span style="color: #ff5a5f; font-weight: bold;">${room.discount}%</span>
+								                    <span style="text-decoration: line-through; color: #bbb; margin-left: 3px;">
+								                        <fmt:formatNumber value="${room.price}" pattern="#,###"/>
+								                    </span>
+								                </div>
+								                <div style="font-size: 1.05rem; font-weight: 700; color: #222;">
+								                    <fmt:formatNumber value="${room.price * (100 - room.discount) / 100}" pattern="#,###"/>원
+								                </div>
+								            </c:when>
+								            <c:otherwise>
+								                <div style="font-size: 1.05rem; font-weight: 700; color: #222;">
+								                    <fmt:formatNumber value="${room.price}" pattern="#,###"/>원
+								                </div>
+								            </c:otherwise>
+								        </c:choose>
+								    </div>
+								
+								    <button type="button" class="btn btn-primary btn-sm" style="border-radius: 6px; padding: 6px 15px;"
+								            onclick="goBooking(${acc.accNo}, ${room.roomTypeNo})">결제</button>
+								</div>
                             </c:forEach>
                             </div>
                         </div>
@@ -232,13 +249,26 @@
             </div>
 
             <!-- 더 이상 데이터 없음 -->
-            <div class="infinite-scroll-end" id="accomScrollEnd" style="display: none;">
-                <p>모든 숙소를 불러왔습니다</p>
-            </div> 
+            <c:if test="${not empty accList}">
+			    <div class="infinite-scroll-end text-center py-4 w-100" id="accomScrollEnd" style="display: none; text-align: center; padding: 20px;">
+			        <hr class="my-4" style="width: 50%; margin: 0 auto; border-top: 1px dashed #ccc;">
+    				<p class="text-muted">✨ 모든 숙소를 불러왔습니다 ✨</p>
+			    </div>
+			</c:if>
             </div>
         </div>
+		     <!-- 검색 결과 없음 -->
+		     <c:if test="${empty accList}">
+			    <div class="no-result-wrapper text-center">
+			        <i class="bi bi-search" style="font-size: 4rem; color: #dee2e6;"></i>
+			        <h3 class="mt-4 fw-bold">검색 결과가 없습니다</h3>
+			        <p class="text-muted">다른 지역이나 키워드로 검색해보시겠어요?</p>
+			        <a href="${contextPath}/product/accommodation" class="btn btn-primary btn-lg mt-3 shadow-sm">
+			            <i class="bi bi-arrow-clockwise"></i> 검색 초기화
+			        </a>
+			    </div>
+			</c:if>
     </div>
-</div>
 
 <style>
 /* 검색 드롭다운 스타일 */
@@ -526,7 +556,16 @@ a.accommodation-image:hover img {
     text-align: center;
     font-weight: bold;
 }
-}
+
+/* 검색 결과가 없을 경우 */
+.no-result-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;  /* 가로 중앙 */
+        justify-content: center; /* 세로 중앙 (필요시) */
+        min-height: 400px;    /* 너무 딱 붙어있지 않게 높이 확보 */
+        width: 100%;
+    }
 </style>
 <script src="${pageContext.request.contextPath}/resources/js/accommodation.js"></script>
 <script>

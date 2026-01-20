@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper;
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
+import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
@@ -17,11 +18,6 @@ public class AccommodationServiceImpl implements IAccommodationService{
 	
 	@Autowired
 	private IAccommodationMapper accMapper;
-
-	@Override
-	public List<AccommodationVO> selectAccommodationList(String areaCode) {
-		return accMapper.selectAccommodationList();
-	}
 
 	/**
 	 *	<p> 숙소 정보 가져오기 </p>
@@ -103,6 +99,12 @@ public class AccommodationServiceImpl implements IAccommodationService{
 	@Override
 	public List<Map<String, Object>> searchLocation(String keyword) {
 		return accMapper.searchLocation(keyword);
+	}
+
+	@Override
+	public int registReservation(AccResvVO resvVO) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 
 }

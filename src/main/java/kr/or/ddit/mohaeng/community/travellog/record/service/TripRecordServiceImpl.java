@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import kr.or.ddit.mohaeng.community.travellog.record.dto.PagedResponse;
+import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq;
 import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordCreateReq;
 import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordUpdateReq;
 import kr.or.ddit.mohaeng.community.travellog.record.mapper.ITripRecordMapper;
@@ -26,13 +27,27 @@ public class TripRecordServiceImpl implements ITripRecordService {
     private final ITripRecordMapper mapper;
     private final ObjectMapper objectMapper;
     private final IAttachService attachService;
-
     
     @Override
-    public PagedResponse<TripRecordListVO> list(int page, int size, String keyword, String openScopeCd, Long loginMemNo) {
+    public PagedResponse<TripRecordListVO> list(
+            int page,
+            int size,
+            String keyword,
+            String openScopeCd,
+            String filter,
+            Long loginMemNo
+    ) {
         int safePage = Math.max(page, 1);
         int safeSize = Math.min(Math.max(size, 1), 50);
         int offset = (safePage - 1) * safeSize;
+
+        // ✅ filter 정규화
+        filter = normalizeFilter(filter);
+
+        // ✅ my-spot은 로그인 없으면 빈 결과
+        if ("my-spot".equals(filter) && loginMemNo == null) {
+            return new PagedResponse<>(List.of(), 0L, safePage, safeSize, 0);
+        }
 
         Map<String, Object> param = new HashMap<>();
         param.put("keyword", keyword);
@@ -41,12 +56,32 @@ public class TripRecordServiceImpl implements ITripRecordService {
         param.put("offset", offset);
         param.put("size", safeSize);
 
+        // ✅ 추가된 필터
+        param.put("filter", filter);
+
         long total = mapper.selectTripRecordListCount(param);
-        List<TripRecordListVO> list = mapper.selectTripRecordList(param);
+        List<TripRecordListVO> list = (total > 0) ? mapper.selectTripRecordList(param) : List.of();
 
         int totalPages = (int) Math.ceil((double) total / safeSize);
+
+        // ✅ 너 프로젝트 PagedResponse 생성자에 맞춘 형태
         return new PagedResponse<>(list, total, safePage, safeSize, totalPages);
     }
+
+
+    // ====== 아래 유틸 메소드 2개 추가 ======
+    private String normalizeFilter(String filter) {
+        if (filter == null || filter.isBlank()) return "all";
+        switch (filter) {
+            case "all":
+            case "popular-spot":
+            case "my-spot":
+                return filter;
+            default:
+                return "all";
+        }
+    }
+
 
     @Override
     @Transactional
@@ -83,11 +118,10 @@ public class TripRecordServiceImpl implements ITripRecordService {
         System.out.println("[DEBUG] rcdNo=" + rcdNo + ", tags=" + tags);
 
         List<String> cleaned = java.util.Collections.emptyList();
-
         if (tags != null && !tags.isEmpty()) {
             cleaned = tags.stream()
                 .filter(t -> t != null && !t.trim().isEmpty())
-                .map(t -> t.trim().replace("#", ""))  // # 제거
+                .map(t -> t.trim().replace("#", ""))
                 .distinct()
                 .toList();
         }
@@ -95,8 +129,10 @@ public class TripRecordServiceImpl implements ITripRecordService {
         System.out.println("[DEBUG] cleaned=" + cleaned);
 
         if (!cleaned.isEmpty()) {
-            mapper.insertHashtags(rcdNo, cleaned);
+        	String tagText = String.join(",", cleaned); // ✅ 표시용 저장
+            mapper.upsertHashtagText(rcdNo, tagText);
         }
+
 
 
         return rcdNo;
@@ -164,4 +200,176 @@ public class TripRecordServiceImpl implements ITripRecordService {
             // 예: fileService.replaceCover(rcdNo, coverFile, loginMemNo);
         }
     }
+    
+    @Override
+    @Transactional
+    public long createWithBlocks(
+            TripRecordCreateReq req,
+            Long memNo,
+            MultipartFile coverFile,
+            List<MultipartFile> bodyFiles,
+            List<TripRecordBlockReq> blocks
+    ) {
+        if (memNo == null) throw new RuntimeException("로그인 정보가 없습니다.");
+
+        // 기본값
+        if (req.getOpenScopeCd() == null) req.setOpenScopeCd("PUBLIC");
+        if (req.getMapDispYn() == null) req.setMapDispYn("Y");
+        if (req.getReplyEnblYn() == null) req.setReplyEnblYn("Y");
+
+        // ✅ 1) 커버 attachNo 결정 (insert 전에 딱 1번만!)
+        if (coverFile != null && !coverFile.isEmpty()) {
+            Long attachNo = attachService.saveAndReturnAttachNo(coverFile, memNo);
+            req.setAttachNo(attachNo);
+        } else if (req.getCoverAttachNo() != null && req.getCoverAttachNo() > 0) {
+            req.setAttachNo(req.getCoverAttachNo());
+        }
+
+        // ✅ 2) TRIP_RECORD INSERT
+        int cnt = mapper.insertTripRecord(req, memNo);
+        if (cnt != 1) throw new RuntimeException("여행기록 등록 실패");
+
+        Long rcdNoObj = req.getRcdNo();
+        if (rcdNoObj == null || rcdNoObj <= 0) throw new RuntimeException("RCD_NO 생성 실패");
+        long rcdNo = rcdNoObj;
+
+        // 3) 블록 저장
+        if (blocks != null && !blocks.isEmpty()) {
+            int order = 1;
+
+            for (TripRecordBlockReq b : blocks) {
+                String type = (b.getType() == null) ? "" : b.getType().trim().toLowerCase();
+
+                long connNo = mapper.nextConnNo();
+                String targetPk = String.valueOf(connNo);
+
+                // (여기에는 커버 세팅 로직 절대 넣지 마!)
+                if ("text".equals(type)) {
+                    String content = b.getContent();
+                    if (content == null || content.trim().isEmpty()) {
+                        continue;
+                    }
+                }
+
+                switch (type) {
+                    case "image": {
+                        Integer fileIdx = b.getFileIdx();
+                        MultipartFile img = (bodyFiles != null && fileIdx != null
+                                && fileIdx >= 0 && fileIdx < bodyFiles.size())
+                                ? bodyFiles.get(fileIdx)
+                                : null;
+
+                        if (img != null && !img.isEmpty()) {
+                            Long attachNo = attachService.saveAndReturnAttachNo(img, memNo);
+                            mapper.insertTripRecordSeq(connNo, rcdNo, order++, "IMAGE", targetPk);
+                            mapper.insertTripRecordImg(connNo, attachNo, b.getCaption());
+                        } else {
+                            String fallback = writeJsonSafe(b);
+                            mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+                            mapper.insertTripRecordTxt(connNo, fallback);
+                        }
+                        break;
+                    }
+
+                    case "divider": {
+                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "DIVIDER", null);
+                        break;
+                    }
+
+                    case "day-header": {
+                        String json = writeJsonSafe(b);
+                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+                        mapper.insertTripRecordTxt(connNo, json);
+                        break;
+                    }
+
+                    case "place": {
+                        // ✅ plcNo 없으면(수동으로 추가한 place-block 등) 일단 기존처럼 TEXT로 저장만 하고 스킵
+                        if (b.getPlcNo() == null || b.getPlcNo() <= 0) {
+                            String json = writeJsonSafe(b);
+                            mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+                            mapper.insertTripRecordTxt(connNo, json);
+                            break;
+                        }
+
+                        // 1) 리뷰 PK 생성
+                        long prvSeq = mapper.nextTourPlaceReviewSeq();
+                        String placeReviewNo = makePlaceReviewNo(prvSeq);
+
+                        // 2) 리뷰 insert
+                        String reviewConn = (b.getContent() == null) ? null : b.getContent().trim();
+                        double rating = safeRating(b.getRating());
+
+                        mapper.insertTourPlaceReview(
+                            placeReviewNo,
+                            connNo,     // ✅ 리뷰는 이 블록 connNo에 연결
+                            memNo,      // 로그인 사용자
+                            b.getPlcNo(),
+                            reviewConn,
+                            rating
+                        );
+
+                        // 3) SEQ insert (PLACE)
+                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "PLACE", placeReviewNo);
+
+                        break;
+                    }
+
+
+                    case "text":
+                    default: {
+                        String text = (b.getContent() == null) ? "" : b.getContent().trim();
+                        String toSave = text.isEmpty() ? writeJsonSafe(b) : text;
+
+                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+                        mapper.insertTripRecordTxt(connNo, toSave);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 4) 해시태그 저장
+        List<String> tags = req.getTags();
+        if (tags != null && !tags.isEmpty()) {
+            List<String> cleaned = tags.stream()
+                    .filter(t -> t != null && !t.trim().isEmpty())
+                    .map(t -> t.trim().replace("#", ""))
+                    .distinct()
+                    .toList();
+
+            if (!cleaned.isEmpty()) {
+                String tagText = String.join(",", cleaned);
+                mapper.upsertHashtagText(rcdNo, tagText);
+            }
+        }
+
+        return rcdNo;
+    }
+
+    private String writeJsonSafe(Object o) {
+        try {
+            return objectMapper.writeValueAsString(o);
+        } catch (Exception e) {
+            return String.valueOf(o);
+        }
+    }
+    
+    private String makePlaceReviewNo(long seq) {
+        return "PRV" + String.format("%010d", seq);
+    }
+
+    private double safeRating(Double r) {
+        if (r == null) return 0.0;
+        if (r < 0) return 0.0;
+        if (r > 5) return 5.0;
+        return r;
+    }
+    
+    @Override
+    public List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO> blocks(long rcdNo) {
+        return mapper.selectTripRecordBlocks(rcdNo);
+    }
+
+
 }

@@ -1,56 +1,62 @@
 package kr.or.ddit.mohaeng.tripschedule.controller;
 
-import java.io.Console;
 import java.net.URI;
-import java.net.http.HttpResponse;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;import java.util.Map;
+import java.util.List;
+import java.util.Map;
 
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.http.HttpServletRequest;
-import kr.or.ddit.mohaeng.admin.login.controller.ConnetController;
-import kr.or.ddit.mohaeng.login.controller.LoginController;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.tripschedule.enums.RegionCode;
 import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
-import kr.or.ddit.mohaeng.vo.CustomUser;
+import kr.or.ddit.mohaeng.util.CommUtil;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
-import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
-import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import java.util.Base64;
+import java.nio.charset.StandardCharsets;
 
 @Slf4j
 @Controller
 @RequestMapping("/schedule")
 public class TripScheduleController {
+    
+	private final ChatClient chatClient;
 	
 	@Autowired
 	ITripScheduleService tripScheduleService;
+
+    TripScheduleController(ChatClient.Builder builder) {
+        this.chatClient = builder.build();
+    }
+    
+	public record Recommendation(String title, String description, String reason) {
+	}
 	
 	@GetMapping("/search")
 	public String search(Model model) {
@@ -78,7 +84,11 @@ public class TripScheduleController {
 	}
 	
 	@GetMapping("/planner")
-	public String planner() {
+	public String planner(Model model) {
+		List<Params> tourContentList = tripScheduleService.tourContentList();
+		System.out.println("tourContentList : " + tourContentList);
+		
+		model.addAttribute("tourContentList", tourContentList);
 		return "schedule/planner";
 	}
 	
@@ -95,43 +105,68 @@ public class TripScheduleController {
 		scheduleVO.setMemNo(memNo);
 		TripScheduleVO schedule = tripScheduleService.selectTripSchedule(scheduleVO);
 		
+		List<Params> tourContentList = tripScheduleService.tourContentList();
 		System.out.println("schedule : " + schedule);
+		System.out.println("tourContentList : " + tourContentList);
 		
 		model.addAttribute("schedule", schedule);
+		model.addAttribute("tourContentList", tourContentList);
 		
-		return "schedule/planner_edit";
+		return "schedule/planner-edit";
 	}
 	
 	@GetMapping("/view/{schdlNo}")
 	public String plannerView(
-			@AuthenticationPrincipal CustomUserDetails customUser,
-			@PathVariable int schdlNo,
-			Model model
-			) {
-		int memNo = customUser.getMember().getMemNo();
-		TripScheduleVO params = new TripScheduleVO();
-		params.setSchdlNo(schdlNo);
-		params.setMemNo(memNo);
-		TripScheduleVO schedule = tripScheduleService.selectTripSchedule(params);
-		
-		System.out.println("schedule :" + schedule);
-		
-		model.addAttribute("schedule", schedule);
-		
-		return "schedule/view";
+	        @AuthenticationPrincipal CustomUserDetails customUser,
+	        @PathVariable int schdlNo,
+	        Model model
+	) throws Exception {
+	    int memNo = customUser.getMember().getMemNo();
+
+	    TripScheduleVO params = new TripScheduleVO();
+	    params.setSchdlNo(schdlNo);
+	    params.setMemNo(memNo);
+
+	    TripScheduleVO schedule = tripScheduleService.selectTripSchedule(params);
+	    
+	    System.out.println("schedule :" + schedule);
+	    
+	    model.addAttribute("schedule", schedule);
+
+	    //일정 전체(일차/장소 포함) JSON을 함께 내려준다
+	    ObjectMapper om = new ObjectMapper();
+
+	    String scheduleJson = om.writeValueAsString(schedule);
+	    String scheduleJsonB64 = Base64.getEncoder().encodeToString(scheduleJson.getBytes(StandardCharsets.UTF_8));
+	    model.addAttribute("scheduleJsonB64", scheduleJsonB64);
+
+	    return "schedule/view";
 	}
 	
 	@ResponseBody
-	@GetMapping("/common/initTourPlaceList")
-	public ResponseEntity<Map<String, Object>> initTourPlaceList(HttpServletRequest req ,Model model) {
-		Params params = Params.of(req);
+	@PostMapping("/common/initTourPlaceList")
+	public ResponseEntity<Map<String, Object>> initTourPlaceList(@RequestBody Params params ,Model model) {
+//		Params params = Params.of(req);
 		RestClient restClient = RestClient.create();
-
+		String page = "1";
+		String areaCode = "";
+		
+		if(params.get("page") != null && !params.get("page").equals("")) {
+			page = params.getString("page");
+		}
+		
+		if(params.get("areaCode") != null && !params.get("areaCode").equals("")) {
+			areaCode = params.getString("areaCode");
+		}
+		
 		String urlString = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2?MobileOS=WEB&MobileApp=mohaeng&_type=json"
 				+ "&arrange=Q"
-				+ "&pageNo=1&numOfRows=15"
-				+ "&areaCode=" + params.get("areaCode")
+				+ "&pageNo=" + page + "&numOfRows=15"
 				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+		
+		if(!areaCode.equals("")) {
+			urlString  += "&areaCode=" + params.get("areaCode");
+		}
 
 		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
 		URI uri = URI.create(urlString);
@@ -161,7 +196,7 @@ public class TripScheduleController {
 	@GetMapping("/common/searchPlaceDetail")
 	public ResponseEntity<TourPlaceVO> searchPlaceDetail(int contentId, int contenttypeId, Model model) {
 		Params params = new Params();
-		RestClient restClient = RestClient.create();
+		
 		params.put("contentId", contentId);
 		params.put("contenttypeId", contenttypeId);
 		
@@ -173,67 +208,77 @@ public class TripScheduleController {
 			return new ResponseEntity<TourPlaceVO>(myTourPlaceVO, HttpStatus.OK);
 		}
 		
-		String introUrlString = "https://apis.data.go.kr/B551011/KorService2/detailIntro2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
-				+ "&contentId=" + contentId
-				+ "&contentTypeId=" + contenttypeId
-				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
-		
-		String detailUrlString = "https://apis.data.go.kr/B551011/KorService2/detailCommon2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
-				+ "&contentId=" + contentId
-				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
-		
-		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
-		URI introUri = URI.create(introUrlString);
-		URI detailUri = URI.create(detailUrlString);
-		
-		JsonNode introNode = restClient.get()
-			    .uri(introUri)
-			    .retrieve()
-			    .body(JsonNode.class);
-		
-		JsonNode introItemNode = introNode.path("response")
-				.path("body")
-				.path("items")
-				.path("item")
-				.get(0);
-		
-		JsonNode detailNode = restClient.get()
-				.uri(detailUri)
-				.retrieve()
-				.body(JsonNode.class);
-		
-		JsonNode detailItemNode = detailNode.path("response")
-				.path("body")
-				.path("items")
-				.path("item")
-				.get(0);
-		
-		//어떤 키값에 비용과 이용시간 정보가 있는건지 체킹 후 params 에 넣음
-		tripScheduleService.contentIdCheck(params);
-		
-		System.out.println("		JsonNode detailItemNode : "+ detailItemNode);
-		
-		String plcDesc = detailItemNode.get("overview")+"";
-		String plcNm = detailItemNode.get("title")+"";
-		String operationHours = introItemNode.get(params.getString("operationhours"))+"";
-		String plcPrice = introItemNode.get(params.getString("plcprice"))+"";
-		String defaultImg = detailItemNode.get("firstimage")+"";
-		String plcAddr1 = detailItemNode.get("addr1")+"";
-		
-		TourPlaceVO tourPlaceVO = new TourPlaceVO();
-		tourPlaceVO.setPlcNo(contentId);
-		tourPlaceVO.setPlcNm(plcNm);
-		tourPlaceVO.setPlcDesc(plcDesc.replace("\"", ""));
-		tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
-		tourPlaceVO.setPlcPrice(plcPrice.replace("\"", ""));
-		tourPlaceVO.setDefaultImg(defaultImg.replace("\"", ""));
-		tourPlaceVO.setPlcAddr1(plcAddr1.replace("\"", ""));
-		
-		int cnt = tripScheduleService.saveTourPlacInfo(tourPlaceVO);
-		
+		TourPlaceVO tourPlaceVO = tripScheduleService.updatePlaceDetail(params);
+
 		System.out.println("tourPlaceVO : " + tourPlaceVO);
 		
 		return new ResponseEntity<TourPlaceVO>(tourPlaceVO, HttpStatus.OK);
+	}
+	
+	@ResponseBody
+	@PostMapping("/common/searchTourPlaceList")
+	public ResponseEntity<Map<String, Object>> searchTourPlaceList(@RequestBody Params params ,Model model) {
+		
+		log.info("searchTourPlaceList Params : {}", params);
+		
+		RestClient restClient = RestClient.create();
+		String page = "1";
+		String areaCode = "";
+		String keyword = "";
+		
+		if(params.get("page") != null && !params.get("page").equals("")) {
+			page = params.getString("page");
+		}
+		
+		if(params.get("areaCode") != null && !params.get("areaCode").equals("")) {
+			areaCode = params.getString("areaCode");
+		}
+		
+		if(params.get("areaCode") != null && !params.get("areaCode").equals("")) {
+			keyword = params.getString("keyword");
+		}
+		
+		String urlString = "https://apis.data.go.kr/B551011/KorService2/searchKeyword2?"
+				+ "numOfRows=15"
+				+ "&pageNo=" + page
+				+ "&arrange=O"
+				+ "&MobileOS=web&MobileApp=mohaeng&_type=json"
+				+ "&keyword=" + keyword
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+				
+				
+		if(!areaCode.equals("")) {
+			urlString  += "&areaCode=" + params.get("areaCode");
+		}
+
+		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
+		URI uri = URI.create(urlString);
+		
+		JsonNode responseNode = restClient.get()
+			    .uri(uri)
+			    .retrieve()
+			    .body(JsonNode.class);
+		
+		ObjectMapper mapper = new ObjectMapper();
+		Map<String, Object> responseMap = mapper.convertValue(responseNode, Map.class);
+		
+		JsonNode itemsNode = responseNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item");
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+		List<Map<String, String>> tourPlaceList = objectMapper.convertValue(itemsNode, new TypeReference<>() {});
+		
+		System.out.println("tourPlaceList  :" + tourPlaceList);
+		
+		tripScheduleService.mergeSearchTourPlace(tourPlaceList);
+		
+		List<TourPlaceVO> popularPlaceList = tripScheduleService.selectPopularPlaceList(tourPlaceList);
+		
+		responseMap.put("popularPlaceList", popularPlaceList);
+		
+		return new ResponseEntity<Map<String, Object>>(responseMap, HttpStatus.OK);
 	}
 	
 	@PostMapping("/insert")
@@ -282,8 +327,6 @@ public class TripScheduleController {
 		return ResponseEntity.ok(1);
 	}
 	
-	
-	
 	@GetMapping("/my")
 	public String mySchedule(
 			@AuthenticationPrincipal CustomUserDetails customUser, Model model) {
@@ -326,5 +369,123 @@ public class TripScheduleController {
 	        result.put("error", e.getMessage());
 	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(result); // 500 Error
 	    }
+	}
+	
+	@Data
+	public static class ThumbnailData {
+		private MultipartFile thumbnailFile;
+		private int schdlNo;
+	    private String linkThumbnail;
+	    private String defaultYn;
+	    private int attachNo;
+	    private int memNo;
+
+        // Lombok 미사용 시 기본 생성자와 Getter/Setter가 반드시 필요합니다.
+        public ThumbnailData() {}
+    }
+	
+	@PostMapping("/thumbnail/update")
+	@ResponseBody
+	public ResponseEntity<?> updateThumbnail(
+			@ModelAttribute ThumbnailData thumbnailData
+			) {
+		System.out.println("ThumbnailData : " + thumbnailData);
+		
+		int resultSchedule = tripScheduleService.updateScheduleThumbnail(thumbnailData);
+		
+		return ResponseEntity.ok(1);
+	}
+	
+	@PostMapping("/rcmd-result")
+	public String mySchedule(String preferenceData, Model model) {
+		
+		ObjectMapper objectMapper = new ObjectMapper();
+	    try {
+	    	// 1. String으로 받은 JSON을 Map으로 변환
+//	        Map<String, Object> preferenceMap = objectMapper.readValue(preferenceData, new TypeReference<Map<String, Object>>(){});
+	        JsonNode preferenceNode = objectMapper.readTree(preferenceData);
+	        
+	        System.out.println("preferenceNode : " + preferenceNode.toPrettyString());
+	        
+	        String dateItem = preferenceNode.get("travelDates").asText();
+	        
+	        String dates[] = dateItem.split(" ~ ");
+	        
+	        String tripStyleCatList[] = objectMapper.convertValue(
+	        		preferenceNode.get("tripStyleCatList"), 
+	        	    new TypeReference<String[]>() {}
+	        	);
+	        
+	        Params params = new Params();
+	        params.put("tripStyleCatList", tripStyleCatList);
+	        params.put("rgnNo", preferenceNode.get("destinationcode").asText());
+	        
+	        List<TourPlaceVO> styleMatchPlaceList = tripScheduleService.selectStyleMatchPlace(params);
+	        
+	        System.out.println("styleMatchPlaceList : " + styleMatchPlaceList.size());
+	        
+	        int duration = CommUtil.calculateDaysBetween(dates[0], dates[1]);
+	        String durationStr = duration + "박"+ (duration+1) +"일";
+	        
+//	        // 2. 비즈니스 로직 처리 (예: 서비스 호출)
+//	        // service.getRecommendation(preferenceData);
+	        
+	        // 3. 모델에 담아 JSP 등으로 전달
+	        model.addAttribute("data", preferenceData);
+	        
+	        int destinationcode = Integer.parseInt(preferenceNode.get("destinationcode").asText());
+	        
+	        String region = RegionCode.getNameByNo(destinationcode);
+	        
+	        // 3. 프롬프트 작성 (RAG 패턴)
+//	        String message = String.format("""
+//	            사용자가 '%s' 여행지를 찾고 있어.
+//	            
+//	            [여행기간]
+//	            %s
+//	            
+//	            [여행페이스]
+//	            %s
+//              
+//              
+//              
+//	            [참고할 관광지 DB 데이터]
+//	            %s
+//	            
+//	            위 [참고 데이터]를 바탕으로 여행지별로 색인붙여줘.
+//	            데이터에 정보가 부족하면 너의 지식을 섞어서 보충해.
+//	            결과는 PLC_NO 기준으로 해당 관광지 styleCd 값들을 배열형태로 배치해하여 JSON으로 줘.
+//	            예시형태 rgnNo : 100, styles : [WATER_SPORTS, HIKING] 
+//	            """, region, durationStr, dbContext);
+	        
+//	        // 3. 프롬프트 작성 (RAG 패턴)
+//	        String message = String.format("""
+//	            사용자가 '%s' 여행지를 찾고 있어.
+//	            
+//	            [참고할 여행 키워드 분류항목 테이블 데이터]
+//	            %s
+//	            
+//	            [참고할 우리 DB 데이터]
+//	            %s
+//	            
+//	            위 [참고 데이터]를 바탕으로 추천 장소 3곳을 선정해줘.
+//	            데이터에 정보가 부족하면 너의 지식을 섞어서 보충해.
+//	            결과는 제목, 설명, 추천 이유 필드를 가진 JSON으로 줘.
+//	            """, "서울", dbContext);
+//	        
+	        // 4. AI 호출
+//	        List<Map<String, Object>> result = chatClient.prompt()
+//	                .user(message)
+//	                .call()
+//	                .entity(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+////	        
+//	        System.out.println("result : " + result);
+	        
+	    } catch (Exception e) {
+	        e.printStackTrace();
+//	        return "error-page";
+	    }
+		
+		return "schedule/rcmd-result";
 	}
 }

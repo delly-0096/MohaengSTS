@@ -10,10 +10,16 @@
 }
 
 .mypage-container {
-    display: grid;
     grid-template-columns: 280px 1fr;
     gap: 24px;
 }
+
+.mypage-container-mypage.full-width {
+	max-width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 
 /* 사이드바 없는 레이아웃 (기업회원용) */
 .mypage-container.no-sidebar {
@@ -21,6 +27,12 @@
 }
 
 .mypage-content.full-width {
+    max-width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.mypage-content-con.full-width {
     max-width: 80%;
     margin-left: auto;
     margin-right: auto;

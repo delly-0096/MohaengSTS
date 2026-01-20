@@ -42,17 +42,84 @@ function changeMainImage(img, index) {
 }
 
 function updateTotal() {
-    const people = parseInt(document.getElementById('bookingPeople').value);
-    const total = pricePerPerson * people;
+    var selectEl = document.getElementById('bookingPeople');
+    var selectedValue = selectEl.value;
+    
+    // 5명 이상인 경우
+    if (selectedValue === '5+') {
+        document.getElementById('totalPrice').textContent = '문의 필요';
+        return;
+    }
+    
+    var people = parseInt(selectedValue);
+    var total = pricePerPerson * people;
     document.getElementById('totalPrice').textContent = total.toLocaleString() + '원';
+}
+
+// ==================== 인원 선택 관련 ====================
+
+// 5명 이상 선택 시 안내 메시지 표시
+function checkGroupBooking() {
+    var selectEl = document.getElementById('bookingPeople');
+    var noticeEl = document.getElementById('groupBookingNotice');
+    
+    if (!selectEl || !noticeEl) return;
+    
+    var selectedValue = selectEl.value;
+    
+    if (selectedValue === '5+') {
+        noticeEl.style.display = 'block';
+        disableBookingButtons(true);
+    } else {
+        noticeEl.style.display = 'none';
+        disableBookingButtons(false);
+    }
+}
+
+// 결제/장바구니 버튼 비활성화
+function disableBookingButtons(disable) {
+    var bookingActions = document.querySelector('.booking-actions');
+    if (!bookingActions) return;
+    
+    var buttons = bookingActions.querySelectorAll('button');
+    buttons.forEach(function(btn) {
+        if (disable) {
+            btn.disabled = true;
+            btn.classList.add('disabled');
+        } else {
+            btn.disabled = false;
+            btn.classList.remove('disabled');
+        }
+    });
+}
+
+// 문의하기 섹션으로 스크롤
+function scrollToInquiry() {
+    var inquirySection = document.querySelector('.inquiry-section');
+    if (inquirySection) {
+        inquirySection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // 문의 유형을 '예약/일정 문의'로 자동 선택
+        setTimeout(function() {
+            var inquiryType = document.getElementById('inquiryType');
+            if (inquiryType) {
+                inquiryType.value = 'booking';
+            }
+            var inquiryContent = document.getElementById('inquiryContent');
+            if (inquiryContent) {
+                inquiryContent.focus();
+            }
+        }, 500);
+    }
 }
 
 function addToBookmark() {
     if (!isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            sessionStorage.setItem('returnUrl', window.location.href);
+        sessionStorage.setItem('returnUrl', window.location.href);
+        showToast('로그인이 필요한 서비스입니다.', 'warning');
+        setTimeout(function() {
             window.location.href = CONTEXT_PATH + '/member/login';
-        }
+        }, 1000);
         return;
     }
 
@@ -62,35 +129,48 @@ function addToBookmark() {
 document.getElementById('bookingForm').addEventListener('submit', function(e) {
     e.preventDefault();
 
-    if (!isLoggedIn) {
-        sessionStorage.setItem('returnUrl', window.location.href);
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            window.location.href = CONTEXT_PATH + '/member/login';
-        }
-        return;
-    }
+	if (!isLoggedIn) {
+	    sessionStorage.setItem('returnUrl', window.location.href);
+	    showToast('로그인이 필요한 서비스입니다.', 'warning');
+	    setTimeout(function() {
+	        window.location.href = CONTEXT_PATH + '/member/login';
+	    }, 1000);
+	    return;
+	}
 
     const date = document.getElementById('bookingDate').value;
     const time = document.getElementById('bookingTime').value;
+	const people = document.getElementById('bookingPeople').value;
 
     if (!date || !time) {
         showToast('날짜와 시간을 선택해주세요.', 'error');
         return;
     }
+	
+	// 5명 이상 선택 시 결제 차단
+    if (people === '5+') {
+        showToast('5명 이상 단체 예약은 판매자 문의를 이용해주세요.', 'warning');
+        scrollToInquiry();
+        return;
+    }
 
     // 결제 페이지로 이동
     window.location.href = CONTEXT_PATH + '/tour/' + TRIP_PROD_NO + '/booking?date=' + date + '&time=' + time +
-                           '&people=' + document.getElementById('bookingPeople').value;
+                           '&people=' + people;
 });
 
-// ==================== 장바구니 기능 ====================
-
-// 페이지 로드시 장바구니 불러오기
+// 페이지 로드시
 document.addEventListener('DOMContentLoaded', function() {
     loadCart();
     updateCartUI();
     updateTotal();
+	initMap();
+	initGalleryNavigation();
+	initBookingDatePicker();
 });
+
+
+// ==================== 장바구니 기능 ====================
 
 // 세션스토리지에서 장바구니 불러오기
 function loadCart() {
@@ -111,7 +191,16 @@ function saveCart() {
 
 // 상세페이지에서 장바구니에 추가
 function addToCartFromDetail() {
-    var people = parseInt(document.getElementById('bookingPeople').value) || 1;
+    var peopleValue = document.getElementById('bookingPeople').value;
+    
+    // 5명 이상 선택 시 장바구니 추가 차단
+    if (peopleValue === '5+') {
+        showToast('5명 이상 단체 예약은 판매자 문의를 이용해주세요.', 'warning');
+        scrollToInquiry();
+        return;
+    }
+    
+    var people = parseInt(peopleValue) || minPeople;
 
     // 이미 장바구니에 있는지 확인
     var existingItem = cart.find(function(item) {
@@ -119,17 +208,30 @@ function addToCartFromDetail() {
     });
 
     if (existingItem) {
-        existingItem.quantity += people;
-        showToast('장바구니에 ' + people + '개 추가되었습니다', 'success');
+		var newQuantity = existingItem.quantity + people;
+	    if (newQuantity > 4) {
+	        showToast('5명 이상 단체 예약은 판매자에게 문의해주세요', 'warning');
+	        return;
+	    }
+	    existingItem.quantity = newQuantity;
+	    showToast('장바구니에 ' + people + '명 추가되었습니다', 'success');
     } else {
         cart.push({
             id: currentProduct.id,
             name: currentProduct.name,
             price: currentProduct.price,
             image: currentProduct.image,
-            quantity: people
+			location: currentProduct.location,
+			minPeople: minPeople,
+            quantity: people,
+			saleEndDt: saleEndDt
         });
-        showToast('장바구니에 담겼습니다 (' + people + '개)', 'success');
+		
+		if (minPeople > 1) {
+            showToast('장바구니에 담겼습니다 (최소 ' + minPeople + '명)', 'success');
+        } else {
+            showToast('장바구니에 담겼습니다 (' + people + '명)', 'success');
+        }
     }
 
     saveCart();
@@ -160,13 +262,21 @@ function updateQuantity(id, delta) {
     });
 
     if (item) {
-        item.quantity += delta;
+		var newQuantity = item.quantity + delta;
+		var itemMinPeople = item.minPeople || 1;
+		var maxPeople = 4;
 
-        if (item.quantity <= 0) {
-            removeFromCart(id);
+		if (newQuantity < itemMinPeople) {
+            showToast('최소 인원은 ' + itemMinPeople + '명입니다', 'warning');
+            return;
+        }
+		
+		if (newQuantity > maxPeople) {
+            showToast('5명 이상 단체 예약은 판매자에게 문의해주세요', 'warning');
             return;
         }
 
+		item.quantity = newQuantity;
         saveCart();
         updateCartUI();
         renderCart();
@@ -233,12 +343,19 @@ function renderCart() {
     var html = '';
     cart.forEach(function(item) {
         var itemTotal = item.price * item.quantity;
+		var itemMinPeople = item.minPeople || 1;
+		
+		var minPeopleHtml = itemMinPeople > 1 
+            ? '<div class="cart-item-min-people"><i class="bi bi-people"></i> 최소 ' + itemMinPeople + '명</div>' 
+            : '';
+		
         html += '<div class="cart-item" data-id="' + item.id + '">' +
             '<div class="cart-item-image">' +
                 '<img src="' + item.image + '" alt="' + item.name + '">' +
             '</div>' +
             '<div class="cart-item-info">' +
                 '<div class="cart-item-name">' + item.name + '</div>' +
+				minPeopleHtml +
                 '<div class="cart-item-price">' + itemTotal.toLocaleString() + '원</div>' +
                 '<div class="cart-item-quantity">' +
                     '<button class="quantity-btn" onclick="updateQuantity(\'' + item.id + '\', -1)">' +
@@ -287,19 +404,20 @@ function checkout() {
     }
 
     // 로그인 체크
-    if (!isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            sessionStorage.setItem('returnUrl', window.location.href);
-            window.location.href = CONTEXT_PATH + '/member/login';
-        }
-        return;
-    }
+	if (!isLoggedIn) {
+	    sessionStorage.setItem('returnUrl', window.location.href);
+	    showToast('로그인이 필요한 서비스입니다.', 'warning');
+	    setTimeout(function() {
+	        window.location.href = CONTEXT_PATH + '/member/login';
+	    }, 1000);
+	    return;
+	}
 
     // 장바구니 데이터를 sessionStorage에 저장 (결제 페이지에서 사용)
     sessionStorage.setItem('tourCartCheckout', JSON.stringify(cart));
 
     // 결제 페이지로 이동
-    window.location.href = CONTEXT_PATH + '/booking/tour/checkout';
+    window.location.href = CONTEXT_PATH + '/tour/cart/booking';
 }
 
 // ESC 키로 장바구니 닫기
@@ -894,13 +1012,14 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
 
             // 로그인 체크
-            if (!isLoggedIn) {
-                if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-                    sessionStorage.setItem('returnUrl', window.location.href);
-                    window.location.href = CONTEXT_PATH + '/member/login';
-                }
-                return;
-            }
+			if (!isLoggedIn) {
+			    sessionStorage.setItem('returnUrl', window.location.href);
+			    showToast('로그인이 필요한 서비스입니다.', 'warning');
+			    setTimeout(function() {
+			        window.location.href = CONTEXT_PATH + '/member/login';
+			    }, 1000);
+			    return;
+			}
 
             // 폼 데이터 수집
             var inquiryType = document.getElementById('inquiryType').value;
@@ -1647,11 +1766,6 @@ function initMap() {
 	});
 }
 
-// 페이지 로드 시 지도 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    initMap();
-});
-
 // ==================== 상품 이미지 관리 ====================
 var newImageFiles = [];
 
@@ -1807,11 +1921,23 @@ function removeNewImage(index) {
     });
 }
 
+// 이미지 업로드 중복 방지 플래그
+var isUploadingImages = false;
+
 function uploadProductImages() {
+    // 중복 클릭 방지
+    if (isUploadingImages) return;
+    
     if (newImageFiles.length === 0) {
         bootstrap.Modal.getInstance(document.getElementById('imageUploadModal')).hide();
         return;
     }
+    
+    // 플래그 설정 & 버튼 비활성화
+    isUploadingImages = true;
+    var submitBtn = document.querySelector('#imageUploadModal .btn-primary');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>업로드 중...';
     
     var formData = new FormData();
     newImageFiles.forEach(function(file) {
@@ -1830,6 +1956,7 @@ function uploadProductImages() {
             document.getElementById('newImagesPreview').innerHTML = '';
             loadCurrentImages();
             refreshGallery();
+            bootstrap.Modal.getInstance(document.getElementById('imageUploadModal')).hide();
         } else {
             showToast(data.message || '업로드에 실패했습니다.', 'error');
         }
@@ -1837,6 +1964,12 @@ function uploadProductImages() {
     .catch(function(error) {
         console.error('Error:', error);
         showToast('오류가 발생했습니다.', 'error');
+    })
+    .finally(function() {
+        // 버튼 상태 복원
+        isUploadingImages = false;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="bi bi-check-lg me-1"></i>저장';
     });
 }
 
@@ -1899,11 +2032,6 @@ function refreshGallery() {
 // ==================== 갤러리 네비게이션 ====================
 var currentImageIndex = 0;
 var galleryImages = [];
-
-// 페이지 로드시 갤러리 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    initGalleryNavigation();
-});
 
 function initGalleryNavigation() {
     var thumbs = document.querySelectorAll('#galleryThumbs img');
@@ -1981,4 +2109,19 @@ function updateNavButtonsVisibility() {
         if (nextBtn) nextBtn.style.display = 'none';
         if (counter) counter.style.display = 'none';
     }
+}
+
+// ==================== 예약 날짜 선택기 초기화 ====================
+function initBookingDatePicker() {
+    var bookingDateInput = document.getElementById('bookingDate');
+    if (!bookingDateInput) return;
+    
+    flatpickr(bookingDateInput, {
+        locale: 'ko',
+        dateFormat: 'Y-m-d',
+        minDate: 'today',
+        maxDate: saleEndDt || null,  // 판매 종료일까지만 선택 가능
+        disableMobile: true,
+        position: 'below'
+    });
 }

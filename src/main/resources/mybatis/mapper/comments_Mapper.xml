@@ -5,72 +5,155 @@
 
 <mapper namespace="kr.or.ddit.mohaeng.community.travellog.comments.mapper.ICommentsMapper">
 
-    <!-- 여행기록 댓글 목록(댓글 + 대댓글) -->
-    <select id="selectTripRecordComments" parameterType="long"
-            resultType="kr.or.ddit.mohaeng.vo.CommentItemVO">
-        SELECT
-            c.CMNT_NO        AS cmntNo,
-            c.TARGET_TYPE    AS targetType,
-            c.TARGET_NO      AS targetNo,
-            c.WRITER_NO      AS writerNo,
-            m.MEM_ID         AS writerId,
-            c.PARENT_CMNT_NO AS parentCmntNo,
-            c.CMNT_CONTENT   AS cmntContent,
-            c.CMNT_STATUS    AS cmntStatus,
-            c.REG_DT         AS regDt,
-            c.MOD_DT         AS modDt,
+  <resultMap id="CommentsMap" type="kr.or.ddit.mohaeng.vo.CommentsVO">
+    <id property="cmntNo" column="CMNT_NO"/>
+    <result property="targetType" column="TARGET_TYPE"/>
+    <result property="targetNo" column="TARGET_NO"/>
+    <result property="writerNo" column="WRITER_NO"/>
+    <result property="parentCmntNo" column="PARENT_CMNT_NO"/>
+    <result property="cmntContent" column="CMNT_CONTENT"/>
+    <result property="cmntStatus" column="CMNT_STATUS"/>
+    <result property="regDt" column="REG_DT"/>
+    <result property="modDt" column="MOD_DT"/>
 
-            CASE WHEN c.PARENT_CMNT_NO IS NULL THEN 0 ELSE 1 END AS depth,
+    <result property="writerId" column="WRITER_ID"/>
+    <result property="nickname" column="NICKNAME"/>
+    <result property="depth" column="DEPTH"/>
+    <result property="likeCount" column="LIKE_COUNT"/>
+    <result property="myLiked" column="MY_LIKED"/>
+    <result property="isWriter" column="IS_WRITER"/>
+    <result property="rootCmntNo" column="ROOT_CMNT_NO"/>
+    <result property="profilePath" column="PROFILE_PATH"/>
+  </resultMap>
 
-            (SELECT COUNT(*)
-               FROM COMMENTS cc
-              WHERE cc.PARENT_CMNT_NO = c.CMNT_NO
-                AND cc.TARGET_TYPE = 'TRIP_RECORD'
-                AND cc.TARGET_NO = #{rcdNo}
-            ) AS childCount
+  <!-- 댓글/대댓글 목록 -->
+  <select id="selectCommentsByTarget" resultMap="CommentsMap">
+	  SELECT
+	    c.CMNT_NO,
+	    c.TARGET_TYPE,
+	    c.TARGET_NO,
+	    c.WRITER_NO,
+	    c.PARENT_CMNT_NO,
+	    CONNECT_BY_ROOT c.CMNT_NO AS ROOT_CMNT_NO,
+	    CASE
+	      WHEN c.CMNT_STATUS = 1 THEN '삭제된 댓글입니다.'
+	      ELSE c.CMNT_CONTENT
+	    END AS CMNT_CONTENT,
+	    c.CMNT_STATUS,
+	    c.REG_DT,
+	    c.MOD_DT,
+	
+	    m.MEM_ID AS WRITER_ID,
+	    NVL(mu.NICKNAME, m.MEM_NAME) AS NICKNAME,
+	
+	    /* ✅ 프로필 경로 */
+	    CASE
+  WHEN prof.FILE_PATH IS NULL THEN NULL
+  WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
+  WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
+  ELSE prof.FILE_PATH || prof.FILE_NAME
+END AS PROFILE_PATH,
 
-        FROM COMMENTS c
-        JOIN MEMBER m ON m.MEM_NO = c.WRITER_NO
-        WHERE c.TARGET_TYPE = 'TRIP_RECORD'
-          AND c.TARGET_NO = #{rcdNo}
+	
+	    (LEVEL - 1) AS DEPTH,
+	
+	    (SELECT COUNT(*)
+	       FROM TEAM3_202507F.LIKES l
+	      WHERE l.LIKES_KEY = c.CMNT_NO
+	        AND l.LIKES_CAT_CD = 'COMMENT'
+	    ) AS LIKE_COUNT,
+	
+	    CASE
+	      WHEN #{loginMemberNo} IS NULL THEN 0
+	      WHEN EXISTS (
+	        SELECT 1
+	          FROM TEAM3_202507F.LIKES l
+	         WHERE l.LIKES_KEY = c.CMNT_NO
+	           AND l.LIKES_CAT_CD = 'COMMENT'
+	           AND l.MEM_NO = #{loginMemberNo}
+	      ) THEN 1 ELSE 0
+	    END AS MY_LIKED,
+	
+	    CASE
+	      WHEN #{loginMemberNo} IS NULL THEN 0
+	      WHEN c.WRITER_NO = #{loginMemberNo} THEN 1 ELSE 0
+	    END AS IS_WRITER
+	
+	  FROM TEAM3_202507F.COMMENTS c
+	  JOIN TEAM3_202507F.MEMBER m
+	    ON m.MEM_NO = c.WRITER_NO
+	  LEFT JOIN TEAM3_202507F.MEM_USER mu
+	    ON mu.MEM_NO = m.MEM_NO
+	
+	  /* ✅ 여기 추가: 프로필 파일(대표 1개만) */
+	  LEFT JOIN (
+  SELECT attach_no,
+         file_path,
+         file_name
+  FROM (
+    SELECT
+      afd.ATTACH_NO,
+      afd.FILE_PATH,
+      afd.FILE_NAME,
+      ROW_NUMBER() OVER (
+        PARTITION BY afd.ATTACH_NO
+        ORDER BY afd.REG_DT DESC NULLS LAST, afd.FILE_NO DESC
+      ) AS rn
+    FROM TEAM3_202507F.ATTACH_FILE_DETAIL afd
+    WHERE afd.FILE_GB_CD = 'PROFILE'
+      AND NVL(afd.USE_YN, 'Y') = 'Y'
+  )
+  WHERE rn = 1
+) prof
+  ON prof.ATTACH_NO = m.MEM_PROFILE
+	
+	  WHERE c.TARGET_TYPE = #{targetType}
+	    AND c.TARGET_NO = #{targetNo}
+	
+	  START WITH c.PARENT_CMNT_NO IS NULL
+	  CONNECT BY PRIOR c.CMNT_NO = c.PARENT_CMNT_NO
+	  ORDER SIBLINGS BY c.REG_DT ASC
+	</select>
 
-        <!-- 정렬: 부모댓글 먼저, 그 다음 대댓글 -->
-        ORDER BY
-            NVL(c.PARENT_CMNT_NO, c.CMNT_NO) ASC,
-            CASE WHEN c.PARENT_CMNT_NO IS NULL THEN 0 ELSE 1 END ASC,
-            c.CMNT_NO ASC
-    </select>
 
-    <!-- 댓글/대댓글 등록 -->
-    <insert id="insertTripRecordComment">
-        INSERT INTO COMMENTS (
-            CMNT_NO, TARGET_TYPE, TARGET_NO,
-            WRITER_NO, PARENT_CMNT_NO,
-            CMNT_CONTENT, CMNT_STATUS,
-            REG_DT, MOD_DT
-        ) VALUES (
-            SEQ_COMMENTS.NEXTVAL,
-            'TRIP_RECORD',
-            #{rcdNo},
-            #{writerNo},
-            #{parentCmntNo},
-            #{content},
-            1,
-            TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS'),
-            NULL
-        )
-    </insert>
+  <select id="countByTarget" resultType="int">
+    SELECT COUNT(*)
+    FROM TEAM3_202507F.COMMENTS
+    WHERE TARGET_TYPE = #{targetType}
+      AND TARGET_NO = #{targetNo}
+  </select>
 
-    <!-- 소프트 삭제(작성자만) -->
-    <update id="softDeleteTripRecordComment">
-        UPDATE COMMENTS
-        SET
-            CMNT_STATUS = 9,
-            CMNT_CONTENT = '삭제된 댓글입니다.',
-            MOD_DT = TO_CHAR(SYSDATE, 'YYYY-MM-DD HH24:MI:SS')
-        WHERE CMNT_NO = #{cmntNo}
-          AND WRITER_NO = #{writerNo}
-          AND TARGET_TYPE = 'TRIP_RECORD'
-    </update>
+  <!-- 작성 -->
+  <insert id="insertComment" parameterType="kr.or.ddit.mohaeng.vo.CommentsVO">
+    INSERT INTO TEAM3_202507F.COMMENTS (
+      CMNT_NO, TARGET_TYPE, TARGET_NO, WRITER_NO, PARENT_CMNT_NO,
+      CMNT_CONTENT, CMNT_STATUS, REG_DT, MOD_DT
+    ) VALUES (
+      TEAM3_202507F.SEQ_COMMENTS.NEXTVAL,
+      #{targetType}, #{targetNo}, #{writerNo}, #{parentCmntNo},
+      #{cmntContent}, 0, SYSDATE, NULL
+    )
+  </insert>
+
+  <!-- 수정(본인만) -->
+  <update id="updateCommentContent">
+    UPDATE TEAM3_202507F.COMMENTS
+    SET CMNT_CONTENT = #{content},
+        MOD_DT = SYSDATE
+    WHERE CMNT_NO = #{cmntNo}
+      AND WRITER_NO = #{writerNo}
+      AND CMNT_STATUS = 0
+  </update>
+
+  <!-- 삭제(본인만, 소프트 삭제) -->
+  <update id="softDeleteComment">
+    UPDATE TEAM3_202507F.COMMENTS
+    SET CMNT_STATUS = 1,
+        MOD_DT = SYSDATE
+    WHERE CMNT_NO = #{cmntNo}
+      AND WRITER_NO = #{writerNo}
+      AND CMNT_STATUS = 0
+  </update>
+
 
 </mapper>

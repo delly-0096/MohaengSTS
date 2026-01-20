@@ -26,13 +26,13 @@ public class MemberVO {
 	private Date udtDt; 			/* 수정일 */
 	private Date wdrwDt; 			/* 탈퇴일 */
 	private String TempPwYn;		/* 임시 비밀번호 상태 Y, N */
-	
+
 	// sns 로그인 관련
 	private String joinMode;
 	private String joinCompleteYn;	/* 회원정보 완성도 */
-	
+
 	private List<MemberAuthVO> authList;	// 권한 정보
-	
+
 	private CompanyVO company;		/* 기업 정보 */
 	private MemCompVO memComp;		/* 기업 회원 부가 정보 */
 	private MemUserVO memUser;		/* 일반 회원 부가 정보 */
@@ -41,10 +41,15 @@ public class MemberVO {
 
 	private String tel;
 	private String memProfilePath;
-	
+
 	// 기업 담당자용
 	private String managerName;
 	private String managerEmail;
 
-	
+	//관리자 일반회원 관리기능을 위해 추가한 필드
+	private AlarmConfigVO alarmConfig;
+	private MemberTermsAgreeVO termsAgree;
+	private MarketingConsentVO marketingConsent;
+	private String memStatusName; // DB 조인을 통해 '정상', '휴면' 등의 한글명을 담을 필드
+
 }

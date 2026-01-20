@@ -139,6 +139,8 @@
 		            	<c:forEach items="${tpList}" var="tp">
 			                <!-- 투어 카드 1 -->
 			                <div class="tour-card" data-id="${tp.tripProdNo}" data-name="${tp.tripProdTitle}" data-price="${tp.price}" 
+     							data-min-people="${tp.prodMinPeople != null ? tp.prodMinPeople : 1}"
+							    data-location="${tp.ctyNm}"
      							data-image="${not empty tp.thumbImage ? pageContext.request.contextPath.concat('/upload/product/').concat(tp.thumbImage) : 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80'}">
 			                    <a href="${pageContext.request.contextPath}/tour/${tp.tripProdNo}" class="tour-link">
 			                        <div class="tour-image">
@@ -258,6 +260,7 @@
 </c:if>
 
 <script>
+const CONTEXT_PATH = '${pageContext.request.contextPath}';
 var totalCount = ${totalCount};
 var initialListSize = ${fn:length(tpList)};
 var isBusiness = ${not empty sessionScope.loginMember && sessionScope.loginMember.memType eq 'BUSINESS'};

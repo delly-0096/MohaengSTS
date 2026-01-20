@@ -663,5 +663,15 @@ public class MemberServiceImpl implements IMemberService {
 		
 	}
 
+	@Override
+	public MemberVO selectByMemNo(int memNo) {
+		return memberMapper.selectByMemNo(memNo);
+	}
+
+	@Override
+	public MemUserVO selectMemUserByMemNo(int memNo) {
+		return memberMapper.selectMemUserByMemNo(memNo);
+	}
+
 }
 

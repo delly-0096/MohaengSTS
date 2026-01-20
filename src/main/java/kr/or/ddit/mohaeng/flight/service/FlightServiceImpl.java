@@ -29,20 +29,19 @@ import lombok.extern.slf4j.Slf4j;
 public class FlightServiceImpl implements IFlightService {
 
 	@Autowired
-	private IFlightMapper mapper;
+	private IFlightMapper flightMapper;
 	
 	// api 서비스키
 	public static final String serviceKey = "a7bc76e60824b232ff8273a1191a079f36c11cee6fdbe0be73f54b73d5c510f9";
 	
-
 	@Override
 	public List<AirportVO> getAirportList() {
-		return mapper.getAirportList();
+		return flightMapper.getAirportList();
 	}
 
 	@Override
 	public List<AirlineVO> getAirlineList() {
-		return mapper.getAirlineList();
+		return flightMapper.getAirlineList();
 	}
 	
 	@Override
@@ -102,10 +101,21 @@ public class FlightServiceImpl implements IFlightService {
 			        String rawArrTime = node.path("arrPlandTime").asText(); 
 			        timeFormatter(vo , rawArrTime, 2);
 			        
-			        AirlineVO airlineVO = mapper.selectAirline(vo.getAirlineNm());
+			        AirlineVO airlineVO = flightMapper.selectAirline(vo.getAirlineNm());
 			        if(airlineVO != null) {
 			        	vo.setAirlineId(airlineVO.getAirlineId());
 			        }
+			        
+			        vo.setDepAirportId(flightProduct.getDepAirportId());
+			        vo.setArrAirportId(flightProduct.getArrAirportId());
+			        
+			        // 여기서 호출해서 좌석 개수 가져오기?
+			        log.info("vo.setDepTime : {}", vo.getDepTime());
+			        log.info("vo.setArrTime : {}", vo.getArrTime());
+			        List<String> seatList = flightMapper.getFlightSeat(vo);
+//			        log.info("getFlightSeat 실행후 seatList : {}", seatList);
+			        if(flightProduct.getCabin().equals("economy") && seatList.size() >= 102) continue;
+			        if(flightProduct.getCabin().equals("business") && seatList.size() >= 18) continue;
 			        
 			        flightProductList.add(vo);
 			    }
@@ -131,7 +141,7 @@ public class FlightServiceImpl implements IFlightService {
 		        String rawArrTime = items.path("arrPlandTime").asText(); 
 		        timeFormatter(vo ,rawArrTime, 2);
 		        
-		        AirlineVO airlineVO = mapper.selectAirline(vo.getAirlineNm());
+		        AirlineVO airlineVO = flightMapper.selectAirline(vo.getAirlineNm());
 		        if(airlineVO != null) {
 		        	vo.setAirlineId(airlineVO.getAirlineId());
 		        }
@@ -174,7 +184,7 @@ public class FlightServiceImpl implements IFlightService {
 	
 	@Override
 	public MemberVO getPayPerson(String memId) {
-		MemberVO result = mapper.getPayPerson(memId);
+		MemberVO result = flightMapper.getPayPerson(memId);
 		if(result != null) {
 			return result;
 		}
@@ -182,22 +192,14 @@ public class FlightServiceImpl implements IFlightService {
 	}
 	
 	@Override
-	public List<String> getSeatInfo(FlightProductVO flightProductVO) {
-		Integer fltProdId = mapper.getFlightKey(flightProductVO);		// 항공권 키 얻기
+	public List<String> getFlightSeat(FlightProductVO flightProductVO) {
 		log.info("getSeatInfo 실행 : {}", flightProductVO);
 		
-		if(fltProdId != null) {
-			List<String> seatList = mapper.getSeatInfo(fltProdId); 
-			log.info("seatList : {}", seatList);
-			log.info("seatListSize : {}", seatList.size());
+		List<String> seatList = flightMapper.getFlightSeat(flightProductVO); 
+		log.info("seatList : {}", seatList);
 			
-			return seatList;
-		}else {
-			return null;
-		}
+		return seatList;
 	}
-	
-	
 	
 	@Override
 	public int registerAirport() {
@@ -223,7 +225,7 @@ public class FlightServiceImpl implements IFlightService {
 			log.info("airportId : ", vo.getAirportId());
 			log.info("airportNm : ", vo.getAirportNm());
 			// 정보 있는지 조회하는 코드 필요
-			status = mapper.registerAirport(vo);
+			status = flightMapper.registerAirport(vo);
 			log.info("registerAirport : regist ", status);
 		}
 		
@@ -253,7 +255,7 @@ public class FlightServiceImpl implements IFlightService {
 			vo.setAirlineNm((String)airline.get("airlineNm"));
 			log.info("airlineId : ", vo.getAirlineId());
 			log.info("airportNm : ", vo.getAirlineNm());
-			status = mapper.registerAirline(vo);
+			status = flightMapper.registerAirline(vo);
 			log.info("registerAirport : regist ", status);
 		}
 		return status;

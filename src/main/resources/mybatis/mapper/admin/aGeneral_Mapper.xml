@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.memUser.mapper.IGeneralMapper">
+
+    <resultMap id="memberMap" type="kr.or.ddit.mohaeng.vo.MemberVO" autoMapping="true">
+        <id property="memNo" column="MEM_NO"/>
+        <result property="memStatusName" column="MEM_STATUS_NAME"/>
+        <association property="memUser" javaType="kr.or.ddit.mohaeng.vo.MemUserVO" autoMapping="true">
+            <id property="memNo" column="MEM_NO"/>
+        </association>
+        <association property="alarmConfig" javaType="kr.or.ddit.mohaeng.vo.AlarmConfigVO" autoMapping="true">
+            <id property="memNo" column="MEM_NO"/>
+        </association>
+        <association property="termsAgree" javaType="kr.or.ddit.mohaeng.vo.MemberTermsAgreeVO" autoMapping="true">
+            <id property="memNo" column="MEM_NO"/>
+        </association>
+        <association property="marketingConsent" javaType="kr.or.ddit.mohaeng.vo.MarketingConsentVO" autoMapping="true">
+            <id property="memNo" column="MEM_NO"/>
+        </association>
+    </resultMap>
+
+    <sql id="memberSearch">
+        <if test="searchWord != null and searchWord != ''">
+            AND ( M.MEM_ID LIKE '%' || #{searchWord} || '%'
+                OR M.MEM_NAME LIKE '%' || #{searchWord} || '%'
+                OR U.NICKNAME LIKE '%' || #{searchWord} || '%'
+                OR M.MEM_EMAIL LIKE '%' || #{searchWord} || '%'
+                OR U.TEL LIKE '%' || #{searchWord} || '%' )
+        </if>
+        <if test="searchType != null and searchType != 'all'">
+            AND M.MEM_STATUS = UPPER(#{searchType})
+        </if>
+    </sql>
+
+    <select id="getMemList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultMap="memberMap">
+        SELECT B.*
+        FROM (
+            SELECT A.*, ROWNUM RNUM FROM (
+                SELECT
+                      M.MEM_NO
+                    , M.MEM_ID
+                    , M.MEM_NAME
+                    , M.MEM_EMAIL
+                    , M.MEM_STATUS
+                    , M.REG_DT
+                    , M.UDT_DT
+                    , M.ENABLED
+                    , M.DEL_YN
+                    , U.NICKNAME
+                    , U.TEL
+                    , U.BIRTH_DATE
+                    , U.GENDER
+                    , C.CD_NAME AS MEM_STATUS_NAME
+                FROM MEMBER M
+                LEFT OUTER JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+                LEFT OUTER JOIN CODE C ON (M.MEM_STATUS = C.CD AND C.CDGR = 'MEMBER_STATUS')
+                WHERE 1=1
+                <include refid="memberSearch"/>
+                ORDER BY M.MEM_NO DESC
+            ) A
+        ) B
+        WHERE B.RNUM BETWEEN #{startRow} AND #{endRow}
+    </select>
+
+    <select id="getMemCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+        SELECT COUNT(*)
+        FROM MEMBER M
+        LEFT OUTER JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+        WHERE 1=1
+        <include refid="memberSearch"/>
+    </select>
+
+    <select id="getMemDetail" parameterType="int" resultMap="memberMap">
+        SELECT
+              M.*
+            , U.*
+            , AL.RSVT_ALARM_YN
+            , AL.SCHD_ALARM_YN
+            , AL.COMM_ALARM_YN
+            , AL.PNT_ALARM_YN
+            , AL.QNA_ALARM_YN
+            , TA.USE_TERM_YN
+            , TA.PRIVACY_POLICY_YN
+            , TA.LOCATION_TERM_YN
+            , TA.MARKETING_YN
+            , MC.EMAIL_CONSENT_YN
+            , MC.SMS_CONSENT_YN
+            , MC.PUSH_CONSENT_YN
+            , C.CD_NAME AS MEM_STATUS_NAME
+        FROM MEMBER M
+        LEFT OUTER JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+        LEFT OUTER JOIN ALARM_CONFIG AL ON M.MEM_NO = AL.MEM_NO
+        LEFT OUTER JOIN MEMBER_TERMS_AGREE TA ON M.MEM_NO = TA.MEM_NO
+        LEFT OUTER JOIN MARKETING_CONSENT MC ON M.MEM_NO = MC.MEM_NO
+        LEFT OUTER JOIN CODE C ON (M.MEM_STATUS = C.CD AND C.CDGR = 'MEMBER_STATUS')
+        WHERE M.MEM_NO = #{memNo}
+    </select>
+
+    <insert id="insertMember" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+        <selectKey keyProperty="memNo" resultType="int" order="BEFORE">
+            SELECT SEQ_MEMBER.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO MEMBER (
+              MEM_NO
+            , MEM_ID
+            , MEM_PASSWORD
+            , MEM_NAME
+            , MEM_EMAIL
+            , MEM_STATUS
+            , ENABLED
+            , REG_DT
+            , JOIN_COMPLETE_YN
+            , TEMP_PW_YN
+            , MEM_SNS_YN
+            , DEL_YN
+        ) VALUES (
+              #{memNo}
+            , #{memId}
+            , #{memPassword}
+            , #{memName}
+            , #{memEmail}
+            , #{memStatus}
+            , #{enabled}
+            , SYSDATE
+            , #{joinCompleteYn}
+            , #{tempPwYn}
+            , #{memSnsYn}
+            , #{delYn}
+        )
+    </insert>
+
+    <insert id="insertMemUser" parameterType="kr.or.ddit.mohaeng.vo.MemUserVO">
+        INSERT INTO MEM_USER (
+              MEM_NO
+            , NICKNAME
+            , BIRTH_DATE
+            , GENDER
+            , ZIP
+            , ADDR1
+            , ADDR2
+            , TEL
+        ) VALUES (
+              #{memNo}
+            , #{nickname}
+            , #{birthDate}
+            , #{gender}
+            , #{zip}
+            , #{addr1}
+            , #{addr2}
+            , #{tel}
+        )
+    </insert>
+
+    <insert id="insertMemberAuth" parameterType="int">
+        INSERT INTO MEMBER_AUTH (MEM_AUTH_NO, MEM_NO, AUTH, REG_DT)
+        VALUES (SEQ_MEMBER_AUTH.NEXTVAL, #{memNo}, 'ROLE_MEMBER', SYSDATE)
+    </insert>
+
+    <insert id="insertAlarmConfig" parameterType="kr.or.ddit.mohaeng.vo.AlarmConfigVO">
+        INSERT INTO ALARM_CONFIG (
+              MEM_NO
+            , RSVT_ALARM_YN
+            , SCHD_ALARM_YN
+            , COMM_ALARM_YN
+            , PNT_ALARM_YN
+            , QNA_ALARM_YN
+            , UDT_DT
+        ) VALUES (
+              #{memNo}
+            , #{rsvtAlarmYn}
+            , #{schdAlarmYn}
+            , #{commAlarmYn}
+            , #{pntAlarmYn}
+            , #{qnaAlarmYn}
+            , SYSDATE
+        )
+    </insert>
+
+    <insert id="insertTermsAgree" parameterType="kr.or.ddit.mohaeng.vo.MemberTermsAgreeVO">
+        INSERT INTO MEMBER_TERMS_AGREE (
+              AGREE_NO
+            , MEM_NO
+            , USE_TERM_YN
+            , PRIVACY_POLICY_YN
+            , LOCATION_TERM_YN
+            , MARKETING_YN
+            , REG_DT
+        ) VALUES (
+              SEQ_MEMBER_TERMS_AGREE.NEXTVAL
+            , #{memNo}
+            , #{useTermYn}
+            , #{privacyPolicyYn}
+            , #{locationTermYn}
+            , #{marketingYn}
+            , SYSDATE
+        )
+    </insert>
+
+    <insert id="insertMarketingConsent" parameterType="kr.or.ddit.mohaeng.vo.MarketingConsentVO">
+        INSERT INTO MARKETING_CONSENT (
+              MEM_NO
+            , EMAIL_CONSENT_YN
+            , SMS_CONSENT_YN
+            , PUSH_CONSENT_YN
+            , UDT_DT
+        ) VALUES (
+              #{memNo}
+            , #{emailConsentYn}
+            , #{smsConsentYn}
+            , #{pushConsentYn}
+            , SYSDATE
+        )
+    </insert>
+
+    <update id="updateMember" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+        UPDATE MEMBER
+        SET   MEM_NAME = #{memName}
+            , MEM_EMAIL = #{memEmail}
+            , MEM_STATUS = #{memStatus}
+            , ENABLED = #{enabled}
+            , UDT_DT = SYSDATE
+        WHERE MEM_NO = #{memNo}
+    </update>
+
+    <update id="updateMemUser" parameterType="kr.or.ddit.mohaeng.vo.MemUserVO">
+        UPDATE MEM_USER
+        SET   NICKNAME = #{nickname}
+            , BIRTH_DATE = #{birthDate}
+            , GENDER = #{gender}
+            , ZIP = #{zip}
+            , ADDR1 = #{addr1}
+            , ADDR2 = #{addr2}
+            , TEL = #{tel}
+        WHERE MEM_NO = #{memNo}
+    </update>
+
+    <update id="updateAlarmConfig" parameterType="kr.or.ddit.mohaeng.vo.AlarmConfigVO">
+        UPDATE ALARM_CONFIG
+        SET   RSVT_ALARM_YN = #{rsvtAlarmYn}
+            , SCHD_ALARM_YN = #{schdAlarmYn}
+            , COMM_ALARM_YN = #{commAlarmYn}
+            , PNT_ALARM_YN = #{pntAlarmYn}
+            , QNA_ALARM_YN = #{qnaAlarmYn}
+            , UDT_DT = SYSDATE
+        WHERE MEM_NO = #{memNo}
+    </update>
+
+    <update id="updateTermsAgree" parameterType="kr.or.ddit.mohaeng.vo.MemberTermsAgreeVO">
+        UPDATE MEMBER_TERMS_AGREE
+        SET   USE_TERM_YN = #{useTermYn}
+            , PRIVACY_POLICY_YN = #{privacyPolicyYn}
+            , LOCATION_TERM_YN = #{locationTermYn}
+            , MARKETING_YN = #{marketingYn}
+            , UDT_DT = SYSDATE
+        WHERE MEM_NO = #{memNo}
+    </update>
+
+    <update id="updateMarketingConsent" parameterType="kr.or.ddit.mohaeng.vo.MarketingConsentVO">
+        UPDATE MARKETING_CONSENT
+        SET   EMAIL_CONSENT_YN = #{emailConsentYn}
+            , SMS_CONSENT_YN = #{smsConsentYn}
+            , PUSH_CONSENT_YN = #{pushConsentYn}
+            , UDT_DT = SYSDATE
+        WHERE MEM_NO = #{memNo}
+    </update>
+
+    <update id="changePassword">
+        UPDATE MEMBER
+        SET   MEM_PASSWORD = #{param2}
+            , UDT_DT = SYSDATE
+        WHERE MEM_NO = #{param1}
+    </update>
+
+    <select id="checkDuplicateId" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM MEMBER WHERE MEM_ID = #{memId}
+    </select>
+
+    <select id="checkDuplicateEmail" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM MEMBER WHERE MEM_EMAIL = #{memEmail}
+    </select>
+
+    <select id="getCodeListByGroup" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.CodeVO">
+        SELECT CD, CDGR, CD_NAME, CD_DESC
+        FROM CODE
+        WHERE CDGR = #{cdgr} AND CD_YN = 'Y'
+        ORDER BY CD
+    </select>
+
+    <select id="getAllMemList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultMap="memberMap">
+    	SELECT
+            M.MEM_NO, M.MEM_ID, M.MEM_NAME, M.MEM_EMAIL, M.MEM_STATUS,
+            M.REG_DT, M.UDT_DT, M.ENABLED, M.DEL_YN,
+            U.NICKNAME, U.TEL, U.BIRTH_DATE, U.GENDER,
+            C.CD_NAME AS MEM_STATUS_NAME
+        FROM MEMBER M
+        LEFT OUTER JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+        LEFT OUTER JOIN CODE C ON (M.MEM_STATUS = C.CD AND C.CDGR = 'MEMBER_STATUS')
+        WHERE 1=1
+        <include refid="memberSearch"/>
+        ORDER BY M.MEM_NO DESC
+    </select>
+
+</mapper>

@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 
 <c:set var="pageTitle" value="숙박 검색" />
 <c:set var="pageCss" value="product" />
@@ -18,34 +20,39 @@
     <div class="container">
         <!-- 검색 박스 -->
         <div class="search-box">
-            <form id="accommodationSearchForm">
+            <form id="accommodationSearchForm" action="${pageContext.request.contextPath}/product/accommodation" method="get">
                 <div class="search-form-row">
                     <div class="form-group">
                         <label class="form-label">목적지</label>
                         <div class="search-input-group">
                             <span class="input-icon"><i class="bi bi-geo-alt-fill"></i></span>
-                            <input type="text" class="form-control location-autocomplete" id="destination" placeholder="도시, 지역 또는 숙소명" autocomplete="off">
-                            <div class="autocomplete-dropdown" id="destinationDropdown"></div>
-                        </div>
+                            <input type="text" class="form-control location-autocomplete" id="destination" 
+                            		name="keyword" placeholder="도시, 지역 또는 숙소명" autocomplete="off">
+                            <div class="auto-dropdown" id="destinationDropdown" style="display:none;"></div>
+                            <input type="hidden" name="areaCode" id="areaCode"><input type="hidden" name="accNo" id="accNo">
+                            </div>
                     </div>
                     <div class="form-group">
                         <label class="form-label">체크인</label>
-                        <input type="text" class="form-control date-picker" id="checkIn" placeholder="날짜 선택">
+                        <input type="text" class="form-control date-picker" id="checkIn" name="startDate" placeholder="날짜 선택">
                     </div>
                     <div class="form-group">
                         <label class="form-label">체크아웃</label>
-                        <input type="text" class="form-control date-picker" id="checkOut" placeholder="날짜 선택">
+                        <input type="text" class="form-control date-picker" id="checkOut" name="endDate" placeholder="날짜 선택">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">객실 / 인원</label>
-                        <select class="form-control form-select" id="guests">
-                            <option value="1-2">객실 1, 성인 2명</option>
-                            <option value="1-1">객실 1, 성인 1명</option>
-                            <option value="1-3">객실 1, 성인 3명</option>
-                            <option value="1-4">객실 1, 성인 4명</option>
-                            <option value="2-4">객실 2, 성인 4명</option>
-                        </select>
-                    </div>
+					    <label class="form-label">인원</label>
+					    <div class="guest-counter-wrapper">
+					        <div class="counter-item">
+					            <div class="counter-controls">
+					            <small>성인 기준</small>
+					                <button type="button" class="btn-count minus" onclick="updateCount('adult', -1)">-</button>
+					                <input type="number" id="adultCount" name="adultCount" value="2" readonly>인
+					                <button type="button" class="btn-count plus" onclick="updateCount('adult', 1)">+</button>
+					            </div>
+					        </div>
+					        </div>
+					</div>
                     <button type="submit" class="btn btn-primary btn-search">
                         <i class="bi bi-search me-2"></i>검색
                     </button>
@@ -101,17 +108,29 @@
 
         <!-- 검색 결과 -->
         <div class="flight-results">
-            <div class="results-header">
-                <p class="results-count">
-                    <strong>제주도</strong> 숙소 <strong>128</strong>개
-                </p>
-            </div>
-
+		    <div class="results-header">
+		        <p class="results-count"> <c:choose>
+		                <c:when test="${not empty keyword}">
+		                    <strong>${keyword}</strong>
+		                </c:when>
+		                <c:when test="${not empty searchParam.keyword}">
+		                    <strong>${searchParam.keyword}</strong>
+		                </c:when>
+		                <c:otherwise>
+		                    <strong>전체</strong>
+		                </c:otherwise>
+		            </c:choose>
+		            숙소 <strong>${totalCount}</strong>개
+		        </p>
+		    </div>
+		</div>
+	        
+            <!-- 숙소 카드 -->
             <div class="accommodation-grid">
-                <!-- 숙소 카드 1 -->
-                <div class="accommodation-card" data-accommodation-id="1">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/1" class="accommodation-image">
-                        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop&q=80" alt="호텔">
+                <c:forEach items="${accList }" var="acc">
+                <div class="accommodation-card" data-accommodation-id="${acc.accNo}">
+                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo }" class="accommodation-image">
+                        <img src="${acc.accFilePath}" alt="${acc.accName}">
                         <span class="accommodation-badge">인기</span>
                     </a>
                     <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">
@@ -123,394 +142,104 @@
                             <span>4.8</span>
                             <span class="review-count">(1,234)</span>
                         </div>
-                        <a href="${pageContext.request.contextPath}/product/accommodation/1" class="accommodation-name-link">
-                            <h3 class="accommodation-name">제주 신라호텔</h3>
+                        <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo }" class="accommodation-name-link">
+                            <h3 class="accommodation-name">${acc.accName}</h3>
                         </a>
+
                         <p class="accommodation-location">
-                            <i class="bi bi-geo-alt"></i> 제주 서귀포시 중문관광로
+                            <i class="bi bi-geo-alt"></i> ${acc.addr1}
                         </p>
-                        <div class="accommodation-amenities">
-                            <span class="amenity"><i class="bi bi-wifi"></i> 무료 와이파이</span>
-                            <span class="amenity"><i class="bi bi-water"></i> 수영장</span>
-                            <span class="amenity"><i class="bi bi-p-circle"></i> 주차</span>
-                        </div>
+                        <div class="accommodation-amenities" style="display: flex; flex-wrap: wrap; gap: 8px;">
+                            <c:if test="${acc.accFacility.wifiYn eq 'Y'}"><span class="amenity"><i class="bi bi-wifi"></i> WiFi</span></c:if>
+						    <c:if test="${acc.accFacility.parkingYn eq 'Y'}"><span class="amenity"><i class="bi bi-p-circle"></i> 주차</span></c:if>
+						    <c:if test="${acc.accFacility.breakfastYn eq 'Y'}"><span class="amenity"><i class="bi bi-cup-hot"></i> 조식</span></c:if>
+						    <c:if test="${acc.accFacility.poolYn eq 'Y'}"><span class="amenity"><i class="bi bi-water"></i> 수영장</span></c:if>
+						    <c:if test="${acc.accFacility.gymYn eq 'Y'}"><span class="amenity"><i class="bi bi-heart-pulse"></i> 피트니스</span></c:if>
+						    <c:if test="${acc.accFacility.spaYn eq 'Y'}"><span class="amenity"><i class="bi bi-magic"></i> 스파</span></c:if>
+						    <c:if test="${acc.accFacility.restaurantYn eq 'Y'}"><span class="amenity"><i class="bi bi-egg-fried"></i> 식당</span></c:if>
+						    <c:if test="${acc.accFacility.barYn eq 'Y'}"><span class="amenity"><i class="bi bi-glass-cocktail"></i> 바</span></c:if>
+						    <c:if test="${acc.accFacility.roomServiceYn eq 'Y'}"><span class="amenity"><i class="bi bi-bell"></i> 룸서비스</span></c:if>
+						    <c:if test="${acc.accFacility.laundryYn eq 'Y'}"><span class="amenity"><i class="bi bi-wind"></i> 세탁</span></c:if>
+						    <c:if test="${acc.accFacility.smokingAreaYn eq 'Y'}"><span class="amenity"><i class="bi bi-cursor"></i> 흡연구역</span></c:if>
+						    <c:if test="${acc.accFacility.petFriendlyYn eq 'Y'}"><span class="amenity"><i class="bi bi-dog"></i> 반려동물</span></c:if>
+						</div>
+               			<div class="discount-row">
+               				<p class="discount-badge" style="font-size: 0.5em;">${acc.maxDiscount }% OFF</p>
+               			</div>
                         <div class="accommodation-price-row">
                             <div class="accommodation-price">
-                                <span class="price-label">최저가</span>
-                                <span class="price">265,000원</span>
+                            	<c:choose>
+                            		<c:when test="${acc.maxDiscount > 0 }">
+                            			<div class="price-main-row">
+                            			<span class="original-price" style="text-decoration: line-through; color: #999; font-size: 0.9em;">
+                            				<fmt:formatNumber value="${acc.minPrice}" pattern="#,###"/>원
+                            			</span>
+                            			<span class="price" style="color: #e74c3c; font-weight: bold;">
+                            				<fmt:formatNumber value="${acc.finalPrice}" pattern="#,###"/>원
+                            			</span>
+                            			</div>
+                            		</c:when>
+                            	<c:otherwise>
+                            		<span class="price">
+                            			<fmt:formatNumber value="${acc.minPrice}" pattern="#,###"/>원
+                            		</span>
+                            	</c:otherwise>
+                            	</c:choose>
                                 <span class="per-night">/ 1박</span>
                             </div>
-                            <button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, 1)">
-                                결제 <i class="bi bi-chevron-down"></i>
+                           
+                            <button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, ${acc.accNo})">
+                                예약 <i class="bi bi-chevron-down"></i>
                             </button>
                         </div>
                     </div>
                     <!-- 결제 드롭다운 -->
-                    <div class="accommodation-booking-dropdown" id="accommodationDropdown1">
+                    <div class="accommodation-booking-dropdown" id="accommodationDropdown${acc.accNo}">
                         <div class="booking-dropdown-content">
                             <div class="room-options">
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>디럭스 더블룸</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 42㎡</p>
-                                        <span class="room-stock available"><i class="bi bi-check-circle"></i> 잔여 5실</span>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">265,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/1/booking?room=deluxe" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>스위트룸 (오션뷰)</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 65㎡</p>
-                                        <span class="room-stock low"><i class="bi bi-exclamation-circle"></i> 잔여 2실</span>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">420,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/1/booking?room=suite" class="btn btn-primary btn-sm">결제</a>
-                                </div>
+                            <c:set var="lastRoomName" value="" />
+                            <c:forEach items="${acc.roomList }" var="room">
+                            	<c:if test="${room.roomName ne lastRoomName}"/>
+                            	<div class="room-option" style="padding: 15px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center;">
+								    <div class="room-option-info" style="flex: 1;">
+								        <h6 style="margin: 0; font-weight: 600; color: #333;">${room.roomName}</h6>
+								        <p style="font-size: 0.8rem; color: #888; margin: 4px 0;">
+								            기준 ${room.baseGuestCount}인 · 잔여 ${room.totalRoomCount}실
+								        </p>
+								    </div>
+								
+								    <div class="room-option-price" style="text-align: right; margin-right: 15px;">
+								        <c:choose>
+								            <c:when test="${room.discount > 0}">
+								                <div style="font-size: 0.75rem;">
+								                    <span style="color: #ff5a5f; font-weight: bold;">${room.discount}%</span>
+								                    <span style="text-decoration: line-through; color: #bbb; margin-left: 3px;">
+								                        <fmt:formatNumber value="${room.price}" pattern="#,###"/>
+								                    </span>
+								                </div>
+								                <div style="font-size: 1.05rem; font-weight: 700; color: #222;">
+								                    <fmt:formatNumber value="${room.price * (100 - room.discount) / 100}" pattern="#,###"/>원
+								                </div>
+								            </c:when>
+								            <c:otherwise>
+								                <div style="font-size: 1.05rem; font-weight: 700; color: #222;">
+								                    <fmt:formatNumber value="${room.price}" pattern="#,###"/>원
+								                </div>
+								            </c:otherwise>
+								        </c:choose>
+								    </div>
+								
+								    <button type="button" class="btn btn-primary btn-sm" style="border-radius: 6px; padding: 6px 15px;"
+								            onclick="goBooking(${acc.accNo}, ${room.roomTypeNo})">결제</button>
+								</div>
+                            </c:forEach>
                             </div>
                         </div>
                     </div>
                 </div>
+              </c:forEach>
 
-                <!-- 숙소 카드 2 -->
-                <div class="accommodation-card" data-accommodation-id="2">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/2" class="accommodation-image">
-                        <img src="https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=400&h=300&fit=crop&q=80" alt="호텔">
-                    </a>
-                    <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                    <div class="accommodation-body">
-                        <div class="accommodation-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span>4.6</span>
-                            <span class="review-count">(892)</span>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/product/accommodation/2" class="accommodation-name-link">
-                            <h3 class="accommodation-name">롯데호텔 제주</h3>
-                        </a>
-                        <p class="accommodation-location">
-                            <i class="bi bi-geo-alt"></i> 제주 서귀포시 중문관광로
-                        </p>
-                        <div class="accommodation-amenities">
-                            <span class="amenity"><i class="bi bi-wifi"></i> 무료 와이파이</span>
-                            <span class="amenity"><i class="bi bi-cup-hot"></i> 조식</span>
-                            <span class="amenity"><i class="bi bi-water"></i> 수영장</span>
-                        </div>
-                        <div class="accommodation-price-row">
-                            <div class="accommodation-price">
-                                <span class="price-label">최저가</span>
-                                <span class="price">238,000원</span>
-                                <span class="per-night">/ 1박</span>
-                            </div>
-                            <button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, 2)">
-                                결제 <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="accommodation-booking-dropdown" id="accommodationDropdown2">
-                        <div class="booking-dropdown-content">
-                            <div class="room-options">
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>스탠다드 트윈룸</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 38㎡</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">238,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/2/booking?room=standard" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>디럭스 더블룸 (조식포함)</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 45㎡</p>
-                                        <span class="room-stock available"><i class="bi bi-check-circle"></i> 잔여 8실</span>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">298,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/2/booking?room=deluxe" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 숙소 카드 3 -->
-                <div class="accommodation-card" data-accommodation-id="3">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/3" class="accommodation-image">
-                        <img src="https://images.unsplash.com/photo-1587061949409-02df41d5e562?w=400&h=300&fit=crop&q=80" alt="펜션">
-                        <span class="accommodation-badge">특가</span>
-                    </a>
-                    <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                    <div class="accommodation-body">
-                        <div class="accommodation-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span>4.9</span>
-                            <span class="review-count">(567)</span>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/product/accommodation/3" class="accommodation-name-link">
-                            <h3 class="accommodation-name">애월 오션뷰 펜션</h3>
-                        </a>
-                        <p class="accommodation-location">
-                            <i class="bi bi-geo-alt"></i> 제주 제주시 애월읍
-                        </p>
-                        <div class="accommodation-amenities">
-                            <span class="amenity"><i class="bi bi-wifi"></i> 무료 와이파이</span>
-                            <span class="amenity"><i class="bi bi-p-circle"></i> 주차</span>
-                            <span class="amenity"><i class="bi bi-fire"></i> BBQ</span>
-                        </div>
-                        <div class="accommodation-price-row">
-                            <div class="accommodation-price">
-                                <span class="price-label">최저가</span>
-                                <span class="price">142,000원</span>
-                                <span class="per-night">/ 1박</span>
-                            </div>
-                            <button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, 3)">
-                                결제 <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="accommodation-booking-dropdown" id="accommodationDropdown3">
-                        <div class="booking-dropdown-content">
-                            <div class="room-options">
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>오션뷰 스탠다드</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 33㎡</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">142,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/3/booking?room=standard" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>오션뷰 패밀리룸</h6>
-                                        <p><i class="bi bi-people"></i> 4인 / <i class="bi bi-arrows-angle-expand"></i> 50㎡</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">198,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/3/booking?room=family" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 숙소 카드 4 -->
-                <div class="accommodation-card" data-accommodation-id="4">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/4" class="accommodation-image">
-                        <img src="https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=400&h=300&fit=crop&q=80" alt="리조트">
-                    </a>
-                    <button class="accommodation-bookmark active" onclick="toggleAccommodationBookmark(event, this)">
-                        <i class="bi bi-bookmark-fill"></i>
-                    </button>
-                    <div class="accommodation-body">
-                        <div class="accommodation-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span>4.7</span>
-                            <span class="review-count">(445)</span>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/product/accommodation/4" class="accommodation-name-link">
-                            <h3 class="accommodation-name">제주 해비치 리조트</h3>
-                        </a>
-                        <p class="accommodation-location">
-                            <i class="bi bi-geo-alt"></i> 제주 서귀포시 표선면
-                        </p>
-                        <div class="accommodation-amenities">
-                            <span class="amenity"><i class="bi bi-wifi"></i> 무료 와이파이</span>
-                            <span class="amenity"><i class="bi bi-water"></i> 수영장</span>
-                            <span class="amenity"><i class="bi bi-heart-pulse"></i> 스파</span>
-                        </div>
-                        <div class="accommodation-price-row">
-                            <div class="accommodation-price">
-                                <span class="price-label">최저가</span>
-                                <span class="price">298,000원</span>
-                                <span class="per-night">/ 1박</span>
-                            </div>
-                            <button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, 4)">
-                                결제 <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="accommodation-booking-dropdown" id="accommodationDropdown4">
-                        <div class="booking-dropdown-content">
-                            <div class="room-options">
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>디럭스 가든뷰</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 48㎡</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">298,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/4/booking?room=garden" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>프리미엄 오션뷰</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 55㎡</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">385,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/4/booking?room=premium" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 숙소 카드 5 -->
-                <div class="accommodation-card" data-accommodation-id="5">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/5" class="accommodation-image">
-                        <img src="https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop&q=80" alt="게스트하우스">
-                    </a>
-                    <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                    <div class="accommodation-body">
-                        <div class="accommodation-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span>4.5</span>
-                            <span class="review-count">(234)</span>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/product/accommodation/5" class="accommodation-name-link">
-                            <h3 class="accommodation-name">제주 올레 게스트하우스</h3>
-                        </a>
-                        <p class="accommodation-location">
-                            <i class="bi bi-geo-alt"></i> 제주 제주시 이도동
-                        </p>
-                        <div class="accommodation-amenities">
-                            <span class="amenity"><i class="bi bi-wifi"></i> 무료 와이파이</span>
-                            <span class="amenity"><i class="bi bi-cup"></i> 공용주방</span>
-                        </div>
-                        <div class="accommodation-price-row">
-                            <div class="accommodation-price">
-                                <span class="price-label">최저가</span>
-                                <span class="price">42,000원</span>
-                                <span class="per-night">/ 1박</span>
-                            </div>
-                            <button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, 5)">
-                                결제 <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="accommodation-booking-dropdown" id="accommodationDropdown5">
-                        <div class="booking-dropdown-content">
-                            <div class="room-options">
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>도미토리 (여성전용)</h6>
-                                        <p><i class="bi bi-people"></i> 1인 / <i class="bi bi-door-open"></i> 4인실</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">28,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/5/booking?room=dorm-f" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>더블룸 (개인실)</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 18㎡</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">65,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/5/booking?room=double" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 숙소 카드 6 -->
-                <div class="accommodation-card" data-accommodation-id="6">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/6" class="accommodation-image">
-                        <img src="https://images.unsplash.com/photo-1564501049412-61c2a3083791?w=400&h=300&fit=crop&q=80" alt="호텔">
-                    </a>
-                    <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                    <div class="accommodation-body">
-                        <div class="accommodation-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <span>4.4</span>
-                            <span class="review-count">(678)</span>
-                        </div>
-                        <a href="${pageContext.request.contextPath}/product/accommodation/6" class="accommodation-name-link">
-                            <h3 class="accommodation-name">메종 글래드 제주</h3>
-                        </a>
-                        <p class="accommodation-location">
-                            <i class="bi bi-geo-alt"></i> 제주 제주시 노연로
-                        </p>
-                        <div class="accommodation-amenities">
-                            <span class="amenity"><i class="bi bi-wifi"></i> 무료 와이파이</span>
-                            <span class="amenity"><i class="bi bi-cup-hot"></i> 조식</span>
-                            <span class="amenity"><i class="bi bi-p-circle"></i> 주차</span>
-                        </div>
-                        <div class="accommodation-price-row">
-                            <div class="accommodation-price">
-                                <span class="price-label">최저가</span>
-                                <span class="price">172,000원</span>
-                                <span class="per-night">/ 1박</span>
-                            </div>
-                            <button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, 6)">
-                                결제 <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="accommodation-booking-dropdown" id="accommodationDropdown6">
-                        <div class="booking-dropdown-content">
-                            <div class="room-options">
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>스탠다드 더블</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 32㎡</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">172,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/6/booking?room=standard" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                                <div class="room-option">
-                                    <div class="room-option-info">
-                                        <h6>디럭스 트윈 (조식포함)</h6>
-                                        <p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 40㎡</p>
-                                    </div>
-                                    <div class="room-option-price">
-                                        <span class="price">215,000원</span>
-                                        <span class="per-night">/ 1박</span>
-                                    </div>
-                                    <a href="${pageContext.request.contextPath}/product/accommodation/6/booking?room=deluxe" class="btn btn-primary btn-sm">결제</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 로딩 인디케이터 -->
+             <!-- 로딩 인디케이터 -->
             <div class="infinite-scroll-loader" id="accomScrollLoader">
                 <div class="loader-spinner">
                     <div class="spinner-border text-primary" role="status">
@@ -520,14 +249,122 @@
             </div>
 
             <!-- 더 이상 데이터 없음 -->
-            <div class="infinite-scroll-end" id="accomScrollEnd" style="display: none;">
-                <p>모든 숙소를 불러왔습니다</p>
+            <c:if test="${not empty accList}">
+			    <div class="infinite-scroll-end text-center py-4 w-100" id="accomScrollEnd" style="display: none; text-align: center; padding: 20px;">
+			        <hr class="my-4" style="width: 50%; margin: 0 auto; border-top: 1px dashed #ccc;">
+    				<p class="text-muted">✨ 모든 숙소를 불러왔습니다 ✨</p>
+			    </div>
+			</c:if>
             </div>
         </div>
+		     <!-- 검색 결과 없음 -->
+		     <c:if test="${empty accList}">
+			    <div class="no-result-wrapper text-center">
+			        <i class="bi bi-search" style="font-size: 4rem; color: #dee2e6;"></i>
+			        <h3 class="mt-4 fw-bold">검색 결과가 없습니다</h3>
+			        <p class="text-muted">다른 지역이나 키워드로 검색해보시겠어요?</p>
+			        <a href="${contextPath}/product/accommodation" class="btn btn-primary btn-lg mt-3 shadow-sm">
+			            <i class="bi bi-arrow-clockwise"></i> 검색 초기화
+			        </a>
+			    </div>
+			</c:if>
     </div>
-</div>
 
 <style>
+/* 검색 드롭다운 스타일 */
+/* 드롭다운 전체 박스 크기 조절 */
+.auto-dropdown {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    background: #fff;
+    position: absolute;
+    width: 100%;
+    z-index: 1000;
+}
+
+/* 개별 항목 글씨 크기 줄이기 */
+.auto-dropdown .list-group-item {
+    padding: 6px 10px !important; /* 상하 여백 줄임 */
+    font-size: 13px !important;    /* 리더가 원한 작은 글씨! */
+    border: none;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+}
+
+/* 아이콘 크기 조절 */
+.auto-dropdown .bi {
+    font-size: 11px;
+    margin-right: 5px;
+}
+.auto-dropdown .list-group-item {
+    padding: 8px 12px;     /* 상하 간격을 좁혀서 더 많이 보이게 */
+    font-size: 14px;       /* 기본보다 살짝 줄임 (원래 보통 16px) */
+    color: #333;           /* 글자색을 좀 더 깔끔하게 */
+    white-space: nowrap;   /* 글자가 길어도 줄바꿈 안 되게 */
+    overflow: hidden;
+    text-overflow: ellipsis; /* 너무 길면 ... 처리 */
+}
+
+.region-item strong {
+    pointer-events: none; /* 글씨를 눌러도 부모인 li가 이벤트를 받게 함 */
+}
+
+.auto-dropdown .bi-geo-alt-fill {
+    font-size: 12px;
+    margin-right: 8px;
+}
+
+/* 금액 영역 전체 컨테이너 */
+.accommodation-price-row {
+    display: flex;
+    justify-content: space-between; /* 가격과 결제버튼 양끝 정렬 */
+    align-items: flex-end; /* 바닥 기준 정렬 */
+/*     margin-top: 2px; */
+}
+
+.accommodation-price {
+    display: flex;
+    align-items: baseline; /* 텍스트 베이스라인에 맞춤 */
+    flex-wrap: nowrap; /* 절대 줄바꿈 금지 */
+    gap: 6px; /* 요소 사이 간격 */
+}
+
+/* 10% OFF 뱃지 */
+.discount-badge {
+	display: inline-block;  
+    width: auto;            
+    background-color: #ffeded;
+    color: #e74c3c;
+    padding: 2px 8px;       
+    border-radius: 4px;
+    margin-bottom: 1px;
+}
+
+/* 원래 가격 (취소선) */
+.original-price {
+    color: #999;
+    text-decoration: line-through;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+/* 실제 결제 가격 (빨간색) */
+.price {
+    color: #e74c3c;
+    font-size: 20px; /* 크기 살짝 조정 */
+    font-weight: 800;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* / 1박 텍스트 */
+.per-night {
+    font-size: 13px;
+    color: #666;
+    margin-left: 2px;
+}
+
 /* 숙소 카드 드롭다운 스타일 */
 .accommodation-price .price-label {
     display: block;
@@ -682,263 +519,66 @@ a.accommodation-image:hover img {
 .accommodation-name-link:hover .accommodation-name {
     color: var(--primary-color);
 }
+
+/* 인원 선택 스타일 */
+.guest-counter-wrapper {
+    display: flex;
+    align-items: center;
+    background: var(--white-color);
+    border: 2px solid var(--gray-light);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    font-size: 15px;
+}
+.counter-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+}
+.btn-count {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--primary-color);
+    background: #fff;
+    color: var(--primary-color);
+    font-weight: bold;
+    cursor: pointer;
+}
+.btn-count:hover {
+    background: var(--primary-color);
+    color: #fff;
+}
+#adultCount {
+    width: 30px;
+    border: none;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* 검색 결과가 없을 경우 */
+.no-result-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;  /* 가로 중앙 */
+        justify-content: center; /* 세로 중앙 (필요시) */
+        min-height: 400px;    /* 너무 딱 붙어있지 않게 높이 확보 */
+        width: 100%;
+    }
 </style>
-
+<script src="${pageContext.request.contextPath}/resources/js/accommodation.js"></script>
 <script>
-// 숙소 드롭다운 토글
-function toggleAccommodationDropdown(e, accommodationId) {
-    e.stopPropagation();
 
-    const card = document.querySelector('.accommodation-card[data-accommodation-id="' + accommodationId + '"]');
-
-    // 다른 열린 드롭다운 닫기
-    document.querySelectorAll('.accommodation-card.active').forEach(function(activeCard) {
-        if (activeCard !== card) {
-            activeCard.classList.remove('active');
-        }
-    });
-
-    // 현재 카드 토글
-    card.classList.toggle('active');
-}
-
-// 외부 클릭 시 드롭다운 닫기
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.accommodation-card')) {
-        document.querySelectorAll('.accommodation-card.active').forEach(function(card) {
-            card.classList.remove('active');
+window.addEventListener('load', function() {
+    if (typeof initSearch === 'function') {
+        initSearch({
+            initialListSize: ${empty accList ? 0 : accList.size()},
+            totalCount: ${empty totalCount ? 0 : totalCount},
+            areaCode: '${param.areaCode}',
+            keyword: '${param.keyword}'
         });
     }
-});
-
-// 결제 사이트 링크 클릭 시 이벤트 전파 방지
-document.querySelectorAll('.booking-site-item').forEach(function(item) {
-    item.addEventListener('click', function(e) {
-        e.stopPropagation();
-    });
-});
-
-// 숙소 북마크 토글
-function toggleAccommodationBookmark(e, btn) {
-    e.stopPropagation();
-
-    if (!isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            window.location.href = '${pageContext.request.contextPath}/member/login';
-        }
-        return;
-    }
-
-    btn.classList.toggle('active');
-    const icon = btn.querySelector('i');
-
-    if (btn.classList.contains('active')) {
-        icon.className = 'bi bi-bookmark-fill';
-        showToast('북마크에 추가되었습니다.', 'success');
-    } else {
-        icon.className = 'bi bi-bookmark';
-        showToast('북마크가 해제되었습니다.', 'info');
-    }
-}
-
-// ==================== 인피니티 스크롤 ====================
-var accomCurrentPage = 1;
-var accomIsLoading = false;
-var accomHasMore = true;
-var accomTotalPages = 4;
-
-// 추가 숙소 데모 데이터
-var additionalAccommodations = [
-    {
-        id: 7,
-        name: '제주 히든클리프 호텔',
-        type: '호텔',
-        location: '제주 서귀포시',
-        image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&h=300&fit=crop&q=80',
-        rating: 4.6,
-        reviews: 312,
-        price: 165000,
-        originalPrice: 195000
-    },
-    {
-        id: 8,
-        name: '스테이폴리오 제주',
-        type: '펜션',
-        location: '제주 제주시',
-        image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?w=400&h=300&fit=crop&q=80',
-        rating: 4.9,
-        reviews: 87,
-        price: 280000,
-        originalPrice: null
-    },
-    {
-        id: 9,
-        name: '제주 오션뷰 리조트',
-        type: '리조트',
-        location: '제주 서귀포시',
-        image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=400&h=300&fit=crop&q=80',
-        rating: 4.7,
-        reviews: 456,
-        price: 198000,
-        originalPrice: 250000
-    }
-];
-
-// 페이지 로드시 인피니티 스크롤 초기화
-document.addEventListener('DOMContentLoaded', function() {
-    initAccomInfiniteScroll();
-});
-
-function initAccomInfiniteScroll() {
-    var loader = document.getElementById('accomScrollLoader');
-    if (!loader) return;
-
-    var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting && !accomIsLoading && accomHasMore) {
-                loadMore();
-            }
-        });
-    }, {
-        root: null,
-        rootMargin: '100px',
-        threshold: 0
-    });
-
-    observer.observe(loader);
-}
-
-function loadMore() {
-    if (accomIsLoading || !accomHasMore) return;
-
-    accomIsLoading = true;
-    document.getElementById('accomScrollLoader').style.display = 'flex';
-
-    setTimeout(function() {
-        accomCurrentPage++;
-
-        if (accomCurrentPage > accomTotalPages) {
-            accomHasMore = false;
-            document.getElementById('accomScrollLoader').style.display = 'none';
-            document.getElementById('accomScrollEnd').style.display = 'block';
-            accomIsLoading = false;
-            return;
-        }
-
-        var grid = document.querySelector('.accommodation-grid');
-        var accommodationsToAdd = getAccommodationsForPage(accomCurrentPage);
-
-        accommodationsToAdd.forEach(function(accom, index) {
-            var accomHtml = createAccommodationCard(accom);
-            var tempDiv = document.createElement('div');
-            tempDiv.innerHTML = accomHtml;
-            var newCard = tempDiv.firstElementChild;
-
-            newCard.style.opacity = '0';
-            newCard.style.transform = 'translateY(20px)';
-            grid.appendChild(newCard);
-
-            setTimeout(function() {
-                newCard.style.transition = 'all 0.4s ease';
-                newCard.style.opacity = '1';
-                newCard.style.transform = 'translateY(0)';
-            }, index * 100);
-        });
-
-        accomIsLoading = false;
-    }, 800);
-}
-
-function getAccommodationsForPage(page) {
-    var accommodations = [];
-    for (var i = 0; i < 3; i++) {
-        var dataIndex = ((page - 2) * 3 + i) % additionalAccommodations.length;
-        var accom = Object.assign({}, additionalAccommodations[dataIndex]);
-        accom.id = 6 + (page - 2) * 3 + i + 1;
-        accommodations.push(accom);
-    }
-    return accommodations;
-}
-
-function createAccommodationCard(data) {
-    var badgeHtml = data.originalPrice ? '<span class="accommodation-badge">특가</span>' : '';
-
-    return '<div class="accommodation-card" data-accommodation-id="' + data.id + '">' +
-        '<div class="accommodation-image">' +
-            '<img src="' + data.image + '" alt="' + data.name + '">' +
-            badgeHtml +
-            '<button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">' +
-                '<i class="bi bi-bookmark"></i>' +
-            '</button>' +
-        '</div>' +
-        '<div class="accommodation-body">' +
-            '<div class="accommodation-rating">' +
-                '<i class="bi bi-star-fill"></i>' +
-                '<span>' + data.rating + '</span>' +
-                '<span class="review-count">(' + data.reviews.toLocaleString() + ')</span>' +
-            '</div>' +
-            '<h3 class="accommodation-name">' + data.name + '</h3>' +
-            '<p class="accommodation-location">' +
-                '<i class="bi bi-geo-alt"></i> ' + data.location +
-            '</p>' +
-            '<div class="accommodation-amenities">' +
-                '<span class="amenity"><i class="bi bi-wifi"></i> 무료 와이파이</span>' +
-                '<span class="amenity"><i class="bi bi-p-circle"></i> 주차</span>' +
-            '</div>' +
-            '<div class="accommodation-price-row">' +
-                '<div class="accommodation-price">' +
-                    '<span class="price-label">최저가</span>' +
-                    '<span class="price">' + data.price.toLocaleString() + '원</span>' +
-                    '<span class="per-night">/ 1박</span>' +
-                '</div>' +
-                '<button class="btn btn-primary btn-sm accommodation-select-btn" onclick="toggleAccommodationDropdown(event, ' + data.id + ')">' +
-                    '결제 <i class="bi bi-chevron-down"></i>' +
-                '</button>' +
-            '</div>' +
-        '</div>' +
-        '<div class="accommodation-booking-dropdown" id="accommodationDropdown' + data.id + '">' +
-            '<div class="booking-dropdown-content">' +
-                '<div class="room-options">' +
-                    '<div class="room-option">' +
-                        '<div class="room-option-info">' +
-                            '<h6>스탠다드룸</h6>' +
-                            '<p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 35㎡</p>' +
-                        '</div>' +
-                        '<div class="room-option-price">' +
-                            '<span class="price">' + data.price.toLocaleString() + '원</span>' +
-                            '<span class="per-night">/ 1박</span>' +
-                        '</div>' +
-                        '<a href="${pageContext.request.contextPath}/product/accommodation/' + data.id + '/booking?room=standard" class="btn btn-primary btn-sm">결제</a>' +
-                    '</div>' +
-                    '<div class="room-option">' +
-                        '<div class="room-option-info">' +
-                            '<h6>디럭스룸</h6>' +
-                            '<p><i class="bi bi-people"></i> 2인 / <i class="bi bi-arrows-angle-expand"></i> 45㎡</p>' +
-                        '</div>' +
-                        '<div class="room-option-price">' +
-                            '<span class="price">' + Math.round(data.price * 1.3).toLocaleString() + '원</span>' +
-                            '<span class="per-night">/ 1박</span>' +
-                        '</div>' +
-                        '<a href="${pageContext.request.contextPath}/product/accommodation/' + data.id + '/booking?room=deluxe" class="btn btn-primary btn-sm">결제</a>' +
-                    '</div>' +
-                '</div>' +
-            '</div>' +
-        '</div>' +
-    '</div>';
-}
-
-// 검색 폼 제출
-document.getElementById('accommodationSearchForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const destination = document.getElementById('destination').value;
-
-    if (!destination) {
-        showToast('목적지를 입력해주세요.', 'error');
-        return;
-    }
-
-    showToast('숙소를 검색하고 있습니다...', 'info');
 });
 </script>
 

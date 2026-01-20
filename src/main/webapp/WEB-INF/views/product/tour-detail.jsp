@@ -227,31 +227,58 @@
                     <form class="booking-form" id="bookingForm">
                         <div class="form-group">
                             <label class="form-label">날짜 선택</label>
-                            <input type="text" class="form-control date-picker" id="bookingDate"
+                            <input type="text" class="form-control booking-date-picker" id="bookingDate"
                                    placeholder="날짜를 선택하세요" required>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">시간 선택</label>
                             <select class="form-control form-select" id="bookingTime" required>
-                                <option value="">시간을 선택하세요</option>
-                                <option value="09:00">09:00</option>
-                                <option value="10:00">10:00</option>
-                                <option value="11:00">11:00</option>
-                                <option value="14:00">14:00</option>
-                                <option value="15:00">15:00</option>
-                                <option value="16:00">16:00</option>
-                            </select>
+						        <option value="">시간을 선택하세요</option>
+						        <c:choose>
+						            <c:when test="${not empty availableTimes}">
+						                <c:forEach items="${availableTimes}" var="timeInfo">
+						                    <option value="${timeInfo.rsvtAvailableTime}">${timeInfo.rsvtAvailableTime}</option>
+						                </c:forEach>
+						            </c:when>
+						            <c:otherwise>
+						                <!-- 등록된 시간이 없을 경우 기본값 -->
+						                <option value="09:00">09:00</option>
+						                <option value="10:00">10:00</option>
+						                <option value="11:00">11:00</option>
+						                <option value="14:00">14:00</option>
+						                <option value="15:00">15:00</option>
+						                <option value="16:00">16:00</option>
+						            </c:otherwise>
+						        </c:choose>
+						    </select>
                         </div>
 
                         <div class="form-group">
                             <label class="form-label">인원 선택</label>
-                            <select class="form-control form-select" id="bookingPeople" onchange="updateTotal()">
-                                <option value="1">1명</option>
-                                <option value="2" selected>2명</option>
-                                <option value="3">3명</option>
-                                <option value="4">4명</option>
-                            </select>
+						    <select class="form-control form-select" id="bookingPeople" onchange="updateTotal(); checkGroupBooking();">
+						        <c:set var="minPeople" value="${info.prodMinPeople != null ? info.prodMinPeople : 1}" />
+						        <c:set var="maxPeople" value="${info.prodMaxPeople != null ? info.prodMaxPeople : 10}" />
+						        
+						        <c:choose>
+						            <c:when test="${maxPeople >= 5}">
+						                <c:forEach begin="${minPeople}" end="4" var="i">
+						                    <option value="${i}" ${i == 2 ? 'selected' : ''}>${i}명</option>
+						                </c:forEach>
+						                <option value="5+">5명 이상</option>
+						            </c:when>
+						            <c:otherwise>
+						                <c:forEach begin="${minPeople}" end="${maxPeople}" var="i">
+						                    <option value="${i}" ${i == 2 || (i == minPeople && minPeople > 2) ? 'selected' : ''}>${i}명</option>
+						                </c:forEach>
+						            </c:otherwise>
+						        </c:choose>
+						    </select>
+						    
+						    <div class="group-booking-notice" id="groupBookingNotice" style="display: none;">
+						        <i class="bi bi-info-circle me-1"></i>
+						        5명 이상 단체 예약은 하단의 <a href="javascript:void(0)" onclick="scrollToInquiry()">판매자 문의</a>를 이용해주세요.
+						    </div>
                         </div>
 
                         <div class="booking-total">
@@ -862,13 +889,16 @@ var isLoggedIn = ${not empty sessionScope.loginMember};
 var totalReviewCount = ${reviewStat.reviewCount != null ? reviewStat.reviewCount : 0};
 var totalInquiryCount = ${inquiryCount != null ? inquiryCount : 0};
 var placeAddr1 = '${place.addr1}';
-var placeAddr2 = '${place.addr2}';
+var saleEndDt = '<fmt:formatDate value="${tp.saleEndDt}" pattern="yyyy-MM-dd"/>';
+var minPeople = ${info.prodMinPeople != null ? info.prodMinPeople : 1};
+var maxPeople = ${info.prodMaxPeople != null ? info.prodMaxPeople : 10};
 
 // 현재 상품 정보
 const currentProduct = {
     id: '${tp.tripProdNo}',
     name: '${tp.tripProdTitle}',
     price: ${sale != null ? sale.price : 0},
+    location: '${tp.ctyNm}',
     image: <c:choose>
         <c:when test="${not empty productImages}">'${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}'</c:when>
         <c:otherwise>'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80'</c:otherwise>

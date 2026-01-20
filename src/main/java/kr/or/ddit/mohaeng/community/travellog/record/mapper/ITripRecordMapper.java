@@ -23,23 +23,6 @@ public interface ITripRecordMapper {
     void increaseViewCnt(long rcdNo);
     Long selectWriterMemNo(long rcdNo);
 
-    // ===== 블록(SEQ/TXT/IMG) =====
-    Long nextConnNo(); // SEQ_TRIP_RECORD_CONN.NEXTVAL (너희 시퀀스명에 맞게 XML에서 사용)
-
-    int insertTripRecordSeq(@Param("connNo") long connNo,
-                            @Param("rcdNo") long rcdNo,
-                            @Param("order") int order);
-
-    // TXT: PK(VARCHAR2)는 SQL에서 SYS_GUID()로 생성
-    int insertTripRecordTxt(@Param("connNo") long connNo,
-                            @Param("text") String text);
-
-    // IMG: PK(VARCHAR2)는 SQL에서 SYS_GUID()로 생성
-    // attachNo는 TRIP_RECORD_IMG.RCD_IMG 로 들어감
-    int insertTripRecordImg(@Param("connNo") long connNo,
-                            @Param("attachNo") Long attachNo,
-                            @Param("desc") String desc);
-
     // 커버(대표이미지) attachNo 업데이트
     int updateCoverAttachNo(@Param("rcdNo") long rcdNo,
                             @Param("attachNo") Long attachNo);
@@ -69,5 +52,42 @@ public interface ITripRecordMapper {
     
     int insertHashtags(@org.apache.ibatis.annotations.Param("rcdNo") long rcdNo,
             @org.apache.ibatis.annotations.Param("tags") java.util.List<String> tags);
+    
+    long nextConnNo();
+
+    int insertTripRecordSeq(
+        @Param("connNo") long connNo,
+        @Param("rcdNo") long rcdNo,
+        @Param("order") int order,
+        @Param("blockType") String blockType,
+        @Param("targetPk") String targetPk   // ✅ String
+    );
+
+    long nextTourPlaceReviewSeq();
+
+    int insertTourPlaceReview(@Param("placeReviewNo") String placeReviewNo,
+            @Param("rcdConnNo") long rcdConnNo,
+            @Param("memNo") long memNo,
+            @Param("plcNo") Long plcNo,
+            @Param("reviewConn") String reviewConn,
+            @Param("rating") double rating
+    );
+    
+    int insertTripRecordTxt(
+        @Param("connNo") long connNo,
+        @Param("text") String text
+    );
+
+    int insertTripRecordImg(
+        @Param("connNo") long connNo,
+        @Param("attachNo") Long attachNo,
+        @Param("desc") String desc
+    );
+    
+    void upsertHashtagText(@org.apache.ibatis.annotations.Param("rcdNo") long rcdNo,
+            @org.apache.ibatis.annotations.Param("tagText") String tagText);
+
+    List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO> selectTripRecordBlocks(@Param("rcdNo") long rcdNo);
+
 
 }

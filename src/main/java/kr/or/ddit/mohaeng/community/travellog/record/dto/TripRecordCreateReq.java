@@ -28,4 +28,7 @@ public class TripRecordCreateReq {
     private String replyEnblYn;  // Y/N
     
     private List<String> tags;
+    
+    private Long coverAttachNo; // ✅ 일정 attach 커버용
+
 }

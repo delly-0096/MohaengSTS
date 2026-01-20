@@ -150,6 +150,10 @@ public interface IMemberService {
 
 	public void updateJoinCompleteYn(int memNo, String string);
 
+	public MemberVO selectByMemNo(int memNo);
+
+	public MemUserVO selectMemUserByMemNo(int memNo);
+
 
 
 

@@ -2,7 +2,7 @@ package kr.or.ddit.mohaeng.community.chat.enums;
 
 public enum ChatMessageType {
 
-    TEXT("일반 메시지"),
+    CHAT("일반 메시지"),
     ENTER("입장"),
     LEAVE("퇴장"),
     IMAGE("이미지"),

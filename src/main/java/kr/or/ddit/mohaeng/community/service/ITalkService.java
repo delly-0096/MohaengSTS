@@ -8,6 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.vo.BoardFileVO;
 import kr.or.ddit.mohaeng.vo.BoardVO;
+import kr.or.ddit.mohaeng.vo.LikesVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 
 public interface ITalkService {
@@ -32,6 +33,8 @@ public interface ITalkService {
 	public BoardFileVO getFileInfo(int fileNo);
 
 	public int saveFileList(List<MultipartFile> boardFile, Map<String, String> uploadInfo, int int1);
+
+	public ServiceResult toggleLike(LikesVO likesVO);
 		
 
 }

@@ -22,8 +22,38 @@
             <!-- 썸네일 영역 -->
             <div class="schedule-thumbnail-section">
                 <div class="schedule-thumbnail" id="scheduleThumbnail">
-                    <img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=300&fit=crop&q=80"
-                         alt="일정 썸네일" id="thumbnailImage">
+                    <c:choose>
+                        <c:when test="${schedule.linkThumbnail != null && schedule.linkThumbnail != ''}">
+                            <img src="${schedule.linkThumbnail}" alt="일정 썸네일" id="thumbnailImage">
+                        </c:when>
+                        <c:when test="${schedule.attachNo != null && schedule.attachNo != 0}">
+                            <img src="${pageContext.request.contextPath }/file/searchthumbnail?path=${schedule.attachFile.filePath}" alt="일정 썸네일" id="thumbnailImage">
+                        </c:when>
+                        <c:otherwise>
+                            <%-- 이미지를 찾았는지 확인할 플래그 변수 선언 --%>
+                            <c:set var="imageFound" value="false" />
+                            <c:forEach items="${schedule.tripScheduleDetailsList}" var="detail">
+                                <%-- 이미 이미지를 찾았다면 더 이상 안쪽 로직을 수행하지 않음 --%>
+                                <c:if test="${not imageFound}">
+                                    <c:forEach items="${detail.tripSchedulePlaceList}" var="place">
+                                        <c:if test="${not imageFound}">
+                                            <%-- 1. 첨부파일이 있는 경우 --%><!-- 해당 케이스 미정 -->
+                                            <c:if test="${place.tourPlace.attachNo != null && place.tourPlace.attachNo != 0}">
+                                                <img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=200&h=150&fit=crop&q=80" alt="일정 썸네일" id="thumbnailImage">
+                                                <c:set var="imageFound" value="true" /> <%-- 찾았으므로 true로 변경 --%>
+                                            </c:if>
+                                            
+                                            <%-- 2. 기본 이미지가 있는 경우 --%>
+                                            <c:if test="${place.tourPlace.attachNo == null || place.tourPlace.attachNo == 0}">
+                                                <img src="${place.tourPlace.defaultImg}" alt="일정 썸네일" id="thumbnailImage">
+                                                <c:set var="imageFound" value="true" /> <%-- 찾았으므로 true로 변경 --%>
+                                            </c:if>
+                                        </c:if>
+                                    </c:forEach>
+                                </c:if>
+                            </c:forEach>
+                        </c:otherwise>
+                    </c:choose>
                     <button class="thumbnail-change-btn" onclick="openThumbnailModal()">
                         <i class="bi bi-camera"></i>
                         <span>썸네일 변경</span>
@@ -191,7 +221,7 @@
             <a href="${pageContext.request.contextPath}/schedule/my" class="btn btn-outline btn-lg">
                 <i class="bi bi-list me-2"></i>목록으로
             </a>
-            <a href="${pageContext.request.contextPath}/schedule/planner?id=${schedule.schdlNo}" class="btn btn-primary btn-lg">
+            <a href="${pageContext.request.contextPath}/schedule/planner/${schedule.schdlNo}" class="btn btn-primary btn-lg">
                 <i class="bi bi-pencil me-2"></i>일정 수정하기
             </a>
         </div>
@@ -839,6 +869,7 @@ var selectedThumbnailUrl = null;
 var defaultThumbnailYn = null;
 var uploadedImageData = null;
 var thumbnailModal = null;
+let file = null;
 
 // 썸네일 모달 열기
 function openThumbnailModal() {
@@ -867,14 +898,13 @@ function selectThumbnailOption(element) {
     // 이미지 URL 저장
     selectedThumbnailUrl = element.querySelector('img').src;
     defaultThumbnailYn = element.querySelector('img').getAttribute('data-default');
-    console.log(defaultThumbnailYn);
     uploadedImageData = null; // 업로드 이미지 초기화
 
 }
 
 // 썸네일 업로드 처리
 function handleThumbnailUpload(input) {
-    var file = input.files[0];
+    file = input.files[0];
     if (!file) return;
 
     // 파일 크기 체크 (5MB)
@@ -912,6 +942,8 @@ function handleThumbnailUpload(input) {
             opt.classList.remove('selected');
         });
     };
+
+    defaultThumbnailYn = 'N';
     reader.readAsDataURL(file);
 }
 
@@ -943,18 +975,24 @@ function saveThumbnail() {
     // 모달 닫기
     thumbnailModal.hide();
 
+    let formData = new FormData();
+    formData.append("schdlNo", '${schedule.schdlNo}');
+    formData.append("linkThumbnail", newThumbnailUrl);
+    formData.append("defaultYn", defaultThumbnailYn);
+    console.log(defaultThumbnailYn);
+    formData.append("memNo", '${sessionScope.loginMember.memNo}');
+
+    if(file != null){
+        formData.append("thumbnailFile", file);
+    }
+
     // 실제 서버 저장 로직 (AJAX)
     // TODO: 서버에 썸네일 URL 또는 이미지 데이터 전송
     fetch(`${pageContext.request.contextPath}/schedule/thumbnail/update`, {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-            schdlNo: '${schedule.schdlNo}',
-            thumbnailData: newThumbnailUrl,
-            defaultYn: defaultThumbnailYn
-        })
+        body: formData
     }).then(response => response.json())
     .then(data => {
         console.log('서버 응답:', data);
@@ -1042,24 +1080,6 @@ function shareSchedule() {
     }
 }
 
-// function toggleScheduleViewBookmark(button) {
-//     var icon = button.querySelector('i');
-//     if (icon.classList.contains('bi-bookmark')) {
-//         icon.classList.remove('bi-bookmark');
-//         icon.classList.add('bi-bookmark-fill');
-//         button.innerHTML = '<i class="bi bi-bookmark-fill me-1"></i>북마크됨';
-//         if (typeof showToast === 'function') {
-//             showToast('북마크에 추가되었습니다.', 'success');
-//         }
-//     } else {
-//         icon.classList.remove('bi-bookmark-fill');
-//         icon.classList.add('bi-bookmark');
-//         button.innerHTML = '<i class="bi bi-bookmark me-1"></i>북마크';
-//         if (typeof showToast === 'function') {
-//             showToast('북마크가 해제되었습니다.', 'info');
-//         }
-//     }
-// }
 async function toggleScheduleViewBookmark(button) {
     var icon = button.querySelector('i');
 
@@ -1118,6 +1138,29 @@ async function deleteSchedule() {
     }
 }
 </script>
+
+
+<div id="schedulePayload" data-b64="${fn:escapeXml(scheduleJsonB64)}" style="display:none;"></div>
+<script>
+(function(){
+  try {
+    const el = document.getElementById('schedulePayload');
+    const b64 = el ? el.dataset.b64 : '';
+    const safeB64 = (b64 || '').replace(/ /g, '+');
+
+    // ✅ base64 -> bytes -> utf-8 string
+    const bin = atob(safeB64);
+    const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+    const jsonText = new TextDecoder('utf-8').decode(bytes);
+
+    window.__SCHEDULE__ = JSON.parse(jsonText);
+  } catch(e) {
+    console.error('[schedule/view] failed to init __SCHEDULE__', e);
+    window.__SCHEDULE__ = null;
+  }
+})();
+</script>
+
 
 <c:set var="pageJs" value="schedule" />
 <%@ include file="../common/footer.jsp" %>

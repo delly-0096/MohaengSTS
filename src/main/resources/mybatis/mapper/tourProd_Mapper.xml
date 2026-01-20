@@ -31,6 +31,7 @@
                     s.LEAD_TIME,
                     s.TOTAL_STOCK,
                     s.CUR_STOCK,
+				    i.PROD_MIN_PEOPLE,
                     r.AVG_RATING,
                     r.REVIEW_COUNT,
                     r.RECOMMEND_COUNT,

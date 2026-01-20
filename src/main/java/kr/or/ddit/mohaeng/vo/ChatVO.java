@@ -40,4 +40,8 @@ public class ChatVO {
 	 * 메시지타입(메시지, 파일...)
 	 */
 	private ChatMessageType chatType;
+	/**
+	 * 채팅방에서 쓰는 닉네임
+	 */
+	private String memNickname;
 }

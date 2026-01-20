@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 
+import kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController.ThumbnailData;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
 import kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO;
@@ -52,4 +53,25 @@ public interface ITripScheduleMapper {
 
 	public void deleteSchedulePlace(int schdlNo);
 
+	public int updateScheduleThumbnail(ThumbnailData thumbnailData);
+
+	public List<Params> tourContentList();
+
+	public void scheduleOngoing();
+
+	public void scheduleCompleted();
+
+	public List<TourPlaceVO> selectPopularPlaceList(List<Map<String, String>> tourPlaceList);
+
+	public List<TourPlaceVO> searchTourPlaceList(int rgnNo);
+	
+	public List<Params> selectTripStyleList(String[] tripStyleCatList);
+
+	public List<TourPlaceVO> selectTargetPlaceList();
+
+	public List<Params> searchEmptyStyleKeywordPlace();
+
+	public int insertTourKeywords(List<Map<String, Object>> resultList);
+
+	public List<TourPlaceVO> selectStyleMatchPlace(Params params);
 }

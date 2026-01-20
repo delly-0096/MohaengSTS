@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.community.chat.service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -8,18 +9,27 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.community.chat.dto.ChatMessageDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomCreateRequestDTO;
 import kr.or.ddit.mohaeng.community.chat.dto.ChatRoomResponseDTO;
 import kr.or.ddit.mohaeng.community.chat.mapper.IChatMapper;
+import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.ChatRoomVO;
 import kr.or.ddit.mohaeng.vo.ChatUserVO;
+import kr.or.ddit.mohaeng.vo.ChatVO;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class ChatServiceImpl implements IChatService{
 
+	@Autowired
+	private IFileService fileService;
+	
 	@Autowired
 	private IChatMapper chatMapper;
 	
@@ -31,9 +41,9 @@ public class ChatServiceImpl implements IChatService{
 	 *	@return 
 	 */
 	@Override
-	public List<ChatRoomResponseDTO> getChatRooms(String category) {
+	public List<ChatRoomResponseDTO> getChatRooms(String category, String memId) {
 		
-		List<ChatRoomVO> rooms = chatMapper.selectChatRooms(category);
+		List<ChatRoomVO> rooms = chatMapper.selectChatRooms(category, memId);
 		
 		return rooms.stream().map(room -> {
 			ChatRoomResponseDTO res = new ChatRoomResponseDTO();
@@ -46,6 +56,7 @@ public class ChatServiceImpl implements IChatService{
 	        res.setCreatedByNickname(room.getCreatedByNickname());
 	        res.setCreatedById(room.getCreatedById());
 	        res.setFull(room.getCurrentUsers() >= room.getChatMax());
+	        res.setUnreadCount(room.getUnreadCount());
 	        
 	        return res;
 		}).toList();
@@ -189,7 +200,112 @@ public class ChatServiceImpl implements IChatService{
 		chatMapper.insertMessage(message);
 	}
 
+	/**
+	 *	<p> 지난 채팅 내역 불러오기 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	@Override
+	public List<ChatVO> getChatMessagesByRoomId(Long chatId) {
+		return chatMapper.getChatMessageByRoomId(chatId);
+	}
+
+	/**
+	 *	<p> HOST 퇴장 시 채팅방 삭제 </p>
+	 *	@date 2026.01.14
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	@Override
+	@Transactional
+	public boolean processLeaveOrDestroy(Long chatId, String memId, int memNo) {
+		
+		ChatRoomVO room = chatMapper.getChatRoomById(chatId);
+	    
+	    // 2. 방장 여부 확인 (DB의 REG_ID 컬럼과 현재 사용자의 memId 비교)
+		if (room != null && room.getRegId() != null && room.getRegId().equals(memId)) {
+	        chatMapper.deleteAllChatUsersByRoomId(chatId);    // 참여자 전체 삭제
+	        chatMapper.deleteAllChatMessagesByRoomId(chatId); // 메시지 CHAT_DEL = 'Y'
+	        chatMapper.deleteChatRoomPermanently(chatId);    // 방 자체 삭제
+	        return true; 
+	        
+	    } else {
+	        Map<String, Object> params = new HashMap<>();
+	        params.put("chatId", chatId);
+	        params.put("memId", memId);
+	        params.put("memNo", memNo);
+	        
+	        chatMapper.exitChatUser(params); 
+	        return false; 
+	    }
+	}
 	
-	
-	
+	/**
+	 *	<p> 마지막 메시지 갱신  </p>
+	 *	@date 2026.01.15
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	@Override
+	@Transactional
+	public void syncLastMsgId(Long chatId, String memId) {
+		// 해당 방의 마지막 메시지 번호 조회
+		int lastMsgId = chatMapper.getLatestMsgId(chatId);
+		
+		// 내 LAST_MSG_ID 업데이트
+		if(lastMsgId > 0) {
+			chatMapper.updateLastMsgId(chatId, memId, lastMsgId);
+			log.info("✅ 유저[{}]의 최종 읽은 메시지 번호 갱신: {}", memId, lastMsgId);
+		}
+		
+	}
+
+	/**
+	 *	<p> 채팅방 입장 시 최신 메시지 갱신  </p>
+	 *	@date 2026.01.15
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	@Override
+	public void updateLastReadMessage(Long chatId, String memId) {
+		chatMapper.updateLastReadMessage(chatId, memId);
+	}
+
+	/**
+	 *	<p> 채팅방 파일 업로드 </p>
+	 *	@date 2026.01.15
+	 *	@author kdrs
+	 *	@param chatId 채팅방 각각의 id
+	 *	@return 
+	 */
+	@Override
+	@Transactional
+	public Map<String, Object> uploadChatFile(MultipartFile file, Long chatId, int memNo) {
+		
+		int attachNo = fileService.saveFiles(Collections.singletonList(file), "chat", "CHAT", memNo);
+	    
+	    Map<String, Object> result = new HashMap<>();
+	    if (attachNo > 0) {
+	        // 2. 상세 정보 조회를 통해 DB에 저장된 실제 경로 가져오기
+	        List<AttachFileDetailVO> details = fileService.getAttachFileDetails(attachNo);
+	        if (details != null && !details.isEmpty()) {
+	            AttachFileDetailVO detail = details.get(0);
+	            
+	            result.put("success", true);
+	            result.put("fileUrl", "/upload" + detail.getFilePath()); 
+	            result.put("originName", detail.getFileOriginalName());
+	            result.put("fileSize", detail.getFileSize());
+	            result.put("fileExt", detail.getFileExt());
+	            result.put("attachNo", detail.getAttachNo()); 
+	        }
+	    } else {
+	        result.put("success", false);
+	    }
+	    return result;
+	}
 }

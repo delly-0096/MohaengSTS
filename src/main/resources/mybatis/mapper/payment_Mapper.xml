@@ -30,4 +30,48 @@
 	        , #{resMsg}, #{payRawData, jdbcType=CLOB}
 	    )
 	</insert>
+	
+	<!-- 포인트 적립 -->
+	<update id="insertPoint" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+		UPDATE member
+			SET
+			    point = point + #{point}
+			WHERE
+		        mem_no = #{memNo}
+	</update>
+	
+	<!-- 포인트 사용 -->
+	<update id="updatePoint" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
+		UPDATE member
+			SET
+			    point = point - #{point}
+			WHERE
+		        mem_no = #{memNo}
+	</update>
+	
+	<!-- 투어 상품 목록 저장 -->
+	<insert id="insertTripProdList" parameterType="kr.or.ddit.mohaeng.vo.TripProdListVO">
+	    <selectKey keyProperty="prodListNo" resultType="int" order="BEFORE">
+	        SELECT NVL(MAX(PROD_LIST_NO), 0) + 1 FROM TRIP_PROD_LIST
+	    </selectKey>
+	    INSERT INTO TRIP_PROD_LIST (
+	        PROD_LIST_NO, PAY_NO, TRIP_PROD_NO,
+	        UNIT_PRICE, DISCOUNT_AMT, PAY_PRICE, QUANTITY,
+	        RESV_DT, USE_TIME, RSV_MEMO
+	    ) VALUES (
+	        #{prodListNo}, #{payNo}, #{tripProdNo},
+	        #{unitPrice}, #{discountAmt}, #{payPrice}, #{quantity},
+	        TO_DATE(#{resvDt}, 'YYYY-MM-DD'), #{useTime}, #{rsvMemo}
+	    )
+	</insert>
+
+	<!-- 마케팅 동의 업데이트 -->
+	<update id="updateMktAgree" parameterType="int">
+		UPDATE MEMBER_TERMS_AGREE
+		SET MARKETING_YN = 'Y',
+			UDT_DT = SYSDATE
+		WHERE MEM_NO = #{memNo}
+		  AND MARKETING_YN = 'N'
+	</update>
+	
 </mapper>

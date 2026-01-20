@@ -9,6 +9,7 @@ import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -27,6 +28,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices;
 import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -41,8 +44,6 @@ import kr.or.ddit.mohaeng.security.CustomUserDetailsService;
 import kr.or.ddit.mohaeng.util.TokenProvider;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.http.HttpMethod;
 
 @Slf4j
 @Configuration
@@ -72,25 +73,30 @@ public class SecurityConfig {
 			"/member/find",
 			"/member/idCheck",
 			"/member/find",
+			"/member/find/id",
+			"/member/find/password",
+			"/member/sns/**",
 			"/mypage/profile",
 			"/mypage/business/profile",
 			"/mypage/profile/update",
 			"/mypage/profile/checkPassword",
 			"/mypage/profile/withdraw",
-			"/member/find/id",
-			"/member/find/password",
-			"/member/sns/**",
 			"/idCheck",
 			"/error",
 			"/api/chatbot",
 			"/tour",
 			"/tour/**",
 			"/schedule/search",
+			"/schedule/rcmd-result",
 			"/schedule/planner",
 			"/schedule/common/**",
+			"/product/accmmodation",
+			"/product/accmmodation-booking",
+			"/product/accmmodation-detail",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
+			"/batch/load-acc-detail"
 	};
 
 	// 일반회원 허용 url test
@@ -99,6 +105,9 @@ public class SecurityConfig {
 			"/error",
 			"/mohaeng",
 			"/schedule/**",
+			"/product/accmmodation",
+			"/product/accmmodation-booking",
+			"/product/accmmodation-detail",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/oauth2/**",
 			"/login/oauth2/**"
@@ -227,6 +236,7 @@ public class SecurityConfig {
          )
         .formLogin(form -> form.disable())
         .httpBasic(hbasic -> hbasic.disable());
+	    http.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()));
 
     http.exceptionHandling(exception ->
         exception.accessDeniedHandler(new CustomAccessDeniedHandler())
@@ -326,6 +336,11 @@ public class SecurityConfig {
 	    service.setParameter("remember-me"); // 체크박스 name값
 	    service.setTokenValiditySeconds(604800); // 7일
 	    return service;
+	}
+	
+	@Bean
+	protected RequestCache requestCache() {
+	    return new HttpSessionRequestCache();
 	}
 
 }

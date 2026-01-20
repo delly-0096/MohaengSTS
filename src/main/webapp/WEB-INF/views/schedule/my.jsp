@@ -42,22 +42,22 @@
             <ul class="nav nav-pills gap-2">
                 <li class="nav-item">
                     <a class="nav-link active" href="#" data-filter="all">
-                        <i class="bi bi-grid-3x3-gap me-2"></i>전체 <span class="badge bg-primary ms-1">3</span>
+                        <i class="bi bi-grid-3x3-gap me-2"></i>전체 <span class="badge bg-primary ms-1" id="allCount">3</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#" data-filter="upcoming">
-                        <i class="bi bi-airplane me-2"></i>다가오는 여행 <span class="badge bg-primary ms-1">2</span>
+                        <i class="bi bi-airplane me-2"></i>다가오는 여행 <span class="badge bg-primary ms-1" id="upcomingCount">2</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#" data-filter="ongoing">
-                        <i class="bi bi-play-circle me-2"></i>진행중 <span class="badge bg-primary ms-1">0</span>
+                        <i class="bi bi-play-circle me-2"></i>진행중 <span class="badge bg-primary ms-1" id="ongoingCount">0</span>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#" data-filter="completed">
-                        <i class="bi bi-check-circle me-2"></i>완료된 여행 <span class="badge bg-primary ms-1">1</span>
+                        <i class="bi bi-check-circle me-2"></i>완료된 여행 <span class="badge bg-primary ms-1" id="completedCount">1</span>
                     </a>
                 </li>
             </ul>
@@ -67,11 +67,50 @@
         <div class="schedule-grid" id="scheduleGrid">
             <!-- 다가오는 여행 -->
             <c:forEach var="schedule" items="${scheduleList}">
-                <div class="schedule-card" data-status="upcoming" data-schdl-no="${schedule.schdlNo}">
+                <c:set var="scheduleStatus" value="${fn:toLowerCase(schedule.schdlStatus.toLowerCase())}" />
+                <div class="schedule-card" data-status="${scheduleStatus}" data-schdl-no="${schedule.schdlNo}">
 
                     <div class="schedule-card-image">
-                        <img src="${schedule.thumbnail}" alt="썸네일">
-                        <span class="schedule-card-status upcoming">D-8</span>
+                        <%-- <img src="${schedule.thumbnail}" alt="썸네일"> --%>
+                        <c:choose>
+                            <c:when test="${schedule.linkThumbnail != null && schedule.linkThumbnail != ''}">
+                                <img src="${schedule.linkThumbnail}" alt="일정 썸네일" id="thumbnailImage">
+                            </c:when>
+                            <c:when test="${schedule.attachNo != null && schedule.attachNo != 0}">
+                                <img src="${pageContext.request.contextPath }/file/searchthumbnail?path=${schedule.attachFile.filePath}" alt="일정 썸네일" id="thumbnailImage">
+                            </c:when>
+                            <c:otherwise>
+                                <%-- 이미지를 찾았는지 확인할 플래그 변수 선언 --%>
+                                <c:set var="imageFound" value="false" />
+                                <c:forEach items="${schedule.tripScheduleDetailsList}" var="detail">
+                                    <%-- 이미 이미지를 찾았다면 더 이상 안쪽 로직을 수행하지 않음 --%>
+                                    <c:if test="${not imageFound}">
+                                        <c:forEach items="${detail.tripSchedulePlaceList}" var="place">
+                                            <c:if test="${not imageFound}">
+                                                <%-- 1. 첨부파일이 있는 경우 --%><!-- 해당 케이스 미정 -->
+                                                <c:if test="${place.tourPlace.attachNo != null && place.tourPlace.attachNo != 0}">
+                                                    <img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=200&h=150&fit=crop&q=80" alt="일정 썸네일" id="thumbnailImage">
+                                                    <c:set var="imageFound" value="true" /> <%-- 찾았으므로 true로 변경 --%>
+                                                </c:if>
+                                                
+                                                <%-- 2. 기본 이미지가 있는 경우 --%>
+                                                <c:if test="${place.tourPlace.attachNo == null || place.tourPlace.attachNo == 0}">
+                                                    <img src="${place.tourPlace.defaultImg}" alt="일정 썸네일" id="thumbnailImage">
+                                                    <c:set var="imageFound" value="true" /> <%-- 찾았으므로 true로 변경 --%>
+                                                </c:if>
+                                            </c:if>
+                                        </c:forEach>
+                                    </c:if>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
+                        <span class="schedule-card-status ${scheduleStatus}">
+                            <c:choose>
+                                <c:when test="${scheduleStatus == 'upcoming'}">D-${schedule.DDay}</c:when>
+                                <c:when test="${scheduleStatus == 'ongoing'}">진행중</c:when>
+                                <c:when test="${scheduleStatus == 'completed'}">완료</c:when>
+                            </c:choose>
+                        </span>
                         <button class="schedule-card-bookmark ${schedule.bkmkYn eq 'Y' ? 'active' : ''}" onclick="toggleScheduleBookmark(this)">
                             <i class="bi ${schedule.bkmkYn eq 'Y' ? 'bi-bookmark-fill' : 'bi-bookmark'}"></i>
                         </button>
@@ -101,110 +140,19 @@
                         <a href="${pageContext.request.contextPath}/schedule/view/${schedule.schdlNo}" class="btn btn-outline btn-sm">
                             상세보기
                         </a>
-                        <a href="${pageContext.request.contextPath}/schedule/planner/${schedule.schdlNo}" class="btn btn-primary btn-sm">
-                            수정하기
-                        </a>
+                        <c:if test="${scheduleStatus ne 'completed'}">
+                            <a href="${pageContext.request.contextPath}/schedule/planner/${schedule.schdlNo}" class="btn btn-primary btn-sm">
+                                수정하기
+                            </a>
+                        </c:if>
+                        <c:if test="${scheduleStatus eq 'completed'}">
+                            <a href="${pageContext.request.contextPath}/community/travel-log/write?schedule=${schedule.schdlNo}" class="btn btn-secondary btn-sm">
+                                여행기록 작성
+                            </a>
+                        </c:if>
                     </div>
                 </div>
             </c:forEach>
-
-
-
-
-            <div class="schedule-card" data-status="upcoming">
-                <div class="schedule-card-image">
-                    <img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=300&fit=crop&q=80" alt="제주도">
-                    <span class="schedule-card-status upcoming">D-8</span>
-                    <button class="schedule-card-bookmark active" onclick="toggleScheduleBookmark(this)">
-                        <i class="bi bi-bookmark-fill"></i>
-                    </button>
-                </div>
-                <div class="schedule-card-body">
-                    <h3 class="schedule-card-title">제주도 힐링 여행</h3>
-                    <div class="schedule-card-dates">
-                        <i class="bi bi-calendar3"></i>
-                        <span>2026.01.01 - 2026.01.04</span>
-                        <span class="text-muted">(3박 4일)</span>
-                    </div>
-                    <div class="schedule-card-places">
-                        <span class="place-tag">성산일출봉</span>
-                        <span class="place-tag">우도</span>
-                        <span class="place-tag">+5</span>
-                    </div>
-                </div>
-                <div class="schedule-card-footer">
-                    <a href="${pageContext.request.contextPath}/schedule/view/1" class="btn btn-outline btn-sm">
-                        상세보기
-                    </a>
-                    <a href="${pageContext.request.contextPath}/schedule/planner?id=1" class="btn btn-primary btn-sm">
-                        수정하기
-                    </a>
-                </div>
-            </div>
-
-            <!-- 다가오는 여행 2 -->
-            <div class="schedule-card" data-status="upcoming">
-                <div class="schedule-card-image">
-                    <img src="https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400&h=300&fit=crop&q=80" alt="오사카">
-                    <span class="schedule-card-status upcoming">D-22</span>
-                    <button class="schedule-card-bookmark" onclick="toggleScheduleBookmark(this)">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="schedule-card-body">
-                    <h3 class="schedule-card-title">오사카 맛집 투어</h3>
-                    <div class="schedule-card-dates">
-                        <i class="bi bi-calendar3"></i>
-                        <span>2026.01.15 - 2026.01.18</span>
-                        <span class="text-muted">(3박 4일)</span>
-                    </div>
-                    <div class="schedule-card-places">
-                        <span class="place-tag">도톤보리</span>
-                        <span class="place-tag">구로몬시장</span>
-                        <span class="place-tag">+8</span>
-                    </div>
-                </div>
-                <div class="schedule-card-footer">
-                    <a href="${pageContext.request.contextPath}/schedule/view/2" class="btn btn-outline btn-sm">
-                        상세보기
-                    </a>
-                    <a href="${pageContext.request.contextPath}/schedule/planner?id=2" class="btn btn-primary btn-sm">
-                        수정하기
-                    </a>
-                </div>
-            </div>
-
-            <!-- 완료된 여행 -->
-            <div class="schedule-card" data-status="completed">
-                <div class="schedule-card-image">
-                    <img src="https://images.unsplash.com/photo-1508009603885-50cf7c579365?w=400&h=300&fit=crop&q=80" alt="방콕">
-                    <span class="schedule-card-status completed">완료</span>
-                    <button class="schedule-card-bookmark" onclick="toggleScheduleBookmark(this)">
-                        <i class="bi bi-bookmark"></i>
-                    </button>
-                </div>
-                <div class="schedule-card-body">
-                    <h3 class="schedule-card-title">방콕 휴양 여행</h3>
-                    <div class="schedule-card-dates">
-                        <i class="bi bi-calendar3"></i>
-                        <span>2025.12.10 - 2025.12.14</span>
-                        <span class="text-muted">(4박 5일)</span>
-                    </div>
-                    <div class="schedule-card-places">
-                        <span class="place-tag">왓아룬</span>
-                        <span class="place-tag">카오산로드</span>
-                        <span class="place-tag">+6</span>
-                    </div>
-                </div>
-                <div class="schedule-card-footer">
-                    <a href="${pageContext.request.contextPath}/schedule/view/3" class="btn btn-outline btn-sm">
-                        상세보기
-                    </a>
-                    <a href="${pageContext.request.contextPath}/community/travel-log/write?schedule=3" class="btn btn-secondary btn-sm">
-                        여행기록 작성
-                    </a>
-                </div>
-            </div>
         </div>
 
         <!-- 빈 상태 (일정이 없을 때) -->
@@ -536,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // borderColor: '$schedule.borderColor',
             // textColor: '$schedule.textColor',
             extendedProps: {
-                status: '${schedule.schdlStatus}',
+                status: '${fn:toLowerCase(schedule.schdlStatus.toLowerCase())}',
                 location: '${schedule.rgnNm}',
                 people: ${schedule.travelerCnt},
                 url: contextPath + '/schedule/view/${schedule.schdlNo}'
@@ -644,6 +592,9 @@ document.addEventListener('DOMContentLoaded', function() {
             removeTooltip();
         }
     });
+
+    // 카운트 업데이트
+    initStateCounts();
 });
 
 function removeTooltip() {
@@ -712,6 +663,29 @@ async function toggleScheduleBookmark(button) {
         })
     });
 }
+
+initStateCounts = () => {
+    const cards = document.querySelectorAll('.schedule-card');
+    let counts = {
+        all: 0,
+        upcoming: 0,
+        ongoing: 0,
+        completed: 0
+    };
+
+    cards.forEach(card => {
+        counts.all++;
+        const status = card.dataset.status;
+        if (counts[status] !== undefined) {
+            counts[status]++;
+        }
+    });
+
+    document.getElementById('allCount').textContent = counts.all;
+    document.getElementById('upcomingCount').textContent = counts.upcoming;
+    document.getElementById('ongoingCount').textContent = counts.ongoing;
+    document.getElementById('completedCount').textContent = counts.completed;
+};
 </script>
 
 <%@ include file="../common/footer.jsp" %>

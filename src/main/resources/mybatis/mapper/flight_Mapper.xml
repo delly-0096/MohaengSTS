@@ -64,17 +64,11 @@
 		    , dep_time, arr_time, domestic_days, start_dt, end_dt
 		    , checked_baggage, carry_on_baggage, extra_baggage_price, airline_id
 		) VALUES (
-		    #{fltProdId}, #{flightSymbol}, #{depAirportId}, #{arrAirportId},
-	        #{depTime}, #{arrTime}, #{domesticDays}, #{startDt}, #{endDt},
-	        #{checkedBaggage}, #{carryOnBaggage}, #{extraBaggagePrice}, #{airlineId}
+		    #{fltProdId}, #{flightSymbol}, #{depAirportId}, #{arrAirportId}
+	        , #{depTime}, #{arrTime}, #{domesticDays}, #{startDt}, #{endDt}
+	        , #{checkedBaggage}, #{carryOnBaggage}, #{extraBaggagePrice}, #{airlineId}
 		)
 	</insert>
-	
-	<!-- 예약번호 사용 -->
-<!-- 	<select id="getReserveNo" resultType="long">
-		SELECT TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD') || LPAD(seq_flight_reservation.NEXTVAL, 8, '0')) 
-    	FROM DUAL
-	</select> -->
 	
 	<!-- 예약 정보 추가 -->
 	<insert id="insertFlightReservation" parameterType="kr.or.ddit.mohaeng.vo.FlightReservationVO" useGeneratedKeys="true">
@@ -129,12 +123,21 @@
 	</select>
 	
 	<!-- 좌석정보 가져오기 -->
-	<select id="getSeatInfo" parameterType="Integer" resultType="string">
-		select
-			fp.flight_seat
-		from flight_reservation fr
-		INNER JOIN flight_passengers fp on(fr.reserve_no = fp.reserve_no)
-		where fr.flt_prod_id = #{fltProdId}
+	<select id="getFlightSeat" parameterType="kr.or.ddit.mohaeng.vo.FlightProductVO" resultType="string">
+		SELECT 
+        	FP.flight_seat
+	    FROM flight_reservation FR 
+	    INNER JOIN flight_passengers FP ON(FR.reserve_no = FP.reserve_no)
+	    WHERE FP.passengers_type != '유아'
+	    AND FR.flt_prod_id IN
+		    (SELECT FLT_PROD_ID
+	          FROM flight_product
+	          WHERE airline_id = #{airlineId}
+		      AND flight_symbol = #{flightSymbol}
+		      AND dep_airport_id = #{depAirportId}
+		      AND arr_airport_id = #{arrAirportId}
+		      AND arr_time = #{arrTime}      
+		      AND dep_time = #{depTime})
 	</select>
 	
 </mapper>

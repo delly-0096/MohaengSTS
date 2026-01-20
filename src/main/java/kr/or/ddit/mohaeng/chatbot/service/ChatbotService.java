@@ -22,7 +22,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
 @Slf4j
@@ -31,6 +30,9 @@ public class ChatbotService {
 
     @Autowired
     private ChatbotMapper chatbotMapper;
+    
+    @Autowired
+    private CloseableHttpClient httpClient;
 
     private static final String API_URL = "https://api.anthropic.com/v1/messages";
 
@@ -207,8 +209,7 @@ public class ChatbotService {
             httpPost.setHeader("anthropic-version", "2023-06-01");
             httpPost.setEntity(new StringEntity(gson.toJson(requestBody), "UTF-8"));
 
-            try (CloseableHttpClient httpClient = HttpClients.createDefault();
-                 CloseableHttpResponse response = httpClient.execute(httpPost)) {
+            try (CloseableHttpResponse response = httpClient.execute(httpPost)) {
 
                 String responseBody = EntityUtils.toString(response.getEntity());
                 System.out.println("Claude API Response: " + responseBody);

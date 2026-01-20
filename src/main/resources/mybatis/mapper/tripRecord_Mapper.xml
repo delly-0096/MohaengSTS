@@ -25,194 +25,278 @@
           <if test="openScopeCd != null and openScopeCd != ''">
             AND tr.OPEN_SCOPE_CD = #{openScopeCd}
           </if>
+          
+          <if test="filter == 'my-spot' and loginMemNo != null">
+		    AND tr.MEM_NO = #{loginMemNo}
+		  </if>
     </select>
 
     <!-- 목록 -->
-    <!-- 목록 -->
-<select id="selectTripRecordList"
+	<select id="selectTripRecordList"
         parameterType="map"
         resultType="kr.or.ddit.mohaeng.vo.TripRecordListVO">
 
-    SELECT
-        tr.RCD_NO        AS rcdNo,
-        tr.RCD_TITLE     AS rcdTitle,
-        tr.REG_DT        AS regDt,
-        tr.MEM_NO        AS memNo,
-        m.MEM_ID         AS memId,
-        tr.VIEW_CNT      AS viewCnt,
-        tr.OPEN_SCOPE_CD AS openScopeCd,
-        tr.LOC_CD        AS locCd,
-        mu.NICKNAME      AS nickname,   
+	    SELECT
+	        tr.RCD_NO        AS rcdNo,
+	        tr.RCD_TITLE     AS rcdTitle,
+	        tr.REG_DT        AS regDt,
+	        tr.MEM_NO        AS memNo,
+	        m.MEM_ID         AS memId,
+	        tr.VIEW_CNT      AS viewCnt,
+	        tr.OPEN_SCOPE_CD AS openScopeCd,
+	        tr.LOC_CD        AS locCd,
+	        mu.NICKNAME      AS nickname,
+	        RG.RGN_NM        AS locName,
+	
+	        -- ✅ 프로필(작성자)
+	        CASE
+			  WHEN prof.FILE_PATH IS NULL THEN NULL
+			  WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
+			  WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
+			  ELSE prof.FILE_PATH || prof.FILE_NAME
+			END AS profilePath,
 
-        tr.ATTACH_NO     AS attachNo,
-        afd.FILE_PATH    AS coverPath,
+	
+	        tr.ATTACH_NO     AS attachNo,
+	        
+	        CASE
+			  WHEN afd.FILE_PATH IS NULL THEN NULL
+			  WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
+			  WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
+			  ELSE afd.FILE_PATH || afd.FILE_NAME
+			END AS coverPath,
+	
+	        NVL(lk.like_cnt, 0)   AS likeCount,
+	        NVL(cm.cmnt_cnt, 0)   AS commentCount,
+	        NVL(bm.bmk_cnt, 0)    AS bookmarkCount,
+	
+	        CASE
+	          WHEN #{loginMemNo} IS NULL THEN 0
+	          WHEN EXISTS (
+	              SELECT 1
+	              FROM LIKES l2
+	              WHERE l2.LIKES_CAT_CD = 'TRIP_RECORD'
+	                AND l2.LIKES_KEY    = tr.RCD_NO
+	                AND l2.MEM_NO       = #{loginMemNo}
+	          ) THEN 1
+	          ELSE 0
+	        END AS myLiked
+	
+	    FROM TRIP_RECORD tr
+	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
+	    LEFT JOIN REGION RG
+  			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
+	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
+	
+	    -- ✅ 프로필 1장 (MEMBER.MEM_PROFILE = attach_no)
+	    LEFT JOIN (
+		    SELECT attach_no,
+		           file_path,
+		           file_name,
+		           ROW_NUMBER() OVER (
+		             PARTITION BY attach_no
+		             ORDER BY reg_dt DESC, file_no DESC
+		           ) AS rn
+		    FROM ATTACH_FILE_DETAIL
+		    WHERE use_yn = 'Y'
+		      AND file_gb_cd = 'PROFILE'
+		) prof
+		  ON prof.attach_no = m.MEM_PROFILE
+		 AND prof.rn = 1
 
-        NVL(lk.like_cnt, 0)   AS likeCount,
-        NVL(cm.cmnt_cnt, 0)   AS commentCount,
-        NVL(bm.bmk_cnt, 0)    AS bookmarkCount
-        
-        ,
-CASE
-  WHEN #{loginMemNo} IS NULL THEN 0
-  WHEN EXISTS (
-      SELECT 1
-      FROM LIKES l2
-      WHERE l2.LIKES_CAT_CD = 'TRIP_RECORD'
-        AND l2.LIKES_KEY    = tr.RCD_NO
-        AND l2.MEM_NO       = #{loginMemNo}
-  ) THEN 1
-  ELSE 0
-END AS myLiked
-        
+	
+	    -- ✅ 커버 1장 (TRIP_RECORD.ATTACH_NO)
+	    LEFT JOIN (
+	        SELECT attach_no, MIN(file_no) AS file_no
+	        FROM ATTACH_FILE_DETAIL
+	        WHERE use_yn = 'Y'
+	          AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
+	        GROUP BY attach_no
+	    ) afd_pick
+	      ON afd_pick.attach_no = tr.ATTACH_NO
+	
+	    LEFT JOIN ATTACH_FILE_DETAIL afd
+	      ON afd.ATTACH_NO = afd_pick.ATTACH_NO
+	     AND afd.FILE_NO   = afd_pick.FILE_NO
+	     AND afd.USE_YN    = 'Y'
+	
+	    LEFT JOIN (
+	        SELECT LIKES_KEY, COUNT(*) AS like_cnt
+	        FROM LIKES
+	        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
+	        GROUP BY LIKES_KEY
+	    ) lk ON lk.LIKES_KEY = tr.RCD_NO
+	
+	    LEFT JOIN (
+	        SELECT TARGET_NO, COUNT(*) AS cmnt_cnt
+	        FROM COMMENTS
+	        WHERE TARGET_TYPE = 'TRIP_RECORD'
+	        GROUP BY TARGET_NO
+	    ) cm ON cm.TARGET_NO = tr.RCD_NO
+	
+	    LEFT JOIN (
+	        SELECT PRDT_NO, COUNT(*) AS bmk_cnt
+	        FROM BOOKMARK
+	        WHERE BMK_TYPE = 'TRIP_RECORD'
+	          AND DEL_YN = 'N'
+	        GROUP BY PRDT_NO
+	    ) bm ON bm.PRDT_NO = tr.RCD_NO
+	
+	    WHERE 1=1
+	      <if test="keyword != null and keyword != ''">
+	        AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
+	             OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
+	      </if>
+	
+	      <if test="loginMemNo == null">
+	        AND tr.OPEN_SCOPE_CD = 'PUBLIC'
+	      </if>
+	      <if test="loginMemNo != null">
+	        AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
+	      </if>
+	
+	      <if test="openScopeCd != null and openScopeCd != ''">
+	        AND tr.OPEN_SCOPE_CD = #{openScopeCd}
+	      </if>
+	
+		  <if test="filter == 'my-spot' and loginMemNo != null">
+  		    AND tr.MEM_NO = #{loginMemNo}
+		  </if>
+	
+	    <choose>
+		  <when test="filter == 'popular-spot'">
+		    ORDER BY NVL(lk.like_cnt, 0) DESC, tr.RCD_NO DESC
+		  </when>
+		  <otherwise>
+		    ORDER BY tr.RCD_NO DESC
+		  </otherwise>
+		</choose>
 
-    FROM TRIP_RECORD tr
-    JOIN MEMBER m
-      ON m.MEM_NO = tr.MEM_NO
-	LEFT JOIN MEM_USER mu            -- ✅ 추가 (일반회원만 존재할 수 있으니 LEFT JOIN)
-  ON mu.MEM_NO = m.MEM_NO
-  
-    <!-- 1) 커버파일 1개(file_no 최소값) 뽑기: ATTACH + 사용중 -->
-    LEFT JOIN (
-        SELECT attach_no,
-               MIN(file_no) AS file_no
-        FROM ATTACH_FILE_DETAIL
-        WHERE use_yn = 'Y'
-          AND file_gb_cd = 'ATTACH'
-        GROUP BY attach_no
-    ) afd_pick
-      ON afd_pick.attach_no = tr.ATTACH_NO
-
-    <!-- 2) 실제 파일 경로(FILE_PATH) 가져오기 위해 afd 조인(이게 없어서 ORA-00904 났던 것) -->
-    LEFT JOIN ATTACH_FILE_DETAIL afd
-      ON afd.ATTACH_NO = afd_pick.ATTACH_NO
-     AND afd.FILE_NO   = afd_pick.FILE_NO
-     AND afd.USE_YN    = 'Y'
-
-    LEFT JOIN (
-        SELECT LIKES_KEY, COUNT(*) AS like_cnt
-        FROM LIKES
-        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
-        GROUP BY LIKES_KEY
-    ) lk
-      ON lk.LIKES_KEY = tr.RCD_NO
-
-    LEFT JOIN (
-        SELECT TARGET_NO, COUNT(*) AS cmnt_cnt
-        FROM COMMENTS
-        WHERE TARGET_TYPE = 'TRIP_RECORD'
-        GROUP BY TARGET_NO
-    ) cm
-      ON cm.TARGET_NO = tr.RCD_NO
-
-    LEFT JOIN (
-        SELECT PRDT_NO, COUNT(*) AS bmk_cnt
-        FROM BOOKMARK
-        WHERE BMK_TYPE = 'TRIP_RECORD'
-          AND DEL_YN = 'N'
-        GROUP BY PRDT_NO
-    ) bm
-      ON bm.PRDT_NO = tr.RCD_NO
-
-    WHERE 1=1
-      <if test="keyword != null and keyword != ''">
-        AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
-             OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
-      </if>
-
-      <!-- 비로그인: PUBLIC만 / 로그인: PUBLIC + 내 글(PRIVATE 허용) -->
-      <if test="loginMemNo == null">
-        AND tr.OPEN_SCOPE_CD = 'PUBLIC'
-      </if>
-      <if test="loginMemNo != null">
-        AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
-      </if>
-
-      <if test="openScopeCd != null and openScopeCd != ''">
-        AND tr.OPEN_SCOPE_CD = #{openScopeCd}
-      </if>
-
-    ORDER BY tr.RCD_NO DESC
-    OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
-</select>
+	    OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
+	</select>
+	
 
 
     <!-- 상세 -->
-    <select id="selectTripRecordDetail" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.TripRecordDetailVO">
-        SELECT
-            tr.RCD_NO        AS rcdNo,
-            tr.SCHDL_NO      AS schdlNo,
-            tr.MEM_NO        AS memNo,
-            m.MEM_ID         AS memId,
-            tr.RCD_TITLE     AS rcdTitle,
-            tr.RCD_CONTENT   AS rcdContent,
-            tr.VIEW_CNT      AS viewCnt,
-            tr.TRIP_DAYS_CD  AS tripDaysCd,
-            tr.LOC_CD        AS locCd,
-            tr.ATTACH_NO     AS attachNo,
-            tr.REG_DT        AS regDt,
-            tr.START_DT      AS startDt,
-            tr.END_DT        AS endDt,
-            tr.OPEN_SCOPE_CD AS openScopeCd,
-            tr.MAP_DISP_YN   AS mapDispYn,
-            tr.REPLY_ENBL_YN AS replyEnblYn,
-            tr.ATTACH_NO     AS attachNo,
-        	afd.FILE_PATH    AS coverPath,
-        	 mu.NICKNAME      AS nickname,  
+    <select id="selectTripRecordDetail"
+        parameterType="map"
+        resultType="kr.or.ddit.mohaeng.vo.TripRecordDetailVO">
+	
+	    SELECT
+	        tr.RCD_NO        AS rcdNo,
+	        tr.SCHDL_NO      AS schdlNo,
+	        tr.MEM_NO        AS memNo,
+	        m.MEM_ID         AS memId,
+	        tr.RCD_TITLE     AS rcdTitle,
+	        tr.RCD_CONTENT   AS rcdContent,
+	        tr.VIEW_CNT      AS viewCnt,
+	        tr.TRIP_DAYS_CD  AS tripDaysCd,
+	        tr.LOC_CD        AS locCd,
+	        tr.ATTACH_NO     AS attachNo,
+	        tr.REG_DT        AS regDt,
+	        tr.START_DT      AS startDt,
+	        tr.END_DT        AS endDt,
+	        tr.OPEN_SCOPE_CD AS openScopeCd,
+	        tr.MAP_DISP_YN   AS mapDispYn,
+	        tr.REPLY_ENBL_YN AS replyEnblYn,
+	        RG.RGN_NM        AS locName,
+	        (
+			  SELECT h.TAG_NAME
+			  FROM HASHTAG h
+			  WHERE h.RCD_NO = tr.RCD_NO
+			    AND ROWNUM = 1
+			) AS tagName,
+	
+	        CASE
+			  WHEN afd.FILE_PATH IS NULL THEN NULL
+			  WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
+			  WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
+			  ELSE afd.FILE_PATH || afd.FILE_NAME
+			END AS coverPath,
+			
+	        mu.NICKNAME      AS nickname,
+	
+	        -- ✅ 프로필 경로
+	        CASE
+			  WHEN prof.FILE_PATH IS NULL THEN NULL
+			  WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
+			  WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
+			  ELSE prof.FILE_PATH || prof.FILE_NAME
+			END AS profilePath,
 
-            -- counts
-            (SELECT COUNT(*) FROM LIKES
-              WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO) AS likeCount,
+	
+	        (SELECT COUNT(*) FROM LIKES
+	          WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO) AS likeCount,
+	
+	        (SELECT COUNT(*) FROM COMMENTS
+	          WHERE TARGET_TYPE='TRIP_RECORD' AND TARGET_NO=tr.RCD_NO) AS commentCount,
+	
+	        (SELECT COUNT(*) FROM BOOKMARK
+	          WHERE BMK_TYPE='TRIP_RECORD' AND PRDT_NO=tr.RCD_NO AND DEL_YN='N') AS bookmarkCount,
+	
+	        CASE
+	          WHEN #{loginMemNo} IS NULL THEN 0
+	          WHEN EXISTS (
+	              SELECT 1 FROM LIKES
+	              WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO AND MEM_NO=#{loginMemNo}
+	          ) THEN 1 ELSE 0
+	        END AS myLiked,
+	
+	        CASE
+	          WHEN #{loginMemNo} IS NULL THEN 0
+	          WHEN EXISTS (
+	              SELECT 1 FROM BOOKMARK
+	              WHERE BMK_TYPE='TRIP_RECORD' AND PRDT_NO=tr.RCD_NO AND MEM_NO=#{loginMemNo} AND DEL_YN='N'
+	          ) THEN 1 ELSE 0
+	        END AS bookmarked
+	
+	    FROM TRIP_RECORD tr
+	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
+	    LEFT JOIN REGION RG
+  			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
+	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
+	
+	    -- ✅ 프로필 1장
+	    LEFT JOIN (
+		    SELECT attach_no,
+		           file_path,
+		           file_name,
+		           ROW_NUMBER() OVER (
+		             PARTITION BY attach_no
+		             ORDER BY reg_dt DESC, file_no DESC
+		           ) AS rn
+		    FROM ATTACH_FILE_DETAIL
+		    WHERE use_yn = 'Y'
+		      AND file_gb_cd = 'PROFILE'
+		) prof
+		  ON prof.attach_no = m.MEM_PROFILE
+		 AND prof.rn = 1
 
-            (SELECT COUNT(*) FROM COMMENTS
-              WHERE TARGET_TYPE='TRIP_RECORD' AND TARGET_NO=tr.RCD_NO) AS commentCount,
-
-            (SELECT COUNT(*) FROM BOOKMARK
-              WHERE BMK_TYPE='TRIP_RECORD' AND PRDT_NO=tr.RCD_NO AND DEL_YN='N') AS bookmarkCount,
-
-            -- 상태 (비로그인 null이면 0으로)
-            CASE
-              WHEN #{loginMemNo} IS NULL THEN 0
-              WHEN EXISTS (
-                  SELECT 1 FROM LIKES
-                  WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO AND MEM_NO=#{loginMemNo}
-              ) THEN 1 ELSE 0
-            END AS myLiked,
-
-            CASE
-              WHEN #{loginMemNo} IS NULL THEN 0
-              WHEN EXISTS (
-                  SELECT 1 FROM BOOKMARK
-                  WHERE BMK_TYPE='TRIP_RECORD' AND PRDT_NO=tr.RCD_NO AND MEM_NO=#{loginMemNo} AND DEL_YN='N'
-              ) THEN 1 ELSE 0
-            END AS bookmarked
-
-        FROM TRIP_RECORD tr
-        JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
-        LEFT JOIN MEM_USER mu            -- ✅ 추가 (일반회원만 존재할 수 있으니 LEFT JOIN)
-  ON mu.MEM_NO = m.MEM_NO
-        
-        LEFT JOIN (
-        SELECT attach_no,
-               MIN(file_no) AS file_no
-        FROM ATTACH_FILE_DETAIL
-        WHERE use_yn = 'Y'
-        GROUP BY attach_no
-    ) afd_pick ON afd_pick.attach_no = tr.attach_no
-
-    LEFT JOIN ATTACH_FILE_DETAIL afd
-           ON afd.attach_no = afd_pick.attach_no
-          AND afd.file_no   = afd_pick.file_no
-        
-        WHERE tr.RCD_NO = #{rcdNo}
-
-          <!-- 비공개: 작성자만 -->
-          <if test="loginMemNo == null">
-            AND tr.OPEN_SCOPE_CD = 'PUBLIC'
-          </if>
-          <if test="loginMemNo != null">
-            AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
-          </if>
-    </select>
+	
+	    -- ✅ 커버 1장
+	    LEFT JOIN (
+	        SELECT attach_no, MIN(file_no) AS file_no
+	        FROM ATTACH_FILE_DETAIL
+	        WHERE use_yn = 'Y'
+	          AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
+	        GROUP BY attach_no
+	    ) afd_pick
+	      ON afd_pick.attach_no = tr.ATTACH_NO
+	
+	    LEFT JOIN ATTACH_FILE_DETAIL afd
+	      ON afd.attach_no = afd_pick.attach_no
+	     AND afd.file_no   = afd_pick.file_no
+	     AND afd.use_yn    = 'Y'
+	
+	    WHERE tr.RCD_NO = #{rcdNo}
+	      <if test="loginMemNo == null">
+	        AND tr.OPEN_SCOPE_CD = 'PUBLIC'
+	      </if>
+	      <if test="loginMemNo != null">
+	        AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
+	      </if>
+	</select>
+    
 
     <update id="increaseViewCnt" parameterType="long">
         UPDATE TRIP_RECORD
@@ -295,8 +379,8 @@ END AS myLiked
 
 <!-- TRIP_RECORD_SEQ -->
 <insert id="insertTripRecordSeq">
-  INSERT INTO TRIP_RECORD_SEQ (RCD_CONN_NO, RCD_NO, RCD_ORDER)
-  VALUES (#{connNo}, #{rcdNo}, #{order})
+  INSERT INTO TRIP_RECORD_SEQ (RCD_CONN_NO, RCD_NO, RCD_ORDER, BLOCK_TYPE, TARGET_PK)
+  VALUES (#{connNo}, #{rcdNo}, #{order}, #{blockType}, #{targetPk})
 </insert>
 
 <!-- TRIP_RECORD_TXT : PK는 SYS_GUID() -->
@@ -310,6 +394,34 @@ END AS myLiked
   INSERT INTO TRIP_RECORD_IMG (RCD_IMG_NO, RCD_CONN_NO, RCD_IMG, RCD_IMG_DESC)
   VALUES (RAWTOHEX(SYS_GUID()), #{connNo}, #{attachNo}, #{desc})
 </insert>
+
+<!-- ===== TOUR_PLACE_REVIEW PK 시퀀스 ===== -->
+<select id="nextTourPlaceReviewSeq" resultType="long">
+  SELECT SEQ_TOUR_PLACE_REVIEW.NEXTVAL FROM DUAL
+</select>
+
+<!-- ===== TOUR_PLACE_REVIEW INSERT ===== -->
+<insert id="insertTourPlaceReview">
+  INSERT INTO TOUR_PLACE_REVIEW (
+    PLACE_REVIEW_NO,
+    RCD_CONN_NO,
+    MEM_NO,
+    PLC_NO,
+    REVIEW_CONN,
+    RATING,
+    REG_DT
+  ) VALUES (
+    #{placeReviewNo},
+    #{rcdConnNo},
+    #{memNo},
+    #{plcNo},
+    #{reviewConn},
+    #{rating},
+    SYSDATE
+  )
+</insert>
+
+
 
 <!-- 커버 attachNo -->
 <update id="updateCoverAttachNo">
@@ -341,14 +453,106 @@ END AS myLiked
    #{path}, #{fileGbCd}, #{mimyType}, #{useYn}, #{regId}, SYSDATE)
 </insert>
 
-<insert id="insertHashtags">
-  INSERT ALL
-  <foreach collection="tags" item="tag">
-    INTO HASHTAG (HSTG_NO, RCD_NO, TAG_NAME, REG_DT)
-    VALUES (SEQ_HASHTAG.NEXTVAL, #{rcdNo}, #{tag}, SYSDATE)
-  </foreach>
-  SELECT 1 FROM DUAL
+<insert id="upsertHashtagText">
+  MERGE INTO HASHTAG h
+  USING (
+    SELECT #{rcdNo} AS RCD_NO,
+           #{tagText} AS TAG_TEXT
+    FROM DUAL
+  ) s
+  ON (h.RCD_NO = s.RCD_NO)
+  WHEN MATCHED THEN
+    UPDATE SET h.TAG_NAME = s.TAG_TEXT,
+               h.REG_DT   = SYSDATE
+  WHEN NOT MATCHED THEN
+    INSERT (HSTG_NO, RCD_NO, TAG_NAME, REG_DT)
+    VALUES (SEQ_HASHTAG.NEXTVAL, s.RCD_NO, s.TAG_TEXT, SYSDATE)
 </insert>
+
+
+
+<select id="selectTripRecordBlocks"
+        parameterType="long"
+        resultType="kr.or.ddit.mohaeng.vo.TripRecordBlockVO">
+
+  SELECT
+    s.RCD_ORDER          AS "order",
+    s.BLOCK_TYPE         AS "blockType",
+    s.TARGET_PK          AS "targetPk",
+
+    /* ===== TEXT ===== */
+    t.TXT_CONN           AS "text",
+
+    /* ===== IMAGE ===== */
+    i.RCD_IMG_DESC       AS "desc",
+    afd.FILE_PATH        AS "imgPath",
+
+    /* ===== PLACE (리뷰) ===== */
+    pr.PLACE_REVIEW_NO   AS "placeReviewNo",
+    pr.PLC_NO            AS "plcNo",
+    pr.RATING            AS "rating",
+    pr.REVIEW_CONN       AS "reviewConn",
+
+    /* ===== PLACE (장소) ===== */
+    p.PLC_NM             AS "plcNm",
+    p.PLC_ADDR1          AS "plcAddr1",
+    p.PLC_ADDR2          AS "plcAddr2",
+    p.DEFAULT_IMG        AS "defaultImg",
+    p.ATTACH_NO          AS "placeAttachNo",
+    pafd.FILE_PATH       AS "placeImgPath"
+
+  FROM TRIP_RECORD_SEQ s
+
+  /* ===== TEXT ===== */
+  LEFT JOIN TRIP_RECORD_TXT t
+    ON s.BLOCK_TYPE = 'TEXT'
+   AND s.TARGET_PK  = TO_CHAR(t.RCD_CONN_NO)
+
+  /* ===== IMAGE ===== */
+  LEFT JOIN TRIP_RECORD_IMG i
+    ON s.BLOCK_TYPE = 'IMAGE'
+   AND s.TARGET_PK  = TO_CHAR(i.RCD_CONN_NO)
+
+  LEFT JOIN (
+    SELECT attach_no, MIN(file_no) AS file_no
+    FROM ATTACH_FILE_DETAIL
+    WHERE use_yn = 'Y'
+      AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
+    GROUP BY attach_no
+  ) pick
+    ON pick.attach_no = i.RCD_IMG
+
+  LEFT JOIN ATTACH_FILE_DETAIL afd
+    ON afd.attach_no = pick.attach_no
+   AND afd.file_no   = pick.file_no
+   AND afd.use_yn    = 'Y'
+
+  /* ===== PLACE ===== */
+  LEFT JOIN TOUR_PLACE_REVIEW pr
+    ON s.BLOCK_TYPE = 'PLACE'
+   AND s.TARGET_PK  = TO_CHAR(pr.PLACE_REVIEW_NO)
+
+  LEFT JOIN TOUR_PLACE p
+    ON p.PLC_NO = pr.PLC_NO
+
+  /* 장소 대표 이미지 1장 */
+  LEFT JOIN (
+    SELECT attach_no, MIN(file_no) AS file_no
+    FROM ATTACH_FILE_DETAIL
+    WHERE use_yn = 'Y'
+    GROUP BY attach_no
+  ) p_pick
+    ON p_pick.attach_no = p.ATTACH_NO
+
+  LEFT JOIN ATTACH_FILE_DETAIL pafd
+    ON pafd.attach_no = p_pick.attach_no
+   AND pafd.file_no   = p_pick.file_no
+   AND pafd.use_yn    = 'Y'
+
+  WHERE s.RCD_NO = #{rcdNo}
+  ORDER BY s.RCD_ORDER ASC
+
+</select>
 
 
 

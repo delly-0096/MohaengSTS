@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
 
 <c:set var="pageTitle" value="결제하기" />
 <c:set var="pageCss" value="product" />
@@ -28,33 +29,64 @@
             <!-- 결제 정보 입력 -->
             <div class="booking-main">
                 <form id="bookingInfoForm">
-                    <!-- 이용일 선택 -->
-                    <div class="booking-section">
-                        <h3><i class="bi bi-calendar-event me-2"></i>이용일 선택</h3>
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">이용 날짜 <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control date-picker" id="useDate"
-                                           placeholder="날짜를 선택하세요" required>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label">희망 시간 <span class="text-danger">*</span></label>
-                                    <select class="form-control form-select" id="useTime" required>
-                                        <option value="">시간을 선택하세요</option>
-                                        <option value="09:00">09:00</option>
-                                        <option value="10:00">10:00</option>
-                                        <option value="11:00">11:00</option>
-                                        <option value="14:00">14:00</option>
-                                        <option value="15:00">15:00</option>
-                                        <option value="16:00">16:00</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                
+                	<!-- ========== 장바구니 모드: 결제 상품 목록 ========== -->
+                    <c:if test="${type eq 'cart'}">
+	                    <div class="booking-section" id="cartItemsSection">
+	                        <h3><i class="bi bi-cart-check me-2"></i>결제 상품 (<span id="cartItemCount">0</span>개)</h3>
+	                        <div class="cart-booking-items" id="cartBookingItems">
+	                            <!-- JavaScript로 렌더링 -->
+	                        </div>
+	                    </div>
+                    </c:if>
+                    
+                    <!-- ========== 단일 상품 모드: 이용일 선택 ========== -->
+                    <c:if test="${type ne 'cart'}">
+	                    <div class="booking-section">
+	                        <h3><i class="bi bi-calendar-event me-2"></i>이용일 선택</h3>
+	                        <div class="row">
+	                            <div class="col-md-6">
+	                                <div class="form-group">
+	                                    <label class="form-label">이용 날짜 <span class="text-danger">*</span></label>
+	                                    <input type="text" class="form-control booking-date" id="useDate"
+	                                           placeholder="날짜를 선택하세요" required>
+	                                </div>
+	                            </div>
+	                            <div class="col-md-6">
+	                                <div class="form-group">
+	                                    <label class="form-label">희망 시간 <span class="text-danger">*</span></label>
+	                                    <select class="form-control form-select" id="useTime" required>
+								            <option value="">시간을 선택하세요</option>
+								            <c:choose>
+								                <c:when test="${not empty availableTimes}">
+								                    <c:forEach items="${availableTimes}" var="timeInfo">
+								                        <option value="${timeInfo.rsvtAvailableTime}">${timeInfo.rsvtAvailableTime}</option>
+								                    </c:forEach>
+								                </c:when>
+								                <c:otherwise>
+								                    <option value="09:00">09:00</option>
+								                    <option value="10:00">10:00</option>
+								                    <option value="11:00">11:00</option>
+								                    <option value="14:00">14:00</option>
+								                    <option value="15:00">15:00</option>
+								                    <option value="16:00">16:00</option>
+								                </c:otherwise>
+								            </c:choose>
+								        </select>
+	                                </div>
+	                            </div>
+	                        </div>
+	                    </div>
+	                    
+	                    <!-- 요청사항 -->
+	                    <div class="booking-section">
+	                        <h3><i class="bi bi-chat-text me-2"></i>요청사항</h3>
+	                        <div class="form-group mb-0">
+	                            <textarea class="form-control" id="requests" rows="3"
+	                                      placeholder="업체에 전달할 요청사항을 입력해주세요. (선택)"></textarea>
+	                        </div>
+	                    </div>
+                    </c:if>
 
                     <!-- 결제자 정보 -->
                     <div class="booking-section">
@@ -64,33 +96,24 @@
                                 <div class="form-group">
                                     <label class="form-label">이름 <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="bookerName"
-                                           value="${sessionScope.loginUser.userName}" required>
+                                           value="${member.memName}" required>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-group">
                                     <label class="form-label">연락처 <span class="text-danger">*</span></label>
                                     <input type="tel" class="form-control" id="bookerPhone"
-                                           value="${sessionScope.loginUser.phone}" placeholder="010-0000-0000" required>
+                                           value="${memUser.tel}" placeholder="010-0000-0000" required>
                                 </div>
                             </div>
                             <div class="col-12">
                                 <div class="form-group mb-0">
                                     <label class="form-label">이메일 <span class="text-danger">*</span></label>
                                     <input type="email" class="form-control" id="bookerEmail"
-                                           value="${sessionScope.loginUser.email}" required>
+                                           value="${member.memEmail}" required>
                                     <small class="text-muted">결제 확인 메일이 발송됩니다.</small>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- 요청사항 -->
-                    <div class="booking-section">
-                        <h3><i class="bi bi-chat-text me-2"></i>요청사항</h3>
-                        <div class="form-group mb-0">
-                            <textarea class="form-control" id="requests" rows="3"
-                                      placeholder="업체에 전달할 요청사항을 입력해주세요. (선택)"></textarea>
                         </div>
                     </div>
 
@@ -100,12 +123,14 @@
                         <div class="point-use-container">
                             <div class="point-balance">
                                 <span class="point-label">보유 포인트</span>
-                                <span class="point-value" id="availablePoints">15,000 P</span>
+                                <span class="point-value" id="availablePoints">
+                                	<fmt:formatNumber value="${member.point}" pattern="#,###"/> P
+                                </span>
                             </div>
                             <div class="point-input-group">
                                 <div class="input-group">
                                     <input type="number" class="form-control" id="usePointInput"
-                                           placeholder="0" min="0" max="15000" value="0">
+                                           placeholder="0" min="0" max="${member.point}" value="0">
                                     <span class="input-group-text">P</span>
                                 </div>
                                 <div class="point-buttons">
@@ -127,36 +152,9 @@
                     <!-- 결제 수단 -->
                     <div class="booking-section">
                         <h3><i class="bi bi-credit-card me-2"></i>결제 수단</h3>
-                        <div class="payment-methods">
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="card" checked>
-                                <div class="payment-method-content">
-                                    <i class="bi bi-credit-card"></i>
-                                    <span>신용/체크카드</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="kakao">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-chat-fill" style="color: #FEE500;"></i>
-                                    <span>카카오페이</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="naver">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-n-circle" style="color: #03C75A;"></i>
-                                    <span>네이버페이</span>
-                                </div>
-                            </label>
-                            <label class="payment-method">
-                                <input type="radio" name="paymentMethod" value="bank">
-                                <div class="payment-method-content">
-                                    <i class="bi bi-bank"></i>
-                                    <span>계좌이체</span>
-                                </div>
-                            </label>
-                        </div>
+                        <div class="payment-container">
+						    <div id="payment-method"></div>
+						</div>
                     </div>
 
                     <!-- 약관 동의 -->
@@ -190,8 +188,8 @@
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-primary btn-lg w-100 pay-btn">
-                        <i class="bi bi-lock me-2"></i><span id="payBtnText">136,000원 결제하기</span>
+                    <button type="submit" id="payment-button" class="btn btn-primary btn-lg w-100 pay-btn">
+                        <i class="bi bi-lock me-2"></i><span id="payBtnText">0원 결제하기</span>
                     </button>
                 </form>
             </div>
@@ -201,31 +199,62 @@
                 <div class="summary-card">
                     <h4>결제 정보</h4>
 
-                    <div class="summary-product-single">
-                        <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300&h=200&fit=crop&q=80" alt="상품 이미지">
-                        <div class="summary-product-info">
-                            <h5>제주 스쿠버다이빙 체험 (초보자 가능)</h5>
-                            <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 중문</p>
-                        </div>
-                    </div>
+					<!-- 단일 상품 모드 -->
+                    <c:if test="${type ne 'cart'}">
+	                    <div class="summary-product-single">
+						    <c:choose>
+						        <c:when test="${not empty productImages}">
+						            <img src="${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}" 
+						                 alt="${tp.tripProdTitle}">
+						        </c:when>
+						        <c:otherwise>
+						            <img src="https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80"
+						                 alt="상품 이미지">
+						        </c:otherwise>
+						    </c:choose>
+						    <div class="summary-product-info">
+						        <h5>${tp.tripProdTitle}</h5>
+						        <p><i class="bi bi-geo-alt"></i> ${tp.ctyNm}</p>
+						    </div>
+						</div>
+					</c:if>
+					
+					<!-- 장바구니 모드: 상품 목록 -->
+					<c:if test="${type eq 'cart'}">
+						<div class="summary-items" id="summaryItems">
+	                        <!-- JavaScript로 렌더링 -->
+	                    </div>
+					</c:if>
 
                     <div class="summary-details">
-                        <div class="summary-row" id="useDateRow" style="display: none;">
-                            <span class="summary-label">이용일</span>
-                            <span class="summary-value" id="summaryDate">-</span>
-                        </div>
-                        <div class="summary-row" id="useTimeRow" style="display: none;">
-                            <span class="summary-label">이용시간</span>
-                            <span class="summary-value" id="summaryTime">-</span>
-                        </div>
-                        <div class="summary-row">
-                            <span class="summary-label">인원</span>
-                            <span class="summary-value" id="summaryPeople">2명</span>
-                        </div>
-                        <div class="summary-row">
-                            <span class="summary-label">상품 금액</span>
-                            <span class="summary-value" id="summaryProductPrice">68,000원 x 2</span>
-                        </div>
+                        <!-- 단일 상품 모드 -->
+                        <c:if test="${type ne 'cart'}">
+	                        <div class="summary-row" id="useDateRow" style="display: none;">
+	                            <span class="summary-label">이용일</span>
+	                            <span class="summary-value" id="summaryDate">-</span>
+	                        </div>
+	                        <div class="summary-row" id="useTimeRow" style="display: none;">
+	                            <span class="summary-label">이용시간</span>
+	                            <span class="summary-value" id="summaryTime">-</span>
+	                        </div>
+	                        <div class="summary-row">
+	                            <span class="summary-label">인원</span>
+	                            <span class="summary-value" id="summaryPeople">2명</span>
+	                        </div>
+	                        <div class="summary-row">
+	                            <span class="summary-label">상품 금액</span>
+	                            <span class="summary-value" id="summaryProductPrice">68,000원 x 2</span>
+	                        </div>
+                        </c:if>
+                        
+                        <!-- 장바구니 모드 -->
+                        <c:if test="${type eq 'cart'}">
+	                        <div class="summary-row">
+	                            <span class="summary-label">상품 금액</span>
+	                            <span class="summary-value" id="subtotal">0원</span>
+	                        </div>
+                        </c:if>
+                        
                         <div class="summary-row">
                             <span class="summary-label">할인</span>
                             <span class="summary-value text-danger">-0원</span>
@@ -236,7 +265,7 @@
                         </div>
                         <div class="summary-row total">
                             <span class="summary-label">총 결제금액</span>
-                            <span class="summary-value" id="totalAmount">136,000원</span>
+                            <span class="summary-value" id="totalAmount">0원</span>
                         </div>
                     </div>
 
@@ -344,6 +373,111 @@
     color: var(--primary-color);
 }
 
+/* 장바구니 상품 아이템 스타일 */
+.cart-booking-items {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.cart-booking-item {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+}
+
+.cart-item-header {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.cart-item-image {
+    width: 120px;
+    height: 90px;
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.cart-item-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.cart-item-info {
+    flex: 1;
+}
+
+.cart-item-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 6px;
+}
+
+.cart-item-location {
+    font-size: 13px;
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.cart-item-location i {
+    margin-right: 4px;
+}
+
+.cart-item-price-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cart-item-quantity {
+    font-size: 13px;
+    color: #666;
+}
+
+.cart-item-price {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+/* 상품별 이용 정보 입력 */
+.cart-item-booking-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+.cart-item-booking-info .form-group {
+    margin-bottom: 0;
+}
+
+.cart-item-booking-info .form-group.full-width {
+    grid-column: 1 / -1;
+}
+
+.cart-item-booking-info .form-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    margin-bottom: 6px;
+}
+
+.cart-item-booking-info .form-control,
+.cart-item-booking-info .form-select {
+    font-size: 14px;
+}
+
+.cart-item-booking-info textarea {
+    resize: none;
+}
+
 /* 포인트 사용 */
 .point-use-container {
     background: #f8fafc;
@@ -438,54 +572,6 @@
 
 .point-cancel-btn:hover {
     background: #fee2e2;
-}
-
-/* 결제 수단 */
-.payment-methods {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-}
-
-.payment-method {
-    cursor: pointer;
-}
-
-.payment-method input {
-    position: absolute;
-    opacity: 0;
-}
-
-.payment-method-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-    padding: 16px 12px;
-    border: 2px solid #eee;
-    border-radius: 12px;
-    transition: all 0.2s ease;
-}
-
-.payment-method-content i {
-    font-size: 24px;
-    color: #666;
-}
-
-.payment-method-content span {
-    font-size: 12px;
-    font-weight: 500;
-    color: #666;
-}
-
-.payment-method input:checked + .payment-method-content {
-    border-color: var(--primary-color);
-    background: rgba(74, 144, 217, 0.05);
-}
-
-.payment-method input:checked + .payment-method-content i,
-.payment-method input:checked + .payment-method-content span {
-    color: var(--primary-color);
 }
 
 /* 약관 동의 */
@@ -583,6 +669,55 @@
     margin: 0;
 }
 
+/* 장바구니 사이드바 상품 목록 */
+.summary-items {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 16px;
+}
+
+.summary-product {
+    display: flex;
+    gap: 12px;
+    padding: 12px;
+    background: #f8fafc;
+    border-radius: 10px;
+    margin-bottom: 10px;
+}
+
+.summary-product:last-child {
+    margin-bottom: 0;
+}
+
+.summary-product img {
+    width: 70px;
+    height: 52px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.summary-product-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.summary-product-info h5 {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.summary-product-info p {
+    font-size: 12px;
+    color: #666;
+    margin: 0;
+}
+
 .summary-details {
     padding-top: 16px;
     border-top: 1px solid #eee;
@@ -626,6 +761,49 @@
     align-items: flex-start;
 }
 
+/* 빈 장바구니 모달 */
+.empty-cart-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.empty-cart-overlay.active {
+    display: flex;
+}
+
+.empty-cart-modal {
+    background: white;
+    border-radius: 20px;
+    padding: 48px;
+    text-align: center;
+    max-width: 400px;
+}
+
+.empty-cart-modal i {
+    font-size: 64px;
+    color: #ccc;
+    margin-bottom: 20px;
+}
+
+.empty-cart-modal h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 12px;
+}
+
+.empty-cart-modal p {
+    color: #666;
+    margin-bottom: 24px;
+}
+
 /* 반응형 */
 @media (max-width: 992px) {
     .booking-container {
@@ -637,10 +815,6 @@
         order: -1;
     }
 
-    .payment-methods {
-        grid-template-columns: repeat(2, 1fr);
-    }
-
     .booking-steps {
         gap: 30px;
     }
@@ -648,6 +822,10 @@
     .booking-step:not(:last-child)::after {
         width: 20px;
         left: calc(100% + 5px);
+    }
+    
+    .cart-item-booking-info {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -669,75 +847,269 @@
     .booking-section {
         padding: 16px;
     }
-
-    .payment-methods {
-        grid-template-columns: 1fr 1fr;
+    
+    .cart-item-header {
+        flex-direction: column;
     }
+    
+    .cart-item-image {
+        width: 100%;
+        height: 150px;
+    }
+}
+
+/* 토스페이먼츠 테스트 배너 가리기 */
+.payment-container {
+    position: relative;
+    overflow: hidden;
+}
+
+#payment-method iframe {
+    margin-top: -140px !important;
 }
 </style>
 
 <script>
-var pricePerPerson = 68000;
-var peopleCount = 2; // URL 파라미터에서 가져올 수 있음
-var availablePoints = 15000; // 보유 포인트 (서버에서 가져올 값)
+var availablePoints = ${member.point}; // 보유 포인트
 var appliedPoints = 0; // 적용된 포인트
+var totalPrice = 0;
+var subtotalPrice = 0;
+let widgets = null;
+var cartItems = [];
+
+//단일 상품 모드 전용 변수
+<c:if test="${type ne 'cart'}">
+	var pricePerPerson = ${sale.price};
+	var peopleCount = 2;
+	var saleEndDt = '<fmt:formatDate value="${tp.saleEndDt}" pattern="yyyy-MM-dd"/>';
+</c:if>
 
 // 페이지 로드
-document.addEventListener('DOMContentLoaded', function() {
-    // URL 파라미터에서 정보 가져오기
-    var urlParams = new URLSearchParams(window.location.search);
-    var date = urlParams.get('date');
-    var time = urlParams.get('time');
-    var people = urlParams.get('people');
-
-    if (date) {
-        document.getElementById('useDate').value = date;
-        document.getElementById('useDateRow').style.display = 'flex';
-        document.getElementById('summaryDate').textContent = date;
-    }
-
-    if (time) {
-        document.getElementById('useTime').value = time;
-        document.getElementById('useTimeRow').style.display = 'flex';
-        document.getElementById('summaryTime').textContent = time;
-    }
-
-    if (people) {
-        peopleCount = parseInt(people);
-        document.getElementById('summaryPeople').textContent = peopleCount + '명';
-        updateTotalPrice();
-    }
-
-    initDatePicker();
+document.addEventListener('DOMContentLoaded', async function() {
+    <c:if test="${type eq 'cart'}">
+    	loadCartData();
+    </c:if>
+    
+    <c:if test="${type ne 'cart'}">
+    	initSingleProductMode();
+    </c:if>
+    
+    await main();
 });
+
+//==================== 단일 상품 모드 ====================
+<c:if test="${type ne 'cart'}">
+	function initSingleProductMode() {
+	    // URL 파라미터에서 정보 가져오기
+	    var urlParams = new URLSearchParams(window.location.search);
+	    var date = urlParams.get('date');
+	    var time = urlParams.get('time');
+	    var people = urlParams.get('people');
+	
+	    initDatePicker(date);
+	
+	    if (date) {
+	        document.getElementById('useDateRow').style.display = 'flex';
+	        document.getElementById('summaryDate').textContent = date;
+	    }
+	
+	    if (time) {
+	        document.getElementById('useTime').value = time;
+	        document.getElementById('useTimeRow').style.display = 'flex';
+	        document.getElementById('summaryTime').textContent = time;
+	    }
+	
+	    if (people) {
+	        peopleCount = parseInt(people);
+	        document.getElementById('summaryPeople').textContent = peopleCount + '명';
+	    }
+	
+	    updateTotalPrice();
+	}
+	
+	// 날짜 선택 초기화 (단일 상품)
+	function initDatePicker(defaultDate) {
+	    var dateInput = document.getElementById('useDate');
+	    if (dateInput && typeof flatpickr !== 'undefined') {
+	        flatpickr(dateInput, {
+	            dateFormat: 'Y-m-d',
+	            minDate: 'today',
+	            maxDate: saleEndDt,
+	            defaultDate: defaultDate || null,
+	            locale: 'ko',
+	            onChange: function(selectedDates, dateStr) {
+	                document.getElementById('useDateRow').style.display = 'flex';
+	                document.getElementById('summaryDate').textContent = dateStr;
+	            }
+	        });
+	    }
+	
+	    // 시간 선택 이벤트
+	    document.getElementById('useTime').addEventListener('change', function() {
+	        if (this.value) {
+	            document.getElementById('useTimeRow').style.display = 'flex';
+	            document.getElementById('summaryTime').textContent = this.value;
+	        }
+	    });
+	}
+</c:if>
+
+// ==================== 장바구니 모드 ====================
+<c:if test="${type eq 'cart'}">
+	function loadCartData() {
+	    var checkoutData = sessionStorage.getItem('tourCartCheckout');
+	
+	    if (!checkoutData) {
+	        checkoutData = localStorage.getItem('tourCart');
+	    }
+	
+	    if (!checkoutData) {
+	        console.error('장바구니 데이터가 없습니다.');
+	        return;
+	    }
+	
+	    try {
+	        cartItems = JSON.parse(checkoutData);
+	        if (cartItems.length === 0) {
+	            console.error('장바구니가 비어있습니다.');
+	            return;
+	        }
+	
+	        document.getElementById('cartItemCount').textContent = cartItems.length;
+	        renderCartBookingItems();
+	        renderSummaryItems();
+	        updateTotalPrice();
+	        
+	        // 날짜 선택기 초기화
+	        initCartDatePickers();
+	    } catch (e) {
+	        console.error('장바구니 데이터 파싱 오류:', e);
+	    }
+	}
+	
+	function renderCartBookingItems() {
+	    var container = document.getElementById('cartBookingItems');
+	    var html = '';
+	
+	    cartItems.forEach(function(item, index) {
+	        var itemTotal = item.price * item.quantity;
+	        html += '<div class="cart-booking-item" data-index="' + index + '">' +
+	            '<div class="cart-item-header">' +
+	                '<div class="cart-item-image">' +
+	                    '<img src="' + item.image + '" alt="' + item.name + '">' +
+	                '</div>' +
+	                '<div class="cart-item-info">' +
+	                    '<div class="cart-item-name">' + item.name + '</div>' +
+	                    '<div class="cart-item-location"><i class="bi bi-geo-alt"></i>' + (item.location || '위치 정보 없음') + '</div>' +
+	                    '<div class="cart-item-price-info">' +
+	                        '<span class="cart-item-quantity">' + item.price.toLocaleString() + '원 x ' + item.quantity + '명</span>' +
+	                        '<span class="cart-item-price">' + itemTotal.toLocaleString() + '원</span>' +
+	                    '</div>' +
+	                '</div>' +
+	            '</div>' +
+	            '<div class="cart-item-booking-info">' +
+	                '<div class="form-group">' +
+	                    '<label class="form-label">이용 날짜 <span class="text-danger">*</span></label>' +
+	                    '<input type="text" class="form-control cart-date-picker" id="cartUseDate_' + index + '" ' +
+	                           'data-index="' + index + '" placeholder="날짜를 선택하세요" required>' +
+	                '</div>' +
+	                '<div class="form-group">' +
+	                    '<label class="form-label">희망 시간 <span class="text-danger">*</span></label>' +
+	                    '<select class="form-control form-select" id="cartUseTime_' + index + '" data-index="' + index + '" required>' +
+	                        '<option value="">시간을 선택하세요</option>' +
+	                        '<option value="09:00">09:00</option>' +
+	                        '<option value="10:00">10:00</option>' +
+	                        '<option value="11:00">11:00</option>' +
+	                        '<option value="14:00">14:00</option>' +
+	                        '<option value="15:00">15:00</option>' +
+	                        '<option value="16:00">16:00</option>' +
+	                    '</select>' +
+	                '</div>' +
+	                '<div class="form-group full-width">' +
+	                    '<label class="form-label">요청사항</label>' +
+	                    '<textarea class="form-control" id="cartRequests_' + index + '" rows="2" ' +
+	                              'placeholder="업체에 전달할 요청사항을 입력해주세요. (선택)"></textarea>' +
+	                '</div>' +
+	            '</div>' +
+	        '</div>';
+	    });
+	
+	    container.innerHTML = html;
+	}
+	
+	function renderSummaryItems() {
+	    var container = document.getElementById('summaryItems');
+	    var html = '';
+	
+	    cartItems.forEach(function(item) {
+	        var itemTotal = item.price * item.quantity;
+	        html += '<div class="summary-product">' +
+	            '<img src="' + item.image + '" alt="' + item.name + '">' +
+	            '<div class="summary-product-info">' +
+	                '<h5>' + item.name + '</h5>' +
+	                '<p>' + item.quantity + '명 · ' + itemTotal.toLocaleString() + '원</p>' +
+	            '</div>' +
+	        '</div>';
+	    });
+	
+	    container.innerHTML = html;
+	}
+	
+	function initCartDatePickers() {
+	    document.querySelectorAll('.cart-date-picker').forEach(function(input) {
+	        if (typeof flatpickr !== 'undefined') {
+	            flatpickr(input, {
+	                dateFormat: 'Y-m-d',
+	                minDate: 'today',
+	                locale: 'ko'
+	            });
+	        }
+	    });
+	}
+</c:if>
 
 // 총 금액 업데이트
 function updateTotalPrice() {
-    var subtotal = pricePerPerson * peopleCount;
-    var total = subtotal - appliedPoints;
-    if (total < 0) total = 0;
+    <c:if test="${type eq 'cart'}">
+        // 장바구니 모드
+        subtotalPrice = cartItems.reduce(function(sum, item) {
+            return sum + (item.price * item.quantity);
+        }, 0);
+        
+        totalPrice = subtotalPrice - appliedPoints;
+        if (totalPrice < 0) totalPrice = 0;
 
-    document.getElementById('totalAmount').textContent = total.toLocaleString() + '원';
-    document.getElementById('payBtnText').textContent = total.toLocaleString() + '원 결제하기';
+        document.getElementById('subtotal').textContent = subtotalPrice.toLocaleString() + '원';
+    </c:if>
+    
+    <c:if test="${type ne 'cart'}">
+        // 단일 상품 모드
+        subtotalPrice = pricePerPerson * peopleCount;
+        totalPrice = subtotalPrice - appliedPoints;
+        if (totalPrice < 0) totalPrice = 0;
 
-    // 상품 금액 업데이트
-    document.getElementById('summaryProductPrice').textContent =
-        pricePerPerson.toLocaleString() + '원 x ' + peopleCount;
+        // 상품 금액 업데이트
+        document.getElementById('summaryProductPrice').textContent =
+            pricePerPerson.toLocaleString() + '원 x ' + peopleCount;
+    </c:if>
+
+    document.getElementById('totalAmount').textContent = totalPrice.toLocaleString() + '원';
+    document.getElementById('payBtnText').textContent = totalPrice.toLocaleString() + '원 결제하기';
+    
+    
 }
 
 // ==================== 포인트 관련 함수 ====================
 
 // 전액 사용
 function useAllPoints() {
-    var subtotal = pricePerPerson * peopleCount;
-    var maxUsable = Math.min(availablePoints, subtotal);
+    var maxUsable = Math.min(availablePoints, subtotalPrice);
     document.getElementById('usePointInput').value = maxUsable;
 }
 
 // 포인트 적용
 function applyPoints() {
     var inputPoints = parseInt(document.getElementById('usePointInput').value) || 0;
-    var subtotal = pricePerPerson * peopleCount;
 
     // 유효성 검사
     if (inputPoints < 0) {
@@ -756,9 +1128,9 @@ function applyPoints() {
         return;
     }
 
-    if (inputPoints > subtotal) {
+    if (inputPoints > subtotalPrice) {
         showToast('결제 금액을 초과할 수 없습니다.', 'warning');
-        inputPoints = subtotal;
+        inputPoints = subtotalPrice;
         document.getElementById('usePointInput').value = inputPoints;
     }
 
@@ -791,28 +1163,99 @@ function cancelPoints() {
     showToast('포인트 적용이 취소되었습니다.', 'info');
 }
 
-// 날짜 선택 초기화
-function initDatePicker() {
-    var dateInput = document.getElementById('useDate');
-    if (dateInput && typeof flatpickr !== 'undefined') {
-        flatpickr(dateInput, {
-            dateFormat: 'Y-m-d',
-            minDate: 'today',
-            locale: 'ko',
-            onChange: function(selectedDates, dateStr) {
-                document.getElementById('useDateRow').style.display = 'flex';
-                document.getElementById('summaryDate').textContent = dateStr;
-            }
-        });
-    }
+async function main() {
+	const button = document.getElementById("payment-button");
 
-    // 시간 선택 이벤트
-    document.getElementById('useTime').addEventListener('change', function() {
-        if (this.value) {
-            document.getElementById('useTimeRow').style.display = 'flex';
-            document.getElementById('summaryTime').textContent = this.value;
-        }
-    });
+  	// ------  결제위젯 초기화 ------
+	const clientKey = "test_gck_docs_Ovk5rk1EwkEbP0W43n07xlzm";
+	const customerKey = "MyKgi0HwDJKFeRDGmc_wM";
+
+	const tossPayments = TossPayments(clientKey);
+	widgets = tossPayments.widgets({
+	  customerKey,
+	});
+	
+	// ------ 주문의 결제 금액 설정 ------
+	await widgets.setAmount({
+	  currency: "KRW",
+	  value: totalPrice,
+	});
+	
+	console.log("totalPrice : ", totalPrice);
+	await Promise.all([
+	  // ------  결제 UI 렌더링 ------
+	  widgets.renderPaymentMethods({
+	    selector: "#payment-method",
+	    variantKey: "DEFAULT",
+	  })
+	]);
+	
+	// 결제 form
+	const bookingForm = document.querySelector("#bookingInfoForm");
+	bookingForm.addEventListener("submit", async function(e){
+		e.preventDefault();
+		
+		const timeStamp = Date.now();
+	    var tripProdList = [];
+	    var orderId = "";
+	    var orderName = "";
+
+	    <c:if test="${type eq 'cart'}">
+	    	for (var i = 0; i < cartItems.length; i++) {
+	            var item = cartItems[i];
+	            tripProdList.push({
+	                tripProdNo: item.id,
+	                unitPrice: item.price,
+	                quantity: item.quantity,
+	                discountAmt: 0,
+	                payPrice: item.price * item.quantity,
+	                resvDt: document.getElementById('cartUseDate_' + i).value,
+	                useTime: document.getElementById('cartUseTime_' + i).value,
+	                rsvMemo: document.getElementById('cartRequests_' + i).value
+	            });
+	        }
+	    	orderId = "TOUR-" + ${member.memNo} + "-" + timeStamp;
+	        orderName = cartItems.length > 1 
+	        ? cartItems[0].name + ' 외 ' + (cartItems.length - 1) + '건'
+	        : cartItems[0].name;
+        </c:if>
+        
+        <c:if test="${type ne 'cart'}">
+	        tripProdList.push({
+	            tripProdNo: ${tp.tripProdNo},
+	            unitPrice: pricePerPerson,
+	            quantity: peopleCount,
+	            discountAmt: 0,
+	            payPrice: totalPrice,
+	            resvDt: document.getElementById('useDate').value,
+	            useTime: document.getElementById('useTime').value,
+	            rsvMemo: document.getElementById('requests').value
+	        });
+	    	orderId = "TOUR-" + ${tp.tripProdNo} + "-" + ${member.memNo} + "-" + timeStamp;
+    		orderName = "${tp.tripProdTitle}";
+    	</c:if>
+	    
+	    // 투어 결제 데이터
+	    const tourPaymentData = {
+	        memNo: ${member.memNo},
+	        usePoint: appliedPoints,
+	        tripProdList: tripProdList,
+	        mktAgreeYn: document.getElementById('agreeMarketing').checked ? 'Y' : null
+	    };
+
+	    sessionStorage.setItem("tourPaymentData", JSON.stringify(tourPaymentData));
+		
+		await widgets.requestPayment({
+			orderId: orderId,												// 결제번호
+			orderName: orderName,
+			// paymentKey, paymentType, amount는 기본적으로 포함되어 있음
+			successUrl: window.location.origin + "/product/payment/tour",	// 성공 위치 - 리다이렉트로 이동
+			failUrl: window.location.origin + "/product/payment/error",		// 실패 위치 - 같은곳으로 보내자
+			customerEmail: "${member.memEmail}",							// 결제자 이메일
+			customerName: "${member.memName}",								// 결제자 이름
+			customerMobilePhone: "${memUser.tel}".replace(/-/g, '')			// 결제자 전화번호
+		});
+	});
 }
 
 // 전체 동의 토글
@@ -837,64 +1280,6 @@ function updateAllAgreeStatus() {
 
     document.getElementById('agreeAll').checked = (checkedCount === requiredCount && marketingChecked);
 }
-
-// 폼 제출
-document.getElementById('bookingInfoForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    // 필수 입력값 검증
-    var bookerName = document.getElementById('bookerName').value;
-    var bookerPhone = document.getElementById('bookerPhone').value;
-    var bookerEmail = document.getElementById('bookerEmail').value;
-    var useDate = document.getElementById('useDate').value;
-    var useTime = document.getElementById('useTime').value;
-
-    if (!bookerName || !bookerPhone || !bookerEmail) {
-        showToast('결제자 정보를 모두 입력해주세요.', 'error');
-        return;
-    }
-
-    if (!useDate || !useTime) {
-        showToast('이용 날짜와 시간을 선택해주세요.', 'error');
-        return;
-    }
-
-    // 필수 약관 체크 확인
-    var requiredAgrees = document.querySelectorAll('.agree-item');
-    var allAgreed = true;
-
-    requiredAgrees.forEach(function(agree) {
-        if (!agree.checked) {
-            allAgreed = false;
-        }
-    });
-
-    if (!allAgreed) {
-        showToast('필수 약관에 동의해주세요.', 'error');
-        return;
-    }
-
-    // 결제 처리
-    showToast('결제를 진행합니다...', 'info');
-
-    // 결제 단계 업데이트
-    document.querySelectorAll('.booking-step')[0].classList.remove('active');
-    document.querySelectorAll('.booking-step')[0].classList.add('completed');
-    document.querySelectorAll('.booking-step')[1].classList.add('active');
-
-    setTimeout(function() {
-        // 결제 완료
-        document.querySelectorAll('.booking-step')[1].classList.remove('active');
-        document.querySelectorAll('.booking-step')[1].classList.add('completed');
-        document.querySelectorAll('.booking-step')[2].classList.add('active');
-
-        showToast('결제가 완료되었습니다!', 'success');
-
-        setTimeout(function() {
-            window.location.href = '${pageContext.request.contextPath}/product/tour/complete/1';
-        }, 500);
-    }, 1500);
-});
 </script>
 
 <%@ include file="../common/footer.jsp" %>

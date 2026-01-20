@@ -2,7 +2,7 @@
  * tour.js - 투어/체험/티켓 페이지 스크립트
  * 
  * 전역 변수 (JSP에서 선언):
- * - contextPath: 컨텍스트 경로
+ * - CONTEXT_PATH: 컨텍스트 경로
  * - totalCount: 전체 상품 수
  * - initialListSize: 초기 로드된 리스트 크기
  * - isBusiness: 비즈니스 회원 여부
@@ -28,7 +28,6 @@ var tourCurrentPage = 1;
 var tourIsLoading = false;
 var tourHasMore = true;
 var tourPageSize = 12;
-var tourTotalCount = totalCount; // JSP에서 전달받은 변수
 
 // ==================== 인기 검색어 변수 ====================
 var currentKeywordIndex = 0;
@@ -172,7 +171,7 @@ function selectKeywordByText(keyword) {
 
 // ==================== 필터 URL 생성 ====================
 function buildFilterUrl(page) {
-    var url = contextPath + '/tour/more?page=' + page + '&pageSize=' + tourPageSize;
+    var url = CONTEXT_PATH + '/tour/more?page=' + page + '&pageSize=' + tourPageSize;
     
     if (currentKeyword) url += '&keyword=' + encodeURIComponent(currentKeyword);
     if (currentDestination) url += '&destination=' + encodeURIComponent(currentDestination);
@@ -295,11 +294,13 @@ function createTourCard(data) {
     // 대표 이미지 처리
     var defaultImage = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80';
     var imageUrl = data.thumbImage 
-        ? contextPath + '/upload/product/' + data.thumbImage 
+        ? CONTEXT_PATH + '/upload/product/' + data.thumbImage 
         : defaultImage;
 
-    return '<div class="tour-card" data-id="' + data.tripProdNo + '" data-name="' + data.tripProdTitle + '" data-price="' + data.price + '" data-image="' + imageUrl + '">' +
-        '<a href="' + contextPath + '/tour/' + data.tripProdNo + '" class="tour-link">' +
+	var minPeople = data.prodMinPeople || 1;
+
+    return '<div class="tour-card" data-id="' + data.tripProdNo + '" data-name="' + data.tripProdTitle + '" data-price="' + data.price + '" data-min-people="' + minPeople + '" data-image="' + imageUrl + '" data-location="' + data.ctyNm + '">' +
+        '<a href="' + CONTEXT_PATH + '/tour/' + data.tripProdNo + '" class="tour-link">' +
             '<div class="tour-image">' +
                 '<img src="' + imageUrl + '" alt="' + data.tripProdTitle + '">' +
                 '<span class="tour-category">' + categoryText + '</span>' +
@@ -448,12 +449,18 @@ function addToCart(btn) {
     var name = card.dataset.name;
     var price = parseInt(card.dataset.price);
     var image = card.dataset.image;
+	var minPeople = parseInt(card.dataset.minPeople) || 1;
+	var location = card.dataset.location || '';
 
     var existingItem = cart.find(function(item) {
         return item.id === id;
     });
 
     if (existingItem) {
+		if (existingItem.quantity >= 4) {
+	        showToast('5명 이상 단체 예약은 판매자에게 문의해주세요', 'warning');
+	        return;
+	    }
         existingItem.quantity++;
         showToast('수량이 추가되었습니다', 'success');
     } else {
@@ -462,9 +469,17 @@ function addToCart(btn) {
             name: name,
             price: price,
             image: image,
-            quantity: 1
+			location: location,
+			minPeople: minPeople,
+			quantity: minPeople,
+			saleEndDt: card.dataset.saleEndDt || ''
         });
-        showToast('장바구니에 담겼습니다', 'success');
+		
+		if (minPeople > 1) {
+            showToast('장바구니에 담겼습니다 (최소 ' + minPeople + '명)', 'success');
+        } else {
+            showToast('장바구니에 담겼습니다', 'success');
+        }
     }
 
     btn.classList.add('added');
@@ -496,13 +511,21 @@ function updateQuantity(id, delta) {
     });
 
     if (item) {
-        item.quantity += delta;
+		var newQuantity = item.quantity + delta;
+		var minPeople = item.minPeople || 1;
+		var maxPeople = 4;
 
-        if (item.quantity <= 0) {
-            removeFromCart(id);
+		if (newQuantity < minPeople) {
+            showToast('최소 인원은 ' + minPeople + '명입니다', 'warning');
+            return;
+        }
+		
+		if (newQuantity > maxPeople) {
+            showToast('5명 이상 단체 예약은 판매자에게 문의해주세요', 'warning');
             return;
         }
 
+		item.quantity = newQuantity;
         saveCart();
         updateCartUI();
         renderCart();
@@ -563,12 +586,19 @@ function renderCart() {
     var html = '';
     cart.forEach(function(item) {
         var itemTotal = item.price * item.quantity;
+		var minPeople = item.minPeople || 1;
+		
+		var minPeopleHtml = minPeople > 1
+		    ? '<div class="cart-item-min-people"><i class="bi bi-people"></i> 최소 ' + minPeople + '명</div>'
+		    : '';
+					
         html += '<div class="cart-item" data-id="' + item.id + '">' +
             '<div class="cart-item-image">' +
                 '<img src="' + item.image + '" alt="' + item.name + '">' +
             '</div>' +
             '<div class="cart-item-info">' +
                 '<div class="cart-item-name">' + item.name + '</div>' +
+				minPeopleHtml + 
                 '<div class="cart-item-price">' + itemTotal.toLocaleString() + '원</div>' +
                 '<div class="cart-item-quantity">' +
                     '<button class="quantity-btn" onclick="updateQuantity(\'' + item.id + '\', -1)">' +
@@ -609,14 +639,15 @@ function checkout() {
         return;
     }
 
-    if (!isLoggedIn) {
-        if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
-            sessionStorage.setItem('returnUrl', window.location.href);
-            window.location.href = contextPath + '/member/login';
-        }
-        return;
-    }
+	if (!isLoggedIn) {
+	    sessionStorage.setItem('returnUrl', window.location.href);
+	    showToast('로그인이 필요한 서비스입니다.', 'warning');
+	    setTimeout(function() {
+	        window.location.href = CONTEXT_PATH + '/member/login';
+	    }, 1000);
+	    return;
+	}
 
     sessionStorage.setItem('tourCartCheckout', JSON.stringify(cart));
-    window.location.href = contextPath + '/booking/tour/checkout';
+    window.location.href = CONTEXT_PATH + '/tour/cart/booking';
 }

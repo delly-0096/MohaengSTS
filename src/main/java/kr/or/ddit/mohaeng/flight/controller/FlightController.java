@@ -75,7 +75,7 @@ public class FlightController {
 	}
 	
 	/**
-	 * <p>예약페이지 이동 컨트롤러
+	 * <p>예약페이지 이동 컨트롤러</p>		-- 결제자 정보도 보내자
 	 * @author sdg
 	 * @return 예약페이지
 	 */
@@ -93,7 +93,7 @@ public class FlightController {
 	@PostMapping("/product/flight/seat")
 	public List<String> flightSeat(@RequestBody FlightProductVO flightProductVO){
 		log.info("flightProductVO : {}", flightProductVO);
-		return service.getSeatInfo(flightProductVO);
+		return service.getFlightSeat(flightProductVO);
 	}
 	
 }

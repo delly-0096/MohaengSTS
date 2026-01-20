@@ -6,13 +6,19 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import kr.or.ddit.mohaeng.file.service.IFileService;
+import kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController.ThumbnailData;
 import kr.or.ddit.mohaeng.tripschedule.mapper.ITripScheduleMapper;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO;
@@ -23,8 +29,17 @@ import kr.or.ddit.util.Params;
 @Service
 public class TripScheduleServiceImpl implements ITripScheduleService {
 	
+	private final ChatClient chatClient;
+	
+	public TripScheduleServiceImpl(ChatClient.Builder builder) {
+		this.chatClient = builder.build();
+	}
+	
 	@Autowired
 	ITripScheduleMapper iTripScheduleMapper;
+	
+	@Autowired
+	IFileService fileService;
 	
 	@Override
 	public List<Map<String, Object>> selectRegionList() {
@@ -61,7 +76,6 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			String addr2 = tourPlace.get("addr2");
 			String mapy = tourPlace.get("mapy");
 			String mapx = tourPlace.get("mapx");
-//			String defaultImg = tourPlace.get("firstimage2");
 			String defaultImg = tourPlace.get("firstimage");
 			
 			TourPlaceVO tourPlaceVO = new TourPlaceVO(contentid, areacode, contenttypeid, title, zip, addr1, addr2
@@ -70,6 +84,10 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		}
 		
 		iTripScheduleMapper.mergeSearchTourPlace(tourPlaceList);
+		
+		updateTourPlaceInfo();
+		
+		aiInsertStyleKeyword();
 	}
 	
 	@Override
@@ -219,7 +237,7 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			for(TripScheduleVO tripSchedule : scheduleList) {
 			    List<String> displayPlaceNames = new ArrayList<>(); // 화면에 표시할 2개만 담을 리스트
 			    int totalPlaceCnt = 0;
-			    String getUrl = "";
+//			    String getUrl = "";
 			    
 			    for(TripScheduleDetailsVO details : tripSchedule.getTripScheduleDetailsList()) {
 			        List<TripSchedulePlaceVO> places = details.getTripSchedulePlaceList();
@@ -231,25 +249,25 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			                if(displayPlaceNames.size() < 2) {
 			                    displayPlaceNames.add(place.getPlcNm());
 			                }
-			                if(getUrl.equals("")) {
-			                	TourPlaceVO placeVO = new TourPlaceVO();
-			                	placeVO.setPlcNo(place.getDestId());
-			                	placeVO = searchPlaceDetail(placeVO);
-			                	if(placeVO.getDefaultImg() == null) {
-			                		System.out.println("placeVO : " + placeVO);
-			                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
-			                		getUrl = placeVO.getDefaultImg();
-			                	} else {
-			                		getUrl = placeVO.getDefaultImg();
-			                	}
-			                	
-			                	tripSchedule.setThumbnail(getUrl);
-			                	
-			                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
-			                	if(placeVO.getAttachNo() != 0) {
-//			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
-			                	}
-			                }
+//			                if(getUrl.equals("")) {
+//			                	TourPlaceVO placeVO = new TourPlaceVO();
+//			                	placeVO.setPlcNo(place.getDestId());
+//			                	placeVO = searchPlaceDetail(placeVO);
+//			                	if(placeVO.getDefaultImg() == null) {
+//			                		System.out.println("placeVO : " + placeVO);
+//			                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
+//			                		getUrl = placeVO.getDefaultImg();
+//			                	} else {
+//			                		getUrl = placeVO.getDefaultImg();
+//			                	}
+//			                	
+//			                	tripSchedule.setThumbnail(getUrl);
+//			                	
+//			                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
+//			                	if(placeVO.getAttachNo() != 0) {
+////			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
+//			                	}
+//			                }
 			            }
 			        }
 			    }
@@ -266,32 +284,32 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		TripScheduleVO tripSchedule = iTripScheduleMapper.selectTripSchedule(params);
 		if(tripSchedule != null) {
 			int totalPlaceCnt = 0;
-			String getUrl = "";
+//			String getUrl = "";
 		    
 		    for(TripScheduleDetailsVO details : tripSchedule.getTripScheduleDetailsList()) {
 		        List<TripSchedulePlaceVO> places = details.getTripSchedulePlaceList();
 		        if(places != null) {
 		            for(TripSchedulePlaceVO place : places) {
 		            	totalPlaceCnt++;
-		                if(getUrl.equals("")) {
-		                	TourPlaceVO placeVO = new TourPlaceVO();
-		                	placeVO.setPlcNo(place.getDestId());
-		                	placeVO = searchPlaceDetail(placeVO);
-		                	if(placeVO.getDefaultImg() == null) {
-		                		System.out.println("placeVO : " + placeVO);
-		                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
-		                		getUrl = placeVO.getDefaultImg();
-		                	} else {
-		                		getUrl = placeVO.getDefaultImg();
-		                	}
-		                	
-		                	tripSchedule.setThumbnail(getUrl);
-		                	
-		                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
-		                	if(placeVO.getAttachNo() != 0) {
-//			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
-		                	}
-		                }
+//		                if(getUrl.equals("")) {
+//		                	TourPlaceVO placeVO = new TourPlaceVO();
+//		                	placeVO.setPlcNo(place.getDestId());
+//		                	placeVO = searchPlaceDetail(placeVO);
+//		                	if(placeVO.getDefaultImg() == null) {
+//		                		System.out.println("placeVO : " + placeVO);
+//		                		placeVO = updateTourPlace(placeVO.getPlcNo(),placeVO.getPlaceType());
+//		                		getUrl = placeVO.getDefaultImg();
+//		                	} else {
+//		                		getUrl = placeVO.getDefaultImg();
+//		                	}
+//		                	
+//		                	tripSchedule.setThumbnail(getUrl);
+//		                	
+//		                	//나중에 첨부파일이 셋팅이 되어있다는 기준으로 수정하기
+//		                	if(placeVO.getAttachNo() != 0) {
+////			                		tripSchedule.setThumbnail(placeVO.getAttachNo());
+//		                	}
+//		                }
 		            }
 		        }
 		    }
@@ -349,10 +367,44 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		
 		String plcDesc = detailItemNode.get("overview")+"";
 		String plcNm = detailItemNode.get("title")+"";
-		String operationHours = introItemNode.get(params.getString("operationhours"))+"";
-		String plcPrice = introItemNode.get(params.getString("plcprice"))+"";
 		String defaultImg = detailItemNode.get("firstimage")+"";
 		String plcAddr1 = detailItemNode.get("addr1")+"";
+		
+		String operationHours = null;
+		String plcPrice = null;
+		
+		if(!detailNode.path("response").path("body").path("totalCount").equals("0")) {
+			operationHours = introItemNode.get(params.getString("operationhours"))+"";
+			plcPrice = introItemNode.get(params.getString("plcprice"))+"";
+		} else {
+	        String message = String.format("""
+		            관광지 정보를 찾고 있어.
+		            [관광지키]
+		            %s
+		            
+		            [관광지이름]
+		            %s
+		            
+		            [관광지 소개]
+		            %s
+		            
+		            내가 필요한 [관광지이름]과 [관광지 소개]정보야
+		            해당 관광지의 운영시간과 비용에대한 정보를 알고싶어.
+		            [관광지키]는 한국관광관련 TourApi에서 사용하는 key값이야
+		            배열형태로 배치해하여 0번째 인덱스는 운영시간, 1번째 인덱스는 비용에 대한 정보를 JSON으로 줘.
+		            검색하여 정보를 찾는 행위허용
+		            예시형태 [운영시간, 비용] 
+		            """, contentId,plcNm, plcDesc);
+	        
+	        String[] result = chatClient.prompt()
+	                .user(message)
+	                .call()
+	                .entity(new ParameterizedTypeReference<String[]>() {});
+	        System.out.println("result:  " + result);
+	        
+	        operationHours = result[0];
+	        plcPrice = result[1];
+		}
 		
 		TourPlaceVO tourPlaceVO = new TourPlaceVO();
 		tourPlaceVO.setPlcNo(contentId);
@@ -427,6 +479,250 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		
 		return resultSchedule;
 	}
+
+	@Override
+	public int updateScheduleThumbnail(ThumbnailData thumbnailData) {
+		int resultKey = 0;
+		if(thumbnailData.getDefaultYn().equals("N")) {
+			Map<String, String> uploadInfo = new HashMap<>();
+			
+			uploadInfo.put("fileGbCd", "TRIP_SCHEDULE");
+			uploadInfo.put("filePath", "/tripschedule/thumbnail");
+			
+			resultKey = fileService.saveFile(thumbnailData.getThumbnailFile(), uploadInfo, thumbnailData.getMemNo());
+			thumbnailData.setAttachNo(resultKey);
+		}
+		
+		int result = iTripScheduleMapper.updateScheduleThumbnail(thumbnailData);
+		
+		return result;
+	}
+
+	@Override
+	public List<Params> tourContentList() {
+		return iTripScheduleMapper.tourContentList();
+	}
+
+	@Override
+	public void updateTripScheduleState() {
+		iTripScheduleMapper.scheduleOngoing();
+		iTripScheduleMapper.scheduleCompleted();
+	}
+
+	@Override
+	public TourPlaceVO updatePlaceDetail(Params params) {
+		RestClient restClient = RestClient.create();
+		
+		int contentId = params.getInt("contentId");
+		int contenttypeId = params.getInt("contenttypeId");
+		
+		String introUrlString = "https://apis.data.go.kr/B551011/KorService2/detailIntro2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
+				+ "&contentId=" + contentId
+				+ "&contentTypeId=" + contenttypeId
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+		
+		String detailUrlString = "https://apis.data.go.kr/B551011/KorService2/detailCommon2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
+				+ "&contentId=" + contentId
+				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+		
+		// 2. URI 객체로 변환 (이러면 RestClient가 내부에서 자동 인코딩을 안 합니다)
+		URI introUri = URI.create(introUrlString);
+		URI detailUri = URI.create(detailUrlString);
+		
+		JsonNode introNode = restClient.get()
+			    .uri(introUri)
+			    .retrieve()
+			    .body(JsonNode.class);
+		
+		JsonNode introItemNode = introNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item")
+				.get(0);
+		
+		JsonNode detailNode = restClient.get()
+				.uri(detailUri)
+				.retrieve()
+				.body(JsonNode.class);
+		
+		JsonNode detailItemNode = detailNode.path("response")
+				.path("body")
+				.path("items")
+				.path("item")
+				.get(0);
+		
+		//어떤 키값에 비용과 이용시간 정보가 있는건지 체킹 후 params 에 넣음
+		contentIdCheck(params);
+		
+		String plcDesc = detailItemNode.get("overview")+"";
+		String plcNm = detailItemNode.get("title")+"";
+		
+//		if(params.get("operationhours") != null && introItemNode.get(params.getString("operationhours")) != null) {
+//			operationHours = introItemNode.get(params.getString("operationhours"))+"";
+//		}
+		
+		String operationHours = null;
+		String plcPrice = null;
+		
+		if(introItemNode != null) {
+			System.out.println("detailNode.path(\"response\").path(\"body\").path(\"totalCount\").equals(\"0\") : " + detailNode.path("response").path("body").path("totalCount").equals("0"));
+			operationHours = introItemNode.get(params.getString("operationhours"))+"";
+			plcPrice = introItemNode.get(params.getString("plcprice"))+"";
+		} else {
+//	        String message = String.format("""
+//		            관광지 정보를 찾고 있어.
+//		            [관광지키]
+//		            %s
+//		            
+//		            [관광지이름]
+//		            %s
+//		            
+//		            [관광지 소개]
+//		            %s
+//		            
+//		            내가 필요한 [관광지이름]과 [관광지 소개]정보야
+//		            해당 관광지의 운영시간과 비용에대한 정보를 알고싶어.
+//		            [관광지키]는 한국관광관련 TourApi에서 사용하는 key값이야
+//		            배열형태로 배치해하여 0번째 인덱스는 운영시간, 1번째 인덱스는 비용에 대한 정보를 JSON으로 줘.
+//		            검색하여 정보를 찾는 행위허용
+//		            예시형태 [운영시간, 비용] 
+//		            """, contentId,plcNm, plcDesc);
+//	        
+//	        String[] result = chatClient.prompt()
+//	                .user(message)
+//	                .call()
+//	                .entity(new ParameterizedTypeReference<String[]>() {});
+//	        System.out.println("result:  " + result);
+//	        
+//	        if(result != null) {
+//		        operationHours = result[0];
+//		        plcPrice = result[1];
+//	        }
+		}
+		
+		String defaultImg = detailItemNode.get("firstimage")+"";
+		String plcAddr1 = detailItemNode.get("addr1")+"";
+		
+		TourPlaceVO tourPlaceVO = new TourPlaceVO();
+		tourPlaceVO.setPlcNo(contentId);
+		tourPlaceVO.setPlcNm(plcNm);
+		tourPlaceVO.setPlcDesc(plcDesc.replace("\"", ""));
+		
+		if(operationHours != null && !operationHours.equals("")) tourPlaceVO.setOperationHours(operationHours.replace("\"", ""));
+		if(plcPrice != null) tourPlaceVO.setPlcPrice(plcPrice.replace("\"", ""));
+		
+		tourPlaceVO.setDefaultImg(defaultImg.replace("\"", ""));
+		tourPlaceVO.setPlcAddr1(plcAddr1.replace("\"", ""));
+		
+		saveTourPlacInfo(tourPlaceVO);
+		
+		return tourPlaceVO;
+	}
+
+	@Override
+	public List<TourPlaceVO> selectPopularPlaceList(List<Map<String, String>> tourPlaceList) {
+		List<TourPlaceVO> popularTourPlaceList = iTripScheduleMapper.selectPopularPlaceList(tourPlaceList);
+		return popularTourPlaceList;
+	}
+
+	@Override
+	public List<TourPlaceVO> searchTourPlaceList(int rgnNo) {
+		
+		List<TourPlaceVO> tourPlaceVO = iTripScheduleMapper.searchTourPlaceList(rgnNo);
+		
+		return tourPlaceVO;
+	}
+	
+	public String formatStyleCatList(List<Params> dbList) {
+	    if (dbList == null || dbList.isEmpty()) {
+	        return "관련된 장소 정보가 없습니다.";
+	    }
+
+	    StringBuilder sb = new StringBuilder();
+	    
+	    for (Params params : dbList) {
+	        // 1. 필요한 정보만 쏙쏙 뽑기 (null 처리도 안전하게)
+	        String title = String.valueOf(params.get("TITLE")); // 제목
+	        String addr = String.valueOf(params.get("ADDR1"));  // 주소
+	        // String tel = String.valueOf(params.get("TEL")); // 전화번호 필요하면 추가
+
+	        // 2. AI가 이해하기 쉬운 라벨 붙이기
+	        sb.append("- 장소명: ").append(title).append("\n");
+	        sb.append("  주소: ").append(addr).append("\n");
+	        // sb.append("  설명: ...").append("\n"); // 설명 컬럼이 있다면 추가
+	        
+	        sb.append("\n"); // 가독성을 위해 한 줄 띄우기
+	    }
+	    
+	    return sb.toString();
+	}
+
+	@Override
+	public List<Params> selectTripStyleList(String[] tripStyleCatList) {
+		List<Params> tripStyleList = iTripScheduleMapper.selectTripStyleList(tripStyleCatList);
+		
+		return tripStyleList;
+	}
+
+	@Override
+	public void updateTourPlaceInfo() {
+		
+		List<TourPlaceVO> updateDataList = iTripScheduleMapper.selectTargetPlaceList();
+		
+		for(TourPlaceVO place : updateDataList) {
+			Params params = new Params();
+			params.put("content_Id", place.getPlcNo());
+			params.put("contenttype_Id", place.getPlaceType());
+			updatePlaceDetail(params);
+		}
+		
+	}
+	
+	@Async("asyncTaskExecutor")
+	@Override
+	public void aiInsertStyleKeyword() {
+		
+		String tripStyleCatList[] = null;
+		
+        List<Params> tripStyleList = selectTripStyleList(tripStyleCatList);
+        System.out.println("tripStyleList : " + tripStyleList);
+        
+		// 1. DB에서 데이터 조회 (MyBatis)
+        List<Params> dbList = iTripScheduleMapper.searchEmptyStyleKeywordPlace();
+        
+        // 2. 조회한 데이터를 문자열로 변환 (AI에게 먹여줄 '참고자료')
+        String dbContext = dbList.toString();
+		
+        // 3. 프롬프트 작성 (RAG 패턴)
+        String message = String.format("""
+            [참고할 여행 키워드 분류항목 테이블 데이터]
+            %s
+            
+            [참고할 관광지 DB 데이터]
+            %s
+            
+            [참고 데이터]를 바탕으로 여행지별로 색인붙여줘.
+            [참고 데이터]의 정보가 부족하면 너의 지식을 섞어서 보충하거나
+            인터넷에서 검색해서 보충해줘.
+            결과는 PLC_NO 기준으로 해당 관광지 styleCd 값들을 배열형태로 배치해하여 JSON으로 줘.
+            예시형태 plcNo : 100, styles : [WATER_SPORTS, HIKING] 
+            """, tripStyleList, dbContext);
+        
+        // 4. AI 호출
+        List<Map<String, Object>> resultList = chatClient.prompt()
+                .user(message)
+                .call()
+                .entity(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+        
+        System.out.println("resultList: " + resultList);
+        
+        iTripScheduleMapper.insertTourKeywords(resultList);
+	}
+
+	@Override
+	public List<TourPlaceVO> selectStyleMatchPlace(Params params) {
+		return iTripScheduleMapper.selectStyleMatchPlace(params);
+	}
 	
 	// 텍스트 정제용 프라이빗 메소드 (예시)
 //	private String cleanText(String input) {
@@ -434,5 +730,5 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 //	    // HTML 태그 제거 (<br> -> 줄바꿈 등) 처리가 필요할 수 있음
 //	    return input.replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "").trim();
 //	}
-
+	
 }

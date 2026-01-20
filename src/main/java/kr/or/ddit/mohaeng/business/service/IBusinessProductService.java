@@ -32,10 +32,10 @@ public interface IBusinessProductService {
 	 * <p>숙박상품 조회</p>
 	 * @author sdg
 	 * @date 2026-01-19
-	 * @param tripProd (memNo)
+	 * @param businessProducts (memNo)
 	 * @return 숙박상품목록
 	 */
-//	public List<AccommodationVO> getAccommodationList(TripProdVO tripProd);
+	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProducts);
 
 	
 	/**

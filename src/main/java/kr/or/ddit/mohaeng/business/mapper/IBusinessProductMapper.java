@@ -32,6 +32,17 @@ public interface IBusinessProductMapper {
 	public List<TripProdVO> getProductlist(TripProdVO product);
 	
 	/**
+	 * <p>본인 판매 숙박상품 조회</p>
+	 * @author sdg
+	 * @date 2026-01-20
+	 * @param businessProd 회원id
+	 * @return 본인 상품
+	 */
+	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProd);
+	
+	
+	
+	/**
 	 * <p>기업 상품 현황 통계</p>
 	 * @author sdg
 	 * @date 2026-01-18

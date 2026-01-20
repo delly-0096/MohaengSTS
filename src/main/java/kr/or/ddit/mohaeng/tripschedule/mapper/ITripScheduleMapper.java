@@ -68,4 +68,10 @@ public interface ITripScheduleMapper {
 	public List<Params> selectTripStyleList(String[] tripStyleCatList);
 
 	public List<TourPlaceVO> selectTargetPlaceList();
+
+	public List<Params> searchEmptyStyleKeywordPlace();
+
+	public int insertTourKeywords(List<Map<String, Object>> resultList);
+
+	public List<TourPlaceVO> selectStyleMatchPlace(Params params);
 }

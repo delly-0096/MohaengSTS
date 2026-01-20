@@ -60,4 +60,8 @@ public interface ITripScheduleService {
 	public List<Params> selectTripStyleList(String[] tripStyleCatList);
 
 	public void updateTourPlaceInfo();
+
+	public void aiInsertStyleKeyword();
+
+	public List<TourPlaceVO> selectStyleMatchPlace(Params params);
 }

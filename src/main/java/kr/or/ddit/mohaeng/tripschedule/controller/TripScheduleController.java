@@ -416,44 +416,48 @@ public class TripScheduleController {
 	        	    new TypeReference<String[]>() {}
 	        	);
 	        
-	        List<Params> tripStyleList = tripScheduleService.selectTripStyleList(tripStyleCatList);
-	        System.out.println("tripStyleList : " + tripStyleList);
+	        Params params = new Params();
+	        params.put("tripStyleCatList", tripStyleCatList);
+	        params.put("rgnNo", preferenceNode.get("destinationcode").asText());
+	        
+	        List<TourPlaceVO> styleMatchPlaceList = tripScheduleService.selectStyleMatchPlace(params);
+	        
+	        System.out.println("styleMatchPlaceList : " + styleMatchPlaceList.size());
 	        
 	        int duration = CommUtil.calculateDaysBetween(dates[0], dates[1]);
-	        System.out.println("duration : "+duration);
+	        String durationStr = duration + "박"+ (duration+1) +"일";
 	        
-	        // 2. 비즈니스 로직 처리 (예: 서비스 호출)
-	        // service.getRecommendation(preferenceData);
+//	        // 2. 비즈니스 로직 처리 (예: 서비스 호출)
+//	        // service.getRecommendation(preferenceData);
 	        
 	        // 3. 모델에 담아 JSP 등으로 전달
 	        model.addAttribute("data", preferenceData);
 	        
 	        int destinationcode = Integer.parseInt(preferenceNode.get("destinationcode").asText());
 	        
-			// 1. DB에서 데이터 조회 (MyBatis)
-	        List<TourPlaceVO> dbList = tripScheduleService.searchTourPlaceList(destinationcode);
-	        
-	        // 2. 조회한 데이터를 문자열로 변환 (AI에게 먹여줄 '참고자료')
-	        String dbContext = dbList.toString();
-	        
 	        String region = RegionCode.getNameByNo(destinationcode);
 	        
 	        // 3. 프롬프트 작성 (RAG 패턴)
-	        String message = String.format("""
-	            사용자가 '%s' 여행지를 찾고 있어.
-	            
-	            [참고할 여행 키워드 분류항목 테이블 데이터]
-	            %s
-	            
-	            [참고할 관광지 DB 데이터]
-	            %s
-	            
-	            위 [참고 데이터]를 바탕으로 여행지별로 색인붙여줘.
-	            데이터에 정보가 부족하면 너의 지식을 섞어서 보충해.
-	            결과는 PLC_NO 기준으로 해당 관광지 styleCd 값들을 배열형태로 배치해하여 JSON으로 줘.
-	            예시형태 rgnNo : 100, styles : [WATER_SPORTS, HIKING] 
-	            """, region, tripStyleList, dbContext);
-
+//	        String message = String.format("""
+//	            사용자가 '%s' 여행지를 찾고 있어.
+//	            
+//	            [여행기간]
+//	            %s
+//	            
+//	            [여행페이스]
+//	            %s
+//              
+//              
+//              
+//	            [참고할 관광지 DB 데이터]
+//	            %s
+//	            
+//	            위 [참고 데이터]를 바탕으로 여행지별로 색인붙여줘.
+//	            데이터에 정보가 부족하면 너의 지식을 섞어서 보충해.
+//	            결과는 PLC_NO 기준으로 해당 관광지 styleCd 값들을 배열형태로 배치해하여 JSON으로 줘.
+//	            예시형태 rgnNo : 100, styles : [WATER_SPORTS, HIKING] 
+//	            """, region, durationStr, dbContext);
+	        
 //	        // 3. 프롬프트 작성 (RAG 패턴)
 //	        String message = String.format("""
 //	            사용자가 '%s' 여행지를 찾고 있어.
@@ -470,12 +474,12 @@ public class TripScheduleController {
 //	            """, "서울", dbContext);
 //	        
 	        // 4. AI 호출
-	        List<Map<String, Object>> result = chatClient.prompt()
-	                .user(message)
-	                .call()
-	                .entity(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
-//	        
-	        System.out.println("result : " + result);
+//	        List<Map<String, Object>> result = chatClient.prompt()
+//	                .user(message)
+//	                .call()
+//	                .entity(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
+////	        
+//	        System.out.println("result : " + result);
 	        
 	    } catch (Exception e) {
 	        e.printStackTrace();

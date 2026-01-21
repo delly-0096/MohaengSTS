@@ -29,10 +29,17 @@ public class TourPlaceVO {
 	private String popTrvlYn;
 	private String defaultImg;
 	
+	private int ldongRegnCd;
+	private int ldongSignguCd;
+	private String ldongRegnCdNm;
+	private String ldongSignguNm;
+	private String fullNm;
+	
+	
 	public TourPlaceVO () {}
 	
 	public TourPlaceVO(int plcNo, int rgnNo, String placeType, String plcNm, String plcZip, String plcAddr1, String plcAddr2,
-			String latitude, String longitude, String regId, String defaultImg) {
+			String latitude, String longitude, String regId, String defaultImg, int ldongRegnCd, int ldongSignguCd) {
 		super();
 		this.plcNo = plcNo;
 		this.rgnNo = rgnNo;
@@ -45,6 +52,8 @@ public class TourPlaceVO {
 		this.longitude = longitude;
 		this.regId = regId;
 		this.defaultImg = defaultImg;
+		this.ldongRegnCd = ldongRegnCd;
+		this.ldongSignguCd = ldongSignguCd;
 	}
 	
 }

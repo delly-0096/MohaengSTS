@@ -77,9 +77,11 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 			String mapy = tourPlace.get("mapy");
 			String mapx = tourPlace.get("mapx");
 			String defaultImg = tourPlace.get("firstimage");
+			int ldongRegnCd = Integer.parseInt(tourPlace.get("lDongRegnCd"));
+			int ldongSignguCd = Integer.parseInt(tourPlace.get("lDongSignguCd"));
 			
 			TourPlaceVO tourPlaceVO = new TourPlaceVO(contentid, areacode, contenttypeid, title, zip, addr1, addr2
-					, mapy, mapx, "0", defaultImg);
+					, mapy, mapx, "0", defaultImg, ldongRegnCd, ldongSignguCd);
 			tourPlaceList.add(tourPlaceVO);
 		}
 		

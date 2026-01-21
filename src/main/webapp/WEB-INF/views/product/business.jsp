@@ -125,7 +125,8 @@
 			        	<c:if test="${status == '판매중지'}">
 				        	<c:set var="dataStatus" value="inactive"/>
 			        	</c:if>
-			            <div class="product-manage-card" data-id="${prod.tripProdNo}" data-status="${dataStatus}">
+			        	<c:set var="accNo" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accNo : 0}"/>
+			            <div class="product-manage-card" data-id="${prod.tripProdNo}" data-status="${dataStatus}" data-no="${accNo}">
 			                <label class="product-checkbox">
 			                    <input type="checkbox" class="product-select-checkbox" value="${prod.tripProdNo}" onchange="toggleProductSelect(this)">
 			                </label>
@@ -138,33 +139,39 @@
 			                    <h3 class="product-name">${prod.tripProdTitle}</h3>
 			                    <div class="product-meta">
 			                        <span><i class="bi bi-geo-alt"></i>${prod.ctyNm}</span><!-- 지역 코드 -->
-			                        <span><i class="bi bi-star-fill text-warning"></i> ${prod.avgRating} (${prod.reviewCount })</span>
+			                        <span>
+			                        	<c:set var="avgRating" value="${empty prod.avgRating or prod.avgRating == 0 ? 0.0 : prod.avgRating}"/>
+			                        	<c:set var="reviewCount" value="${empty prod.reviewCount or prod.reviewCount == 0 ? 0 : prod.reviewCount}"/>
+										<i class="bi bi-star-fill text-warning"></i> ${avgRating} (${reviewCount })
+			                        </span>
 			                    </div>
 			                    <div class="product-period">
 			                        <i class="bi bi-calendar-range"></i>
 			                        <span>
-			                        <fmt:formatDate value="${prod.saleStartDt}" pattern="yyyy.MM.dd" /> ~ 
-			                        <fmt:formatDate value="${prod.saleEndDt}" pattern="yyyy.MM.dd" />
+				                        <fmt:formatDate value="${prod.saleStartDt}" pattern="yyyy.MM.dd" /> ~ 
+				                        <fmt:formatDate value="${prod.saleEndDt}" pattern="yyyy.MM.dd" />
 			                        </span>
 			                    </div>
 			                    <div class="product-price">
 			                    <c:choose>
-			                    	<c:when test="${prod.discount > 0}">
+			                    	<c:when test="${not empty prod.prodSale and prod.prodSale.discount > 0}">
 				                        <span class="original-price">
-				                        	<fmt:formatNumber value="${prod.netprc}" pattern="#,###"/>원
+				                        	<fmt:formatNumber value="${prod.prodSale.netprc}" pattern="#,###"/>원
 				                        </span>
 				                        <span class="sale-price">
-				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+				                        	<fmt:formatNumber value="${prod.displayPrice}" pattern="#,###"/>원
 				                        </span>
-				                        <span class="discount-rate">${prod.discount}% 할인</span>
+				                        <span class="discount-rate">${prod.prodSale.discount}% 할인</span>
 			                    	</c:when>
-			                    	<c:when test="${prod.netprc > 0 and empty prod.discount}">
-				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+			                    	<c:when test="${not empty prod.prodSale and prod.prodSale.netprc > 0 and empty prod.prodSale.discount}">
+			                    		<span class="sale-price">
+				                        	<fmt:formatNumber value="${prod.displayPrice}" pattern="#,###"/>원
+				                        </span>
 			                    	</c:when>
 			                    	<c:otherwise>
+				                    	<!-- 숙박 상품인 경우  -->
 				                        <span class="sale-price">
-<%-- 				                        	<fmt:formatNumber value="${prod.price}" pattern="#,###"/>원 --%>
-											아직 안불러옴
+				                        	<fmt:formatNumber value="${prod.displayPrice}" pattern="#,###"/>원 ~
 				                        </span>
 			                    	</c:otherwise>
 			                    </c:choose>
@@ -178,11 +185,11 @@
 			                	 -->
 			                    <div class="stat-item">
 			                        <span class="stat-label">총 재고</span>
-			                        <span class="stat-value stock-value">${prod.totalStock}개</span>
+			                        <span class="stat-value stock-value">${prod.prodSale.totalStock}개</span>
 			                    </div>
 			                    <div class="stat-item">
 			                        <span class="stat-label">현재 재고</span>
-			                        <span class="stat-value stock-value">${prod.curStock}개</span>
+			                        <span class="stat-value stock-value">${prod.prodSale.curStock}개</span>
 			                    </div>
 			                    <div class="stat-item">
 			                        <span class="stat-label">조회수</span>
@@ -190,14 +197,14 @@
 			                    </div>
 			                    <div class="stat-item">
 			                        <span class="stat-label">예약수</span>
-			                        <span class="stat-value">${prod.totalStock - prod.curStock}</span>
+			                        <span class="stat-value">${prod.prodSale.totalStock - prod.prodSale.curStock}</span>
 			                    </div>
 			                    <div class="stat-item">
 			                        <span class="stat-label">매출</span>
 			                        <span class="stat-value">
 			                        	<c:choose>
-			                        		<c:when test="${not empty prod.price and prod.price > 0}">
-					                        	<c:set var="price" value="${prod.price * (prod.totalStock - prod.curStock)}"/>
+			                        		<c:when test="${not empty prod.prodSale.price and prod.prodSale.price > 0}">
+					                        	<c:set var="price" value="${prod.prodSale.price * (prod.prodSale.totalStock - prod.prodSale.curStock)}"/>
 					                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원
 			                        		</c:when>
 			                        		<c:otherwise>
@@ -214,7 +221,7 @@
 			                        <i class="bi bi-eye"></i> 상세보기
 			                    </a>
 			                    <button class="btn btn-outline btn-sm" onclick="editProduct(this)"
-			                    	data-id="${prod.tripProdNo}">
+			                    	data-id="${prod.tripProdNo}" data-no="${accNo}">
 			                        <i class="bi bi-pencil"></i> 수정
 			                    </button>
 			                    <button class="btn btn-outline btn-sm" onclick="toggleProductStatus(this)"
@@ -426,29 +433,31 @@
                     </div><!-- /defaultInfoSection -->
 
 
+
                     <!-- 숙박 전용 필드 여기에 그냥 추가를 하자 너무 김-->
                     <div id="accommodationFields" style="display: none;">
+						<input type="hidden" name="accommodation.accNo"/>
                         <div class="form-section-title">
                             <i class="bi bi-building me-2"></i>숙소 정보
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label class="form-label">숙소 유형 <span class="text-danger">*</span></label>
-                                <select class="form-select" name="accommodationType">
+                                <select class="form-select" name="accommodation.accCatCd">
                                     <option value="">선택하세요</option>
-                                    <option value="hotel">호텔</option>
-                                    <option value="resort">리조트</option>
-                                    <option value="pension">펜션</option>
-                                    <option value="motel">모텔</option>
-                                    <option value="guesthouse">게스트하우스</option>
+                                    <option value="B02010100">호텔</option>
+                                    <option value="B02010500">리조트</option>
+                                    <option value="B02010700">펜션</option>
+                                    <option value="B02011100">게스트하우스</option>
+<!--                                     <option value="motel">모텔</option>
                                     <option value="hanok">한옥</option>
                                     <option value="condo">콘도</option>
-                                    <option value="camping">캠핑/글램핑</option>
+                                    <option value="camping">캠핑/글램핑</option> -->
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">등급</label>
-                                <select class="form-select" name="starRating">
+                                <select class="form-select" name="accommodation.starGrade">
                                     <option value="">선택하세요</option>
                                     <option value="5">5성급</option>
                                     <option value="4">4성급</option>
@@ -460,145 +469,26 @@
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">총 객실 수</label>
-                                <input type="number" class="form-control" name="totalRooms" placeholder="0" min="1">
+                                <input type="number" class="form-control" name="accommodation.totalRoomCnt" placeholder="0" min="1">
                             </div>
                         </div>
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">체크인 시간 <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" name="checkInTime" value="15:00">
+                                <input type="time" class="form-control" name="accommodation.checkInTime">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">체크아웃 시간 <span class="text-danger">*</span></label>
-                                <input type="time" class="form-control" name="checkOutTime" value="11:00">
+                                <input type="time" class="form-control" name="accommodation.checkOutTime">
                             </div>
                         </div>
+
 
                         <div class="form-section-title">
                             <i class="bi bi-door-open me-2"></i>객실 정보
                         </div>
                         <div class="room-type-container" id="roomTypeContainer">
-                            <div class="room-type-item" data-room-index="0">
-                                <div class="room-type-header">
-                                    <h6><i class="bi bi-door-closed me-2"></i>객실 타입 1</h6>
-                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRoomType(0)" style="display: none;">
-                                        <i class="bi bi-x"></i>
-                                    </button>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-md-4">
-                                        <label class="form-label">객실명 <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" name="roomName_0" placeholder="예: 스탠다드 더블">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">기준 인원 <span class="text-danger">*</span></label>
-                                        <input type="number" class="form-control" name="roomCapacity_0" placeholder="2" min="1">
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label">최대 인원</label>
-                                        <input type="number" class="form-control" name="roomMaxCapacity_0" placeholder="4" min="1">
-                                    </div>
-                                </div>
-                                <div class="row mb-3">
-                                    <div class="col-md-3">
-                                        <label class="form-label">1박 가격(PRICE) <span class="text-danger">*</span></label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" name="roomPrice_0" placeholder="0">
-                                            <span class="input-group-text">원</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">할인율</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" name="roomDiscount_0" placeholder="0" min="0" max="100">
-                                            <span class="input-group-text">%</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">총 객실수<span class="text-danger">*</span></label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" name="roomStock_0" placeholder="0" min="0">
-                                            <span class="input-group-text">실</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">객실 크기(방너비)</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" name="roomSize_0" placeholder="0">
-                                            <span class="input-group-text">㎡</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">조식 포함</label>
-                                        <select class="form-select" name="roomBreakfast_0">
-                                            <option value="none">조식 미포함</option>
-                                            <option value="included">조식 포함</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">침대 타입</label>
-                                    <div class="form-check-group">
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="bedType_0" value="single" id="bedSingle_0">
-                                            <label class="form-check-label" for="bedSingle_0">싱글</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="bedType_0" value="double" id="bedDouble_0">
-                                            <label class="form-check-label" for="bedDouble_0">더블</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="bedType_0" value="queen" id="bedQueen_0">
-                                            <label class="form-check-label" for="bedQueen_0">퀸</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="bedType_0" value="king" id="bedKing_0">
-                                            <label class="form-check-label" for="bedKing_0">킹</label>
-                                        </div>
-                                        <div class="form-check form-check-inline">
-                                            <input class="form-check-input" type="checkbox" name="bedType_0" value="ondol" id="bedOndol_0">
-                                            <label class="form-check-label" for="bedOndol_0">온돌</label>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">객실 특징</label>
-                                    <div class="room-features-grid">
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roomFeature_0" value="free_cancel" id="featureFreeCancel_0">
-                                            <label class="form-check-label" for="featureFreeCancel_0"><i class="bi bi-check-circle me-1"></i>무료 취소</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roomFeature_0" value="ocean_view" id="featureOceanView_0">
-                                            <label class="form-check-label" for="featureOceanView_0"><i class="bi bi-water me-1"></i>오션뷰</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roomFeature_0" value="mountain_view" id="featureMountainView_0">
-                                            <label class="form-check-label" for="featureMountainView_0"><i class="bi bi-mountain me-1"></i>마운틴뷰</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roomFeature_0" value="city_view" id="featureCityView_0">
-                                            <label class="form-check-label" for="featureCityView_0"><i class="bi bi-buildings me-1"></i>시티뷰</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roomFeature_0" value="living_room" id="featureLivingRoom_0">
-                                            <label class="form-check-label" for="featureLivingRoom_0"><i class="bi bi-door-open me-1"></i>거실 포함</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roomFeature_0" value="balcony" id="featureBalcony_0">
-                                            <label class="form-check-label" for="featureBalcony_0"><i class="bi bi-flower1 me-1"></i>발코니/테라스</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roomFeature_0" value="no_smoking" id="featureNoSmoking_0">
-                                            <label class="form-check-label" for="featureNoSmoking_0"><i class="bi bi-slash-circle me-1"></i>금연</label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" name="roomFeature_0" value="kitchen" id="featureKitchen_0">
-                                            <label class="form-check-label" for="featureKitchen_0"><i class="bi bi-cup-hot me-1"></i>주방/취사</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        	<!-- 객실 정보 출력 -->
                         </div>
                         <button type="button" class="btn btn-outline w-100 mb-3" onclick="addRoomType()">
                             <i class="bi bi-plus-lg me-2"></i>객실 타입 추가
@@ -702,33 +592,7 @@
                             <i class="bi bi-plus-circle me-2"></i>추가 옵션 (선택사항)
                         </div>
                         <div class="addon-options-container" id="addonOptionsContainer">
-                            <div class="addon-option-item" data-addon-index="0">
-                                <div class="row">
-                                    <div class="col-md-5">
-                                        <label class="form-label">옵션명</label>
-                                        <input type="text" class="form-control" name="addonName_0" placeholder="예: 조식 뷔페">
-                                    </div>
-                                    <div class="col-md-2">
-                                        <label class="form-label">인원</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" name="addonPerson_0" placeholder="0" min="0" value="0">
-                                            <span class="input-group-text">명</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <label class="form-label">가격</label>
-                                        <div class="input-group">
-                                            <input type="number" class="form-control" name="addonPrice_0" placeholder="0">
-                                            <span class="input-group-text">원</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-2 d-flex align-items-end">
-                                        <button type="button" class="btn btn-outline-danger w-100" onclick="removeAddonOption(0)" style="display: none;">
-                                            <i class="bi bi-x"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
+                            <!-- 추가옵션 -->
                         </div>
                         <button type="button" class="btn btn-outline w-100 mb-3" onclick="addAddonOption()">
                             <i class="bi bi-plus-lg me-2"></i>추가 옵션 추가
@@ -760,11 +624,12 @@
 	                        <!-- 전체? 현재? -->
 	                            <label class="form-label">재고 수량 <span class="text-danger">*</span></label>
 	                            <div class="input-group">
-	                                <input type="number" class="form-control" name="prodSale.totalStock" placeholder="0" min="0" required>
+	                                <input type="number" class="form-control" name="prodSale.totalStock" placeholder="0" min="1" required>
 	                                <span class="input-group-text">개</span>
 	                            </div>
 	                        </div>
-	                        <!-- 전체? 현재? -->
+							<!--  애는 등록시애는 그냥 보내는데 totalStock이랑 같은 값으로 설정 
+							그래서 처음 등록시에는 display:none -->
 	                        <!-- style="display:none;" -->
 	                        <div class="col-md-3 curStock" >
 	                            <label class="form-label">현재 수량 <span class="text-danger">*</span></label>
@@ -774,6 +639,7 @@
 	                            </div>
 	                        </div>
 	                    </div>
+	                    <!-- 얘네 같이 보여줄래 -->
 	                    <div class="row mb-3">
 	                        <div class="col-md-6">
 	                            <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
@@ -802,11 +668,11 @@
                         <div class="row mb-3">
                             <div class="col-md-6">
                                 <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control date-picker" name="accomStartDate" placeholder="시작일 선택">
+                                <input type="text" class="form-control date-picker" name="saleStartDt" placeholder="시작일 선택">
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control date-picker" name="accomEndtDate" placeholder="종료일 선택">
+                                <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택">
                             </div>
                         </div>
                         <div class="mb-3" id="accomImageField">
@@ -903,35 +769,55 @@ function setModalForNew() {
 
 // 상품 수정 모달 설정
 async function editProduct(prodData) {
-	const { id } = prodData.dataset;
-	const container = document.getElementById('bookingTimeList');
+	const { id, no } = prodData.dataset;	// tripProdNo랑 accNo
+	console.log("editProduct : id, no" +  id  + " " + no);
+	const container = document.getElementById('bookingTimeList');	// 시간 목록 초기화
 	container.innerHTML = ``;
+	const imageContainer = document.querySelector(".productImageList");	// 사진목록 초기화
+	imageContainer.innerHTML = ``;
 	bookingTimes = [];
+	imageList = [];
 	
 	// 정보를 불러와야지
 	try {
-        const response = await axios.post(`/business/product/productDetail`, {tripProdNo: id});
+
+		const requestData = {tripProdNo: id}; 
+		if (no != 0)  requestData.accNo = no;
+		
+        const response = await axios.post(`/business/product/productDetail`, requestData);
         
         const prodData = response.data;
         // 예약정보 담기
-        if(prodData.prodTimeList != null && prodData.prodTimeList.length > 0){
-        	bookingTimes = prodData.prodTimeList.map(time => time.rsvtAvailableTime);
-        	renderBookingTimes();
-        }
-        if(prodData.imageList != null && prodData.imageList.length > 0 ){
-        	console.log("사진 조회용 : ", prodData.imageList );
-        	imageList = [...prodData.imageList];	// 여기서 꺼내서 쓰자
-	        console.log("prodData.imageList : ", prodData.imageList);
-        	console.log("imageList : ", imageList);
-        	renderImageList();
-        }
-		renderProductData(prodData);
+        
+        //
+        
+        // 숙박 정보 불러오기
+//         if(prodData.prodCtgryType === "accommodation"){
+//         	console.log("데이터 변경");
+//         }
+        
+//         else{
+	        if(prodData.prodTimeList != null && prodData.prodTimeList.length > 0){
+	        	bookingTimes = prodData.prodTimeList.map(time => time.rsvtAvailableTime);
+	        	renderBookingTimes();
+	        }
+	        if(prodData.imageList != null && prodData.imageList.length > 0 ){
+	        	console.log("사진 조회용 : ", prodData.imageList );
+	        	imageList = [...prodData.imageList];	// 여기서 꺼내서 쓰자
+		        console.log("prodData.imageList : ", prodData.imageList);
+	        	console.log("imageList : ", imageList);
+	        	renderImageList();
+	        }
+			renderProductData(prodData);	// 상품 불러오기
+//         }
 		toggleCategoryFields();	// value에 따라 duratino나오는게 달라짐
 		
         document.getElementById('productModalTitle').textContent = '상품 수정';
 		document.querySelector("#update").style.display = "block";
 		document.querySelector("#register").style.display = "none";
         
+		// 방 수만큼 넣어야됨
+// 		addRoomType();
         setTimeout(() => {modal.show()}, 300);
     } catch (error) {
         console.error("데이터 로드 중 error 발생: ", error);
@@ -950,7 +836,6 @@ function renderImageList(imageData = ""){
 	}
 	
 	if(imageData !== "" && imageList.length < 5) imageList.push(imageData);
-	
 		
 	imageContainer.innerHTML = '';
     if (imageList.length === 0) {
@@ -1443,8 +1328,8 @@ function toggleCategoryFields() {
 var roomTypeIndex = 1;
 
 function addRoomType() {
-    var container = document.getElementById('roomTypeContainer');
-    var index = roomTypeIndex++;
+    const container = document.getElementById('roomTypeContainer');
+    var index = roomTypeIndex++;	// 추가하는데 번호는 list 사이즈의 index만큼
 
     var roomHtml =
         '<div class="room-type-item" data-room-index="' + index + '">' +
@@ -1577,6 +1462,8 @@ function addRoomType() {
 	showToast('객실 타입이 추가되었습니다.', 'success');
 }
 
+// 선택 객실 삭제 -> 여기도 예약 고객 있는지 확인해서 삭제해야됨
+// 삭제시 인덱스도 줄어들게 만들어야되고
 function removeRoomType(index) {
     var roomItem = document.querySelector('.room-type-item[data-room-index="' + index + '"]');
     if (roomItem) {
@@ -1590,6 +1477,7 @@ function removeRoomType(index) {
     }
 }
 
+// 여기서 삭제 버트 만듬
 function updateRoomDeleteButtons() {
     var roomItems = document.querySelectorAll('.room-type-item');
     roomItems.forEach((item, idx) => {
@@ -1601,38 +1489,39 @@ function updateRoomDeleteButtons() {
 // ==================== 추가 옵션 관리 ====================
 var addonOptionIndex = 1;
 
+// 추가옵션 수 만큼 그거 하자
 function addAddonOption() {
     var container = document.getElementById('addonOptionsContainer');
     var index = addonOptionIndex++;
 
     var addonHtml =
-        '<div class="addon-option-item" data-addon-index="' + index + '">' +
-            '<div class="row">' +
-                '<div class="col-md-5">' +
-                    '<label class="form-label">옵션명</label>' +
-                    '<input type="text" class="form-control" name="addonName_' + index + '" placeholder="예: 레이트 체크아웃">' +
-                '</div>' +
-                '<div class="col-md-2">' +
-                    '<label class="form-label">인원</label>' +
-                    '<div class="input-group">' +
-                        '<input type="number" class="form-control" name="addonPerson_' + index + '" placeholder="0" min="0" value="0">' +
-                        '<span class="input-group-text">명</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="col-md-3">' +
-                    '<label class="form-label">가격</label>' +
-                    '<div class="input-group">' +
-                        '<input type="number" class="form-control" name="addonPrice_' + index + '" placeholder="0">' +
-                        '<span class="input-group-text">원</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="col-md-2 d-flex align-items-end">' +
-                    '<button type="button" class="btn btn-outline-danger w-100" onclick="removeAddonOption(' + index + ')">' +
-                        '<i class="bi bi-x"></i>' +
-                    '</button>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
+        `<div class="addon-option-item" data-addon-index="\${index}">
+            <div class="row">
+                <div class="col-md-5">
+                    <label class="form-label">옵션명</label>
+                    <input type="text" class="form-control" name="addonName" placeholder="예: 레이트 체크아웃">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">인원</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="addonPerson" placeholder="0" min="0" value="0">
+                        <span class="input-group-text">명</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">가격</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="addonPrice" placeholder="0">
+                        <span class="input-group-text">원</span>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeAddonOption('\${index}')">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+        </div>`;
 
     container.insertAdjacentHTML('beforeend', addonHtml);
 

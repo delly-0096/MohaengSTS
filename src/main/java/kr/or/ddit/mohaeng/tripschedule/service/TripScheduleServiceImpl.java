@@ -717,8 +717,9 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
                 .entity(new ParameterizedTypeReference<List<Map<String, Object>>>() {});
         
         System.out.println("resultList: " + resultList);
-        
-        iTripScheduleMapper.insertTourKeywords(resultList);
+        if(resultList != null) {
+        	iTripScheduleMapper.insertTourKeywords(resultList);
+        }
 	}
 
 	@Override
@@ -726,11 +727,41 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		return iTripScheduleMapper.selectStyleMatchPlace(params);
 	}
 	
-	// 텍스트 정제용 프라이빗 메소드 (예시)
-//	private String cleanText(String input) {
-//	    if (input == null) return "";
-//	    // HTML 태그 제거 (<br> -> 줄바꿈 등) 처리가 필요할 수 있음
-//	    return input.replaceAll("<(/)?([a-zA-Z]*)(\\s[a-zA-Z]*=[^>]*)?(\\s)*(/)?>", "").trim();
-//	}
+	@Async("asyncTaskExecutor")
+	@Override
+	public void matchLegalDongCode() {
+		List<TourPlaceVO> updateDataList = iTripScheduleMapper.emptyLdongRegnPlace();
+		RestClient restClient = RestClient.create();
+		
+		for(TourPlaceVO place : updateDataList) {
+			String detailUrlString = "https://apis.data.go.kr/B551011/KorService2/detailCommon2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
+					+ "&contentId=" + place.getPlcNo()
+					+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+			
+			URI detailUri = URI.create(detailUrlString);
+			
+			JsonNode detailNode = restClient.get()
+					.uri(detailUri)
+					.retrieve()
+					.body(JsonNode.class);
+			
+			JsonNode detailItemNode = detailNode.path("response")
+					.path("body")
+					.path("items")
+					.path("item")
+					.get(0);
+			System.out.println("place.getPlcNo() : " + place.getPlcNo());
+			if(detailItemNode != null && detailItemNode.get("lDongRegnCd") != null) {
+				String lDongRegnCd = detailItemNode.get("lDongRegnCd").asText();
+				String lDongSignguCd = detailItemNode.get("lDongSignguCd").asText();
+				place.setLdongRegnCd(Integer.parseInt(lDongRegnCd));
+				place.setLdongSignguCd(Integer.parseInt(lDongSignguCd));
+				
+				System.out.println(place);
+				iTripScheduleMapper.updateLDongPlace(place);
+			}
+		}
+		
+	}
 	
 }

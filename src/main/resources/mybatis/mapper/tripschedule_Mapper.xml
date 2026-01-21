@@ -747,7 +747,7 @@
 			 , (SELECT LDONG_REGN_NM 
 				  FROM LEGAL_DONG_CODE LDC 
 				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
-				 GROUP BY LDONG_SIGNGU_NM
+				 GROUP BY LDONG_REGN_NM
 				) AS LDONG_SIGNGU_NM
 			 , LDONG_SIGNGU_CD
 			 , (SELECT LDONG_SIGNGU_NM 
@@ -776,5 +776,42 @@
 					    ('')
 					</if>
             	) > 0
+            AND LDONG_REGN_CD IS NOT NULL
+            ORDER BY LDONG_REGN_CD, LDONG_SIGNGU_CD
 	</select>
+	
+	<select id="emptyLdongRegnPlace" parameterType="kr.or.ddit.util.Params">
+		SELECT PLC_NO
+			 , RGN_NO
+			 , PLACE_TYPE
+			 , PLC_NM
+			 , PLC_DESC
+			 , PLC_ZIP
+			 , ATTACH_NO
+			 , LATITUDE
+			 , LONGITUDE
+			 , OPERATION_HOURS
+			 , PLC_PRICE
+			 , REG_ID
+			 , REG_DT
+			 , MOD_ID
+			 , MOD_DT
+			 , PCL_STATUS_CD
+			 , POP_TRVL_YN
+			 , DEFAULT_IMG
+			 , PLC_ADDR1
+			 , PLC_ADDR2
+			 , LDONG_REGN_CD
+			 , LDONG_SIGNGU_CD
+		  FROM TOUR_PLACE
+		 WHERE LDONG_REGN_CD IS NULL
+		    OR LDONG_SIGNGU_CD IS NULL
+	</select>
+	
+	<update id="updateLDongPlace" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		UPDATE TOUR_PLACE
+		   SET LDONG_REGN_CD = #{ldongRegnCd}
+			 , LDONG_SIGNGU_CD = #{ldongSignguCd}
+		 WHERE PLC_NO = #{plcNo}
+	</update>
 </mapper>

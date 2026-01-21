@@ -42,7 +42,7 @@ public class BusinessProductsVO {
     private String delYn;            // 삭제여부 (Y, N)
     private Date delDt;              // 삭제일자
     private String ctyNm;            // 지역
-
+    
     
     ////////////////////////////////
     // 대표 이미지
@@ -60,6 +60,7 @@ public class BusinessProductsVO {
 
     // 화면에 뿌려줄 가격
     private Integer displayPrice;
+    // 할인 금액
     
     // 평점, 리뷰수, 추천수
     private Double avgRating;
@@ -67,6 +68,8 @@ public class BusinessProductsVO {
     private Integer recommendCount;
     /////////////////
     
+    // 숙박 키
+    private int accNo;
     
     // 1대1
     private TripProdSaleVO prodSale;		// 상품 판매 정보
@@ -98,6 +101,7 @@ public class BusinessProductsVO {
         }
     }
 	
+	private List<TripProdListVO> prodList;				// 구입 상품 내역
 	private List<ProdReviewVO> prodReviewList;			// 상품 리뷰 내역
 	private List<TripProdInquiryVO> prodInquiryList;	// 상품 문의 내역
     
@@ -106,9 +110,10 @@ public class BusinessProductsVO {
 	private List<AccOptionVO> optionList;				// 추가옵션 - 숙소와 1대n
 	private List<AccResvOptionVO> resOptionList;		// 숙소 예약옵션 - 추가옵션과 1대1
 	private List<AccResvVO> resList;					// 숙소 예약 - 숙소 예약옵션과 1대1, 객실타입과 1대n
-	
-	private List<RoomTypeVO> roomTpyeList;				// 객실타입 - 숙소 와 1대n
-	private List<RoomFacilityVO> roomFacilityList;		// 객실 내 시설 - 객싵타입과 1대1
-	private List<RoomFeatureVO> roomFeatureList;		// 객실 내 특징 - 객실 타입과 1대1
-	private List<RoomVO> roomList;						// 객실	- 객실타입과 1대n
+
+	// 여기 안에 feature, facility가 다 있음
+	private List<RoomTypeVO> roomTypeList;				// 객실타입 - 숙소 와 1대n
+//	private List<RoomFacilityVO> roomFacilityList;		// 객실 내 시설 - 객싵타입과 1대1
+//	private List<RoomFeatureVO> roomFeatureList;		// 객실 내 특징 - 객실 타입과 1대1
+	private List<RoomVO> rooms;						// 객실	- 객실타입과 1대n
 }

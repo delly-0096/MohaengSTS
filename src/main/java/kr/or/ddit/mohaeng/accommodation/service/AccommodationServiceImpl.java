@@ -27,8 +27,8 @@ public class AccommodationServiceImpl implements IAccommodationService{
 	 *	@return 
 	 */
 	@Override
-	public AccommodationVO getAccommodationDetail(int accNo) {
-		return accMapper.getAccommodationDetail(accNo);
+	public AccommodationVO getAccommodationDetail(int tripProdNo) {
+		return accMapper.getAccommodationDetail(tripProdNo);
 	}
 
 	/**

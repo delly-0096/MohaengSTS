@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/accommodation-detail.css">
 <sec:authorize access="isAuthenticated()"><sec:authentication property="principal" var="user" /></sec:authorize>
 
+
 <div class="accommodation-detail-page">
     <div class="container">
         <!-- 브레드크럼 -->
@@ -268,7 +269,7 @@
 							
 							    <sec:authorize access="hasRole('MEMBER')" var="isUser">
 							        <button class="btn btn-primary btn-sm" 
-							                onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${calculatedFinalPrice}, ${room.baseGuestCount}, ${room.extraGuestFee})">
+							                onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${calculatedFinalPrice}, ${room.baseGuestCount}, ${room.maxGuestCount}, ${room.extraGuestFee})">
 							            객실 선택
 							        </button>
 							    </sec:authorize>
@@ -280,13 +281,13 @@
 
                 <!-- 위치 -->
                 <div class="accommodation-section" style="border-bottom: none;">
-                    <h3>위치</h3>
-                    <p><i class="bi bi-geo-alt me-2"></i>제주특별자치도 서귀포시 중문관광로 72번길 75</p>
-                    <div class="bg-light rounded-3 p-4 text-center" style="height: 200px;">
-                        <i class="bi bi-map" style="font-size: 48px; color: var(--gray-medium);"></i>
-                        <p class="mt-2 text-muted">지도가 표시됩니다</p>
-                    </div>
-                </div>
+				    <h3>위치</h3>
+				    <p><i class="bi bi-geo-alt me-2"></i> ${acc.addr1}${not empty acc.addr2 ? ' ' : ''}${acc.addr2}</p>
+				    
+				    <div id="map" style="width: 100%; height: 300px; border-radius:12px;">
+				        <p class="text-center pt-5">지도를 불러오는 중...</p>
+				    </div>
+				</div>
             </div>
 
             <!-- 예약 사이드바 -->
@@ -381,12 +382,12 @@
 
         <!-- 리뷰 섹션 -->
         <div class="review-section mt-5">
-            <div class="review-header">
-                <h3><i class="bi bi-star me-2"></i>리뷰 (${reviewStat.reviewCount})</h3>
-                <div class="review-summary">
-                    <div class="review-score">
-                        <span class="score">${reviewStat.avgRating > 0 ? reviewStat.avgRating : '-'}</span>
-                        <div class="stars">
+		    <div class="review-header">
+		        <h3><i class="bi bi-star me-2"></i>리뷰 (${reviewStat.reviewCount})</h3>
+		        <div class="review-summary">
+		            <div class="review-score">
+		                <span class="score">${reviewStat.avgRating > 0 ? reviewStat.avgRating : '-'}</span>
+		                <div class="stars">
 		                    <c:set var="rating" value="${reviewStat.avgRating != null ? reviewStat.avgRating : 0}" />
 		                    <fmt:parseNumber var="fullStars" value="${rating}" integerOnly="true" />
 		                    <c:set var="decimal" value="${rating - fullStars}" />
@@ -404,57 +405,101 @@
 		                            </c:otherwise>
 		                        </c:choose>
 		                    </c:forEach>
-                        </div>
-                    </div>
-                </div>
-            </div>
+		                </div>
+		            </div>
+		        </div>
+		    </div>
+		
+		    <div class="review-list" id="reviewList">
+		        <c:choose>
+		            <c:when test="${empty review}">
+		                <div class="no-review">
+		                    <i class="bi bi-chat-square-text"></i>
+		                    <p>아직 리뷰가 없습니다.</p>
+		                </div>
+		            </c:when>
+		            <c:otherwise>
+		                <c:forEach items="${review}" var="rv">
+						    <div class="review-item" data-review-id="${rv.prodRvNo}">
+						        <div class="review-item-header">
+						            <div class="reviewer-info">
+						                <div class="reviewer-avatar">
+										    <c:choose>
+										        <c:when test="${not empty rv.profileImage}">
+										            <img src="${pageContext.request.contextPath}/upload${rv.profileImage}" alt="프로필">
+										        </c:when>
+										        <c:otherwise>
+										            <i class="bi bi-person"></i>
+										        </c:otherwise>
+										    </c:choose>
+										</div>
+						                <div>
+						                    <span class="reviewer-name">${rv.nickname}</span>
+						                    <span class="review-date">
+						                        <fmt:formatDate value="${rv.prodRegdate}" pattern="yyyy.MM.dd"/>
+						                    </span>
+						                </div>
+						            </div>
+						            <div class="d-flex align-items-center gap-2">
+						                <div class="review-rating">
+						                    <c:forEach begin="1" end="5" var="i">
+						                        <c:choose>
+						                            <c:when test="${i <= rv.rating}">
+						                                <i class="bi bi-star-fill"></i>
+						                            </c:when>
+						                            <c:otherwise>
+						                                <i class="bi bi-star"></i>
+						                            </c:otherwise>
+						                        </c:choose>
+						                    </c:forEach>
+						                </div>
+						                <sec:authorize access="isAuthenticated()">
+    										<sec:authentication property="user.member.memNo" var="loginMemNo" />
+								                 <c:if test="${not empty loginMemNo == rv.memNo}">
+								                    <div class="dropdown">
+								                        <button class="btn-more" type="button" data-bs-toggle="dropdown">
+								                            <i class="bi bi-three-dots-vertical"></i>
+								                        </button>
+								                        <ul class="dropdown-menu dropdown-menu-end">
+								                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReviewModal(${rv.prodRvNo}, ${rv.rating}, '${fn:escapeXml(rv.prodReview)}')">
+								                                <i class="bi bi-pencil me-2"></i>수정</a></li>
+								                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReview(${rv.prodRvNo})">
+								                                <i class="bi bi-trash me-2"></i>삭제</a></li>
+								                        </ul>
+								                    </div>
+								                </c:if>
+										</sec:authorize>
+						            </div>
+						        </div>
+						        <div class="review-content">
+						            <p>${rv.prodReview}</p>
+						        </div>
+						        <!-- 리뷰 이미지 (이미지가 있는 경우만 표시) -->
+								<c:if test="${not empty rv.reviewImages}">
+								    <div class="review-images">
+								        <c:forEach items="${rv.reviewImages}" var="img">
+								            <img src="${pageContext.request.contextPath}/upload/review/${img}" 
+								                 alt="리뷰 이미지" onclick="openReviewImage(this.src)">
+								        </c:forEach>
+								    </div>
+								</c:if>
+						    </div>
+						</c:forEach>
+		            </c:otherwise>
+		        </c:choose>
+		    </div>
+		
+		    <!-- 더보기 버튼: 6개 이상일 때만 표시 -->
+		    <c:if test="${reviewStat.reviewCount > 5}">
+		        <div class="review-more" id="reviewMoreBtn">
+		            <button class="btn btn-outline" onclick="loadMoreReviews()">
+		                더 많은 리뷰 보기 <i class="bi bi-chevron-down ms-1"></i>
+		            </button>
+		        </div>
+		    </c:if>
+		</div>
 
-            <div class="review-list" id="reviewList">
-                <!-- 리뷰 1 -->
-                <div class="review-item">
-                    <div class="review-item-header">
-                        <div class="reviewer-info">
-                            <div class="reviewer-avatar">
-                                <i class="bi bi-person"></i>
-                            </div>
-                            <div>
-                                <span class="reviewer-name">travel_lover</span>
-                                <span class="review-date">2024.03.15</span>
-                            </div>
-                        </div>
-                        <div class="review-rating">
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                            <i class="bi bi-star-fill"></i>
-                        </div>
-                    </div>
-                    <div class="review-room">
-                        <i class="bi bi-door-closed me-1"></i>디럭스 더블 | 2024.03.10 - 2024.03.12 (2박)
-                    </div>
-                    <div class="review-content">
-                        <p>
-                            위치도 좋고 시설도 깨끗해서 정말 만족스러웠습니다.
-                            특히 오션뷰가 정말 멋졌고, 조식 뷔페도 다양하고 맛있었어요.
-                            직원분들도 친절하셔서 다음에 제주 올 때도 여기 묵을 것 같아요!
-                        </p>
-                    </div>
-                    <div class="review-images">
-                        <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=100&h=100&fit=crop&q=80" alt="리뷰 이미지">
-                        <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=100&h=100&fit=crop&q=80" alt="리뷰 이미지">
-                    </div>
-                </div>
-            </div>
-
-            <div class="review-more">
-                <button class="btn btn-outline" onclick="loadMoreReviews()">
-                    더 많은 리뷰 보기 <i class="bi bi-chevron-down ms-1"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- 문의 섹션 -->
+        <!-- 판매자 문의 섹션 -->
         <div class="inquiry-section mt-5">
             <div class="inquiry-header">
                 <h3><i class="bi bi-chat-dots me-2"></i>숙소 문의</h3>
@@ -867,15 +912,35 @@
 </sec:authorize>
 
 <script src="${pageContext.request.contextPath}/resources/js/accommodation-detail.js"></script>
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=0a4b8e6c128016aa0df7300b3ab799f1&libraries=services&autoload=false"></script>
+
 <script>
     const cp = document.querySelector('meta[name="context-path"]')?.content || '${pageContext.request.contextPath}';
+    const TRIP_PROD_NO = "${acc.tripProdNo}";
+    const mapInfo = {
+            addr: "${acc.addr1}",
+            name: "${acc.accName}"
+        };
 
+	 // 시큐리티로 로그인 정보 뽑기
+	var isLoggedIn = false;
+    var loginMemNo = "";
+    var isBusiness = false;
+    <sec:authorize access="isAuthenticated()">
+    isLoggedIn = true;
+    loginMemNo = "<sec:authentication property='principal.member.memNo'/>";
+    <sec:authorize access="hasRole('ROLE_BUSINESS')">
+        isBusiness = true;
+	</sec:authorize>
+	</sec:authorize>
+	    
+    
     initDetail({
         contextPath: cp,
         accNo: '${acc.accNo}',
         accName: '${acc.accName}',
-        isLoggedIn: ${not empty loginMember ? 'true' : 'false'}, 
-        isBusiness: ${not empty loginMember and loginMember.memType eq 'BUSINESS' ? 'true' : 'false'}
+        isLoggedIn: isLoggedIn, 
+        isBusiness: isBusiness
     });
 
     function openEditInquiryModal(id, ctgry, content, secret) {

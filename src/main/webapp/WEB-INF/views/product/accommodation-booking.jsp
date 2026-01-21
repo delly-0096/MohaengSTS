@@ -562,6 +562,6 @@ document.addEventListener('DOMContentLoaded', function() {
         initBookingForm();
         initTossPayments().catch(err => console.error("토스 로딩 실패:", err));
     }
-})
+});
 </script>
 <%@ include file="../common/footer.jsp" %>

@@ -1,6 +1,5 @@
 package kr.or.ddit.mohaeng.accommodation.controller;
 
-import java.beans.Customizer;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -9,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -21,12 +18,21 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.accommodation.service.IAccommodationService;
+import kr.or.ddit.mohaeng.file.service.IFileService;
+import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
+import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
+import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
+import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
+import kr.or.ddit.mohaeng.tour.service.ITripProdService;
+import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
+import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 import lombok.extern.slf4j.Slf4j;
@@ -38,6 +44,19 @@ public class AccommodationController {
 
 	@Autowired
 	private IAccommodationService accService;
+	
+	@Autowired
+	private IProdReviewService reviewService;
+	
+	@Autowired
+	private ITripProdInquiryService inquiryService;
+	
+	@Autowired
+	private IFileService fileService;
+	
+	@Autowired
+	private ITripProdService tripProdService;
+	
 	
 	/**
 	 * 전체 목록 가져오기
@@ -145,47 +164,60 @@ public class AccommodationController {
 	/**
 	 * 숙박 상품 상세 페이지
 	 */
-	@GetMapping("/product/accommodation/{accNo}")
+	@GetMapping("/product/accommodation/{tripProdNo}")
 	public String accommodationDetail(
-			@PathVariable("accNo") Integer accNo,
+			@PathVariable("tripProdNo") int tripProdNo,
 			@AuthenticationPrincipal  CustomUserDetails user,
 			Model model) {
 				
 		// 숙소 상세 정보
-		AccommodationVO detail = accService.getAccommodationDetail(accNo);
+		AccommodationVO detail = accService.getAccommodationDetail(tripProdNo);
+		int accNo = detail.getAccNo();
 		// 숙소 객실 타입 정보
 		List<RoomTypeVO> roomList = accService.getRoomList(accNo);
 		// 숙소 보유시설 정보
 		AccFacilityVO facility = accService.getAccFacility(accNo);
+		// 리뷰 목록
+		List<ProdReviewVO> review = reviewService.getReviewPaging(tripProdNo, 1, 5); 
+	    ProdReviewVO reviewStat = reviewService.getStat(tripProdNo);
+        // 문의 목록
+        List<TripProdInquiryVO> inquiry = inquiryService.getInquiryPaging(tripProdNo, 1, 5);
+        int inquiryCount = inquiryService.getInquiryCount(tripProdNo);
 		
 		int compNo = detail.getCompNo();
 		// 판매자 정보
         CompanyVO seller = accService.getSellerStatsByAccNo(detail.getCompNo());
 		
 		model.addAttribute("acc", detail);
+		model.addAttribute("review", review);
+	    model.addAttribute("reviewStat", reviewStat);
 		model.addAttribute("roomList", roomList);
 	    model.addAttribute("facility", facility);
         model.addAttribute("seller", seller);
+        model.addAttribute("inquiry", inquiry);
+        model.addAttribute("inquiryCount", inquiryCount);
 		
 		return "product/accommodation-detail";
 	}
 	
 	/**
-	 * 숙소 예약 페이지
+	 * 숙소 결제 페이지
 	 */
-	@GetMapping("/product/accommodation/{accNo}/booking")
+	@GetMapping("/product/accommodation/{tripProdNo}/booking")
 	public String accommodationBooking(
 			@AuthenticationPrincipal CustomUserDetails user,
-			@PathVariable("accNo") int accNo,
+			@PathVariable("tripProdNo") int tripProdNo,
 			@RequestParam("roomNo") int roomTypeNo,
 	        @RequestParam Map<String, String> bookingData, // 날짜, 인원 등을 한 번에 맵으로 받기
 	        Model model) {
 		
-		log.info("결제 시도 - 숙소번호: {}, 방번호: {}", accNo, roomTypeNo);
+		log.info("결제 시도 - 숙소번호: {}, 방번호: {}", tripProdNo, roomTypeNo);
 	    
 		// 숙소와 객실 정보 가져오기
-		AccommodationVO acc = accService.getAccommodationDetail(accNo);
+		AccommodationVO acc = accService.getAccommodationDetail(tripProdNo);
         RoomTypeVO room = accService.getRoomTypeDetail(roomTypeNo);
+        
+        int accNo = acc.getAccNo();
         
         // 방어 로직: 정보가 없으면 목록으로 튕겨내기
         if (acc == null || room == null) {
@@ -215,6 +247,7 @@ public class AccommodationController {
 		
 	    // 넘어온 예약 데이터를 모델에 담아서 결제 화면에 뿌려주기
         model.addAttribute("acc", acc);
+        model.addAttribute("accNo", accNo);
         model.addAttribute("room", room);
 	    model.addAttribute("bookingData", bookingData);
 	    model.addAttribute("nights", nights);
@@ -225,12 +258,13 @@ public class AccommodationController {
 
 	
 	/**
-	 * 숙소 예약 프로세스
+	 * 숙소 결제 프로세스
 	 */
 	@ResponseBody
-	@PostMapping("/product/accommodation/{accNo}/booking")
+	@PostMapping("/product/accommodation/{tripProdNo}/booking")
 	public Map<String, Object> bookingProcess(
 			@RequestBody AccResvVO resvVO,
+			@PathVariable("tripProdNo") int tripProdNo,
 			@AuthenticationPrincipal CustomUserDetails user
 			){
 		log.info("예약 요청 데이터: {}", resvVO);
@@ -253,5 +287,761 @@ public class AccommodationController {
 	    return response;
 	}
 	
+	/**
+     * 상세페이지 리뷰 수정
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/review/update")
+    @ResponseBody
+    public Map<String, Object> updateReview(
+            @PathVariable int tripProdNo,
+            @RequestBody ProdReviewVO vo,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+        	result.put("success", false);
+        	result.put("message", "로그인이 필요합니다.");
+        	return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            vo.setMemNo(memNo);
+            int updated = reviewService.updateReview(vo);
+            
+            if (updated > 0) {
+                result.put("success", true);
+                result.put("message", "리뷰가 수정되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "수정 권한이 없습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "리뷰 수정에 실패했습니다.");
+        }
+        
+        return result;
+    }
+	
+    /**
+     * 상세페이지 리뷰 이미지 조회 (수정 모달용)
+     */
+    @GetMapping("/product/accommodation/{tripProdNo}/review/{prodRvNo}/images")
+    @ResponseBody
+    public Map<String, Object> getReviewImages(
+            @PathVariable int tripProdNo,
+            @PathVariable int prodRvNo,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        Map<String, Object> result = new HashMap<>();
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            Integer attachNo = reviewService.getReviewAttachNo(prodRvNo);
+            
+            if (attachNo == null) {
+                result.put("success", true);
+                result.put("images", new ArrayList<>());
+                return result;
+            }
+            
+            List<AttachFileDetailVO> details = fileService.getAttachFileDetails(attachNo);
+            
+            List<Map<String, Object>> images = new ArrayList<>();
+            for (AttachFileDetailVO d : details) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("FILE_NO", d.getFileNo());
+                map.put("FILE_PATH", d.getFilePath());
+                map.put("FILE_ORIGINAL_NAME", d.getFileOriginalName());
+                images.add(map);
+            }
+            
+            result.put("success", true);
+            result.put("images", images);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 조회에 실패했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세페이지 리뷰 이미지 개별 삭제
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/review/{prodRvNo}/image/delete")
+    @ResponseBody
+    public Map<String, Object> deleteReviewImage(
+            @PathVariable int tripProdNo,
+            @PathVariable int prodRvNo,
+            @RequestBody Map<String, Integer> params,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            Integer attachNo = reviewService.getReviewAttachNo(prodRvNo);
+            if (attachNo == null) {
+                result.put("success", false);
+                result.put("message", "이미지가 없습니다.");
+                return result;
+            }
+            
+            int fileNo = params.get("fileNo");
+            
+            // ★ FileService 직접 사용
+            int deleted = fileService.softDeleteFile(attachNo, fileNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "이미지가 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "이미지 삭제에 실패했습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 삭제 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 리뷰 이미지 추가 - FileService 직접 사용
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/review/{prodRvNo}/image/upload")
+    @ResponseBody
+    public Map<String, Object> uploadReviewImages(
+            @PathVariable int tripProdNo,
+            @PathVariable int prodRvNo,
+            @RequestParam("files") List<MultipartFile> files,
+            @AuthenticationPrincipal CustomUserDetails user
+    		) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            Integer attachNo = reviewService.getReviewAttachNo(prodRvNo);
+            
+            // ★ FileService 직접 사용
+            int newAttachNo = fileService.addFilesToAttach(
+                attachNo,       // 기존 번호 (null 가능)
+                files,          // 업로드 파일들
+                "review",       // 폴더명: C:/mohaeng/review/
+                "REVIEW",       // 분류 코드
+                memNo           // 등록자
+            );
+            
+            // 새로 생성된 경우 리뷰에 연결
+            if (attachNo == null && newAttachNo > 0) {
+                reviewService.updateReviewAttachNo(prodRvNo, newAttachNo);
+            }
+            
+            // 업로드 후 이미지 목록 반환
+            List<AttachFileDetailVO> details = fileService.getAttachFileDetails(newAttachNo);
+            
+            List<Map<String, Object>> images = new ArrayList<>();
+            for (AttachFileDetailVO d : details) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("FILE_NO", d.getFileNo());
+                map.put("FILE_PATH", d.getFilePath());
+                map.put("FILE_ORIGINAL_NAME", d.getFileOriginalName());
+                images.add(map);
+            }
+            
+            result.put("success", true);
+            result.put("message", files.size() + "개의 이미지가 추가되었습니다.");
+            result.put("images", images);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 업로드 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+
+    
+    /**
+     * 상세페이지 리뷰 삭제
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/review/delete")
+    @ResponseBody
+    public Map<String, Object> deleteReview(
+            @PathVariable int tripProdNo,
+            @RequestBody Map<String, Integer> params,
+            @AuthenticationPrincipal CustomUserDetails user
+    		) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            int prodRvNo = params.get("prodRvNo");
+            int deleted = reviewService.deleteReview(prodRvNo, memNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "리뷰가 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "삭제 권한이 없습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "리뷰 삭제에 실패했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 리뷰 더보기
+     */
+    @GetMapping("/product/accommodation/{tripProdNo}/reviews")
+    @ResponseBody
+    public Map<String, Object> loadMoreReviews(
+            @PathVariable int tripProdNo,
+            @RequestParam(defaultValue = "2") int page,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        int pageSize = 5;
+        List<ProdReviewVO> reviews = reviewService.getReviewPaging(tripProdNo, page, pageSize);
+        ProdReviewVO stat = reviewService.getStat(tripProdNo);
+        
+        int totalCount = stat != null ? stat.getReviewCount() : 0;
+        int loadedCount = page * pageSize;
+        
+        // 로그인 여부에 따라 memNo 가져오기
+        Integer loginMemNo = (user != null) ? user.getMember().getMemNo() : null;
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("reviews", reviews);
+        result.put("hasMore", loadedCount < totalCount);
+        result.put("loginMemNo", loginMemNo); // 로그인 안 했으면 null이 전달
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 문의 등록
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/inquiry")
+    @ResponseBody
+    public Map<String, Object> insertInquiry(
+            @PathVariable int tripProdNo,
+            @RequestBody TripProdInquiryVO vo,
+            @AuthenticationPrincipal CustomUserDetails user
+    		) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            vo.setTripProdNo(tripProdNo);
+            vo.setInquiryMemNo(memNo);
+            
+            // ★ Service에서 등록 후 닉네임 포함된 정보를 반환
+            TripProdInquiryVO inserted = inquiryService.insertInquiry(vo);
+            
+            result.put("success", true);
+            result.put("message", "문의가 등록되었습니다.");
+            result.put("inquiry", inserted);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "문의 등록에 실패했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 문의 수정
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/inquiry/update")
+    @ResponseBody
+    public Map<String, Object> updateInquiry(
+            @PathVariable int tripProdNo,
+            @RequestBody TripProdInquiryVO vo,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            vo.setInquiryMemNo(memNo); // 작성자 번호 세팅
+            
+            //  서비스 호출
+            int updated = inquiryService.updateInquiry(vo);
+            
+            if (updated > 0) {
+                result.put("success", true);
+                result.put("message", "문의가 수정되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "수정 권한이 없거나 답변 완료된 문의입니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "문의 수정에 실패했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 문의 삭제
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/inquiry/delete")
+    @ResponseBody
+    public Map<String, Object> deleteInquiry(
+            @PathVariable int tripProdNo,
+            @RequestBody Map<String, Integer> params,
+            @AuthenticationPrincipal CustomUserDetails user
+    		) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+       
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            // 삭제할 문의 번호 꺼내기
+            int prodInqryNo = params.get("prodInqryNo");
+            
+            // 서비스 호출 (삭제 시 본인 확인 로직 포함)
+            int deleted = inquiryService.deleteInquiry(prodInqryNo, memNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "문의가 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "삭제 권한이 없거나 이미 답변이 완료된 문의입니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "문의 삭제 처리 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 문의 더보기
+     */
+    @GetMapping("/product/accommodation/{tripProdNo}/inquiries")
+    @ResponseBody
+    public Map<String, Object> loadMoreInquiries(
+            @PathVariable int tripProdNo,
+            @RequestParam(defaultValue = "2") int page,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        int pageSize = 5;
+        List<TripProdInquiryVO> inquiries = inquiryService.getInquiryPaging(tripProdNo, page, pageSize);
+        int totalCount = inquiryService.getInquiryCount(tripProdNo);
+        int loadedCount = page * pageSize;
+        
+        // 로그인 사용자 정보
+        Integer loginMemNo = (user != null) ? user.getMember().getMemNo() : null;
+        
+        Map<String, Object> result = new HashMap<>();
+        result.put("inquiries", inquiries);
+        result.put("hasMore", loadedCount < totalCount);
+        result.put("loginMemNo", loginMemNo); 
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 문의 답변 등록
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/inquiry/reply")
+    @ResponseBody
+    public Map<String, Object> insertReply(
+            @PathVariable int tripProdNo,
+            @RequestBody Map<String, Object> param,
+            @AuthenticationPrincipal CustomUserDetails user
+    		) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        // 기업회원 체크
+        boolean isBusiness = user.getAuthorities().stream()
+        					 .anyMatch(auth -> auth.getAuthority().equals("ROLE_BUSINESS"));
+        
+        if (!isBusiness) {
+        	result.put("success", false);
+        	result.put("message", "기업회원 권한이 필요합니다.");
+        	return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+        	int prodInqryNo = Integer.parseInt(param.get("prodInqryNo").toString());
+            String replyCn = (String) param.get("replyCn");
+            
+            TripProdInquiryVO vo = new TripProdInquiryVO();
+            vo.setProdInqryNo(prodInqryNo);
+            vo.setReplyCn(replyCn);
+            vo.setReplyMemNo(memNo);
+            
+            int updated = inquiryService.insertReply(vo);
+            
+            if (updated > 0) {
+                result.put("success", true);
+                result.put("message", "답변이 등록되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "답변 등록에 실패했습니다.");
+            }
+        	
+        } catch(Exception e) {
+        	e.printStackTrace();
+        	result.put("success", false);
+        	result.put("message", "답변 등록 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 문의 답변 수정
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/inquiry/reply/update")
+    @ResponseBody
+    public Map<String, Object> updateReply(
+            @PathVariable int tripProdNo,
+            @RequestBody Map<String, Object> param,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        boolean isBusiness = user.getAuthorities().stream()
+				 .anyMatch(auth -> auth.getAuthority().equals("ROLE_BUSINESS"));
+        
+        if (!isBusiness) {
+        	result.put("success", false);
+        	result.put("message", "기업회원 권한이 필요합니다.");
+        	return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            int prodInqryNo = Integer.parseInt(param.get("prodInqryNo").toString());
+            String replyCn = (String) param.get("replyCn");
+            
+            TripProdInquiryVO vo = new TripProdInquiryVO();
+            vo.setProdInqryNo(prodInqryNo);
+            vo.setReplyCn(replyCn);
+            vo.setReplyMemNo(memNo);
+            
+            int updated = inquiryService.updateReply(vo);
+            
+            if (updated > 0) {
+                result.put("success", true);
+                result.put("message", "답변이 수정되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "수정 권한이 없습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "답변 수정 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+    
+    
+    /**
+     * 상세 페이지 문의 답변 삭제
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/inquiry/reply/delete")
+    @ResponseBody
+    public Map<String, Object> deleteReply(
+            @PathVariable int tripProdNo,
+            @RequestBody Map<String, Object> param,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        boolean isBusiness = user.getAuthorities().stream()
+				 .anyMatch(auth -> auth.getAuthority().equals("ROLE_BUSINESS"));
+       
+       if (!isBusiness) {
+       	result.put("success", false);
+       	result.put("message", "기업회원 권한이 필요합니다.");
+       	return result;
+       }
+       
+       int memNo = user.getMember().getMemNo();
+        
+        try {
+            int prodInqryNo = Integer.parseInt(param.get("prodInqryNo").toString());
+            
+            int deleted = inquiryService.deleteReply(prodInqryNo, memNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "답변이 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "삭제 권한이 없거나 이미 삭제된 답변입니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "답변 삭제 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세 페이지 상품 이미지 목록 조회
+     */
+    @GetMapping("/product/accommodation/{tripProdNo}/images")
+    @ResponseBody
+    public Map<String, Object> getProductImages(@PathVariable int tripProdNo) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            TripProdVO tp = tripProdService.detail(tripProdNo);
+            
+            if (tp == null || tp.getAttachNo() == null) {
+                result.put("success", true);
+                result.put("images", new ArrayList<>());
+                return result;
+            }
+            
+            List<AttachFileDetailVO> details = fileService.getAttachFileDetails(tp.getAttachNo());
+            
+            List<Map<String, Object>> images = new ArrayList<>();
+            for (AttachFileDetailVO d : details) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("FILE_NO", d.getFileNo());
+                map.put("FILE_PATH", d.getFilePath());
+                map.put("FILE_ORIGINAL_NAME", d.getFileOriginalName());
+                images.add(map);
+            }
+            
+            result.put("success", true);
+            result.put("images", images);
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 조회에 실패했습니다.");
+        }
+        
+        return result;
+    }
+    
+    /**
+     * 상세페이지 상품 이미지 업로드
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/image/upload")
+    @ResponseBody
+    public Map<String, Object> uploadProductImage(
+            @PathVariable int tripProdNo,
+            @RequestParam("files") List<MultipartFile> files,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            TripProdVO tp = tripProdService.detail(tripProdNo);
+            
+            if (tp == null) {
+                result.put("success", false);
+                result.put("message", "상품을 찾을 수 없습니다.");
+                return result;
+            }
+            
+            // 본인 상품인지 확인
+            if (memNo != tp.getMemNo()) {
+                result.put("success", false);
+                result.put("message", "본인의 상품만 이미지를 수정할 수 있습니다.");
+                return result;
+            }
+            
+            int newAttachNo = fileService.addFilesToAttach(
+                tp.getAttachNo(),
+                files,
+                "product",
+                "PRODUCT",
+                memNo
+            );
+            
+            // 새로 생성된 경우 상품에 연결
+            if (tp.getAttachNo() == null && newAttachNo > 0) {
+            	tripProdService.updateAttachNo(tripProdNo, newAttachNo);
+            }
+            
+            result.put("success", true);
+            result.put("message", files.size() + "개의 이미지가 업로드되었습니다.");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "이미지 업로드에 실패했습니다.");
+        }
+        
+        return result;
+    }
+
+    /**
+     * 상품 이미지 삭제
+     */
+    @PostMapping("/product/accommodation/{tripProdNo}/image/delete")
+    @ResponseBody
+    public Map<String, Object> deleteProductImage(
+            @PathVariable int tripProdNo,
+            @RequestBody Map<String, Integer> params,
+            @AuthenticationPrincipal CustomUserDetails user
+            ) {
+        
+        Map<String, Object> result = new HashMap<>();
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            TripProdVO tp = tripProdService.detail(tripProdNo);
+            
+            if (tp == null || tp.getAttachNo() == null) {
+                result.put("success", false);
+                result.put("message", "상품 또는 등록된 이미지를 찾을 수 없습니다.");
+                return result;
+            }
+            
+            if (memNo != tp.getMemNo()) {
+                result.put("success", false);
+                result.put("message", "본인이 등록한 상품의 이미지만 삭제할 수 있습니다.");
+                return result;
+            }
+            
+            int fileNo = params.get("fileNo");
+            int deleted = fileService.softDeleteFile(tp.getAttachNo(), fileNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "이미지가 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "이미지 삭제에 실패했습니다.");
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+
 }
 

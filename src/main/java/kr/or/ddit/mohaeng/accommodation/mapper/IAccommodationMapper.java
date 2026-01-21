@@ -30,7 +30,7 @@ public interface IAccommodationMapper {
 	 *	@param 
 	 *	@return 
 	 */
-	public AccommodationVO getAccommodationDetail(int accNo);
+	public AccommodationVO getAccommodationDetail(int tripProdNo);
 
 	/**
 	 *	<p> 숙소 타입 가져오기 </p>

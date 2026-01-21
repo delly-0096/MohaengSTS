@@ -12,6 +12,7 @@ public class TripRecordBlockVO {
     private String text;
 
     // IMAGE
+    private Long attachNo;  
     private String desc;
     private String imgPath;
 

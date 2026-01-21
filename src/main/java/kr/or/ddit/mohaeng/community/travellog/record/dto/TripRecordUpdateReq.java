@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.community.travellog.record.dto;
 
 import java.util.Date;
+import java.util.List;
 
 import lombok.Data;
 
@@ -20,4 +21,6 @@ public class TripRecordUpdateReq {
     private String openScopeCd;
     private String mapDispYn;
     private String replyEnblYn;
+    
+    private List<String> tags;
 }

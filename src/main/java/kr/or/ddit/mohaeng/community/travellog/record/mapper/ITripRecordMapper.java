@@ -65,13 +65,14 @@ public interface ITripRecordMapper {
 
     long nextTourPlaceReviewSeq();
 
-    int insertTourPlaceReview(@Param("placeReviewNo") String placeReviewNo,
-            @Param("rcdConnNo") long rcdConnNo,
-            @Param("memNo") long memNo,
-            @Param("plcNo") Long plcNo,
-            @Param("reviewConn") String reviewConn,
-            @Param("rating") double rating
-    );
+    int insertTourPlaceReview(
+    	    @Param("placeReviewNo") long placeReviewNo,   
+    	    @Param("rcdConnNo") long rcdConnNo,
+    	    @Param("memNo") long memNo,
+    	    @Param("plcNo") Long plcNo,
+    	    @Param("reviewConn") String reviewConn,
+    	    @Param("rating") double rating
+    	);
     
     int insertTripRecordTxt(
         @Param("connNo") long connNo,
@@ -88,6 +89,20 @@ public interface ITripRecordMapper {
             @org.apache.ibatis.annotations.Param("tagText") String tagText);
 
     List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO> selectTripRecordBlocks(@Param("rcdNo") long rcdNo);
+
+    
+ // ===== 삭제 정리용 =====
+    int deleteTripRecordSeqByRcdNo(@Param("rcdNo") long rcdNo);
+    int deleteTripRecordTxtByRcdNo(@Param("rcdNo") long rcdNo);
+    int deleteTripRecordImgByRcdNo(@Param("rcdNo") long rcdNo);
+    int deleteTourPlaceReviewByRcdNo(@Param("rcdNo") long rcdNo);
+
+    int deleteHashtagByRcdNo(@Param("rcdNo") long rcdNo);
+
+    // (선택) 커뮤니티 연관 제거
+    int deleteLikesByRcdNo(@Param("rcdNo") long rcdNo);
+    int deleteBookmarkByRcdNo(@Param("rcdNo") long rcdNo);
+    int deleteCommentsByRcdNo(@Param("rcdNo") long rcdNo);
 
 
 }

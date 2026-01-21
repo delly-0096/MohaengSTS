@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.community.travellog.record.dto.PagedResponse;
+import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq;
 import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordCreateReq;
 import kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordUpdateReq;
 import kr.or.ddit.mohaeng.vo.TripRecordDetailVO;
@@ -39,11 +40,22 @@ public interface ITripRecordService {
 	        TripRecordCreateReq req,
 	        Long memNo,
 	        MultipartFile coverFile,
-	        java.util.List<MultipartFile> bodyFiles,
-	        java.util.List<kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq> blocks
+	        List<MultipartFile> bodyFiles,
+	        List<TripRecordBlockReq> blocks
+	);
+
+	void updateWithBlocks(
+	        long rcdNo,
+	        TripRecordUpdateReq req,
+	        Long memNo,
+	        MultipartFile coverFile,
+	        List<MultipartFile> bodyFiles,
+	        List<TripRecordBlockReq> blocks
 	);
 	
 	List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO> blocks(long rcdNo);
+	
+	
 
 
 }

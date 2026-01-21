@@ -23,5 +23,7 @@ public class TripRecordBlockReq {
     private String name;
     private String address;
     private String image;
-    private Double rating; 
+    private Double rating;
+    
+    private Long attachNo;
 }

@@ -12,6 +12,7 @@ var accomHasMore = true;
 
 // ==================== 인피니티 스크롤 로직 ====================
 document.addEventListener('DOMContentLoaded', function() {
+	// 기존 인피니티 스크롤 설정 로직
     if (typeof initialListSize !== 'undefined' && initialListSize < accomPageSize) {
         accomHasMore = false;
         const loader = document.getElementById('accomScrollLoader');
@@ -19,6 +20,23 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         initAccomInfiniteScroll();
     }
+	
+	// 필터 및 정렬 드롭다운 실시간 감시자
+	const accomFilters = document.querySelectorAll('.tour-filters select');
+	    
+	    accomFilters.forEach(filter => {
+	        filter.addEventListener('change', function() {
+	            console.log('필터 감지됨:', this.name, '->', this.value);
+	            
+	            // 필터가 바뀌면 1페이지부터 다시 시작해야 함!
+	            accomCurrentPage = 1; 
+	            accomHasMore = true; // 더보기 가능성 열어주기
+	            
+	            // 목록을 싹 비우고 새로 불러오기 함수 호출
+	            refreshAccomList();
+	        });
+	    });
+	
 });
 
 function initAccomInfiniteScroll() {
@@ -108,6 +126,57 @@ function loadMore() {
             console.error("데이터 로드 실패:", err);
             accomIsLoading = false;
         });
+}
+
+// ======= 필터된 데이터로 목록을 새로고침하는 함수 =============
+
+/**
+ * 필터된 데이터로 목록을 새로고침하는 함수
+ */
+function refreshAccomList() {
+    // 로더 다시 보여주기
+    const loader = document.getElementById('accomScrollLoader');
+    if(loader) loader.style.display = 'block';
+
+    // 현재 모든 필터 값 수집 (JSP에 있는 id/name과 일치 확인!)
+    const params = {
+        page: 1,
+        pageSize: accomPageSize,
+        accCatCd: document.querySelector('select[name="accCatCd"]')?.value || '',
+        priceRange: document.querySelector('select[name="priceRange"]')?.value || '',
+        starGrade: document.querySelector('select[name="starGrade"]')?.value || '',
+        sortBy: document.getElementById('sortBy')?.value || 'recommend',
+        areaCode: document.getElementById('areaCode')?.value || '',
+        keyword: document.getElementById('keyword')?.value || ''
+    };
+
+    // AJAX로 필터링된 목록 요청
+    fetch(`${cp}/product/accommodation/loadMore?` + new URLSearchParams(params))
+        .then(res => res.json())
+        .then(data => {
+            const listContainer = document.getElementById('accommodationList');
+            if (!listContainer) return;
+
+            // 핵심: 기존 목록 지우기
+            listContainer.innerHTML = ''; 
+
+            if (data.list && data.list.length > 0) {
+                // 새로운 목록 그리기 (기존에 쓰던 렌더링 함수가 있다면 호출!)
+                // 예: data.list.forEach(item => appendItemToList(item));
+                renderAccomList(data.list); 
+                
+                // 가져온 데이터가 pageSize보다 적으면 더보기 종료
+                if (data.list.length < accomPageSize) {
+                    accomHasMore = false;
+                    if(loader) loader.style.display = 'none';
+                }
+            } else {
+                listContainer.innerHTML = '<div class="no-result">조건에 맞는 숙소가 없습니다.</div>';
+                accomHasMore = false;
+                if(loader) loader.style.display = 'none';
+            }
+        })
+        .catch(err => console.error('필터링 오류:', err));
 }
 
 // ==================== 카드 생성 함수 ====================
@@ -398,3 +467,5 @@ function goBooking(accNo, roomTypeNo) {
 
 	// JSP에서 호출할 수 있게 window에 등록
 	window.goBooking = goBooking;
+	
+	

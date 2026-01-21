@@ -45,7 +45,7 @@ public interface IBusinessProductService {
 	 * @param businessProducts 상품 정보
 	 * @return 해당 상품의 정보
 	 */
-	public BusinessProductsVO retrieveProductDetail(BusinessProductsVO businessProducts);
+	public BusinessProductsVO getProductDetail(BusinessProductsVO businessProducts);
 	
 	/**
 	 * <p>판매 상품 정보 수정</p>

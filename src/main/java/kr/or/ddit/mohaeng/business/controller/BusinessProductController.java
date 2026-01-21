@@ -94,7 +94,6 @@ public class BusinessProductController {
 		List<BusinessProductsVO> prodList = businessService.getProductlist(businessProducts);	// 숙박 상품도 담기긴 함. 그런데
 		log.info("prodList : {}", prodList);
 		
-		
 		// 숙박 정보
 //		BusinessProductsVO businessProd = new BusinessProductsVO();
 //		businessProd.setMemNo(memNo);
@@ -104,13 +103,14 @@ public class BusinessProductController {
 		// 숙박 상품을 따로 담을지? 이래야 조건 걸어서 해줄수 있을수도?
 		// 회원 번호와 맞는 객실
 		
-//        TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
+		// 통계. 이거 tripProdList로 받아야됨
+        TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
         
         // 인기 키워드 조회
 //        List<SearchLogVO> keywords = searchLogService.getKeywords();
         
-//        model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
-//        model.addAttribute("prodAggregate", prodAggregate);
+        model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
+        model.addAttribute("prodAggregate", prodAggregate);
         
 //        model.addAttribute("tripProd", tripProd);	// memNo담김
 //        model.addAttribute("keywords", keywords);
@@ -131,8 +131,19 @@ public class BusinessProductController {
 	@PostMapping("/business/product/productDetail")
 	public BusinessProductsVO productDetail(@RequestBody BusinessProductsVO businessProducts){
 		log.info("productDetail : {}", businessProducts);
+		log.info("productDetail.accNo : {}", businessProducts.getAccNo());
 		
-		BusinessProductsVO product = businessService.retrieveProductDetail(businessProducts);
+
+		
+		BusinessProductsVO product = businessService.getProductDetail(businessProducts);
+		String category = product.getCtyNm();
+		
+		
+		// 숙소일때
+		if(category != null && category.equals(category)) {
+			
+		}
+		
 //		log.info("product : {}", product);
 		return product;
 	}

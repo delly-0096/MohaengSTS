@@ -224,5 +224,15 @@ public interface IBusinessProductMapper {
 	 * @return 결과 0, 1
 	 */
 	public int deleteProductStatus(TripProdVO tripProd);
+
+	
+	/**
+	 * <p>숙박 상품 정보 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-21
+	 * @param tripProd
+	 * @return 결과 0, 1
+	 */
+	public AccommodationVO retrieveAccomodationDetail(AccommodationVO accommodationvo);
 	
 }

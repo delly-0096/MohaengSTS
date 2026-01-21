@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.ServiceResult;
+import kr.or.ddit.mohaeng.accommodation.service.IAccommodationService;
 import kr.or.ddit.mohaeng.business.mapper.IBusinessProductMapper;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
@@ -27,6 +28,9 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 	@Autowired
 	private IBusinessProductMapper businessMapper;
 	
+	@Autowired
+	private IAccommodationService accommodationService;
+	
 	@Override
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts) {
 		return businessMapper.getProductlist(businessProducts);
@@ -43,9 +47,26 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 	}
 	
 	@Override
-	public BusinessProductsVO retrieveProductDetail(BusinessProductsVO businessProducts) {
+	public BusinessProductsVO getProductDetail(BusinessProductsVO businessProducts) {
+		// 숙소 정보
+		
 		// 상품 정보, 상품 이용안내, 상품 가격, 여행 상품 관광지
-		BusinessProductsVO prodVO = businessMapper.retrieveProductDetail(businessProducts); 
+		BusinessProductsVO prodVO = businessMapper.retrieveProductDetail(businessProducts);
+//		if(prodVO.getProdCtgryType().equals("accommodation")) {
+//			return prodVO;
+//		}
+		
+		int accNo = 0;
+		if(businessProducts.getAccNo() != 0) {
+			accNo = businessProducts.getAccNo();
+		}
+		
+		AccommodationVO accommodationvo = new AccommodationVO();
+		accommodationvo.setAccNo(accNo);
+		
+		AccommodationVO accommodation = businessMapper.retrieveAccomodationDetail(accommodationvo);
+		log.info("retrieveAccomodationDetail : {}", accommodation.getRoomList().size());
+		
 		// 나머지 1대다 매칭 후 보내기
 		log.info("retrieveProductDetail-retrieveProductDetail : {}", prodVO);
 		
@@ -70,7 +91,6 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 			prodVO.setImageList(productImages);
 		}
 		
-		// 숙소 정보
 		
 		return prodVO;
 	}

@@ -27,8 +27,8 @@ public class AccommodationServiceImpl implements IAccommodationService{
 	 *	@return 
 	 */
 	@Override
-	public AccommodationVO getAccommodationDetail(int accNo) {
-		return accMapper.getAccommodationDetail(accNo);
+	public AccommodationVO getAccommodationDetail(int tripProdNo) {
+		return accMapper.getAccommodationDetail(tripProdNo);
 	}
 
 	/**
@@ -101,10 +101,18 @@ public class AccommodationServiceImpl implements IAccommodationService{
 		return accMapper.searchLocation(keyword);
 	}
 
+
+	/**
+	 *	<p> 숙박 예약하기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
 	@Override
 	public int registReservation(AccResvVO resvVO) {
-		// TODO Auto-generated method stub
-		return 0;
+		int result = accMapper.insertAccommodationReservaion(resvVO); 
+		return result;
 	}
 
 }

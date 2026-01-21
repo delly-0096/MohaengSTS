@@ -7,12 +7,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.ServiceResult;
+import kr.or.ddit.mohaeng.accommodation.service.IAccommodationService;
 import kr.or.ddit.mohaeng.business.mapper.IBusinessProductMapper;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
+import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +28,17 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 	@Autowired
 	private IBusinessProductMapper businessMapper;
 	
+	@Autowired
+	private IAccommodationService accommodationService;
+	
 	@Override
-	public List<TripProdVO> getProductlist(TripProdVO tripProd) {
-		return businessMapper.getProductlist(tripProd);
+	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts) {
+		return businessMapper.getProductlist(businessProducts);
+	}
+	
+	@Override
+	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProducts) {
+		return businessMapper.getAccommodationList(businessProducts);
 	}
 	
 	@Override
@@ -37,9 +47,26 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 	}
 	
 	@Override
-	public BusinessProductsVO retrieveProductDetail(BusinessProductsVO businessProducts) {
+	public BusinessProductsVO getProductDetail(BusinessProductsVO businessProducts) {
+		// 숙소 정보
+		
 		// 상품 정보, 상품 이용안내, 상품 가격, 여행 상품 관광지
-		BusinessProductsVO prodVO = businessMapper.retrieveProductDetail(businessProducts); 
+		BusinessProductsVO prodVO = businessMapper.retrieveProductDetail(businessProducts);
+//		if(prodVO.getProdCtgryType().equals("accommodation")) {
+//			return prodVO;
+//		}
+		
+		int accNo = 0;
+		if(businessProducts.getAccNo() != 0) {
+			accNo = businessProducts.getAccNo();
+		}
+		
+		AccommodationVO accommodationvo = new AccommodationVO();
+		accommodationvo.setAccNo(accNo);
+		
+		AccommodationVO accommodation = businessMapper.retrieveAccomodationDetail(accommodationvo);
+		log.info("retrieveAccomodationDetail : {}", accommodation.getRoomList().size());
+		
 		// 나머지 1대다 매칭 후 보내기
 		log.info("retrieveProductDetail-retrieveProductDetail : {}", prodVO);
 		
@@ -64,8 +91,6 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 			prodVO.setImageList(productImages);
 		}
 		
-		// 숙소 정보
-		
 		
 		return prodVO;
 	}
@@ -81,7 +106,6 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 		int productstatus = 0;	// 1 , 0
 		productstatus = businessMapper.modifyTripProduct(businessProducts);
 		log.info("productstatus : {}", productstatus);
-		
 		
 		
 		// 상품 가격
@@ -105,36 +129,39 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 		placeStatus = businessMapper.modifyProdPlace(prodPlaceVO);
 		log.info("placeStatus : {}", placeStatus);
 		
-		
+		// 결과 비교
+		int baseStatus = productstatus + saleStatus + infoStatus + placeStatus;	// 4
 		// 숙소 
 		
 		// 예약가능시간(예약 가능 시간)
 		int productTimetatus = 0;
-		log.info("TimeList : {}", businessProducts.getProdTimeList());
-		
 		productTimetatus = businessMapper.deleteProdTimeInfo(businessProducts);
 		log.info("deleteProdInfo : {}", productTimetatus);
 		
-//		if(productstatus + saleStatus + infoStatus + placeStatus == 4) {
-//			return result = ServiceResult.OK;
-//		}
-		// 일단 여기까지	
-		
-		
-//		businessProducts.setProdTimeList();
+		// 예약시간 수정
 		List<ProdTimeInfoVO> prodTimeInfoVO = businessProducts.getProdTimeList();
-		log.info("prodTimeInfoVO.길이 : {}", prodTimeInfoVO.size());
-		if (productTimetatus != 0) {
-			productTimetatus = 0;
-			productstatus = businessMapper.insertProdTimeInfo(prodTimeInfoVO);
-			log.info("insertProdTimeInfo : {}", productstatus);
+		log.info("prodTimeInfoVO.길이 : {}", prodTimeInfoVO);
+		boolean isTimeSuccess = true; // 시간 처리 성공 여부 플래그
+		if (prodTimeInfoVO != null && !prodTimeInfoVO.isEmpty()) {
+			for(ProdTimeInfoVO timeInfo : prodTimeInfoVO) {
+				timeInfo.setTripProdNo(tripProdNo);
+			}
+			
+			int insertCount = businessMapper.insertProdTimeInfo(prodTimeInfoVO);
+			log.info("시간 등록 개수: {}, 기대 개수: {}", insertCount, prodTimeInfoVO.size());
+			
+			if (insertCount != prodTimeInfoVO.size()) {
+				isTimeSuccess = false;
+			}
 		}
-		
-		if(productstatus == 1 && productTimetatus == prodTimeInfoVO.size()) {
-			return result = ServiceResult.OK;
-		}else {
-			return result = ServiceResult.FAILED;
-		}
+
+		if (baseStatus == 4 && isTimeSuccess) {
+	        log.info("수정 최종 성공");
+	        return ServiceResult.OK;
+	    } else {
+	        log.error("수정 실패");
+	        return ServiceResult.FAILED;
+	    }
 		
 		// 숙소 정보는 나중에
 //		int accomStatus = 0;

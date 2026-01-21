@@ -37,4 +37,6 @@ public class PaymentVO {
 	
 	private List<TripProdListVO> tripProdList;	// 투어 상품 목록
 	private String mktAgreeYn;					// 마케팅 동의
+	
+	private AccResvVO accResvVO; // 숙소 상품
 }

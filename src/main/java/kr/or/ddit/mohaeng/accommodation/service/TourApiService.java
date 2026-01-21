@@ -33,6 +33,9 @@ public class TourApiService {
 	@Autowired
 	private IAccommodationMapper accMapper;
 	
+	
+	
+	
 	@Value("${tour.api.key}")
     private String serviceKey;
 	

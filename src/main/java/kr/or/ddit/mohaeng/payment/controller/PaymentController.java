@@ -1,5 +1,6 @@
 package kr.or.ddit.mohaeng.payment.controller;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -101,6 +102,32 @@ public class PaymentController {
 	}
 	
 	/**
+	 * <p> 숙박 상품 결제 성공 시 이동 페이지 </p>
+	 * @date 2025.01.20
+	 * @author kdrs
+	 */
+	@GetMapping("/product/payment/success")
+	public String accommodationPayment(
+	        @RequestParam String paymentType,
+	        @RequestParam String orderId,
+	        @RequestParam String paymentKey,
+	        @RequestParam Long amount,
+	        Model model
+	        ) {
+	    
+	    log.info("숙박 결제 성공 진입 : " + paymentType + ", " + orderId + ", " + paymentKey + ", " + amount);
+
+	    model.addAttribute("paymentType", paymentType);
+	    model.addAttribute("orderId", orderId);
+	    model.addAttribute("paymentKey", paymentKey);
+	    model.addAttribute("amount", amount);
+	    model.addAttribute("productType", "accommodation");
+	    model.addAttribute("success", "success");
+	    
+	    return "product/payment";
+	}
+	
+	/**
 	 * <p>결제 서버 접근 실패시 이동 페이지</p>
 	 * @date 2025.01.07
 	 * @author sdg
@@ -142,12 +169,20 @@ public class PaymentController {
 		log.info("confirmFlightPayment productList : {}", paymentVO.getFlightProductList());
 		log.info("confirmFlightPayment passengersList : {}", paymentVO.getFlightPassengersList());
 		log.info("confirmFlightPayment resvAgree : {}", paymentVO.getFlightResvAgree());	// 느낌이 하나 객체 가져와서 resvno마다 하나씩 추가??
-		Map<String, Object> result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨 - serviceResult타입은 아님
 		
-		if(result != null) {
-			return new ResponseEntity<>(result, HttpStatus.OK);
-		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		try {
+			Map<String, Object> result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨 - serviceResult타입은 아님
+			
+			if(result != null) {
+				return new ResponseEntity<>(result, HttpStatus.OK);
+			} else {
+				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			}
+		} catch (RuntimeException e) {
+			Map<String, Object> errorResult = new HashMap<>();
+	        errorResult.put("success", false);
+	        errorResult.put("message", e.getMessage());
+	        return new ResponseEntity<>(errorResult, HttpStatus.BAD_REQUEST);
 		}
     }
 }

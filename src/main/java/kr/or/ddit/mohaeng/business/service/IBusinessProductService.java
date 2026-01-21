@@ -16,8 +16,8 @@ public interface IBusinessProductService {
 	 * @param tripProd (memNo)
 	 * @return 상품목록
 	 */
-	public List<TripProdVO> getProductlist(TripProdVO tripProd);
-
+//	public List<TripProdVO> getProductlist(TripProdVO tripProd);
+	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts);
 	/**
 	 * <p>기업 상품 현황 통계</p>
 	 * @author sdg
@@ -32,10 +32,10 @@ public interface IBusinessProductService {
 	 * <p>숙박상품 조회</p>
 	 * @author sdg
 	 * @date 2026-01-19
-	 * @param tripProd (memNo)
+	 * @param businessProducts (memNo)
 	 * @return 숙박상품목록
 	 */
-//	public List<AccommodationVO> getAccommodationList(TripProdVO tripProd);
+	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProducts);
 
 	
 	/**
@@ -45,7 +45,7 @@ public interface IBusinessProductService {
 	 * @param businessProducts 상품 정보
 	 * @return 해당 상품의 정보
 	 */
-	public BusinessProductsVO retrieveProductDetail(BusinessProductsVO businessProducts);
+	public BusinessProductsVO getProductDetail(BusinessProductsVO businessProducts);
 	
 	/**
 	 * <p>판매 상품 정보 수정</p>

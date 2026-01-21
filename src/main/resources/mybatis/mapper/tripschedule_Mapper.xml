@@ -295,6 +295,8 @@
 	                   , #{item.longitude} AS LONGITUDE
 	                   , #{item.regId}     AS REG_ID
 	                   , #{item.defaultImg} AS DEFAULT_IMG
+	                   , #{item.ldongRegnCd} AS LDONG_REGN_CD
+	                   , #{item.ldongSignguCd} AS LDONG_SIGNGU_CD
 	              FROM DUAL
 	          </foreach>
 	      ) S
@@ -312,6 +314,8 @@
 	              , T.DEFAULT_IMG = S.DEFAULT_IMG
 	              , T.MOD_ID	  = S.REG_ID  
 	              , T.MOD_DT      = SYSDATE  
+	              , T.LDONG_REGN_CD   = S.LDONG_REGN_CD  
+	              , T.LDONG_SIGNGU_CD = S.LDONG_SIGNGU_CD  
 	            WHEN NOT MATCHED THEN
 	          INSERT (
 	                PLC_NO
@@ -325,7 +329,9 @@
 	              , LONGITUDE
 	              , REG_ID
 	              , DEFAULT_IMG
-	              , REG_DT  
+	              , REG_DT
+	              , LDONG_REGN_CD
+	              , LDONG_SIGNGU_CD
 	          ) VALUES (
 	                S.PLC_NO
 	              , S.RGN_NO
@@ -339,6 +345,8 @@
 	              , S.REG_ID
 	              , S.DEFAULT_IMG
 	              , SYSDATE
+	              , S.LDONG_REGN_CD
+	              , S.LDONG_SIGNGU_CD
 	          )
 	</update>
 	
@@ -735,6 +743,23 @@
 			 , PLC_PRICE
 			 , PCL_STATUS_CD
 			 , POP_TRVL_YN
+			 , LDONG_REGN_CD
+			 , (SELECT LDONG_REGN_NM 
+				  FROM LEGAL_DONG_CODE LDC 
+				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
+				 GROUP BY LDONG_SIGNGU_NM
+				) AS LDONG_SIGNGU_NM
+			 , LDONG_SIGNGU_CD
+			 , (SELECT LDONG_SIGNGU_NM 
+				  FROM LEGAL_DONG_CODE LDC 
+				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
+				   AND LDC.LDONG_SIGNGU_CD = P.LDONG_REGN_CD
+				 ) AS LDONG_SIGNGU_NM
+			 , (SELECT FULL_NM 
+				  FROM LEGAL_DONG_CODE LDC 
+				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
+				   AND LDC.LDONG_SIGNGU_CD = P.LDONG_REGN_CD
+				 ) AS FULL_NM
 		  FROM TOUR_PLACE P
          WHERE RGN_NO = #{rgnNo}
            AND	(SELECT COUNT(*) FROM TOUR_PLACE_KEYWORD TPK

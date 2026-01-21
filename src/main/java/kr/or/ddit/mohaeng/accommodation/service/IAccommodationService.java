@@ -13,7 +13,7 @@ public interface IAccommodationService {
 
 
 	// 상세 페이지 불러오기
-	public AccommodationVO getAccommodationDetail(int accNo);
+	public AccommodationVO getAccommodationDetail(int tripProdNo);
 
 	// 객실 타입 조회
 	public List<RoomTypeVO> getRoomList(int accNo);

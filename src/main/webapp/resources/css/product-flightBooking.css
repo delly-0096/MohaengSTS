@@ -606,6 +606,7 @@
     
 }
 
+/* 테스트버전 안보이게 */
 .payment-container {
     width: 100%;
     overflow: hidden;    /* 이 안에서 위로 밀려난 부분은 모두 잘려 나갑니다 */

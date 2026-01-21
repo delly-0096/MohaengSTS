@@ -65,13 +65,12 @@
             <div class="filter-row">
                 <div class="filter-group">
                     <label>숙소 유형</label>
-                    <select class="form-select">
+                    <select class="form-select" name="accCatCd">
                         <option value="">전체</option>
-                        <option value="hotel">호텔</option>
-                        <option value="resort">리조트</option>
-                        <option value="pension">펜션</option>
-                        <option value="guesthouse">게스트하우스</option>
-                        <option value="airbnb">에어비앤비</option>
+                        <option value="B02010100">호텔</option>
+                        <option value="B02010500">리조트</option>
+                        <option value="B02010700">펜션</option>
+                        <option value="B02011100">게스트하우스</option>
                     </select>
                 </div>
                 <div class="filter-group">

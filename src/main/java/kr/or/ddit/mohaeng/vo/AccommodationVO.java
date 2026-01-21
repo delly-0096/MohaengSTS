@@ -83,6 +83,10 @@ public class AccommodationVO {
     private AccFacilityVO accFacility;
     private List<RoomTypeVO> roomList;
     
+    // 옵션 목록(신동근 추가)
+    private List<AccOptionVO> accOptionList;
+    
+    
     // ACC_FACILITY
     private String wifiYn; /* WiFi 제공 여부 */
     private String parkingYn; /* 주차 가능 여부 */
@@ -130,4 +134,8 @@ public class AccommodationVO {
     private String saleStartDt; // 상품 판매 시작일
     private String saleEndDt;   // 상품 판매 종료일
     private String approveStatus; // 판매중, 판매중지 상태
+    
+    // 필터 기능 구현
+    private String priceRange; // 가격대 (예: "50000-100000")
+    private String sortBy;     // 정렬 기준 (recommend, price_low 등)
 }

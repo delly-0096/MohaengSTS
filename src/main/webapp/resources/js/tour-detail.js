@@ -201,6 +201,7 @@ function addToCartFromDetail() {
     }
     
     var people = parseInt(peopleValue) || minPeople;
+	var stock = currentProduct.stock || 999;
 
     // 이미 장바구니에 있는지 확인
     var existingItem = cart.find(function(item) {
@@ -209,13 +210,25 @@ function addToCartFromDetail() {
 
     if (existingItem) {
 		var newQuantity = existingItem.quantity + people;
+		
+		if (newQuantity > stock) {
+            showToast('재고가 부족합니다 (남은 재고: ' + stock + '개)', 'warning');
+            return;
+        }
+		
 	    if (newQuantity > 4) {
 	        showToast('5명 이상 단체 예약은 판매자에게 문의해주세요', 'warning');
 	        return;
 	    }
+		
 	    existingItem.quantity = newQuantity;
 	    showToast('장바구니에 ' + people + '명 추가되었습니다', 'success');
     } else {
+		if (people > stock) {
+	        showToast('재고가 부족합니다 (남은 재고: ' + stock + '개)', 'warning');
+	        return;
+	    }
+		
         cart.push({
             id: currentProduct.id,
             name: currentProduct.name,
@@ -224,6 +237,7 @@ function addToCartFromDetail() {
 			location: currentProduct.location,
 			minPeople: minPeople,
             quantity: people,
+			stock: stock,
 			saleEndDt: saleEndDt
         });
 		
@@ -265,9 +279,15 @@ function updateQuantity(id, delta) {
 		var newQuantity = item.quantity + delta;
 		var itemMinPeople = item.minPeople || 1;
 		var maxPeople = 4;
+		var stock = item.stock || 999;
 
 		if (newQuantity < itemMinPeople) {
             showToast('최소 인원은 ' + itemMinPeople + '명입니다', 'warning');
+            return;
+        }
+		
+		if (newQuantity > stock) {
+            showToast('재고가 부족합니다 (남은 재고: ' + stock + '개)', 'warning');
             return;
         }
 		
@@ -417,7 +437,8 @@ function checkout() {
     sessionStorage.setItem('tourCartCheckout', JSON.stringify(cart));
 
     // 결제 페이지로 이동
-    window.location.href = CONTEXT_PATH + '/tour/cart/booking';
+	var prodIds = cart.map(function(item) { return item.id; }).join(',');
+    window.location.href = CONTEXT_PATH + '/tour/cart/booking?prodIds=' + prodIds;
 }
 
 // ESC 키로 장바구니 닫기

@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.payment.mapper;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import kr.or.ddit.mohaeng.vo.PaymentInfoVO;
@@ -16,4 +17,7 @@ public interface IPaymentMapper {
 	public int updatePoint(MemberVO member);	// 사용 포인트 감면
 	public int insertTripProdList(TripProdListVO item);
 	public int updateMktAgree(int memNo);
+	public int decreaseStock(@Param("tripProdNo") int tripProdNo, @Param("quantity") int quantity);
+	public int getCurrentStock(int tripProdNo);
+	public int updateSoldOut(int tripProdNo);
 }

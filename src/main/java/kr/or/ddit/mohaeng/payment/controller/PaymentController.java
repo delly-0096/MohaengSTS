@@ -1,5 +1,6 @@
 package kr.or.ddit.mohaeng.payment.controller;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -142,12 +143,20 @@ public class PaymentController {
 		log.info("confirmFlightPayment productList : {}", paymentVO.getFlightProductList());
 		log.info("confirmFlightPayment passengersList : {}", paymentVO.getFlightPassengersList());
 		log.info("confirmFlightPayment resvAgree : {}", paymentVO.getFlightResvAgree());	// 느낌이 하나 객체 가져와서 resvno마다 하나씩 추가??
-		Map<String, Object> result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨 - serviceResult타입은 아님
 		
-		if(result != null) {
-			return new ResponseEntity<>(result, HttpStatus.OK);
-		} else {
-			return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+		try {
+			Map<String, Object> result = service.confirmPayment(paymentVO);		// 여기서 받는 값을 전송해야됨 - serviceResult타입은 아님
+			
+			if(result != null) {
+				return new ResponseEntity<>(result, HttpStatus.OK);
+			} else {
+				return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+			}
+		} catch (RuntimeException e) {
+			Map<String, Object> errorResult = new HashMap<>();
+	        errorResult.put("success", false);
+	        errorResult.put("message", e.getMessage());
+	        return new ResponseEntity<>(errorResult, HttpStatus.BAD_REQUEST);
 		}
     }
 }

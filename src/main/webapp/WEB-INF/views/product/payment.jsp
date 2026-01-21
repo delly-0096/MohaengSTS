@@ -371,21 +371,27 @@ async function processTourPayment(customData, payNo, orderName, payDt, person, t
 		    document.querySelector(".payment-complete").style.display = "block";
 		    
 		    sessionStorage.removeItem("tourPaymentData");
+		    sessionStorage.removeItem("tourCart");
+		    sessionStorage.removeItem("tourCartCheckout");
 		    sessionStorage.removeItem("@tosspayments/session-id");
 		} else {
-			try {
-				const msgSplit = resultData.message.split(': "');
-				const jsonStr = msgSplit[msgSplit.length - 1].replace(/"$/, '');
-				const errorDetail = JSON.parse(jsonStr);
-				
-				message.innerHTML = errorDetail.message;
-				document.querySelector("#orderFailName").innerHTML = orderId.value;
-				document.querySelector(".payment-fail").style.display = "block";
-			} catch (e) {
-				console.error("파싱 실패:", e);
-				message.innerHTML = "결제 처리 중 오류가 발생했습니다.";
-				document.querySelector(".payment-fail").style.display = "block";
-			}
+			if (resultData.success === false && resultData.message) {
+		        message.innerHTML = resultData.message;
+		    } else {
+		        // 토스페이먼츠 API 에러
+		        try {
+		            const msgSplit = resultData.message.split(': "');
+		            const jsonStr = msgSplit[msgSplit.length - 1].replace(/"$/, '');
+		            const errorDetail = JSON.parse(jsonStr);
+		            message.innerHTML = errorDetail.message;
+		        } catch (e) {
+		            console.error("파싱 실패:", e);
+		            message.innerHTML = "결제 처리 중 오류가 발생했습니다.";
+		        }
+		    }
+		    
+		    document.querySelector("#orderFailName").innerHTML = orderId.value;
+		    document.querySelector(".payment-fail").style.display = "block";
 		}
 	} catch (error) {
 		console.error("결제 처리 오류:", error);

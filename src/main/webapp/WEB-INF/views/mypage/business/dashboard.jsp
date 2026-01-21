@@ -20,17 +20,17 @@
                 <div class="stats-grid">
                     <div class="stat-card primary">
                         <div class="stat-icon"><i class="bi bi-currency-won"></i></div>
-                        <div class="stat-value">3,250,000</div>
+                        <div class="stat-value" id="monthlySales">0</div>
                         <div class="stat-label">이번 달 매출</div>
                     </div>
                     <div class="stat-card secondary">
                         <div class="stat-icon"><i class="bi bi-cart-check"></i></div>
-                        <div class="stat-value">47</div>
+                        <div class="stat-value" id="monthlyReservations">0</div>
                         <div class="stat-label">이번 달 예약</div>
                     </div>
                     <div class="stat-card accent">
                         <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
-                        <div class="stat-value">8</div>
+                        <div class="stat-value" id="sellingProductCount">0</div>
                         <div class="stat-label">등록 상품</div>
                     </div>
                     <div class="stat-card warning">
@@ -46,9 +46,10 @@
                         <div class="content-section">
                             <div class="section-header">
                                 <h3><i class="bi bi-receipt"></i> 최근 예약</h3>
-                                <a href="${pageContext.request.contextPath}/mypage/business/sales" class="view-all">
-                                    전체보기 <i class="bi bi-arrow-right"></i>
-                                </a>
+                               <a href="${pageContext.request.contextPath}/mypage/business/products" class="view-all">
+   									 전체보기 <i class="bi bi-arrow-right"></i>
+							   </a>
+
                             </div>
 
                             <div class="table-responsive">
@@ -62,43 +63,10 @@
                                             <th>상태</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td>MH2403001</td>
-                                            <td>제주 스쿠버다이빙 체험</td>
-                                            <td>김OO</td>
-                                            <td class="text-primary fw-bold">136,000원</td>
-                                            <td><span class="payment-status completed">확정</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>MH2403002</td>
-                                            <td>한라산 트레킹 투어</td>
-                                            <td>이OO</td>
-                                            <td class="text-primary fw-bold">85,000원</td>
-                                            <td><span class="payment-status completed">확정</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>MH2403003</td>
-                                            <td>제주 서핑 레슨</td>
-                                            <td>박OO</td>
-                                            <td class="text-primary fw-bold">65,000원</td>
-                                            <td><span class="payment-status completed">확정</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>MH2403004</td>
-                                            <td>제주 스쿠버다이빙 체험</td>
-                                            <td>최OO</td>
-                                            <td class="text-primary fw-bold">204,000원</td>
-                                            <td><span class="payment-status completed">확정</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td>MH2403005</td>
-                                            <td>우도 자전거 투어</td>
-                                            <td>정OO</td>
-                                            <td class="text-primary fw-bold">45,000원</td>
-                                            <td><span class="payment-status cancelled">취소</span></td>
-                                        </tr>
-                                    </tbody>
+                                    <tbody id="recentResvTbody">
+										  <tr><td colspan="5" class="text-muted text-center">불러오는 중...</td></tr>
+									</tbody>
+
                                 </table>
                             </div>
                         </div>
@@ -107,12 +75,20 @@
                     <!-- 알림 -->
                     <div class="col-lg-4">
                         <div class="content-section">
-                            <div class="section-header">
-                                <h3><i class="bi bi-bell"></i> 알림</h3>
-                                <a href="${pageContext.request.contextPath}/mypage/business/notifications" class="view-all">
-                                    전체보기 <i class="bi bi-arrow-right"></i>
-                                </a>
-                            </div>
+							  <div class="section-header">
+							    <h3><i class="bi bi-bell"></i> 알림</h3>
+							    <a href="${pageContext.request.contextPath}/mypage/business/notifications" class="view-all">
+							      전체보기 <i class="bi bi-arrow-right"></i>
+							    </a>
+							  </div>
+							
+							  <!-- ✅ 리스트형 -->
+							  <ul class="noti-list" id="notiList">
+							    <!-- JS로 렌더링 -->
+							    <li class="noti-empty">알림을 불러오는 중...</li>
+							  </ul>
+							</div>
+
 
                             <div class="notification-list">
                                 <div class="notification-item unread">
@@ -228,5 +204,128 @@
     </div>
 </div>
 
+<script>
+(async function () {
+  const contextPath = "${pageContext.request.contextPath}";
+  const url = contextPath + "/api/company/dashboard";
+
+  try {
+    const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" }});
+    if (!res.ok) throw new Error("HTTP " + res.status);
+
+    const data = await res.json();
+    const kpi = data.kpi || {};
+
+    // 숫자 포맷
+    const won = (n) => (n ?? 0).toLocaleString("ko-KR") + "원";
+    const num = (n) => (n ?? 0).toLocaleString("ko-KR");
+
+    document.querySelector("#monthlySales").textContent = won(kpi.monthlySales);
+    document.querySelector("#monthlyReservations").textContent = num(kpi.monthlyReservations);
+    document.querySelector("#sellingProductCount").textContent = num(kpi.sellingProductCount);
+
+    // topProducts로 '상품 현황' 일부도 채우고 싶으면 여기서 렌더링 가능
+    // console.log(data);
+
+  } catch (e) {
+    console.error("대시보드 로딩 실패:", e);
+  }
+})();
+</script>
+
+
+<style>
+/* 알림 리스트 */
+.noti-list{
+  list-style:none;
+  padding:0;
+  margin:0;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.noti-item{
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+  padding:12px 12px;
+  border:1px solid #eee;
+  border-radius:14px;
+  background:#fff;
+  cursor:pointer;
+  transition:transform .08s ease, box-shadow .08s ease;
+}
+
+.noti-item:hover{
+  transform:translateY(-1px);
+  box-shadow:0 6px 18px rgba(0,0,0,.06);
+}
+
+/* 읽지 않음 강조 */
+.noti-item.unread{
+  background:#f5fbff;
+  border-color:#d9efff;
+}
+
+.noti-icon{
+  width:36px;
+  height:36px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 36px;
+  font-size:18px;
+}
+
+/* 타입별 컬러(원하는대로 수정) */
+.noti-item.type-order .noti-icon{ background:#e8f5ff; color:#1f6feb; }
+.noti-item.type-review .noti-icon{ background:#fff5e6; color:#f59f00; }
+.noti-item.type-inquiry .noti-icon{ background:#e6fff7; color:#0ca678; }
+.noti-item.type-settle .noti-icon{ background:#f2f2f2; color:#495057; }
+
+.noti-body{
+  flex:1;
+  min-width:0; /* ✅ 이거 없으면 줄바꿈 깨지고 세로로 찢어짐 */
+}
+
+.noti-title{
+  font-weight:700;
+  font-size:14px;
+  margin:0 0 2px 0;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+
+.noti-desc{
+  font-size:13px;
+  margin:0;
+  color:#666;
+  overflow:hidden;
+  display:-webkit-box;
+  -webkit-line-clamp:1;
+  -webkit-box-orient:vertical;
+}
+
+.noti-meta{
+  flex:0 0 auto;
+  font-size:12px;
+  color:#8a8a8a;
+  margin-left:auto;
+  padding-left:10px;
+  white-space:nowrap;
+}
+
+.noti-empty{
+  padding:12px;
+  color:#888;
+  text-align:center;
+}
+
+
+
+</style>
 <c:set var="pageJs" value="mypage" />
 <%@ include file="../../common/footer.jsp" %>

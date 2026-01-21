@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.mypage.dashboard.mapper.ICompanyDashboardMapper">
+
+  <!-- KPI -->
+  <select id="selectKpi" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$Kpi">
+    SELECT
+      NVL((
+        SELECT SUM(pl.PAY_PRICE)
+        FROM TRIP_PROD_LIST pl
+        JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
+        JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = pl.TRIP_PROD_NO
+        WHERE tp.COMP_NO = #{compNo}
+          AND p.PAY_STATUS = 'DONE'
+          AND p.PAY_DT >= TRUNC(SYSDATE, 'MM')
+        AND p.PAY_DT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+
+      ), 0) AS monthlySales,
+ 
+      NVL((
+        SELECT COUNT(*)
+        FROM TRIP_PROD_LIST pl
+        JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
+        JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = pl.TRIP_PROD_NO
+        WHERE tp.COMP_NO = #{compNo}
+          AND p.PAY_STATUS = 'DONE'
+          AND p.PAY_DT >= TRUNC(SYSDATE, 'MM')
+          AND p.PAY_DT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+      ), 0) AS monthlyReservations,
+
+      NVL((
+        SELECT COUNT(*)
+        FROM TRIP_PROD tp
+        WHERE tp.COMP_NO = #{compNo}
+          AND NVL(tp.DEL_YN, 'N') = 'N'
+          AND tp.APPROVE_STATUS = '판매중'
+          AND tp.SALE_START_DT &lt;= SYSDATE
+          AND tp.SALE_END_DT >= SYSDATE
+      ), 0) AS sellingProductCount
+    FROM DUAL
+  </select>
+
+  <!-- 월별 매출 (최근 N개월, 0 포함) -->
+  <select id="selectMonthlySalesChart" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$MonthlySalesPoint">
+    SELECT
+      m.month_key AS month,
+      NVL(s.sales, 0) AS sales
+    FROM (
+      SELECT TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -(LEVEL-1)), 'YYYY-MM') AS month_key
+      FROM DUAL
+      CONNECT BY LEVEL &lt;= #{months}
+    ) m
+    LEFT JOIN (
+      SELECT
+        TO_CHAR(p.PAY_DT, 'YYYY-MM') AS month_key,
+        SUM(pl.PAY_PRICE) AS sales
+      FROM TRIP_PROD_LIST pl
+      JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
+      JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = pl.TRIP_PROD_NO
+      WHERE tp.COMP_NO = #{compNo}
+        AND p.PAY_STATUS = 'DONE'
+        AND p.PAY_DT &gt;= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -(#{months}-1))
+        AND p.PAY_DT &lt;  ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+      GROUP BY TO_CHAR(p.PAY_DT, 'YYYY-MM')
+    ) s
+    ON s.month_key = m.month_key
+    ORDER BY m.month_key
+  </select>
+
+  <!-- TOP 상품 (이번달) -->
+  <select id="selectTopProducts" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$TopTripProd">
+    SELECT *
+    FROM (
+      SELECT
+        tp.TRIP_PROD_NO AS tripProdNo,
+        tp.TRIP_PROD_TITLE AS tripProdTitle,
+        tp.APPROVE_STATUS AS approveStatus,
+        SUM(pl.PAY_PRICE) AS sales,
+        COUNT(*) AS reservationCount
+      FROM TRIP_PROD tp
+      JOIN TRIP_PROD_LIST pl ON pl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+      JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
+      WHERE tp.COMP_NO = #{compNo}
+        AND p.PAY_STATUS = 'DONE'
+        AND p.PAY_DT >= TRUNC(SYSDATE, 'MM')
+        AND p.PAY_DT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+      GROUP BY tp.TRIP_PROD_NO, tp.TRIP_PROD_TITLE, tp.APPROVE_STATUS
+      ORDER BY sales DESC, reservationCount DESC
+    )
+    WHERE ROWNUM &lt;= #{limit}
+  </select>
+
+  <!-- 판매중 상품 수 (인터페이스에 있어서 XML에도 반드시 있어야 함) -->
+  <select id="selectSellingProductCount" resultType="int">
+    SELECT COUNT(*)
+    FROM TRIP_PROD tp
+    WHERE tp.COMP_NO = #{compNo}
+      AND NVL(tp.DEL_YN,'N')='N'
+      AND tp.APPROVE_STATUS='판매중'
+      AND tp.SALE_START_DT &lt;= SYSDATE
+      AND tp.SALE_END_DT >= SYSDATE
+  </select>
+
+</mapper>

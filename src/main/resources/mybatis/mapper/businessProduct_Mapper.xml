@@ -263,7 +263,7 @@
 	   WHERE t.TRIP_PROD_NO = #{tripProdNo}
 	</select>
 	
-	<!-- 숙소정보는 따로 가져오자 조인 지옥 버리고 그냥 갈까 -->
+	<!-- 숙소정보 가져오기 -->
 	<select id="retrieveAccomodationDetail" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accMap">
 		SELECT 
 	        <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accommodationColumns">

@@ -179,8 +179,25 @@ public class TripRecordServiceImpl implements ITripRecordService {
     @Override
     @Transactional
     public void delete(long rcdNo, long loginMemNo) {
+
+        // ✅ (선택) 좋아요/북마크/댓글도 같이 지울지 정책에 따라 결정
+        mapper.deleteLikesByRcdNo(rcdNo);
+        mapper.deleteBookmarkByRcdNo(rcdNo);
+        mapper.deleteCommentsByRcdNo(rcdNo);
+
+        // ✅ 블록 관련 제거
+        mapper.deleteTourPlaceReviewByRcdNo(rcdNo);
+        mapper.deleteTripRecordImgByRcdNo(rcdNo);
+        mapper.deleteTripRecordTxtByRcdNo(rcdNo);
+        mapper.deleteTripRecordSeqByRcdNo(rcdNo);
+
+        // ✅ 태그 제거
+        mapper.deleteHashtagByRcdNo(rcdNo);
+
+        // ✅ 마지막 TRIP_RECORD
         mapper.deleteTripRecord(rcdNo);
     }
+
 
     @Override
     public boolean isWriter(long rcdNo, Long loginMemNo) {
@@ -196,7 +213,7 @@ public class TripRecordServiceImpl implements ITripRecordService {
 
         // 2) coverFile이 있을 때만 커버 교체
         if (coverFile != null && !coverFile.isEmpty()) {
-            // TODO: 기존 커버 삭제/교체 로직(attachNo 갱신 포함) 구현
+            // 기존 커버 삭제/교체 로직(attachNo 갱신 포함) 구현
             // 예: fileService.replaceCover(rcdNo, coverFile, loginMemNo);
         }
     }
@@ -234,106 +251,8 @@ public class TripRecordServiceImpl implements ITripRecordService {
         long rcdNo = rcdNoObj;
 
         // 3) 블록 저장
-        if (blocks != null && !blocks.isEmpty()) {
-            int order = 1;
+        insertBlocks(rcdNo, memNo, bodyFiles, blocks);
 
-            for (TripRecordBlockReq b : blocks) {
-                String type = (b.getType() == null) ? "" : b.getType().trim().toLowerCase();
-
-                long connNo = mapper.nextConnNo();
-                String targetPk = String.valueOf(connNo);
-
-                // (여기에는 커버 세팅 로직 절대 넣지 마!)
-                if ("text".equals(type)) {
-                    String content = b.getContent();
-                    if (content == null || content.trim().isEmpty()) {
-                        continue;
-                    }
-                }
-
-                switch (type) {
-                    case "image": {
-                        Integer fileIdx = b.getFileIdx();
-                        MultipartFile img = (bodyFiles != null && fileIdx != null
-                                && fileIdx >= 0 && fileIdx < bodyFiles.size())
-                                ? bodyFiles.get(fileIdx)
-                                : null;
-
-                        if (img != null && !img.isEmpty()) {
-                            Long attachNo = attachService.saveAndReturnAttachNo(img, memNo);
-                            mapper.insertTripRecordSeq(connNo, rcdNo, order++, "IMAGE", targetPk);
-                            mapper.insertTripRecordImg(connNo, attachNo, b.getCaption());
-                        } else {
-                            String fallback = writeJsonSafe(b);
-                            mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
-                            mapper.insertTripRecordTxt(connNo, fallback);
-                        }
-                        break;
-                    }
-
-                    case "divider": {
-                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "DIVIDER", null);
-                        break;
-                    }
-
-                    case "day-header": {
-                        String json = writeJsonSafe(b);
-                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
-                        mapper.insertTripRecordTxt(connNo, json);
-                        break;
-                    }
-
-                    case "place": {
-                        // plcNo 없으면 저장 불가 → TEXT fallback(너 정책 유지)
-                        if (b.getPlcNo() == null || b.getPlcNo() <= 0) {
-                            String json = writeJsonSafe(b);
-                            mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
-                            mapper.insertTripRecordTxt(connNo, json);
-                            break;
-                        }
-
-                        // ✅ 1) 리뷰 PK (NUMBER) 생성
-                        Long placeReviewNo = mapper.nextTourPlaceReviewSeq();
-
-                        // ✅ 2) 리뷰 insert (RCD_CONN_NO = connNo)
-                        String reviewConn = (b.getContent() == null) ? null : b.getContent().trim();
-                        double rating = (b.getRating() == null) ? 0.0 : safeRating(b.getRating());
-
-                        mapper.insertTourPlaceReview(
-                            placeReviewNo,   // NUMBER
-                            connNo,          // RCD_CONN_NO
-                            memNo,           // MEM_NO
-                            b.getPlcNo(),    // PLC_NO
-                            reviewConn,      // REVIEW_CONN
-                            rating           // RATING
-                        );
-
-                        // ✅ 3) SEQ insert (TARGET_PK = placeReviewNo)
-                        mapper.insertTripRecordSeq(
-                            connNo,
-                            rcdNo,
-                            order++,
-                            "PLACE",
-                            String.valueOf(placeReviewNo)   // JOIN이 TO_CHAR(pr.PLACE_REVIEW_NO)라서 문자열로
-                        );
-
-                        break;
-                    }
-
-
-
-                    case "text":
-                    default: {
-                        String text = (b.getContent() == null) ? "" : b.getContent().trim();
-                        String toSave = text.isEmpty() ? writeJsonSafe(b) : text;
-
-                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
-                        mapper.insertTripRecordTxt(connNo, toSave);
-                        break;
-                    }
-                }
-            }
-        }
 
         // 4) 해시태그 저장
         List<String> tags = req.getTags();
@@ -374,6 +293,187 @@ public class TripRecordServiceImpl implements ITripRecordService {
     public List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO> blocks(long rcdNo) {
         return mapper.selectTripRecordBlocks(rcdNo);
     }
+
+
+    @Override
+    @Transactional
+    public void updateWithBlocks(
+            long rcdNo,
+            TripRecordUpdateReq req,
+            Long memNo,
+            MultipartFile coverFile,
+            List<MultipartFile> bodyFiles,
+            List<TripRecordBlockReq> blocks
+    ) {
+        if (memNo == null) throw new RuntimeException("로그인 정보가 없습니다.");
+
+        // 1) TRIP_RECORD 업데이트 (제목/기간/공개범위 등)
+        TripRecordVO vo = new TripRecordVO();
+        vo.setRcdNo(rcdNo);
+        vo.setMemNo(memNo);
+
+        vo.setSchdlNo(req.getSchdlNo());
+        vo.setRcdTitle(req.getRcdTitle());
+        vo.setRcdContent(req.getRcdContent()); // (옵션) 블록 기반이면 안써도 되지만 유지해도 됨
+        vo.setTripDaysCd(req.getTripDaysCd());
+        vo.setLocCd(req.getLocCd());
+        vo.setAttachNo(req.getAttachNo());     // 커버는 아래에서 교체할 수 있으니 일단 req 값 반영
+        vo.setStartDt(req.getStartDt());
+        vo.setEndDt(req.getEndDt());
+        vo.setOpenScopeCd(req.getOpenScopeCd());
+        vo.setMapDispYn(req.getMapDispYn());
+        vo.setReplyEnblYn(req.getReplyEnblYn());
+
+        mapper.updateTripRecord(vo);
+
+        // 2) 커버 교체(파일이 들어온 경우만)
+        if (coverFile != null && !coverFile.isEmpty()) {
+            Long newAttachNo = attachService.saveAndReturnAttachNo(coverFile, memNo);
+            mapper.updateCoverAttachNo(rcdNo, newAttachNo);
+        }
+
+        // 3) 기존 블록 전부 삭제 (TRIP_RECORD만 남기고)
+        mapper.deleteTourPlaceReviewByRcdNo(rcdNo);
+        mapper.deleteTripRecordImgByRcdNo(rcdNo);
+        mapper.deleteTripRecordTxtByRcdNo(rcdNo);
+        mapper.deleteTripRecordSeqByRcdNo(rcdNo);
+
+        // 4) 새 블록 재삽입
+        insertBlocks(rcdNo, memNo, bodyFiles, blocks);
+
+        // 5) 해시태그 업데이트(통째 문자열 저장 정책 유지)
+        List<String> tags = req.getTags(); // ✅ TripRecordUpdateReq에 tags 있어야 함
+
+        // ✅ tags가 null/빈배열이면: 기존 태그 삭제
+        if (tags == null || tags.isEmpty()) {
+            mapper.deleteHashtagByRcdNo(rcdNo);
+        } else {
+            List<String> cleaned = tags.stream()
+                    .filter(t -> t != null && !t.trim().isEmpty())
+                    .map(t -> t.trim().replace("#", ""))
+                    .distinct()
+                    .toList();
+
+            if (!cleaned.isEmpty()) {
+                String tagText = String.join(",", cleaned);
+                mapper.upsertHashtagText(rcdNo, tagText);
+            } else {
+                mapper.deleteHashtagByRcdNo(rcdNo);
+            }
+        }
+
+    }
+    
+    
+    private void insertBlocks(
+            long rcdNo,
+            long memNo,
+            List<MultipartFile> bodyFiles,
+            List<TripRecordBlockReq> blocks
+    ) {
+        if (blocks == null || blocks.isEmpty()) return;
+
+        int order = 1;
+
+        for (TripRecordBlockReq b : blocks) {
+            String type = (b.getType() == null) ? "" : b.getType().trim().toLowerCase();
+
+            long connNo = mapper.nextConnNo();
+            String targetPk = String.valueOf(connNo);
+
+            // text인데 비어있으면 스킵(너 기존 정책 유지)
+            if ("text".equals(type)) {
+                String content = b.getContent();
+                if (content == null || content.trim().isEmpty()) continue;
+            }
+
+            switch (type) {
+	            case "image": {
+	                Integer fileIdx = b.getFileIdx();
+	                MultipartFile img = (bodyFiles != null && fileIdx != null
+	                        && fileIdx >= 0 && fileIdx < bodyFiles.size())
+	                        ? bodyFiles.get(fileIdx)
+	                        : null;
+	
+	                // ✅ 1) 새 파일이 있으면 새로 저장
+	                if (img != null && !img.isEmpty()) {
+	                    Long attachNo = attachService.saveAndReturnAttachNo(img, memNo);
+	                    mapper.insertTripRecordSeq(connNo, rcdNo, order++, "IMAGE", targetPk);
+	                    mapper.insertTripRecordImg(connNo, attachNo, b.getCaption());
+	                    break;
+	                }
+	
+	                // ✅ 2) 새 파일이 없고, 기존 attachNo가 오면 그대로 유지
+	                if (b.getAttachNo() != null) {
+	                    mapper.insertTripRecordSeq(connNo, rcdNo, order++, "IMAGE", targetPk);
+	                    mapper.insertTripRecordImg(connNo, b.getAttachNo(), b.getCaption());
+	                    break;
+	                }
+	
+	                // ✅ 3) 둘 다 없으면 fallback (원하면 스킵해도 됨)
+	                String fallback = writeJsonSafe(b);
+	                mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+	                mapper.insertTripRecordTxt(connNo, fallback);
+	                break;
+	            }
+
+                case "divider": {
+                    mapper.insertTripRecordSeq(connNo, rcdNo, order++, "DIVIDER", null);
+                    break;
+                }
+
+                case "day-header": {
+                    String json = writeJsonSafe(b);
+                    mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+                    mapper.insertTripRecordTxt(connNo, json);
+                    break;
+                }
+
+                case "place": {
+                    if (b.getPlcNo() == null || b.getPlcNo() <= 0) {
+                        String json = writeJsonSafe(b);
+                        mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+                        mapper.insertTripRecordTxt(connNo, json);
+                        break;
+                    }
+
+                    Long placeReviewNo = mapper.nextTourPlaceReviewSeq();
+                    String reviewConn = (b.getContent() == null) ? null : b.getContent().trim();
+                    double rating = (b.getRating() == null) ? 0.0 : safeRating(b.getRating());
+
+                    mapper.insertTourPlaceReview(
+                            placeReviewNo,
+                            connNo,
+                            memNo,
+                            b.getPlcNo(),
+                            reviewConn,
+                            rating
+                    );
+
+                    mapper.insertTripRecordSeq(
+                            connNo,
+                            rcdNo,
+                            order++,
+                            "PLACE",
+                            String.valueOf(placeReviewNo)
+                    );
+                    break;
+                }
+
+                case "text":
+                default: {
+                    String text = (b.getContent() == null) ? "" : b.getContent().trim();
+                    String toSave = text.isEmpty() ? writeJsonSafe(b) : text;
+
+                    mapper.insertTripRecordSeq(connNo, rcdNo, order++, "TEXT", targetPk);
+                    mapper.insertTripRecordTxt(connNo, toSave);
+                    break;
+                }
+            }
+        }
+    }
+
+
 
 
 }

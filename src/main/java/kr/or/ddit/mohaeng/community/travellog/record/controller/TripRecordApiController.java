@@ -131,19 +131,25 @@ public class TripRecordApiController {
     }
 
 
-    // ✅ 수정: MEMBER + 작성자만 (multipart: 커버 변경 지원)
+    // ✅ 수정: MEMBER + 작성자만 (multipart: 커버 변경 + 블록/본문 이미지 변경 지원)
     @PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
     @PutMapping(value = "/{rcdNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<Void> updateMultipart(
             @PathVariable long rcdNo,
             @RequestPart("req") TripRecordUpdateReq req,
             @RequestPart(value = "coverFile", required = false) MultipartFile coverFile,
+
+            // ✅ 추가
+            @RequestPart(value = "bodyFiles", required = false) java.util.List<MultipartFile> bodyFiles,
+            @RequestPart(value = "blocks", required = false) java.util.List<kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq> blocks,
+
             Authentication authentication
     ) {
         Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        service.updateWithCover(rcdNo, req, loginMemNo, coverFile);
+        service.updateWithBlocks(rcdNo, req, loginMemNo, coverFile, bodyFiles, blocks);
         return ResponseEntity.ok().build();
     }
+
 
     // 삭제: MEMBER + 작성자만
     @PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")

@@ -200,6 +200,7 @@
 	        tr.MAP_DISP_YN   AS mapDispYn,
 	        tr.REPLY_ENBL_YN AS replyEnblYn,
 	        RG.RGN_NM        AS locName,
+	        ts.SCHDL_NM AS schdlNm,
 	        (
 			  SELECT h.TAG_NAME
 			  FROM HASHTAG h
@@ -252,6 +253,8 @@
 	
 	    FROM TRIP_RECORD tr
 	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
+	    LEFT JOIN TRIP_SCHEDULE ts
+  			ON ts.SCHDL_NO = tr.SCHDL_NO
 	    LEFT JOIN REGION RG
   			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
 	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
@@ -327,22 +330,28 @@
     </insert> -->
 
     <update id="updateTripRecord" parameterType="kr.or.ddit.mohaeng.vo.TripRecordVO">
-        UPDATE TRIP_RECORD
-        SET
-            SCHDL_NO      = #{schdlNo},
-            RCD_TITLE     = #{rcdTitle},
-            RCD_CONTENT   = #{rcdContent},
-            TRIP_DAYS_CD  = #{tripDaysCd},
-            LOC_CD        = #{locCd},
-            ATTACH_NO     = #{attachNo},
-            START_DT      = #{startDt},
-            END_DT        = #{endDt},
-            OPEN_SCOPE_CD = #{openScopeCd},
-            MAP_DISP_YN   = #{mapDispYn},
-            REPLY_ENBL_YN = #{replyEnblYn},
-            REG_DT        = REG_DT
-        WHERE RCD_NO = #{rcdNo}
-    </update>
+  UPDATE TRIP_RECORD
+  <set>
+    SCHDL_NO      = #{schdlNo},
+    RCD_TITLE     = #{rcdTitle},
+    RCD_CONTENT   = #{rcdContent},
+    TRIP_DAYS_CD  = #{tripDaysCd},
+    LOC_CD        = #{locCd},
+
+    <!-- ✅ attachNo가 null이 아닐 때만 커버 갱신 -->
+    <if test="attachNo != null">
+      ATTACH_NO     = #{attachNo},
+    </if>
+
+    START_DT      = #{startDt},
+    END_DT        = #{endDt},
+    OPEN_SCOPE_CD = #{openScopeCd},
+    MAP_DISP_YN   = #{mapDispYn},
+    REPLY_ENBL_YN = #{replyEnblYn}
+  </set>
+  WHERE RCD_NO = #{rcdNo}
+</update>
+
 
     <delete id="deleteTripRecord" parameterType="long">
         DELETE FROM TRIP_RECORD WHERE RCD_NO = #{rcdNo}
@@ -484,6 +493,7 @@
     t.TXT_CONN           AS "text",
 
     /* ===== IMAGE ===== */
+    i.RCD_IMG            AS "attachNo",    
     i.RCD_IMG_DESC       AS "desc",
     afd.FILE_PATH        AS "imgPath",
 
@@ -555,6 +565,67 @@
 </select>
 
 
+<!-- ===================== 블록 삭제 정리 ===================== -->
+
+<delete id="deleteTourPlaceReviewByRcdNo">
+  DELETE FROM TOUR_PLACE_REVIEW pr
+   WHERE pr.RCD_CONN_NO IN (
+     SELECT s.RCD_CONN_NO
+       FROM TRIP_RECORD_SEQ s
+      WHERE s.RCD_NO = #{rcdNo}
+        AND s.BLOCK_TYPE = 'PLACE'
+   )
+</delete>
+
+<delete id="deleteTripRecordImgByRcdNo">
+  DELETE FROM TRIP_RECORD_IMG i
+   WHERE i.RCD_CONN_NO IN (
+     SELECT s.RCD_CONN_NO
+       FROM TRIP_RECORD_SEQ s
+      WHERE s.RCD_NO = #{rcdNo}
+        AND s.BLOCK_TYPE = 'IMAGE'
+   )
+</delete>
+
+<delete id="deleteTripRecordTxtByRcdNo">
+  DELETE FROM TRIP_RECORD_TXT t
+   WHERE t.RCD_CONN_NO IN (
+     SELECT s.RCD_CONN_NO
+       FROM TRIP_RECORD_SEQ s
+      WHERE s.RCD_NO = #{rcdNo}
+        AND s.BLOCK_TYPE = 'TEXT'
+   )
+</delete>
+
+<delete id="deleteTripRecordSeqByRcdNo">
+  DELETE FROM TRIP_RECORD_SEQ
+   WHERE RCD_NO = #{rcdNo}
+</delete>
+
+<delete id="deleteHashtagByRcdNo">
+  DELETE FROM HASHTAG
+   WHERE RCD_NO = #{rcdNo}
+</delete>
+
+<!-- ===================== (선택) 커뮤니티 연관 삭제 ===================== -->
+
+<delete id="deleteLikesByRcdNo">
+  DELETE FROM LIKES
+   WHERE LIKES_CAT_CD = 'TRIP_RECORD'
+     AND LIKES_KEY = #{rcdNo}
+</delete>
+
+<delete id="deleteBookmarkByRcdNo">
+  DELETE FROM BOOKMARK
+   WHERE BMK_TYPE = 'TRIP_RECORD'
+     AND PRDT_NO = #{rcdNo}
+</delete>
+
+<delete id="deleteCommentsByRcdNo">
+  DELETE FROM COMMENTS
+   WHERE TARGET_TYPE = 'TRIP_RECORD'
+     AND TARGET_NO = #{rcdNo}
+</delete>
 
 
 

@@ -6,6 +6,8 @@
 <%@ taglib uri="http://www.springframework.org/security/tags"
 	prefix="sec"%>
 
+<c:set var="pageTitle" value="여행기록 상세" />
+<c:set var="pageCss" value="community" />
 
 <%@ include file="../common/header.jsp"%>
 
@@ -16,8 +18,7 @@
 		access="!isAuthenticated()">ANON</sec:authorize>
 </span>
 
-<c:set var="pageTitle" value="여행기록 상세" />
-<c:set var="pageCss" value="community" />
+
 
 
 
@@ -1296,10 +1297,20 @@
 						</h3>
 
 						<sec:authorize access="hasAuthority('ROLE_MEMBER')">
-							<div class="detail-comment-input">
-								<input id="commentInput" type="text" placeholder="댓글을 입력하세요..." />
-								<button type="button" onclick="submitComment(CURRENT_RCD_NO)">등록</button>
-							</div>
+						  <c:choose>
+						    <c:when test="${detail.replyEnblYn eq 'Y'}">
+						      <div class="detail-comment-input">
+						        <input id="commentInput" type="text" placeholder="댓글을 입력하세요..." />
+						        <button type="button" onclick="submitComment(CURRENT_RCD_NO)">등록</button>
+						      </div>
+						    </c:when>
+						    <c:otherwise>
+						      <div class="detail-comment-input">
+						        <input type="text" placeholder="작성자가 댓글을 비활성화했어요." disabled />
+						        <button type="button" disabled>등록</button>
+						      </div>
+						    </c:otherwise>
+						  </c:choose>
 						</sec:authorize>
 
 						<sec:authorize access="!hasAuthority('ROLE_MEMBER')">
@@ -1346,8 +1357,8 @@ const ROLE_BUSINESS = 'ROLE_BUSINESS';
 	const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80";
 
 
-const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+// const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
+// const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
 
 const ctxPath = '${pageContext.request.contextPath}';
 
@@ -1842,7 +1853,8 @@ async function loadComments(rcdNo) {
 
 	    const isWriter = (Number(c.isWriter) === 1);
 
-	    const canReply  = (!isDeleted && AUTH_ROLE === ROLE_MEMBER);
+	    const canReply  = (!isDeleted && AUTH_ROLE === ROLE_MEMBER && ("${detail.replyEnblYn}" === "Y"));
+
 	    const canReport = (!isDeleted && AUTH_ROLE === ROLE_MEMBER && !isWriter);
 
 	    const myLiked = (Number(c.myLiked) === 1);
@@ -1985,9 +1997,12 @@ async function loadComments(rcdNo) {
 
 
 //===== 블록 렌더링 =====
+// ===== 블록 렌더링 =====
+
+// ✅ 전역: API 주소
 const BLOCKS_API = CTX + '/api/travel-log/records/' + encodeURIComponent(CURRENT_RCD_NO) + '/blocks';
 
-
+// ===== 유틸 =====
 function safeText(v){ return (v == null) ? '' : String(v); }
 
 function starString(rating){
@@ -1998,12 +2013,9 @@ function starString(rating){
 }
 
 function resolvePlaceImg(block){
-  // 1) 첨부 이미지 경로 (DB에서 뽑은 ATTACH_FILE_DETAIL.FILE_PATH)
+  // 1) 첨부 이미지 경로 (DB에서 뽑은 FILE_PATH 등)
   const p = (block.placeImgPath || '').trim();
-  if (p) {
-    // 너희 파일 서빙 규칙이 "/files{path}" 형태였지 (cover에서 사용)
-    return CTX + '/files' + p;
-  }
+  if (p) return CTX + '/files' + p;
 
   // 2) 기본 이미지(URL 형태로 저장되어 있을 가능성)
   const d = (block.defaultImg || '').trim();
@@ -2013,59 +2025,145 @@ function resolvePlaceImg(block){
   return 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80';
 }
 
-function renderBlock(block){
-  const type = (block.blockType || '').toUpperCase();
+function tryParseJsonText(s){
+  if (!s) return null;
+  const t = String(s).trim();
+  if (!(t.startsWith('{') && t.endsWith('}'))) return null;
+  try { return JSON.parse(t); } catch(e){ return null; }
+}
 
+// ✅ day-header JSON에서 값 꺼내기 (네 콘솔 데이터 기준: day/date가 정답)
+function parseDayHeaderFromJson(obj){
+  if (!obj) return null;
+  const type = String(obj.type || '').toLowerCase();
+  if (type !== 'day-header') return null;
+
+  const dayNo   = obj.day ?? obj.dayNo ?? obj.order ?? '';
+  const dateStr = obj.date ?? obj.dateStr ?? obj.dayDate ?? '';
+
+  if (!dayNo) return null;
+  return { dayNo: String(dayNo), dateStr: String(dateStr || '') };
+}
+
+function buildDayBadge(dayNo, dateStr){
+  const wrap = document.createElement('div');
+  wrap.className = 'travellog-block day-header';
+  wrap.innerHTML =
+    '<span class="day-badge">' +
+      '<span class="day-dot">DAY ' + escapeHtml(String(dayNo)) + '</span>' +
+      (dateStr ? ('<span class="day-date">' + escapeHtml(String(dateStr)) + '</span>') : '') +
+    '</span>';
+  return wrap;
+}
+
+// ✅ (선택) "DAY 1 2026-01-14" 같은 텍스트도 대응하고 싶으면 유지
+function parseDayFromText(text){
+  const m = String(text || '').trim().match(/^DAY\s*([0-9]+)\s*(\d{4}-\d{2}-\d{2})?\s*$/i);
+  if (!m) return null;
+  return { dayNo: m[1], dateStr: m[2] || '' };
+}
+
+
+function resolveImageSrc(rawPath){
+	  const p = (rawPath ?? '').toString().trim();
+	  if (!p || p === 'null' || p === 'undefined') return '';
+
+	  // 절대 URL이면 그대로
+	  if (/^https?:\/\//i.test(p)) return p;
+
+	  // "/files/..." 로 이미 내려오면 CTX만 붙임
+	  if (p.startsWith('/files/')) return CTX + p;
+
+	  // "/upload/..." 로 내려오면 CTX만 붙임 (네 프로젝트가 /upload로 서빙하는 경우)
+	  if (p.startsWith('/upload/')) return CTX + p;
+
+	  // "/tripschedule/..." 같은 형태면 "/files" 붙여서 서빙
+	  if (p.startsWith('/')) return CTX + '/files' + p;
+
+	  // "tripschedule/..." 처럼 슬래시 없이 오면
+	  return CTX + '/files/' + p;
+	}
+
+	function pickImagePath(block){
+	  // 백엔드에서 필드명이 다를 수 있어서 후보를 넉넉히
+	  return (
+	    block?.imgPath ??
+	    block?.imagePath ??
+	    block?.filePath ??
+	    block?.path ??
+	    ''
+	  );
+}
+
+
+
+// ===== 핵심: renderBlock은 딱 1개만! =====
+function renderBlock(block){
+  const typeRaw = (block.blockType || '').toString();
+  const type = typeRaw.toUpperCase().replace(/[\s_-]/g, ''); // "DAY_HEADER" "day-header" 등 정규화
+
+  // 1) DIVIDER
   if (type === 'DIVIDER') {
     const div = document.createElement('div');
     div.className = 'travellog-block travellog-block-divider';
     return div;
   }
 
+  // 2) TEXT (여기서 day-header JSON 문자열 처리)
   if (type === 'TEXT') {
-	  const text = safeText(block.text).trim();
+    const raw = safeText(block.text).trim();
 
-	  // ✅ "DAY 1 2026-01-18" / "DAY 2" / "DAY2 2026-01-18" 등도 대응
-	  const m = text.match(/^DAY\s*([0-9]+)\s*(\d{4}-\d{2}-\d{2})?\s*$/i);
+    // 2-1) JSON day-header
+    const obj = tryParseJsonText(raw);
+    const dayJson = parseDayHeaderFromJson(obj);
+    if (dayJson) return buildDayBadge(dayJson.dayNo, dayJson.dateStr);
 
-	  // ✅ DAY 패턴이면 "배지"로 렌더링
-	  if (m) {
-	    const dayNo = m[1];
-	    const dateStr = m[2] || '';
+    // 2-2) "DAY 1 2026-01-14" 패턴 (있으면)
+    const dayText = parseDayFromText(raw);
+    if (dayText) return buildDayBadge(dayText.dayNo, dayText.dateStr);
 
-	    const wrap = document.createElement('div');
-	    wrap.className = 'travellog-block day-header';
-	    wrap.innerHTML =
-	    	  '<span class="day-badge">' +
-	    	  '<span class="day-dot">DAY ' + escapeHtml(dayNo) + '</span>' +
-	    	    (dateStr ? ('<span class="day-date">' + escapeHtml(dateStr) + '</span>') : '') +
-	    	  '</span>';
+    // 2-3) 일반 텍스트
+    const div = document.createElement('div');
+    div.className = 'travellog-block travellog-block-text';
+    div.innerHTML = escapeHtml(raw);
+    return div;
+  }
 
-	    return wrap;
-	  }
+  // 3) IMAGE
+  if (type === 'IMAGE') {
+  const wrap = document.createElement('div');
+  wrap.className = 'travellog-block travellog-block-image';
 
-	  // ✅ 일반 텍스트 블록은 기존대로
-	  const div = document.createElement('div');
-	  div.className = 'travellog-block travellog-block-text';
-	  div.innerHTML = escapeHtml(text);
-	  return div;
+  const imgPathRaw = pickImagePath(block);
+  const imgSrc = resolveImageSrc(imgPathRaw);
+
+  // 캡션도 같이 숨길 수 있게 class 부여
+  const captionHtml = block.desc
+    ? ('<div class="caption">' + escapeHtml(block.desc) + '</div>')
+    : '';
+
+  // 이미지가 깨지면:
+  // 1) 기본 이미지로 교체
+  // 2) 그래도 깨지면(기본도 실패) 블록 전체 숨김(캡션 포함)
+  const FALLBACK_IMG = 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80';
+
+  wrap.innerHTML =
+    '<img src="' + escapeHtml(imgSrc || FALLBACK_IMG) + '" alt="image" ' +
+      'onerror="' +
+        'if(!this.dataset.fallback){' +
+          'this.dataset.fallback=\'1\';' +
+          'this.src=\'' + FALLBACK_IMG + '\';' +
+        '}else{' +
+          'this.closest(\'.travellog-block-image\').style.display=\'none\';' +
+        '}' +
+      '" />' +
+    captionHtml;
+
+  return wrap;
 }
 
 
-  if (type === 'IMAGE') {
-    const wrap = document.createElement('div');
-    wrap.className = 'travellog-block travellog-block-image';
-
-    const imgPathRaw = (block.imgPath || '').trim();
-    const imgSrc = imgPathRaw ? (CTX + '/files' + imgPathRaw) : '';
-
-    wrap.innerHTML =
-      '<img src="' + escapeHtml(imgSrc) + '" alt="image" onerror="this.style.display=\'none\';" />' +
-      (block.desc ? ('<div class="caption">' + escapeHtml(block.desc) + '</div>') : '');
-
-    return wrap;
-  }
-
+  // 4) PLACE
   if (type === 'PLACE') {
     const imgSrc = resolvePlaceImg(block);
 
@@ -2082,7 +2180,8 @@ function renderBlock(block){
     card.innerHTML =
       '<div class="place-card">' +
         '<div class="place-thumb">' +
-          '<img src="' + escapeHtml(imgSrc) + '" alt="place" onerror="this.onerror=null;this.src=\'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80\';" />' +
+          '<img src="' + escapeHtml(imgSrc) + '" alt="place" ' +
+               'onerror="this.onerror=null;this.src=\'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1200&h=600&fit=crop&q=80\';" />' +
         '</div>' +
         '<div class="place-body">' +
           '<div class="place-title">' + escapeHtml(safeText(block.plcNm || '장소')) + '</div>' +
@@ -2098,13 +2197,14 @@ function renderBlock(block){
     return card;
   }
 
-  // 알 수 없는 타입은 TEXT처럼 출력
+  // 5) fallback: 모르는 타입은 조용히 텍스트로
   const fallback = document.createElement('div');
   fallback.className = 'travellog-block travellog-block-text';
-  fallback.innerHTML = escapeHtml(JSON.stringify(block));
+  fallback.innerHTML = ''; // ✅ 화면에 JSON 덕지덕지 안 나오게
   return fallback;
 }
 
+// ===== 로드 =====
 async function loadBlocks(rcdNo){
   const container = document.getElementById('recordBlocks');
   const fallback  = document.getElementById('recordContentFallback');
@@ -2112,26 +2212,64 @@ async function loadBlocks(rcdNo){
 
   try{
     const res = await fetch(BLOCKS_API, { credentials:'same-origin' });
+    console.log('[blocks] fetch status:', res.status, res.ok);
+
     if (!res.ok) throw new Error('blocks fetch failed: ' + res.status);
 
     const blocks = await res.json();
+    console.log('[blocks] sample:', blocks?.[0]);
+    console.log('[blocks] all:', blocks);
+
     container.innerHTML = '';
 
     if (!Array.isArray(blocks) || blocks.length === 0){
-      // 블록이 없으면 기존 rcdContent를 보여주자(옵션)
       if (fallback) fallback.style.display = 'block';
       return;
     }
 
-    (fallback && (fallback.style.display = 'none'));
+    if (fallback) fallback.style.display = 'none';
 
     blocks.forEach(b => container.appendChild(renderBlock(b)));
   }catch(e){
     console.error(e);
-    // 실패하면 fallback 텍스트라도 보여주기
     if (fallback) fallback.style.display = 'block';
   }
 }
+
+
+
+
+async function loadBlocks(rcdNo){
+	  const container = document.getElementById('recordBlocks');
+	  const fallback  = document.getElementById('recordContentFallback');
+	  if (!container) return;
+
+	  try{
+	    const res = await fetch(BLOCKS_API, { credentials:'same-origin' });
+	    console.log('[blocks] fetch status:', res.status, res.ok); // ✅ 여기서 res 사용 가능
+
+	    if (!res.ok) throw new Error('blocks fetch failed: ' + res.status);
+
+	    const blocks = await res.json();
+	    console.log('[blocks] sample:', blocks?.[0]);
+	    console.log('[blocks] all:', blocks);
+
+	    container.innerHTML = '';
+
+	    if (!Array.isArray(blocks) || blocks.length === 0){
+	      if (fallback) fallback.style.display = 'block';
+	      return;
+	    }
+
+	    if (fallback) fallback.style.display = 'none';
+
+	    blocks.forEach(b => container.appendChild(renderBlock(b)));
+	  }catch(e){
+	    console.error(e);
+	    if (fallback) fallback.style.display = 'block';
+	  }
+}
+
 
 
 
@@ -2288,6 +2426,53 @@ document.addEventListener("DOMContentLoaded", () => {
 	  loadBlocks(CURRENT_RCD_NO);
 	  loadComments(CURRENT_RCD_NO);
 });
+
+
+function goEdit(rcdNo){
+	  location.href = CTX + '/community/travel-log/write?rcdNo=' + encodeURIComponent(rcdNo);
+	}
+
+	async function confirmDelete(rcdNo){
+	  const ok = await Swal.fire({
+	    icon: 'warning',
+	    title: '게시글을 삭제할까요?',
+	    text: '삭제하면 복구할 수 없습니다.',
+	    showCancelButton: true,
+	    confirmButtonText: '삭제',
+	    cancelButtonText: '취소',
+	    confirmButtonColor: '#ef4444'
+	  }).then(r => r.isConfirmed);
+
+	  if (!ok) return;
+
+	  const csrf = getCsrf();
+	  const headers = {};
+	  if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
+
+	  const res = await fetch(CTX + '/api/travel-log/records/' + encodeURIComponent(rcdNo), {
+	    method: 'DELETE',
+	    credentials: 'same-origin',
+	    headers
+	  });
+
+	  if (!res.ok){
+	    const text = await res.text().catch(()=> '');
+	    console.error('삭제 실패', res.status, text);
+	    Swal.fire('오류', '삭제에 실패했어요.', 'error');
+	    return;
+	  }
+
+	  Swal.fire({
+	    icon: 'success',
+	    title: '삭제 완료',
+	    timer: 900,
+	    showConfirmButton: false
+	  }).then(() => {
+	    location.href = CTX + '/community/travel-log';
+	  });
+}
+
+
 </script>
 
 <%@ include file="../common/footer.jsp"%>

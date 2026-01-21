@@ -501,6 +501,15 @@ let bodyImageFiles = [];
 let __locJustOpened = false;
 
 
+const __CTX = window.__CTX__ || '';
+const __URL_PARAMS = new URLSearchParams(location.search);
+const __RCD_NO__ = __URL_PARAMS.get('rcdNo'); // ✅ 수정 모드면 값 있음
+
+let isEditMode = !!__RCD_NO__;
+let editingRcdNo = isEditMode ? Number(__RCD_NO__) : null;
+
+// ✅ 수정 모드에서 기존 커버/이미지 유지용
+let existingCoverAttachNo = null;
 
 
 function applyScheduleToEditor(schedule) {
@@ -531,7 +540,7 @@ function applyScheduleToEditor(schedule) {
 	      addPlaceBlockFromSchedule(info);
 	    });
 	  });
-	}
+}
 
 
 function resetEditorKeepFirstTextBlock() {
@@ -549,7 +558,7 @@ function resetEditorKeepFirstTextBlock() {
 	  // 첫 블록 textarea 비우고 포커스
 	  const ta = first.querySelector('textarea');
 	  if (ta) ta.value = '';
-	}
+}
 
 //✅ 전역 현재 일자 컨텍스트
 let __CURRENT_DAY_NO__ = null;
@@ -587,7 +596,7 @@ function addDayHeaderBlock(dayNo, dateStr) {
 	    '</div>';
 
 	  editor.appendChild(block);
-	}
+}
 
 function extractPlaceInfo(placeVO) {
 	  placeVO = placeVO || {};               // ✅ null-safe
@@ -610,7 +619,7 @@ function extractPlaceInfo(placeVO) {
 	    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300&h=200&fit=crop&q=80';
 
 	  return { plcNo, name, address, imageUrl };
-	}
+}
 
 
 function addPlaceBlockFromSchedule(info) {
@@ -664,7 +673,7 @@ function addPlaceBlockFromSchedule(info) {
 	    '<textarea class="block-textarea" placeholder="이 장소에 대한 이야기를 작성하세요..." oninput="autoResize(this)"></textarea>';
 
 	  editor.appendChild(block);
-	}
+}
 
 
 function escapeHtml(s) {
@@ -674,43 +683,43 @@ function escapeHtml(s) {
 	    .replaceAll('>', '&gt;')
 	    .replaceAll('"', '&quot;')
 	    .replaceAll("'", '&#39;');
-	}
+}
 
 function removeScheduleBlocksOnly() {
 	  const editor = document.getElementById('blogEditor');
 	  if (!editor) return;
-
+	
 	  // 일정에서 생성된 블록만 제거
 	  editor.querySelectorAll('.editor-block[data-from-schedule="1"]').forEach(el => el.remove());
-
+	
 	  // 컨텍스트 초기화
 	  __CURRENT_DAY_NO__ = null;
 	  __CURRENT_DAY_DATE__ = null;
-	}
+}
 
-	function resetLinkedScheduleUI() {
+function resetLinkedScheduleUI() {
 	  // UI 원복
 	  linkedSchedule = null;
 	  document.getElementById('scheduleLinkBanner').style.display = 'flex';
 	  document.getElementById('linkedScheduleCard').style.display = 'none';
-
+	
 	  // 커버: 일정에서 자동 세팅한 경우만 제거
 	  if (coverImageData && coverImageData.fromSchedule) {
 	    removeCoverImage();   // 기존 함수 그대로 사용
 	  }
-
+	
 	  // 위치 원복
 	  selectedLocationName = '';
 	  selectedLocationCode = '';
 	  document.getElementById('locationValue').textContent = '위치를 추가하세요';
 	  const locInput = document.getElementById('locationInput');
 	  if (locInput) locInput.value = '';
-
+	
 	  // 날짜 원복
 	  travelStartDate = null;
 	  travelEndDate = null;
 	  document.getElementById('dateValue').textContent = '날짜를 선택하세요';
-
+	
 	  const fp = document.getElementById('travelDateRange')?._flatpickr;
 	  if (fp) fp.clear(); // 날짜 선택값 제거
 	  
@@ -723,8 +732,330 @@ function removeScheduleBlocksOnly() {
 	    titleInput.dataset.autoFromSchedule = "0";
 	    titleInput.dataset.autoTitleValue = '';
 	  }
-	  
+  
+}
+
+function initEditModeUI() {
+	  // 제목/버튼 문구 변경
+	  const h2 = document.querySelector('.travellog-write-header h2');
+	  if (h2) h2.textContent = '여행기록 수정';
+
+	  const btn = document.getElementById('submitBtn');
+	  if (btn) {
+	    btn.textContent = '수정';
+	    btn.onclick = submitTravellog; // 그대로
+	  }
+}
+
+
+async function loadExistingRecordForEdit(rcdNo) {
+	  try {
+	    // 1) detail 가져오기
+	    const detailUrl = __CTX + '/api/travel-log/records/' + encodeURIComponent(rcdNo);
+	    const detailRes = await fetch(detailUrl, { credentials:'include' });
+	    if (!detailRes.ok) throw new Error('상세 조회 실패: ' + detailRes.status);
+
+	    const detail = await detailRes.json();
+
+	    // 2) blocks 가져오기 (detail에 없으면 별도 호출)
+	    let blocks = detail.blocks;
+	    if (!Array.isArray(blocks)) {
+	      const blocksUrl = __CTX + '/api/travel-log/records/' + encodeURIComponent(rcdNo) + '/blocks';
+	      const blocksRes = await fetch(blocksUrl, { credentials:'include' });
+	      if (blocksRes.ok) blocks = await blocksRes.json();
+	    }
+	    if (!Array.isArray(blocks)) blocks = [];
+
+	    // 3) 폼 채우기
+	    fillFormForEdit(detail);
+	    fillBlocksForEdit(blocks);
+
+	  } catch (e) {
+	    console.error(e);
+	    showToast('수정 데이터를 불러오지 못했습니다.', 'error');
+	  }
+}
+
+
+function toThumbUrlIfNeeded(pathOrUrl) {
+	  if (!pathOrUrl) return '';
+
+	  const s = String(pathOrUrl).trim();
+
+	  // 이미 외부 URL이면 그대로
+	  if (/^https?:\/\//i.test(s)) return s;
+
+	  // 이미 searchthumbnail 형태면 그대로
+	  if (s.includes('/file/searchthumbnail?path=')) return s;
+
+	  // ✅ 404 나는 /travellog/cover/... 같은 URL이면 "path"로 간주해서 컨트롤러로 우회
+	  //    (서버가 path 기반으로만 서빙한다는 전제)
+	  //    만약 d.coverPath가 진짜 filePath(/upload/...)라면 이것도 그대로 인코딩되어 들어감.
+	  return __CTX + '/file/searchthumbnail?path=' + encodeURIComponent(s);
+}
+
+
+function fillFormForEdit(d) {
+	  // 제목
+	  const titleEl = document.getElementById('blogTitle');
+	  if (titleEl) titleEl.value = d.rcdTitle || '';
+
+	  // 위치
+	  selectedLocationCode = d.locCd ? String(d.locCd) : '';
+	  selectedLocationName = d.locName || '';
+	  document.getElementById('locationValue').textContent = selectedLocationName || '위치를 추가하세요';
+	  const locInput = document.getElementById('locationInput');
+	  if (locInput) locInput.value = selectedLocationName || '';
+
+	  // 날짜
+	  if (d.startDt && d.endDt) {
+	    travelStartDate = new Date(d.startDt);
+	    travelEndDate   = new Date(d.endDt);
+	    document.getElementById('dateValue').textContent = d.startDt + ' ~ ' + d.endDt;
+	    const fp = document.getElementById('travelDateRange')?._flatpickr;
+	    if (fp) fp.setDate([travelStartDate, travelEndDate], true);
+	  }
+
+	  // 공개/지도/댓글
+	  const visibility = document.getElementById('visibility');
+	  if (visibility) visibility.value = (d.openScopeCd === 'PRIVATE') ? 'private' : 'public';
+	  document.getElementById('showOnMap').checked = (d.mapDispYn !== 'N');
+	  document.getElementById('allowComments').checked = (d.replyEnblYn !== 'N');
+
+	  // 태그 (detail에서 tagText/tagName 중 뭐가 오는지 몰라서 방어)
+	  tags = [];
+	  const rawTag = d.tagText || d.tagName || '';
+	  if (rawTag) {
+	    tags = String(rawTag)
+	      .split(',')
+	      .map(x => x.trim().replace('#',''))
+	      .filter(Boolean);
+	  }
+	  renderTags();
+
+	  // 일정 연결(있는 경우)
+	    // 일정 연결(있는 경우)
+	  if (d.schdlNo) {
+	    const schTitle = d.schdlNm || d.schdlName || d.scheduleTitle || '연결된 일정';
+	
+	    linkedSchedule = {
+	      schdlNo: Number(d.schdlNo),
+	      title: schTitle,
+	      location: selectedLocationName
+	    };
+	
+	    document.getElementById('scheduleLinkBanner').style.display = 'none';
+	    document.getElementById('linkedScheduleCard').style.display = 'block';
+	
+	    document.getElementById('linkedScheduleTitle').textContent = schTitle;
+	    document.getElementById('linkedScheduleLocation').textContent = selectedLocationName || '';
+	
+	    // ✅ 날짜는 YYYY-MM-DD로 정리해서 표시
+	    const sYmd = toYmdString(d.startDt);
+	    const eYmd = toYmdString(d.endDt);
+	
+	    document.getElementById('linkedScheduleDates').textContent =
+	      (sYmd && eYmd) ? (sYmd + ' - ' + eYmd) : '';
+	
+	    // (선택) dateValue도 같이 통일하고 싶으면:
+	    // if (sYmd && eYmd) document.getElementById('dateValue').textContent = sYmd + ' ~ ' + eYmd;
+	  }
+
+
+	  // 커버 (중요: 기존 커버는 “파일 업로드 없이도 유지”해야 함)
+	  existingCoverAttachNo = d.attachNo || null;
+
+	  // ✅ coverPath가 오면, 무조건 접근 가능한 URL로 변환해서 src에 넣기
+	  if (d.coverPath) {
+	    const coverUrl = toThumbUrlIfNeeded(d.coverPath);
+	    document.getElementById('coverImg').src = coverUrl;
+	    document.getElementById('coverPlaceholder').style.display = 'none';
+	    document.getElementById('coverPreview').style.display = 'block';
+
+	    coverImageData = {
+	      fromExisting: true,
+	      attachNo: existingCoverAttachNo,
+	      dataUrl: coverUrl
+	    };
+	  }
+	
+}
+
+	function fillBlocksForEdit(blocks) {
+	  // 에디터 초기화(첫 블록 포함 싹 지우고 재구성)
+	  const editor = document.getElementById('blogEditor');
+	  editor.innerHTML = '';
+	  bodyImageFiles = []; // ✅ 수정에서 새로 추가하는 파일만 여기 들어가야 함
+
+	  blocks.forEach(b => {
+	    const type = (b.blockType || b.type || '').toString().toUpperCase();
+
+	    if (type === 'DIVIDER') {
+	      addDividerBlock();
+	      return;
+	    }
+
+	    if (type === 'IMAGE') {
+	      addImageBlockFromServer(b);
+	      return;
+	    }
+
+	    if (type === 'PLACE') {
+	      addPlaceBlockFromServer(b);
+	      return;
+	    }
+
+	    // TEXT: day-header JSON이면 day-header로 복원
+	    const text = b.text || b.content || '';
+	    const restored = tryRestoreDayHeaderFromText(text);
+	    if (restored) {
+	      addDayHeaderBlock(restored.dayNo, restored.dateStr);
+	      return;
+	    }
+
+	    // 일반 텍스트
+	    addTextBlock();
+	    const last = editor.lastElementChild;
+	    last.querySelector('textarea').value = text || '';
+	    autoResize(last.querySelector('textarea'));
+	  });
+
+	  // 블록이 하나도 없으면 최소 1개
+	  if (!editor.querySelector('.editor-block')) addTextBlock();
 	}
+
+	function tryRestoreDayHeaderFromText(text) {
+	  if (!text) return null;
+	  const t = String(text).trim();
+
+	  // 1) JSON 형태로 저장된 경우
+	  if (t.startsWith('{') && t.endsWith('}')) {
+	    try {
+	      const obj = JSON.parse(t);
+	      if (obj && (obj.type === 'day-header' || obj.type === 'DAY_HEADER')) {
+	        return { dayNo: obj.dayNo ?? obj.day ?? '', dateStr: obj.dateStr ?? obj.date ?? '' };
+	      }
+	    } catch (e) {}
+	  }
+
+	  // 2) "DAY 1 2024-01-01" 같은 문자열로 저장된 경우(너 현재 collectBlocksForSave가 이렇게 저장했었음)
+	  const m = t.match(/^DAY\s*([0-9]+)\s*(.*)$/i);
+	  if (m) return { dayNo: m[1], dateStr: (m[2] || '').trim() };
+
+	  return null;
+	}
+
+	
+	function pickExistingAttachNo(b) {
+		  if (!b) return null;
+
+		  // 서버가 내려주는 필드명이 제각각일 수 있어서 후보를 넓게 잡음
+		  const candidates = [
+		    b.attachNo,
+		    b.imgAttachNo,
+		    b.bodyAttachNo,
+		    b.fileAttachNo,
+		    b.attchNo,
+		    b.attach_no,
+		    b.ATTACH_NO,
+		    b.targetPk,     // 어떤 구현은 TARGET_PK에 attachNo를 넣기도 함
+		    b.targetNo,
+		    b.fileNo
+		  ];
+
+		  for (const v of candidates) {
+		    if (v === 0) return 0; // 혹시 0을 유효값으로 쓰는 구조면 살림(보통은 아니지만 방어)
+		    if (v != null && String(v).trim() !== '') return Number(v);
+		  }
+		  return null;
+		}
+
+		function pickExistingImagePath(b) {
+		  if (!b) return '';
+		  // 서버가 내려주는 이미지 경로 키 후보
+		  return (
+		    b.imgPath ||
+		    b.imageUrl ||
+		    b.filePath ||
+		    b.path ||
+		    b.url ||
+		    b.IMG_PATH ||
+		    ''
+		  );
+		}
+
+		function addImageBlockFromServer(b) {
+		  blockIdCounter++;
+		  const currentId = blockIdCounter;
+
+		  const rawPath = pickExistingImagePath(b);
+		  const imgUrl = toThumbUrlIfNeeded(rawPath);
+		  const desc = b.desc || b.caption || b.text || '';
+
+		  const editor = document.getElementById('blogEditor');
+		  const block = document.createElement('div');
+		  block.className = 'editor-block image-block';
+		  block.dataset.blockId = currentId;
+
+		  // ✅✅ 핵심: 기존 이미지 유지용 attachNo를 dataset에 반드시 박는다
+		  const existingAttachNo = pickExistingAttachNo(b);
+		  if (existingAttachNo != null) {
+		    block.dataset.attachNo = String(existingAttachNo);
+		  }
+
+		  // ✅ 기존 블록은 새 업로드가 아니므로 fileIdx는 절대 넣지 않는다 (혹시 남아있으면 제거)
+		  delete block.dataset.fileIdx;
+
+		  block.innerHTML =
+		    '<div class="block-actions">' +
+		      '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
+		      '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + currentId + ')"><i class="bi bi-chevron-down"></i></button>' +
+		      '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + currentId + ')"><i class="bi bi-trash"></i></button>' +
+		    '</div>' +
+		    '<div class="image-block-content">' +
+		      '<img src="' + imgUrl + '" alt="이미지">' +
+		    '</div>' +
+		    '<input type="text" class="image-caption" placeholder="사진 설명" value="' + escapeHtml(desc) + '">';
+
+		  editor.appendChild(block);
+
+		  // 🔎 디버그: 기존 이미지 블록이 attachNo를 제대로 갖는지 확인
+		  console.log('[edit:image] restored', {
+		    blockId: currentId,
+		    attachNo: block.dataset.attachNo,
+		    rawPath,
+		    imgUrl
+		  });
+		}
+
+
+
+	function addPlaceBlockFromServer(b) {
+	  // place 블록은 너가 이미 만든 addPlaceToEditor랑 거의 동일
+	  const plcNo = b.plcNo ?? null;
+	  const name = b.plcNm || b.name || '장소';
+	  const addr = ((b.plcAddr1 || '') + ' ' + (b.plcAddr2 || '')).trim() || (b.address || '');
+	  const img = b.placeImgPath || b.defaultImg || b.image || 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=300&h=200&fit=crop&q=80';
+
+	  addPlaceToEditor(plcNo, name, addr, img);
+
+	  // 마지막 place-block에 리뷰/별점 세팅
+	  const editor = document.getElementById('blogEditor');
+	  const last = editor.lastElementChild;
+	  if (!last) return;
+
+	  // 리뷰(텍스트)
+	  const ta = last.querySelector('textarea');
+	  if (ta) {
+	    ta.value = b.reviewConn || b.content || '';
+	    autoResize(ta);
+	  }
+
+	  // 별점
+	  const rating = Number(b.rating || 0);
+	  if (rating > 0) setPlaceRating(Number(last.dataset.blockId), rating);
+}
+
 
 
 
@@ -742,32 +1073,32 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Flatpickr 초기화   
     const dateInput = document.getElementById('travelDateRange');
-if (dateInput && typeof flatpickr !== 'undefined') {
-
-  // ✅ 이미 다른 곳에서 flatpickr가 붙어있다면 제거
-  if (dateInput._flatpickr) {
-    dateInput._flatpickr.destroy();
-  }
-
-  flatpickr(dateInput, {
-    locale: 'ko',
-    dateFormat: 'Y-m-d',
-    mode: 'range',
-    allowInput: true,
-
-    // ✅ 혹시 다른 곳에서 min/max 걸려도 여기서 "해제" 강제
-    minDate: null,
-    maxDate: null,
-
-    onChange: function(selectedDates, dateStr) {
-      if (selectedDates.length === 2) {
-        travelStartDate = selectedDates[0];
-        travelEndDate = selectedDates[1];
-        document.getElementById('dateValue').textContent = dateStr;
-      }
-    }
-  });
-}
+	if (dateInput && typeof flatpickr !== 'undefined') {
+	
+	  // ✅ 이미 다른 곳에서 flatpickr가 붙어있다면 제거
+	  if (dateInput._flatpickr) {
+	    dateInput._flatpickr.destroy();
+	  }
+	
+	  flatpickr(dateInput, {
+	    locale: 'ko',
+	    dateFormat: 'Y-m-d',
+	    mode: 'range',
+	    allowInput: true,
+	
+	    // ✅ 혹시 다른 곳에서 min/max 걸려도 여기서 "해제" 강제
+	    minDate: null,
+	    maxDate: null,
+	
+	    onChange: function(selectedDates, dateStr) {
+	      if (selectedDates.length === 2) {
+	        travelStartDate = selectedDates[0];
+	        travelEndDate = selectedDates[1];
+	        document.getElementById('dateValue').textContent = dateStr;
+	      }
+	    }
+	  });
+	}
 
 
     // URL 파라미터 체크 (일정에서 넘어온 경우)
@@ -792,7 +1123,13 @@ if (dateInput && typeof flatpickr !== 'undefined') {
     document.getElementById('locationSettingItem')?.addEventListener('click', function(e){
     	  e.stopPropagation();
     	  toggleSettingInput('location');
-    	});
+    });
+    
+    if (isEditMode) {
+    	  initEditModeUI();
+    	  loadExistingRecordForEdit(editingRcdNo);
+    }
+
 
     
 });
@@ -868,85 +1205,95 @@ if (dateInput && typeof flatpickr !== 'undefined') {
 
 	
 	
-// 플러스
 function collectBlocksForSave() {
-  const result = [];
-  const blocks = document.querySelectorAll('#blogEditor .editor-block');
+			  const result = [];
+			  const blocks = document.querySelectorAll('#blogEditor .editor-block');
 
-  blocks.forEach((block, idx) => {
-    const order = idx + 1;
+			  blocks.forEach((block, idx) => {
+			    const order = idx + 1;
 
-    // TEXT
-    if (block.classList.contains('text-block')) {
-      result.push({
-        type: 'TEXT',
-        order,
-        // ✅ 서버가 기대하는 키로 통일
-        content: block.querySelector('textarea')?.value || ''
-      });
-      return;
-    }
+			    // TEXT
+			    if (block.classList.contains('text-block')) {
+			      result.push({
+			        type: 'text',
+			        order,
+			        content: block.querySelector('textarea')?.value || ''
+			      });
+			      return;
+			    }
 
-    // IMAGE
-    if (block.classList.contains('image-block')) {
-      result.push({
-        type: 'IMAGE',
-        order,
-        // ✅ 서버에서 fileIdx로 받는 흔적이 있어서 맞춤
-        fileIdx: Number(block.dataset.fileIdx),
-        // ✅ 서버에 caption(또는 content)로 받는 경우가 많아서 caption으로 맞춤
-        caption: block.querySelector('.image-caption')?.value || ''
-      });
-      return;
-    }
+			    // IMAGE
+			    if (block.classList.contains('image-block')) {
+			      const fileIdxRaw = block.dataset.fileIdx;   // 새로 추가한 파일이면 존재
+			      const attachNoRaw = block.dataset.attachNo; // 서버에서 불러온 기존 이미지면 존재
 
-    // DIVIDER
-    if (block.classList.contains('divider-block')) {
-      result.push({ type: 'DIVIDER', order });
-      return;
-    }
+			      const payload = {
+			        type: 'image',
+			        order,
+			        caption: block.querySelector('.image-caption')?.value || ''
+			      };
 
-    // DAY_HEADER -> TEXT로 저장(빠른 방식)
-    if (block.classList.contains('day-header-block')) {
-      const day = block.querySelector('.day-badge')?.textContent?.trim() || '';
-      const date = block.querySelector('.day-date')?.textContent?.trim() || '';
-      result.push({
-        type: 'TEXT',
-        order,
-        // ✅ 여기서도 content로
-        content: (day + ' ' + date).trim()
-      });
-      return;
-    }
+			      // ✅ 새 파일이면 fileIdx
+			      if (fileIdxRaw != null && fileIdxRaw !== '') {
+			        payload.fileIdx = Number(fileIdxRaw);
+			      }
 
-    // PLACE
-    if (block.classList.contains('place-block')) {
-      const rating = block.querySelector('.place-rating')?.dataset?.rating || '0';
+			      // ✅ 기존 이미지 유지면 attachNo
+			      if (attachNoRaw != null && attachNoRaw !== '') {
+			        payload.attachNo = Number(attachNoRaw);
+			      }
 
-      result.push({
-        type: 'PLACE',
-        order,
+			      result.push(payload);
+			      return;
+			    }
 
-        plcNo: block.dataset.plcNo ? Number(block.dataset.plcNo) : null,
+			    // DIVIDER
+			    if (block.classList.contains('divider-block')) {
+			      result.push({ type: 'divider', order });
+			      return;
+			    }
 
-        day: block.dataset.day ? Number(block.dataset.day) : null,
-        date: block.dataset.date || null,
+			    // DAY_HEADER (진짜 타입으로 보내자: day-header)
+			    // DAY_HEADER (진짜 타입으로 보내자: day-header)
+				if (block.classList.contains('day-header-block')) {
+				  const dayVal = block.dataset.dayNo || '';
+				  const dateVal = block.dataset.dateStr || '';
+				
+				  result.push({
+				    type: 'day-header',
+				    order,
+				    // ✅ 서버가 기대하는 키로 맞추기
+				    day: dayVal !== '' ? Number(dayVal) : null,
+				    date: dateVal || null
+				  });
+				  return;
+				}
 
-        name: block.dataset.name || null,
-        address: block.dataset.address || null,
-        image: block.dataset.image || null,
 
-        rating: Number(rating),
+			    // PLACE
+			    if (block.classList.contains('place-block')) {
+			      const rating = block.querySelector('.place-rating')?.dataset?.rating || '0';
 
-        // ✅ 핵심: place textarea는 review가 아니라 content로 보내야 서버가 저장함
-        content: block.querySelector('textarea')?.value || ''
-      });
-      return;
-    }
-  });
+			      result.push({
+			        type: 'place',
+			        order,
+			        plcNo: block.dataset.plcNo ? Number(block.dataset.plcNo) : null,
+			        day: block.dataset.day ? Number(block.dataset.day) : null,
+			        date: block.dataset.date || null,
+			        name: block.dataset.name || null,
+			        address: block.dataset.address || null,
+			        image: block.dataset.image || null,
+			        rating: Number(rating),
+			        content: block.querySelector('textarea')?.value || ''
+			      });
+			      return;
+			    }
+			  });
 
-  return result;
+			  return result;
 }
+
+
 
 		
 
@@ -1888,10 +2235,24 @@ function getMainStoryText() {
 	  const d = String(dateObj.getDate()).padStart(2, '0');
 	  return y + '-' + m + '-' + d;
 	}
+	
+	function toYmdString(v) {
+		  if (!v) return '';
+		  // 이미 YYYY-MM-DD면 그대로
+		  const s = String(v);
+		  if (/^\d{4}-\d{2}-\d{2}$/.test(s)) return s;
+		  // ISO면 앞 10자리(YYYY-MM-DD)만
+		  if (s.length >= 10 && /^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+
+		  // 혹시 Date 객체면 formatDateToYMD 사용
+		  if (v instanceof Date && !isNaN(v.getTime())) return formatDateToYMD(v);
+
+		  return s; // fallback
+	}
 
 	function isValidDate(d) {
 		  return d instanceof Date && !isNaN(d.getTime());
-		}
+	}
 
 // 제출
 function submitTravellog() {
@@ -1926,18 +2287,28 @@ function submitTravellog() {
   // 2) 일정에서 자동 세팅된 coverImageData(이미지 URL)도 인정할지 여부
   //    -> "진짜 업로드만 허용"이면 hasCoverFile만 체크하면 됨
 // ✅ 일정에서 자동세팅된 건 'attachPath or attachNo'가 있을 때만 인정
+const hasAutoCover = !!(
+  coverImageData &&
+  (
+    // 일정에서 자동 세팅
+    (coverImageData.fromSchedule && (coverImageData.attachNo || coverImageData.attachPath)) ||
+    // 수정 모드에서 기존 커버 유지
+    (coverImageData.fromExisting && (coverImageData.attachNo || existingCoverAttachNo))
+  )
+);
+
+//✅ 일정에서 자동세팅된 커버인지(attachPath/attachNo 있을 때)
 const hasScheduleCover = !!(
   coverImageData &&
   coverImageData.fromSchedule &&
   (coverImageData.attachNo || coverImageData.attachPath)
 );
-
-
-	if (!hasCoverFile && !hasScheduleCover) {
-	  showToast('커버 이미지를 추가해주세요.', 'error');
-	  document.getElementById('coverPlaceholder')?.click();
-	  return;
-	}
+  
+if (!hasCoverFile && !hasAutoCover) {
+  showToast('커버 이미지를 추가해주세요.', 'error');
+  document.getElementById('coverPlaceholder')?.click();
+  return;
+}
 
   if (!selectedLocationCode) {
 	  showToast('위치를 선택해주세요.', 'error');
@@ -1989,6 +2360,20 @@ const hasScheduleCover = !!(
 	  // 플러스
 	  // blocks JSON 추가
 	  const blocks = collectBlocksForSave();
+	  
+	  // ✅ 디버그/검증: 기존 이미지인데 attachNo가 없는 블록이 있으면 바로 알림
+	  blocks.forEach((b, i) => {
+	    if (b.type === 'image') {
+	      const hasNew = (b.fileIdx != null);
+	      const hasOld = (b.attachNo != null);
+	      if (!hasNew && !hasOld) {
+	        console.warn('[save:image] image block missing both fileIdx and attachNo', i, b);
+	      }
+	    }
+	  });
+
+	  
+	  
 	  formData.append("blocks", new Blob([JSON.stringify(blocks)], { type:"application/json" }));
 
 	  // 본문 이미지 파일들 추가
@@ -2008,26 +2393,45 @@ const hasScheduleCover = !!(
 	    formData.append("coverFile", coverFileInput.files[0]);
 	  }
 
-	  fetch(base + '/api/travel-log/records', {
-	    method: 'POST',
+	  // ✅ 수정모드면 기존 커버 attachNo 유지(파일 업로드 안 할 때)
+	  if (isEditMode && !hasCoverFile && existingCoverAttachNo) {
+	    req.attachNo = Number(existingCoverAttachNo);
+	  }
+
+	  // (생성에서 일정커버 attachNo를 쓰고 싶다면 req.attachNo로 넣는 게 더 깔끔)
+	  if (!hasCoverFile && hasScheduleCover && coverImageData.attachNo) {
+	    req.attachNo = Number(coverImageData.attachNo);
+	  }
+
+	  // req 다시 append(수정된 attachNo 반영)
+	  formData.set("req", new Blob([JSON.stringify(req)], { type:"application/json" }));
+
+	  const url = isEditMode
+	    ? (base + '/api/travel-log/records/' + encodeURIComponent(editingRcdNo))
+	    : (base + '/api/travel-log/records');
+
+	  const method = isEditMode ? 'PUT' : 'POST';
+
+	  fetch(url, {
+	    method,
 	    body: formData,
 	    credentials: 'include'
 	  })
 	    .then(res => {
-	      if (!res.ok) return res.text().then(t => { throw new Error(t || '등록 실패'); });
-	      return res.json(); // rcdNo 받는다고 가정
+	      if (!res.ok) return res.text().then(t => { throw new Error(t || (isEditMode ? '수정 실패' : '등록 실패')); });
+	      return isEditMode ? Promise.resolve(editingRcdNo) : res.json();
 	    })
 	    .then(rcdNo => {
-	      showToast('여행기록이 등록되었습니다!', 'success');
+	      showToast(isEditMode ? '여행기록이 수정되었습니다!' : '여행기록이 등록되었습니다!', 'success');
 	      window.location.href = base + '/community/travel-log/detail?rcdNo=' + rcdNo;
 	    })
 	    .catch(err => {
 	      console.error(err);
-	      showToast('여행기록 등록 중 오류가 발생했습니다.', 'error');
+	      showToast(isEditMode ? '여행기록 수정 중 오류가 발생했습니다.' : '여행기록 등록 중 오류가 발생했습니다.', 'error');
 	    })
 	    .finally(() => {
 	      submitBtn.disabled = false;
-	      submitBtn.textContent = '등록';
+	      submitBtn.textContent = isEditMode ? '수정' : '등록';
 	    });
 }
 
@@ -2071,6 +2475,7 @@ async function loadScheduleFull(schdlNo) {
 	  if (!frame) return;
 
 	  const url = window.__CTX__ + '/schedule/view/' + schdlNo;
+	  
 
 	  frame.onload = function() {
 	    try {

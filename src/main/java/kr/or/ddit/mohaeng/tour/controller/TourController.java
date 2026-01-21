@@ -963,7 +963,7 @@ public class TourController {
      * 결제 페이지
      */
     @GetMapping("/{tripProdNo}/booking")
-    public String booking(@PathVariable int tripProdNo, Model model, RedirectAttributes ra, HttpSession session) {
+    public String booking(@PathVariable int tripProdNo, @RequestParam int people, Model model, RedirectAttributes ra, HttpSession session) {
     	// 로그인 체크
         Integer memNo = getMemNo(session);
         if (memNo == null) {
@@ -979,8 +979,20 @@ public class TourController {
             return "redirect:/tour";
         }
         
+        // 판매중 상태 체크
+        if (!"판매중".equals(tp.getApproveStatus())) {
+            ra.addFlashAttribute("message", "현재 판매중인 상품이 아닙니다.");
+            return "redirect:/tour/" + tripProdNo;
+        }
+        
         // 판매 정보 (가격)
         TripProdSaleVO sale = saleService.getSale(tripProdNo);
+        
+        // 재고 체크
+        if (sale == null || sale.getCurStock() < people) {
+            ra.addFlashAttribute("message", "죄송합니다. 재고가 부족합니다. (현재 재고: " + (sale != null ? sale.getCurStock() : 0) + "명)");
+            return "redirect:/tour/" + tripProdNo;
+        }
         
         // 예약 가능 시간 조회
         List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
@@ -1008,7 +1020,7 @@ public class TourController {
      * 장바구니 결제 페이지
      */
     @GetMapping("/cart/booking")
-    public String cartBooking(Model model, HttpSession session, RedirectAttributes ra) {
+    public String cartBooking(@RequestParam String prodIds, Model model, HttpSession session, RedirectAttributes ra) {
         // 로그인 체크
         Integer memNo = getMemNo(session);
         if (memNo == null) {
@@ -1020,9 +1032,58 @@ public class TourController {
         MemberVO member = memberService.selectByMemNo(memNo);
         MemUserVO memUser = memberService.selectMemUserByMemNo(memNo);
         
+        // 다수 상품 정보 담는 맵
+        Map<Integer, TripProdVO> productMap = new HashMap<>();
+        Map<Integer, List<ProdTimeInfoVO>> timesMap = new HashMap<>();
+        List<Integer> unavailableProducts = new ArrayList<>();
+        
+        String[] ids = prodIds.split(",");
+        for (String id : ids) {
+            int tripProdNo = Integer.parseInt(id.trim());
+            
+            TripProdVO tp = tripProdService.detail(tripProdNo);
+            
+            // 판매중지 또는 존재하지 않는 상품 체크
+            if (tp == null || !"판매중".equals(tp.getApproveStatus())) {
+                unavailableProducts.add(tripProdNo);
+                continue;
+            }
+            
+            // 재고 체크
+            TripProdSaleVO sale = saleService.getSale(tripProdNo);
+            if (sale == null || sale.getCurStock() <= 0) {
+                unavailableProducts.add(tripProdNo);
+                continue;
+            }
+            
+            List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
+            
+            productMap.put(tripProdNo, tp);
+            timesMap.put(tripProdNo, availableTimes);
+        }
+        
+        // 판매불가 상품이 있으면 전달
+        if (!unavailableProducts.isEmpty()) {
+            model.addAttribute("unavailableProducts", unavailableProducts);
+        }
+        
+        // 결제 가능한 상품이 없으면 이전 페이지로
+        if (productMap.isEmpty()) {
+            String soldoutIds = "";
+            for (int i = 0; i < unavailableProducts.size(); i++) {
+                soldoutIds += unavailableProducts.get(i);
+                if (i < unavailableProducts.size() - 1) {
+                    soldoutIds += ",";
+                }
+            }
+            return "redirect:/tour?soldout=" + soldoutIds;
+        }
+        
         model.addAttribute("member", member);
         model.addAttribute("memUser", memUser);
         model.addAttribute("type", "cart");
+        model.addAttribute("productMap", productMap);
+        model.addAttribute("timesMap", timesMap);
         
         return "product/booking";
     }

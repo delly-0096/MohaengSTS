@@ -308,15 +308,27 @@ public class PaymentServiceImpl implements IPaymentService {
 	    // TRIP_PROD_LIST 테이블에 저장
 	    List<TripProdListVO> tripProdList = paymentVO.getTripProdList();
 	    for (TripProdListVO item : tripProdList) {
+	    	// 재고 감소 먼저 시도
+	        int stockResult = payMapper.decreaseStock(item.getTripProdNo(), item.getQuantity());
+	        
+	        // 재고 부족하면 롤백
+	        if (stockResult == 0) {
+	            throw new RuntimeException("재고가 부족합니다. 상품번호: " + item.getTripProdNo());
+	        }
+	    	
 	        item.setPayNo(paymentVO.getPayNo());
 	        result = payMapper.insertTripProdList(item);
-	        log.info("insertTripProdList : {}", result);
+	        
+	        // 재고 0이면 판매중지로 변경
+	        int currentStock = payMapper.getCurrentStock(item.getTripProdNo());
+	        if (currentStock <= 0) {
+	            payMapper.updateSoldOut(item.getTripProdNo());
+	        }
 	    }
 	    
 	    // 마케팅 동의 업데이트 (N → Y인 경우만)
 	    if ("Y".equals(paymentVO.getMktAgreeYn())) {
-	        int mktResult = payMapper.updateMktAgree(paymentVO.getMemNo());
-	        log.info("updateMktAgree : {}", mktResult);
+	        payMapper.updateMktAgree(paymentVO.getMemNo());
 	    }
 	    
 	    return result;

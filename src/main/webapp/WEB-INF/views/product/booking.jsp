@@ -870,6 +870,7 @@
 </style>
 
 <script>
+var CONTEXT_PATH = '${pageContext.request.contextPath}';
 var availablePoints = ${member.point}; // 보유 포인트
 var appliedPoints = 0; // 적용된 포인트
 var totalPrice = 0;
@@ -884,9 +885,61 @@ var cartItems = [];
 	var saleEndDt = '<fmt:formatDate value="${tp.saleEndDt}" pattern="yyyy-MM-dd"/>';
 </c:if>
 
+//장바구니 모드 전용 변수
+<c:if test="${type eq 'cart'}">
+    // 상품별 판매종료일
+    var saleEndMap = {
+        <c:forEach items="${productMap}" var="entry" varStatus="status">
+            '${entry.key}': '<fmt:formatDate value="${entry.value.saleEndDt}" pattern="yyyy-MM-dd"/>'<c:if test="${!status.last}">,</c:if>
+        </c:forEach>
+    };
+    
+    // 상품별 예약 가능 시간
+    var timesMap = {
+        <c:forEach items="${timesMap}" var="entry" varStatus="status">
+            '${entry.key}': [
+                <c:forEach items="${entry.value}" var="timeInfo" varStatus="tStatus">
+                    '${timeInfo.rsvtAvailableTime}'<c:if test="${!tStatus.last}">,</c:if>
+                </c:forEach>
+            ]<c:if test="${!status.last}">,</c:if>
+        </c:forEach>
+    };
+</c:if>
+
 // 페이지 로드
 document.addEventListener('DOMContentLoaded', async function() {
     <c:if test="${type eq 'cart'}">
+	 	// 판매불가 상품 처리 (품절, 판매중지 등)
+	    <c:if test="${not empty unavailableProducts}">
+	        var unavailableIds = [
+	            <c:forEach items="${unavailableProducts}" var="prodId" varStatus="status">
+	                '${prodId}'<c:if test="${!status.last}">,</c:if>
+	            </c:forEach>
+	        ];
+	        
+	        // sessionStorage에서 해당 상품 제거
+	        var savedCart = sessionStorage.getItem('tourCart');
+	        if (savedCart) {
+	            var cart = JSON.parse(savedCart);
+	            cart = cart.filter(function(item) {
+	                return !unavailableIds.includes(item.id);
+	            });
+	            sessionStorage.setItem('tourCart', JSON.stringify(cart));
+	        }
+	        
+	        // tourCartCheckout도 업데이트
+	        var checkoutCart = sessionStorage.getItem('tourCartCheckout');
+	        if (checkoutCart) {
+	            var checkout = JSON.parse(checkoutCart);
+	            checkout = checkout.filter(function(item) {
+	                return !unavailableIds.includes(item.id);
+	            });
+	            sessionStorage.setItem('tourCartCheckout', JSON.stringify(checkout));
+	        }
+	        
+	        showToast('품절된 상품이 장바구니에서 제거되었습니다.', 'warning');
+	    </c:if>
+    
     	loadCartData();
     </c:if>
     
@@ -963,17 +1016,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 	        checkoutData = localStorage.getItem('tourCart');
 	    }
 	
-	    if (!checkoutData) {
-	        console.error('장바구니 데이터가 없습니다.');
-	        return;
-	    }
-	
 	    try {
 	        cartItems = JSON.parse(checkoutData);
-	        if (cartItems.length === 0) {
-	            console.error('장바구니가 비어있습니다.');
-	            return;
-	        }
 	
 	        document.getElementById('cartItemCount').textContent = cartItems.length;
 	        renderCartBookingItems();
@@ -993,7 +1037,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 	
 	    cartItems.forEach(function(item, index) {
 	        var itemTotal = item.price * item.quantity;
-	        html += '<div class="cart-booking-item" data-index="' + index + '">' +
+            var times = timesMap[item.id] || ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+            var timeOptions = '<option value="">시간을 선택하세요</option>';
+            times.forEach(function(time) {
+                timeOptions += '<option value="' + time + '">' + time + '</option>';
+            });
+            
+	        html += '<div class="cart-booking-item" data-index="' + index + '" data-prod-id="' + item.id + '">' +
 	            '<div class="cart-item-header">' +
 	                '<div class="cart-item-image">' +
 	                    '<img src="' + item.image + '" alt="' + item.name + '">' +
@@ -1011,18 +1061,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 	                '<div class="form-group">' +
 	                    '<label class="form-label">이용 날짜 <span class="text-danger">*</span></label>' +
 	                    '<input type="text" class="form-control cart-date-picker" id="cartUseDate_' + index + '" ' +
-	                           'data-index="' + index + '" placeholder="날짜를 선택하세요" required>' +
+		                    'data-index="' + index + '" data-prod-id="' + item.id + '" ' +
+	                        'placeholder="날짜를 선택하세요" required>' +
 	                '</div>' +
 	                '<div class="form-group">' +
-	                    '<label class="form-label">희망 시간 <span class="text-danger">*</span></label>' +
+		                '<label class="form-label">희망 시간 <span class="text-danger">*</span></label>' +
 	                    '<select class="form-control form-select" id="cartUseTime_' + index + '" data-index="' + index + '" required>' +
-	                        '<option value="">시간을 선택하세요</option>' +
-	                        '<option value="09:00">09:00</option>' +
-	                        '<option value="10:00">10:00</option>' +
-	                        '<option value="11:00">11:00</option>' +
-	                        '<option value="14:00">14:00</option>' +
-	                        '<option value="15:00">15:00</option>' +
-	                        '<option value="16:00">16:00</option>' +
+	                        timeOptions +
 	                    '</select>' +
 	                '</div>' +
 	                '<div class="form-group full-width">' +
@@ -1058,9 +1103,13 @@ document.addEventListener('DOMContentLoaded', async function() {
 	function initCartDatePickers() {
 	    document.querySelectorAll('.cart-date-picker').forEach(function(input) {
 	        if (typeof flatpickr !== 'undefined') {
+	        	var prodId = input.dataset.prodId;
+                var saleEndDt = saleEndMap[prodId] || null;
+	        	
 	            flatpickr(input, {
 	                dateFormat: 'Y-m-d',
 	                minDate: 'today',
+                    maxDate: saleEndDt,
 	                locale: 'ko'
 	            });
 	        }
@@ -1096,7 +1145,12 @@ function updateTotalPrice() {
     document.getElementById('totalAmount').textContent = totalPrice.toLocaleString() + '원';
     document.getElementById('payBtnText').textContent = totalPrice.toLocaleString() + '원 결제하기';
     
-    
+    if (widgets) {
+        widgets.setAmount({
+            currency: "KRW",
+            value: totalPrice
+        });
+    }
 }
 
 // ==================== 포인트 관련 함수 ====================
@@ -1201,6 +1255,15 @@ async function main() {
 	    var orderName = "";
 
 	    <c:if test="${type eq 'cart'}">
+		    for (var i = 0; i < cartItems.length; i++) {
+	            var dateInput = document.getElementById('cartUseDate_' + i);
+	            if (!dateInput.value) {
+	                dateInput.focus();
+	                dateInput._flatpickr.open();
+	                return;
+	            }
+	        }
+	    
 	    	for (var i = 0; i < cartItems.length; i++) {
 	            var item = cartItems[i];
 	            tripProdList.push({
@@ -1253,7 +1316,11 @@ async function main() {
 			failUrl: window.location.origin + "/product/payment/error",		// 실패 위치 - 같은곳으로 보내자
 			customerEmail: "${member.memEmail}",							// 결제자 이메일
 			customerName: "${member.memName}",								// 결제자 이름
-			customerMobilePhone: "${memUser.tel}".replace(/-/g, '')			// 결제자 전화번호
+			customerMobilePhone: "${memUser.tel}".replace(/-/g, ''),		// 결제자 전화번호
+			// 포인트용 // 다른 정보 담아도 됨. string타입만 담을수 있음
+			metadata: {
+		        usedPoints: appliedPoints.toString() // 포인트를 여기에 실어 보냅니다.
+		    }
 		});
 	});
 }

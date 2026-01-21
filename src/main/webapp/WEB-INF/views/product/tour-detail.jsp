@@ -899,12 +899,21 @@ const currentProduct = {
     name: '${tp.tripProdTitle}',
     price: ${sale != null ? sale.price : 0},
     location: '${tp.ctyNm}',
+    stock: ${sale != null ? sale.curStock : 999},
     image: <c:choose>
         <c:when test="${not empty productImages}">'${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}'</c:when>
         <c:otherwise>'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80'</c:otherwise>
     </c:choose>
 };
 </script>
+
+<c:if test="${not empty message}">
+	<script>
+	document.addEventListener('DOMContentLoaded', function() {
+	    showToast('${message}', 'error');
+	});
+	</script>
+</c:if>
 
 <script src="${pageContext.request.contextPath}/resources/js/tour-detail.js"></script>
 

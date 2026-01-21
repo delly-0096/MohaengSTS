@@ -63,6 +63,8 @@ public class RoomTypeVO {
 	
 	private RoomFeatureVO feature;
     private RoomFacilityVO facility;
+    private List<AccResvVO> accResvList; 
+    private List<RoomVO> rooms;
     
     private int maxDiscount;
     private int minPrice;    // 최저가

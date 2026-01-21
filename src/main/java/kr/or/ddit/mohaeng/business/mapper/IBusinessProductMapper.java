@@ -29,7 +29,22 @@ public interface IBusinessProductMapper {
 	 * @param product 회원id
 	 * @return 본인 상품
 	 */
-	public List<TripProdVO> getProductlist(TripProdVO product);
+//	public List<TripProdVO> getProductlist(TripProdVO product);
+	
+	
+	
+	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts);
+	
+	/**
+	 * <p>본인 판매 숙박상품 조회</p>
+	 * @author sdg
+	 * @date 2026-01-20
+	 * @param businessProd 회원id
+	 * @return 본인 상품
+	 */
+	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProd);
+	
+	
 	
 	/**
 	 * <p>기업 상품 현황 통계</p>
@@ -209,5 +224,15 @@ public interface IBusinessProductMapper {
 	 * @return 결과 0, 1
 	 */
 	public int deleteProductStatus(TripProdVO tripProd);
+
+	
+	/**
+	 * <p>숙박 상품 정보 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-21
+	 * @param tripProd
+	 * @return 결과 0, 1
+	 */
+	public AccommodationVO retrieveAccomodationDetail(AccommodationVO accommodationvo);
 	
 }

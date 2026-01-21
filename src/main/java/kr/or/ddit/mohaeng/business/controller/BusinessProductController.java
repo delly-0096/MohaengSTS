@@ -61,9 +61,6 @@ public class BusinessProductController {
     private ITripProdInquiryService inquiryService;
     
     @Autowired
-    private ISearchLogService searchLogService;
-    
-    @Autowired
     private IFileService fileService;
 
 	@Autowired
@@ -91,7 +88,7 @@ public class BusinessProductController {
 		businessProducts.setMemNo(memNo);
 		log.info("businessProducts : {}", businessProducts);
         // 투어상품 정보
-		List<BusinessProductsVO> prodList = businessService.getProductlist(businessProducts);	// 숙박 상품도 담기긴 함. 그런데
+		List<BusinessProductsVO> prodList = businessService.getProductlist(businessProducts);	// 숙박 상품도 담기긴 함. 그런데 좀 바뀔수도
 		log.info("prodList : {}", prodList);
 		
 		// 숙박 정보
@@ -106,45 +103,28 @@ public class BusinessProductController {
 		// 통계. 이거 tripProdList로 받아야됨
         TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
         
-        // 인기 키워드 조회
-//        List<SearchLogVO> keywords = searchLogService.getKeywords();
+        // 검색은 스크립트에서
         
         model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
         model.addAttribute("prodAggregate", prodAggregate);
-        
-//        model.addAttribute("tripProd", tripProd);	// memNo담김
-//        model.addAttribute("keywords", keywords);
         
 		return "product/business";
 	}
 	
 	/**
-	 * <p>투어상품 상세 조회</p>
+	 * <p>상품 상세 조회</p>
 	 * @author sdg
 	 * @date 2026-01-18
-	 * @param tripProdNo	 상품 번호
-	 * @param model			
-	 * @param ra
-	 * @return 상품 상세 정보
+	 * @param businessProducts	 상품 번호
+	 * @return 상품 상세 정보 - 타입이 accommodation일때는 숙소정보, 아닐때는 상품정보
 	 */
 	@ResponseBody
 	@PostMapping("/business/product/productDetail")
 	public BusinessProductsVO productDetail(@RequestBody BusinessProductsVO businessProducts){
 		log.info("productDetail : {}", businessProducts);
-		log.info("productDetail.accNo : {}", businessProducts.getAccNo());
-		
-
-		
 		BusinessProductsVO product = businessService.getProductDetail(businessProducts);
-		String category = product.getCtyNm();
 		
-		
-		// 숙소일때
-		if(category != null && category.equals(category)) {
-			
-		}
-		
-//		log.info("product : {}", product);
+		log.info("product : {}", product);
 		return product;
 	}
 	

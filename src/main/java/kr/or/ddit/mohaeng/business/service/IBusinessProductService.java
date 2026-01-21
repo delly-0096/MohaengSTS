@@ -16,7 +16,6 @@ public interface IBusinessProductService {
 	 * @param tripProd (memNo)
 	 * @return 상품목록
 	 */
-//	public List<TripProdVO> getProductlist(TripProdVO tripProd);
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts);
 	/**
 	 * <p>기업 상품 현황 통계</p>

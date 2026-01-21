@@ -28,9 +28,6 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 	@Autowired
 	private IBusinessProductMapper businessMapper;
 	
-	@Autowired
-	private IAccommodationService accommodationService;
-	
 	@Override
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts) {
 		return businessMapper.getProductlist(businessProducts);
@@ -48,35 +45,33 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 	
 	@Override
 	public BusinessProductsVO getProductDetail(BusinessProductsVO businessProducts) {
-		// 숙소 정보
 		
 		// 상품 정보, 상품 이용안내, 상품 가격, 여행 상품 관광지
 		BusinessProductsVO prodVO = businessMapper.retrieveProductDetail(businessProducts);
-//		if(prodVO.getProdCtgryType().equals("accommodation")) {
-//			return prodVO;
-//		}
-		
-		int accNo = 0;
-		if(businessProducts.getAccNo() != 0) {
-			accNo = businessProducts.getAccNo();
-		}
-		
-		AccommodationVO accommodationvo = new AccommodationVO();
-		accommodationvo.setAccNo(accNo);
-		
-		AccommodationVO accommodation = businessMapper.retrieveAccomodationDetail(accommodationvo);
-		log.info("retrieveAccomodationDetail : {}", accommodation.getRoomList().size());
-		
-		// 나머지 1대다 매칭 후 보내기
 		log.info("retrieveProductDetail-retrieveProductDetail : {}", prodVO);
-		
-		// 상품 이용안내 별, 예약가능시간(예약 가능 시간)
-		List<ProdTimeInfoVO> prodTimeList = businessMapper.retrieveProdTimeList(prodVO);
-		log.info("retrieveProductDetail-retrieveProdTimeList : {}", prodTimeList);
-		
-		if(prodTimeList.size() > 0 && prodTimeList != null) {
-			prodVO.setProdTimeList(prodTimeList);
-			log.info("prod setProdTimeList : {}", prodVO.getProdTimeList());
+
+		// 숙소 타입일 경우에는 이렇게
+		if(prodVO.getProdCtgryType().equals("accommodation")) {
+			int accNo = 0;
+			if(businessProducts.getAccNo() != 0) {
+				accNo = businessProducts.getAccNo();
+			}
+			
+			AccommodationVO accommodationvo = new AccommodationVO();
+			accommodationvo.setAccNo(accNo);
+			
+			AccommodationVO accommodation = businessMapper.retrieveAccomodationDetail(accommodationvo);
+			prodVO.setAccommodation(accommodation);
+			log.info("retrieveAccomodationDetail : {}", accommodation.getRoomList().size());
+		// 숙소가 아닐때는 이렇게
+		} else {
+			List<ProdTimeInfoVO> prodTimeList = businessMapper.retrieveProdTimeList(prodVO);
+			log.info("retrieveProductDetail-retrieveProdTimeList : {}", prodTimeList);
+			
+			if(prodTimeList != null && prodTimeList.size() > 0) {
+				prodVO.setProdTimeList(prodTimeList);
+				log.info("prod setProdTimeList : {}", prodVO.getProdTimeList());
+			}
 		}
 		
 		// 상품 사진
@@ -90,7 +85,6 @@ public class BusinessProductServiceImpl implements IBusinessProductService {
 		if(productImages != null && productImages.size() > 0) {
 			prodVO.setImageList(productImages);
 		}
-		
 		
 		return prodVO;
 	}

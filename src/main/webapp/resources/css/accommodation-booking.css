@@ -1,5 +1,36 @@
 @charset "UTF-8";
 
+/* 토스 테스트 환경 알림 숨기기 */
+body.demo [role="alert"] {
+  display: none !important;
+}
+
+.bmw6m0.vixore0 {
+  display: none !important;
+}
+
+div[aria-describedby^="radix-"] {
+  display: none !important;
+}
+
+.payment-container {
+    width: 100%;
+    overflow: hidden;    /* 이 안에서 위로 밀려난 부분은 모두 잘려 나갑니다 */
+    position: relative;
+    /* 상단 여백을 조금 주어 '결제 수단' 제목과 너무 붙지 않게 조절 */
+    padding-top: 5px; 
+}
+
+#payment-method {
+    /* 수치를 -145px 정도로 높여보세요. */
+    /* 글자가 아예 안 보일 때까지 -5px씩 조절하는 것이 팁입니다. */
+    margin-top: -145px !important; 
+    
+    /* 혹시 모를 레이아웃 깨짐 방지 */
+    display: block;
+}
+
+/* 결제 사이드 바 */
 .booking-summary {
     position: sticky;
     top: 100px; /* 헤더 높이에 맞춰 조절 */

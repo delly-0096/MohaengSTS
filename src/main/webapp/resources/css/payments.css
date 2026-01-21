@@ -130,3 +130,40 @@ text-align: right;
 .color-grey {
 color: #b0b8c1;
 }
+
+/* 공통 컨테이너 */
+.payment-complete, .payment-fail {
+    max-width: 550px;
+    margin: 50px auto;
+    text-align: center;
+}
+
+/* 카드 스타일 */
+.complete-details-card, .fail-details-card {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border: 1px solid #eef2f6;
+    margin-bottom: 30px;
+    position: relative;
+    text-align: left;
+}
+
+/* 성공 포인트 */
+.receipt-top-line {
+    position: absolute; top: 0; left: 0; right: 0; height: 6px;
+    background: #1a7f7f; border-radius: 20px 20px 0 0;
+}
+.complete-icon { color: #1a7f7f; font-size: 60px; margin-bottom: 20px; }
+
+/* 실패 포인트 */
+.complete-icon.fail { color: #e53e3e; }
+.fail-details-card { border-top: 6px solid #e53e3e; }
+
+/* 텍스트 스타일 */
+.detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+.detail-row .label { color: #718096; font-size: 15px; }
+.detail-row .value { font-weight: 600; color: #2d3748; }
+.total-row { border-top: 1px dashed #cbd5e0; padding-top: 20px; margin-top: 20px; }
+.total-row .value { color: #1a7f7f; font-size: 24px; font-weight: 800; }

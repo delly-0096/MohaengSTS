@@ -128,5 +128,14 @@ public interface IAccommodationMapper {
 	 */
 	public int insertAccommodationReservaion(AccResvVO resvVO);
 
+	/**
+	 *	<p> 숙박 예약 시 약관 동의 </p>
+	 *	@date 2026.01.21
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	public void insertAccResvAgree(AccResvVO resv);
+
 
 }

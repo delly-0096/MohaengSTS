@@ -208,12 +208,20 @@ function showBusinessRestricted() { /* ... 기업제한 HTML 코드 ... */ }
 
 // 약관 동의 체크 핸들러
 function initAgreementEvents() {
-    document.querySelectorAll('.agree-item').forEach(item => {
+    // 1. 필수 및 선택(마케팅) 모든 체크박스를 가져옴
+    const allItems = document.querySelectorAll('.agree-item, #marketAgree');
+    const agreeAll = document.getElementById('agreeAll');
+
+    allItems.forEach(item => {
         item.addEventListener('change', () => {
-            const requiredCount = document.querySelectorAll('.agree-item').length;
-            const checkedCount = document.querySelectorAll('.agree-item:checked').length;
-            const marketingChecked = document.getElementById('agreeMarketing')?.checked ?? true;
-            document.getElementById('agreeAll').checked = (checkedCount === requiredCount && marketingChecked);
+            // 현재 체크된 개수와 전체 개수를 비교
+            const totalCount = allItems.length;
+            const checkedCount = document.querySelectorAll('.agree-item:checked, #marketAgree:checked').length;
+            
+            // 모두 체크되었다면 '전체 동의' 체크, 하나라도 비면 해제
+            if (agreeAll) {
+                agreeAll.checked = (totalCount === checkedCount);
+            }
         });
     });
 }
@@ -229,7 +237,7 @@ function toggleAllAgree() {
     });
     
     // 2. 마케팅 수신 동의(#agreeMarketing)도 같이 변경
-    const marketing = document.getElementById('agreeMarketing');
+    const marketing = document.getElementById('marketAgree');
     if (marketing) {
         marketing.checked = isChecked;
     }
@@ -266,7 +274,8 @@ function initBookingForm() {
         sessionStorage.setItem("pendingBooking", JSON.stringify(finalData));
 		
 		const timeStamp = Date.now();
-		    await widgets.requestPayment({
+		    try {
+				await widgets.requestPayment({
 		        orderId: `ACC-${finalData.startDt}-${timeStamp}`, 
 		        orderName: `${document.getElementById('accommodationName').textContent} - ${finalData.roomTypeNo}번 객실`,
 		        successUrl: window.location.origin + "/product/payment/success", 
@@ -274,25 +283,11 @@ function initBookingForm() {
 		        customerEmail: finalData.bookerEmail,
 		        customerName: finalData.bookerName,
 		        customerMobilePhone: finalData.bookerPhone
-		    });
-	    
-		fetch(targetUrl, { 
-		    method: "POST",
-		    headers: { "Content-Type": "application/json" },
-		    body: JSON.stringify(finalData)
-		})
-		 .then(res => res.json())
-		 .then(data => {
-			if(data.status === 'success' || data.result === 'ok') {
-			        // 1. 축하 팡파르! (SweetAlert 같은 거 쓰면 더 예쁨)
-			        showToast('✨ 예약이 완료되었습니다! 마이페이지에서 예약 내역을 확인해주세요.'); 
-			        
-			        // 2. 예약 리스트나 메인 페이지로 이동
-			        //location.href = `${bookingConfig.contextPath}/member/mypage/reservation`; 
-			    } else {
-			        showToast('잠시 후 다시 시도해주세요. (사유: ' + data.message + ')');
-			    }
-			})
+		        });
+		        // 페이지가 성공/실패 URL로 이동하기 때문에 이 이후의 코드는 실행되지 않아!
+		    } catch (error) {
+		        console.error("결제 요청 에러:", error);
+		    }
 	})
 }
 
@@ -435,7 +430,13 @@ function collectBookingData() {
                    (bookingConfig.addonsTotal || 0),
         
         // 추가 서비스 (String 하나로 합쳐서 보낼지 리스트로 보낼지 결정 필요)
-        resvAddons: addons.join(',') 
+        resvAddons: addons.join(','),
+		
+		// 약관 동의 상태 수집 (체크되면 Y, 아니면 N)
+		stayTermYn: document.getElementById('stayTerm')?.checked ? 'Y' : 'N',
+        privacyAgreeYn: document.getElementById('privacyAgree')?.checked ? 'Y' : 'N',
+        refundAgreeYn: document.getElementById('refundAgree')?.checked ? 'Y' : 'N',
+        marketAgreeYn: document.getElementById('marketAgree')?.checked ? 'Y' : 'N'
     };
 
     return bookingData;

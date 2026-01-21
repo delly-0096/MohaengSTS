@@ -639,6 +639,7 @@
 	
 	    INSERT INTO ACC_RESV (
 	        ACC_RESV_NO
+	        , PAY_NO
 	        , ROOM_TYPE_NO 
 	        , RESV_MEM_NO
 	        , START_DT 
@@ -653,6 +654,7 @@
 	        , RESV_STATUS
 	    ) VALUES (
 	        #{accResvNo} 
+	        , #{payNo}
 	        , #{roomTypeNo} 
 	        , #{resvMemNo} 
 	        , #{startDt}
@@ -665,6 +667,24 @@
 	        , #{resvRequest}
 	        , SYSDATE 
 	        , '결제완료'
+	    )
+	</insert>
+	
+	<insert id="insertAccResvAgree" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
+	    INSERT INTO ACC_RESV_AGREE (
+	        ACC_RESV_NO
+	        , STAY_TERM_YN
+	        , PRIVACY_AGREE_YN
+	        , REFUND_AGREE_YN
+	        , MARKET_AGREE_YN
+	        , REG_DT
+	    ) VALUES (
+	        #{accResvNo}
+	        , #{accResvAgree.stayTermYn}
+	        , #{accResvAgree.privacyAgreeYn}
+	        , #{accResvAgree.refundAgreeYn}
+	        , #{accResvAgree.marketAgreeYn}
+	        , SYSDATE
 	    )
 	</insert>
 </mapper>

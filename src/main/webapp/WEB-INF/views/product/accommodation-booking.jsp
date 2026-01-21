@@ -387,22 +387,22 @@
                             </label>
                             <div class="agreement-divider"></div>
                             <label class="agreement-item">
-                                <input type="checkbox" class="agree-item" required>
+                                <input type="checkbox" id="stayTerm" class="agree-item" required>
                                 <span>[필수] 숙박 이용약관 동의</span>
                                 <a href="#" class="agreement-link">보기</a>
                             </label>
                             <label class="agreement-item">
-                                <input type="checkbox" class="agree-item" required>
+                                <input type="checkbox" id="privacyAgree" class="agree-item" required>
                                 <span>[필수] 개인정보 수집 및 이용 동의</span>
                                 <a href="#" class="agreement-link">보기</a>
                             </label>
                             <label class="agreement-item">
-                                <input type="checkbox" class="agree-item" required>
+                                <input type="checkbox" id="refundAgree" class="agree-item" required>
                                 <span>[필수] 취소/환불 규정 동의</span>
                                 <a href="#" class="agreement-link">보기</a>
                             </label>
                             <label class="agreement-item">
-                                <input type="checkbox" id="agreeMarketing">
+                                <input type="checkbox" id="marketAgree">
                                 <span>[선택] 마케팅 정보 수신 동의</span>
                             </label>
                         </div>
@@ -560,7 +560,6 @@ document.addEventListener('DOMContentLoaded', function() {
     } else {
         initAgreementEvents();
         initBookingForm();
-        
         initTossPayments().catch(err => console.error("토스 로딩 실패:", err));
     }
 })

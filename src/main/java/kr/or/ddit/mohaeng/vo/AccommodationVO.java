@@ -83,6 +83,10 @@ public class AccommodationVO {
     private AccFacilityVO accFacility;
     private List<RoomTypeVO> roomList;
     
+    // 옵션 목록(신동근 추가)
+    private List<AccOptionVO> accOptionList;
+    
+    
     // ACC_FACILITY
     private String wifiYn; /* WiFi 제공 여부 */
     private String parkingYn; /* 주차 가능 여부 */

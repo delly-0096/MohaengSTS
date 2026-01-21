@@ -39,7 +39,7 @@ public class AccResvVO {
 	/**
 	 * 예약상태
 	 */
-	private String ResvStatus;
+	private String resvStatus;
 	/**
 	 * 예상 도착 시간
 	 */

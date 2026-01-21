@@ -74,4 +74,26 @@
 		  AND MARKETING_YN = 'N'
 	</update>
 	
+	<!-- 투어상품 재고 감소 -->
+	<update id="decreaseStock">
+	    UPDATE TRIP_PROD_SALE
+	    SET CUR_STOCK = CUR_STOCK - #{quantity}
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	    AND CUR_STOCK >= #{quantity}
+	</update>
+	
+	<!-- 현재 재고 조회 -->
+	<select id="getCurrentStock" resultType="int">
+	    SELECT CUR_STOCK 
+	    FROM TRIP_PROD_SALE 
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</select>
+	
+	<!-- 판매중지 처리 -->
+	<update id="updateSoldOut">
+	    UPDATE TRIP_PROD
+	    SET APPROVE_STATUS = '판매중지'
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
 </mapper>

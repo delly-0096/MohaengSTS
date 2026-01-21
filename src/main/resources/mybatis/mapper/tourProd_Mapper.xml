@@ -54,6 +54,9 @@
                 ) r ON t.TRIP_PROD_NO = r.TRIP_PROD_NO
                 WHERE (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
                   AND t.APPROVE_STATUS = '판매중'
+				  AND t.APRV_YN = 'Y'
+  				  AND s.CUR_STOCK >= NVL(i.PROD_MIN_PEOPLE, 1)
+				  AND t.PROD_CTGRY_TYPE != 'accommodation'
                 <!-- 검색어 -->
                 <if test="keyword != null and keyword != ''">
                     AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%'
@@ -147,6 +150,9 @@
         LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
         WHERE (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
           AND t.APPROVE_STATUS = '판매중'
+		  AND t.APRV_YN = 'Y'
+		  AND s.CUR_STOCK >= NVL(i.PROD_MIN_PEOPLE, 1)
+		  AND t.PROD_CTGRY_TYPE != 'accommodation'
         <if test="keyword != null and keyword != ''">
             AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%'
                  OR t.TRIP_PROD_CONTENT LIKE '%' || #{keyword} || '%')

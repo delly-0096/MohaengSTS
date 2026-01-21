@@ -15,7 +15,7 @@ var currentKeyword = '';
 var currentDestination = '';
 var currentCategory = '';
 var currentTourDate = '';
-var currentPeople = 2;
+var currentPeople = null;
 
 // ==================== 필터 변수 ====================
 var currentPriceMin = null;
@@ -39,6 +39,29 @@ var cart = [];
 
 // ==================== 페이지 로드시 초기화 ====================
 document.addEventListener('DOMContentLoaded', function() {
+	// 품절 상품 처리 (결제 페이지에서 리다이렉트된 경우)
+    var urlParams = new URLSearchParams(window.location.search);
+    var soldout = urlParams.get('soldout');
+    
+    if (soldout) {
+        var unavailableIds = soldout.split(',');
+        
+        // sessionStorage에서 해당 상품 제거
+        var savedCart = sessionStorage.getItem('tourCart');
+        if (savedCart) {
+            var cart = JSON.parse(savedCart);
+            cart = cart.filter(function(item) {
+                return !unavailableIds.includes(item.id);
+            });
+            sessionStorage.setItem('tourCart', JSON.stringify(cart));
+        }
+        
+        showToast('품절된 상품이 장바구니에서 제거되었습니다.', 'warning');
+        
+        // URL에서 파라미터 제거
+        window.history.replaceState({}, document.title, window.location.pathname);
+    }
+		
     // 인피니티 스크롤 초기화
     if (initialListSize < tourPageSize) {
         tourHasMore = false;
@@ -177,7 +200,7 @@ function buildFilterUrl(page) {
     if (currentDestination) url += '&destination=' + encodeURIComponent(currentDestination);
     if (currentCategory) url += '&category=' + encodeURIComponent(currentCategory);
     if (currentTourDate) url += '&tourDate=' + encodeURIComponent(currentTourDate);
-    if (currentPeople) url += '&people=' + currentPeople;
+    if (currentPeople !== null) url += '&people=' + currentPeople;
     if (currentPriceMin !== null) url += '&priceMin=' + currentPriceMin;
     if (currentPriceMax !== null) url += '&priceMax=' + currentPriceMax;
     if (currentLeadTime !== null) url += '&leadTime=' + currentLeadTime;
@@ -299,7 +322,7 @@ function createTourCard(data) {
 
 	var minPeople = data.prodMinPeople || 1;
 
-    return '<div class="tour-card" data-id="' + data.tripProdNo + '" data-name="' + data.tripProdTitle + '" data-price="' + data.price + '" data-min-people="' + minPeople + '" data-image="' + imageUrl + '" data-location="' + data.ctyNm + '">' +
+    return '<div class="tour-card" data-id="' + data.tripProdNo + '" data-name="' + data.tripProdTitle + '" data-price="' + data.price + '" data-min-people="' + minPeople + '" data-stock="' + data.curStock + '" data-image="' + imageUrl + '" data-location="' + data.ctyNm + '">' +
         '<a href="' + CONTEXT_PATH + '/tour/' + data.tripProdNo + '" class="tour-link">' +
             '<div class="tour-image">' +
                 '<img src="' + imageUrl + '" alt="' + data.tripProdTitle + '">' +
@@ -457,6 +480,11 @@ function addToCart(btn) {
     });
 
     if (existingItem) {
+		if (existingItem.quantity >= existingItem.stock) {
+	        showToast('재고가 부족합니다 (남은 재고: ' + existingItem.stock + '개)', 'warning');
+	        return;
+	    }
+			
 		if (existingItem.quantity >= 4) {
 	        showToast('5명 이상 단체 예약은 판매자에게 문의해주세요', 'warning');
 	        return;
@@ -464,6 +492,13 @@ function addToCart(btn) {
         existingItem.quantity++;
         showToast('수량이 추가되었습니다', 'success');
     } else {
+		var stock = parseInt(card.dataset.stock) || 999;
+		    
+	    if (minPeople > stock) {
+	        showToast('재고가 부족합니다 (남은 재고: ' + stock + '개)', 'warning');
+	        return;
+	    }
+			
         cart.push({
             id: id,
             name: name,
@@ -472,6 +507,7 @@ function addToCart(btn) {
 			location: location,
 			minPeople: minPeople,
 			quantity: minPeople,
+			stock: parseInt(card.dataset.stock) || 999,
 			saleEndDt: card.dataset.saleEndDt || ''
         });
 		
@@ -514,9 +550,15 @@ function updateQuantity(id, delta) {
 		var newQuantity = item.quantity + delta;
 		var minPeople = item.minPeople || 1;
 		var maxPeople = 4;
+		var stock = item.stock || 999;
 
 		if (newQuantity < minPeople) {
             showToast('최소 인원은 ' + minPeople + '명입니다', 'warning');
+            return;
+        }
+		
+		if (newQuantity > stock) {
+            showToast('재고가 부족합니다 (남은 재고: ' + stock + '개)', 'warning');
             return;
         }
 		
@@ -649,5 +691,6 @@ function checkout() {
 	}
 
     sessionStorage.setItem('tourCartCheckout', JSON.stringify(cart));
-    window.location.href = CONTEXT_PATH + '/tour/cart/booking';
+	var prodIds = cart.map(function(item) { return item.id; }).join(',');
+    window.location.href = CONTEXT_PATH + '/tour/cart/booking?prodIds=' + prodIds;
 }

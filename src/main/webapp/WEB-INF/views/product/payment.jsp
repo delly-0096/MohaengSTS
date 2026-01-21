@@ -45,44 +45,50 @@
         </div>
 		
         <!-- 결제 완료 -->
-        <c:if test="${empty error }">
-        <div class="payment-complete" style="display: none">
-            <div class="complete-icon">
-                <i class="bi bi-check-lg"></i>
-            </div>
-            <h1 class="complete-title">결제가 완료되었습니다!</h1>
-            <p class="complete-message">
-                결제 확인 메일이 <strong id="memEmail">이메일</strong>으로 발송되었습니다.<br>
-                즐거운 여행 되세요!
-            </p>
-
-            <div class="complete-details">
-                <h4>결제 상세</h4>
-                <div class="detail-row">
-                    <span class="label">결제번호</span>
-                    <span class="value"><strong id="payNo"> </strong></span>
-                </div>
-                <div class="detail-row">
-                    <span class="label">상품명</span>
-                    <span class="value" id="orderName"> </span>
-                </div>
-                <div class="detail-row">
-                    <span class="label">이용일시</span>
-                    <span class="value" id="payDt"> </span>
-                </div>
-                <div class="detail-row">
-                    <span class="label">인원</span>
-                    <span class="value" id="person"> 명</span>
-                </div>
-                <div class="detail-row">
-                    <span class="label">결제금액</span>
-                    <span class="value"><strong class="text-primary" id="totalAmount"> </strong>원</span>
-                </div>
-                <div class="detail-row">
-                    <span class="label">결제수단</span>
-                    <span class="value" id="method"> </span>
-                </div>
-            </div>
+        <c:if test="${empty error}">
+		    <div class="payment-complete" style="display: none">
+		        <div class="complete-header">
+		            <div class="complete-icon">
+		                <i class="bi bi-check-lg"></i>
+		            </div>
+		            <h1 class="complete-title">결제가 완료되었습니다!</h1>
+		            <p class="complete-message">
+		                결제 확인 메일이 <strong id="memEmail" class="text-teal">이메일</strong>으로 발송되었습니다.<br>
+		                모행과 함께 즐거운 여행 되세요!
+		            </p>
+		        </div>
+		
+		        <div class="complete-details-card">
+		            <div class="receipt-top-line"></div>
+		            <h4>결제 상세 내역</h4>
+		            <div class="detail-rows">
+		                <div class="detail-row">
+		                    <span class="label">결제번호</span>
+		                    <span class="value" id="payNo"></span>
+		                </div>
+		                <div class="detail-row">
+		                    <span class="label">상품명</span>
+		                    <span class="value" id="orderName"></span>
+		                </div>
+		                <div class="detail-row">
+		                    <span class="label">이용일시</span>
+		                    <span class="value" id="payDt"></span>
+		                </div>
+		                <div class="detail-row">
+		                    <span class="label">인원 구성</span>
+		                    <span class="value" id="person"></span>
+		                </div>
+		                <div class="detail-row">
+		                    <span class="label">결제수단</span>
+		                    <span class="value" id="method"></span>
+		                </div>
+		                <div class="receipt-divider"></div>
+		                <div class="detail-row total-row">
+		                    <span class="label">최종 결제금액</span>
+		                    <span class="value"><strong id="totalAmount"></strong>원</span>
+		                </div>
+		            </div>
+		        </div>
 
 <!--        상품 결제시
 		    <div class="alert alert-warning mb-4">
@@ -95,30 +101,42 @@
                 </ul>
             </div> -->
 
-            <div class="complete-actions">
-                <a href="${pageContext.request.contextPath}/mypage/payments" class="btn btn-outline btn-lg">
-                    <i class="bi bi-receipt me-2"></i>결제 내역 보기
-                </a>
-                <a href="${pageContext.request.contextPath}/" class="btn btn-primary btn-lg">
-                    <i class="bi bi-house me-2"></i>홈으로
-                </a>
-            </div>
-        </div>
+            <div class="complete-actions text-center">
+	            <a href="${pageContext.request.contextPath}/mypage/payments" class="btn btn-outline btn-lg">
+	                <i class="bi bi-receipt me-2"></i>결제 내역 보기
+	            </a>
+	            <a href="${pageContext.request.contextPath}/" class="btn btn-primary btn-lg">
+	                <i class="bi bi-house me-2"></i>홈으로
+	            </a>
+	        </div>
+	    </div>
         
     	<!--  결제 실패 시 구간 만들기 -->
 		<div class="payment-fail" style="display: none">
-            <div class="complete-icon fail"> <i class="bi bi-exclamation-circle"></i> </div>
-            <h1 class="fail-title">결제가 실패되었습니다</h1>
-            <hr/>
-            <p class="fail-message"></p>
-			<div class="fail-details">
-				<div detail-row>
-					<span class="label">상품명</span>
-					<span class="value" id="orderFailName"></span>
-				</div>
-			</div>
-		</div>
-		</c:if>
+	        <div class="complete-icon fail">
+	            <i class="bi bi-exclamation-circle"></i>
+	        </div>
+	        <h1 class="fail-title">결제에 실패하였습니다</h1>
+	        <p class="fail-message text-danger"></p>
+	        
+	        <div class="fail-details-card">
+	            <div class="detail-row">
+	                <span class="label">실패 사유</span>
+	                <span class="value text-danger" id="failReason">네트워크 오류 또는 잔액 부족</span>
+	            </div>
+	            <div class="detail-row">
+	                <span class="label">주문 번호</span>
+	                <span class="value" id="orderFailName"></span>
+	            </div>
+	        </div>
+	        
+	        <div class="complete-actions">
+	            <button onclick="history.back()" class="btn btn-outline-secondary btn-lg">
+	                <i class="bi bi-arrow-left me-2"></i>다시 시도하기
+	            </button>
+	        </div>
+	    </div>
+	</c:if>
 		
 		
 		<!-- 서버 접근도 못했을때 -->
@@ -209,6 +227,9 @@ document.addEventListener("DOMContentLoaded", async function(){
 		if (pType === "tour") {
 			// 투어 상품 결제
 			await processTourPayment(customData, payNo, orderName, payDt, person, totalAmount, method, message);
+		} else if (pType === "accommodation") {
+			// 숙박 상품 결제
+		    await processAccommodationPayment(customData, payNo, orderName, payDt, person, totalAmount, method, message);
 		} else {
 			if(flightProduct) flightProduct = JSON.parse(flightProduct); 
 			
@@ -371,27 +392,101 @@ async function processTourPayment(customData, payNo, orderName, payDt, person, t
 		    document.querySelector(".payment-complete").style.display = "block";
 		    
 		    sessionStorage.removeItem("tourPaymentData");
+		    sessionStorage.removeItem("tourCart");
+		    sessionStorage.removeItem("tourCartCheckout");
 		    sessionStorage.removeItem("@tosspayments/session-id");
 		} else {
-			try {
-				const msgSplit = resultData.message.split(': "');
-				const jsonStr = msgSplit[msgSplit.length - 1].replace(/"$/, '');
-				const errorDetail = JSON.parse(jsonStr);
-				
-				message.innerHTML = errorDetail.message;
-				document.querySelector("#orderFailName").innerHTML = orderId.value;
-				document.querySelector(".payment-fail").style.display = "block";
-			} catch (e) {
-				console.error("파싱 실패:", e);
-				message.innerHTML = "결제 처리 중 오류가 발생했습니다.";
-				document.querySelector(".payment-fail").style.display = "block";
-			}
+			if (resultData.success === false && resultData.message) {
+		        message.innerHTML = resultData.message;
+		    } else {
+		        // 토스페이먼츠 API 에러
+		        try {
+		            const msgSplit = resultData.message.split(': "');
+		            const jsonStr = msgSplit[msgSplit.length - 1].replace(/"$/, '');
+		            const errorDetail = JSON.parse(jsonStr);
+		            message.innerHTML = errorDetail.message;
+		        } catch (e) {
+		            console.error("파싱 실패:", e);
+		            message.innerHTML = "결제 처리 중 오류가 발생했습니다.";
+		        }
+		    }
+		    
+		    document.querySelector("#orderFailName").innerHTML = orderId.value;
+		    document.querySelector(".payment-fail").style.display = "block";
 		}
 	} catch (error) {
 		console.error("결제 처리 오류:", error);
 		message.innerHTML = "결제 처리 중 오류가 발생했습니다.";
 		document.querySelector(".payment-fail").style.display = "block";
 	}
+}
+
+// ------- 숙박 상품 결제 -------
+async function processAccommodationPayment(customData, payNo, orderName, payDt, person, totalAmount, method, message) {
+  try{
+	let pendingBooking = JSON.parse(sessionStorage.getItem("pendingBooking"));
+    
+    console.log("숙소 대기 데이터:", pendingBooking);
+    
+    pendingBooking.resvMemNo = customData.memNo;
+    
+    const requestData = {
+        paymentKey: paymentKey.value,
+        orderId: orderId.value,
+        amount: amount.value,
+        paymentType: paymentType.value,
+        productType: "accommodation",
+        memNo: customData.memNo,
+        accResvVO: pendingBooking 
+    };
+
+    const response = await fetch("/product/payment/confirm", {
+        method: "post",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(requestData)
+    });
+    
+    const resultData = await response.json();
+    
+    if (response.ok) {
+        // UI 업데이트
+		payNo.innerText = resultData.orderId || "";
+        orderName.innerText = resultData.orderName || "";
+        
+        // 인원 구성
+        if (resultData.guestInfo) {
+            person.innerHTML = resultData.guestInfo; 
+        } else {
+        	let adult = pendingBooking.adultCnt || 0;
+            let child = pendingBooking.childCnt || 0;
+            let infant = pendingBooking.infantCnt || 0;
+            
+            let guestText = `성인 ${adult}명`;
+            if (child > 0) guestText += `, 아동 ${child}명`;
+            if (infant > 0) guestText += `, 유아 ${infant}명`;
+            person.innerHTML = guestText;
+        }
+        
+        // 이용일시 및 금액
+        payDt.innerHTML = pendingBooking.startDt + " ~ " + pendingBooking.endDt;
+        totalAmount.innerHTML = resultData.totalAmount.toLocaleString();
+        
+        // 결제 수단
+        method.innerHTML = resultData.method === '간편결제' ? resultData.easyPay.provider : resultData.method;
+        
+        // 화면 전환 및 세션 정리
+        document.querySelector(".payment-complete").style.display = "block";
+        sessionStorage.removeItem("pendingBooking"); // 성공했으니 세션 삭제
+	    } else {
+	        // 실패 처리 로직...
+	        document.querySelector(".payment-fail").style.display = "block";
+	        if (message) message.innerHTML = resultData.message || "결제 승인 중 오류가 발생했습니다.";
+	    }
+    } catch (error) {
+        console.error("결제 프로세스 에러:", error);
+        document.querySelector(".payment-fail").style.display = "block";
+    }
+    
 }
 </script>
 

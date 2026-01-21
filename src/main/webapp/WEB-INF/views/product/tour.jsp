@@ -140,6 +140,7 @@
 			                <!-- 투어 카드 1 -->
 			                <div class="tour-card" data-id="${tp.tripProdNo}" data-name="${tp.tripProdTitle}" data-price="${tp.price}" 
      							data-min-people="${tp.prodMinPeople != null ? tp.prodMinPeople : 1}"
+							    data-stock="${tp.curStock}"
 							    data-location="${tp.ctyNm}"
      							data-image="${not empty tp.thumbImage ? pageContext.request.contextPath.concat('/upload/product/').concat(tp.thumbImage) : 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80'}">
 			                    <a href="${pageContext.request.contextPath}/tour/${tp.tripProdNo}" class="tour-link">

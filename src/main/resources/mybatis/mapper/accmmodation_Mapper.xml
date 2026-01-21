@@ -364,6 +364,7 @@
 	                    , acc.ADDR1
 	                    , acc.ACC_FILE_PATH
 	                    , acc.STAR_GRADE
+	                    , acc.ACC_CAT_CD
 	                    
 	                      , <include refid="accFacilityColumns"/>
 				          
@@ -371,43 +372,77 @@
 	                      , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) AS FINAL_PRICE
 	                      , (SELECT MIN(PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) AS MIN_PRICE
 	                      , (SELECT COUNT(*) FROM PROD_REVIEW PR WHERE PR.TRIP_PROD_NO = t.TRIP_PROD_NO) AS REVIEW_COUNT
+	                      <!-- 평점 정렬용 -->
+	                      , (SELECT NVL(AVG(RATING), 0) FROM PROD_REVIEW PR WHERE PR.TRIP_PROD_NO = t.TRIP_PROD_NO) AS AVG_RATING
 	                FROM TRIP_PROD t
 	                JOIN ACCOMMODATION acc ON t.TRIP_PROD_NO = acc.TRIP_PROD_NO
 	                LEFT OUTER JOIN ACC_FACILITY AF ON acc.ACC_NO = AF.ACC_NO
 	                
 	                <where>
-				        AND t.PROD_CTGRY_TYPE = 'accommodation'
-				        AND (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
-				        AND t.APPROVE_STATUS = '판매중'
-				    
-				        <choose>
-				            <when test="accNo != null and accNo > 0">
-				                AND acc.ACC_NO = #{accNo}
-				            </when>
-				            <otherwise>
-				                <choose>
-				                    <when test="areaCode != null and areaCode != ''">
-				                        AND t.CTY_NM = #{areaCode}
-				                    </when>
-				                    <otherwise>
-				                        <if test="keyword != null and keyword != ''">
-				                            AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%' OR acc.ADDR1 LIKE '%' || #{keyword} || '%')
-				                        </if>
-				                    </otherwise>
-				                </choose>
-				            </otherwise>
-				        </choose>
-	                
-	                <if test="adultCount != null and adultCount > 0">
-					    AND EXISTS (
-					        SELECT 1 FROM ROOM_TYPE RT 
-					        WHERE RT.ACC_NO = acc.ACC_NO 
-					        AND RT.MAX_GUEST_COUNT >= #{adultCount}
-					    )
-					</if>
-					</where>
+                    AND t.PROD_CTGRY_TYPE = 'accommodation'
+                    AND (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
+                    AND t.APPROVE_STATUS = '판매중'
+                    
+                    <if test="accCatCd != null and accCatCd != ''">
+                        AND acc.ACC_CAT_CD = #{accCatCd}
+                    </if>
+                
+                    <choose>
+                        <when test="accNo != null and accNo > 0">
+                            AND acc.ACC_NO = #{accNo}
+                        </when>
+                        <otherwise>
+                            <choose>
+                                <when test="areaCode != null and areaCode != ''">
+                                    AND t.CTY_NM = #{areaCode}
+                                </when>
+                                <otherwise>
+                                    <if test="keyword != null and keyword != ''">
+                                        AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%' OR acc.ADDR1 LIKE '%' || #{keyword} || '%')
+                                    </if>
+                                </otherwise>
+                            </choose>
+                        </otherwise>
+                    </choose>
+                
+                    <if test="adultCount != null and adultCount > 0">
+                        AND EXISTS (
+                            SELECT 1 FROM ROOM_TYPE RT 
+                            WHERE RT.ACC_NO = acc.ACC_NO 
+                            AND RT.MAX_GUEST_COUNT >= #{adultCount}
+                        )
+                    </if>
+                    
+                    <if test="starGrade != null and starGrade != ''">
+                        AND acc.STAR_GRADE = #{starGrade}
+                    </if>
+
+                    <if test="priceRange != null and priceRange != ''">
+                        <choose>
+                            <when test="priceRange == '0-50000'">
+                                AND (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) &lt;= 50000
+                            </when>
+                            <when test="priceRange == '50000-100000'">
+                                AND (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) BETWEEN 50000 AND 100000
+                            </when>
+                            <when test="priceRange == '100000-200000'">
+                                AND (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) BETWEEN 100000 AND 200000
+                            </when>
+                            <when test="priceRange == '200000-'">
+                                AND (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) &gt;= 200000
+                            </when>
+                        </choose>
+                    </if>
+                </where>
+                
+                <choose>
+                    <when test="sortBy == 'price_low'"> ORDER BY FINAL_PRICE ASC, t.REG_DT DESC </when>
+                    <when test="sortBy == 'price_high'"> ORDER BY FINAL_PRICE DESC, t.REG_DT DESC </when>
+                    <when test="sortBy == 'rating'"> ORDER BY AVG_RATING DESC, t.REG_DT DESC </when>
+                    <when test="sortBy == 'review'"> ORDER BY REVIEW_COUNT DESC, t.REG_DT DESC </when>
+                    <otherwise> ORDER BY t.REG_DT DESC </otherwise>
+                </choose>
 	
-	                ORDER BY FINAL_PRICE ASC, t.REG_DT DESC
 	            ) a
 	            <![CDATA[ WHERE ROWNUM <= #{page} * #{pageSize} ]]>
 	        )
@@ -710,38 +745,59 @@
 	    )
 	</insert>
 	
-	<insert id="insertAccommodationReservation" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
+	<insert id="insertAccommodationReservaion" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
 	    <selectKey keyProperty="accResvNo" resultType="int" order="BEFORE">
 	        SELECT SEQ_ACC_RESV.NEXTVAL FROM DUAL
 	    </selectKey>
 	
 	    INSERT INTO ACC_RESV (
 	        ACC_RESV_NO
+	        , PAY_NO
 	        , ROOM_TYPE_NO 
 	        , RESV_MEM_NO
 	        , START_DT 
 	        , END_DT 
 	        , STAY_DAYS 
 	        , ARRIVE_TIME
-	        , REG_DT 
-	        , RESV_STATUS
 	        , ADULT_CNT
 	        , CHILD_CNT
 	        , INFANT_CNT
+	        , RESV_REQUEST
+	        , REG_DT 
+	        , RESV_STATUS
 	    ) VALUES (
 	        #{accResvNo} 
+	        , #{payNo}
 	        , #{roomTypeNo} 
 	        , #{resvMemNo} 
 	        , #{startDt}
 	        , #{endDt} 
 	        , #{stayDays} 
-	        , #{resvCnt}
 	        , #{arriveTime}
 	        , #{adultCnt}
 	        , #{childCnt}
 	        , #{infantCnt} 
+	        , #{resvRequest}
 	        , SYSDATE 
 	        , '결제완료'
+	    )
+	</insert>
+	
+	<insert id="insertAccResvAgree" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
+	    INSERT INTO ACC_RESV_AGREE (
+	        ACC_RESV_NO
+	        , STAY_TERM_YN
+	        , PRIVACY_AGREE_YN
+	        , REFUND_AGREE_YN
+	        , MARKET_AGREE_YN
+	        , REG_DT
+	    ) VALUES (
+	        #{accResvNo}
+	        , #{accResvAgree.stayTermYn}
+	        , #{accResvAgree.privacyAgreeYn}
+	        , #{accResvAgree.refundAgreeYn}
+	        , #{accResvAgree.marketAgreeYn}
+	        , SYSDATE
 	    )
 	</insert>
 </mapper>

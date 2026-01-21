@@ -17,8 +17,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper;
 import kr.or.ddit.mohaeng.flight.mapper.IFlightMapper;
 import kr.or.ddit.mohaeng.payment.mapper.IPaymentMapper;
+import kr.or.ddit.mohaeng.vo.AccResvAgreeVO;
+import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.FlightPassengersVO;
 import kr.or.ddit.mohaeng.vo.FlightProductVO;
 import kr.or.ddit.mohaeng.vo.FlightReservationVO;
@@ -38,6 +41,9 @@ public class PaymentServiceImpl implements IPaymentService {
 
 	@Autowired
 	private IFlightMapper flightMapper;
+	
+	@Autowired
+	private IAccommodationMapper accMapper;
 
 	@Override
 	@Transactional
@@ -195,13 +201,67 @@ public class PaymentServiceImpl implements IPaymentService {
 			    // 투어 인원 정보 추가
 			    int quantity = paymentVO.getTripProdList().get(0).getQuantity();
 			    responseBody.put("quantity", quantity + "명");
+			    
+			} else if(paymentVO.getProductType().equals("accommodation")) { // ★ 여기 추가!
+                // 1. 숙소 예약 로직 호출
+                result = accommodationPayConfirm(paymentVO); 
+                log.info("accommodation pay result : {}", result);
+                
+                // 2. 영수증 화면에 보여줄 인원 정보 가공 (성인 2, 아동 1...)
+                AccResvVO resv = paymentVO.getAccResvVO();
+                if(resv != null) {
+                    String guestInfo = "성인 " + resv.getAdultCnt() + "명";
+                    if(resv.getChildCnt() > 0) guestInfo += ", 아동 " + resv.getChildCnt() + "명";
+                    responseBody.put("guestInfo", guestInfo);
+                }
+                
+                if (result > 0) {
+                	accMapper.insertAccResvAgree(resv);
+                	log.info("약관 동의 저장 완료 : {}", resv.getAccResvNo());
+                }
 			}
 
 			return responseBody;
-		} else {
+		} 
+		
+		else {
 			log.error("결제 승인 API 실패: {}", response.getStatusCode());
 			return null;
-		}
+	}
+}
+	
+	/**
+	 * 숙박 상품 예약 확정 처리
+	 * @author kdrs
+	 */
+	@Transactional
+	private int accommodationPayConfirm(PaymentVO paymentVO) {
+	    int result = 0;
+	    AccResvVO resvVO = paymentVO.getAccResvVO();
+	    
+	    if (resvVO != null) {
+	        resvVO.setPayNo(paymentVO.getPayNo()); 
+	        
+	        result = accMapper.insertAccommodationReservaion(resvVO); 
+	        log.info("ACC_RESV 테이블 INSERT 결과 : {}", result);
+	        
+	     // 2. 약관 동의 객체가 null일 때 처리
+	        if (resvVO.getAccResvAgree() == null) {
+	            AccResvAgreeVO agreeVO = new AccResvAgreeVO();
+	            
+	            // ★ [중요] resvVO에서 바로 꺼내서 agreeVO에 세팅해야 함!
+	            // (AccResvVO에 stayTermYn 등의 필드가 있다는 전제하에)
+	            agreeVO.setStayTermYn(resvVO.getStayTermYn());
+	            agreeVO.setPrivacyAgreeYn(resvVO.getPrivacyAgreeYn());
+	            agreeVO.setRefundAgreeYn(resvVO.getRefundAgreeYn());
+	            agreeVO.setMarketAgreeYn(resvVO.getMarketAgreeYn());
+	            
+	            // 3. 생성한 객체를 다시 resvVO에 꽂아줌
+	            resvVO.setAccResvAgree(agreeVO);
+	        }
+	    }
+	    
+	    return result;
 	}
 
 	/**

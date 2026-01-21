@@ -17,11 +17,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.admin.memUser.service.IGeneralService;
+import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,9 @@ public class AdminGeneralController {
 
 	@Autowired
 	private IGeneralService generalService;
+
+	@Autowired
+	private IFileService fileService;
 
 	/**
      * [추가] 화면 초기 로드 시 필요한 공통 코드 및 설정 데이터 조회
@@ -280,5 +285,26 @@ public class AdminGeneralController {
 			pagInfoVO.setSearchType(searchType);
 		}
 	 	generalService.downloadMemberExcel(response.getOutputStream(),pagInfoVO);
+	}
+	//[추가]프로필 파일 업로드
+	@PostMapping("/profile/upload")
+	public ResponseEntity<Map<String, Object>> uploadProfile(@RequestParam("file") MultipartFile file, HttpSession session){
+		Map<String, Object> response = new HashMap<>();
+		try {
+			MemberVO loginMember = (MemberVO) session.getAttribute("loginMember");
+			int regId = loginMember.getMemNo();
+
+			int attachNo = fileService.saveFile(file, regId);
+
+			response.put("success", true);
+	        response.put("attachNo", attachNo);
+	        return ResponseEntity.ok(response);
+
+		} catch (Exception e) {
+			response.put("success", false);
+	        response.put("message", "파일 업로드 실패");
+	        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+		}
+
 	}
 }

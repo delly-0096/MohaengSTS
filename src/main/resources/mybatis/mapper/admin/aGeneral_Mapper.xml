@@ -42,6 +42,8 @@
                     , M.MEM_NAME
                     , M.MEM_EMAIL
                     , M.MEM_STATUS
+                    , M.MEM_PROFILE
+                    , AFD.FILE_PATH AS MEM_PROFILE_PATH
                     , M.REG_DT
                     , M.UDT_DT
                     , M.ENABLED
@@ -53,8 +55,11 @@
                     , C.CD_NAME AS MEM_STATUS_NAME
                 FROM MEMBER M
                 LEFT OUTER JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+                LEFT OUTER JOIN ATTACH_FILE_DETAIL AFD ON M.MEM_PROFILE = AFD.ATTACH_NO
                 LEFT OUTER JOIN CODE C ON (M.MEM_STATUS = C.CD AND C.CDGR = 'MEMBER_STATUS')
+                INNER JOIN MEMBER_AUTH MA ON M.MEM_NO = MA.MEM_NO
                 WHERE 1=1
+                AND MA.AUTH = 'ROLE_MEMBER'
                 <include refid="memberSearch"/>
                 ORDER BY M.MEM_NO DESC
             ) A
@@ -74,6 +79,7 @@
         SELECT
               M.*
             , U.*
+            , AFD.FILE_PATH AS MEM_PROFILE_PATH
             , AL.RSVT_ALARM_YN
             , AL.SCHD_ALARM_YN
             , AL.COMM_ALARM_YN
@@ -89,6 +95,7 @@
             , C.CD_NAME AS MEM_STATUS_NAME
         FROM MEMBER M
         LEFT OUTER JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+        LEFT OUTER JOIN ATTACH_FILE_DETAIL AFD ON M.MEM_PROFILE = AFD.ATTACH_NO
         LEFT OUTER JOIN ALARM_CONFIG AL ON M.MEM_NO = AL.MEM_NO
         LEFT OUTER JOIN MEMBER_TERMS_AGREE TA ON M.MEM_NO = TA.MEM_NO
         LEFT OUTER JOIN MARKETING_CONSENT MC ON M.MEM_NO = MC.MEM_NO
@@ -98,7 +105,7 @@
 
     <insert id="insertMember" parameterType="kr.or.ddit.mohaeng.vo.MemberVO">
         <selectKey keyProperty="memNo" resultType="int" order="BEFORE">
-            SELECT SEQ_MEMBER.NEXTVAL FROM DUAL
+            SELECT SEQ_MEMBER_NO.NEXTVAL FROM DUAL
         </selectKey>
         INSERT INTO MEMBER (
               MEM_NO
@@ -153,7 +160,7 @@
 
     <insert id="insertMemberAuth" parameterType="int">
         INSERT INTO MEMBER_AUTH (MEM_AUTH_NO, MEM_NO, AUTH, REG_DT)
-        VALUES (SEQ_MEMBER_AUTH.NEXTVAL, #{memNo}, 'ROLE_MEMBER', SYSDATE)
+        VALUES (SEQ_MEMBER_AUTH_NO.NEXTVAL, #{memNo}, 'ROLE_MEMBER', SYSDATE)
     </insert>
 
     <insert id="insertAlarmConfig" parameterType="kr.or.ddit.mohaeng.vo.AlarmConfigVO">
@@ -218,6 +225,7 @@
             , MEM_EMAIL = #{memEmail}
             , MEM_STATUS = #{memStatus}
             , ENABLED = #{enabled}
+            , MEM_PROFILE = #{memProfile}
             , UDT_DT = SYSDATE
         WHERE MEM_NO = #{memNo}
     </update>
@@ -282,18 +290,31 @@
     <select id="getCodeListByGroup" parameterType="string" resultType="kr.or.ddit.mohaeng.vo.CodeVO">
         SELECT CD, CDGR, CD_NAME, CD_DESC
         FROM CODE
-        WHERE CDGR = #{cdgr} AND CD_YN = 'Y'
+        WHERE CDGR = #{cdgr} AND USE_YN = 'Y'
         ORDER BY CD
     </select>
 
     <select id="getAllMemList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultMap="memberMap">
     	SELECT
-            M.MEM_NO, M.MEM_ID, M.MEM_NAME, M.MEM_EMAIL, M.MEM_STATUS,
-            M.REG_DT, M.UDT_DT, M.ENABLED, M.DEL_YN,
-            U.NICKNAME, U.TEL, U.BIRTH_DATE, U.GENDER,
-            C.CD_NAME AS MEM_STATUS_NAME
+            M.MEM_NO
+          , M.MEM_ID
+          , M.MEM_NAME
+          , M.MEM_EMAIL
+          , M.MEM_STATUS
+          , M.MEM_PROFILE
+          , AFD.FILE_PATH AS MEM_PROFILE_PATH
+          , M.REG_DT
+          , M.UDT_DT
+          , M.ENABLED
+          , M.DEL_YN
+          , U.NICKNAME
+          , U.TEL
+          , U.BIRTH_DATE
+          , U.GENDER
+          , C.CD_NAME AS MEM_STATUS_NAME
         FROM MEMBER M
         LEFT OUTER JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+        LEFT OUTER JOIN ATTACH_FILE_DETAIL AFD ON M.MEM_PROFILE = AFD.ATTACH_NO
         LEFT OUTER JOIN CODE C ON (M.MEM_STATUS = C.CD AND C.CDGR = 'MEMBER_STATUS')
         WHERE 1=1
         <include refid="memberSearch"/>

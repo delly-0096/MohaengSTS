@@ -169,7 +169,7 @@
 				                        </span>
 			                    	</c:when>
 			                    	<c:otherwise>
-				                    	<!-- 숙박 상품인 경우  -->
+				                    	<!-- 숙박 상품인 경우, 할인된 가격도 가져와야됨  -->
 				                        <span class="sale-price">
 				                        	<fmt:formatNumber value="${prod.displayPrice}" pattern="#,###"/>원 ~
 				                        </span>
@@ -209,7 +209,6 @@
 			                        		</c:when>
 			                        		<c:otherwise>
 	<%-- 				                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원 --%>
-													<!--  -->
 												<div>아직 안불러옴</div>
 			                        		</c:otherwise>
 			                        	</c:choose>
@@ -261,7 +260,6 @@
     </div>
 </div>
 
-<!-- accommodation -> -->
 <!-- 상품 등록/수정 모달 -->
 <div class="modal fade" id="productModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -350,8 +348,24 @@
                             </div>
                         </div>
                         <input type="text" class="form-control mt-2" name="prodPlace.addr2" placeholder="상세주소 (건물명, 층, 호수 등)">
-                        <input type="hidden" name="latitude" id="productLatitude">
-                        <input type="hidden" name="longitude" id="productLongitude">
+                        <div class="mb-3" id="mapSection" style="display: none;">
+						    <label class="form-label">위치 확인</label>
+						    <div id="registerMap" style="width: 100%; height: 250px; border-radius:12px; border: 1px solid #ddd;"></div>
+						</div>
+                        
+                        <input type="hidden" name="latitude" id="productLatitude"/>
+                        <input type="hidden" name="longitude" id="productLongitude"/>
+                        
+                        <!-- 상품용 -->
+                        <input type="hidden" name="accommodation.addr1" id="accAddr1">
+					    <input type="hidden" name="accommodation.addr2" id="accAddr2">
+					    
+					    <!-- 숙박용 -->
+					    <input type="hidden" name="accommodation.mapx" id="productLongitude"> 
+					    <input type="hidden" name="accommodation.mapy" id="productLatitude">  
+					    <input type="hidden" class="form-control mt-2" id="detailAddressInput" 
+					           placeholder="상세주소 (건물명, 층, 호수 등)" oninput="syncDetailAddress(this.value)">
+                        
                     </div>
                     <div class="mb-3" id="descriptionField">
                         <label class="form-label">상품 설명 <span class="text-danger">*</span></label>
@@ -365,9 +379,8 @@
 	                    </div>
 	                    <div class="row mb-3">
 	                        <div class="col-md-4">
+	                        	<!-- 시간을 ~로 해야될지 감이 안잡힌다 -->
 	                            <label class="form-label">운영 시간 <span class="text-danger">*</span></label>
-	<!--                             <input type="time" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required> -->
-								<!-- text를 time으로 변경해서 해볼지?? -->
 	                            <input type="text" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required>
 	                        </div>
 	                        <div class="col-md-4">
@@ -401,7 +414,7 @@
 	                            </div>
 	                            <div class="booking-time-add">
 	                                <div class="input-group">
-	                                    <input type="time" class="form-control" id="newBookingTime"><!--  -->
+	                                    <input type="time" class="form-control" id="newBookingTime"/>
 	                                    <button type="button" class="btn btn-outline" onclick="addBookingTime()">
 	                                        <i class="bi bi-plus-lg"></i> 시간 추가
 	                                    </button>
@@ -414,7 +427,7 @@
 	                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="addPresetTimes('hourly')">1시간 단위</button>
 	                            </div>
 	                        </div>
-	                        <input type="hidden" name="bookingTimes" id="bookingTimesInput">	<!-- 시간 정보 저장 -->
+	                        <input type="hidden" name="bookingTimes" id="bookingTimesInput"/>	<!-- 시간 정보 저장 -->
 	                    </div>
 	                    <div class="row mb-3">
 	                        <div class="col-md-6">
@@ -431,7 +444,6 @@
 	                        <textarea class="form-control" name="prodInfo.prodNotice" rows="3" placeholder="예약 및 이용 시 유의해야 할 사항을 입력하세요"></textarea>
 	                    </div>
                     </div><!-- /defaultInfoSection -->
-
 
 
                     <!-- 숙박 전용 필드 여기에 그냥 추가를 하자 너무 김-->
@@ -482,7 +494,6 @@
                                 <input type="time" class="form-control" name="accommodation.checkOutTime">
                             </div>
                         </div>
-
 
                         <div class="form-section-title">
                             <i class="bi bi-door-open me-2"></i>객실 정보
@@ -639,29 +650,21 @@
 	                            </div>
 	                        </div>
 	                    </div>
-	                    <!-- 얘네 같이 보여줄래 -->
-	                    <div class="row mb-3">
-	                        <div class="col-md-6">
-	                            <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
-	                            <input type="text" class="form-control date-picker" name="saleStartDt" placeholder="시작일 선택" required>
-	                        </div>
-	                        <div class="col-md-6">
-	                            <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
-	                            <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택" required>
-	                        </div>
-	                    </div>
-	                    <div class="mb-3">
+                    </div><!-- /defaultPriceSection -->
+                    
+                    
+<!-- 	                    <div class="mb-3">
 	                        <label class="form-label">상품 이미지</label>
-	                        <!--  multipart, 선택한 이미지 보여주기. attachNo에 맞는게 대표이미지. 이거에 뭔가 걸어야겠다. -->
+	                         multipart, 선택한 이미지 보여주기. attachNo에 맞는게 대표이미지. 이거에 뭔가 걸어야겠다.
 	                        <input type="file" class="form-control" name="productImage" accept="image/*"  onchange="renderImageList(this)" multiple/>
-	                        <input type="hidden" name="image.attachNo" /><!-- 상품 이미지 -->
+	                        <input type="hidden" name="image.attachNo" />상품 이미지
+
 	                        <div class="productImageList"></div>
 	                        <div class="form-text">권장 크기: 800x600px, 최대 5MB</div>
-	                    </div>
-                    </div><!-- /defaultPriceSection -->
+	                    </div> -->
 
                     <!-- 공통 판매 기간 (숙박용) -->
-                    <div id="accomDateSection" style="display: none;">
+                    <!-- <div id="accomDateSection" style="display: none;">
                         <div class="form-section-title">
                             <i class="bi bi-calendar-range me-2"></i>판매 기간
                         </div>
@@ -678,10 +681,45 @@
                         <div class="mb-3" id="accomImageField">
                             <label class="form-label">상품 이미지</label>
                             <input type="file" class="form-control" name="productImageAlt" accept="image/*" multiple>
-                            <!--  숙소 이미지 -->
+                             숙소 이미지
                             <div class="form-text" id="imageList">숙소 대표 이미지를 등록하세요 (최대 5장)</div>
                         </div>
-                    </div>
+                    </div> -->
+                    
+                    <!-- 공통파트 -->
+                    <div id="commonSaleSection">
+					    <div class="form-section-title">
+					        <i class="bi bi-calendar-check me-2"></i>판매 기간 및 대표 이미지
+					    </div>
+					    <div class="row mb-3">
+					        <div class="col-md-6">
+					            <label class="form-label">판매 시작일 <span class="text-danger">*</span></label>
+					            <input type="text" class="form-control date-picker" name="saleStartDt" placeholder="시작일 선택" required>
+					        </div>
+					        <div class="col-md-6">
+					            <label class="form-label">판매 종료일 <span class="text-danger">*</span></label>
+					            <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택" required>
+					        </div>
+					    </div>
+					
+                        
+					    <div class="mb-3">
+					        <label class="form-label">상품 대표 이미지 <span class="text-danger">*</span></label>
+					        <input type="file" class="form-control" name="mainImage" accept="image/*" onchange="renderMainImagePreview(this)" required>
+					        <div id="mainImagePreview" class="mt-2"></div>
+					        <div class="form-text">상품 리스트에 노출될 대표 사진입니다.</div>
+					    </div>
+					    
+                        <input type="hidden" name="image.attachNo" />상품 이미지
+                        <div class="productImageList"></div>
+					
+					    <div id="accommodationAdditionalImages" style="display: none;">
+					        <label class="form-label">숙소 상세 이미지 (최대 5장)</label>
+					        <input type="file" class="form-control" name="subImages" accept="image/*" multiple onchange="renderSubImagesPreview(this)">
+					        <div id="subImagesPreview" class="productImageList mt-2"></div>
+					    </div>
+					</div>
+                    
                 </form>
             </div>
             <div class="modal-footer">
@@ -698,49 +736,65 @@
 <c:set var="hasInlineScript" value="true" />
 <!-- 다음 주소 검색 -->
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+<!-- 카카오맵 -->
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=0a4b8e6c128016aa0df7300b3ab799f1&libraries=services&autoload=false"></script>
 <%@ include file="../common/footer.jsp" %>
 
 
 <script>
-let modal = null;	// 모달 객체
-let bookingTimes = [];	// 예약 가능 시간 목록
-let imageList = [];		// 이미지 정보 목록
+let modal = null;			// 모달 객체
+let bookingTimes = [];		// 예약 가능 시간 목록
+let imageList = [];			// 이미지 정보 목록
+
+let timeListContainer;		// 예약가능시간 출력란
+let imageContainer;			// 사진출력란
+let roomTypeContainer;		// 숙소 타입 출력란
+let addonOptionsContainer; 	// 추가 옵션 출력란
+let category;				// 카테고리
 
 let startDatePicker;
 let endDatePicker;
 
-// 페이지 로드 완료 후 초기화
-$(document).ready(function() {
-    // 날짜 선택기 초기화
-    const startDateInput = document.querySelector('input[name="startDate"]');
-    const endDateInput = document.querySelector('input[name="endDate"]');
-
-    // endDate는 그걸로
-    if (startDateInput && typeof flatpickr !== 'undefined') {
-        startDatePicker = flatpickr(startDateInput, {
-            locale: 'ko',
-            dateFormat: 'Y-m-d',
-            minDate: 'today',
-            disableMobile: true,
-            onChange: function(selectedDates) {
-                if (selectedDates.length > 0 && endDatePicker) endDatePicker.set('minDate', selectedDates[0]);
-            }
-        });
-    }
-
-    if (endDateInput && typeof flatpickr !== 'undefined') {
-        endDatePicker = flatpickr(endDateInput, {
-            locale: 'ko',
-            dateFormat: 'Y-m-d',
-            minDate: 'today',
-            disableMobile: true
-        });
-    }
-
-    // 모달이 열릴 때 폼 초기화
-    $('#productModal').on('show.bs.modal', function() {
-        // 날짜 선택기 초기화는 setModalForNew에서 처리
-    });
+document.addEventListener('DOMContentLoaded', function() {
+	const modalElem = document.getElementById('productModal');
+    if (modalElem) modal = new bootstrap.Modal(modalElem);
+	
+    // 컨테이너 지정
+	timeListContainer = document.getElementById('bookingTimeList');
+	imageContainer = document.querySelector(".productImageList");
+	roomTypeContainer = document.getElementById('roomTypeContainer');
+	addonOptionsContainer = document.getElementById('addonOptionsContainer');
+	
+	// 카테고리 
+	category = document.getElementById('productCategory');
+	
+	const startDateInput = document.querySelector('input[name="startDate"]');
+	const endDateInput = document.querySelector('input[name="endDate"]');
+	
+	// endDate는 그걸로
+	if (startDateInput && typeof flatpickr !== 'undefined') {
+	    startDatePicker = flatpickr(startDateInput, {
+	        locale: 'ko',
+	        dateFormat: 'Y-m-d',
+	        minDate: 'today',
+	        disableMobile: true,
+	        onChange: function(selectedDates) {
+	            if (selectedDates.length > 0 && endDatePicker) endDatePicker.set('minDate', selectedDates[0]);
+	        }
+	    });
+	}
+	
+	if (endDateInput && typeof flatpickr !== 'undefined') {
+	    endDatePicker = flatpickr(endDateInput, {
+	        locale: 'ko',
+	        dateFormat: 'Y-m-d',
+	        minDate: 'today',
+	        disableMobile: true
+	    });
+	}
+	
+	// 초기화
+    updateSelectedCount();
 });
 
 // 새 상품 등록 모달 설정
@@ -768,56 +822,67 @@ function setModalForNew() {
 }
 
 // 상품 수정 모달 설정
-async function editProduct(prodData) {
-	const { id, no } = prodData.dataset;	// tripProdNo랑 accNo
+async function editProduct(data) {
+	const { id, no } = data.dataset;	// tripProdNo랑 accNo
 	console.log("editProduct : id, no" +  id  + " " + no);
-	const container = document.getElementById('bookingTimeList');	// 시간 목록 초기화
-	container.innerHTML = ``;
-	const imageContainer = document.querySelector(".productImageList");	// 사진목록 초기화
+	
+	timeListContainer.innerHTML = ``;
 	imageContainer.innerHTML = ``;
+	roomTypeContainer.innerHTML = ``;
+	
 	bookingTimes = [];
 	imageList = [];
 	
 	// 정보를 불러와야지
 	try {
-
 		const requestData = {tripProdNo: id}; 
 		if (no != 0)  requestData.accNo = no;
 		
         const response = await axios.post(`/business/product/productDetail`, requestData);
+        const data = response.data;
+        console.log("data : ", data);
         
-        const prodData = response.data;
-        // 예약정보 담기
+        // 미리 세팅
+        category.value = data.prodCtgryType;
+		toggleCategoryFields();
         
-        //
+		// 숙박 타입일때 그만큼 방 만들기
+		// 빈 폼 생성 (이 함수 안에서 name이 순서대로 부여되어야 함)
+		if (data.prodCtgryType === 'accommodation' && data.roomTypeList) {
+			data.roomTypeList.forEach((room, index) => addRoomType());
+        }
+		
+		// 시간 담기
+        if(data.prodTimeList && data.prodTimeList.length > 0){
+        	bookingTimes = data.prodTimeList.map(time => time.rsvtAvailableTime);
+        	renderBookingTimes();
+        }
         
-        // 숙박 정보 불러오기
-//         if(prodData.prodCtgryType === "accommodation"){
-//         	console.log("데이터 변경");
+		// 사진 담기
+        if(data.imageList && data.imageList.length > 0 ){
+        	imageList = [...data.imageList];	// 여기서 꺼내서 쓰자
+        	renderImageList();
+        }
+        
+		renderProductData(data);	// 상품 불러오기
+		
+		// 6. [추가] 화면용 주소창 동기화 (Hidden 필드 말고 검색창에 보여주기)
+// 		if (data.prodCtgryType === 'accommodation' && data.accommodation) {
+//             document.getElementById('productAddress').value = data.accommodation.addr1 || '';
+//             // 주소가 있다면 지도도 바로 띄워주기 (선택사항)
+//             if(data.accommodation.addr1) {
+//                 setTimeout(() => showMapForAcc(data.accommodation.addr1), 500);
+//             }
+//         } else if (data.prodPlace) {
+//             document.getElementById('productAddress').value = data.prodPlace.addr1 || '';
 //         }
-        
-//         else{
-	        if(prodData.prodTimeList != null && prodData.prodTimeList.length > 0){
-	        	bookingTimes = prodData.prodTimeList.map(time => time.rsvtAvailableTime);
-	        	renderBookingTimes();
-	        }
-	        if(prodData.imageList != null && prodData.imageList.length > 0 ){
-	        	console.log("사진 조회용 : ", prodData.imageList );
-	        	imageList = [...prodData.imageList];	// 여기서 꺼내서 쓰자
-		        console.log("prodData.imageList : ", prodData.imageList);
-	        	console.log("imageList : ", imageList);
-	        	renderImageList();
-	        }
-			renderProductData(prodData);	// 상품 불러오기
-//         }
-		toggleCategoryFields();	// value에 따라 duratino나오는게 달라짐
 		
         document.getElementById('productModalTitle').textContent = '상품 수정';
 		document.querySelector("#update").style.display = "block";
 		document.querySelector("#register").style.display = "none";
         
 		// 방 수만큼 넣어야됨
-// 		addRoomType();
+		modal.show()
         setTimeout(() => {modal.show()}, 300);
     } catch (error) {
         console.error("데이터 로드 중 error 발생: ", error);
@@ -828,7 +893,6 @@ async function editProduct(prodData) {
 function renderImageList(imageData = ""){
 	// imageList = 5개까지만 가능
 	console.log("imageData : ", imageData.value);
-	const imageContainer = document.querySelector(".productImageList");	// imageList = 숙박 전용
 	let html = ``;
 	if(imageList.length >= 5){
 		showToast("사진은 5개까지만 가능합니다!!", "error");
@@ -851,22 +915,22 @@ function renderImageList(imageData = ""){
         imageContainer.innerHTML += html;
     }
     // hidden input에 JSON으로 저장
-    console.log("JSON.stringify(imageList) : ", JSON.stringify(imageList));
+//     console.log("JSON.stringify(imageList) : ", JSON.stringify(imageList));
 //     document.getElementById('bookingTimesInput').value = JSON.stringify(imageList);
 // 사진정보는 어떻게 hidden 에 넣어말어
 }
 
 // 수정할 상품 정보 modal에 세팅
-function renderProductData(prodData, prefix = ""){
-	if (!prodData) return;
+function renderProductData(data, prefix = ""){
+	if (!data) return;
 	
-    Object.keys(prodData).forEach(key => {
-        const value = prodData[key];
+    Object.keys(data).forEach(key => {
+        const value = data[key];
         const nameAttr = prefix ? `\${prefix}.\${key}` : key;
         
         if (value !== null && typeof value === 'object' && key !== "prodTimeList") {	// key가 prodTimeList일때 value는 object
             // value가 객체(prodSale, prodInfo 등)인 경우 재귀 호출
-            console.log("object key : ", key);
+//             console.log("object key : ", key);
             renderProductData(value, nameAttr);
         } else {
             // 실제 DOM 요소 찾기
@@ -875,7 +939,7 @@ function renderProductData(prodData, prefix = ""){
             if (tag) {
                 if (tag.type === 'checkbox') tag.checked = value === 'Y';
                 else if(key === "saleStartDt" || key === "saleEndDt"){
-                	let dateSet = prodData[key].split("T");
+                	let dateSet = data[key].split("T");
                 	tag.value = dateSet[0];
                 }  else tag.value = value ?? '';	  // 일반 text, number, hidden 등 value가 null이나 undefined일 경우는 ''가 된다
             }
@@ -899,21 +963,20 @@ async function saveProduct(data) {
    		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
     } 
     
-    // insert
+    // insert 구현해야된다
     else {
 		const res = await axios.post(`/business/product/insert`, formData);
    		console.log("saveProduct res.data : " + res.data);
    		if(res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
    		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
     }
-    // insert문 
+    
     if (modal) modal.hide();
 }
 
-
 // 상품 상태 변경 - update
-function toggleProductStatus(prodData) {
-	const { id, status } = prodData.dataset;
+function toggleProductStatus(data) {
+	const { id, status } = data.dataset;
 	
     if (confirm('상품 상태를 변경하시겠습니까?')) {
         axios.post(`/business/product/changeProductStatus`, {
@@ -933,8 +996,8 @@ function toggleProductStatus(prodData) {
 }
 
 // 상품 삭제
-function deleteProduct(prodData) {
-	const { id } = prodData.dataset;
+function deleteProduct(data) {
+	const { id } = data.dataset;
     if (confirm('정말 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.')) {
         axios.post(`/business/product/removeProduct`, {
         	tripProdNo : id
@@ -951,10 +1014,9 @@ function deleteProduct(prodData) {
     }
 }
 
-// 필터링 - 검색
+// 필터링 - 검색(스크립트로)
 function filterProducts() {
-    // TODO: 필터링 로직 구현
-    console.log('Filtering products...');
+    // 스크립트
 }
 
 // ==================== 예약 가능 시간 관리 ====================
@@ -988,14 +1050,12 @@ function removeBookingTime(time) {
 
 // 시간 목록 렌더링 - 여기서 데이터 받자
 function renderBookingTimes() {
-	const container = document.getElementById('bookingTimeList');
 
-    if (bookingTimes.length === 0) container.innerHTML = '';
+    if (bookingTimes.length === 0) timeListContainer.innerHTML = '';
     else {
         var html = bookingTimes.map(time => {
-            
             let displayTime = ""; // 24시간 형식을 보기 좋게 변환
-            if(time.length > 5) displayTime = formatTime(time);
+            if (time.length > 5) displayTime = formatTime(time);
             return `<span class="booking-time-slot">
                        <i class="bi bi-clock"></i>\${displayTime === "" ? time : displayTime}
                        <button type="button" class="remove-time" onclick="removeBookingTime('\${time}')">
@@ -1003,10 +1063,9 @@ function renderBookingTimes() {
                        </button>
                    </span>`;
         }).join('');
-        container.innerHTML = html;
+        timeListContainer.innerHTML = html;
     }
     // hidden input에 JSON으로 저장
-    console.log("JSON.stringify(bookingTimes) : ", JSON.stringify(bookingTimes));
     document.getElementById('bookingTimesInput').value = bookingTimes.join(',');
     // JSON.stringify(bookingTimes) 시간 정보만 담김 -> rsvtAvailableTime이거에 매칭 시켜야됨
 }
@@ -1056,19 +1115,19 @@ function searchAddress() {
     new daum.Postcode({
         oncomplete: function(data) {
             // 주소 정보 설정
-            var address = data.roadAddress || data.jibunAddress;
+            const address = data.roadAddress || data.jibunAddress;
             document.getElementById('productAddress').value = address;
 
             // 좌표 검색 (카카오 맵 API) - 이건 천천히
-//             if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
-//                 var geocoder = new kakao.maps.services.Geocoder();
-//                 geocoder.addressSearch(address, function(result, status) {
-//                     if (status === kakao.maps.services.Status.OK) {
-//                         document.getElementById('productLatitude').value = result[0].y;
-//                         document.getElementById('productLongitude').value = result[0].x;
-//                     }
-//                 });
-//             }
+            if (typeof kakao !== 'undefined' && kakao.maps && kakao.maps.services) {
+                var geocoder = new kakao.maps.services.Geocoder();
+                geocoder.addressSearch(address, function(result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        document.getElementById('productLatitude').value = result[0].y;
+                        document.getElementById('productLongitude').value = result[0].x;
+                    }
+                });
+            }
         }
     }).open();
 }
@@ -1127,11 +1186,9 @@ function updateSelectedCount() {
 function getSelectedProductIds() {
 	var checkedCheckboxes = document.querySelectorAll('.product-select-checkbox:checked');
     const ids = [];	// 
+// 	    console.log("getSelectedProductIds id", cb.value);
     // approved 상태도 바꿔야될듯
-    checkedCheckboxes.forEach(cb => {
-	    console.log("getSelectedProductIds id", cb.value);
-    	ids.push(cb.value);
-    });
+    checkedCheckboxes.forEach(cb => ids.push(cb.value));
     return ids;
 }
 
@@ -1163,8 +1220,7 @@ function pauseSelectedProducts() {
 
     // 선택 해제
     clearProductSelection();
-
-    if (typeof showToast === 'function') showToast(selectedIds.length + '개의 상품이 중지되었습니다.', 'success');
+    showToast(selectedIds.length + '개의 상품이 중지되었습니다.', 'success');
 
     // 통계 업데이트
     updateProductStats();
@@ -1271,34 +1327,29 @@ function updateProductStats() {
     }
 }
 
-// 페이지 로드 시 선택 수 초기화
-$(document).ready(function() {
-    updateSelectedCount();
-});
-
 // ==================== 카테고리별 필드 전환 ====================
 function toggleCategoryFields() {
-    var category = document.getElementById('productCategory').value;
-
     // 기본 섹션들
-    var regionField = document.getElementById('regionField');
-    var durationField = document.getElementById('durationField');
-    var descriptionField = document.getElementById('descriptionField');
-    var defaultInfoSection = document.getElementById('defaultInfoSection');
-    var defaultPriceSection = document.getElementById('defaultPriceSection');
-    var productNameField = document.getElementById('productNameField');
-    var locationField = document.getElementById('locationField');
-
+    const regionField = document.getElementById('regionField');
+    const durationField = document.getElementById('durationField');
+    const descriptionField = document.getElementById('descriptionField');
+    const defaultInfoSection = document.getElementById('defaultInfoSection');
+    const defaultPriceSection = document.getElementById('defaultPriceSection');
+    const productNameField = document.getElementById('productNameField');
+    const locationField = document.getElementById('locationField');
+	
     // 숙박 섹션들
-    var accommodationFields = document.getElementById('accommodationFields');
-    var accomDateSection = document.getElementById('accomDateSection');
-    var accomImageField = document.getElementById('accomImageField');
-
+    const accommodationFields = document.getElementById('accommodationFields');
+//     const accomImageField = document.getElementById('accomImageField');
+	const accommodationAdditionalImages = document.getElementById('accommodationAdditionalImages');	// 숙박에서만 보여줄것
+    
+    // 일반 정보 섹션 제어
+    
     // 모든 섹션 초기화 (숨기기)
     accommodationFields.style.display = 'none';
-    accomDateSection.style.display = 'none';
-
-    if (category === 'accommodation') {
+    accommodationAdditionalImages.style.display = 'none';
+    
+    if (category.value === 'accommodation') {
         // 숙박 선택 시
         productNameField.style.display = 'block';
         locationField.style.display = 'block';
@@ -1309,9 +1360,8 @@ function toggleCategoryFields() {
         defaultPriceSection.style.display = 'none';
 
         accommodationFields.style.display = 'block';
-        accomDateSection.style.display = 'block';
-        accomImageField.style.display = 'block';
-
+//         accomImageField.style.display = 'block';
+	    accommodationAdditionalImages.style.display = 'block';
     } else {
         // 기본 상품 (이외의 상품)
         productNameField.style.display = 'block';
@@ -1321,140 +1371,142 @@ function toggleCategoryFields() {
         descriptionField.style.display = 'block';
         defaultInfoSection.style.display = 'block';
         defaultPriceSection.style.display = 'block';
+        
+	    accommodationAdditionalImages.style.display = 'none';
     }
 }
 
 // ==================== 객실 타입 관리 ====================
-var roomTypeIndex = 1;
-
 function addRoomType() {
-    const container = document.getElementById('roomTypeContainer');
-    var index = roomTypeIndex++;	// 추가하는데 번호는 list 사이즈의 index만큼
+	// 처음에는 아무것도 없기에 0부터 시작
+	const index = roomTypeIndexContainer.children.length;
+	// 객실 타입 \${index + 1}은 화면에만 보여지는 것
+	
+    const roomHtml =
+        `<div class="room-type-item" data-room-index="\${index}">
+            <div class="room-type-header">
+                <h6><i class="bi bi-door-closed me-2"></i>객실 타입 \${index + 1}</h6>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRoomType('\${index}')">
+                    <i class="bi bi-x"></i> 삭제
+                </button>
+            </div>
+            <input type="hidden" name="roomTypeList[\${index}].roomNo" />
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">객실명 <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" name="roomName" placeholder="예: 디럭스 트윈">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">기준 인원 <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" name="roomCapacity" placeholder="2" min="1">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">최대 인원</label>
+                    <input type="number" class="form-control" name="roomMaxCapacity" placeholder="4" min="1">
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <label class="form-label">1박 가격 <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="roomPrice" placeholder="0">
+                        <span class="input-group-text">원</span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">할인율</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="roomDiscount" placeholder="0" min="0" max="100">
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">잔여 객실 <span class="text-danger">*</span></label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="roomStock" placeholder="0" min="0">
+                        <span class="input-group-text">실</span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">객실 크기</label>
+                    <div class="input-group">
+                        <input type="number" class="form-control" name="roomSize" placeholder="0">
+                        <span class="input-group-text">㎡</span>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">조식 포함</label>
+                    <select class="form-select" name="roomBreakfast">
+                        <option value="none">조식 미포함</option>
+                        <option value="included">조식 포함</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">침대 타입</label>
+                <div class="form-check-group">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="bedType" value="single" id="bedSingle">
+                        <label class="form-check-label" for="bedSingle">싱글</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="bedType" value="double" id="bedDouble">
+                        <label class="form-check-label" for="bedDouble">더블</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="bedType" value="queen" id="bedQueen">
+                        <label class="form-check-label" for="bedQueen">퀸</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="checkbox" name="bedType" value="king" id="bedKing">
+                        <label class="form-check-label" for="bedKing">킹</label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        '<input class="form-check-input" type="checkbox" name="bedType" value="ondol" id="bedOndol">
+                        <label class="form-check-label" for="bedOndol">온돌</label>
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">객실 특징</label>
+                <div class="room-features-grid">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="roomFeature" value="free_cancel" id="featureFreeCancel">
+                        <label class="form-check-label" for="featureFreeCancel"><i class="bi bi-check-circle me-1"></i>무료 취소</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="roomFeature" value="ocean_view" id="featureOceanView">
+                        <label class="form-check-label" for="featureOceanView"><i class="bi bi-water me-1"></i>오션뷰</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="roomFeature" value="mountain_view" id="featureMountainView">
+                        <label class="form-check-label" for="featureMountainView"><i class="bi bi-mountain me-1"></i>마운틴뷰</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="roomFeature" value="city_view" id="featureCityView">
+                        <label class="form-check-label" for="featureCityView"><i class="bi bi-buildings me-1"></i>시티뷰</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="roomFeature" value="living_room" id="featureLivingRoom">
+                        <label class="form-check-label" for="featureLivingRoom"><i class="bi bi-door-open me-1"></i>거실 포함</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="roomFeature" value="balcony" id="featureBalcony">
+                        <label class="form-check-label" for="featureBalcony"><i class="bi bi-flower1 me-1"></i>발코니/테라스</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="roomFeature" value="no_smoking" id="featureNoSmoking">
+                        <label class="form-check-label" for="featureNoSmoking"><i class="bi bi-slash-circle me-1"></i>금연</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" name="roomFeature" value="kitchen" id="featureKitchen">
+                        <label class="form-check-label" for="featureKitchen"><i class="bi bi-cup-hot me-1"></i>주방/취사</label>
+                    </div>
+                </div>
+            </div>
+        </div>`;
 
-    var roomHtml =
-        '<div class="room-type-item" data-room-index="' + index + '">' +
-            '<div class="room-type-header">' +
-                '<h6><i class="bi bi-door-closed me-2"></i>객실 타입 ' + (index + 1) + '</h6>' +
-                '<button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRoomType(' + index + ')">' +
-                    '<i class="bi bi-x"></i> 삭제' +
-                '</button>' +
-            '</div>' +
-            '<div class="row mb-3">' +
-                '<div class="col-md-4">' +
-                    '<label class="form-label">객실명 <span class="text-danger">*</span></label>' +
-                    '<input type="text" class="form-control" name="roomName_' + index + '" placeholder="예: 디럭스 트윈">' +
-                '</div>' +
-                '<div class="col-md-4">' +
-                    '<label class="form-label">기준 인원 <span class="text-danger">*</span></label>' +
-                    '<input type="number" class="form-control" name="roomCapacity_' + index + '" placeholder="2" min="1">' +
-                '</div>' +
-                '<div class="col-md-4">' +
-                    '<label class="form-label">최대 인원</label>' +
-                    '<input type="number" class="form-control" name="roomMaxCapacity_' + index + '" placeholder="4" min="1">' +
-                '</div>' +
-            '</div>' +
-            '<div class="row mb-3">' +
-                '<div class="col-md-3">' +
-                    '<label class="form-label">1박 가격 <span class="text-danger">*</span></label>' +
-                    '<div class="input-group">' +
-                        '<input type="number" class="form-control" name="roomPrice_' + index + '" placeholder="0">' +
-                        '<span class="input-group-text">원</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="col-md-2">' +
-                    '<label class="form-label">할인율</label>' +
-                    '<div class="input-group">' +
-                        '<input type="number" class="form-control" name="roomDiscount_' + index + '" placeholder="0" min="0" max="100">' +
-                        '<span class="input-group-text">%</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="col-md-2">' +
-                    '<label class="form-label">잔여 객실 <span class="text-danger">*</span></label>' +
-                    '<div class="input-group">' +
-                        '<input type="number" class="form-control" name="roomStock_' + index + '" placeholder="0" min="0">' +
-                        '<span class="input-group-text">실</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="col-md-2">' +
-                    '<label class="form-label">객실 크기</label>' +
-                    '<div class="input-group">' +
-                        '<input type="number" class="form-control" name="roomSize_' + index + '" placeholder="0">' +
-                        '<span class="input-group-text">㎡</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="col-md-3">' +
-                    '<label class="form-label">조식 포함</label>' +
-                    '<select class="form-select" name="roomBreakfast_' + index + '">' +
-                        '<option value="none">조식 미포함</option>' +
-                        '<option value="included">조식 포함</option>' +
-                    '</select>' +
-                '</div>' +
-            '</div>' +
-            '<div class="mb-3">' +
-                '<label class="form-label">침대 타입</label>' +
-                '<div class="form-check-group">' +
-                    '<div class="form-check form-check-inline">' +
-                        '<input class="form-check-input" type="checkbox" name="bedType_' + index + '" value="single" id="bedSingle_' + index + '">' +
-                        '<label class="form-check-label" for="bedSingle_' + index + '">싱글</label>' +
-                    '</div>' +
-                    '<div class="form-check form-check-inline">' +
-                        '<input class="form-check-input" type="checkbox" name="bedType_' + index + '" value="double" id="bedDouble_' + index + '">' +
-                        '<label class="form-check-label" for="bedDouble_' + index + '">더블</label>' +
-                    '</div>' +
-                    '<div class="form-check form-check-inline">' +
-                        '<input class="form-check-input" type="checkbox" name="bedType_' + index + '" value="queen" id="bedQueen_' + index + '">' +
-                        '<label class="form-check-label" for="bedQueen_' + index + '">퀸</label>' +
-                    '</div>' +
-                    '<div class="form-check form-check-inline">' +
-                        '<input class="form-check-input" type="checkbox" name="bedType_' + index + '" value="king" id="bedKing_' + index + '">' +
-                        '<label class="form-check-label" for="bedKing_' + index + '">킹</label>' +
-                    '</div>' +
-                    '<div class="form-check form-check-inline">' +
-                        '<input class="form-check-input" type="checkbox" name="bedType_' + index + '" value="ondol" id="bedOndol_' + index + '">' +
-                        '<label class="form-check-label" for="bedOndol_' + index + '">온돌</label>' +
-                    '</div>' +
-                '</div>' +
-            '</div>' +
-            '<div class="mb-3">' +
-                '<label class="form-label">객실 특징</label>' +
-                '<div class="room-features-grid">' +
-                    '<div class="form-check">' +
-                        '<input class="form-check-input" type="checkbox" name="roomFeature_' + index + '" value="free_cancel" id="featureFreeCancel_' + index + '">' +
-                        '<label class="form-check-label" for="featureFreeCancel_' + index + '"><i class="bi bi-check-circle me-1"></i>무료 취소</label>' +
-                    '</div>' +
-                    '<div class="form-check">' +
-                        '<input class="form-check-input" type="checkbox" name="roomFeature_' + index + '" value="ocean_view" id="featureOceanView_' + index + '">' +
-                        '<label class="form-check-label" for="featureOceanView_' + index + '"><i class="bi bi-water me-1"></i>오션뷰</label>' +
-                    '</div>' +
-                    '<div class="form-check">' +
-                        '<input class="form-check-input" type="checkbox" name="roomFeature_' + index + '" value="mountain_view" id="featureMountainView_' + index + '">' +
-                        '<label class="form-check-label" for="featureMountainView_' + index + '"><i class="bi bi-mountain me-1"></i>마운틴뷰</label>' +
-                    '</div>' +
-                    '<div class="form-check">' +
-                        '<input class="form-check-input" type="checkbox" name="roomFeature_' + index + '" value="city_view" id="featureCityView_' + index + '">' +
-                        '<label class="form-check-label" for="featureCityView_' + index + '"><i class="bi bi-buildings me-1"></i>시티뷰</label>' +
-                    '</div>' +
-                    '<div class="form-check">' +
-                        '<input class="form-check-input" type="checkbox" name="roomFeature_' + index + '" value="living_room" id="featureLivingRoom_' + index + '">' +
-                        '<label class="form-check-label" for="featureLivingRoom_' + index + '"><i class="bi bi-door-open me-1"></i>거실 포함</label>' +
-                    '</div>' +
-                    '<div class="form-check">' +
-                        '<input class="form-check-input" type="checkbox" name="roomFeature_' + index + '" value="balcony" id="featureBalcony_' + index + '">' +
-                        '<label class="form-check-label" for="featureBalcony_' + index + '"><i class="bi bi-flower1 me-1"></i>발코니/테라스</label>' +
-                    '</div>' +
-                    '<div class="form-check">' +
-                        '<input class="form-check-input" type="checkbox" name="roomFeature_' + index + '" value="no_smoking" id="featureNoSmoking_' + index + '">' +
-                        '<label class="form-check-label" for="featureNoSmoking_' + index + '"><i class="bi bi-slash-circle me-1"></i>금연</label>' +
-                    '</div>' +
-                    '<div class="form-check">' +
-                        '<input class="form-check-input" type="checkbox" name="roomFeature_' + index + '" value="kitchen" id="featureKitchen_' + index + '">' +
-                        '<label class="form-check-label" for="featureKitchen_' + index + '"><i class="bi bi-cup-hot me-1"></i>주방/취사</label>' +
-                    '</div>' +
-                '</div>' +
-            '</div>' +
-        '</div>';
-
-    container.insertAdjacentHTML('beforeend', roomHtml);
+    roomTypeContainer.insertAdjacentHTML('beforeend', roomHtml);
 
     // 첫 번째 객실 삭제 버튼 표시 (2개 이상일 때)
     updateRoomDeleteButtons();
@@ -1491,7 +1543,6 @@ var addonOptionIndex = 1;
 
 // 추가옵션 수 만큼 그거 하자
 function addAddonOption() {
-    var container = document.getElementById('addonOptionsContainer');
     var index = addonOptionIndex++;
 
     var addonHtml =
@@ -1523,7 +1574,7 @@ function addAddonOption() {
             </div>
         </div>`;
 
-    container.insertAdjacentHTML('beforeend', addonHtml);
+	addonOptionsContainer.insertAdjacentHTML('beforeend', addonHtml);
 
     // 첫 번째 추가 옵션에 삭제 버튼 표시 (2개 이상일 때)
     updateAddonDeleteButtons();
@@ -1550,10 +1601,6 @@ function updateAddonDeleteButtons() {
         if (deleteBtn) deleteBtn.style.display = addonItems.length > 1 ? 'block' : 'none';
     });
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-	modal = new bootstrap.Modal(document.getElementById('productModal'));
-});
 </script>
 </body>
 </html>

@@ -52,7 +52,7 @@
 	<!-- 투어 상품 목록 저장 -->
 	<insert id="insertTripProdList" parameterType="kr.or.ddit.mohaeng.vo.TripProdListVO">
 	    <selectKey keyProperty="prodListNo" resultType="int" order="BEFORE">
-	        SELECT NVL(MAX(PROD_LIST_NO), 0) + 1 FROM TRIP_PROD_LIST
+	        SELECT SEQ_TRIP_PROD_LIST.NEXTVAL FROM DUAL
 	    </selectKey>
 	    INSERT INTO TRIP_PROD_LIST (
 	        PROD_LIST_NO, PAY_NO, TRIP_PROD_NO,
@@ -95,5 +95,17 @@
 	    SET APPROVE_STATUS = '판매중지'
 	    WHERE TRIP_PROD_NO = #{tripProdNo}
 	</update>
+	
+	<!-- 매출 저장 -->
+	<insert id="insertSales" parameterType="kr.or.ddit.mohaeng.vo.SalesVO">
+	    <selectKey keyProperty="saleNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_SALES.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO SALES (
+	        SALE_NO, PROD_LIST_NO, SALE_DT, NET_SALES, SETTLE_STAT_CD
+	    ) VALUES (
+	        #{saleNo}, #{prodListNo}, SYSDATE, #{netSales}, '정산대기'
+	    )
+	</insert>
 	
 </mapper>

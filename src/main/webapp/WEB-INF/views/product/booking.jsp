@@ -1037,7 +1037,11 @@ document.addEventListener('DOMContentLoaded', async function() {
 	
 	    cartItems.forEach(function(item, index) {
 	        var itemTotal = item.price * item.quantity;
-            var times = timesMap[item.id] || ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+	        var times = timesMap[item.id];
+	        if (!times || times.length === 0) {
+	            times = ['09:00', '10:00', '11:00', '14:00', '15:00', '16:00'];
+	        }
+	        
             var timeOptions = '<option value="">시간을 선택하세요</option>';
             times.forEach(function(time) {
                 timeOptions += '<option value="' + time + '">' + time + '</option>';

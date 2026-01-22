@@ -29,6 +29,7 @@ import kr.or.ddit.mohaeng.vo.FlightResvAgreeVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import kr.or.ddit.mohaeng.vo.PaymentInfoVO;
 import kr.or.ddit.mohaeng.vo.PaymentVO;
+import kr.or.ddit.mohaeng.vo.SalesVO;
 import kr.or.ddit.mohaeng.vo.TripProdListVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -378,6 +379,12 @@ public class PaymentServiceImpl implements IPaymentService {
 	    	
 	        item.setPayNo(paymentVO.getPayNo());
 	        result = payMapper.insertTripProdList(item);
+	        
+	        // 매출 테이블 INSERT
+	        SalesVO sales = new SalesVO();
+	        sales.setProdListNo(item.getProdListNo());
+	        sales.setNetSales(item.getPayPrice());
+	        payMapper.insertSales(sales);
 	        
 	        // 재고 0이면 판매중지로 변경
 	        int currentStock = payMapper.getCurrentStock(item.getTripProdNo());

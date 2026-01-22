@@ -24,7 +24,11 @@
                     t.MOD_DT,
                     t.APRV_YN,
                     t.DEL_YN,
-                    t.CTY_NM,
+                    DECODE(t.CTY_NM,
+				    '1', '서울', '2', '인천', '3', '대전', '4', '대구', '5', '광주',
+				    '6', '부산', '7', '울산', '8', '세종특별자치시', '31', '경기도', '32', '강원특별자치도',
+				    '33', '충청북도', '34', '충청남도', '35', '경상북도', '36', '경상남도',
+				    '37', '전북특별자치도', '38', '전라남도', '39', '제주도', t.CTY_NM) AS CTY_NM,
                     s.PRICE,
                     s.NETPRC,
                     s.DISCOUNT,
@@ -44,7 +48,7 @@
                 LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
                 LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
                 LEFT JOIN (
-                    SELECT 
+                    SELECT
                         TRIP_PROD_NO,
                         ROUND(AVG(RATING), 1) AS AVG_RATING,
                         COUNT(*) AS REVIEW_COUNT,
@@ -64,7 +68,11 @@
                 </if>
                 <!-- 여행지 -->
                 <if test="destination != null and destination != ''">
-                    AND UPPER(t.CTY_NM) LIKE '%' || UPPER(#{destination}) || '%'
+                    AND UPPER(DECODE(t.CTY_NM,
+				        '1', '서울', '2', '인천', '3', '대전', '4', '대구', '5', '광주',
+				        '6', '부산', '7', '울산', '8', '세종특별자치시', '31', '경기도', '32', '강원특별자치도',
+				        '33', '충청북도', '34', '충청남도', '35', '경상북도', '36', '경상남도',
+				        '37', '전북특별자치도', '38', '전라남도', '39', '제주도', t.CTY_NM)) LIKE '%' || UPPER(#{destination}) || '%'
                 </if>
                 <!-- 카테고리 -->
                 <if test="category != null and category != ''">
@@ -158,7 +166,11 @@
                  OR t.TRIP_PROD_CONTENT LIKE '%' || #{keyword} || '%')
         </if>
         <if test="destination != null and destination != ''">
-            AND UPPER(t.CTY_NM) LIKE '%' || UPPER(#{destination}) || '%'
+            AND UPPER(DECODE(t.CTY_NM,
+		        '1', '서울', '2', '인천', '3', '대전', '4', '대구', '5', '광주',
+		        '6', '부산', '7', '울산', '8', '세종특별자치시', '31', '경기도', '32', '강원특별자치도',
+		        '33', '충청북도', '34', '충청남도', '35', '경상북도', '36', '경상남도',
+		        '37', '전북특별자치도', '38', '전라남도', '39', '제주도', t.CTY_NM)) LIKE '%' || UPPER(#{destination}) || '%'
         </if>
         <if test="category != null and category != ''">
             AND t.PROD_CTGRY_TYPE = #{category}
@@ -217,7 +229,12 @@
         SELECT
             TRIP_PROD_NO, COMP_NO, MEM_NO, PROD_CTGRY_TYPE, APPROVE_STATUS,
             TRIP_PROD_TITLE, TRIP_PROD_CONTENT, SALE_START_DT, SALE_END_DT,
-            ATTACH_NO, VIEW_CNT, REG_DT, MOD_DT, CTY_NM
+            ATTACH_NO, VIEW_CNT, REG_DT, MOD_DT,
+			DECODE(CTY_NM,
+			    '1', '서울', '2', '인천', '3', '대전', '4', '대구', '5', '광주',
+			    '6', '부산', '7', '울산', '8', '세종특별자치시', '31', '경기도', '32', '강원특별자치도',
+			    '33', '충청북도', '34', '충청남도', '35', '경상북도', '36', '경상남도',
+			    '37', '전북특별자치도', '38', '전라남도', '39', '제주도', CTY_NM) AS CTY_NM
         FROM TRIP_PROD
         WHERE TRIP_PROD_NO = #{tripProdNo}
           AND (DEL_YN = 'N' OR DEL_YN IS NULL)
@@ -312,6 +329,48 @@
 	    SET ATTACH_NO = #{attachNo},
 	        MOD_DT = SYSDATE
 	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 북마크 여부 확인 -->
+	<select id="checkBookmark" resultType="int">
+	    SELECT COUNT(*)
+	    FROM BOOKMARK
+	    WHERE MEM_NO = #{memNo}
+	      AND CONTENT_TYPE = 'TOUR'
+	      AND CONTENT_ID = #{tripProdNo}
+	      AND DEL_YN = 'N'
+	</select>
+	
+	<!-- 북마크 등록 -->
+	<insert id="insertBookmark">
+	    INSERT INTO BOOKMARK (
+	    BMK_NO, CONTENT_TYPE, MEM_NO, CONTENT_ID, REG_DT, DEL_YN
+	    ) VALUES (
+	    SEQ_BOOKMARK.NEXTVAL, #{type}, #{memNo}, #{tripProdNo}, SYSDATE, 'N'
+	    )
+	</insert>
+	
+	<!-- 북마크 삭제 -->
+	<update id="deleteBookmark">
+	    UPDATE BOOKMARK
+	    SET DEL_YN = 'Y',
+	        DEL_DT = SYSDATE
+	    WHERE MEM_NO = #{memNo}
+	      AND CONTENT_TYPE = 'TOUR'
+	      AND CONTENT_ID = #{tripProdNo}
+	      AND DEL_YN = 'N'
+	</update>
+	
+	<!-- 북마크 복구 -->
+	<update id="restoreBookmark">
+	    UPDATE BOOKMARK
+	    SET DEL_YN = 'N',
+	        DEL_DT = NULL,
+	        REG_DT = SYSDATE
+	    WHERE MEM_NO = #{memNo}
+	      AND CONTENT_TYPE = 'TOUR'
+	      AND CONTENT_ID = #{tripProdNo}
+	      AND DEL_YN = 'Y'
 	</update>
 
 </mapper>

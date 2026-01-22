@@ -910,11 +910,12 @@ function scrollToTop() {
 var reportData = {
     type: '', // product, post, comment, chatroom
     targetId: '',
-    targetTitle: ''
+    targetTitle: '',
+	targetMemNo: ''
 };
 
 // 신고 모달 열기
-function openReportModal(type, targetId, targetTitle) {
+function openReportModal(type, targetId, targetTitle, targetMemNo) {
     // 로그인 체크
     if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
@@ -927,6 +928,7 @@ function openReportModal(type, targetId, targetTitle) {
     reportData.type = type;
     reportData.targetId = targetId;
     reportData.targetTitle = targetTitle || '';
+	reportData.targetMemNo = targetMemNo || '';
 
     // 신고 대상 정보 표시
     var targetLabel = '';
@@ -935,6 +937,9 @@ function openReportModal(type, targetId, targetTitle) {
         case 'post': targetLabel = '신고 대상 게시글'; break;
         case 'comment': targetLabel = '신고 대상 댓글'; break;
         case 'chatroom': targetLabel = '신고 대상 채팅방'; break;
+		case 'review': targetLabel = '신고 대상 리뷰'; break;
+		case 'inquiry': targetLabel = '신고 대상 문의'; break;
+		case 'reply': targetLabel = '신고 대상 답변'; break;
         default: targetLabel = '신고 대상';
     }
 
@@ -1007,10 +1012,14 @@ function submitReport() {
 	        targetNo: reportData.targetId,    // 대상 PK
 	        ctgryCd: selectedReason.value,    // 신고 사유 코드
 	        content: detailText              // 상세 내용
- };
+ 	};
+	
+	if (reportData.targetMemNo) {
+	    submitData.targetMemNo = reportData.targetMemNo;
+	}
 
 	// 단일 API로 전송
-	fetch(api('/api/report'), {
+	fetch(contextPath + '/api/report', {
 	        method: 'POST',
 	        headers: { 'Content-Type': 'application/json' },
 	        body: JSON.stringify(submitData)
@@ -1027,6 +1036,12 @@ function submitReport() {
 			            // JSON 파싱 실패 시 (순수 문자열일 때) 그대로 에러로 던짐
 			            throw new Error(responseText || '신고 처리 중 오류가 발생했습니다.');
 			        }
+			    }
+				
+				try {
+			        return JSON.parse(responseText);
+			    } catch (e) {
+			        return responseText;
 			    }
 		})
 		.then(data => {

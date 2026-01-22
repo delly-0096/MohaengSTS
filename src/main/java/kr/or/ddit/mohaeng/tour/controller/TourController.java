@@ -119,7 +119,7 @@ public class TourController {
      * 상세 페이지
      */
     @GetMapping("/{tripProdNo}")
-    public String tourDetail(@PathVariable int tripProdNo, Model model, RedirectAttributes ra) {
+    public String tourDetail(@PathVariable int tripProdNo, Model model, RedirectAttributes ra, HttpSession session) {
         TripProdVO tp = tripProdService.detail(tripProdNo);
         
         if (tp == null) {
@@ -156,6 +156,13 @@ public class TourController {
         // 예약 가능 시간 조회
         List<ProdTimeInfoVO> availableTimes = timeInfoService.getAvailableTimes(tripProdNo);
         
+        // 북마크 여부 확인 추가
+        Integer memNo = getMemNo(session);
+        boolean isBookmarked = false;
+        if (memNo != null) {
+            isBookmarked = tripProdService.checkBookmark(memNo, tripProdNo);
+        }
+        
         model.addAttribute("tp", tp);
         model.addAttribute("sale", sale);
         model.addAttribute("info", info);
@@ -166,6 +173,7 @@ public class TourController {
         model.addAttribute("inquiry", inquiry);
         model.addAttribute("inquiryCount", inquiryCount);
         model.addAttribute("availableTimes", availableTimes);
+        model.addAttribute("isBookmarked", isBookmarked);
         
         return "product/tour-detail";
     }
@@ -1087,15 +1095,44 @@ public class TourController {
         
         return "product/booking";
     }
-
-    @GetMapping("/complete/{tripProdNo}")
-    public String complete(@PathVariable int tripProdNo) {
-        return "product/complete";
-    }
-
-    @GetMapping("/complete")
-    public String completeBooking() {
-        return "product/complete";
+    
+    // 북마크 토글 (등록/삭제 통합)
+    @PostMapping("/{tripProdNo}/bookmark")
+    @ResponseBody
+    public Map<String, Object> toggleBookmark(@PathVariable int tripProdNo, HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        
+        Integer memNo = getMemNo(session);
+        if (memNo == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        try {
+            // 현재 북마크 상태 확인
+            boolean isBookmarked = tripProdService.checkBookmark(memNo, tripProdNo);
+            
+            if (isBookmarked) {
+                // 북마크 삭제
+                tripProdService.deleteBookmark(memNo, tripProdNo);
+                result.put("success", true);
+                result.put("bookmarked", false);
+                result.put("message", "북마크가 삭제되었습니다.");
+            } else {
+                // 북마크 등록
+                tripProdService.insertBookmark(memNo, "TOUR", tripProdNo);
+                result.put("success", true);
+                result.put("bookmarked", true);
+                result.put("message", "북마크에 추가되었습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "처리 중 오류가 발생했습니다.");
+        }
+        
+        return result;
     }
     
     /**

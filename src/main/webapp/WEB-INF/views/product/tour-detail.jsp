@@ -81,7 +81,7 @@
 					    </c:choose>
                     </span>
                     <c:if test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS'}">
-                    <button class="report-btn" onclick="openReportModal('product', '${tp.tripProdNo}', '${tp.tripProdTitle}')">
+                    <button class="report-btn" onclick="openReportModal('product', '${tp.tripProdNo}', '${tp.tripProdTitle}', '${tp.memNo}')">
                         <i class="bi bi-flag"></i> 신고
                     </button>
                     </c:if>
@@ -288,20 +288,27 @@
 
                         <div class="booking-actions">
                             <c:if test="${sessionScope.loginMember.memType ne 'BUSINESS'}">
-                            <button type="button" class="btn btn-outline w-100" onclick="addToBookmark()">
-                                <i class="bi bi-bookmark me-2"></i>북마크
-                            </button>
-                            <button type="button" class="btn btn-outline-primary w-100" onclick="addToCartFromDetail()">
-                                <i class="bi bi-cart-plus me-2"></i>장바구니
-                            </button>
-                            <button type="submit" class="btn btn-primary w-100">
-                                <i class="bi bi-credit-card me-2"></i>바로 결제
-                            </button>
+	                            <button type="button" class="btn btn-outline w-100" id="bookmarkBtn" onclick="toggleTourBookmark()">
+								    <c:choose>
+								        <c:when test="${isBookmarked}">
+								            <i class="bi bi-bookmark-fill me-2"></i>북마크 삭제
+								        </c:when>
+								        <c:otherwise>
+								            <i class="bi bi-bookmark me-2"></i>북마크
+								        </c:otherwise>
+								    </c:choose>
+								</button>
+	                            <button type="button" class="btn btn-outline-primary w-100" onclick="addToCartFromDetail()">
+	                                <i class="bi bi-cart-plus me-2"></i>장바구니
+	                            </button>
+	                            <button type="submit" class="btn btn-primary w-100">
+	                                <i class="bi bi-credit-card me-2"></i>바로 결제
+	                            </button>
                             </c:if>
                             <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS'}">
-                            <div class="business-notice mt-2">
-                                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>기업회원은 구매가 불가합니다.</small>
-                            </div>
+	                            <div class="business-notice mt-2">
+	                                <small class="text-muted"><i class="bi bi-info-circle me-1"></i>기업회원은 구매가 불가합니다.</small>
+	                            </div>
                             </c:if>
                         </div>
                     </form>
@@ -382,19 +389,26 @@
 						                        </c:choose>
 						                    </c:forEach>
 						                </div>
-						                <c:if test="${not empty sessionScope.loginMember && sessionScope.loginMember.memNo == rv.memNo}">
-						                    <div class="dropdown">
-						                        <button class="btn-more" type="button" data-bs-toggle="dropdown">
-						                            <i class="bi bi-three-dots-vertical"></i>
-						                        </button>
-						                        <ul class="dropdown-menu dropdown-menu-end">
-						                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReviewModal(${rv.prodRvNo}, ${rv.rating}, '${fn:escapeXml(rv.prodReview)}')">
-						                                <i class="bi bi-pencil me-2"></i>수정</a></li>
-						                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReview(${rv.prodRvNo})">
-						                                <i class="bi bi-trash me-2"></i>삭제</a></li>
-						                        </ul>
-						                    </div>
-						                </c:if>
+						                <c:choose>
+									        <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memNo == rv.memNo}">
+									            <div class="dropdown">
+									                <button class="btn-more" type="button" data-bs-toggle="dropdown">
+									                    <i class="bi bi-three-dots-vertical"></i>
+									                </button>
+									                <ul class="dropdown-menu dropdown-menu-end">
+									                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReviewModal(${rv.prodRvNo}, ${rv.rating}, '${fn:escapeXml(rv.prodReview)}')">
+									                        <i class="bi bi-pencil me-2"></i>수정</a></li>
+									                    <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReview(${rv.prodRvNo})">
+									                        <i class="bi bi-trash me-2"></i>삭제</a></li>
+									                </ul>
+									            </div>
+									        </c:when>
+									        <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS'}">
+									            <button class="btn-more" type="button" onclick="openReportModal('review', '${rv.prodRvNo}', '${fn:escapeXml(fn:substring(rv.prodReview, 0, 30))}...', '${rv.memNo}')">
+									                <i class="bi bi-flag"></i>
+									            </button>
+									        </c:when>
+									    </c:choose>
 						            </div>
 						        </div>
 						        <div class="review-content">
@@ -557,20 +571,26 @@
 										            <span class="inquiry-status waiting">답변대기</span>
 										        </c:otherwise>
 										    </c:choose>
-										    
-										    <c:if test="${not empty sessionScope.loginMember && sessionScope.loginMember.memNo == inq.inquiryMemNo && inq.inqryStatus ne 'DONE'}">
-										        <div class="dropdown">
-										            <button class="btn-more" type="button" data-bs-toggle="dropdown">
-										                <i class="bi bi-three-dots-vertical"></i>
+										    <c:choose>
+										        <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memNo == inq.inquiryMemNo && inq.inqryStatus ne 'DONE'}">
+										            <div class="dropdown">
+										                <button class="btn-more" type="button" data-bs-toggle="dropdown">
+										                    <i class="bi bi-three-dots-vertical"></i>
+										                </button>
+										                <ul class="dropdown-menu dropdown-menu-end">
+										                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditInquiryModal(${inq.prodInqryNo}, '${inq.inquiryCtgry}', '${fn:escapeXml(inq.prodInqryCn)}', '${inq.secretYn}')">
+										                        <i class="bi bi-pencil me-2"></i>수정</a></li>
+										                    <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteInquiry(${inq.prodInqryNo})">
+										                        <i class="bi bi-trash me-2"></i>삭제</a></li>
+										                </ul>
+										            </div>
+										        </c:when>
+										        <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS' && sessionScope.loginMember.memNo != inq.inquiryMemNo && inq.secretYn ne 'Y'}">
+										            <button class="btn-more" type="button" onclick="openReportModal('inquiry', '${inq.prodInqryNo}', '${fn:escapeXml(fn:substring(inq.prodInqryCn, 0, 30))}...', '${inq.inquiryMemNo}')">
+										                <i class="bi bi-flag"></i>
 										            </button>
-										            <ul class="dropdown-menu dropdown-menu-end">
-										                <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditInquiryModal(${inq.prodInqryNo}, '${inq.inquiryCtgry}', '${fn:escapeXml(inq.prodInqryCn)}', '${inq.secretYn}')">
-										                    <i class="bi bi-pencil me-2"></i>수정</a></li>
-										                <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteInquiry(${inq.prodInqryNo})">
-										                    <i class="bi bi-trash me-2"></i>삭제</a></li>
-										            </ul>
-										        </div>
-										    </c:if>
+										        </c:when>
+										    </c:choose>
 										</div>
 			                        </div>
 			                        
@@ -597,19 +617,26 @@
 									                <span class="answer-date">
 									                    <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
 									                </span>
-									                <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && sessionScope.loginMember.memNo == inq.replyMemNo}">
-									                    <div class="dropdown">
-									                        <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
-									                            <i class="bi bi-three-dots-vertical"></i>
-									                        </button>
-									                        <ul class="dropdown-menu dropdown-menu-end">
-									                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
-									                                <i class="bi bi-pencil me-2"></i>수정</a></li>
-									                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
-									                                <i class="bi bi-trash me-2"></i>삭제</a></li>
-									                        </ul>
-									                    </div>
-									                </c:if>
+									                <c:choose>
+										                <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS' && sessionScope.loginMember.memNo == inq.replyMemNo}">
+										                    <div class="dropdown">
+										                        <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
+										                            <i class="bi bi-three-dots-vertical"></i>
+										                        </button>
+										                        <ul class="dropdown-menu dropdown-menu-end">
+										                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
+										                                <i class="bi bi-pencil me-2"></i>수정</a></li>
+										                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
+										                                <i class="bi bi-trash me-2"></i>삭제</a></li>
+										                        </ul>
+										                    </div>
+										                </c:when>
+										                <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS'}">
+										                    <button class="btn-more btn-more-sm" type="button" onclick="openReportModal('reply', '${inq.prodInqryNo}', '${fn:escapeXml(fn:substring(inq.replyCn, 0, 30))}...', '${inq.replyMemNo}')">
+										                        <i class="bi bi-flag"></i>
+										                    </button>
+										                </c:when>
+										            </c:choose>
 									            </div>
 									        </div>
 									        <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
@@ -892,6 +919,7 @@ var placeAddr1 = '${place.addr1}';
 var saleEndDt = '<fmt:formatDate value="${tp.saleEndDt}" pattern="yyyy-MM-dd"/>';
 var minPeople = ${info.prodMinPeople != null ? info.prodMinPeople : 1};
 var maxPeople = ${info.prodMaxPeople != null ? info.prodMaxPeople : 10};
+var isBookmarked = ${isBookmarked};
 
 // 현재 상품 정보
 const currentProduct = {

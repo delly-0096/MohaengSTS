@@ -16,16 +16,44 @@ public class ProdReviewVO {
     private Integer rating;         // 별점 점수
     private Integer attachNo;       // 리뷰이미지
     private String rcmdtnYn;        // 추천여부 (Y/N)
-    
+
     // 조회용 (MEM_USER 조인)
     private String nickname;        // 작성자 닉네임
     private String profileImage;    // 프로필 이미지 경로
-    
+
     // 평균별점, 리뷰수, 추천수
-    private Double avgRating;
-    private Integer reviewCount;
-    private Integer recommendCount;
-    
+    private Double avgRating; // 평균별점
+    private Integer reviewCount; // 리뷰수
+    private Integer recommendCount; // 상품별 추천수
+    //[관리자용-추가]
+    private Integer totalRecommendCount; // 통계용 전체 추천수
+
     // 리뷰 이미지 목록
     private List<String> reviewImages;
+
+    // ===== 관리자 페이지용 추가 필드 =====
+    private String reviewStatus; // 리뷰 상태 (ACTIVE/HIDDEN/REPORTED) - CODE 테이블 참조 : DB 컬럼값
+
+    // 조회용 (MEMBER 조인)
+    private String memName;      // 작성자 이름
+
+    // 조회용 (TRIP_PROD 조인)
+    private String tripProdTitle; //상품명
+    private String prodCtgryType; //상품 카테고리(accommodation/transfer/class/tour/tour/ticket/activity)
+
+    // 조회용 (COMPANY 조인)
+    private Integer compNo;  // 회사키
+    private String bzmnNm;   // 기업명 (상호명)
+
+    // 검색 및 필터용
+    private String searchKeyword; //검색어
+    private Integer ratingFilter; //평점 필터(1~5)
+    private String statusFilter;// 상태 필터(all/active/hidden/reported) : 검색조건
+    private String startDate; // 시작일
+    private String endDate; // 종료일
+
+    // 페이징용 (PaginationInfoVO 사용)
+    private int startRow; // 시작 row
+    private int endRow; // 끝 row
+
 }

@@ -57,6 +57,10 @@ public class AccResvVO {
 	 */
 	private int infantCnt;
 	/**
+	 * 요청 사항
+	 */
+	private String resvRequest;
+	/**
 	* 결제 번호
 	*/
 	private int payNo;
@@ -83,4 +87,13 @@ public class AccResvVO {
 	
 	// 숙소 예약 옵션
 	private List<AccResvOptionVO> accResvOptionList;
+	
+	// 여행상품일련번호
+	private int tripProdNo;
+	
+	// 객실가격
+	private int price;
+	
+	// 할인율
+	private int discount;  
 }

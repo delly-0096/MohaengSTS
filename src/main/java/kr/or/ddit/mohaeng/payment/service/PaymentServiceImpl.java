@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.payment.service;
 
 import java.nio.charset.StandardCharsets;
+import java.text.SimpleDateFormat;
 import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.HashMap;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper;
+import kr.or.ddit.mohaeng.community.travellog.place.controller.PlaceApiController;
 import kr.or.ddit.mohaeng.flight.mapper.IFlightMapper;
 import kr.or.ddit.mohaeng.payment.mapper.IPaymentMapper;
 import kr.or.ddit.mohaeng.vo.AccResvAgreeVO;
@@ -29,6 +31,7 @@ import kr.or.ddit.mohaeng.vo.FlightResvAgreeVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import kr.or.ddit.mohaeng.vo.PaymentInfoVO;
 import kr.or.ddit.mohaeng.vo.PaymentVO;
+import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 import kr.or.ddit.mohaeng.vo.SalesVO;
 import kr.or.ddit.mohaeng.vo.TripProdListVO;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 public class PaymentServiceImpl implements IPaymentService {
+
+    private final PlaceApiController placeApiController;
 
 	@Autowired
 	private IPaymentMapper payMapper;
@@ -45,6 +50,10 @@ public class PaymentServiceImpl implements IPaymentService {
 	
 	@Autowired
 	private IAccommodationMapper accMapper;
+
+    PaymentServiceImpl(PlaceApiController placeApiController) {
+        this.placeApiController = placeApiController;
+    }
 
 	@Override
 	@Transactional
@@ -241,25 +250,69 @@ public class PaymentServiceImpl implements IPaymentService {
 	    AccResvVO resvVO = paymentVO.getAccResvVO();
 	    
 	    if (resvVO != null) {
+	    	// 예약 마스터 정보 저장 (ACC_RESV)
 	        resvVO.setPayNo(paymentVO.getPayNo()); 
-	        
 	        result = accMapper.insertAccommodationReservaion(resvVO); 
 	        log.info("ACC_RESV 테이블 INSERT 결과 : {}", result);
 	        
-	     // 2. 약관 동의 객체가 null일 때 처리
-	        if (resvVO.getAccResvAgree() == null) {
-	            AccResvAgreeVO agreeVO = new AccResvAgreeVO();
+		        if(result > 0) {
+		        // 구입 상품 목록 저장 (PROD_LIST)
+		        TripProdListVO tripProdListVO = new TripProdListVO();
+		        RoomTypeVO room = accMapper.getRoomTypeDetail(resvVO.getRoomTypeNo());
+		        int extraFeeUnit = room.getExtraGuestFee();
+		        
+		        tripProdListVO.setPayNo(paymentVO.getPayNo());
+		        tripProdListVO.setTripProdNo(resvVO.getTripProdNo());
+		        
+		        // 판매 단가
+		        int unitPrice = resvVO.getPrice();
+		        // 박수
+		        int nights = resvVO.getStayDays();
+		        // 실제 결제 금액
+		        int payPrice = paymentVO.getPayTotalAmt(); 
+		        // 추가 인원 계산 (기준 인원 초과분)
+		        int extraGuests = Math.max(0, (resvVO.getAdultCnt() + resvVO.getChildCnt()) - room.getBaseGuestCount());
+		        // 총 추가 요금 계산
+		        int totalExtraFee = extraGuests * extraFeeUnit * resvVO.getStayDays();
+		        // 할인액 계산(1박 단가 * 박수) + 총 추가요금 - 실제 결제액
+		        int totalNormalPrice = (resvVO.getPrice() * resvVO.getStayDays()) + totalExtraFee;
+		        int discountAmt = totalNormalPrice - paymentVO.getPayTotalAmt();
+		        
+		        tripProdListVO.setUnitPrice(unitPrice);
+		        tripProdListVO.setPayPrice(payPrice);
+		        tripProdListVO.setDiscountAmt(Math.max(0, discountAmt));
+		        
+		        tripProdListVO.setQuantity(1);
+		        tripProdListVO.setResvDt(new SimpleDateFormat("yy-MM-dd").format(resvVO.getStartDt()));
+		        tripProdListVO.setUseTime("15:00");
+		        tripProdListVO.setRsvMemo(resvVO.getResvRequest());
+		        
+		        //Mapper에서 selectKye로 prodListNo를 받아온다고 가정
+	            accMapper.insertProdList(tripProdListVO);
 	            
-	            // ★ [중요] resvVO에서 바로 꺼내서 agreeVO에 세팅해야 함!
-	            // (AccResvVO에 stayTermYn 등의 필드가 있다는 전제하에)
-	            agreeVO.setStayTermYn(resvVO.getStayTermYn());
-	            agreeVO.setPrivacyAgreeYn(resvVO.getPrivacyAgreeYn());
-	            agreeVO.setRefundAgreeYn(resvVO.getRefundAgreeYn());
-	            agreeVO.setMarketAgreeYn(resvVO.getMarketAgreeYn());
+	            // 매출 데이터 생성 (SALES)
+	            SalesVO salesVO = new SalesVO();
+	            salesVO.setProdListNo(tripProdListVO.getProdListNo());
+	            salesVO.setNetSales(tripProdListVO.getPayPrice());
+	            salesVO.setSettleStatCd("정산대기");
 	            
-	            // 3. 생성한 객체를 다시 resvVO에 꽂아줌
-	            resvVO.setAccResvAgree(agreeVO);
-	        }
+	            accMapper.insertSales(salesVO);
+	            log.info("SALES 테이블 매출 등록 완료 : {}" , salesVO.getSaleNo());
+	            
+		        
+		        // 약관 동의 객체가 null일 때 처리
+		        if (resvVO.getAccResvAgree() == null) {
+		            AccResvAgreeVO agreeVO = new AccResvAgreeVO();
+		            // resvVO에서 바로 꺼내서 agreeVO에 세팅해야 함
+		            agreeVO.setStayTermYn(resvVO.getStayTermYn());
+		            agreeVO.setPrivacyAgreeYn(resvVO.getPrivacyAgreeYn());
+		            agreeVO.setRefundAgreeYn(resvVO.getRefundAgreeYn());
+		            agreeVO.setMarketAgreeYn(resvVO.getMarketAgreeYn());
+		            
+		            // 생성한 객체를 다시 resvVO에 꽂아줌
+		            resvVO.setAccResvAgree(agreeVO);
+		        }
+		    }
 	    }
 	    
 	    return result;

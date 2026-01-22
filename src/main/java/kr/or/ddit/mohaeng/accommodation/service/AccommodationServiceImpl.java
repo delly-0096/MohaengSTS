@@ -43,6 +43,13 @@ public class AccommodationServiceImpl implements IAccommodationService{
 		return accMapper.getRoomList(accNo);
 	}
 
+	/**
+	 *	<p> 숙소 전체 목록 가져오기 </p>
+	 *	@date 2026.01.18
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
 	@Override
 	public List<AccommodationVO> selectAccommodationListWithPaging(AccommodationVO acc) {
 		return accMapper.selectAccommodationListWithPaging(acc);

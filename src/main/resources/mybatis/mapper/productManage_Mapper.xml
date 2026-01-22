@@ -44,7 +44,6 @@
 		
 		<!-- 구입 상품 목록 판매량 확인용 -->
         <collection property="prodList" resultMap="prodListMap"/>
-<!--         <collection property="roomTypeList" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomTypeMap"/> -->
 	</resultMap>
 	
 	<!-- 구입 상품 목록 이걸로 판매량 확인하기 -->
@@ -147,7 +146,7 @@
 	, CASE
            WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
            THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
-           ELSE s.PRICE
+           ELSE 0
        END AS DISPLAY_PRICE
        
 	, CASE
@@ -155,11 +154,8 @@
            THEN (SELECT MIN(RT.PRICE) 
            			FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
            			이게 있는 RT.ACC_NO의 RT.DISCOUNT가져오기
-           ELSE s.PRICE
-       END AS DISPLAY_PRICE
-	
-		
-		
+           ELSE 0
+       END AS DISPLAY_DISCOUNT
 	 -->
 	<!-- 숙소 재고, 판매량 정보가 애매함. 숙소는 roomTypeList와 다른 것들 적용해야되서 -->
 	<!-- 본인 기업회원 상품 목록 -->
@@ -264,7 +260,6 @@
           AND (DEL_YN = 'N' OR DEL_YN IS NULL)
     </select> -->
 	
-	<!-- 숙소 정보도 다 담을까 -->
 	<!-- 상품, 상품 이용안내, 상품 가격, 상품 장소 -->
 	<select id="retrieveProductDetail" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="tripPordMap">
 		SELECT
@@ -272,7 +267,6 @@
 			, <include refid="prodSaleColumns"/>
 			, <include refid="prodInfoColumns"/>
 			, <include refid="prodPlaceColumns"/>
-			
 			, (SELECT AFD.FILE_PATH 
 				 FROM ATTACH_FILE_DETAIL AFD 
 				 WHERE AFD.ATTACH_NO = t.ATTACH_NO 

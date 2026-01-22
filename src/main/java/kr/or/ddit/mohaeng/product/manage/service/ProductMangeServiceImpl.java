@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper;
@@ -72,13 +73,12 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			List<AttachFileDetailVO> accommodationImages = new ArrayList<>();
 			
 			int fileNo = accommodation.getAccFileNo() != 0 ? accommodation.getAccFileNo() : 0;
-			accommodationImages = manageMapper.retrieveProdImages(businessProducts);
+			accommodationImages = manageMapper.retrieveProdImages(businessProducts);	// 여기에 들어있는 것은 accFileNo
+			// 숙소용 사진은 accommodation에 있음
+			// accommodation에 있는 것
 			if(accommodationImages != null && accommodationImages.size() > 0) {
 				prodVO.setImageList(accommodationImages);
 			}
-			
-			// 숙소용 사진은 accommodation에 있음
-			// accommodation에 있는 것
 			
 		// 숙소가 아닐때는 이렇게
 		} else {
@@ -108,10 +108,12 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 	}
 	
 	@Override
-//	@Transactional
+	@Transactional
 	public ServiceResult modifyProduct(BusinessProductsVO businessProducts) {
 		ServiceResult result = null;
 		
+		log.info("modifyProduct 실행");
+	
 		int tripProdNo = businessProducts.getTripProdNo();
 		int baseStatus = 0;
 		// 변수 바뀔수도, 1대1관계들 update -> 상품, 상품 이용안내, 상품 가격, 상품 장소
@@ -126,17 +128,18 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			// 여기에 숙박과 관련된 모든 정보 있음
 			int accStatus = 0;
 			AccommodationVO accommodation = businessProducts.getAccommodation();
+			log.info("accommodation : {}", accommodation);
 			int accNo = businessProducts.getAccNo();
 			accommodation.setTripProdNo(tripProdNo);
 			
 			// accommodation update
 			// 업데이트
 			
-			
 			int optionStatus = 0;
 			// 1 대 n
 			// accOption update
 			List<AccOptionVO> accOptionList = accommodation.getAccOptionList();
+			log.info("accOptionList : {}", accOptionList);
 			for(AccOptionVO accOptionVO : accOptionList) {
 				accOptionVO.setAccNo(accNo);
 			}

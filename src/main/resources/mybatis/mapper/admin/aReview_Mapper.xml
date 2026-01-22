@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.review.mapper.IAReviewMapper">
+
+	<!-- 공통 WHERE 조건  -->
+	<!-- 닉네임 정리 : PR(PROD_REVIEW) 상품 리뷰 | M(MEMBER) 회원 | TP(TRIP_PROD) 상품 | C(COMPANY) 기업 -->
+	<sql id="searchCondition">
+		<!-- 검색어(상품명, 리뷰내용, 회원명, 기업명)  -->
+		<if test="searchKeyword != null and searchKeyword !=''">
+			AND(
+					TP.TRIP_PROD_TITLE LIKE '%' || #{searchKeyword} || '%'
+				 OR PR.PROD_REVIEW LIKE '%' || #{searchKeyword} || '%'
+				 OR M.MEM_NAME LIKE '%' || #{searchKeyword} || '%'
+				 OR C.BZMN_NM LIKE '%' || #{searchKeyword} || '%'
+			)
+		</if>
+
+		<!-- 평점 필터 -->
+		<if test="ratingFilter != null"> AND PR.RATING = #{ratingFilter}</if>
+
+		<!-- 상태 필터 -->
+		<if test="statusFilter !=null and statusFilter != 'all'">
+			<choose>
+				<when test="statusFilter == 'active'">AND PR.REVIEW_STATUS = 'ACTIVE'</when>
+				<when test="statusFilter == 'hidden'">AND PR.REVIEW_STATUS = 'HIDDEN'</when>
+				<when test="statusFilter == 'reported'">AND PR.REVIEW_STATUS = 'REPORTED'</when>
+			</choose>
+		</if>
+
+		<!-- 기간 필터 -->
+		<if test="startDate !=null and startDate !=''"><![CDATA[AND PR.PROD_REGDATE >= TO_DATE(#{startDate}, 'YYYY-MM-DD')]]></if>
+		<if test="endDate !=null and endDate !=''"><![CDATA[AND PR.PROD_REGDATE <= TO_DATE(#{endDate}, 'YYYY-MM-DD') + 0.99999]]></if>
+	</sql>
+
+	<!-- 리뷰 개수 조회 -->
+	<select id="getReviewCount" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO" resultType="int">
+		SELECT COUNT(*) AS CNT
+		FROM PROD_REVIEW PR
+		LEFT JOIN TRIP_PROD TP ON PR.TRIP_PROD_NO = TP.TRIP_PROD_NO
+        LEFT JOIN MEMBER M ON PR.MEM_NO = M.MEM_NO
+        LEFT JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+        <where>
+        	<include refid="searchCondition"/>
+        </where>
+	</select>
+
+	<!-- 리뷰 목록 조회 -->
+	<select id="getReviewList" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO" resultType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
+		SELECT *
+		FROM (
+			SELECT
+				 PR.PROD_RV_NO
+				,PR.TRIP_PROD_NO
+				,PR.MEM_NO
+				,PR.PROD_REVIEW
+				,PR.PROD_REGDATE
+				,PR.PROD_UPDTDATE
+				,PR.RATING
+				,PR.ATTACH_NO
+				,PR.RCMDTN_YN
+				,PR.REVIEW_STATUS
+				,M.MEM_NAME
+				,TP.TRIP_PROD_TITLE
+				,TP.PROD_CTGRY_TYPE
+				,C.COMP_NO
+				,C.BZMN_NM
+				,ROW_NUMBER() OVER (ORDER BY PR.PROD_REGDATE DESC) AS RNUM
+			FROM PROD_REVIEW PR
+			LEFT JOIN TRIP_PROD TP ON PR.TRIP_PROD_NO = TP.TRIP_PROD_NO
+            LEFT JOIN MEMBER M ON PR.MEM_NO = M.MEM_NO
+            LEFT JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+            <where>
+            	<include refid="searchCondition"/>
+            </where>
+		)
+		WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+
+	<!-- 평균 평점 조회 -->
+	<select id="getAvgRating" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO" resultType="double">
+		SELECT NVL(ROUND(AVG(PR.RATING), 1), 0) AS AVG_RATING
+		FROM PROD_REVIEW PR
+		LEFT JOIN TRIP_PROD TP ON PR.TRIP_PROD_NO = TP.TRIP_PROD_NO
+		LEFT JOIN MEMBER M ON PR.MEM_NO = M.MEM_NO
+		LEFT JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+		<where>
+			<include refid="searchCondition"/>
+		</where>
+	</select>
+
+	<!-- 전체 추천 리뷰 수 조회 -->
+	<select id="getTotalRecommendCount" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO" resultType="int">
+		SELECT COUNT(*) AS CNT
+        FROM PROD_REVIEW PR
+        LEFT JOIN TRIP_PROD TP ON PR.TRIP_PROD_NO = TP.TRIP_PROD_NO
+        LEFT JOIN MEMBER M ON PR.MEM_NO = M.MEM_NO
+        LEFT JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+        <where>
+        	PR.RCMDTN_YN = 'Y'
+        	<include refid="searchCondition"/>
+        </where>
+	</select>
+
+	<!-- 신고된 리뷰 수 조회 -->
+	<select id="getReportedCount" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO" resultType="int">
+		SELECT COUNT(*) AS CNT
+        FROM PROD_REVIEW PR
+        LEFT JOIN TRIP_PROD TP ON PR.TRIP_PROD_NO = TP.TRIP_PROD_NO
+        LEFT JOIN MEMBER M ON PR.MEM_NO = M.MEM_NO
+        LEFT JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+		<where>
+			PR.REVIEW_STATUS = 'REPORTED'
+			<include refid="searchCondition"/>
+		</where>
+	</select>
+
+	<!-- 리뷰 상세 조회 -->
+	<!--리뷰 정보(번호, 내용, 작성일, 수정일, 평점, 사진 번호(ATTACH_NO), 추천 여부),회원 이름,상품 제목, 업체 이름   -->
+	<select id="getReviewDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
+		SELECT
+			PR.PROD_RV_NO
+			,PR.TRIP_PROD_NO
+			,PR.MEM_NO
+			,PR.PROD_REVIEW
+			,PR.PROD_REGDATE
+			,PR.PROD_UPDTDATE
+			,PR.RATING
+			,PR.ATTACH_NO
+			,PR.RCMDTN_YN
+			,PR.REVIEW_STATUS
+			,M.MEM_NAME
+			,TP.TRIP_PROD_TITLE
+			,TP.PROD_CTGRY_TYPE
+			,C.COMP_NO
+			,C.BZMN_NM
+		FROM PROD_REVIEW PR
+		LEFT JOIN TRIP_PROD TP ON PR.TRIP_PROD_NO = TP.TRIP_PROD_NO
+		LEFT JOIN MEMBER M ON PR.MEM_NO = M.MEM_NO
+        LEFT JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+        WHERE PR.PROD_RV_NO = #{prodRvNo}
+	</select>
+
+	<!-- 리뷰 상태 변경 -->
+	<update id="updateReviewStatus" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
+		UPDATE PROD_REVIEW
+		SET
+			 REVIEW_STATUS = #{reviewStatus}
+			,PROD_UPDTDATE = SYSDATE
+		WHERE PROD_RV_NO = #{prodRvNo}
+	</update>
+
+	<!-- 리뷰 삭제 -->
+	<delete id="deleteReview" parameterType="int">
+        DELETE FROM PROD_REVIEW
+        WHERE PROD_RV_NO = #{prodRvNo}
+    </delete>
+
+</mapper>

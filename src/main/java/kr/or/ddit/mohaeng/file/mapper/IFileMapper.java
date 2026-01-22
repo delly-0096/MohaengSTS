@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.file.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -74,5 +75,21 @@ public interface IFileMapper {
      * 기존 ATTACH_NO에 파일 추가
      */
 	public void addFilesToAttach(AttachFileDetailVO detailVO);
+
+	/**
+	 * <p>기존 번호와 받은 번호를 비교해서 없는 번호의 파일 useYn을 n으로 변경</p>
+	 * @date 2026.01.22
+	 * @author sdg
+	 * @param attachNo 기존의 attachNo
+	 * @param currentFileNos 수정시 받아온 남아있는 attachNo
+	 */
+	
+	/**
+	 * <p>기존 번호와 받은 번호를 비교해서 없는 번호의 파일 useYn을 n으로 변경</p>
+	 * @date 2026.01.22
+	 * @author sdg
+	 * @param paramMap attachNo, fileNo가 담긴 map
+	 */
+	public int deleteMissingFiles(Map<String, Object> paramMap);
 	
 }

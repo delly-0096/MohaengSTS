@@ -12,7 +12,9 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import kr.or.ddit.mohaeng.ServiceResult;
@@ -120,6 +122,8 @@ public class ProductMangeController {
 	public BusinessProductsVO productDetail(@RequestBody BusinessProductsVO businessProducts){
 		log.info("productDetail : {}", businessProducts);
 		BusinessProductsVO product = manageService.getProductDetail(businessProducts);
+		
+		// getAttachFileDetails
 		
 		log.info("product : {}", product);
 		return product;
@@ -237,9 +241,12 @@ public class ProductMangeController {
 	@ResponseBody
 	@PostMapping("/product/manage/editProduct")
 	public ResponseEntity<String> editProduct(BusinessProductsVO businessProducts){
+//			@RequestPart("받을데이터명")BusinessProductsVO businessProducts){
+//			,@RequestPart(value = "files", required = false) MultipartFile[] files ){
 		log.info("editProduct : {}", businessProducts);
-		 
 		ServiceResult result = manageService.modifyProduct(businessProducts);
+		
+//		fileService.sav
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {

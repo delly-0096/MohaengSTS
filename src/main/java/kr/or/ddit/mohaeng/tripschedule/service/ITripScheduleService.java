@@ -66,4 +66,6 @@ public interface ITripScheduleService {
 	public List<TourPlaceVO> selectStyleMatchPlace(Params params);
 
 	public void matchLegalDongCode();
+
+	public void updateDefaultImg();
 }

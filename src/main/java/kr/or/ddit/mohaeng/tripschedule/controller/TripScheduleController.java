@@ -7,7 +7,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +47,6 @@ import kr.or.ddit.mohaeng.tripschedule.service.ITripScheduleService;
 import kr.or.ddit.mohaeng.util.CommUtil;
 import kr.or.ddit.mohaeng.util.TravelClusterer;
 import kr.or.ddit.mohaeng.util.TravelClusterer.Location;
-import kr.or.ddit.mohaeng.vo.RegionVO;
 import kr.or.ddit.mohaeng.vo.TourPlaceVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import kr.or.ddit.util.Params;
@@ -410,8 +408,15 @@ public class TripScheduleController {
 		return ResponseEntity.ok(1);
 	}
 	
+	@GetMapping("/rcmd-result")
+	public String RcmdResult() {
+		return "schedule/rcmd-result";
+	}
+	
+	@ResponseBody
 	@PostMapping("/rcmd-result")
-	public String mySchedule(String preferenceData, Model model) {
+//	public String mySchedule(String preferenceData, Model model) {
+	public ResponseEntity<List<Map<String, Object>>> mySchedule(@RequestBody String preferenceData, Model model) {
 		AccommType accommType = null;
 		ActivityLevel activityLevel = null;
 		BudgetPreference budgetPreference = null;
@@ -452,6 +457,11 @@ public class TripScheduleController {
 	        //스타일 키워드에 맞는 관광지리스트
 	        List<TourPlaceVO> styleMatchPlaceList = tripScheduleService.selectStyleMatchPlace(params);
 	        
+	        //관광지 번호로 바로 꺼낼 수 있는 구조의 데이터 생성
+	        Map<String, TourPlaceVO> setKeyPlaceList = new HashMap<>();
+	        
+	        
+	        
 	        System.out.println("styleMatchPlaceList : " + styleMatchPlaceList.size());
 	        int placeListSize = styleMatchPlaceList.size();
 	        List<Map<String, String>> promptDataList = new ArrayList<>();
@@ -459,6 +469,7 @@ public class TripScheduleController {
 	        
 	        if(placeListSize > 0) {
 	        	for(TourPlaceVO place : styleMatchPlaceList) {
+	        		setKeyPlaceList.put(String.valueOf(place.getPlcNo()), place);
 	        		Map<String, String> prompt = new HashMap<>();
 	        		prompt.put("plcNo", String.valueOf(place.getPlcNo()));
 	        		prompt.put("plcNm", place.getPlcNm());
@@ -574,6 +585,8 @@ public class TripScheduleController {
 	        String coordinate = regionData.get("latitude")+"(위도), "+regionData.get("longitude") + "(경도)";
 	        
 	        String message = String.format("""
+	        		너는 한국 여행 전문가야!
+	        		
 	        		여행일정 추천해줘
 	        		현재일자 : '%s'
 		            여행지역 : '%s'
@@ -604,19 +617,19 @@ public class TripScheduleController {
 		            
 					[지시사항]
 					1. 후보군 내에서 위경도 기반으로 가장 가까운 순서대로 동선을 짜라.
-					2. 운영 시간 정보가 있으면 준수하되 부족한 데이터는 니가 가진 데이터를 참고해서 짜줘.
-					3. 순수 JSON만 출력하라.
-					4. 예시데이터 설명 : (No : 관광지 키, Nm : 관광지명, S : 방문시간, T: 방문지 떠나는 시간, O : 방문순서).
-					5. 예시데이터에 없는 항목에 대해서는 데이터 생성하지 말것.
-					6. [참고할 관광지 DB 데이터]의 설명은 정보가 판단 근거가 부족할때 참고할 후순위 참고 데이터로 삼을것.
-					7. 정확도가 다소 떨어져도 괜찮으니 응답속도를 높이는 방향으로 연산할 것
-					8. 주소항목을 이용해서 후보지로 삼을 동선을 좁힐 때 사용할 것
-					9. 운영 시간 정보가 있으면 준수하되, 판단이 불가능할 경우에만 네 내부 지식을 참고해라.
-					10. 좌표를 기준으로 동선을 짜라
-					11. 첫날 시작 좌표는 '%s'이다.
+					2. 순수 JSON만 출력하라.
+					3. 예시데이터 설명 : (No : 관광지 키, Nm : 관광지명, S : 방문시간, T: 방문지 떠나는 시간, O : 방문순서).
+					4. 예시데이터에 없는 항목에 대해서는 데이터 생성하지 말것.
+					5. [참고할 관광지 DB 데이터]의 설명은 정보가 판단 근거가 부족할때 참고할 후순위 참고 데이터로 삼을것.
+					6. 정확도가 다소 떨어져도 괜찮으니 응답속도를 높이는 방향으로 연산할 것
+					7. 좌표를 기준으로 동선을 짜라
+					8. 첫날 시작 좌표는 '%s'이다.
+					9. [참고할 관광지 DB 데이터]는 시/도, 시군구 로 정렬되어있다.
+					10. 일별로 여행의 제목을 지을 수 있으면 지어줘
 					
 		        	예시형태 : {result : [{
 		        		schdlDt : 1,
+		        		schdlNm : 1일차 여행,
 		        		tourPlaceList : [
 			        		{
 			        		    No : 125994,
@@ -636,6 +649,7 @@ public class TripScheduleController {
 		        	},
 		        	{
 		        		schdlDt : 2,
+		        		schdlNm : 경복궁 근처 탐방,
 		        		tourPlaceList : [
 			        		{
 			        		    No : 128213,
@@ -658,6 +672,9 @@ public class TripScheduleController {
 		            """,formattedDate, region, travelers, duration+1, styles
 		               , paceStr, budgetStr, accommodations, transportStr
 		               , finalPrompt, aiInputData, coordinate);
+//			9. check 라는 key로 가장 시간이 오래소요된 작업에 대한 설명과 개선방향이나 추가할 프롬프트 관련 피드백을 해줘 (초단위 시간 알려줄 수 있으면 더 좋음)
+//			12. 만약 축제나 행사등의 경우 운영 기간 외의 장소는 제외해
+//			13. 운영기간이나 비용정보가 정형화가 부족할 경우 너의 내부정보가 더 정형화가 잘 되어있으면 그쪽에 따를 것
 	        
 //	        String message = String.format("""
 //	        		여행일정 추천해줘
@@ -768,11 +785,32 @@ public class TripScheduleController {
 	        model.addAttribute("result", aiResult);
 	        
 	        System.out.println("message : " + message);
+	        
+	        
+			ObjectMapper mapper = new ObjectMapper();
+			Map<String, Object> aiResultMap = mapper.convertValue(aiResult, Map.class);
+			List<Map<String, Object>> resultList = (List<Map<String, Object>>) aiResultMap.get("result");
+			
+			System.out.println("resultList : " + resultList);
+			
+			for(Map<String, Object> resultMap : resultList) {
+				List<Map<String, Object>> tourPlaceList = (List<Map<String, Object>>) resultMap.get("tourPlaceList");
+				System.out.println("tourPlaceList : " + tourPlaceList);
+				for(Map<String, Object> tourPlace : tourPlaceList) {
+					String No = tourPlace.get("No").toString();
+					TourPlaceVO placeData =  setKeyPlaceList.get(No);
+					
+					tourPlace.put("placeInfo", placeData);
+				}
+			}
+			
+	        return new ResponseEntity<List<Map<String, Object>>>(resultList, HttpStatus.OK);
 	    } catch (Exception e) {
 	        e.printStackTrace();
 //	        return "error-page";
+	        return new ResponseEntity<List<Map<String, Object>>>(HttpStatus.BAD_REQUEST);
 	    }
 		
-		return "schedule/rcmd-result";
+//		return "schedule/rcmd-result";
 	}
 }

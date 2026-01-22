@@ -377,14 +377,31 @@ let currentDay = 1;
 let selectedVisibility = 'public';
 let saveScheduleModal;
 
+let travelDates = "";
+let startDt = "";
+let endDt = "";
+let diffDay = 0;
+let duration = 0;
+
+let dayData = {
+    1: { theme: '', date: '' },
+    2: { theme: '', date: '' },
+    3: { theme: '', date: '' },
+    4: { theme: '', date: '' }
+};
+
+const aiRcmdData = JSON.parse(sessionStorage.getItem('aiRcmdData') || '{}');
+const preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
+
 // 선호도 데이터 로드
 document.addEventListener('DOMContentLoaded', function() {
     // 저장 모달 초기화
     saveScheduleModal = new bootstrap.Modal(document.getElementById('saveScheduleModal'));
-    const preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
+
+    console.log(aiRcmdData);
 
     if (preferenceData.destination) {
-        document.getElementById('tripDestination').textContent = preferenceData.destination;
+        document.getElementById('tripDestination').textContent = preferenceData.destination + " 여행";
     }
     if (preferenceData.travelDates) {
         document.getElementById('tripDates').textContent = preferenceData.travelDates;
@@ -396,6 +413,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('resultSubtitle').textContent = '다른 여행자들이 만든 인기 일정입니다';
         document.title = '사용자 추천 일정 - 모행';
     }
+
+    initDurationData();
 });
 
 function selectDay(day) {
@@ -537,11 +556,207 @@ function confirmSaveSchedule() {
     // 모달 닫기
     saveScheduleModal.hide();
 
+    confirmSaveScheduleData();
+
     // 일정 저장 (실제 구현 시 AJAX)
     showToast('일정이 ' + visibilityLabels[selectedVisibility] + '로 저장되었습니다!', 'success');
     setTimeout(function() {
         window.location.href = '${pageContext.request.contextPath}/schedule/my';
     }, 1500);
+}
+
+function initDurationData() {
+    travelDates = preferenceData.travelDates;
+
+    if(travelDates.length > 10) {
+        travelDates = travelDates.replaceAll("~", "");
+        travelDates = travelDates.replaceAll("  ", " ");
+        
+        startDt = travelDates.split(" ")[0];
+        endDt = travelDates.split(" ")[1];
+    } else {
+        startDt = travelDates;
+        endDt = travelDates;
+    }
+    
+    diffDay = getDaysDiff(startDt, endDt);
+    duration = diffDay + 1;
+
+    $("#dayTabs").html("");
+    $("main .schedule-main").html("");
+
+    for(let i = 0; i < duration; i++) {
+        let durDate = new Date(startDt);
+    	durDate.setDate(durDate.getDate() + i);
+    	let shortWeekday = new Intl.DateTimeFormat('ko-KR', { weekday: 'short' }).format(durDate);
+    	let dDateMonth = durDate.getMonth() + 1;
+    	let dDateDay = durDate.getDate();
+
+        let dDay = i + 1;
+
+        dayData[dDay] = {
+            theme: '',
+            date: ''
+        };
+        
+        let dayTabHtml = `
+            <div class="day-tab \${i === 0 ? 'active' : ''}" data-day="\${i + 1}" onclick="selectDay(\${i + 1})">
+                <div class="day-number">\${i + 1}</div>
+                <div class="day-info">
+                    <span class="day-label">\${i + 1}일차</span>
+                    <span class="day-date">\${dDateMonth}월 \${dDateDay}일 (\${shortWeekday})</span>
+                </div>
+            </div>
+        `;
+        $("#dayTabs").append(dayTabHtml);
+
+        $("main .schedule-main").append(`
+            <div class="schedule-day" id="day\${i + 1}" data-day="\${i + 1}" style="display: \${i === 0 ? 'block' : 'none'};">
+                <div class="schedule-day-header">
+                    <h2 class="schedule-day-title">\${i + 1}일차 - 일정 제목</h2>
+                    <div class="schedule-day-actions">
+                        <button class="btn btn-outline btn-sm" onclick="regenerateDay(\${i + 1})">
+                            <i class="bi bi-arrow-clockwise me-1"></i>다시 추천
+                        </button>
+                    </div>
+                </div>
+                <div class="timeline">
+                    <!-- \${i + 1}일차 일정 내용 -->
+                </div>
+                <button class="add-place-btn" onclick="addPlace(\${i + 1})">
+                    <i class="bi bi-plus-circle"></i> 장소 추가하기
+                </button>
+            </div>
+        `);
+    }
+
+    $("main .schedule-main").append(`
+        <div class="schedule-actions">
+            <a href="${pageContext.request.contextPath}/schedule/planner" class="btn btn-outline btn-lg">
+                <i class="bi bi-pencil me-2"></i>일정 수정하기
+            </a>
+            <button class="btn btn-primary btn-lg" onclick="saveSchedule()">
+                <i class="bi bi-bookmark me-2"></i>일정 담기
+            </button>
+        </div>
+    `);
+
+    initDataDisplay();
+}
+
+function initDataDisplay() {
+    aiRcmdData.forEach(scheduleDate => {
+        let schdlDt = scheduleDate.schdlDt;
+        scheduleDate.tourPlaceList.forEach(tourPlace => {
+            // 일정 데이터를 화면에 표시하는 로직
+            $(`#day\${schdlDt} .timeline`).append(`
+                <div class="timeline-item">
+                    <div class="timeline-dot">\${tourPlace.O}</div>
+                    <div class="timeline-time">\${tourPlace.S} - \${tourPlace.T}</div>
+                    <div class="timeline-card">
+                        <div class="timeline-card-header">
+                            <img src="\${tourPlace.placeInfo.defaultImg}"
+                                    alt="\${tourPlace.Nm}" class="timeline-card-image">
+                            <div class="timeline-card-content">
+                                <span class="timeline-card-category">\${tourPlace.placeInfo.placeTypeName}</span>
+                                <h4 class="timeline-card-title">\${tourPlace.Nm}</h4>
+                                <p class="timeline-card-address">
+                                    <i class="bi bi-geo-alt"></i> \${tourPlace.placeInfo.fullNm}
+                                </p>
+                                <div class="timeline-card-actions">
+                                    <button class="btn btn-outline btn-sm" onclick="viewDetail('place', 1)">
+                                        상세보기
+                                    </button>
+                                    <button class="btn btn-text btn-sm" onclick="removeItem(1, 1)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `)
+        });
+    });
+}
+
+function confirmSaveScheduleData() {
+    var schdlNm = $("#tripDestination").text().trim();
+
+    // 1. Master 데이터 추출 (TRIP_SCHEDULE 매핑)
+    const masterData = {
+    	schdlNm : schdlNm,
+        schdlStartDt: startDt, // 시작일 (YYYY-MM-DD)
+        schdlEndDt: endDt,     // 종료일
+        totalBudget: 0,
+        publicYn: selectedVisibility === 'public' ? 'Y' : 'N',
+        aiRecomYn : 'Y',
+        /* prefNo: preferenceData.prefNo || null, // 선호도 번호가 있다면 */
+        startPlaceId : preferenceData.departurecode,
+        targetPlaceId : preferenceData.destinationcode,
+        travelerCount : preferenceData.travelers,
+        details: [] // 상세 일차 데이터를 담을 배열
+    };
+
+    // 2. 일차별 데이터 및 장소 데이터 추출 (DETAILS & PLACE 매핑)
+    for (let d = 1; d <= duration; d++) {
+        const dayInfo = dayData[d] || {};
+        
+        const detailObj = {
+            schdlDt: d,                         // 1일차, 2일차...
+            schdlTitle: dayInfo.theme, // 일차별 테마
+            places: []                          // 해당 일차의 장소들
+        };
+
+        // 해당 일차의 장소 아이템들 수집
+        const items = document.querySelectorAll('#day' + d + 'Items .planner-item');
+        items.forEach((item, index) => {
+            detailObj.places.push({
+                placeId: item.dataset.contentid,        // PLACE_ID
+                placeType: item.dataset.contenttypeid,  // PLACE_TYPE
+                placeStartTime: item.dataset.startTime, // 방문시간
+                placeEndTime: item.dataset.endTime,     // 방문종료시간
+                placeOrder: index + 1,                  // 순서 (순차적으로)
+                // DB에는 없지만 필요시 전달할 추가 정보
+                plcNm: item.querySelector('.planner-item-name').innerText,
+                planCost: item.dataset.cost.replace(/[^0-9]/g, '')
+            });
+        });
+
+        masterData.details.push(detailObj);
+    }
+
+    // 데이터 유효성 검사
+    if (masterData.details.every(d => d.places.length === 0)) {
+        showToast('최소 하나 이상의 장소를 추가해야 저장 가능합니다.', 'warning');
+        return;
+    }
+
+    // 3. 서버 전송 (AJAX)
+    fetch('${pageContext.request.contextPath}/schedule/insert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(masterData)
+    })
+    .then(response => response.json())
+    .then(res => {
+        if (res > 0 || res.status === 'success') {
+            showToast('일정이 안전하게 저장되었습니다!', 'success');
+            
+            // 성공 시 세션 스토리지 정리 (앞서 질문하신 특정 아이템 삭제)
+            sessionStorage.removeItem('tempPlanDataList');
+            sessionStorage.removeItem('tempSchdlNm');
+            setTimeout(() => {
+                window.location.href = '${pageContext.request.contextPath}/schedule/my';
+            }, 1000);
+        } else {
+            showToast('저장 중 오류가 발생했습니다.', 'danger');
+        }
+    })
+    .catch(err => {
+        console.error('Save Error:', err);
+        showToast('서버 통신 실패', 'danger');
+    });
 }
 </script>
 

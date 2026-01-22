@@ -149,9 +149,11 @@
 		    , TSP.MOVE_TYPE
 		    , (SELECT TP.PLC_NM FROM TOUR_PLACE TP WHERE TP.PLC_NO = TSP.DEST_ID) AS PLC_NM
 		    , (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END 
-	             FROM TRIP_SCHEDULE_BOOKMARK B 
-	            WHERE B.SCHDL_NO = TS.SCHDL_NO 
+	             FROM BOOKMARK B 
+	            WHERE B.CONTENT_ID = TS.SCHDL_NO 
 	              AND B.MEM_NO = #{memNo}
+	              AND B.CONTENT_TYPE = 'SCHEDULE'
+	              AND B.DEL_YN != 'Y'
 	           ) AS BKMK_YN
 	        , TP.PLC_NO
         	, TP.RGN_NO
@@ -520,28 +522,43 @@
 	
 	<select id="checkBookmarkExists" parameterType="kr.or.ddit.util.Params" resultType="int">
 		SELECT COUNT(*)
-	     FROM TRIP_SCHEDULE_BOOKMARK
+	     FROM BOOKMARK
 	    WHERE MEM_NO = #{memNo}
-      	  AND SCHDL_NO = #{schdlNo}
+	      AND CONTENT_TYPE = 'SCHEDULE'
+      	  AND CONTENT_ID = #{schdlNo}
+      	  AND DEL_YN != 'Y'
 	</select>
 	
 	<insert id="insertBookmark" parameterType="kr.or.ddit.util.Params">
-	    INSERT INTO TRIP_SCHEDULE_BOOKMARK (
-	        MEM_NO
-	        , SCHDL_NO
-	        , REG_DT
+		<selectKey keyProperty="bmkNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_BOOKMARK.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO BOOKMARK (
+			BMK_NO,
+			CONTENT_TYPE,
+			MEM_NO,
+			CONTENT_ID,
+			DEL_YN,
+			REG_DT
 	    ) VALUES (
-	        #{memNo}
+	   		  #{bmkNo}
+	   		, 'SCHEDULE'
+	        , #{memNo}
 	        , #{schdlNo}
+	        , 'N'
 	        , SYSDATE
 	    )
 	</insert>
 	
-	<delete id="deleteBookmark" parameterType="kr.or.ddit.util.Params">
-	    DELETE FROM TRIP_SCHEDULE_BOOKMARK
+	<update id="deleteBookmark" parameterType="kr.or.ddit.util.Params">
+	   UPDATE BOOKMARK
+	      SET DEL_YN = 'Y'
+	       , DEL_DT = SYSDATE
 	    WHERE MEM_NO = #{memNo}
-	      AND SCHDL_NO = #{schdlNo}
-	</delete>
+	      AND CONTENT_TYPE = 'SCHEDULE'
+      	  AND CONTENT_ID = #{schdlNo}
+      	  AND DEL_YN != 'Y'
+	</update>
 	
 	<update id="updateScheduleThumbnail" parameterType="kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController$ThumbnailData">
 		UPDATE TRIP_SCHEDULE
@@ -730,9 +747,9 @@
 		SELECT P.PLC_NO
 			 , RGN_NO
 			 , PLACE_TYPE
-			 , (SELECT C.CD_NAME FROM CODE C WHERE C.CD  = P.PLACE_TYPE) AS PLACE_TYPE_NAME
+			 , (SELECT TCT.CONTENT_TYPE_NAME FROM TOUR_CONTENT_TYPE TCT WHERE TCT.CONTENT_TYPE_ID  = P.PLACE_TYPE) AS PLACE_TYPE_NAME
 			 , PLC_NM
-			 , PLC_DESC
+			 , PLC_DESC 
 			 , PLC_ZIP
 			 , PLC_ADDR1
 			 , PLC_ADDR2
@@ -744,21 +761,22 @@
 			 , PCL_STATUS_CD
 			 , POP_TRVL_YN
 			 , LDONG_REGN_CD
+			 , DEFAULT_IMG
 			 , (SELECT LDONG_REGN_NM 
 				  FROM LEGAL_DONG_CODE LDC 
 				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
 				 GROUP BY LDONG_REGN_NM
-				) AS LDONG_SIGNGU_NM
+				) AS LDONG_REGN_NM
 			 , LDONG_SIGNGU_CD
 			 , (SELECT LDONG_SIGNGU_NM 
 				  FROM LEGAL_DONG_CODE LDC 
 				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
-				   AND LDC.LDONG_SIGNGU_CD = P.LDONG_REGN_CD
+				   AND LDC.LDONG_SIGNGU_CD = P.LDONG_SIGNGU_CD
 				 ) AS LDONG_SIGNGU_NM
 			 , (SELECT FULL_NM 
 				  FROM LEGAL_DONG_CODE LDC 
 				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
-				   AND LDC.LDONG_SIGNGU_CD = P.LDONG_REGN_CD
+				   AND LDC.LDONG_SIGNGU_CD = P.LDONG_SIGNGU_CD
 				 ) AS FULL_NM
 		  FROM TOUR_PLACE P
          WHERE RGN_NO = #{rgnNo}
@@ -777,6 +795,7 @@
 					</if>
             	) > 0
             AND LDONG_REGN_CD IS NOT NULL
+            AND P.PLACE_TYPE IN ('12', '14', '28', '32', '38', '39')
             ORDER BY LDONG_REGN_CD, LDONG_SIGNGU_CD
 	</select>
 	
@@ -812,6 +831,18 @@
 		UPDATE TOUR_PLACE
 		   SET LDONG_REGN_CD = #{ldongRegnCd}
 			 , LDONG_SIGNGU_CD = #{ldongSignguCd}
+		 WHERE PLC_NO = #{plcNo}
+	</update>
+	
+	<select id="emptyDefaultImg" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		SELECT PLC_NO 
+		 FROM TOUR_PLACE
+		WHERE DEFAULT_IMG IS NULL
+	</select>
+	
+	<update id="updateDefaultImg" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
+		UPDATE TOUR_PLACE
+		   SET DEFAULT_IMG = #{defaultImg}
 		 WHERE PLC_NO = #{plcNo}
 	</update>
 </mapper>

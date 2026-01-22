@@ -727,6 +727,7 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		return iTripScheduleMapper.selectStyleMatchPlace(params);
 	}
 	
+	// 법정동 코드 셋팅
 	@Async("asyncTaskExecutor")
 	@Override
 	public void matchLegalDongCode() {
@@ -760,8 +761,38 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 				System.out.println(place);
 				iTripScheduleMapper.updateLDongPlace(place);
 			}
-		}
-		
+		}	
 	}
 	
+	// 이미지 비어있는 데이터 업데이트
+	@Async("asyncTaskExecutor")
+	@Override
+	public void updateDefaultImg() {
+		List<TourPlaceVO> updateDataList = iTripScheduleMapper.emptyDefaultImg();
+		RestClient restClient = RestClient.create();
+		
+		for(TourPlaceVO place : updateDataList) {
+			String detailUrlString = "https://apis.data.go.kr/B551011/KorService2/detailCommon2?MobileOS=WEB&MobileApp=Mohaeng&_type=json"
+					+ "&contentId=" + place.getPlcNo()
+					+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
+			
+			URI detailUri = URI.create(detailUrlString);
+			
+			JsonNode detailNode = restClient.get()
+					.uri(detailUri)
+					.retrieve()
+					.body(JsonNode.class);
+			
+			JsonNode detailItemNode = detailNode.path("response")
+					.path("body")
+					.path("items")
+					.path("item")
+					.get(0);
+			
+			if(detailItemNode != null && detailItemNode.get("firstimage") != null) {
+				place.setDefaultImg(detailItemNode.get("firstimage").asText());
+				iTripScheduleMapper.updateDefaultImg(place);
+			}
+		}	
+	}
 }

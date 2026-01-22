@@ -78,4 +78,8 @@ public interface ITripScheduleMapper {
 	public List<TourPlaceVO> emptyLdongRegnPlace();
 
 	public void updateLDongPlace(TourPlaceVO place);
+
+	public void updateDefaultImg(TourPlaceVO place);
+
+	public List<TourPlaceVO> emptyDefaultImg();
 }

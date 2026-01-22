@@ -12,6 +12,8 @@ import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.RoomFacilityVO;
 import kr.or.ddit.mohaeng.vo.RoomFeatureVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
+import kr.or.ddit.mohaeng.vo.SalesVO;
+import kr.or.ddit.mohaeng.vo.TripProdListVO;
 
 @Mapper
 public interface IAccommodationMapper {
@@ -47,6 +49,10 @@ public interface IAccommodationMapper {
 	 */
 	public List<AccommodationVO> selectAccommodationListWithPaging(AccommodationVO acc);
 
+	/**
+	 * 숙소 필터 조회
+	 * @return
+	 */
 	public int selectTotalCount(AccommodationVO acc);
 
 	/**
@@ -136,6 +142,24 @@ public interface IAccommodationMapper {
 	 *	@return 
 	 */
 	public void insertAccResvAgree(AccResvVO resv);
+
+	/**
+	 *	<p> 숙박 예약 시 구입상품목록 insert </p>
+	 *	@date 2026.01.21
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	public void insertProdList(TripProdListVO tripProdListVO);
+
+	/**
+	 *	<p> 숙박 예약 시 매출 insert </p>
+	 *	@date 2026.01.21
+	 *	@author kdrs
+	 *	@param 
+	 *	@return 
+	 */
+	public void insertSales(SalesVO salesVO);
 
 
 }

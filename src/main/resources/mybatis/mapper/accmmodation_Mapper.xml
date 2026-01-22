@@ -37,7 +37,6 @@
  	    	
  	    <!-- 옵션 목록 -->
  	    <collection property="accOptionList" resultMap="accOptionMap"/>
- 	    
 	</resultMap>
 	
 	<!-- 숙소보유시설 타입 (AccFacilityVO) -->
@@ -69,6 +68,7 @@
 		<result property="price" column="PRICE"/>
 		<result property="discount" column="DISCOUNT"/>
 		<result property="extraGuestFee" column="EXTRA_GUEST_FEE"/>
+        <result property="breakfastYn" column="BREAKFAST_YN"/>
 		<result property="roomSize" column="ROOM_SIZE"/>
         
         

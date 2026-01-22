@@ -16,16 +16,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import kr.or.ddit.mohaeng.ServiceResult;
-import kr.or.ddit.mohaeng.business.service.IBusinessProductService;
 import kr.or.ddit.mohaeng.file.service.IFileService;
-import kr.or.ddit.mohaeng.login.service.IMemberService;
 import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
+import kr.or.ddit.mohaeng.product.manage.service.IProductMangeService;
 import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
 import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.tour.service.IProdTimeInfoService;
-import kr.or.ddit.mohaeng.tour.service.ISearchLogService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdInfoService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdSaleService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdService;
@@ -34,7 +32,6 @@ import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
-import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
@@ -67,7 +64,7 @@ public class ProductMangeController {
 	private IProdTimeInfoService timeInfoService;
 	
 	@Autowired
-	private IBusinessProductService businessService;
+	private IProductMangeService manageService;
 	
 	/**
 	 * <p>기업 상품 관리 페이지</p>
@@ -88,20 +85,20 @@ public class ProductMangeController {
 		businessProducts.setMemNo(memNo);
 		log.info("businessProducts : {}", businessProducts);
         // 투어상품 정보
-		List<BusinessProductsVO> prodList = businessService.getProductlist(businessProducts);	// 숙박 상품도 담기긴 함. 그런데 좀 바뀔수도
+		List<BusinessProductsVO> prodList = manageService.getProductlist(businessProducts);	// 숙박 상품도 담기긴 함. 그런데 좀 바뀔수도
 		log.info("prodList : {}", prodList);
 		
 		// 숙박 정보
 //		BusinessProductsVO businessProd = new BusinessProductsVO();
 //		businessProd.setMemNo(memNo);
 //		
-//		List<AccommodationVO> accommodationList = businessService.getAccommodationList(businessProd);
+//		List<AccommodationVO> accommodationList = manageService.getAccommodationList(businessProd);
 //		log.info("accommodationList : {}", accommodationList);
 		// 숙박 상품을 따로 담을지? 이래야 조건 걸어서 해줄수 있을수도?
 		// 회원 번호와 맞는 객실
 		
 		// 통계. 이거 tripProdList로 받아야됨
-        TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
+        TripProdVO prodAggregate = manageService.getProductAggregate(tripProd);
         
         // 검색은 스크립트에서
         
@@ -122,7 +119,7 @@ public class ProductMangeController {
 	@PostMapping("/product/manage/productDetail")
 	public BusinessProductsVO productDetail(@RequestBody BusinessProductsVO businessProducts){
 		log.info("productDetail : {}", businessProducts);
-		BusinessProductsVO product = businessService.getProductDetail(businessProducts);
+		BusinessProductsVO product = manageService.getProductDetail(businessProducts);
 		
 		log.info("product : {}", product);
 		return product;
@@ -203,7 +200,7 @@ public class ProductMangeController {
 	@PostMapping("/product/manage/changeProductStatus")
 	public ResponseEntity<String> changeProductStatus(@RequestBody TripProdVO tripProd) {
 		log.info("updateProductStatus : {}", tripProd);
-		ServiceResult result = businessService.updateProductStatus(tripProd);
+		ServiceResult result = manageService.updateProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
@@ -222,7 +219,7 @@ public class ProductMangeController {
 	@PostMapping("/product/manage/removeProduct")
 	public ResponseEntity<String> removeProduct(@RequestBody TripProdVO tripProd){
 		log.info("deleteProduct : {}", tripProd);
-		ServiceResult result = businessService.deleteProductStatus(tripProd);
+		ServiceResult result = manageService.deleteProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
@@ -242,7 +239,7 @@ public class ProductMangeController {
 	public ResponseEntity<String> editProduct(BusinessProductsVO businessProducts){
 		log.info("editProduct : {}", businessProducts);
 		 
-		ServiceResult result = businessService.modifyProduct(businessProducts);
+		ServiceResult result = manageService.modifyProduct(businessProducts);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {

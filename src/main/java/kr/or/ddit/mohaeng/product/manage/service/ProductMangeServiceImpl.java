@@ -7,8 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.ServiceResult;
-import kr.or.ddit.mohaeng.accommodation.service.IAccommodationService;
-import kr.or.ddit.mohaeng.business.mapper.IBusinessProductMapper;
+import kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
@@ -26,28 +25,28 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 
 	// 투어같은 상품 조회
 	@Autowired
-	private IBusinessProductMapper businessMapper;
+	private IProductMangeMapper manageMapper;
 	
 	@Override
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts) {
-		return businessMapper.getProductlist(businessProducts);
+		return manageMapper.getProductlist(businessProducts);
 	}
 	
 	@Override
 	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProducts) {
-		return businessMapper.getAccommodationList(businessProducts);
+		return manageMapper.getAccommodationList(businessProducts);
 	}
 	
 	@Override
 	public TripProdVO getProductAggregate(TripProdVO tripProd) {
-		return businessMapper.getProductAggregate(tripProd);
+		return manageMapper.getProductAggregate(tripProd);
 	}
 	
 	@Override
 	public BusinessProductsVO getProductDetail(BusinessProductsVO businessProducts) {
 		
 		// 상품 정보, 상품 이용안내, 상품 가격, 여행 상품 관광지
-		BusinessProductsVO prodVO = businessMapper.retrieveProductDetail(businessProducts);
+		BusinessProductsVO prodVO = manageMapper.retrieveProductDetail(businessProducts);
 		log.info("retrieveProductDetail-retrieveProductDetail : {}", prodVO);
 
 		// 숙소 타입일 경우에는 이렇게
@@ -60,7 +59,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			AccommodationVO accommodationvo = new AccommodationVO();
 			accommodationvo.setAccNo(accNo);
 			
-			AccommodationVO accommodation = businessMapper.retrieveAccomodationDetail(accommodationvo);
+			AccommodationVO accommodation = manageMapper.retrieveAccomodationDetail(accommodationvo);
 			prodVO.setAccommodation(accommodation);
 			log.info("retrieveAccomodationDetail : {}", accommodation.getRoomTypeList().size());
 			
@@ -69,7 +68,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			
 		// 숙소가 아닐때는 이렇게
 		} else {
-			List<ProdTimeInfoVO> prodTimeList = businessMapper.retrieveProdTimeList(prodVO);
+			List<ProdTimeInfoVO> prodTimeList = manageMapper.retrieveProdTimeList(prodVO);
 			log.info("retrieveProductDetail-retrieveProdTimeList : {}", prodTimeList);
 			
 			if(prodTimeList != null && prodTimeList.size() > 0) {
@@ -82,7 +81,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			
 			// 상품 사진
 			if (prodVO.getAttachNo() != null && prodVO.getAttachNo() > 0) {
-				productImages = businessMapper.retrieveProdImages(prodVO);
+				productImages = manageMapper.retrieveProdImages(prodVO);
 				log.info("getAttachFileDetails : {}", productImages);
 			}
 			
@@ -104,28 +103,28 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		// 변수 바뀔수도, 1대1관계들 update -> 상품, 상품 이용안내, 상품 가격, 상품 장소
 		// 상품
 		int productstatus = 0;	// 1 , 0
-		productstatus = businessMapper.modifyTripProduct(businessProducts);
+		productstatus = manageMapper.modifyTripProduct(businessProducts);
 		log.info("productstatus : {}", productstatus);
 		
 		// 상품 가격
 		int saleStatus = 0;
 		TripProdSaleVO prodSaleVO = businessProducts.getProdSale();
 		prodSaleVO.setTripProdNo(tripProdNo);
-		saleStatus = businessMapper.modifyProdSale(prodSaleVO);
+		saleStatus = manageMapper.modifyProdSale(prodSaleVO);
 		log.info("saleStatus : {}", saleStatus);
 		
 		// 상품 이용안내
 		int infoStatus = 0;
 		TripProdInfoVO prodInfoVO = businessProducts.getProdInfo();
 		prodInfoVO.setTripProdNo(tripProdNo);
-		infoStatus = businessMapper.modifyProdInfo(prodInfoVO);
+		infoStatus = manageMapper.modifyProdInfo(prodInfoVO);
 		log.info("infoStatus : {}", infoStatus);
 		
 		// 상품 장소
 		int placeStatus = 0;
 		TripProdPlaceVO prodPlaceVO = businessProducts.getProdPlace();
 		prodPlaceVO.setTripProdNo(tripProdNo);
-		placeStatus = businessMapper.modifyProdPlace(prodPlaceVO);
+		placeStatus = manageMapper.modifyProdPlace(prodPlaceVO);
 		log.info("placeStatus : {}", placeStatus);
 		
 		// 결과 비교
@@ -134,7 +133,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		
 		// 예약가능시간(예약 가능 시간)
 		int productTimetatus = 0;
-		productTimetatus = businessMapper.deleteProdTimeInfo(businessProducts);
+		productTimetatus = manageMapper.deleteProdTimeInfo(businessProducts);
 		log.info("deleteProdInfo : {}", productTimetatus);
 		
 		// 예약시간 수정
@@ -146,7 +145,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 				timeInfo.setTripProdNo(tripProdNo);
 			}
 			
-			int insertCount = businessMapper.insertProdTimeInfo(prodTimeInfoVO);
+			int insertCount = manageMapper.insertProdTimeInfo(prodTimeInfoVO);
 			log.info("시간 등록 개수: {}, 기대 개수: {}", insertCount, prodTimeInfoVO.size());
 			
 			if (insertCount != prodTimeInfoVO.size()) {
@@ -178,7 +177,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			tripProd.setApproveStatus("판매중");
 		}
 		
-		int status = businessMapper.updateProductStatus(tripProd);
+		int status = manageMapper.updateProductStatus(tripProd);
 		log.info("status : {}", status);
 		if(status > 0) {
 			return result = ServiceResult.OK;
@@ -192,7 +191,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		ServiceResult result = null;
 		log.info("updateProductStatus 실행 : {}", tripProd);
 		
-		int status = businessMapper.deleteProductStatus(tripProd);
+		int status = manageMapper.deleteProductStatus(tripProd);
 		log.info("status : {}", status);
 		if(status > 0) {
 			return result = ServiceResult.OK;

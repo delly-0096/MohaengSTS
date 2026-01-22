@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.tripschedule.mapper.ITripScheduleMapper">
-	
+
 	<resultMap id="tripScheduleResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleVO">
         <id property="schdlNo" column="SCHDL_NO" />
-        
+
         <result property="memNo"            column="MEM_NO" />
         <result property="prefNo"           column="PREF_NO" />
         <result property="startPlaceType"   column="START_PLACE_TYPE" />
@@ -28,10 +28,10 @@
  		<result property="rgnNm" column="rgnNm"/>
 
 		<association property="attachFile" resultMap="attachFileDetailMap" />
-		
-        <collection property="tripScheduleDetailsList" 
-                    resultMap="tripScheduleDetailsResultMap" 
-                    notNullColumn="SCHDL_DETAILS_NO" /> 
+
+        <collection property="tripScheduleDetailsList"
+                    resultMap="tripScheduleDetailsResultMap"
+                    notNullColumn="SCHDL_DETAILS_NO" />
     </resultMap>
 
     <resultMap id="tripScheduleDetailsResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO">
@@ -42,9 +42,9 @@
         <result property="schdlEndDt"   column="DETAILS_END_DT" />
         <result property="schdlDt"      column="SCHDL_DT" />
         <result property="bgColor"      column="BG_COLOR" />
-                            
-        <collection property="tripSchedulePlaceList" 
-                    resultMap="tripSchedulePlaceResultMap" 
+
+        <collection property="tripSchedulePlaceList"
+                    resultMap="tripSchedulePlaceResultMap"
                     notNullColumn="SCHDL_PLC_NO" />
     </resultMap>
 
@@ -62,10 +62,10 @@
         <result property="destId"         column="DEST_ID" />
         <result property="moveType"       column="MOVE_TYPE" />
         <result property="plcNm"       	  column="PLC_NM" />
-        
+
         <association property="tourPlace" resultMap="tourPlaceResultMap" />
     </resultMap>
-    
+
     <resultMap id="tourPlaceResultMap" type="kr.or.ddit.mohaeng.vo.TourPlaceVO">
     	<id property="plcNo" column="PLC_NO" />
 	    <result property="placeType" column="PLACE_TYPE" />
@@ -88,7 +88,7 @@
 	    <result property="plcAddr1" column="PLC_ADDR1" />
 	    <result property="plcAddr2" column="PLC_ADDR2" />
 	</resultMap>
-	
+
 	<resultMap id="attachFileDetailMap" type="kr.or.ddit.mohaeng.vo.AttachFileDetailVO">
 		<id property="fileNo" column="FILE_NO"/>
 		<result property="fileNo" column="FILE_NO"/>
@@ -104,7 +104,7 @@
 		<result property="regId" column="REG_ID" />
 		<result property="regDt" column="REG_DT" />
 	</resultMap>
-    
+
     <!-- with로 바꾸기 -->
     <sql id="tripScheduleColumns">
     	 	  TS.SCHDL_NO
@@ -128,14 +128,14 @@
 		    , TS.PUBLIC_YN
 		    , TS.REG_DT           AS TS_REG_DT
 		    , TS.MOD_DT           AS TS_MOD_DT
-		    
+
 		    , TSD.SCHDL_DETAILS_NO
 		    , TSD.SCHDL_TITLE
 		    , TSD.SCHDL_START_DT  AS DETAILS_START_DT
 		    , TSD.SCHDL_END_DT    AS DETAILS_END_DT
 		    , TSD.SCHDL_DT
 		    , TSD.BG_COLOR
-		    
+
 		    , TSP.SCHDL_PLC_NO
 		    , TSP.PLACE_TYPE
 		    , TSP.PLACE_ID
@@ -148,9 +148,9 @@
 		    , TSP.DEST_ID
 		    , TSP.MOVE_TYPE
 		    , (SELECT TP.PLC_NM FROM TOUR_PLACE TP WHERE TP.PLC_NO = TSP.DEST_ID) AS PLC_NM
-		    , (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END 
-	             FROM TRIP_SCHEDULE_BOOKMARK B 
-	            WHERE B.SCHDL_NO = TS.SCHDL_NO 
+		    , (SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END
+	             FROM TRIP_SCHEDULE_BOOKMARK B
+	            WHERE B.SCHDL_NO = TS.SCHDL_NO
 	              AND B.MEM_NO = #{memNo}
 	           ) AS BKMK_YN
 	        , TP.PLC_NO
@@ -185,7 +185,7 @@
 		    ON TSD.SCHDL_DETAILS_NO = TSP.SCHDL_DETAILS_NO
 		  LEFT JOIN TOUR_PLACE TP
 		    ON TSP.PLACE_ID = TP.PLC_NO
-		  LEFT JOIN REGION RG 
+		  LEFT JOIN REGION RG
 		  	ON RG.RGN_NO = TP.RGN_NO
 		 WHERE TS.MEM_NO = #{memNo}
 		   AND TS.DEL_YN != 'Y'
@@ -193,7 +193,7 @@
 		 		, TSD.SCHDL_DT ASC
 		     	, TSP.PLACE_ORDER ASC
     </select>
-    
+
     <select id="selectTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO" resultMap="tripScheduleResultMap">
         SELECT <include refid="tripScheduleColumns"/>
 		  FROM TRIP_SCHEDULE TS
@@ -223,7 +223,7 @@
 			 , POP_RGN_YN
 		  FROM REGION
 	</select>
-	
+
 	<select id="selectPopRegionList" resultType="kr.or.ddit.util.Params">
 		SELECT RGN_NO
 			 , RGN_NO AS CODE
@@ -239,7 +239,7 @@
 		  FROM REGION
 		 WHERE POP_RGN_YN = 'Y'
 	</select>
-	
+
 	<select id="selectTourPlaceList" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
 		SELECT PLC_NO
 			 , RGN_NO
@@ -263,7 +263,7 @@
 			 , DEFAULT_IMG
 		  FROM TOUR_PLACE
 	</select>
-	
+
 	<select id="searchRegion" resultType="kr.or.ddit.util.Params" parameterType="kr.or.ddit.util.Params">
 		SELECT RGN_NO
 			 , RGN_NO AS CODE
@@ -279,7 +279,7 @@
 		  FROM REGION
 		 WHERE RGN_NO = #{rgnNo}
 	</select>
-	
+
 	<update id="mergeSearchTourPlace" parameterType="java.util.List">
 	MERGE INTO TOUR_PLACE T
 	      USING (
@@ -302,7 +302,7 @@
 	      ) S
 	      ON (T.PLC_NO = S.PLC_NO)
 	      WHEN MATCHED THEN
-	          UPDATE SET 
+	          UPDATE SET
 	                T.RGN_NO      = S.RGN_NO
 	              , T.PLACE_TYPE  = S.PLACE_TYPE
 	              , T.PLC_NM      = S.PLC_NM
@@ -312,10 +312,10 @@
 	              , T.LATITUDE    = S.LATITUDE
 	              , T.LONGITUDE   = S.LONGITUDE
 	              , T.DEFAULT_IMG = S.DEFAULT_IMG
-	              , T.MOD_ID	  = S.REG_ID  
-	              , T.MOD_DT      = SYSDATE  
-	              , T.LDONG_REGN_CD   = S.LDONG_REGN_CD  
-	              , T.LDONG_SIGNGU_CD = S.LDONG_SIGNGU_CD  
+	              , T.MOD_ID	  = S.REG_ID
+	              , T.MOD_DT      = SYSDATE
+	              , T.LDONG_REGN_CD   = S.LDONG_REGN_CD
+	              , T.LDONG_SIGNGU_CD = S.LDONG_SIGNGU_CD
 	            WHEN NOT MATCHED THEN
 	          INSERT (
 	                PLC_NO
@@ -349,7 +349,7 @@
 	              , S.LDONG_SIGNGU_CD
 	          )
 	</update>
-	
+
 	<select id="searchPlaceDetail" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
 		SELECT PLC_NO
 			 , RGN_NO
@@ -374,7 +374,7 @@
 		  FROM TOUR_PLACE
 		 WHERE PLC_NO = #{plcNo}
 	</select>
-	
+
 	<update id="saveTourPlacInfo" parameterType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
 		UPDATE TOUR_PLACE
 		   SET PLC_DESC = #{plcDesc}
@@ -382,7 +382,7 @@
 			 , PLC_PRICE = #{plcPrice}
 		 WHERE PLC_NO = #{plcNo}
 	</update>
-	
+
 	<insert id="insertTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO">
 		<selectKey keyProperty="schdlNo" resultType="int" order="BEFORE">
 	        SELECT NVL(MAX(SCHDL_NO)+1, 1) FROM TRIP_SCHEDULE
@@ -427,7 +427,7 @@
 			 , 'N'
 			 )
 	</insert>
-	
+
 	<insert id="insertTripScheduleDetails" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleDetailsVO">
 		<selectKey keyProperty="schdlDetailsNo" resultType="int" order="BEFORE">
 	        SELECT NVL(MAX(SCHDL_DETAILS_NO) + 1, 1) FROM TRIP_SCHEDULE_DETAILS
@@ -448,7 +448,7 @@
 			 , #{schdlDt}
 			 )
 	</insert>
-	
+
 	<insert id="insertTripSchedulePlace" parameterType="kr.or.ddit.mohaeng.vo.TripSchedulePlaceVO">
 		<selectKey keyProperty="schdlPlcNo" resultType="int" order="BEFORE">
 	        SELECT NVL(MAX(SCHDL_PLC_NO) + 1, 1) FROM TRIP_SCHEDULE_PLACE
@@ -481,14 +481,14 @@
 			 , #{planCost}
 			 )
 	</insert>
-	
+
 	<update id="deleteTripSchedule" parameterType="int">
 		UPDATE TRIP_SCHEDULE
 		   SET DEL_YN = 'Y'
 			 , DEL_DT = SYSDATE
 		 WHERE SCHDL_NO = #{schdlNo}
 	</update>
-	
+
 	<update id="updateTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO">
 		UPDATE TRIP_SCHEDULE
 		   SET START_PLACE_TYPE 	= #{startPlaceType}
@@ -504,12 +504,12 @@
 		     , MOD_DT               = sysdate
 		 WHERE SCHDL_NO = #{schdlNo}
 	</update>
-	
+
 	<delete id="deleteScheduleDetails" parameterType="int">
 		DELETE FROM TRIP_SCHEDULE_DETAILS
 		 WHERE SCHDL_NO = #{schdlNo}
 	</delete>
-	
+
 	<delete id="deleteSchedulePlace" parameterType="int">
 		DELETE FROM TRIP_SCHEDULE_PLACE
 		 WHERE SCHDL_DETAILS_NO IN (SELECT SCHDL_DETAILS_NO
@@ -517,14 +517,14 @@
 									 WHERE SCHDL_NO = #{schdlNo}
 									)
 	</delete>
-	
+
 	<select id="checkBookmarkExists" parameterType="kr.or.ddit.util.Params" resultType="int">
 		SELECT COUNT(*)
 	     FROM TRIP_SCHEDULE_BOOKMARK
 	    WHERE MEM_NO = #{memNo}
       	  AND SCHDL_NO = #{schdlNo}
 	</select>
-	
+
 	<insert id="insertBookmark" parameterType="kr.or.ddit.util.Params">
 	    INSERT INTO TRIP_SCHEDULE_BOOKMARK (
 	        MEM_NO
@@ -536,16 +536,16 @@
 	        , SYSDATE
 	    )
 	</insert>
-	
+
 	<delete id="deleteBookmark" parameterType="kr.or.ddit.util.Params">
 	    DELETE FROM TRIP_SCHEDULE_BOOKMARK
 	    WHERE MEM_NO = #{memNo}
 	      AND SCHDL_NO = #{schdlNo}
 	</delete>
-	
+
 	<update id="updateScheduleThumbnail" parameterType="kr.or.ddit.mohaeng.tripschedule.controller.TripScheduleController$ThumbnailData">
 		UPDATE TRIP_SCHEDULE
-		   SET 
+		   SET
 		   	<if test='defaultYn eq "Y"'>
 		   	   ATTACH_NO = null
 			 , LINK_THUMBNAIL = #{linkThumbnail}
@@ -556,13 +556,13 @@
 		   	</if>
 		 WHERE SCHDL_NO = #{schdlNo}
 	</update>
-	
+
 	<select id="tourContentList" resultType="kr.or.ddit.util.Params">
 		select CONTENT_TYPE_ID
 			 , CONTENT_TYPE_NAME
 		  FROM TOUR_CONTENT_TYPE
 	</select>
-	
+
 	<update id="scheduleOngoing" parameterType="int">
 		UPDATE TRIP_SCHEDULE
 		  SET SCHDL_STATUS = 'ONGOING'
@@ -571,7 +571,7 @@
 		  AND TO_DATE(SCHDL_END_DT) >= SYSDATE
 		   ]]>
 	</update>
-	
+
 	<update id="scheduleCompleted" parameterType="int">
 		UPDATE TRIP_SCHEDULE
 		   SET SCHDL_STATUS = 'COMPLETED'
@@ -579,7 +579,7 @@
 		 WHERE TO_DATE(SCHDL_END_DT) < SYSDATE
 		   ]]>
 	</update>
-	
+
 	<select id="selectPopularPlaceList" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO">
 		SELECT PLC_NO
 			 , RGN_NO
@@ -608,7 +608,7 @@
 			#{tourPlace.contentid}
 		</foreach>
 	</select>
-	
+
 	<select id="searchTourPlaceList" parameterType="int" resultMap="tourPlaceResultMap">
 		SELECT PLC_NO
 			 , RGN_NO
@@ -635,7 +635,7 @@
 		   AND PLC_DESC != null
 		   AND (SELECT COUNT(*) FROM TOUR_PLACE_KEYWORD K WHERE TP.PLC_NO = K.PLC_NO) > 0
 	</select>
-	
+
 	<select id="selectTargetPlaceList" resultMap="tourPlaceResultMap">
 		SELECT PLC_NO
 			 , RGN_NO
@@ -660,7 +660,7 @@
 		  FROM TOUR_PLACE TP
 		 WHERE PLC_DESC IS NULL
 	</select>
-	
+
 	<select id="selectTripStyleList" resultType="kr.or.ddit.util.Params">
 		SELECT C2.CD_NAME AS STYLE_CAT
 		     , TSTY.STYLE_CAT_CD
@@ -678,7 +678,7 @@
 			</foreach>
 		</if>
 	</select>
-	
+
 	<select id="searchEmptyStyleKeywordPlace" resultType="kr.or.ddit.util.Params">
 		SELECT PLC_NO
 			 , RGN_NO
@@ -704,28 +704,28 @@
 		 WHERE (select COUNT(*) FROM TOUR_PLACE_KEYWORD PK WHERE P.PLC_NO = PK.PLC_NO) = 0
 		   AND PLC_DESC != '-'
 	</select>
-	
+
 	<insert id="insertTourKeywords" parameterType="java.util.List">
 	    INSERT INTO TOUR_PLACE_KEYWORD (
-	        PLC_KWD_NO, 
-	        PLC_NO, 
-	        PLC_KWD_CD, 
+	        PLC_KWD_NO,
+	        PLC_NO,
+	        PLC_KWD_CD,
 	        REG_DT
 	    )
 	    SELECT SQL_TOUR_PLACE_KEYWORD.NEXTVAL, TPK.*
 	    FROM (
 	        <foreach collection="list" item="item" separator="UNION ALL">
 	            <foreach collection="item.styles" item="style" separator="UNION ALL">
-	                SELECT 
-	                    #{item.plcNo} AS PLC_NO, 
-	                    #{style} AS PLC_KWD_CD, 
-	                    SYSDATE AS REG_DT 
+	                SELECT
+	                    #{item.plcNo} AS PLC_NO,
+	                    #{style} AS PLC_KWD_CD,
+	                    SYSDATE AS REG_DT
 	                FROM DUAL
 	            </foreach>
 	        </foreach>
 	    ) TPK
 	</insert>
-	
+
 	<select id="selectStyleMatchPlace" resultType="kr.or.ddit.mohaeng.vo.TourPlaceVO" parameterType="kr.or.ddit.util.Params">
 		SELECT P.PLC_NO
 			 , RGN_NO
@@ -744,20 +744,20 @@
 			 , PCL_STATUS_CD
 			 , POP_TRVL_YN
 			 , LDONG_REGN_CD
-			 , (SELECT LDONG_REGN_NM 
-				  FROM LEGAL_DONG_CODE LDC 
-				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
-				 GROUP BY LDONG_SIGNGU_NM
+			 , (SELECT LDONG_REGN_NM
+				  FROM LEGAL_DONG_CODE LDC
+				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD
+				 GROUP BY LDONG_REGN_NM
 				) AS LDONG_SIGNGU_NM
 			 , LDONG_SIGNGU_CD
-			 , (SELECT LDONG_SIGNGU_NM 
-				  FROM LEGAL_DONG_CODE LDC 
-				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
+			 , (SELECT LDONG_SIGNGU_NM
+				  FROM LEGAL_DONG_CODE LDC
+				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD
 				   AND LDC.LDONG_SIGNGU_CD = P.LDONG_REGN_CD
 				 ) AS LDONG_SIGNGU_NM
-			 , (SELECT FULL_NM 
-				  FROM LEGAL_DONG_CODE LDC 
-				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD 
+			 , (SELECT FULL_NM
+				  FROM LEGAL_DONG_CODE LDC
+				 WHERE LDC.LDONG_REGN_CD = P.LDONG_REGN_CD
 				   AND LDC.LDONG_SIGNGU_CD = P.LDONG_REGN_CD
 				 ) AS FULL_NM
 		  FROM TOUR_PLACE P
@@ -766,7 +766,7 @@
                  INNER JOIN TRIP_STYLE TSTY
                     ON TPK.PLC_KWD_CD = TSTY.STYLE_CD
                  WHERE P.PLC_NO = TPK.PLC_NO
-                   AND TSTY.STYLE_CAT_CD IN 
+                   AND TSTY.STYLE_CAT_CD IN
 					<if test="tripStyleCatList != null and tripStyleCatList.length > 0">
 					    <foreach item="tripStyleCat" collection="tripStyleCatList" open="(" separator="," close=")">
 					        #{tripStyleCat}

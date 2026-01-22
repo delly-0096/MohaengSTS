@@ -557,12 +557,6 @@ function confirmSaveSchedule() {
     saveScheduleModal.hide();
 
     confirmSaveScheduleData();
-
-    // 일정 저장 (실제 구현 시 AJAX)
-    showToast('일정이 ' + visibilityLabels[selectedVisibility] + '로 저장되었습니다!', 'success');
-    setTimeout(function() {
-        window.location.href = '${pageContext.request.contextPath}/schedule/my';
-    }, 1500);
 }
 
 function initDurationData() {
@@ -620,7 +614,7 @@ function initDurationData() {
                         </button>
                     </div>
                 </div>
-                <div class="timeline">
+                <div class="timeline" id="day\${i + 1}-timeline">
                     <!-- \${i + 1}일차 일정 내용 -->
                 </div>
                 <button class="add-place-btn" onclick="addPlace(\${i + 1})">
@@ -650,7 +644,11 @@ function initDataDisplay() {
         scheduleDate.tourPlaceList.forEach(tourPlace => {
             // 일정 데이터를 화면에 표시하는 로직
             $(`#day\${schdlDt} .timeline`).append(`
-                <div class="timeline-item">
+                <div class="timeline-item" data-contentid="\${tourPlace.No}" 
+                     data-contenttypeid="\${tourPlace.placeInfo.placeType}" 
+                     data-start-time="\${tourPlace.S}" 
+                     data-end-time="\${tourPlace.T}"
+                     data-order="\${tourPlace.O}">
                     <div class="timeline-dot">\${tourPlace.O}</div>
                     <div class="timeline-time">\${tourPlace.S} - \${tourPlace.T}</div>
                     <div class="timeline-card">
@@ -709,7 +707,8 @@ function confirmSaveScheduleData() {
         };
 
         // 해당 일차의 장소 아이템들 수집
-        const items = document.querySelectorAll('#day' + d + 'Items .planner-item');
+        const items = document.querySelectorAll('#day' + d + '-timeline .timeline-item');
+        console.log(items.length);
         items.forEach((item, index) => {
             detailObj.places.push({
                 placeId: item.dataset.contentid,        // PLACE_ID
@@ -718,15 +717,15 @@ function confirmSaveScheduleData() {
                 placeEndTime: item.dataset.endTime,     // 방문종료시간
                 placeOrder: index + 1,                  // 순서 (순차적으로)
                 // DB에는 없지만 필요시 전달할 추가 정보
-                plcNm: item.querySelector('.planner-item-name').innerText,
-                planCost: item.dataset.cost.replace(/[^0-9]/g, '')
+                plcNm: item.querySelector('.timeline-card-title').innerText,
+                planCost: '0'
             });
         });
 
         masterData.details.push(detailObj);
     }
-
-    // 데이터 유효성 검사
+    console.log(masterData);
+    // // 데이터 유효성 검사
     if (masterData.details.every(d => d.places.length === 0)) {
         showToast('최소 하나 이상의 장소를 추가해야 저장 가능합니다.', 'warning');
         return;
@@ -746,9 +745,17 @@ function confirmSaveScheduleData() {
             // 성공 시 세션 스토리지 정리 (앞서 질문하신 특정 아이템 삭제)
             sessionStorage.removeItem('tempPlanDataList');
             sessionStorage.removeItem('tempSchdlNm');
+            sessionStorage.removeItem('aiRcmdData');
+
             setTimeout(() => {
                 window.location.href = '${pageContext.request.contextPath}/schedule/my';
             }, 1000);
+
+            // 일정 저장 (실제 구현 시 AJAX)
+            showToast('일정이 ' + visibilityLabels[selectedVisibility] + '로 저장되었습니다!', 'success');
+            setTimeout(function() {
+                window.location.href = '${pageContext.request.contextPath}/schedule/my';
+            }, 1500);
         } else {
             showToast('저장 중 오류가 발생했습니다.', 'danger');
         }

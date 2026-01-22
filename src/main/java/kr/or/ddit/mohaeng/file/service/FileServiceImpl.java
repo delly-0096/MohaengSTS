@@ -409,4 +409,12 @@ public class FileServiceImpl implements IFileService{
 	    
 	    return attachNo;
 	}
+
+	@Override
+	public void syncFiles(Integer attachNo, List<Integer> currentFileNos) {
+		// 기존 attachNo와 이거와 매칭되는 fileNo
+		AttachFileDetailVO attachFileDetail = new AttachFileDetailVO();
+//		List<AttachFileDetailVO> attachFileDetailList = fileMapper.selectProfileFileDetail(attachNo);
+		// 비교
+	}
 }

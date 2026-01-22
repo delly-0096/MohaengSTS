@@ -31,7 +31,7 @@ public class TourPlaceVO {
 	
 	private int ldongRegnCd;
 	private int ldongSignguCd;
-	private String ldongRegnCdNm;
+	private String ldongRegnNm;
 	private String ldongSignguNm;
 	private String fullNm;
 	

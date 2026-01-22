@@ -534,8 +534,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
     initBooking({
     	roomNo: ${room.roomTypeNo},
+    	tripProdNo: '${tripProdNo}',
+    	unitPrice : ${room.price},
         roomPricePerNight: ${room.finalPrice},
         nights: ${nights},
+        
         extraGuestPrice: ${room.extraGuestFee},
         baseGuestCount: ${room.baseGuestCount},
         maxGuestCount: ${room.maxGuestCount},  
@@ -543,6 +546,9 @@ document.addEventListener('DOMContentLoaded', function() {
         checkInTime: '${acc.checkInTime}',
         contextPath: '${pageContext.request.contextPath}',
         isLoggedIn: isLoggedIn,
+        
+        adultCount: '${bookingData.adultCount}', 
+        childCount: '${bookingData.childCount}',
         
         // 날짜 & 이미지 데이터 주입
 		startDt: '${bookingData.startDate}', 

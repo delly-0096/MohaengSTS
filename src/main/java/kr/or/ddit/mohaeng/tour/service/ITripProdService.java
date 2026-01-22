@@ -14,4 +14,7 @@ public interface ITripProdService {
 	public TripProdPlaceVO getPlace(int tripProdNo);
 	public int updateExpiredStatus();
 	public void updateAttachNo(int tripProdNo, int attachNo);
+	public boolean checkBookmark(int memNo, int tripProdNo);
+	public int insertBookmark(int memNo, String type, int tripProdNo);
+	public int deleteBookmark(int memNo, int tripProdNo);
 }

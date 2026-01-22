@@ -80,17 +80,14 @@ public class AccommodationController {
 	        acc.setEndDate(LocalDate.now().plusDays(1).toString());
 	    }
 	    
-	    acc.setAreaCode(areaCode);
-	    acc.setKeyword(keyword);
-	    acc.setAccNo(accNo);
+	    if(areaCode != null) acc.setAreaCode(areaCode);
+	    if(keyword != null) acc.setKeyword(keyword);
+	    if(accNo != null) acc.setAccNo(accNo);
 		
 		acc.setPage(1);
 	    acc.setPageSize(12);
 	    acc.setStartRow(1);
 	    acc.setEndRow(12);
-		
-		AccommodationVO vo = new AccommodationVO();
-		vo.setAreaCode(areaCode);
 		
 		List<AccommodationVO> list = accService.selectAccommodationListWithPaging(acc);
 		int totalCount = accService.selectTotalCount(acc);
@@ -125,7 +122,7 @@ public class AccommodationController {
 	/**
 	 * 숙소 추가 데이터 로드 (인피니티 스크롤용 API)
 	 */
-	@GetMapping("/product/accommodation/more")
+	@GetMapping("/product/accommodation/api/loadMore")
 	@ResponseBody // 리턴값을 페이지가 아닌 JSON 데이터로 쏴줌!
 	public Map<String, Object> loadMore(
 			AccommodationVO acc,
@@ -133,7 +130,6 @@ public class AccommodationController {
 	        @RequestParam(value="areaCode", required=false) String areaCode
 			) {
 	    // 1. 페이징 계산 (AccommodationVO에 page와 pageSize 필드가 있다고 가정)
-	    // 만약 VO에 없다면 파라미터로 따로 받아도 돼!
 	    int startRow = (acc.getPage() - 1) * acc.getPageSize() + 1;
 	    int endRow = acc.getPage() * acc.getPageSize();
 	    
@@ -173,6 +169,12 @@ public class AccommodationController {
 		// 숙소 상세 정보
 		AccommodationVO detail = accService.getAccommodationDetail(tripProdNo);
 		int accNo = detail.getAccNo();
+		
+		if (detail == null) {
+	        log.error("존재하지 않는 상품 번호입니다: {}", tripProdNo);
+	        return "redirect:/product/accommodation"; // 혹은 에러 페이지
+	    }
+		
 		// 숙소 객실 타입 정보
 		List<RoomTypeVO> roomList = accService.getRoomList(accNo);
 		// 숙소 보유시설 정보
@@ -203,19 +205,20 @@ public class AccommodationController {
 	/**
 	 * 숙소 결제 페이지
 	 */
-	@GetMapping("/product/accommodation/{tripProdNo}/booking")
+	@GetMapping("/product/accommodation/{roomNo}/booking")
 	public String accommodationBooking(
 			@AuthenticationPrincipal CustomUserDetails user,
-			@PathVariable("tripProdNo") int tripProdNo,
-			@RequestParam("roomNo") int roomTypeNo,
+			@PathVariable("roomNo") int roomTypeNo,       
+	        @RequestParam("tripProdNo") int tripProdNo,
+	        @RequestParam("price") int price,
 	        @RequestParam Map<String, String> bookingData, // 날짜, 인원 등을 한 번에 맵으로 받기
 	        Model model) {
 		
 		log.info("결제 시도 - 숙소번호: {}, 방번호: {}", tripProdNo, roomTypeNo);
 	    
 		// 숙소와 객실 정보 가져오기
+		RoomTypeVO room = accService.getRoomTypeDetail(roomTypeNo);
 		AccommodationVO acc = accService.getAccommodationDetail(tripProdNo);
-        RoomTypeVO room = accService.getRoomTypeDetail(roomTypeNo);
         
         int accNo = acc.getAccNo();
         
@@ -246,6 +249,7 @@ public class AccommodationController {
         long totalPayAmount = (long) room.getFinalPrice() * nights;
 		
 	    // 넘어온 예약 데이터를 모델에 담아서 결제 화면에 뿌려주기
+        model.addAttribute("tripProdNo", tripProdNo);
         model.addAttribute("acc", acc);
         model.addAttribute("accNo", accNo);
         model.addAttribute("room", room);

@@ -433,6 +433,12 @@ public class PaymentServiceImpl implements IPaymentService {
 	        item.setPayNo(paymentVO.getPayNo());
 	        result = payMapper.insertTripProdList(item);
 	        
+	        // 매출 테이블 INSERT
+	        SalesVO sales = new SalesVO();
+	        sales.setProdListNo(item.getProdListNo());
+	        sales.setNetSales(item.getPayPrice());
+	        payMapper.insertSales(sales);
+	        
 	        // 재고 0이면 판매중지로 변경
 	        int currentStock = payMapper.getCurrentStock(item.getTripProdNo());
 	        if (currentStock <= 0) {

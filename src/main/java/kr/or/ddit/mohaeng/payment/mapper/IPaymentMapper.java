@@ -6,6 +6,7 @@ import org.apache.ibatis.annotations.Param;
 import kr.or.ddit.mohaeng.vo.MemberVO;
 import kr.or.ddit.mohaeng.vo.PaymentInfoVO;
 import kr.or.ddit.mohaeng.vo.PaymentVO;
+import kr.or.ddit.mohaeng.vo.SalesVO;
 import kr.or.ddit.mohaeng.vo.TripProdListVO;
 
 @Mapper
@@ -20,4 +21,5 @@ public interface IPaymentMapper {
 	public int decreaseStock(@Param("tripProdNo") int tripProdNo, @Param("quantity") int quantity);
 	public int getCurrentStock(int tripProdNo);
 	public int updateSoldOut(int tripProdNo);
+	public int insertSales(SalesVO sales);
 }

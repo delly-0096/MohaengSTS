@@ -52,4 +52,25 @@ public class TripProdServiceImpl implements ITripProdService {
 		mapper.updateAttachNo(tripProdNo, attachNo);
 	}
 
+	@Override
+	public boolean checkBookmark(int memNo, int tripProdNo) {
+		return mapper.checkBookmark(memNo, tripProdNo) > 0;
+	}
+
+	@Override
+	public int insertBookmark(int memNo, String type, int tripProdNo) {
+	    int restored = mapper.restoreBookmark(memNo, tripProdNo);
+	    
+	    if (restored == 0) {
+	        return mapper.insertBookmark(memNo, type, tripProdNo);
+	    }
+	    
+	    return restored;
+	}
+
+	@Override
+	public int deleteBookmark(int memNo, int tripProdNo) {
+		return mapper.deleteBookmark(memNo, tripProdNo);
+	}
+
 }

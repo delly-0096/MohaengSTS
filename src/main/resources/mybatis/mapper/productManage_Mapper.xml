@@ -142,6 +142,25 @@
 	    , p.ADDR2
 	</sql>
 	
+	
+	<!-- 
+	, CASE
+           WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
+           THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
+           ELSE s.PRICE
+       END AS DISPLAY_PRICE
+       
+	, CASE
+           WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
+           THEN (SELECT MIN(RT.PRICE) 
+           			FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
+           			이게 있는 RT.ACC_NO의 RT.DISCOUNT가져오기
+           ELSE s.PRICE
+       END AS DISPLAY_PRICE
+	
+		
+		
+	 -->
 	<!-- 숙소 재고, 판매량 정보가 애매함. 숙소는 roomTypeList와 다른 것들 적용해야되서 -->
 	<!-- 본인 기업회원 상품 목록 -->
 	<select id="getProductlist" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="tripPordMap">
@@ -156,10 +175,11 @@
                     <!-- 가격에서 할인 가격도 가져와야됨 -->
                     , acc.ACC_NO
 	                , acc.ACC_NAME
-	                , CASE 
+	                , acc.TOTAL_ROOM_CNT
+	                , CASE
 	                    WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
 	                    THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
-	                    ELSE s.PRICE 
+	                    ELSE s.PRICE
 	                END AS DISPLAY_PRICE
                     , r.AVG_RATING 
                     , r.REVIEW_COUNT

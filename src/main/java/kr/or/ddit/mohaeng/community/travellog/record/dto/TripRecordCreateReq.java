@@ -9,26 +9,22 @@ import java.util.List;
 @Data
 public class TripRecordCreateReq {
 	private Long rcdNo;
-    private Long schdlNo;        // nullable
-    private String rcdTitle;
-    private String rcdContent;
+	private Long schdlNo; 
+	private String rcdTitle;
+	private String rcdContent;
+	private String tripDaysCd;
+	private String locCd;
+	private Long attachNo;
 
-    private String tripDaysCd;
-    private String locCd;
-    private Long attachNo;
+	@JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+	private Date startDt;
 
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
-    private Date startDt;
+	@JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
+	private Date endDt;
 
-    @JsonFormat(pattern = "yyyy-MM-dd", timezone = "Asia/Seoul")
-    private Date endDt;
-
-    private String openScopeCd;  // PUBLIC/PRIVATE
-    private String mapDispYn;    // Y/N
-    private String replyEnblYn;  // Y/N
-    
-    private List<String> tags;
-    
-    private Long coverAttachNo; // ✅ 일정 attach 커버용
-
+	private String openScopeCd; // PUBLIC/PRIVATE
+	private String mapDispYn; 
+	private String replyEnblYn; 
+	private List<String> tags;
+	private Long coverAttachNo; 
 }

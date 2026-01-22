@@ -5,11 +5,11 @@ import kr.or.ddit.mohaeng.vo.CommentsVO;
 
 public interface ICommentsService {
 
-    List<CommentsVO> list(String targetType, Long targetNo, Long loginMemberNo);
+	List<CommentsVO> list(String targetType, Long targetNo, Long loginMemberNo);
 
-    int write(String targetType, Long targetNo, Long writerNo, String content, Long parentCmntNo);
+	int write(String targetType, Long targetNo, Long writerNo, String content, Long parentCmntNo);
 
-    boolean update(Long cmntNo, Long writerNo, String content);
+	boolean update(Long cmntNo, Long writerNo, String content);
 
-    boolean delete(Long cmntNo, Long writerNo);
+	boolean delete(Long cmntNo, Long writerNo);
 }

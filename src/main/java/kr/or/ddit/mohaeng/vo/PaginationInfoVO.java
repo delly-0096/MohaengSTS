@@ -18,6 +18,7 @@ public class PaginationInfoVO<T>{
     private List<T> dataList; //결과를 넣을 데이터 리스트
     private String searchType;
     private String searchWord;
+    private int memNo;
     
     public PaginationInfoVO() {}
     

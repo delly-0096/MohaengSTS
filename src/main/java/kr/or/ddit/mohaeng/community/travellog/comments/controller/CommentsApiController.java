@@ -26,109 +26,92 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/community/travel-log")
 public class CommentsApiController {
 
-    private final ICommentsService service;
-    private final ILikesService likesService;
+	private final ICommentsService service;
+	private final ILikesService likesService;
 
-    private Long getLoginMemberNo(Authentication auth) {
-        if (auth == null || !auth.isAuthenticated()
-                || "anonymousUser".equals(String.valueOf(auth.getPrincipal()))) {
-            return null;
-        }
+	private Long getLoginMemberNo(Authentication auth) {
+		if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(String.valueOf(auth.getPrincipal()))) {
+			return null;
+		}
 
-        // ✅ 너희 프로젝트에서 이미 쓰는 방식(게시글 좋아요와 동일)
-        try {
-            return likesService.resolveMemNo(auth);
-        } catch (Exception e) {
-            return null;
-        }
-    }
+		try {
+			return likesService.resolveMemNo(auth);
+		} catch (Exception e) {
+			return null;
+		}
+	}
 
+	// ===== 목록 =====
+	@GetMapping("/comments")
+	public ResponseEntity<List<CommentsVO>> list(@RequestParam("rcdNo") Long rcdNo, Authentication auth) {
+		Long loginMemberNo = getLoginMemberNo(auth);
+		List<CommentsVO> list = service.list("TRIP_RECORD", rcdNo, loginMemberNo);
+		return ResponseEntity.ok(list);
+	}
 
-    // ===== 목록 =====
-    @GetMapping("/comments")
-    public ResponseEntity<List<CommentsVO>> list(
-            @RequestParam("rcdNo") Long rcdNo,
-            Authentication auth
-    ) {
-        Long loginMemberNo = getLoginMemberNo(auth);
-        List<CommentsVO> list = service.list("TRIP_RECORD", rcdNo, loginMemberNo);
-        return ResponseEntity.ok(list);
-    }
+	// ===== 작성(댓글/대댓글) : 일반회원만 =====
+	public record WriteReq(String content, Long parentCmntNo) {
+	}
 
-    // ===== 작성(댓글/대댓글) : 일반회원만 =====
-    public record WriteReq(String content, Long parentCmntNo) {}
+	@PreAuthorize("hasRole('ROLE_MEMBER')")
+	@PostMapping("/comments")
+	public ResponseEntity<?> write(@RequestParam("rcdNo") Long rcdNo, @RequestBody WriteReq req, Authentication auth) {
+		Long writerNo = getLoginMemberNo(auth);
+		if (writerNo == null)
+			return ResponseEntity.status(401).body("UNAUTHORIZED");
 
-    @PreAuthorize("hasRole('ROLE_MEMBER')")
-    @PostMapping("/comments")
-    public ResponseEntity<?> write(
-            @RequestParam("rcdNo") Long rcdNo,
-            @RequestBody WriteReq req,
-            Authentication auth
-    ) {
-        Long writerNo = getLoginMemberNo(auth);
-        if (writerNo == null) return ResponseEntity.status(401).body("UNAUTHORIZED");
+		String content = (req.content() == null) ? "" : req.content().trim();
+		if (content.isEmpty())
+			return ResponseEntity.badRequest().body("EMPTY_CONTENT");
 
-        String content = (req.content() == null) ? "" : req.content().trim();
-        if (content.isEmpty()) return ResponseEntity.badRequest().body("EMPTY_CONTENT");
+		service.write("TRIP_RECORD", rcdNo, writerNo, content, req.parentCmntNo());
+		return ResponseEntity.ok().build();
+	}
 
-        service.write("TRIP_RECORD", rcdNo, writerNo, content, req.parentCmntNo());
-        return ResponseEntity.ok().build();
-    }
+	// ===== 수정(본인만) =====
+	public record UpdateReq(String content) {
+	}
 
-    // ===== 수정(본인만) =====
-    public record UpdateReq(String content) {}
+	@PreAuthorize("hasRole('ROLE_MEMBER')")
+	@PutMapping("/comments/{cmntNo}")
+	public ResponseEntity<?> update(@PathVariable("cmntNo") Long cmntNo, @RequestBody UpdateReq req,
+			Authentication auth) {
+		Long writerNo = getLoginMemberNo(auth);
+		if (writerNo == null)
+			return ResponseEntity.status(401).body("UNAUTHORIZED");
 
-    @PreAuthorize("hasRole('ROLE_MEMBER')")
-    @PutMapping("/comments/{cmntNo}")
-    public ResponseEntity<?> update(
-            @PathVariable("cmntNo") Long cmntNo,
-            @RequestBody UpdateReq req,
-            Authentication auth
-    ) {
-        Long writerNo = getLoginMemberNo(auth);
-        if (writerNo == null) return ResponseEntity.status(401).body("UNAUTHORIZED");
+		String content = (req.content() == null) ? "" : req.content().trim();
+		if (content.isEmpty())
+			return ResponseEntity.badRequest().body("EMPTY_CONTENT");
 
-        String content = (req.content() == null) ? "" : req.content().trim();
-        if (content.isEmpty()) return ResponseEntity.badRequest().body("EMPTY_CONTENT");
+		boolean ok = service.update(cmntNo, writerNo, content);
+		return ok ? ResponseEntity.ok().build() : ResponseEntity.status(403).body("FORBIDDEN");
+	}
 
-        boolean ok = service.update(cmntNo, writerNo, content);
-        return ok ? ResponseEntity.ok().build()
-                  : ResponseEntity.status(403).body("FORBIDDEN");
-    }
+	// ===== 삭제(본인만) =====
+	@PreAuthorize("hasRole('ROLE_MEMBER')")
+	@DeleteMapping("/comments/{cmntNo}")
+	public ResponseEntity<?> delete(@PathVariable("cmntNo") Long cmntNo, Authentication auth) {
+		Long writerNo = getLoginMemberNo(auth);
+		if (writerNo == null)
+			return ResponseEntity.status(401).body("UNAUTHORIZED");
 
-    // ===== 삭제(본인만) =====
-    @PreAuthorize("hasRole('ROLE_MEMBER')")
-    @DeleteMapping("/comments/{cmntNo}")
-    public ResponseEntity<?> delete(
-            @PathVariable("cmntNo") Long cmntNo,
-            Authentication auth
-    ) {
-        Long writerNo = getLoginMemberNo(auth);
-        if (writerNo == null) return ResponseEntity.status(401).body("UNAUTHORIZED");
+		boolean ok = service.delete(cmntNo, writerNo);
+		return ok ? ResponseEntity.ok().build() : ResponseEntity.status(403).body("FORBIDDEN");
+	}
 
-        boolean ok = service.delete(cmntNo, writerNo);
-        return ok ? ResponseEntity.ok().build()
-                  : ResponseEntity.status(403).body("FORBIDDEN");
-    }
-    
- // 댓글 좋아요 토글 (일반회원만)
-    @PreAuthorize("hasAuthority('ROLE_MEMBER')")
-    @PostMapping("/comments/{cmntNo}/likes/toggle")
-    public ResponseEntity<?> toggleCommentLike(
-            @PathVariable("cmntNo") Long cmntNo,
-            Authentication authentication
-    ) {
-        final String CAT_COMMENT = "COMMENT";
+	// 댓글 좋아요 토글 (일반회원만)
+	@PreAuthorize("hasAuthority('ROLE_MEMBER')")
+	@PostMapping("/comments/{cmntNo}/likes/toggle")
+	public ResponseEntity<?> toggleCommentLike(@PathVariable("cmntNo") Long cmntNo, Authentication authentication) {
+		final String CAT_COMMENT = "COMMENT";
 
-        Long memNo = likesService.resolveMemNo(authentication);
+		Long memNo = likesService.resolveMemNo(authentication);
 
-        boolean liked = likesService.toggleLike(cmntNo, CAT_COMMENT, memNo);
-        int likeCount = likesService.countLikes(cmntNo, CAT_COMMENT);
+		boolean liked = likesService.toggleLike(cmntNo, CAT_COMMENT, memNo);
+		int likeCount = likesService.countLikes(cmntNo, CAT_COMMENT);
 
-        return ResponseEntity.ok(Map.of(
-                "liked", liked,
-                "likeCount", likeCount
-        ));
-    }
+		return ResponseEntity.ok(Map.of("liked", liked, "likeCount", likeCount));
+	}
 
 }

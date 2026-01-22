@@ -32,131 +32,91 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/travel-log/records")
 public class TripRecordApiController {
 
-    private final ITripRecordService service;
+	private final ITripRecordService service;
 
-    // 목록: 누구나
-    @PreAuthorize("permitAll()")
-    @GetMapping
-    public ResponseEntity<PagedResponse<TripRecordListVO>> list(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String openScopeCd,
-            @RequestParam(defaultValue = "all") String filter, 
-            Authentication authentication
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        return ResponseEntity.ok(service.list(page, size, keyword, openScopeCd, filter, loginMemNo));
-    }
+	// 목록: 누구나
+	@PreAuthorize("permitAll()")
+	@GetMapping
+	public ResponseEntity<PagedResponse<TripRecordListVO>> list(@RequestParam(defaultValue = "1") int page,
+			@RequestParam(defaultValue = "12") int size, @RequestParam(required = false) String keyword,
+			@RequestParam(required = false) String openScopeCd, @RequestParam(defaultValue = "all") String filter,
+			Authentication authentication) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+		return ResponseEntity.ok(service.list(page, size, keyword, openScopeCd, filter, loginMemNo));
+	}
 
-    // 상세: 누구나(단, 비공개글은 SQL에서 작성자만 보이게 필터링)
-    @PreAuthorize("permitAll()")
-    @GetMapping("/{rcdNo}")
-    public ResponseEntity<TripRecordDetailVO> detail(
-            @PathVariable long rcdNo,
-            @RequestParam(defaultValue = "true") boolean increaseView,
-            Authentication authentication
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        return ResponseEntity.ok(service.detail(rcdNo, loginMemNo, increaseView));
-    }
-    
-    
-    // 블록 목록: 누구나(단, 비공개 글은 detail 필터를 통과한 경우만)
-    @PreAuthorize("permitAll()")
-    @GetMapping("/{rcdNo}/blocks")
-    public ResponseEntity<List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO>> blocks(
-            @PathVariable long rcdNo,
-            Authentication authentication
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+	// 상세: 누구나(단, 비공개글은 SQL에서 작성자만 보이게 필터링)
+	@PreAuthorize("permitAll()")
+	@GetMapping("/{rcdNo}")
+	public ResponseEntity<TripRecordDetailVO> detail(@PathVariable long rcdNo,
+			@RequestParam(defaultValue = "true") boolean increaseView, Authentication authentication) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+		return ResponseEntity.ok(service.detail(rcdNo, loginMemNo, increaseView));
+	}
 
-        // ✅ 접근 가능한 글인지 검증 (비공개면 작성자만 통과)
-        TripRecordDetailVO d = service.detail(rcdNo, loginMemNo, false);
-        if (d == null) return ResponseEntity.notFound().build();
+	// 블록 목록: 누구나(단, 비공개 글은 detail 필터를 통과한 경우만)
+	@PreAuthorize("permitAll()")
+	@GetMapping("/{rcdNo}/blocks")
+	public ResponseEntity<List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO>> blocks(@PathVariable long rcdNo,
+			Authentication authentication) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
 
-        return ResponseEntity.ok(service.blocks(rcdNo));
-    }
+		// 접근 가능한 글인지 검증 (비공개면 작성자만 통과)
+		TripRecordDetailVO d = service.detail(rcdNo, loginMemNo, false);
+		if (d == null)
+			return ResponseEntity.notFound().build();
 
+		return ResponseEntity.ok(service.blocks(rcdNo));
+	}
 
-    // 작성: MEMBER만
-	/*
-	 * @PreAuthorize("hasRole('MEMBER')")
-	 * 
-	 * @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE) public
-	 * ResponseEntity<Long> create(
-	 * 
-	 * @RequestPart("req") TripRecordCreateReq req,
-	 * 
-	 * @RequestPart(value = "coverFile", required = false)
-	 * org.springframework.web.multipart.MultipartFile coverFile, Authentication
-	 * authentication ) { Long loginMemNo =
-	 * AuthPrincipalExtractor.getMemNo(authentication); // hasRole('MEMBER')면 원래
-	 * null이 나오면 안 되지만 안전장치 if (loginMemNo == null) return
-	 * ResponseEntity.status(401).build();
-	 * 
-	 * long rcdNo = service.createWithFiles(req, loginMemNo, coverFile, null); //
-	 * images는 지금 안씀 return ResponseEntity.ok(rcdNo); }
-	 */
-    
- // 작성: MEMBER만
-    @PreAuthorize("hasRole('MEMBER')")
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Long> create(
-            @RequestPart("req") TripRecordCreateReq req,
-            @RequestPart(value = "coverFile", required = false) MultipartFile coverFile,
-            @RequestPart(value = "bodyFiles", required = false) java.util.List<MultipartFile> bodyFiles,
-            @RequestPart(value = "blocks", required = false) java.util.List<kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq> blocks,
-            Authentication authentication
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        if (loginMemNo == null) return ResponseEntity.status(401).build();
+	// 작성: MEMBER만
+	@PreAuthorize("hasRole('MEMBER')")
+	@PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Long> create(@RequestPart("req") TripRecordCreateReq req,
+			@RequestPart(value = "coverFile", required = false) MultipartFile coverFile,
+			@RequestPart(value = "bodyFiles", required = false) java.util.List<MultipartFile> bodyFiles,
+			@RequestPart(value = "blocks", required = false) java.util.List<kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq> blocks,
+			Authentication authentication) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+		if (loginMemNo == null)
+			return ResponseEntity.status(401).build();
 
-        long rcdNo = service.createWithBlocks(req, loginMemNo, coverFile, bodyFiles, blocks);
-        return ResponseEntity.ok(rcdNo);
-    }
+		long rcdNo = service.createWithBlocks(req, loginMemNo, coverFile, bodyFiles, blocks);
+		return ResponseEntity.ok(rcdNo);
+	}
 
-    
-    // 수정: MEMBER + 작성자만 (JSON)
-    @PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
-    @PutMapping(value="/{rcdNo}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Void> updateJson(
-        @PathVariable long rcdNo,
-        @RequestBody TripRecordUpdateReq req,
-        Authentication authentication
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        service.update(rcdNo, req, loginMemNo);
-        return ResponseEntity.ok().build();
-    }
+	// 수정: MEMBER + 작성자만 (JSON)
+	@PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
+	@PutMapping(value = "/{rcdNo}", consumes = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<Void> updateJson(@PathVariable long rcdNo, @RequestBody TripRecordUpdateReq req,
+			Authentication authentication) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+		service.update(rcdNo, req, loginMemNo);
+		return ResponseEntity.ok().build();
+	}
 
+	// 수정: MEMBER + 작성자만 (multipart: 커버 변경 + 블록/본문 이미지 변경 지원)
+	@PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
+	@PutMapping(value = "/{rcdNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public ResponseEntity<Void> updateMultipart(@PathVariable long rcdNo, @RequestPart("req") TripRecordUpdateReq req,
+			@RequestPart(value = "coverFile", required = false) MultipartFile coverFile,
 
-    // ✅ 수정: MEMBER + 작성자만 (multipart: 커버 변경 + 블록/본문 이미지 변경 지원)
-    @PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
-    @PutMapping(value = "/{rcdNo}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Void> updateMultipart(
-            @PathVariable long rcdNo,
-            @RequestPart("req") TripRecordUpdateReq req,
-            @RequestPart(value = "coverFile", required = false) MultipartFile coverFile,
+			// 추가
+			@RequestPart(value = "bodyFiles", required = false) java.util.List<MultipartFile> bodyFiles,
+			@RequestPart(value = "blocks", required = false) java.util.List<kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq> blocks,
 
-            // ✅ 추가
-            @RequestPart(value = "bodyFiles", required = false) java.util.List<MultipartFile> bodyFiles,
-            @RequestPart(value = "blocks", required = false) java.util.List<kr.or.ddit.mohaeng.community.travellog.record.dto.TripRecordBlockReq> blocks,
+			Authentication authentication) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+		service.updateWithBlocks(rcdNo, req, loginMemNo, coverFile, bodyFiles, blocks);
+		return ResponseEntity.ok().build();
+	}
 
-            Authentication authentication
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        service.updateWithBlocks(rcdNo, req, loginMemNo, coverFile, bodyFiles, blocks);
-        return ResponseEntity.ok().build();
-    }
-
-
-    // 삭제: MEMBER + 작성자만
-    @PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
-    @DeleteMapping("/{rcdNo}")
-    public ResponseEntity<Void> delete(@PathVariable long rcdNo, Authentication authentication) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        service.delete(rcdNo, loginMemNo);
-        return ResponseEntity.ok().build();
-    }
+	// 삭제: MEMBER + 작성자만
+	@PreAuthorize("hasRole('MEMBER') and @tripRecordAuth.isWriter(#rcdNo, authentication)")
+	@DeleteMapping("/{rcdNo}")
+	public ResponseEntity<Void> delete(@PathVariable long rcdNo, Authentication authentication) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+		service.delete(rcdNo, loginMemNo);
+		return ResponseEntity.ok().build();
+	}
 }

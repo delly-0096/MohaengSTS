@@ -14,16 +14,12 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PlaceApiController {
 
-    private final IPlaceService placeService;
+	private final IPlaceService placeService;
 
-    // ✅ 프론트에서 호출하는 URL과 맞춤:
-    // GET /api/community/travel-log/places?keyword=...&rgnNo=...&size=20
-    @GetMapping("/api/community/travel-log/places")
-    public List<PlaceSearchRes> searchPlaces(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String rgnNo,
-            @RequestParam(required = false, defaultValue = "20") Integer size
-    ) {
-        return placeService.searchPlaces(keyword, rgnNo, size);
-    }
+	@GetMapping("/api/community/travel-log/places")
+	public List<PlaceSearchRes> searchPlaces(@RequestParam(required = false) String keyword,
+			@RequestParam(required = false) String rgnNo,
+			@RequestParam(required = false, defaultValue = "20") Integer size) {
+		return placeService.searchPlaces(keyword, rgnNo, size);
+	}
 }

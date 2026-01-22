@@ -14,15 +14,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class PlaceServiceImpl implements IPlaceService {
 
-    private final IPlaceMapper mapper;
+	private final IPlaceMapper mapper;
 
-    @Override
-    public List<PlaceSearchRes> searchPlaces(String keyword, String rgnNo, Integer size) {
-        Map<String, Object> param = new HashMap<>();
-        param.put("keyword", keyword == null ? "" : keyword.trim());
-        param.put("rgnNo", (rgnNo == null || rgnNo.isBlank()) ? null : rgnNo.trim());
-        param.put("size", (size == null || size <= 0) ? 20 : size);
+	@Override
+	public List<PlaceSearchRes> searchPlaces(String keyword, String rgnNo, Integer size) {
+		Map<String, Object> param = new HashMap<>();
+		param.put("keyword", keyword == null ? "" : keyword.trim());
+		param.put("rgnNo", (rgnNo == null || rgnNo.isBlank()) ? null : rgnNo.trim());
+		param.put("size", (size == null || size <= 0) ? 20 : size);
 
-        return mapper.selectPlaces(param);
-    }
+		return mapper.selectPlaces(param);
+	}
 }

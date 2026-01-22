@@ -17,101 +17,77 @@ import kr.or.ddit.mohaeng.vo.TripRecordDetailVO;
 import kr.or.ddit.mohaeng.vo.TripScheduleVO;
 import lombok.RequiredArgsConstructor;
 
-
 @Controller
 @RequestMapping("/community")
 @RequiredArgsConstructor
 public class TripRecordPageController {
 
-    private final ITripRecordService tripRecordService;
-
+	private final ITripRecordService tripRecordService;
 
 	@Autowired
 	ITripScheduleService tripScheduleService;
 
-    @GetMapping("/travel-log")
-    public String listPage(
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "12") int size,
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) String openScopeCd,
-            @RequestParam(defaultValue = "all") String filter,  
-            Authentication authentication,
-            Model model
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication); // 비로그인이면 null
-        var paged = tripRecordService.list(page, size, keyword, openScopeCd, filter, loginMemNo);
+	@GetMapping("/travel-log")
+	public String listPage(@RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "12") int size,
+			@RequestParam(required = false) String keyword, @RequestParam(required = false) String openScopeCd,
+			@RequestParam(defaultValue = "all") String filter, Authentication authentication, Model model) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication); // 비로그인이면 null
+		var paged = tripRecordService.list(page, size, keyword, openScopeCd, filter, loginMemNo);
 
-        model.addAttribute("paged", paged);
-        model.addAttribute("loginMemNo", loginMemNo);
+		model.addAttribute("paged", paged);
+		model.addAttribute("loginMemNo", loginMemNo);
 
-        return "community/travel-log";
-    }
+		return "community/travel-log";
+	}
 
-    // ✅ write.jsp 재사용 (CREATE / EDIT)
-    // 작성: /community/travel-log/write
-    // 수정: /community/travel-log/write?rcdNo=22
-    @GetMapping("/travel-log/write")
-    public String writePage(
-            @RequestParam(required = false) Long rcdNo,
-            Authentication authentication,
-            Model model
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
-        model.addAttribute("loginMemNo", loginMemNo);
-        
-        int memNo = loginMemNo.intValue();
-        List<TripScheduleVO> scheduleList = tripScheduleService.selectTripScheduleList(memNo);
+	@GetMapping("/travel-log/write")
+	public String writePage(@RequestParam(required = false) Long rcdNo, Authentication authentication, Model model) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+		model.addAttribute("loginMemNo", loginMemNo);
 
-        model.addAttribute("scheduleList", scheduleList);
+		int memNo = loginMemNo.intValue();
+		List<TripScheduleVO> scheduleList = tripScheduleService.selectTripScheduleList(memNo);
 
-        if (rcdNo != null) {
-            TripRecordDetailVO detail = tripRecordService.detail(rcdNo, loginMemNo, false); // 조회수 증가 X
+		model.addAttribute("scheduleList", scheduleList);
 
-            // ⚠️ detail.getMemNo() 필드명이 실제로 다르면 여기만 바꿔야 함
-            boolean isWriter = (loginMemNo != null && loginMemNo.equals(detail.getMemNo()));
+		if (rcdNo != null) {
+			TripRecordDetailVO detail = tripRecordService.detail(rcdNo, loginMemNo, false); // 조회수 증가 X
 
-            model.addAttribute("detail", detail);
-            model.addAttribute("isWriter", isWriter);
+			boolean isWriter = (loginMemNo != null && loginMemNo.equals(detail.getMemNo()));
 
-            if (!isWriter) {
-                return "redirect:/community/travel-log/detail?rcdNo=" + rcdNo;
-            }
-            model.addAttribute("mode", "EDIT");
-        } else {
-            model.addAttribute("mode", "CREATE");
-        }
+			model.addAttribute("detail", detail);
+			model.addAttribute("isWriter", isWriter);
 
-        // ✅ 너 write jsp 경로가 "community/travel-log-write.jsp"라면 여기 파일명도 맞춰야 함
-        return "community/travel-log-write";
-    }
+			if (!isWriter) {
+				return "redirect:/community/travel-log/detail?rcdNo=" + rcdNo;
+			}
+			model.addAttribute("mode", "EDIT");
+		} else {
+			model.addAttribute("mode", "CREATE");
+		}
 
-    @GetMapping("/travel-log/detail")
-    public String detailPage(
-            @RequestParam long rcdNo,
-            @RequestParam(defaultValue = "true") boolean incView,
-            Authentication authentication,
-            Model model
-    ) {
-        Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
+		return "community/travel-log-write";
+	}
 
-        TripRecordDetailVO detail = tripRecordService.detail(rcdNo, loginMemNo, incView);
+	@GetMapping("/travel-log/detail")
+	public String detailPage(@RequestParam long rcdNo, @RequestParam(defaultValue = "true") boolean incView,
+			Authentication authentication, Model model) {
+		Long loginMemNo = AuthPrincipalExtractor.getMemNo(authentication);
 
-        // ⚠️ detail.getMemNo() 필드명이 실제로 다르면 여기만 바꿔야 함
-        boolean isWriter = (loginMemNo != null && loginMemNo.equals(detail.getMemNo()));
+		TripRecordDetailVO detail = tripRecordService.detail(rcdNo, loginMemNo, incView);
 
-        model.addAttribute("detail", detail);
-        model.addAttribute("loginMemNo", loginMemNo);
-        model.addAttribute("isWriter", isWriter);
+		boolean isWriter = (loginMemNo != null && loginMemNo.equals(detail.getMemNo()));
 
-        model.addAttribute("likeActiveClass", detail.getMyLiked() == 1 ? "active" : "");
-        model.addAttribute("likeIconClass", detail.getMyLiked() == 1 ? "bi-heart-fill" : "bi-heart");
-        
-        model.addAttribute("blocks", tripRecordService.blocks(rcdNo));
+		model.addAttribute("detail", detail);
+		model.addAttribute("loginMemNo", loginMemNo);
+		model.addAttribute("isWriter", isWriter);
 
-        // ✅ 너 detail jsp 파일명에 맞추기
-        return "community/travel-log-detail";
-    }
-    
-    
+		model.addAttribute("likeActiveClass", detail.getMyLiked() == 1 ? "active" : "");
+		model.addAttribute("likeIconClass", detail.getMyLiked() == 1 ? "bi-heart-fill" : "bi-heart");
+
+		model.addAttribute("blocks", tripRecordService.blocks(rcdNo));
+
+		return "community/travel-log-detail";
+	}
+
 }

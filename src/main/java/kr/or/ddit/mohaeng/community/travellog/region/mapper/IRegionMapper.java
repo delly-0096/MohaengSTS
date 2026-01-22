@@ -10,9 +10,6 @@ import kr.or.ddit.mohaeng.vo.RegionVO;
 @Mapper
 public interface IRegionMapper {
 
-    // 자동완성 검색 (RGN_NM 기준)
-    List<RegionVO> selectRegionAutoComplete(
-            @Param("keyword") String keyword,
-            @Param("size") int size
-    );
+	// 자동완성 검색 (RGN_NM 기준)
+	List<RegionVO> selectRegionAutoComplete(@Param("keyword") String keyword, @Param("size") int size);
 }

@@ -1,10 +1,8 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
-<%@ taglib uri="http://www.springframework.org/security/tags"
-	prefix="sec"%>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec"%>
 
 <c:set var="pageTitle" value="여행기록 상세" />
 <c:set var="pageCss" value="community" />
@@ -18,66 +16,56 @@
 		access="!isAuthenticated()">ANON</sec:authorize>
 </span>
 
-
-
-
-
 <meta name="_csrf" content="${_csrf.token}" />
 <meta name="_csrf_header" content="${_csrf.headerName}" />
 
-<!-- ==================== DETAIL 전용 스타일(인라인) ==================== -->
 <style>
-/* ==================== DAY 배지(아이콘 느낌) ==================== */
 /* ==================== DAY 배지 ==================== */
-.day-header{
-  display:flex;
-  align-items:center;
-  justify-content:flex-start; /* ✅ space-between 제거 */
-  gap: 12px;
-  margin: 18px 0 10px;
+.day-header {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start; 
+	gap: 12px;
+	margin: 18px 0 10px;
 }
 
-.day-badge{
-  display:inline-flex;
-  align-items:center;
-  gap:10px;
-  padding: 8px 14px;
-  width: fit-content;          /* ✅ 내용만큼만 */
-
-
-  color:#111827;
-  font-weight: 900;
-  font-size: 13px;
-  line-height: 1;
-  letter-spacing: .2px;
+.day-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 14px;
+	width: fit-content; 
+	color: #111827;
+	font-weight: 900;
+	font-size: 13px;
+	line-height: 1;
+	letter-spacing: .2px;
 }
 
-.day-badge .day-dot{
-  height: 28px;
-  padding: 0 12px;        /* ✅ 글자 들어갈 자리 */
-  border-radius: 999px;   /* ✅ 원형/필 형태 */
-  background: #107070;
-  color:#fff;
-  display:inline-flex;
-  align-items:center;
-  justify-content:center;
-  flex: 0 0 auto;
-  box-shadow: 0 6px 18px rgba(0,0,0,.06);
-  font-size: 12px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: .2px;
+.day-badge .day-dot {
+	height: 28px;
+	padding: 0 12px; 
+	border-radius: 999px; 
+	background: #107070;
+	color: #fff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
+	font-size: 12px;
+	font-weight: 900;
+	line-height: 1;
+	letter-spacing: .2px;
 }
 
-.day-badge .day-date{
-  margin-left: 0;              /* ✅ gap으로 충분해서 0 */
-  font-weight: 800;
-  color:#64748b;
-  font-size: 12px;
+.day-badge .day-date {
+	margin-left: 0; 
+	font-weight: 800;
+	color: #64748b;
+	font-size: 12px;
 }
 
-
-/* 전체 래퍼(리스트 톤 유지) */
 .travellog-page {
 	background: transparent;
 }
@@ -90,7 +78,6 @@
 	box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
 }
 
-/* 커버 */
 .travellog-detail-cover {
 	position: relative;
 	height: 280px;
@@ -135,12 +122,10 @@
 	background: rgba(255, 255, 255, 1);
 }
 
-/* 본문 영역 */
 .travellog-detail-body {
 	padding: 22px 24px 26px;
 }
 
-/* 작성자 */
 .travellog-detail-author {
 	display: flex;
 	gap: 12px;
@@ -186,7 +171,6 @@
 	margin-left: auto;
 }
 
-/* 제목 */
 .travellog-detail-title {
 	font-size: 26px;
 	font-weight: 800;
@@ -195,7 +179,6 @@
 	margin: 8px 0 12px;
 }
 
-/* 메타 pill */
 .travellog-detail-meta {
 	display: flex;
 	flex-wrap: wrap;
@@ -220,7 +203,6 @@
 	color: var(--primary-color);
 }
 
-/* 본문 */
 .travellog-detail-content {
 	white-space: pre-wrap;
 	line-height: 1.8;
@@ -229,7 +211,6 @@
 	padding: 14px 2px 10px;
 }
 
-/* 액션바 (리스트 버튼 느낌) */
 .travellog-detail-actionbar {
 	display: flex;
 	gap: 10px;
@@ -275,7 +256,6 @@
 	color: #fff;
 }
 
-/* 댓글 섹션 (너 travel-log.jsp의 스타일과 톤 맞춤) */
 .detail-comments-section {
 	margin-top: 8px;
 }
@@ -397,9 +377,6 @@
 	color: var(--primary-color);
 }
 
-/* ===== (강제) SweetAlert2 공유 토스트: 2번째 사진 스타일 ===== */
-
-/* 위치: 상단 가운데 고정 */
 .copy-toast-container.swal2-top {
 	left: 50% !important;
 	transform: translateX(-50%) !important;
@@ -408,7 +385,6 @@
 	padding-top: 12px !important;
 }
 
-/* 초록 pill */
 .copy-toast-popup.swal2-toast {
 	background: #22c55e !important;
 	color: #fff !important;
@@ -417,12 +393,10 @@
 	box-shadow: 0 10px 22px rgba(0, 0, 0, .16) !important;
 }
 
-/* ✅ SweetAlert2 기본 아이콘(큰 원 체크) 강제 제거 */
 .copy-toast-popup .swal2-icon {
 	display: none !important;
 }
 
-/* ✅ html 컨테이너가 숨거나 줄어드는 거 방지 */
 .copy-toast-popup .swal2-html-container {
 	display: flex !important;
 	margin: 0 !important;
@@ -430,7 +404,6 @@
 	align-items: center !important;
 }
 
-/* 한 줄 정렬 */
 .copy-toast-row {
 	display: flex;
 	align-items: center;
@@ -441,7 +414,6 @@
 	white-space: nowrap;
 }
 
-/* 작은 흰 원 + 체크 */
 .copy-toast-badge {
 	width: 28px;
 	height: 28px;
@@ -464,7 +436,6 @@
 	color: #fff;
 }
 
-/* progress bar 숨김(사진과 더 유사) */
 .copy-toast-popup .swal2-timer-progress-bar {
 	display: none !important;
 }
@@ -479,7 +450,6 @@
 	color: #fff;
 }
 
-/* 더보기 버튼 */
 .travellog-more-wrapper {
 	position: relative;
 }
@@ -538,7 +508,6 @@
 	background: #fef2f2;
 }
 
-/* ===== SweetAlert2 신고 모달 커스텀 ===== */
 .rpt-swal-popup {
 	border-radius: 18px !important;
 	padding: 0 !important;
@@ -552,7 +521,6 @@
 	padding: 0 !important;
 }
 
-/* 상단 헤더 */
 .rpt-wrap {
 	background: #fff;
 }
@@ -588,12 +556,10 @@
 	font-size: 18px;
 }
 
-/* 바디 */
 .rpt-body {
 	padding: 16px 18px 18px;
 }
 
-/* 라디오를 "필" 형태로 정돈 */
 .rpt-radio-list {
 	display: flex;
 	gap: 10px;
@@ -632,7 +598,6 @@
 	background: #fff;
 }
 
-/* 체크되면 강조 */
 .rpt-radio-card:has(input:checked) {
 	background: #e8fbf6;
 	border-color: #1abc9c;
@@ -644,7 +609,6 @@
 	background: #1abc9c;
 }
 
-/* 섹션 타이틀 */
 .rpt-section-title {
 	font-weight: 900;
 	font-size: 13px;
@@ -652,7 +616,6 @@
 	margin: 10px 0 8px;
 }
 
-/* 텍스트 영역 */
 .rpt-textarea {
 	width: 100%;
 	min-height: 96px;
@@ -671,7 +634,6 @@
 	box-shadow: 0 0 0 3px rgba(26, 188, 156, .12);
 }
 
-/* 안내문 */
 .rpt-warning {
 	margin-top: 12px;
 	display: flex;
@@ -699,7 +661,6 @@
 	font-weight: 900;
 }
 
-/* 버튼 영역 */
 .swal2-actions {
 	margin: 0 !important;
 	padding: 14px 18px 18px !important;
@@ -707,7 +668,6 @@
 	background: #fff;
 }
 
-/* 공통 버튼 */
 .rpt-btn {
 	border-radius: 12px !important;
 	padding: 12px 14px !important;
@@ -716,7 +676,6 @@
 	box-shadow: none !important;
 }
 
-/* 신고하기(강조) */
 .rpt-btn-danger {
 	background: #ef4444 !important;
 	border: 1px solid #ef4444 !important;
@@ -726,7 +685,6 @@
 	filter: brightness(.98);
 }
 
-/* 취소(고스트) */
 .rpt-btn-ghost {
 	background: #fff !important;
 	color: #111827 !important;
@@ -753,13 +711,11 @@
 	color: var(--primary-color);
 }
 
-/* ===== 대댓글(스레드) UI ===== */
 .detail-comment.is-reply {
-	margin-left: 56px; /* 들여쓰기 */
+	margin-left: 56px; 
 	position: relative;
 }
 
-/* (선택) 왼쪽 연결선 ㄴ 느낌 */
 .detail-comment.is-reply::before {
 	content: "";
 	position: absolute;
@@ -784,33 +740,29 @@
 	opacity: .9;
 }
 
-/* 대댓글 아바타는 살짝 작게 */
 .detail-comment.is-reply .detail-comment-avatar {
 	width: 32px;
 	height: 32px;
 }
 
-/* 대댓글 말풍선/박스는 살짝 더 “붙는 느낌” */
 .detail-comment.is-reply .detail-comment-text {
 	border-radius: 12px;
 	padding: 9px 11px;
 }
 
-/* 부모-자식 묶음 간격 */
 .detail-comment-group {
 	display: flex;
 	flex-direction: column;
-	gap: 10px; /* 부모와 첫 대댓글 간격 */
-	margin-bottom: 14px; /* 다음 부모 그룹과 간격 */
+	gap: 10px; 
+	margin-bottom: 14px; 
 }
 
 .detail-comment-group .reply-list {
 	display: flex;
 	flex-direction: column;
-	gap: 8px; /* 대댓글들끼리 간격 */
+	gap: 8px; 
 }
 
-/* depth가 깊어져도 reply 내부에서 선이 자연스럽게 보이게 */
 .detail-comment .reply-list {
 	margin-top: 8px;
 	display: flex;
@@ -818,9 +770,6 @@
 	gap: 8px;
 }
 
-/* ===== 무한 대댓글(스레드) ===== */
-
-/* 한 "댓글 노드" = (댓글 본문 + 자식 목록) 을 세로로 묶는 컨테이너 */
 .cmnt-node {
 	position: relative;
 	display: flex;
@@ -828,24 +777,16 @@
 	gap: 8px;
 }
 
-/* depth 들여쓰기: JS에서 padding-left로 넣을거라 기본은 0 */
-.cmnt-node .detail-comment {
-	/* 기존 detail-comment 스타일 유지 (flex) */
-	
-}
-
-/* 자식 목록은 무조건 세로로 */
 .cmnt-children {
 	display: flex;
 	flex-direction: column;
 	gap: 8px;
 }
 
-/* ㄴ 느낌의 연결선(선택) */
 .cmnt-node.is-reply::before {
 	content: "";
 	position: absolute;
-	left: 28px; /* 아바타 옆쪽 기준선 위치 */
+	left: 28px; 
 	top: 0;
 	bottom: 0;
 	width: 2px;
@@ -854,12 +795,11 @@
 	opacity: .9;
 }
 
-/* ㄴ의 가로 팔(선택) */
 .cmnt-node.is-reply::after {
 	content: "";
 	position: absolute;
 	left: 28px;
-	top: 28px; /* 아바타 중간쯤 */
+	top: 28px; 
 	width: 18px;
 	height: 2px;
 	background: #e2e8f0;
@@ -867,19 +807,16 @@
 	opacity: .9;
 }
 
-/* depth가 깊어도 아바타는 살짝만 작게(선택) */
 .cmnt-node.is-reply .detail-comment-avatar {
 	width: 32px;
 	height: 32px;
 }
 
-/* 말풍선도 살짝 컴팩트(선택) */
 .cmnt-node.is-reply .detail-comment-text {
 	border-radius: 12px;
 	padding: 9px 11px;
 }
 
-/* ===== 본문 블록 렌더링 ===== */
 .travellog-block {
 	margin: 14px 0;
 }
@@ -898,7 +835,6 @@
 	opacity: .9;
 }
 
-/* 이미지 블록 */
 .travellog-block-image {
 	border: 1px solid #e2e8f0;
 	border-radius: 16px;
@@ -922,7 +858,6 @@
 	background: #f8fafc;
 }
 
-/* PLACE 카드 */
 .place-card {
 	display: flex;
 	gap: 14px;
@@ -931,36 +866,26 @@
 	overflow: hidden;
 	background: #fff;
 	box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
-	
-	height: 160px;  
-  align-items: stretch;/* ✅ 오른쪽이 늘어나면 왼쪽도 같이 늘어남 */
+	height: 180px;
+	align-items: stretch; 
 }
 
-
-/* PLACE 카드 썸네일: 스샷처럼 꽉 차게 */
-.place-thumb{
-  width: 180px;
-  min-width: 180px;
-
-  background: #f1f5f9;
-  overflow: hidden;
-
-  /* ✅ padding 제거: cover는 여백 있으면 이상해짐 */
-  padding: 0;
-  display: block;
-  
-  align-self: stretch;
+.place-thumb {
+	width: 180px;
+	min-width: 180px;
+	background: #f1f5f9;
+	overflow: hidden;
+	padding: 0;
+	display: block;
+	align-self: stretch;
 }
 
-.place-thumb img{
-  width: 100%;
-  height: 100%;
-
-  /* ✅ 핵심: 다시 cover */
-  object-fit: cover;
-  object-position: center;
-
-  display: block;
+.place-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	object-position: center;
+	display: block;
 }
 
 .place-body {
@@ -1016,7 +941,6 @@
 	padding: 10px 12px;
 }
 
-
 @media ( max-width : 768px) {
 	.place-card {
 		flex-direction: column;
@@ -1031,34 +955,35 @@
 	}
 }
 
-/* ===== 태그 영역 ===== */
-.meta-tags{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  flex-wrap:wrap;
-  margin-top: 6px;
-}
-.meta-tags i{
-  color: var(--primary-color);
-  font-size: 15px;
-}
-.tag-pill{
-  display:inline-flex;
-  align-items:center;
-  padding: 7px 12px;
-  border-radius: 999px;
-  background: #e8fbf6;
-  border: 1px solid #bff1e5;
-  color:#0f172a;
-  font-weight: 800;
-  font-size: 12.5px;
-  line-height: 1;
-}
-.tag-pill:hover{
-  filter: brightness(.98);
+.meta-tags {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	flex-wrap: wrap;
+	margin-top: 6px;
 }
 
+.meta-tags i {
+	color: var(--primary-color);
+	font-size: 15px;
+}
+
+.tag-pill {
+	display: inline-flex;
+	align-items: center;
+	padding: 7px 12px;
+	border-radius: 999px;
+	background: #e8fbf6;
+	border: 1px solid #bff1e5;
+	color: #0f172a;
+	font-weight: 800;
+	font-size: 12.5px;
+	line-height: 1;
+}
+
+.tag-pill:hover {
+	filter: brightness(.98);
+}
 
 @media ( max-width : 768px) {
 	.travellog-detail-cover {
@@ -1157,24 +1082,13 @@
 							</div>
 						</div>
 
-						<!-- 오른쪽(수정/삭제 같은 버튼 필요하면 여기) -->
-						<%-- <div class="travellog-detail-actions-right">
-               <button type="button" class="btn btn-outline-secondary btn-sm"
-                      onclick="location.href='${pageContext.request.contextPath}/community/travel-log'">수정
-              </button>
-              <button type="button" class="btn btn-outline-secondary btn-sm"
-                      onclick="location.href='${pageContext.request.contextPath}/community/travel-log'">삭제
-              </button>
-            </div> --%>
-
 						<c:if test="${isWriter}">
 							<div class="travellog-detail-actions-right">
-								
-								<span class="meta-pill">
-							      <i class="bi bi-globe2"></i> 공개:
-							      <c:out value="${detail.openScopeCd}" />
-							    </span>
-							
+
+								<span class="meta-pill"> <i class="bi bi-globe2"></i> 공개:
+									<c:out value="${detail.openScopeCd}" />
+								</span>
+
 								<button type="button" class="btn btn-outline-secondary btn-sm"
 									onclick="goEdit(${detail.rcdNo})">수정</button>
 
@@ -1186,14 +1100,12 @@
 						<c:if test="${!isWriter}">
 							<sec:authorize access="hasAuthority('ROLE_MEMBER')">
 								<div class="travellog-more-wrapper" style="margin-left: auto;">
-									<button type="button" class="travellog-more-btn"
-										onclick="toggleDetailMenu(event, this)">
+									<button type="button" class="travellog-more-btn" onclick="toggleDetailMenu(event, this)">
 										<i class="bi bi-three-dots"></i>
 									</button>
 
 									<div class="travellog-card-menu">
-										<button type="button"
-											onclick="reportPost(CURRENT_RCD_NO, '${fn:escapeXml(detail.rcdTitle)}')">
+										<button type="button" onclick="reportPost(CURRENT_RCD_NO, '${fn:escapeXml(detail.rcdTitle)}')">
 											<i class="bi bi-flag"></i> 신고하기
 										</button>
 									</div>
@@ -1210,36 +1122,35 @@
 
 					<!-- 여행 메타 -->
 					<div class="travellog-detail-meta">
-						<span class="meta-pill"> <i class="bi bi-geo-alt"></i> <c:out
-								value="${detail.locName}" />
-						</span> <span class="meta-pill"> <i class="bi bi-calendar-range"></i>
-							일정: <fmt:formatDate value="${detail.startDt}"
-								pattern="yyyy년 M월 d일" /> ~ <fmt:formatDate
-								value="${detail.endDt}" pattern="yyyy년 M월 d일" />
+						<span class="meta-pill"> <i class="bi bi-geo-alt"></i> 
+							<c:out value="${detail.locName}" />
+						</span> 
+						<span class="meta-pill"> 
+							<i class="bi bi-calendar-range"></i>
+							일정: <fmt:formatDate value="${detail.startDt}" pattern="yyyy년 M월 d일" /> ~ <fmt:formatDate value="${detail.endDt}" pattern="yyyy년 M월 d일" />
 						</span>
-						
+
 						<c:if test="${not empty detail.tagName}">
-						  <div class="meta-tags">
-						
-						    <c:forEach var="t" items="${fn:split(detail.tagName, ',')}">
-						      <c:set var="tag" value="${fn:trim(t)}"/>
-						      <c:if test="${not empty tag}">
-						        <c:choose>
-						          <c:when test="${fn:startsWith(tag, '#')}">
-						            <span class="tag-pill"><c:out value="${tag}"/></span>
-						          </c:when>
-						          <c:otherwise>
-						            <span class="tag-pill">#<c:out value="${tag}"/></span>
-						          </c:otherwise>
-						        </c:choose>
-						      </c:if>
-						    </c:forEach>
-						  </div>
+							<div class="meta-tags">
+
+								<c:forEach var="t" items="${fn:split(detail.tagName, ',')}">
+									<c:set var="tag" value="${fn:trim(t)}" />
+									<c:if test="${not empty tag}">
+										<c:choose>
+											<c:when test="${fn:startsWith(tag, '#')}">
+												<span class="tag-pill"><c:out value="${tag}" /></span>
+											</c:when>
+											<c:otherwise>
+												<span class="tag-pill">#<c:out value="${tag}" /></span>
+											</c:otherwise>
+										</c:choose>
+									</c:if>
+								</c:forEach>
+							</div>
 						</c:if>
 					</div>
 
 					<!-- 본문 -->
-					<!-- 본문(블록 렌더링) -->
 					<div id="recordBlocks" class="travellog-detail-content"></div>
 
 					<!-- (옵션) 예전 rcdContent fallback: blocks 로딩 실패 시에만 보여주고 싶으면 숨겨두기 -->
@@ -1248,15 +1159,13 @@
 						<c:out value="${detail.rcdContent}" />
 					</div>
 
-
 					<!-- 액션 바 (반드시 래퍼로 감싸야 간격/구분선 적용됨) -->
 					<div class="travellog-detail-actionbar">
 						<button type="button"
 							class="travellog-action-btn ${likeActiveClass}"
 							onclick="toggleDetailLike(event,this);">
 
-							<i
-								class="bi ${detail.myLiked == 1 ? 'bi-heart-fill' : 'bi-heart'}"></i>
+							<i class="bi ${detail.myLiked == 1 ? 'bi-heart-fill' : 'bi-heart'}"></i>
 							<span id="likeCount">${detail.likeCount}</span>
 						</button>
 
@@ -1264,24 +1173,6 @@
 							onclick="scrollToComments();">
 							<i class="bi bi-chat"></i> <span id="commentCountTop">${detail.commentCount}</span>
 						</button>
-
-						<%--   <button type="button"
-    class="travellog-action-btn"
-    onclick="toggleDetailBookmark(this);">
-    <i class="bi bi-bookmark"></i>
-    <span id="bookmarkCount">${detail.bookmarkCount}</span>
-  </button> --%>
-
-						<%-- <sec:authorize access="hasRole('MEMBER')">
-  <c:if test="${not empty isWriter and !isWriter}">
-    <button type="button" class="travellog-action-btn" onclick="reportPost(CURRENT_RCD_NO, '${fn:escapeXml(detail.rcdTitle)}')">
-      <i class="bi bi-flag"></i>
-      <span>신고</span>
-    </button>
-  </c:if>
-</sec:authorize> --%>
-
-
 
 						<button type="button" class="travellog-action-btn"
 							style="margin-left: auto;"
@@ -1297,20 +1188,21 @@
 						</h3>
 
 						<sec:authorize access="hasAuthority('ROLE_MEMBER')">
-						  <c:choose>
-						    <c:when test="${detail.replyEnblYn eq 'Y'}">
-						      <div class="detail-comment-input">
-						        <input id="commentInput" type="text" placeholder="댓글을 입력하세요..." />
-						        <button type="button" onclick="submitComment(CURRENT_RCD_NO)">등록</button>
-						      </div>
-						    </c:when>
-						    <c:otherwise>
-						      <div class="detail-comment-input">
-						        <input type="text" placeholder="작성자가 댓글을 비활성화했어요." disabled />
-						        <button type="button" disabled>등록</button>
-						      </div>
-						    </c:otherwise>
-						  </c:choose>
+							<c:choose>
+								<c:when test="${detail.replyEnblYn eq 'Y'}">
+									<div class="detail-comment-input">
+										<input id="commentInput" type="text"
+											placeholder="댓글을 입력하세요..." />
+										<button type="button" onclick="submitComment(CURRENT_RCD_NO)">등록</button>
+									</div>
+								</c:when>
+								<c:otherwise>
+									<div class="detail-comment-input">
+										<input type="text" placeholder="작성자가 댓글을 비활성화했어요." disabled />
+										<button type="button" disabled>등록</button>
+									</div>
+								</c:otherwise>
+							</c:choose>
 						</sec:authorize>
 
 						<sec:authorize access="!hasAuthority('ROLE_MEMBER')">
@@ -1322,9 +1214,6 @@
 
 						<div id="commentList" class="detail-comments-list"></div>
 					</div>
-
-
-
 
 					<!-- ==================== 댓글 JS (500 방지: \${} 이스케이프 필수) ==================== -->
 					<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -1339,26 +1228,16 @@ const CTX = "${pageContext.request.contextPath}";
 const CURRENT_RCD_NO = Number("${detail.rcdNo}" || 0);
 const AUTH_ROLE = (document.getElementById('authRole')?.innerText || '').trim() || 'ANON';
 
+window.CTX = CTX;
+window.CURRENT_RCD_NO = CURRENT_RCD_NO;
+
 const ROLE_MEMBER = 'ROLE_MEMBER';
 const ROLE_BUSINESS = 'ROLE_BUSINESS';
 
-	// ✅ 기본 프로필(민트 사람 아이콘) - 외부링크 없이 사용 가능
-	/* const DEFAULT_AVATAR = (() => {
-	  const svg = `
-	  <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
-	    <circle cx="40" cy="40" r="40" fill="#1abc9c"/>
-	    <circle cx="40" cy="30" r="12" fill="none" stroke="#ffffff" stroke-width="5"/>
-	    <path d="M20 66c4-12 16-18 20-18s16 6 20 18" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round"/>
-	  </svg>`;
-	  return "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.trim());
-	})(); */
+
 	
-	// ✅ 기본 프로필(외부 이미지로 고정)
-	const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80";
-
-
-// const token = document.querySelector('meta[name="_csrf"]').getAttribute('content');
-// const header = document.querySelector('meta[name="_csrf_header"]').getAttribute('content');
+// 기본 프로필(외부 이미지로 고정)
+const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80";
 
 const ctxPath = '${pageContext.request.contextPath}';
 
@@ -1370,14 +1249,9 @@ function showCopyToast(message){
 		position: 'top',
 		showConfirmButton: false,
 		timer: 1600,
-	    // ✅ progress bar 필요 없으면 꺼버리기(전역 CSS랑 충돌도 줄어듦)
 	    timerProgressBar: false,
-
-	    // ✅ 절대 icon/title 쓰지 않기 (기본 success UI 유입 차단)
 	    icon: undefined,
 	    title: undefined,
-
-	    // ✅ html로만 구성
 	    html: `
 			<div class="copy-toast-row">
 				<span class="copy-toast-badge" aria-hidden="true">
@@ -1393,10 +1267,10 @@ function showCopyToast(message){
 			const txt = popup.querySelector('.copy-toast-text');
 			if (txt) txt.textContent = text;
 
-			// 2) ✅ SweetAlert2 기본 아이콘/타이틀이 혹시라도 생기면 제거
+			// 2) SweetAlert2 기본 아이콘/타이틀이 혹시라도 생기면 제거
 			popup.querySelectorAll('.swal2-icon, .swal2-title').forEach(el => el.remove());
 
-			// 3) ✅ 전역 CSS가 html-container를 죽여도 강제로 살리기
+			// 3) 전역 CSS가 html-container를 죽여도 강제로 살리기
 			const html = popup.querySelector('.swal2-html-container');
 			if (html) {
 				html.style.margin = '0';
@@ -1406,7 +1280,7 @@ function showCopyToast(message){
 				html.style.justifyContent = 'center';
 			}
 
-			// 4) ✅ 토스트 pill 스타일을 inline으로 “강제”
+			// 4) 토스트 pill 스타일을 inline으로 “강제”
 			popup.style.background = '#22c55e';
 			popup.style.color = '#fff';
 			popup.style.borderRadius = '999px';
@@ -1419,7 +1293,7 @@ function showCopyToast(message){
 			popup.style.maxWidth = 'calc(100vw - 24px)';
 			popup.style.overflow = 'hidden';
 
-			// 5) ✅ 컨테이너를 상단 가운데로 “강제”
+			// 5) 컨테이너를 상단 가운데로 “강제”
 			const container = popup.closest('.swal2-container');
 			if (container) {
 				container.style.left = '50%';
@@ -1434,7 +1308,6 @@ function showCopyToast(message){
 
 function shareTravellog(id) {
 	const url = location.origin + CTX + '/community/travel-log/detail?rcdNo=' + id; 
-	// ↑ 너희 실제 상세 URL 규칙에 맞게만 바꿔줘 (예: /community/travel-log/' + id)
 
 	navigator.clipboard.writeText(url).then(() => {
 		showCopyToast('링크가 복사되었습니다.');
@@ -1483,7 +1356,7 @@ document.addEventListener('click', function(){
 });
 
 async function reportPost(rcdNo, titlePreview){
-	return openReportModal('TRIP_RECORD', Number(rcdNo), titlePreview);
+	  return openDetailReportModal('TRIP_RECORD', Number(rcdNo), titlePreview);
 }
 
 function escapeHtml(text) {
@@ -1505,7 +1378,12 @@ function escapeJsString(str){
 		.replace(/\n/g, '\\n');
 }
 
-async function openReportModal(targetType, targetNo, previewText){
+function isReportSwalOpen(){
+	  const p = (typeof Swal !== 'undefined') ? Swal.getPopup?.() : null;
+	  return !!(p && p.classList.contains('rpt-swal-popup'));
+}
+
+async function openDetailReportModal(targetType, targetNo, previewText){
 	  const n = Number(targetNo);
 	  if (!Number.isFinite(n) || n <= 0) {
 	    console.error('잘못된 targetNo', targetNo, 'targetType=', targetType);
@@ -1513,7 +1391,30 @@ async function openReportModal(targetType, targetNo, previewText){
 	    return;
 	  }
 
-	  if (AUTH_ROLE !== ROLE_MEMBER) return;
+	  if (AUTH_ROLE === 'ANON') {
+		  Swal.fire({
+		    icon: 'info',
+		    title: '로그인이 필요해요',
+		    text: '신고는 로그인한 일반회원만 사용할 수 있어요.',
+		    showCancelButton: true,
+		    confirmButtonText: '로그인하기',
+		    cancelButtonText: '취소',
+		    confirmButtonColor: '#1abc9c'
+		  }).then(r => {
+		    if (r.isConfirmed) location.href = CTX + '/member/login';
+		  });
+		  return;
+		}
+		if (AUTH_ROLE !== ROLE_MEMBER) {
+		  Swal.fire({
+		    icon: 'warning',
+		    title: '이용 불가',
+		    text: '일반회원만 신고할 수 있어요.',
+		    confirmButtonText: '확인',
+		    confirmButtonColor: '#1abc9c'
+		  });
+		  return;
+		}
 
 	const modalHtml = `<div class="rpt-wrap">
 	      <div class="rpt-header">
@@ -1600,19 +1501,20 @@ async function openReportModal(targetType, targetNo, previewText){
 		body: JSON.stringify(payload)
 	});
 
+	const text = await res.text().catch(()=> '');
+
 	if (res.status === 409) {
-		const msg = await res.text().catch(()=> '이미 신고한 내역이 존재합니다.');
-		Swal.fire('안내', msg, 'info');
-		return;
-	}
-			
-	if (!res.ok) {
-		const text = await res.text().catch(()=> '');
-		console.error('report failed', res.status, text, payload);
-		Swal.fire('실패', `신고 처리 오류 (${res.status})`, 'error');
-		return;
+	  Swal.fire('안내', text || '이미 신고한 내역이 존재합니다.', 'info');
+	  return;
 	}
 
+	if (!res.ok) {
+	  console.error('report failed', res.status, text, payload);
+	  Swal.fire('실패', text || `신고 처리 오류 (${res.status})`, 'error');
+	  return;
+	}
+
+	// 성공 케이스: 서버가 1을 주든 json을 주든 상관없이 성공 처리
 	Swal.fire('접수 완료', '신고가 접수되었습니다. 감사합니다.', 'success');
 }
 
@@ -1663,12 +1565,9 @@ async function reportComment(cmntNo, cmntContentPreview){
 	    return;
 	  }
 
-	  return openReportModal('COMMENT', targetNo, cmntContentPreview);
+	  return openDetailReportModal('COMMENT', targetNo, cmntContentPreview);
 }
 
-// ===== 가드(한 번만 선언) =====
-
-// ✅ 비로그인/권한 가드: alert → SweetAlert2로 변경
 function guardMemberAction(e){
 	if (e) e.preventDefault();
 
@@ -1752,7 +1651,7 @@ async function toggleDetailLike(e, btn){
 	btn.classList.toggle('active', !!data.liked);
 }
 
-  // ===== 공유 =====
+// ===== 공유 =====
 function shareDetail() {
 	const url = location.href;
 	navigator.clipboard.writeText(url).then(() => {
@@ -1762,14 +1661,13 @@ function shareDetail() {
 	});
 }
 
-//✅ 댓글 시간 포맷: "2026-01-15 16:30" (KST 기준)
+// 댓글 시간 포맷(KST 기준)
 function formatCommentDt(regDt) {
   if (!regDt) return '';
 
   // 1) 이미 "YYYY-MM-DD HH:mm:ss" 또는 "YYYY-MM-DD HH:mm"로 내려오는 경우(문자열)
   //    -> 그대로 분까지만 잘라서 사용
   if (typeof regDt === 'string') {
-    // "2026-01-15 16:30:12" / "2026-01-15 16:30"
     if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}/.test(regDt)) {
       return regDt.slice(0, 16);
     }
@@ -1779,7 +1677,7 @@ function formatCommentDt(regDt) {
   const d = new Date(regDt);
   if (isNaN(d.getTime())) return String(regDt);
 
-  // ✅ KST로 변환해서 "YYYY-MM-DD HH:mm:ss" 형태로 뽑기 (sv-SE가 포맷이 딱 좋음)
+  // KST로 변환해서 "YYYY-MM-DD HH:mm:ss" 형태로 뽑기 (sv-SE가 포맷이 딱 좋음)
   const s = d.toLocaleString('sv-SE', {
     timeZone: 'Asia/Seoul',
     year: 'numeric',
@@ -1842,7 +1740,7 @@ async function loadComments(rcdNo) {
 
 	    const cmntNo = getNo(c);
 
-	    // ✅ 삭제 여부(서버 필드명 자동 대응)
+	    // 삭제 여부(서버 필드명 자동 대응)
 	    const isDeleted =
 	      (c.delYn === 'Y') ||
 	      (c.deleteYn === 'Y') ||
@@ -1865,9 +1763,6 @@ async function loadComments(rcdNo) {
 	      (c.profilePath && String(c.profilePath).trim() !== '' && String(c.profilePath).trim() !== 'null');
 
 	    const profilePath = hasProfile ? String(c.profilePath).trim() : '';
-		// 	    const normalized = (profilePath && profilePath.startsWith('/')) ? profilePath : ('/' + profilePath);
-		// 	    const avatar = hasProfile ? (CTX + '/files' + normalized) : DEFAULT_AVATAR;
-		// const avatar = hasProfile ? (CTX + '/upload' + normalized) : DEFAULT_AVATAR;
 		
 		let normalized = profilePath.startsWith('/') ? profilePath : ('/' + profilePath);
 		
@@ -1945,7 +1840,7 @@ async function loadComments(rcdNo) {
 
 	  // ===== 2단 고정 렌더링(부모 + 모든 자식들을 root 기준으로 한 번 들여쓰기) =====
 	  const parents2 = [];
-	  const repliesByRoot = new Map(); // key=rootNo, value=replies[]
+	  const repliesByRoot = new Map(); 
 
 	  (Array.isArray(list) ? list : []).forEach((c) => {
 	    const parentNoRaw = (c.parentCmntNo ?? c.parent_cmnt_no ?? c.parentNo ?? null);
@@ -1995,11 +1890,7 @@ async function loadComments(rcdNo) {
 	  });
 }
 
-
-//===== 블록 렌더링 =====
-// ===== 블록 렌더링 =====
-
-// ✅ 전역: API 주소
+// 전역: API 주소
 const BLOCKS_API = CTX + '/api/travel-log/records/' + encodeURIComponent(CURRENT_RCD_NO) + '/blocks';
 
 // ===== 유틸 =====
@@ -2032,7 +1923,7 @@ function tryParseJsonText(s){
   try { return JSON.parse(t); } catch(e){ return null; }
 }
 
-// ✅ day-header JSON에서 값 꺼내기 (네 콘솔 데이터 기준: day/date가 정답)
+// day-header JSON에서 값 꺼내기 
 function parseDayHeaderFromJson(obj){
   if (!obj) return null;
   const type = String(obj.type || '').toLowerCase();
@@ -2056,7 +1947,6 @@ function buildDayBadge(dayNo, dateStr){
   return wrap;
 }
 
-// ✅ (선택) "DAY 1 2026-01-14" 같은 텍스트도 대응하고 싶으면 유지
 function parseDayFromText(text){
   const m = String(text || '').trim().match(/^DAY\s*([0-9]+)\s*(\d{4}-\d{2}-\d{2})?\s*$/i);
   if (!m) return null;
@@ -2074,7 +1964,7 @@ function resolveImageSrc(rawPath){
 	  // "/files/..." 로 이미 내려오면 CTX만 붙임
 	  if (p.startsWith('/files/')) return CTX + p;
 
-	  // "/upload/..." 로 내려오면 CTX만 붙임 (네 프로젝트가 /upload로 서빙하는 경우)
+	  // "/upload/..." 로 내려오면 CTX만 붙임 
 	  if (p.startsWith('/upload/')) return CTX + p;
 
 	  // "/tripschedule/..." 같은 형태면 "/files" 붙여서 서빙
@@ -2094,8 +1984,6 @@ function resolveImageSrc(rawPath){
 	    ''
 	  );
 }
-
-
 
 // ===== 핵심: renderBlock은 딱 1개만! =====
 function renderBlock(block){
@@ -2162,7 +2050,6 @@ function renderBlock(block){
   return wrap;
 }
 
-
   // 4) PLACE
   if (type === 'PLACE') {
     const imgSrc = resolvePlaceImg(block);
@@ -2200,7 +2087,7 @@ function renderBlock(block){
   // 5) fallback: 모르는 타입은 조용히 텍스트로
   const fallback = document.createElement('div');
   fallback.className = 'travellog-block travellog-block-text';
-  fallback.innerHTML = ''; // ✅ 화면에 JSON 덕지덕지 안 나오게
+  fallback.innerHTML = ''; 
   return fallback;
 }
 
@@ -2212,13 +2099,10 @@ async function loadBlocks(rcdNo){
 
   try{
     const res = await fetch(BLOCKS_API, { credentials:'same-origin' });
-    console.log('[blocks] fetch status:', res.status, res.ok);
 
     if (!res.ok) throw new Error('blocks fetch failed: ' + res.status);
 
     const blocks = await res.json();
-    console.log('[blocks] sample:', blocks?.[0]);
-    console.log('[blocks] all:', blocks);
 
     container.innerHTML = '';
 
@@ -2236,9 +2120,6 @@ async function loadBlocks(rcdNo){
   }
 }
 
-
-
-
 async function loadBlocks(rcdNo){
 	  const container = document.getElementById('recordBlocks');
 	  const fallback  = document.getElementById('recordContentFallback');
@@ -2246,13 +2127,10 @@ async function loadBlocks(rcdNo){
 
 	  try{
 	    const res = await fetch(BLOCKS_API, { credentials:'same-origin' });
-	    console.log('[blocks] fetch status:', res.status, res.ok); // ✅ 여기서 res 사용 가능
 
 	    if (!res.ok) throw new Error('blocks fetch failed: ' + res.status);
 
 	    const blocks = await res.json();
-	    console.log('[blocks] sample:', blocks?.[0]);
-	    console.log('[blocks] all:', blocks);
 
 	    container.innerHTML = '';
 
@@ -2270,9 +2148,6 @@ async function loadBlocks(rcdNo){
 	  }
 }
 
-
-
-
 function toggleReplyBox(cmntNo) {
 	  // 다른 입력칸 닫기
 	  document.querySelectorAll('[id^="replyBox-"]').forEach(el => {
@@ -2284,7 +2159,6 @@ function toggleReplyBox(cmntNo) {
 
 	  box.style.display = (box.style.display === "none" ? "block" : "none");
 }
-
 
 async function submitComment(rcdNo) {
  	if (AUTH_ROLE !== ROLE_MEMBER) return;
@@ -2348,7 +2222,6 @@ async function submitReply(rcdNo, parentCmntNo) {
 	loadComments(rcdNo);
 }
 
-
 async function deleteComment(cmntNo) {
 	if (AUTH_ROLE !== ROLE_MEMBER) return;
 	
@@ -2410,7 +2283,7 @@ async function toggleCommentLike(cmntNo, btn) {
 	  return;
 	}
 	
-	const data = await res.json(); // { liked, likeCount }
+	const data = await res.json(); 
 	
 	btn.classList.toggle('active', !!data.liked);
 	
@@ -2471,7 +2344,6 @@ function goEdit(rcdNo){
 	    location.href = CTX + '/community/travel-log';
 	  });
 }
-
 
 </script>
 

@@ -13,49 +13,31 @@ import kr.or.ddit.mohaeng.vo.TripRecordListVO;
 
 public interface ITripRecordService {
 
-//    PagedResponse<TripRecordListVO> list(int page, int size, String keyword, String openScopeCd, Long loginMemNo);
-	PagedResponse<TripRecordListVO> list(int page, int size, String keyword, String openScopeCd, String filter, Long loginMemNo);
+	PagedResponse<TripRecordListVO> list(int page, int size, String keyword, String openScopeCd, String filter,
+			Long loginMemNo);
 
+	TripRecordDetailVO detail(long rcdNo, Long loginMemNo, boolean increaseView);
 
-    TripRecordDetailVO detail(long rcdNo, Long loginMemNo, boolean increaseView);
+	long create(TripRecordCreateReq req, long loginMemNo);
 
-    long create(TripRecordCreateReq req, long loginMemNo);
+	void update(long rcdNo, TripRecordUpdateReq req, long loginMemNo);
 
-    void update(long rcdNo, TripRecordUpdateReq req, long loginMemNo);
+	void delete(long rcdNo, long loginMemNo);
 
-    void delete(long rcdNo, long loginMemNo);
+	boolean isWriter(long rcdNo, Long loginMemNo);
 
-    boolean isWriter(long rcdNo, Long loginMemNo);
-    
-    long createWithFiles(
-            TripRecordCreateReq req,
-            long loginMemNo,
-            org.springframework.web.multipart.MultipartFile coverFile,
-            java.util.List<org.springframework.web.multipart.MultipartFile> images
-    );
+	long createWithFiles(TripRecordCreateReq req, long loginMemNo,
+			org.springframework.web.multipart.MultipartFile coverFile,
+			java.util.List<org.springframework.web.multipart.MultipartFile> images);
 
 	void updateWithCover(long rcdNo, TripRecordUpdateReq req, Long loginMemNo, MultipartFile coverFile);
 
-	long createWithBlocks(
-	        TripRecordCreateReq req,
-	        Long memNo,
-	        MultipartFile coverFile,
-	        List<MultipartFile> bodyFiles,
-	        List<TripRecordBlockReq> blocks
-	);
+	long createWithBlocks(TripRecordCreateReq req, Long memNo, MultipartFile coverFile, List<MultipartFile> bodyFiles,
+			List<TripRecordBlockReq> blocks);
 
-	void updateWithBlocks(
-	        long rcdNo,
-	        TripRecordUpdateReq req,
-	        Long memNo,
-	        MultipartFile coverFile,
-	        List<MultipartFile> bodyFiles,
-	        List<TripRecordBlockReq> blocks
-	);
-	
+	void updateWithBlocks(long rcdNo, TripRecordUpdateReq req, Long memNo, MultipartFile coverFile,
+			List<MultipartFile> bodyFiles, List<TripRecordBlockReq> blocks);
+
 	List<kr.or.ddit.mohaeng.vo.TripRecordBlockVO> blocks(long rcdNo);
-	
-	
-
 
 }

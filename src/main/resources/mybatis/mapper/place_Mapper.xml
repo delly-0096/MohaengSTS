@@ -1,45 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="kr.or.ddit.mohaeng.community.travellog.place.mapper.IPlaceMapper">
 
-  <select id="selectPlaces" parameterType="map"
-          resultType="kr.or.ddit.mohaeng.community.travellog.place.dto.PlaceSearchRes">
-    SELECT
-      PLC_NO    AS plcNo,
-      RGN_NO    AS rgnNo,
-      PLC_NM    AS plcNm,
-      PLC_ADDR1 AS plcAddr1,
-      PLC_ADDR2 AS plcAddr2,
-      DEFAULT_IMG AS defaultImg,
-      PLACE_TYPE AS placeType
-    FROM TOUR_PLACE
-    WHERE 1=1
+	<select id="selectPlaces" parameterType="map"
+		resultType="kr.or.ddit.mohaeng.community.travellog.place.dto.PlaceSearchRes">
+		SELECT
+		PLC_NO AS plcNo,
+		RGN_NO AS rgnNo,
+		PLC_NM AS plcNm,
+		PLC_ADDR1 AS
+		plcAddr1,
+		PLC_ADDR2 AS plcAddr2,
+		DEFAULT_IMG AS defaultImg,
+		PLACE_TYPE AS
+		placeType
+		FROM TOUR_PLACE
+		WHERE 1=1
 
-    <if test="rgnNo != null and rgnNo != ''">
-      AND RGN_NO = #{rgnNo}
-    </if>
+		<if test="rgnNo != null and rgnNo != ''">
+			AND RGN_NO = #{rgnNo}
+		</if>
 
-    <if test="keyword != null and keyword != ''">
-      AND (
-        PLC_NM LIKE '%' || #{keyword} || '%'
-        OR PLC_ADDR1 LIKE '%' || #{keyword} || '%'
-        OR PLC_ADDR2 LIKE '%' || #{keyword} || '%'
-      )
-    </if>
+		<if test="keyword != null and keyword != ''">
+			AND (
+			PLC_NM LIKE '%' || #{keyword} || '%'
+			OR PLC_ADDR1 LIKE
+			'%' || #{keyword} || '%'
+			OR PLC_ADDR2 LIKE '%' || #{keyword} || '%'
+			)
+		</if>
 
-    <!-- (선택) 활성화된 것만 -->
-    <!-- AND (PCL_STATUS_CD IS NULL OR PCL_STATUS_CD != 'INACTIVE') -->
+		ORDER BY
+		NVL(POP_TRVL_YN, 'N') DESC,
+		PLC_NM ASC
 
-    ORDER BY
-      NVL(POP_TRVL_YN, 'N') DESC,
-      PLC_NM ASC
-
-    <if test="size != null">
-      FETCH FIRST #{size} ROWS ONLY
-    </if>
-  </select>
+		<if test="size != null">
+			FETCH FIRST #{size} ROWS ONLY
+		</if>
+	</select>
 
 </mapper>

@@ -1,35 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="kr.or.ddit.mohaeng.community.travellog.region.mapper.IRegionMapper">
 
-<select id="selectRegionAutoComplete" resultType="kr.or.ddit.mohaeng.vo.RegionVO">
-  SELECT
-    RGN_NO      AS rgnNo,
-    RGN_NM      AS rgnNm,
-    RGN_DETAIL  AS rgnDetail,
-    POP_RGN_YN  AS popRgnYn
-  FROM REGION
-  <where>
-    <if test="keyword != null and keyword != ''">
-      (
-        RGN_NM LIKE '%' || #{keyword} || '%'
-        OR NVL(RGN_DETAIL, '') LIKE '%' || #{keyword} || '%'
-      )
-    </if>
-  </where>
-  ORDER BY
-    CASE WHEN POP_RGN_YN = 'Y' THEN 0 ELSE 1 END,
-    RGN_NM ASC
+	<select id="selectRegionAutoComplete"
+		resultType="kr.or.ddit.mohaeng.vo.RegionVO">
+		SELECT
+		RGN_NO AS rgnNo,
+		RGN_NM AS rgnNm,
+		RGN_DETAIL AS rgnDetail,
+		POP_RGN_YN AS popRgnYn
+		FROM REGION
+		<where>
+			<if test="keyword != null and keyword != ''">
+				(
+				RGN_NM LIKE '%' || #{keyword} || '%'
+				OR NVL(RGN_DETAIL, '') LIKE '%' || #{keyword} || '%'
+				)
+			</if>
+		</where>
+		ORDER BY
+		CASE WHEN POP_RGN_YN = 'Y' THEN 0 ELSE 1 END,
+		RGN_NM ASC
 
-  <!-- ✅ 검색어 있을 때만 size 제한 -->
-  <if test="keyword != null and keyword != ''">
-    FETCH FIRST #{size} ROWS ONLY
-  </if>
-</select>
-
-
+		<!-- 검색어 있을 때만 size 제한 -->
+		<if test="keyword != null and keyword != ''">
+			FETCH FIRST #{size} ROWS ONLY
+		</if>
+	</select>
 
 </mapper>

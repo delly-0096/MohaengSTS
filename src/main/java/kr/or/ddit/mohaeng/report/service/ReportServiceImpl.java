@@ -25,7 +25,7 @@ public class ReportServiceImpl implements IReportService {
         // DB에서 SYSDATE 사용
         report.setReqDt(null);
 
-        // ✅ 중복 신고 체크
+        // 중복 신고 체크
         int exists = reportMapper.existsDuplicateReport(report);
         if (exists == 1) {
             throw new DuplicateReportException("이미 신고한 내역이 존재합니다.");

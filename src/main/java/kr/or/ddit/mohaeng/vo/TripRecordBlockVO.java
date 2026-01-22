@@ -27,6 +27,6 @@ public class TripRecordBlockVO {
     private String plcAddr1;
     private String plcAddr2;
     private String defaultImg;
-    private Long placeAttachNo;   // TOUR_PLACE.ATTACH_NO
-    private String placeImgPath;  // 첨부 이미지 1장(있으면)
+    private Long placeAttachNo;   
+    private String placeImgPath;  
 }

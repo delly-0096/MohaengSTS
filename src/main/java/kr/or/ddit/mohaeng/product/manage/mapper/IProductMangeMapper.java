@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.business.mapper;
+package kr.or.ddit.mohaeng.product.manage.mapper;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 import kr.or.ddit.mohaeng.vo.RoomVO;
 
 @Mapper
-public interface IBusinessProductMapper {
+public interface IProductMangeMapper {
 
 	/**
 	 * <p>본인 판매 상품 목록 조회</p>
@@ -29,10 +29,6 @@ public interface IBusinessProductMapper {
 	 * @param product 회원id
 	 * @return 본인 상품
 	 */
-//	public List<TripProdVO> getProductlist(TripProdVO product);
-	
-	
-	
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts);
 	
 	/**
@@ -43,8 +39,6 @@ public interface IBusinessProductMapper {
 	 * @return 본인 상품
 	 */
 	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProd);
-	
-	
 	
 	/**
 	 * <p>기업 상품 현황 통계</p>
@@ -63,6 +57,15 @@ public interface IBusinessProductMapper {
 	 * @return 상품 정보, 상품 이용안내, 상품 가격, 상품 관광지
 	 */
 	public BusinessProductsVO retrieveProductDetail(BusinessProductsVO businessProducts);
+	
+	/**
+	 * <p>숙박 상품 상세 정보 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-21
+	 * @param tripProd
+	 * @return 결과 0, 1
+	 */
+	public AccommodationVO retrieveAccomodationDetail(AccommodationVO accommodationvo);
 	
 	/**
 	 * <p>본인 판매 상품 목록 상세</p>
@@ -224,15 +227,5 @@ public interface IBusinessProductMapper {
 	 * @return 결과 0, 1
 	 */
 	public int deleteProductStatus(TripProdVO tripProd);
-
-	
-	/**
-	 * <p>숙박 상품 정보 가져오기</p>
-	 * @author sdg
-	 * @date 2026-01-21
-	 * @param tripProd
-	 * @return 결과 0, 1
-	 */
-	public AccommodationVO retrieveAccomodationDetail(AccommodationVO accommodationvo);
 	
 }

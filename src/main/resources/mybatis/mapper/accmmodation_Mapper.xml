@@ -33,11 +33,10 @@
 	    <association property="accFacility" resultMap="accFacilityMap"/>
 			
 		<!-- List타입의 RoomType 타입 객체 -->
- 	    <collection property="roomList" resultMap="roomTypeMap"/>
+ 	    <collection property="roomTypeList" resultMap="roomTypeMap"/>
  	    	
  	    <!-- 옵션 목록 -->
  	    <collection property="accOptionList" resultMap="accOptionMap"/>
- 	    
 	</resultMap>
 	
 	<!-- 숙소보유시설 타입 (AccFacilityVO) -->
@@ -69,6 +68,7 @@
 		<result property="price" column="PRICE"/>
 		<result property="discount" column="DISCOUNT"/>
 		<result property="extraGuestFee" column="EXTRA_GUEST_FEE"/>
+        <result property="breakfastYn" column="BREAKFAST_YN"/>
 		<result property="roomSize" column="ROOM_SIZE"/>
         
         
@@ -79,7 +79,7 @@
         <collection property="accResvList" resultMap="accResvMap"/>
         
         <!-- 객실 목록 -->
-        <collection property="rooms" resultMap="roomMap"/>
+        <collection property="roomList" resultMap="roomMap"/>
 	</resultMap>
 	
 	<!-- 객실 내 특징 (RoomFeatureVO) -->
@@ -113,7 +113,7 @@
 		<id property="roomInfoNo" column="ROOM_INFO_NO"/>
 	    <result property="roomTypeNo" column="ROOM_TYPE_NO"/>
 	    <result property="accNo" column="ACC_NO"/>
-	    <result property="useUn" column="USE_YN"/>
+	    <result property="useUn" column="USE_UN"/>
 	</resultMap>
 	
 	<!-- 숙소 예약 -->
@@ -271,9 +271,6 @@
         , ${alias}TERRACE_YN
         , ${alias}NON_SMOKING_YN
         , ${alias}KITCHEN_YN
-        
-        
-        
 	</sql>
 	
 	<!-- 조인시 사용할 추가 옵션 컬럼(pk없음) -AO. -->
@@ -366,7 +363,7 @@
 	                    , acc.STAR_GRADE
 	                    , acc.ACC_CAT_CD as accCatCd
 	                    
-	                      , <include refid="accFacilityColumns"><property name="alias" value=""/></include>
+	                      , <include refid="accFacilityColumns"><property name="alias" value="AF."/></include>
 				          
 						  , (SELECT MAX(DISCOUNT) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) AS MAX_DISCOUNT
 	                      , (SELECT MIN(PRICE * (100 - NVL(DISCOUNT, 0)) / 100) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO) AS FINAL_PRICE
@@ -612,7 +609,7 @@
 	    WHEN NOT MATCHED THEN
 	        INSERT (
 	            ACC_NO
-	            , <include refid="accFacilityColumns"/>
+	            , <include refid="accFacilityColumns"><property name="alias" value=""/></include>
 	        ) VALUES (
 	            #{accNo}
 	            , #{wifiYn}
@@ -665,7 +662,7 @@
 	<insert id="insertRoomFacility" parameterType="kr.or.ddit.mohaeng.vo.RoomFacilityVO">
 	    INSERT INTO ROOM_FACILITY (
 	        ROOM_TYPE_NO
-	        , <include refid="roomFacilityColumns"/>
+	        , <include refid="roomFacilityColumns"><property name="alias" value=""/></include>
 	    ) VALUES (
 	        #{roomTypeNo}
 	        , #{airConYn}
@@ -683,7 +680,7 @@
 	<insert id="insertRoomFeature" parameterType="kr.or.ddit.mohaeng.vo.RoomFeatureVO">
 	    INSERT INTO ROOM_FEATURE (
 	        ROOM_TYPE_NO
-	        , <include refid="roomFeatureColumns"/>
+	        , <include refid="roomFeatureColumns"><property name="alias" value=""/></include>
 	    ) VALUES (
 	        #{roomTypeNo}
 	        , #{freeCancelYn}

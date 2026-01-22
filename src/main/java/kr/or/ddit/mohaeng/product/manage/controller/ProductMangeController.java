@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.business.controller;
+package kr.or.ddit.mohaeng.product.manage.controller;
 
 import java.util.List;
 
@@ -12,20 +12,20 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import kr.or.ddit.mohaeng.ServiceResult;
-import kr.or.ddit.mohaeng.business.service.IBusinessProductService;
 import kr.or.ddit.mohaeng.file.service.IFileService;
-import kr.or.ddit.mohaeng.login.service.IMemberService;
 import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
+import kr.or.ddit.mohaeng.product.manage.service.IProductMangeService;
 import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
 import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.tour.service.IProdTimeInfoService;
-import kr.or.ddit.mohaeng.tour.service.ISearchLogService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdInfoService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdSaleService;
 import kr.or.ddit.mohaeng.tour.service.ITripProdService;
@@ -34,7 +34,6 @@ import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
-import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
@@ -42,7 +41,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Controller
-public class BusinessProductController {
+public class ProductMangeController {
 
 	
 	@Autowired
@@ -61,16 +60,13 @@ public class BusinessProductController {
     private ITripProdInquiryService inquiryService;
     
     @Autowired
-    private ISearchLogService searchLogService;
-    
-    @Autowired
     private IFileService fileService;
 
 	@Autowired
 	private IProdTimeInfoService timeInfoService;
 	
 	@Autowired
-	private IBusinessProductService businessService;
+	private IProductMangeService manageService;
 	
 	/**
 	 * <p>기업 상품 관리 페이지</p>
@@ -78,7 +74,7 @@ public class BusinessProductController {
 	 * @param model	상품 목록을 담을 데이터
 	 * @return	본인 기업의 상품 정보를 담은 페이지
 	 */
-	@GetMapping("/business/product")
+	@GetMapping("/product/manage")
 	public String productManage(
 			@AuthenticationPrincipal CustomUserDetails customUser, 
 			BusinessProductsVO businessProducts, 
@@ -91,60 +87,45 @@ public class BusinessProductController {
 		businessProducts.setMemNo(memNo);
 		log.info("businessProducts : {}", businessProducts);
         // 투어상품 정보
-		List<BusinessProductsVO> prodList = businessService.getProductlist(businessProducts);	// 숙박 상품도 담기긴 함. 그런데
+		List<BusinessProductsVO> prodList = manageService.getProductlist(businessProducts);	// 숙박 상품도 담기긴 함. 그런데 좀 바뀔수도
 		log.info("prodList : {}", prodList);
 		
 		// 숙박 정보
 //		BusinessProductsVO businessProd = new BusinessProductsVO();
 //		businessProd.setMemNo(memNo);
 //		
-//		List<AccommodationVO> accommodationList = businessService.getAccommodationList(businessProd);
+//		List<AccommodationVO> accommodationList = manageService.getAccommodationList(businessProd);
 //		log.info("accommodationList : {}", accommodationList);
 		// 숙박 상품을 따로 담을지? 이래야 조건 걸어서 해줄수 있을수도?
 		// 회원 번호와 맞는 객실
 		
 		// 통계. 이거 tripProdList로 받아야됨
-        TripProdVO prodAggregate = businessService.getProductAggregate(tripProd);
+        TripProdVO prodAggregate = manageService.getProductAggregate(tripProd);
         
-        // 인기 키워드 조회
-//        List<SearchLogVO> keywords = searchLogService.getKeywords();
+        // 검색은 스크립트에서
         
         model.addAttribute("prodList", prodList);	// 근데 여기에도  memNo가 있음
         model.addAttribute("prodAggregate", prodAggregate);
         
-//        model.addAttribute("tripProd", tripProd);	// memNo담김
-//        model.addAttribute("keywords", keywords);
-        
-		return "product/business";
+		return "product/manage";
 	}
 	
 	/**
-	 * <p>투어상품 상세 조회</p>
+	 * <p>상품 상세 조회</p>
 	 * @author sdg
 	 * @date 2026-01-18
-	 * @param tripProdNo	 상품 번호
-	 * @param model			
-	 * @param ra
-	 * @return 상품 상세 정보
+	 * @param businessProducts	 상품 번호
+	 * @return 상품 상세 정보 - 타입이 accommodation일때는 숙소정보, 아닐때는 상품정보
 	 */
 	@ResponseBody
-	@PostMapping("/business/product/productDetail")
+	@PostMapping("/product/manage/productDetail")
 	public BusinessProductsVO productDetail(@RequestBody BusinessProductsVO businessProducts){
 		log.info("productDetail : {}", businessProducts);
-		log.info("productDetail.accNo : {}", businessProducts.getAccNo());
+		BusinessProductsVO product = manageService.getProductDetail(businessProducts);
 		
-
+		// getAttachFileDetails
 		
-		BusinessProductsVO product = businessService.getProductDetail(businessProducts);
-		String category = product.getCtyNm();
-		
-		
-		// 숙소일때
-		if(category != null && category.equals(category)) {
-			
-		}
-		
-//		log.info("product : {}", product);
+		log.info("product : {}", product);
 		return product;
 	}
 	
@@ -157,7 +138,7 @@ public class BusinessProductController {
 	 * @param ra
 	 * @return 투어 상품 상세 페이지
 	 */
-	@GetMapping("/business/product/tourDetail/{tripProdNo}")
+	@GetMapping("/product/manage/tourDetail/{tripProdNo}")
 	public String productDetailPage(@PathVariable int tripProdNo, Model model, RedirectAttributes ra) {
 		BusinessProductsVO product = null;
         log.info("productDetailPage 집입 {}", tripProdNo);
@@ -220,10 +201,10 @@ public class BusinessProductController {
 	 * @return 상태 변화 리턴
 	 */
 	@ResponseBody
-	@PostMapping("/business/product/changeProductStatus")
+	@PostMapping("/product/manage/changeProductStatus")
 	public ResponseEntity<String> changeProductStatus(@RequestBody TripProdVO tripProd) {
 		log.info("updateProductStatus : {}", tripProd);
-		ServiceResult result = businessService.updateProductStatus(tripProd);
+		ServiceResult result = manageService.updateProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
@@ -239,10 +220,10 @@ public class BusinessProductController {
 	 * @return 상태 변화 리턴
 	 */
 	@ResponseBody
-	@PostMapping("/business/product/removeProduct")
+	@PostMapping("/product/manage/removeProduct")
 	public ResponseEntity<String> removeProduct(@RequestBody TripProdVO tripProd){
 		log.info("deleteProduct : {}", tripProd);
-		ServiceResult result = businessService.deleteProductStatus(tripProd);
+		ServiceResult result = manageService.deleteProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
@@ -258,11 +239,14 @@ public class BusinessProductController {
 	 * @return 성공 여부
 	 */
 	@ResponseBody
-	@PostMapping("/business/product/editProduct")
+	@PostMapping("/product/manage/editProduct")
 	public ResponseEntity<String> editProduct(BusinessProductsVO businessProducts){
+//			@RequestPart("받을데이터명")BusinessProductsVO businessProducts){
+//			,@RequestPart(value = "files", required = false) MultipartFile[] files ){
 		log.info("editProduct : {}", businessProducts);
-		 
-		ServiceResult result = businessService.modifyProduct(businessProducts);
+		ServiceResult result = manageService.modifyProduct(businessProducts);
+		
+//		fileService.sav
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {

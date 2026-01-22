@@ -7,6 +7,16 @@
 <%@ include file="../common/header.jsp" %>
 
 <div class="schedule-search-page">
+    <div id="loadingOverlay" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+        style="background: rgba(0, 0, 0, 0.5); z-index: 9999;">
+        <div class="text-center text-white">
+            <div class="spinner-border" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">데이터를 처리 중입니다...</div>
+        </div>
+    </div>
+
     <div class="container">
         <!-- 진행 단계 표시 -->
         <div class="preference-steps" id="stepIndicator">
@@ -62,7 +72,7 @@
                             <button type="button" class="traveler-btn minus" onclick="changeTravelers(-1)">
                                 <i class="bi bi-dash-lg"></i>
                             </button>
-                            <span class="traveler-count" id="travelerCount">2</span>
+                            <span class="traveler-count" id="travelerCount">1</span>
                             <span class="traveler-unit">명</span>
                             <button type="button" class="traveler-btn plus" onclick="changeTravelers(1)">
                                 <i class="bi bi-plus-lg"></i>
@@ -1083,19 +1093,22 @@ function submitPreference() {
     // 세션 스토리지에 저장
     sessionStorage.setItem('preferenceData', JSON.stringify(preferenceData));
     
-    let rcmdForm = document.createElement("form");;
-    rcmdForm.setAttribute("method", "post");
-    rcmdForm.setAttribute("action", "${pageContext.request.contextPath}/schedule/rcmd-result");
-    document.body.appendChild(rcmdForm);
-    let input = document.createElement("input");
-    input.setAttribute("type", "hidden");
-    input.setAttribute("name", "preferenceData");
-    input.setAttribute("value", JSON.stringify(preferenceData));
-    rcmdForm.appendChild(input);
-    rcmdForm.submit();
+    // let rcmdForm = document.createElement("form");;
+    // rcmdForm.setAttribute("method", "post");
+    // rcmdForm.setAttribute("action", "${pageContext.request.contextPath}/schedule/rcmd-result");
+    // document.body.appendChild(rcmdForm);
+    // let input = document.createElement("input");
+    // input.setAttribute("type", "hidden");
+    // input.setAttribute("name", "preferenceData");
+    // input.setAttribute("value", JSON.stringify(preferenceData));
+    // rcmdForm.appendChild(input);
+    // rcmdForm.submit();
+
 
     // 동일한 결과 페이지로 이동 (추천 유형에 따라 내용만 다르게 표시)
     // window.location.href = '${pageContext.request.contextPath}/schedule/rcmd-result';
+    showLoadingLayout();
+    aiResult(preferenceData);
 }
 
 // URL 파라미터 가져오기
@@ -1224,6 +1237,34 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// 로딩 시작
+function showLoadingLayout() {
+    const loader = document.getElementById('loadingOverlay');
+    loader.classList.remove('d-none');
+}
+
+// 로딩 종료
+function hideLoadingLayout() {
+    const loader = document.getElementById('loadingOverlay');
+    loader.classList.add('d-none');
+}
+
+async function aiResult(preferenceData) {
+    // AI 결과 처리 로직
+    let response = await fetch('${pageContext.request.contextPath}/schedule/rcmd-result', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(preferenceData)
+    });
+
+    let responseData = await response.json();
+    sessionStorage.setItem('aiRcmdData', JSON.stringify(responseData));
+    hideLoadingLayout();
+    location.href = '${pageContext.request.contextPath}/schedule/rcmd-result';
+}
 </script>
 
 <c:set var="pageJs" value="schedule" />

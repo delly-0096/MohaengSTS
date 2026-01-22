@@ -19,4 +19,8 @@ public interface ITripProdMapper {
 	public TripProdPlaceVO getPlace(int tripProdNo);
 	public int updateExpiredStatus();
 	public void updateAttachNo(@Param("tripProdNo") int tripProdNo, @Param("attachNo") int attachNo);
+	public int checkBookmark(@Param("memNo") int memNo, @Param("tripProdNo") int tripProdNo);
+	public int insertBookmark(@Param("memNo") int memNo, @Param("type") String type, @Param("tripProdNo") int tripProdNo);
+	public int deleteBookmark(@Param("memNo") int memNo, @Param("tripProdNo") int tripProdNo);
+	public int restoreBookmark(@Param("memNo") int memNo, @Param("tripProdNo") int tripProdNo);
 }

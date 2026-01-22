@@ -30,7 +30,7 @@ public class AccommodationVO {
 	/**
 	 * 숙소 성급
 	 */
-	private int starGrade; 
+	private Integer starGrade; 
 	/**
 	 * 숙소 우편번호 (앞자리 0 가능)
 	 */

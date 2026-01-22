@@ -361,7 +361,7 @@
 	                    , acc.ADDR1
 	                    , acc.ACC_FILE_PATH
 	                    , acc.STAR_GRADE
-	                    , acc.ACC_CAT_CD
+	                    , acc.ACC_CAT_CD as accCatCd
 	                    
 	                      , <include refid="accFacilityColumns"><property name="alias" value="AF."/></include>
 				          
@@ -451,39 +451,38 @@
 		
 	<!-- 검색 필터링  -->
 	<select id="selectTotalCount" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultType="int">
-	    SELECT COUNT(*) 
-		    FROM ACCOMMODATION A
-		    JOIN TRIP_PROD T ON A.TRIP_PROD_NO = T.TRIP_PROD_NO
-		    
-		    <where>
-		        AND T.PROD_CTGRY_TYPE = 'accommodation'
-		        AND T.APPROVE_STATUS = '판매중'
-		        AND (T.DEL_YN = 'N' OR T.DEL_YN IS NULL)
-		
-		        <choose>
-		            <when test="accNo != null and accNo > 0">
-		                AND A.ACC_NO = #{accNo}
-		            </when>
-		            <otherwise>
-		                <choose>
-		                    <when test="areaCode != null and areaCode != ''">
-		                        AND T.CTY_NM = #{areaCode}
-		                    </when>
-		                    <otherwise>
-		                        <if test="keyword != null and keyword != ''">
-		                            AND (T.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
-		                        </if>
-		                    </otherwise>
-		                </choose>
-		            </otherwise>
-		        </choose>
+	  SELECT COUNT(*) 
+	    FROM ACCOMMODATION A
+	    JOIN TRIP_PROD T ON A.TRIP_PROD_NO = T.TRIP_PROD_NO
+	    <where>
+	        T.PROD_CTGRY_TYPE = 'accommodation'
+	        AND T.APPROVE_STATUS = '판매중'
+	        AND (T.DEL_YN = 'N' OR T.DEL_YN IS NULL)
+	        
+	        <if test="accCatCd != null and accCatCd != ''">
+	            AND A.ACC_CAT_CD = #{accCatCd}
+	        </if>
 	
-	        <if test="adultCount != null and adultCount > 0">
-	            AND EXISTS (
-	                SELECT 1 FROM ROOM_TYPE RT 
-	                WHERE RT.ACC_NO = A.ACC_NO 
-	                AND RT.MAX_GUEST_COUNT >= #{adultCount}
-	            )
+	        <choose>
+	            <when test="accNo != null and accNo > 0">
+	                AND A.ACC_NO = #{accNo}
+	            </when>
+	            <otherwise>
+	                <choose>
+	                    <when test="areaCode != null and areaCode != ''">
+	                        AND T.CTY_NM = #{areaCode}
+	                    </when>
+	                    <otherwise>
+	                        <if test="keyword != null and keyword != ''">
+	                            AND (T.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%' OR A.ADDR1 LIKE '%' || #{keyword} || '%')
+	                        </if>
+	                    </otherwise>
+	                </choose>
+	            </otherwise>
+	        </choose>
+	
+	        <if test="starGrade != null and starGrade != ''">
+	            AND A.STAR_GRADE = #{starGrade}
 	        </if>
 	    </where>
 	</select>
@@ -537,7 +536,7 @@
 	    LEFT OUTER JOIN ROOM_TYPE RT ON A.ACC_NO = RT.ACC_NO
 	    LEFT OUTER JOIN ROOM_FACILITY RF ON RT.ROOM_TYPE_NO = RF.ROOM_TYPE_NO
 	    LEFT OUTER JOIN ROOM_FEATURE RFT ON RT.ROOM_TYPE_NO = RFT.ROOM_TYPE_NO
-	    WHERE A.ACC_NO = #{accNo}
+	    WHERE A.TRIP_PROD_NO = #{tripProdNo}
 	    ORDER BY RT.PRICE ASC, RT.ROOM_TYPE_NO ASC
 	</select>
 	
@@ -743,6 +742,7 @@
 	    )
 	</insert>
 	
+	<!-- 숙소 예약시 데이터 -->
 	<insert id="insertAccommodationReservaion" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
 	    <selectKey keyProperty="accResvNo" resultType="int" order="BEFORE">
 	        SELECT SEQ_ACC_RESV.NEXTVAL FROM DUAL
@@ -750,8 +750,10 @@
 	
 	    INSERT INTO ACC_RESV (
 	        ACC_RESV_NO
+	        , TRIP_PROD_NO
 	        , PAY_NO
 	        , ROOM_TYPE_NO 
+	        , PRICE
 	        , RESV_MEM_NO
 	        , START_DT 
 	        , END_DT 
@@ -765,8 +767,10 @@
 	        , RESV_STATUS
 	    ) VALUES (
 	        #{accResvNo} 
+	        , #{tripProdNo}
 	        , #{payNo}
-	        , #{roomTypeNo} 
+	        , #{roomTypeNo}
+	        , #{price} 
 	        , #{resvMemNo} 
 	        , #{startDt}
 	        , #{endDt} 
@@ -781,6 +785,7 @@
 	    )
 	</insert>
 	
+	<!-- 숙소 결제 시 동의 데이터 -->
 	<insert id="insertAccResvAgree" parameterType="kr.or.ddit.mohaeng.vo.AccResvVO">
 	    INSERT INTO ACC_RESV_AGREE (
 	        ACC_RESV_NO
@@ -798,4 +803,72 @@
 	        , SYSDATE
 	    )
 	</insert>
+	
+	<!-- 숙박 결제 시 구입상품목록 insert -->
+	<insert id="insertProdList" parameterType="kr.or.ddit.mohaeng.vo.TripProdListVO">
+		<selectKey keyProperty="prodListNo" resultType="int" order="BEFORE">
+			SELECT SEQ_TRIP_PROD_LIST.NEXTVAL FROM DUAL
+		</selectKey>
+	    INSERT INTO TRIP_PROD_LIST (
+	        PROD_LIST_NO
+	        , PAY_NO
+	        , TRIP_PROD_NO
+	        , UNIT_PRICE
+	        , DISCOUNT_AMT
+	        , PAY_PRICE
+	        , QUANTITY
+	        , RESV_DT
+	        , USE_TIME
+	        , RSV_MEMO
+	    ) VALUES (
+	          #{prodListNo}
+	        , #{payNo}
+	        , #{tripProdNo}
+	        , #{unitPrice}
+	        , #{discountAmt}
+	        , #{payPrice}
+	        , #{quantity}
+	        , #{resvDt}
+	        , #{useTime}
+	        , #{rsvMemo}
+	    )
+	</insert>
+	
+	<!-- 숙박 결제 시 매출 테이블 insert  -->
+	<insert id="insertSales" parameterType="kr.or.ddit.mohaeng.vo.SalesVO">
+	    INSERT INTO SALES (
+	        SALE_NO
+	        , PROD_LIST_NO
+	        , SALE_DT
+	        , NET_SALES
+	        , SETTLE_STAT_CD
+	    ) VALUES (
+	        SEQ_SALES.NEXTVAL
+	        , #{prodListNo}
+	        , SYSDATE
+	        , #{netSales}
+	        , '정산대기'
+	    )
+	</insert>
+	
+	<!-- 숙박 상품 취소 시 결제 테이블 취소 처리 -->
+	<update id="updatePaymentCancel" parameterType="kr.or.ddit.mohaeng.vo.PaymentVO">
+	    UPDATE PAYMENT
+	       SET PAY_STATUS = '결제취소',
+	           CANCEL_DT = SYSDATE,
+	           CANCEL_REASON = #{cancelReason}
+	     WHERE PAY_NO = #{payNo}
+	       AND MEM_NO = #{memNo} </update>
+	
+	<!--  숙박 상품 취소 시 매출 테이블 취소 처리 -->
+	<update id="updateSalesCancel" parameterType="int">
+	    UPDATE SALES
+	       SET SETTLE_STAT_CD = '취소'
+	     WHERE PROD_LIST_NO IN (
+	         SELECT PROD_LIST_NO 
+	           FROM PROD_LIST 
+	          WHERE PAY_NO = #{payNo}
+	     )
+	</update>
+	
 </mapper>

@@ -269,7 +269,7 @@
 							
 							    <sec:authorize access="hasRole('MEMBER')" var="isUser">
 							        <button class="btn btn-primary btn-sm" 
-							                onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${calculatedFinalPrice}, ${room.baseGuestCount}, ${room.maxGuestCount}, ${room.extraGuestFee})">
+							               onclick="selectRoom('${room.roomTypeNo}', '${room.roomName}', ${calculatedFinalPrice}, ${room.baseGuestCount}, ${room.maxGuestCount}, ${room.extraGuestFee}, ${room.price})">
 							            객실 선택
 							        </button>
 							    </sec:authorize>
@@ -313,6 +313,8 @@
 			        </div>
 			
 			        <form class="booking-form" id="bookingForm" onsubmit="handleBookingSubmit(event)">
+			        <input type="hidden" name="tripProdNo" id="tripProdNo" value="${acc.tripProdNo}">
+    				<input type="hidden" name="roomNo" id="roomNo" value="">
 			            <div class="form-group">
 			                <label class="form-label">체크인</label>
 			                <input type="text" class="form-control date-picker" id="checkInDate"
@@ -366,7 +368,7 @@
 			                        <i class="bi bi-bookmark me-2"></i>북마크
 			                    </button>
 			                    <button type="submit" class="btn btn-primary w-100" id="bookingBtn" disabled>
-			                        <i class="bi bi-credit-card me-2"></i>결제하기
+			                        <i class="bi bi-credit-card me-2" ></i>결제하기
 			                    </button>
 			                </sec:authorize>
 			                <sec:authorize access="hasRole('BUSINESS')" var="isBusiness">
@@ -939,6 +941,7 @@
         contextPath: cp,
         accNo: '${acc.accNo}',
         accName: '${acc.accName}',
+        tripProdNo: '${acc.tripProdNo}',
         isLoggedIn: isLoggedIn, 
         isBusiness: isBusiness
     });

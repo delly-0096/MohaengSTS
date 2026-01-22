@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="kr.or.ddit.mohaeng.business.mapper.IBusinessProductMapper">
-	
+<mapper namespace="kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper">
+
 	<!-- 여행상품 -->
 	<resultMap id="tripPordMap" type="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
 		<id property="tripProdNo" column="TRIP_PROD_NO"/>
@@ -33,16 +33,18 @@
 	    
 	    <!-- 화면에 보여줄 가격 -->
 	    <result property="displayPrice" column="DISPLAY_PRICE" />
-		
+	    
 		<!-- 숙박 -->
 		<association property="accommodation" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accMap"/>
+		
+		<!-- 상품 관련 -->
 		<association property="prodSale" resultMap="prodSaleMap"/>
 		<association property="prodInfo" resultMap="prodInfoMap"/>
 		<association property="prodPlace" resultMap="prodPlaceMap"/>
 		
 		<!-- 구입 상품 목록 판매량 확인용 -->
         <collection property="prodList" resultMap="prodListMap"/>
-        <collection property="roomTypeList" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomTypeMap"/>
+<!--         <collection property="roomTypeList" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomTypeMap"/> -->
 	</resultMap>
 	
 	<!-- 구입 상품 목록 이걸로 판매량 확인하기 -->
@@ -140,6 +142,25 @@
 	    , p.ADDR2
 	</sql>
 	
+	
+	<!-- 
+	, CASE
+           WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
+           THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
+           ELSE s.PRICE
+       END AS DISPLAY_PRICE
+       
+	, CASE
+           WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
+           THEN (SELECT MIN(RT.PRICE) 
+           			FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
+           			이게 있는 RT.ACC_NO의 RT.DISCOUNT가져오기
+           ELSE s.PRICE
+       END AS DISPLAY_PRICE
+	
+		
+		
+	 -->
 	<!-- 숙소 재고, 판매량 정보가 애매함. 숙소는 roomTypeList와 다른 것들 적용해야되서 -->
 	<!-- 본인 기업회원 상품 목록 -->
 	<select id="getProductlist" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="tripPordMap">
@@ -154,10 +175,11 @@
                     <!-- 가격에서 할인 가격도 가져와야됨 -->
                     , acc.ACC_NO
 	                , acc.ACC_NAME
-	                , CASE 
+	                , acc.TOTAL_ROOM_CNT
+	                , CASE
 	                    WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
 	                    THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
-	                    ELSE s.PRICE 
+	                    ELSE s.PRICE
 	                END AS DISPLAY_PRICE
                     , r.AVG_RATING 
                     , r.REVIEW_COUNT
@@ -263,7 +285,7 @@
 	   WHERE t.TRIP_PROD_NO = #{tripProdNo}
 	</select>
 	
-	<!-- 숙소정보는 따로 가져오자 조인 지옥 버리고 그냥 갈까 -->
+	<!-- 숙소정보 가져오기 -->
 	<select id="retrieveAccomodationDetail" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accMap">
 		SELECT 
 	        <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accommodationColumns">
@@ -298,7 +320,6 @@
 		WHERE A.ACC_NO = #{accNo}
 		ORDER BY RT.ROOM_TYPE_NO ASC, AO.ACC_OPTION_NO ASC, R.ROOM_INFO_NO ASC
 	</select>
-	
 	
 	
 	<!-- 예약 가능 시간-->
@@ -447,9 +468,6 @@
 	        </foreach>
 	    ) A
 	</insert>
-	
-	
-	
 	
 	
 	<!-- 상품 판매 정보 변경 -->

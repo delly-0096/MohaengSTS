@@ -1,61 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="kr.or.ddit.mohaeng.report.mapper.IReportMapper">
 
-   <insert id="insertReport" parameterType="kr.or.ddit.mohaeng.vo.ReportVO">
-    <selectKey keyProperty="rptNo" resultType="long" order="BEFORE">
-      SELECT SEQ_REPORT.NEXTVAL FROM DUAL
-    </selectKey>
+	<insert id="insertReport"
+		parameterType="kr.or.ddit.mohaeng.vo.ReportVO">
+		<selectKey keyProperty="rptNo" resultType="long"
+			order="BEFORE">
+			SELECT SEQ_REPORT.NEXTVAL FROM DUAL
+		</selectKey>
 
-    INSERT INTO REPORT (
-      RPT_NO,
-      MGMT_TYPE,
-      TARGET_TYPE,
-      TARGET_NO,
-      REQ_MEM_NO,
-      TARGET_MEM_NO,
-      CTGRY_CD,
-      CONTENT,
-      REQ_DT,
-      PROC_STATUS,
-      PROC_RESULT,
-      PROC_MEM_NO,
-      PROD_DT,
-      REJ_RSN,
-      ADMIN_MEMO,
-      REG_DT,
-      MOD_DT
-    ) VALUES (
-      #{rptNo},
-      #{mgmtType},
-      #{targetType},
-      #{targetNo},
-      #{reqMemNo},
-      #{targetMemNo},
-      #{ctgryCd},
-      #{content},
-      SYSDATE,           <!-- ✅ 변경: #{reqDt} → SYSDATE -->
-      #{procStatus},
-      #{procResult},
-      #{procMemNo},
-      NULL,              <!-- ✅ 안전: 처리일시는 일단 NULL (나중에 처리 시 UPDATE) -->
-      #{rejRsn},
-      #{adminMemo},
-      SYSDATE,
-      NULL
-    )
-  </insert>
+		INSERT INTO REPORT (
+		RPT_NO,
+		MGMT_TYPE,
+		TARGET_TYPE,
+		TARGET_NO,
+		REQ_MEM_NO,
+		TARGET_MEM_NO,
+		CTGRY_CD,
+		CONTENT,
+		REQ_DT,
+		PROC_STATUS,
+		PROC_RESULT,
+		PROC_MEM_NO,
+		PROD_DT,
+		REJ_RSN,
+		ADMIN_MEMO,
+		REG_DT,
+		MOD_DT
+		) VALUES (
+		#{rptNo},
+		#{mgmtType},
+		#{targetType},
+		#{targetNo},
+		#{reqMemNo},
+		#{targetMemNo},
+		#{ctgryCd},
+		#{content},
+		SYSDATE,
+		#{procStatus},
+		#{procResult},
+		#{procMemNo},
+		NULL,
+		#{rejRsn},
+		#{adminMemo},
+		SYSDATE,
+		NULL
+		)
+	</insert>
 
-  <select id="existsDuplicateReport" parameterType="kr.or.ddit.mohaeng.vo.ReportVO" resultType="int">
-	  SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
-	  FROM REPORT
-	  WHERE MGMT_TYPE = 'REPORT'
-	    AND REQ_MEM_NO = #{reqMemNo}
-	    AND TARGET_TYPE = #{targetType}
-	    AND TARGET_NO = #{targetNo}
-  </select>
-  
+	<select id="existsDuplicateReport"
+		parameterType="kr.or.ddit.mohaeng.vo.ReportVO" resultType="int">
+		SELECT CASE WHEN COUNT(*) > 0 THEN 1 ELSE 0 END
+		FROM REPORT
+		WHERE MGMT_TYPE = 'REPORT'
+		AND REQ_MEM_NO = #{reqMemNo}
+		AND TARGET_TYPE = #{targetType}
+		AND TARGET_NO = #{targetNo}
+	</select>
+
 </mapper>

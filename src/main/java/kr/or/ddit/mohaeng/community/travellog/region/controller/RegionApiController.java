@@ -16,14 +16,11 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/regions")
 public class RegionApiController {
 
-    private final IRegionService regionService;
+	private final IRegionService regionService;
 
-    // 예: /api/regions?keyword=제주&size=10
-    @GetMapping
-    public List<RegionVO> search(
-            @RequestParam(name = "keyword", required = false) String keyword,
-            @RequestParam(name = "size", defaultValue = "10") int size
-    ) {
-        return regionService.searchRegions(keyword, size);
-    }
+	@GetMapping
+	public List<RegionVO> search(@RequestParam(name = "keyword", required = false) String keyword,
+			@RequestParam(name = "size", defaultValue = "10") int size) {
+		return regionService.searchRegions(keyword, size);
+	}
 }

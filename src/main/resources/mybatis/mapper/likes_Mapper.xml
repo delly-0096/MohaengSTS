@@ -1,43 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper
-  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="kr.or.ddit.mohaeng.community.travellog.likes.mapper.ILikesMapper">
 
-  <!-- ⚠️ MEMBER 테이블의 아이디 컬럼명이 MEM_ID 라고 가정.
-       만약 USER_ID / MBR_ID 같은 이름이면 여기만 바꿔줘! -->
-  <select id="selectMemNoByMemId" parameterType="string" resultType="long">
-    SELECT MEM_NO
-    FROM MEMBER
-    WHERE MEM_ID = #{memId}
-  </select>
+	<select id="selectMemNoByMemId" parameterType="string"
+		resultType="long">
+		SELECT MEM_NO
+		FROM MEMBER
+		WHERE MEM_ID = #{memId}
+	</select>
 
-  <select id="existsLike" resultType="int">
-    SELECT COUNT(*)
-    FROM LIKES
-    WHERE LIKES_KEY    = #{likesKey}
-      AND LIKES_CAT_CD = #{likesCatCd}
-      AND MEM_NO       = #{memNo}
-  </select>
+	<select id="existsLike" resultType="int">
+		SELECT COUNT(*)
+		FROM LIKES
+		WHERE LIKES_KEY = #{likesKey}
+		AND LIKES_CAT_CD = #{likesCatCd}
+		AND MEM_NO = #{memNo}
+	</select>
 
-  <insert id="insertLike">
-    INSERT INTO LIKES (LIKES_KEY, LIKES_CAT_CD, MEM_NO)
-    VALUES (#{likesKey}, #{likesCatCd}, #{memNo})
-  </insert>
+	<insert id="insertLike">
+		INSERT INTO LIKES (LIKES_KEY, LIKES_CAT_CD, MEM_NO)
+		VALUES (#{likesKey}, #{likesCatCd}, #{memNo})
+	</insert>
 
-  <delete id="deleteLike">
-    DELETE FROM LIKES
-    WHERE LIKES_KEY    = #{likesKey}
-      AND LIKES_CAT_CD = #{likesCatCd}
-      AND MEM_NO       = #{memNo}
-  </delete>
+	<delete id="deleteLike">
+		DELETE FROM LIKES
+		WHERE LIKES_KEY = #{likesKey}
+		AND LIKES_CAT_CD = #{likesCatCd}
+		AND MEM_NO = #{memNo}
+	</delete>
 
-  <select id="countLikes" resultType="int">
-    SELECT COUNT(*)
-    FROM LIKES
-    WHERE LIKES_KEY    = #{likesKey}
-      AND LIKES_CAT_CD = #{likesCatCd}
-  </select>
+	<select id="countLikes" resultType="int">
+		SELECT COUNT(*)
+		FROM LIKES
+		WHERE LIKES_KEY = #{likesKey}
+		AND LIKES_CAT_CD = #{likesCatCd}
+	</select>
 
 </mapper>

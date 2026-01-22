@@ -10,10 +10,10 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class TripRecordAuth {
 
-    private final ITripRecordService service;
+	private final ITripRecordService service;
 
-    public boolean isWriter(long rcdNo, Authentication authentication) {
-        Long memNo = AuthPrincipalExtractor.getMemNo(authentication);
-        return service.isWriter(rcdNo, memNo);
-    }
+	public boolean isWriter(long rcdNo, Authentication authentication) {
+		Long memNo = AuthPrincipalExtractor.getMemNo(authentication);
+		return service.isWriter(rcdNo, memNo);
+	}
 }

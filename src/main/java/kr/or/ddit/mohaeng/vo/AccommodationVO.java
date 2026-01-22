@@ -30,7 +30,7 @@ public class AccommodationVO {
 	/**
 	 * 숙소 성급
 	 */
-	private int starGrade; 
+	private Integer starGrade; 
 	/**
 	 * 숙소 우편번호 (앞자리 0 가능)
 	 */
@@ -81,9 +81,9 @@ public class AccommodationVO {
     private String ldongSignguCd; 
     
     private AccFacilityVO accFacility;
-    private List<RoomTypeVO> roomList;
+    private List<RoomTypeVO> roomTypeList;
     
-    // 옵션 목록(신동근 추가)
+    // 옵션 목록
     private List<AccOptionVO> accOptionList;
     
     

@@ -5,5 +5,5 @@ import java.util.List;
 import kr.or.ddit.mohaeng.vo.RegionVO;
 
 public interface IRegionService {
-    List<RegionVO> searchRegions(String keyword, int size);
+	List<RegionVO> searchRegions(String keyword, int size);
 }

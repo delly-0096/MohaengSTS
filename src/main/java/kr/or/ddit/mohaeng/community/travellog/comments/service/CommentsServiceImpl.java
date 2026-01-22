@@ -13,34 +13,34 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class CommentsServiceImpl implements ICommentsService {
 
-    private final ICommentsMapper mapper;
+	private final ICommentsMapper mapper;
 
-    @Override
-    public List<CommentsVO> list(String targetType, Long targetNo, Long loginMemberNo) {
-        return mapper.selectCommentsByTarget(targetType, targetNo, loginMemberNo);
-    }
+	@Override
+	public List<CommentsVO> list(String targetType, Long targetNo, Long loginMemberNo) {
+		return mapper.selectCommentsByTarget(targetType, targetNo, loginMemberNo);
+	}
 
-    @Override
-    @Transactional
-    public int write(String targetType, Long targetNo, Long writerNo, String content, Long parentCmntNo) {
-        CommentsVO vo = new CommentsVO();
-        vo.setTargetType(targetType);
-        vo.setTargetNo(targetNo);
-        vo.setWriterNo(writerNo);
-        vo.setParentCmntNo(parentCmntNo);
-        vo.setCmntContent(content);
-        return mapper.insertComment(vo);
-    }
+	@Override
+	@Transactional
+	public int write(String targetType, Long targetNo, Long writerNo, String content, Long parentCmntNo) {
+		CommentsVO vo = new CommentsVO();
+		vo.setTargetType(targetType);
+		vo.setTargetNo(targetNo);
+		vo.setWriterNo(writerNo);
+		vo.setParentCmntNo(parentCmntNo);
+		vo.setCmntContent(content);
+		return mapper.insertComment(vo);
+	}
 
-    @Override
-    @Transactional
-    public boolean update(Long cmntNo, Long writerNo, String content) {
-        return mapper.updateCommentContent(cmntNo, writerNo, content) == 1;
-    }
+	@Override
+	@Transactional
+	public boolean update(Long cmntNo, Long writerNo, String content) {
+		return mapper.updateCommentContent(cmntNo, writerNo, content) == 1;
+	}
 
-    @Override
-    @Transactional
-    public boolean delete(Long cmntNo, Long writerNo) {
-        return mapper.softDeleteComment(cmntNo, writerNo) == 1;
-    }
+	@Override
+	@Transactional
+	public boolean delete(Long cmntNo, Long writerNo) {
+		return mapper.softDeleteComment(cmntNo, writerNo) == 1;
+	}
 }

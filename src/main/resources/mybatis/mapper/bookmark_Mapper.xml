@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.mypage.bookmarks.mapper.IBookMarkMapper">
+	
+	<select id="selectBookMarkCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+	    SELECT COUNT(*)
+	    FROM (
+	        <choose>
+	            <when test="searchType == 'schedule'">
+	                SELECT BMK_NO FROM bookmark WHERE DEL_YN = 'N' AND MEM_NO = #{memNo} AND CONTENT_TYPE = 'SCHEDULE'
+	            </when>
+	            <when test="searchType == 'accommodation'">
+	                SELECT BMK_NO FROM bookmark WHERE DEL_YN = 'N' AND MEM_NO = #{memNo} AND CONTENT_TYPE = 'ACCOMMODATION'
+	            </when>
+	            <when test="searchType == 'tour'">
+	                SELECT BMK_NO FROM bookmark WHERE DEL_YN = 'N' AND MEM_NO = #{memNo} AND CONTENT_TYPE = 'TOUR'
+	            </when>
+	            <otherwise>
+	                SELECT BMK_NO FROM bookmark WHERE DEL_YN = 'N' AND MEM_NO = #{memNo} AND CONTENT_TYPE = 'SCHEDULE'
+	                UNION ALL
+	                SELECT BMK_NO FROM bookmark WHERE DEL_YN = 'N' AND MEM_NO = #{memNo} AND CONTENT_TYPE = 'ACCOMMODATION'
+	                UNION ALL
+	                SELECT BMK_NO FROM bookmark WHERE DEL_YN = 'N' AND MEM_NO = #{memNo} AND CONTENT_TYPE = 'TOUR'
+	            </otherwise>
+	        </choose>
+	    ) a
+	</select>
+	
+	<select id="selectBookMarkList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.BookmarkVO">
+	    SELECT b.*
+	    FROM (
+	        SELECT a.*, ROW_NUMBER() OVER (ORDER BY a.bmk_no DESC) rnum
+	        FROM (
+	            <choose>
+	                <when test="searchType == 'schedule'">
+	                    SELECT 
+	                        BMK_NO, TRUNC(TO_DATE(SCHDL_END_DT, 'YYYY-MM-DD') - TO_DATE(SCHDL_START_DT, 'YYYY-MM-DD')) AS bmk_day_count,
+	                        '-' as addr1, 0 as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, SCHDL_NM AS title
+	                    FROM bookmark b LEFT OUTER JOIN trip_schedule ts ON(b.content_id = ts.SCHDL_NO)
+	                    WHERE b.DEL_YN = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'SCHEDULE'
+	                </when>
+	
+	                <when test="searchType == 'accommodation'">
+	                    SELECT 
+	                        BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count,
+	                        (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN ACCOMMODATION a ON(TP.TRIP_PROD_NO = a.TRIP_PROD_NO) WHERE TP.TRIP_PROD_NO = b.content_id) AS addr1,
+	                        (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price,
+	                        CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title
+	                    FROM bookmark b LEFT OUTER JOIN trip_prod tp ON(b.content_id = tp.trip_prod_no)
+	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'ACCOMMODATION'
+	                </when>
+	
+	                <when test="searchType == 'tour'">
+	                    SELECT 
+	                        BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count,
+	                        (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN TRIP_PROD_PLACE TPP ON(TP.TRIP_PROD_NO = TPP.TRIP_PROD_NO) where tp.trip_prod_no = b.content_id) AS addr1,
+	                        (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price,
+	                        CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title
+	                    FROM bookmark b LEFT OUTER JOIN trip_prod tp ON(b.content_id = tp.trip_prod_no)
+	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'TOUR'
+	                </when>
+	
+	                <otherwise>
+	                    SELECT BMK_NO, TRUNC(TO_DATE(SCHDL_END_DT, 'YYYY-MM-DD') - TO_DATE(SCHDL_START_DT, 'YYYY-MM-DD')) AS bmk_day_count, '-' as addr1, 0 as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, SCHDL_NM AS title
+	                    FROM bookmark b LEFT OUTER JOIN trip_schedule ts ON(b.content_id = ts.SCHDL_NO)
+	                    WHERE b.DEL_YN = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'SCHEDULE'
+	                    UNION ALL
+	                    SELECT BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count, (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN ACCOMMODATION a ON(TP.TRIP_PROD_NO = a.TRIP_PROD_NO) WHERE TP.TRIP_PROD_NO = b.content_id) AS addr1, (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title
+	                    FROM bookmark b LEFT OUTER JOIN trip_prod tp ON(b.content_id = tp.trip_prod_no)
+	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'ACCOMMODATION'
+	                    UNION ALL
+	                    SELECT BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count, (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN TRIP_PROD_PLACE TPP ON(TP.TRIP_PROD_NO = TPP.TRIP_PROD_NO) where tp.trip_prod_no = b.content_id) AS addr1, (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title
+	                    FROM bookmark b LEFT OUTER JOIN trip_prod tp ON(b.content_id = tp.trip_prod_no)
+	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'TOUR'
+	                </otherwise>
+	            </choose>
+	        ) a
+	    ) b
+	    <![CDATA[
+	        WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
+	    ]]>
+	</select>
+	
+	<select id="selectBookmarkStats" parameterType="int" resultType="map">
+	    SELECT 
+	        COUNT(*) AS TOTAL_CNT,
+	        COUNT(CASE WHEN CONTENT_TYPE = 'SCHEDULE' THEN 1 END) AS SCHEDULE_CNT,
+	        COUNT(CASE WHEN CONTENT_TYPE = 'ACCOMMODATION' THEN 1 END) AS ACCOMMODATION_CNT,
+	        COUNT(CASE WHEN CONTENT_TYPE = 'TOUR' THEN 1 END) AS TOUR_CNT
+	    FROM bookmark
+	    WHERE MEM_NO = #{memNo} AND DEL_YN = 'N'
+	</select>
+	
+</mapper>

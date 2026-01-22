@@ -6,290 +6,354 @@
 <c:set var="pageTitle" value="여행기록 작성" />
 <c:set var="pageCss" value="community" />
 
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../common/header.jsp"%>
 
 
 <sec:authorize access="hasAnyRole('ROLE_ADMIN', 'ROLE_BUSINESS')">
-    <script>
+	<script>
         alert('일반회원만 여행기록을 작성할 수 있습니다.');
         location.href = '${pageContext.request.contextPath}/member/login';
     </script>
 </sec:authorize>
 
-
-
-
 <style>
-#locationSuggestions .location-item{
-  height: 56px;
-  box-sizing: border-box;
-}
-#locationSuggestions{
-  max-height: calc(56px * 3);
-  overflow-y: auto;
+.day-header {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start; 
+	gap: 12px;
+	margin: 18px 0 10px;
 }
 
-#locationSuggestions .location-item i { color: #1abc9c; }
-#locationSuggestions .location-item small { color: #6b7280; }
-#locationSuggestions .location-item:hover { background: #e8fbf6; }
+.day-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	padding: 8px 14px;
+	width: fit-content; 
+	color: #111827;
+	font-weight: 900;
+	font-size: 13px;
+	line-height: 1;
+	letter-spacing: .2px;
+}
 
-/* 안내/빈결과 메시지도 동일 톤 */
+.day-badge .day-dot {
+	height: 28px;
+	padding: 0 12px; 
+	border-radius: 999px; 
+	background: #107070;
+	color: #fff;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	flex: 0 0 auto;
+	box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
+	font-size: 12px;
+	font-weight: 900;
+	line-height: 1;
+	letter-spacing: .2px;
+}
+
+.day-badge .day-date {
+	margin-left: 0; 
+	font-weight: 800;
+	color: #64748b;
+	font-size: 12px;
+}
+
+#locationSuggestions .location-item {
+	height: 56px;
+	box-sizing: border-box;
+}
+
+#locationSuggestions {
+	max-height: calc(56px * 3);
+	overflow-y: auto;
+}
+
+#locationSuggestions .location-item i {
+	color: #1abc9c;
+}
+
+#locationSuggestions .location-item small {
+	color: #6b7280;
+}
+
+#locationSuggestions .location-item:hover {
+	background: #e8fbf6;
+}
+
 #locationSuggestions .location-empty {
-  padding: 12px;
-  color: #6b7280;
+	padding: 12px;
+	color: #6b7280;
 }
-
 </style>
 
 <div class="travellog-write-page">
-    <div class="travellog-write-container">
-            <!-- 헤더 -->
-            <div class="travellog-write-header">
-                <button type="button" class="btn-back" onclick="goBack()">
-                    <i class="bi bi-arrow-left"></i>
-                </button>
-                <h2>새 여행기록</h2>
-                <button type="button" class="btn-submit" id="submitBtn" onclick="submitTravellog()">등록</button>
-            </div>
+	<div class="travellog-write-container">
+		<div class="travellog-write-header">
+			<button type="button" class="btn-back" onclick="goBack()">
+				<i class="bi bi-arrow-left"></i>
+			</button>
+			<h2>새 여행기록</h2>
+			<button type="button" class="btn-submit" id="submitBtn"
+				onclick="submitTravellog()">등록</button>
+		</div>
 
-            <div class="travellog-write-body-new">
-                <!-- 왼쪽: 블로그 에디터 -->
-                <div class="blog-editor-section">
-                    <!-- 커버 이미지 -->
-                    <div class="cover-image-wrapper" id="coverImageWrapper">
-                        <div class="cover-image-placeholder" id="coverPlaceholder" onclick="document.getElementById('coverImageInput').click()">
-                            <i class="bi bi-image"></i>
-                            <span>커버 이미지 추가</span>
-                            <p>여행의 대표 사진을 선택하세요</p>
-                        </div>
-                        <div class="cover-image-preview" id="coverPreview" style="display: none;">
-                            <img src="" alt="커버 이미지" id="coverImg">
-                            <div class="cover-image-overlay">
-                                <button type="button" class="btn-cover-change" onclick="document.getElementById('coverImageInput').click()">
-                                    <i class="bi bi-camera"></i> 변경
-                                </button>
-                                <button type="button" class="btn-cover-remove" onclick="removeCoverImage()">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <input type="file" id="coverImageInput" accept="image/*" style="display: none;" onchange="handleCoverImage(event)">
-                    </div>
+		<div class="travellog-write-body-new">
+			<!-- 왼쪽: 블로그 에디터 -->
+			<div class="blog-editor-section">
+				<!-- 커버 이미지 -->
+				<div class="cover-image-wrapper" id="coverImageWrapper">
+					<div class="cover-image-placeholder" id="coverPlaceholder"
+						onclick="document.getElementById('coverImageInput').click()">
+						<i class="bi bi-image"></i> <span>커버 이미지 추가</span>
+						<p>여행의 대표 사진을 선택하세요</p>
+					</div>
+					<div class="cover-image-preview" id="coverPreview"
+						style="display: none;">
+						<img src="" alt="커버 이미지" id="coverImg">
+						<div class="cover-image-overlay">
+							<button type="button" class="btn-cover-change"
+								onclick="document.getElementById('coverImageInput').click()">
+								<i class="bi bi-camera"></i> 변경
+							</button>
+							<button type="button" class="btn-cover-remove"
+								onclick="removeCoverImage()">
+								<i class="bi bi-trash"></i>
+							</button>
+						</div>
+					</div>
+					<input type="file" id="coverImageInput" accept="image/*"
+						style="display: none;" onchange="handleCoverImage(event)">
+				</div>
 
-                    <!-- 제목 입력 -->
-                    <div class="blog-title-input">
-                        <input type="text" id="blogTitle" placeholder="여행 제목을 입력하세요" maxlength="100">
-                    </div>
+				<!-- 제목 입력 -->
+				<div class="blog-title-input">
+					<input type="text" id="blogTitle" placeholder="여행 제목을 입력하세요"
+						maxlength="100">
+				</div>
 
-                    <!-- 일정 연결 배너 -->
-                    <div class="schedule-link-banner" id="scheduleLinkBanner" onclick="openScheduleModal()">
-                        <div class="schedule-link-icon">
-                            <i class="bi bi-calendar-check"></i>
-                        </div>
-                        <div class="schedule-link-content">
-                            <span class="schedule-link-title">내 일정 불러오기</span>
-                            <span class="schedule-link-desc">저장된 여행 일정을 연결하면 장소 정보가 자동으로 추가됩니다</span>
-                        </div>
-                        <i class="bi bi-chevron-right"></i>
-                    </div>
+				<!-- 일정 연결 배너 -->
+				<div class="schedule-link-banner" id="scheduleLinkBanner"
+					onclick="openScheduleModal()">
+					<div class="schedule-link-icon">
+						<i class="bi bi-calendar-check"></i>
+					</div>
+					<div class="schedule-link-content">
+						<span class="schedule-link-title">내 일정 불러오기</span> <span
+							class="schedule-link-desc">저장된 여행 일정을 연결하면 장소 정보가 자동으로
+							추가됩니다</span>
+					</div>
+					<i class="bi bi-chevron-right"></i>
+				</div>
 
-                    <!-- 연결된 일정 표시 (선택 후) -->
-                    <div class="linked-schedule-card" id="linkedScheduleCard" style="display: none;">
-                        <div class="linked-schedule-header">
-                            <i class="bi bi-calendar-check-fill"></i>
-                            <span>연결된 일정</span>
-                            <button type="button" class="btn-unlink" onclick="unlinkSchedule()">
-                                <i class="bi bi-x-lg"></i>
-                            </button>
-                        </div>
-                        <div class="linked-schedule-body">
-                            <h4 id="linkedScheduleTitle">제주도 힐링 여행</h4>
-                            <div class="linked-schedule-meta">
-                                <span><i class="bi bi-calendar3"></i> <span id="linkedScheduleDates">2024.03.15 - 2024.03.18</span></span>
-                                <span><i class="bi bi-geo-alt"></i> <span id="linkedScheduleLocation">제주도</span></span>
-                            </div>
-                            <div class="linked-schedule-places" id="linkedSchedulePlaces">
-                                <!-- 장소 태그들이 여기에 표시됩니다 -->
-                            </div>
-                        </div>
-                    </div>
+				<!-- 연결된 일정 표시 (선택 후) -->
+				<div class="linked-schedule-card" id="linkedScheduleCard"
+					style="display: none;">
+					<div class="linked-schedule-header">
+						<i class="bi bi-calendar-check-fill"></i> <span>연결된 일정</span>
+						<button type="button" class="btn-unlink"
+							onclick="unlinkSchedule()">
+							<i class="bi bi-x-lg"></i>
+						</button>
+					</div>
+					<div class="linked-schedule-body">
+						<h4 id="linkedScheduleTitle">제주도 힐링 여행</h4>
+						<div class="linked-schedule-meta">
+							<span><i class="bi bi-calendar3"></i> <span
+								id="linkedScheduleDates">2024.03.15 - 2024.03.18</span></span> <span><i
+								class="bi bi-geo-alt"></i> <span id="linkedScheduleLocation">제주도</span></span>
+						</div>
+						<div class="linked-schedule-places" id="linkedSchedulePlaces">
+							<!-- 장소 태그들이 여기에 표시됩니다 -->
+						</div>
+					</div>
+				</div>
 
-                    <!-- 블로그 에디터 (블록 기반) -->
-                    <div class="blog-editor" id="blogEditor">
-                        <!-- 블록들이 여기에 추가됩니다 -->
-                        <div class="editor-block text-block" data-block-id="1">
-                            <textarea class="block-textarea" placeholder="여행 이야기를 작성하세요..." oninput="autoResize(this)"></textarea>
-                        </div>
-                    </div>
+				<!-- 블로그 에디터 (블록 기반) -->
+				<div class="blog-editor" id="blogEditor">
+					<!-- 블록들이 여기에 추가됩니다 -->
+					<div class="editor-block text-block" data-block-id="1">
+						<textarea class="block-textarea" placeholder="여행 이야기를 작성하세요..."
+							oninput="autoResize(this)"></textarea>
+					</div>
+				</div>
 
-                    <!-- 블록 추가 버튼 -->
-                    <div class="add-block-toolbar">
-                        <button type="button" class="add-block-btn" onclick="addTextBlock()">
-                            <i class="bi bi-text-paragraph"></i>
-                            <span>텍스트</span>
-                        </button>
-                        <button type="button" class="add-block-btn" onclick="document.getElementById('blockImageInput').click()">
-                            <i class="bi bi-image"></i>
-                            <span>이미지</span>
-                        </button>
-                        <button type="button" class="add-block-btn" onclick="addDividerBlock()">
-                            <i class="bi bi-hr"></i>
-                            <span>구분선</span>
-                        </button>
-                        <button type="button" class="add-block-btn" onclick="addPlaceBlock()">
-                            <i class="bi bi-geo-alt"></i>
-                            <span>장소</span>
-                        </button>
-                        <input type="file" id="blockImageInput" accept="image/*" multiple style="display: none;" onchange="addImageBlocks(event)">
-                    </div>
-                </div>
+				<!-- 블록 추가 버튼 -->
+				<div class="add-block-toolbar">
+					<button type="button" class="add-block-btn"
+						onclick="addTextBlock()">
+						<i class="bi bi-text-paragraph"></i> <span>텍스트</span>
+					</button>
+					<button type="button" class="add-block-btn"
+						onclick="document.getElementById('blockImageInput').click()">
+						<i class="bi bi-image"></i> <span>이미지</span>
+					</button>
+					<button type="button" class="add-block-btn"
+						onclick="addDividerBlock()">
+						<i class="bi bi-hr"></i> <span>구분선</span>
+					</button>
+					<button type="button" class="add-block-btn"
+						onclick="addPlaceBlock()">
+						<i class="bi bi-geo-alt"></i> <span>장소</span>
+					</button>
+					<input type="file" id="blockImageInput" accept="image/*" multiple
+						style="display: none;" onchange="addImageBlocks(event)">
+				</div>
+			</div>
 
-                <!-- 오른쪽: 설정 패널 -->
-                <div class="settings-panel">
-                    <!-- 작성자 정보 -->
-                    <%-- <div class="writer-info-card">
-                        <div class="writer-avatar">
-                            <i class="bi bi-person-fill"></i>
-                        </div>
-                        <div class="writer-details">
-                            <span class="writer-name">${sessionScope.loginUser.userName}</span>
-                            <span class="writer-status">여행기록 작성 중</span>
-                        </div>
-                    </div> --%>
+			<!-- 오른쪽: 설정 패널 -->
+			<div class="settings-panel">
+			
+				<!-- 여행 정보 설정 -->
+				<div class="settings-section">
+					<h3 class="settings-title">
+						<i class="bi bi-info-circle"></i> 여행 정보
+					</h3>
 
-                    <!-- 여행 정보 설정 -->
-                    <div class="settings-section">
-                        <h3 class="settings-title"><i class="bi bi-info-circle"></i> 여행 정보</h3>
+					<!-- 위치 정보 -->
+					<div class="setting-item" id="locationSettingItem">
+						<div class="setting-icon">
+							<i class="bi bi-geo-alt"></i>
+						</div>
+						<div class="setting-content">
+							<span class="setting-label">위치</span> <span class="setting-value"
+								id="locationValue">위치를 추가하세요</span>
+						</div>
+						<i class="bi bi-chevron-right setting-arrow"></i>
+					</div>
+					<div class="setting-input-area" id="locationInputArea">
+						<div class="search-input-wrapper">
+							<i class="bi bi-search"></i> <input type="text"
+								id="locationInput" placeholder="지역 검색" autocomplete="off"
+								oninput="onLocationInput(event)"
+								oncompositionend="onLocationInput(event)"
+								onkeyup="onLocationInput(event)">
+						</div>
+						<div class="location-suggestions" id="locationSuggestions"></div>
+					</div>
 
-                        <!-- 위치 정보 -->
-                        <div class="setting-item" id="locationSettingItem">
-                            <div class="setting-icon"><i class="bi bi-geo-alt"></i></div>
-                            <div class="setting-content">
-                                <span class="setting-label">위치</span>
-                                <span class="setting-value" id="locationValue">위치를 추가하세요</span>
-                            </div>
-                            <i class="bi bi-chevron-right setting-arrow"></i>
-                        </div>
-                        <div class="setting-input-area" id="locationInputArea">
-                            <div class="search-input-wrapper">
-                                <i class="bi bi-search"></i>
-                                <input type="text" id="locationInput" placeholder="지역 검색" autocomplete="off"
-       oninput="onLocationInput(event)"
-       oncompositionend="onLocationInput(event)"
-       onkeyup="onLocationInput(event)">
-                            </div>
-                            <div class="location-suggestions" id="locationSuggestions"></div>
-                        </div>
+					<!-- 여행 기간 -->
+					<div class="setting-item" onclick="toggleSettingInput('date')">
+						<div class="setting-icon">
+							<i class="bi bi-calendar-event"></i>
+						</div>
+						<div class="setting-content">
+							<span class="setting-label">여행 기간</span> <span
+								class="setting-value" id="dateValue">날짜를 선택하세요</span>
+						</div>
+						<i class="bi bi-chevron-right setting-arrow"></i>
+					</div>
+					<div class="setting-input-area" id="dateInputArea">
+						<input type="text" class="form-control date-range-picker"
+							id="travelDateRange" placeholder="여행 기간 선택">
+					</div>
 
-                        <!-- 여행 기간 -->
-                        <div class="setting-item" onclick="toggleSettingInput('date')">
-                            <div class="setting-icon"><i class="bi bi-calendar-event"></i></div>
-                            <div class="setting-content">
-                                <span class="setting-label">여행 기간</span>
-                                <span class="setting-value" id="dateValue">날짜를 선택하세요</span>
-                            </div>
-                            <i class="bi bi-chevron-right setting-arrow"></i>
-                        </div>
-                        <div class="setting-input-area" id="dateInputArea">
-                            <input type="text" class="form-control date-range-picker" id="travelDateRange" placeholder="여행 기간 선택">
-                        </div>
+					<!-- 태그 -->
+					<div class="setting-item" onclick="toggleSettingInput('tag')">
+						<div class="setting-icon">
+							<i class="bi bi-hash"></i>
+						</div>
+						<div class="setting-content">
+							<span class="setting-label">태그</span> <span class="setting-value"
+								id="tagValue">태그를 추가하세요</span>
+						</div>
+						<i class="bi bi-chevron-right setting-arrow"></i>
+					</div>
+					<div class="setting-input-area" id="tagInputArea">
+						<input type="text" class="form-control" id="tagInput"
+							placeholder="태그 입력 후 Enter" onkeypress="addTag(event)">
+						<div class="tag-list" id="tagList"></div>
+					</div>
+				</div>
 
-                        <!-- 태그 -->
-                        <div class="setting-item" onclick="toggleSettingInput('tag')">
-                            <div class="setting-icon"><i class="bi bi-hash"></i></div>
-                            <div class="setting-content">
-                                <span class="setting-label">태그</span>
-                                <span class="setting-value" id="tagValue">태그를 추가하세요</span>
-                            </div>
-                            <i class="bi bi-chevron-right setting-arrow"></i>
-                        </div>
-                        <div class="setting-input-area" id="tagInputArea">
-                            <input type="text" class="form-control" id="tagInput" placeholder="태그 입력 후 Enter" onkeypress="addTag(event)">
-                            <div class="tag-list" id="tagList"></div>
-                            <!-- <div class="popular-tags">
-                                <span class="popular-tag-label">인기 태그</span>
-                                <div class="popular-tag-list">
-                                    <span class="popular-tag" onclick="addPopularTag('여행스타그램')">#여행스타그램</span>
-                                    <span class="popular-tag" onclick="addPopularTag('여행에미치다')">#여행에미치다</span>
-                                    <span class="popular-tag" onclick="addPopularTag('국내여행')">#국내여행</span>
-                                    <span class="popular-tag" onclick="addPopularTag('제주도')">#제주도</span>
-                                    <span class="popular-tag" onclick="addPopularTag('여행사진')">#여행사진</span>
-                                    <span class="popular-tag" onclick="addPopularTag('힐링여행')">#힐링여행</span>
-                                </div>
-                            </div> -->
-                        </div>
-                    </div>
+				<!-- 공개 설정 -->
+				<div class="settings-section">
+					<h3 class="settings-title">
+						<i class="bi bi-shield-check"></i> 공개 설정
+					</h3>
 
-                    <!-- 공개 설정 -->
-                    <div class="settings-section">
-                        <h3 class="settings-title"><i class="bi bi-shield-check"></i> 공개 설정</h3>
+					<div class="setting-item no-arrow">
+						<div class="setting-icon">
+							<i class="bi bi-globe"></i>
+						</div>
+						<div class="setting-content">
+							<span class="setting-label">공개 범위</span>
+						</div>
+						<select class="visibility-select" id="visibility">
+							<option value="public">전체 공개</option>
+							<option value="private">나만 보기</option>
+						</select>
+					</div>
 
-                        <div class="setting-item no-arrow">
-                            <div class="setting-icon"><i class="bi bi-globe"></i></div>
-                            <div class="setting-content">
-                                <span class="setting-label">공개 범위</span>
-                            </div>
-                            <select class="visibility-select" id="visibility">
-                                <option value="public">전체 공개</option>
-                                <option value="private">나만 보기</option>
-                            </select>
-                        </div>
+					<div class="setting-item no-arrow">
+						<div class="setting-icon">
+							<i class="bi bi-map"></i>
+						</div>
+						<div class="setting-content">
+							<span class="setting-label">지도에 표시</span> <span
+								class="setting-desc">내 여행 지도에 이 기록을 표시합니다</span>
+						</div>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox" id="showOnMap"
+								checked>
+						</div>
+					</div>
 
-                        <div class="setting-item no-arrow">
-                            <div class="setting-icon"><i class="bi bi-map"></i></div>
-                            <div class="setting-content">
-                                <span class="setting-label">지도에 표시</span>
-                                <span class="setting-desc">내 여행 지도에 이 기록을 표시합니다</span>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="showOnMap" checked>
-                            </div>
-                        </div>
+					<div class="setting-item no-arrow">
+						<div class="setting-icon">
+							<i class="bi bi-chat-dots"></i>
+						</div>
+						<div class="setting-content">
+							<span class="setting-label">댓글 허용</span> <span
+								class="setting-desc">다른 사용자가 댓글을 작성할 수 있습니다</span>
+						</div>
+						<div class="form-check form-switch">
+							<input class="form-check-input" type="checkbox"
+								id="allowComments" checked>
+						</div>
+					</div>
+				</div>
 
-                        <div class="setting-item no-arrow">
-                            <div class="setting-icon"><i class="bi bi-chat-dots"></i></div>
-                            <div class="setting-content">
-                                <span class="setting-label">댓글 허용</span>
-                                <span class="setting-desc">다른 사용자가 댓글을 작성할 수 있습니다</span>
-                            </div>
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="allowComments" checked>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 미리보기 및 저장 -->
-                    <div class="settings-actions">
-                        <button type="button" class="btn btn-outline w-100 mb-2" onclick="previewTravellog()">
-                            <i class="bi bi-eye me-2"></i>미리보기
-                        </button>
-                       <!--  <button type="button" class="btn btn-secondary w-100 mb-2" onclick="saveDraft()">
-                            <i class="bi bi-file-earmark me-2"></i>임시저장
-                        </button> -->
-                    </div>
-                </div>
-            </div>
-        </div>
+				<!-- 미리보기 및 저장 -->
+				<div class="settings-actions">
+					<button type="button" class="btn btn-outline w-100 mb-2"
+						onclick="previewTravellog()">
+						<i class="bi bi-eye me-2"></i>미리보기
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
 </div>
 
 <!-- 일정 선택 모달 -->
 <div class="modal fade" id="scheduleModal" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-calendar-check me-2"></i>내 일정 불러오기</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <!-- 필터 탭 -->
-                <div class="schedule-modal-tabs">
-				  <button class="schedule-modal-tab active" data-filter="all" onclick="filterScheduleModal('all')">전체</button>
-				  <button class="schedule-modal-tab" data-filter="completed" onclick="filterScheduleModal('completed')">완료된 여행</button>
-				  <button class="schedule-modal-tab" data-filter="ongoing" onclick="filterScheduleModal('ongoing')">진행중</button>
-				  <button class="schedule-modal-tab" data-filter="upcoming" onclick="filterScheduleModal('upcoming')">예정된 여행</button>
+	<div
+		class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">
+					<i class="bi bi-calendar-check me-2"></i>내 일정 불러오기
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<div class="modal-body">
+				<!-- 필터 탭 -->
+				<div class="schedule-modal-tabs">
+					<button class="schedule-modal-tab active" data-filter="all"
+						onclick="filterScheduleModal('all')">전체</button>
+					<button class="schedule-modal-tab" data-filter="completed"
+						onclick="filterScheduleModal('completed')">완료된 여행</button>
+					<button class="schedule-modal-tab" data-filter="ongoing"
+						onclick="filterScheduleModal('ongoing')">진행중</button>
+					<button class="schedule-modal-tab" data-filter="upcoming"
+						onclick="filterScheduleModal('upcoming')">예정된 여행</button>
 				</div>
 
-                <!-- 일정 목록 -->
+				<!-- 일정 목록 -->
 				<div class="schedule-modal-list" id="scheduleModalList">
 
 					<c:choose>
@@ -302,32 +366,33 @@
 
 						<c:otherwise>
 							<c:forEach var="s" items="${scheduleList}">
-								<%-- 상태: schdlStatus가 완료/예정 값이 뭐로 오는지 몰라서 일단 D-Day로 판단 --%>
+
 								<c:set var="dday" value="${s.DDay}" />
 								<c:set var="dur" value="${s.tripDuration}" />
-								<c:set var="endDiff" value="${dday + dur}" />  <%-- ✅ 종료일까지 남은 일수 --%>
-								
-								<c:set var="status" value="${dday gt 0 ? 'upcoming' : (endDiff lt 0 ? 'completed' : 'ongoing')}" />
-								
+								<c:set var="endDiff" value="${dday + dur}" />
+
+								<c:set var="status"
+									value="${dday gt 0 ? 'upcoming' : (endDiff lt 0 ? 'completed' : 'ongoing')}" />
+
 								<c:set var="scheduleThumb">
-								  <c:choose>
-								    <c:when test="${not empty s.attachFile and not empty s.attachFile.filePath}">
+									<c:choose>
+										<c:when
+											test="${not empty s.attachFile and not empty s.attachFile.filePath}">
 								      ${pageContext.request.contextPath}/file/searchthumbnail?path=${s.attachFile.filePath}
 								    </c:when>
-								    <c:when test="${not empty s.linkThumbnail}">
+										<c:when test="${not empty s.linkThumbnail}">
 								      ${s.linkThumbnail}
 								    </c:when>
-								    <c:when test="${not empty s.thumbnail}">
+										<c:when test="${not empty s.thumbnail}">
 								      ${s.thumbnail}
 								    </c:when>
-								    <c:otherwise>
+										<c:otherwise>
 								      https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=120&h=90&fit=crop&q=80
 								    </c:otherwise>
-								  </c:choose>
+									</c:choose>
 								</c:set>
-								
-								<div class="schedule-modal-item" 
-									data-status="${status}"
+
+								<div class="schedule-modal-item" data-status="${status}"
 									data-schedule-no="${s.schdlNo}"
 									data-title="${fn:escapeXml(s.schdlNm)}"
 									data-start="${s.schdlStartDt}" data-end="${s.schdlEndDt}"
@@ -337,43 +402,42 @@
 									data-location-code="${s.rgnNo}"
 									data-cover="${fn:escapeXml(scheduleThumb)}"
 									data-attach-no="${s.attachNo}"
-									data-attach-path="${not empty s.attachFile ? fn:escapeXml(s.attachFile.filePath) : ''}"
-									>
-									
+									data-attach-path="${not empty s.attachFile ? fn:escapeXml(s.attachFile.filePath) : ''}">
+
 
 									<div class="schedule-modal-image">
 										<c:choose>
-										  <%-- 1순위: 일정 첨부파일 썸네일 --%>
-										  <c:when test="${not empty s.attachFile and not empty s.attachFile.filePath}">
-										    <img src="${pageContext.request.contextPath}/file/searchthumbnail?path=${s.attachFile.filePath}"
-										         alt="${fn:escapeXml(s.schdlNm)}">
-										  </c:when>
 										
-										  <%-- 2순위: linkThumbnail --%>
-										  <c:when test="${not empty s.linkThumbnail}">
-										    <img src="${s.linkThumbnail}"
-										         alt="${fn:escapeXml(s.schdlNm)}">
-										  </c:when>
-										
-										  <%-- 3순위: 기본 이미지 --%>
-										  <c:otherwise>
-										    <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=120&h=90&fit=crop&q=80"
-										         alt="일정">
-										  </c:otherwise>
+											<c:when
+												test="${not empty s.attachFile and not empty s.attachFile.filePath}">
+												<img
+													src="${pageContext.request.contextPath}/file/searchthumbnail?path=${s.attachFile.filePath}"
+													alt="${fn:escapeXml(s.schdlNm)}">
+											</c:when>
+
+											<c:when test="${not empty s.linkThumbnail}">
+												<img src="${s.linkThumbnail}"
+													alt="${fn:escapeXml(s.schdlNm)}">
+											</c:when>
+
+											<c:otherwise>
+												<img
+													src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=120&h=90&fit=crop&q=80"
+													alt="일정">
+											</c:otherwise>
 										</c:choose>
 
 
-										<span class="schedule-modal-badge ${status}">
-										  <c:choose>
-										    <c:when test="${status eq 'completed'}">완료</c:when>
-										    <c:when test="${status eq 'ongoing'}">진행중</c:when>
-										    <c:otherwise>
-										      <c:choose>
-										        <c:when test="${dday eq 0}">D-DAY</c:when>
-										        <c:otherwise>D-${dday}</c:otherwise>
-										      </c:choose>
-										    </c:otherwise>
-										  </c:choose>
+										<span class="schedule-modal-badge ${status}"> <c:choose>
+												<c:when test="${status eq 'completed'}">완료</c:when>
+												<c:when test="${status eq 'ongoing'}">진행중</c:when>
+												<c:otherwise>
+													<c:choose>
+														<c:when test="${dday eq 0}">D-DAY</c:when>
+														<c:otherwise>D-${dday}</c:otherwise>
+													</c:choose>
+												</c:otherwise>
+											</c:choose>
 										</span>
 									</div>
 
@@ -423,67 +487,64 @@
 				</div>
 
 			</div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">취소</button>
-                <%-- <a href="${pageContext.request.contextPath}/schedule/search" class="btn btn-secondary">
-                    <i class="bi bi-plus-lg me-1"></i>새 일정 만들기
-                </a> --%>
-            </div>
-        </div>
-    </div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline"
+					data-bs-dismiss="modal">취소</button>
+			</div>
+		</div>
+	</div>
 </div>
 
 <!-- 장소 추가 모달 -->
 <div class="modal fade" id="placeBlockModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-geo-alt me-2"></i>장소 추가</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="search-input-wrapper mb-3">
-                    <i class="bi bi-search"></i>
-                    <input type="text" id="placeSearchInput" placeholder="장소 이름 검색" onkeyup="searchPlaceForBlock(event)">
-                </div>
-                <div class="place-search-results" id="placeSearchResults">
-                    
-                    
-                    
-                    
-                </div>
-            </div>
-        </div>
-    </div>
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">
+					<i class="bi bi-geo-alt me-2"></i>장소 추가
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<div class="modal-body">
+				<div class="search-input-wrapper mb-3">
+					<i class="bi bi-search"></i> <input type="text"
+						id="placeSearchInput" placeholder="장소 이름 검색"
+						onkeyup="searchPlaceForBlock(event)">
+				</div>
+				<div class="place-search-results" id="placeSearchResults"></div>
+			</div>
+		</div>
+	</div>
 </div>
 
 <!-- 미리보기 모달 -->
 <div class="modal fade" id="previewModal" tabindex="-1">
-    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="bi bi-eye me-2"></i>미리보기</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-0">
-                <div class="preview-container" id="previewContainer">
-                    <!-- 미리보기 내용이 여기에 렌더링됩니다 -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" data-bs-dismiss="modal">닫기</button>
-               <!--  <button type="button" class="btn btn-primary" onclick="submitTravellog()">
-                    <i class="bi bi-send me-1"></i>공유하기
-                </button> -->
-            </div>
-        </div>
-    </div>
+	<div
+		class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">
+					<i class="bi bi-eye me-2"></i>미리보기
+				</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+			</div>
+			<div class="modal-body p-0">
+				<div class="preview-container" id="previewContainer">
+					<!-- 미리보기 내용이 여기에 렌더링됩니다 -->
+				</div>
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-outline"
+					data-bs-dismiss="modal">닫기</button>
+			</div>
+		</div>
+	</div>
 </div>
-<iframe id="scheduleLoader" style="display:none;"></iframe>
+<iframe id="scheduleLoader" style="display: none;"></iframe>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-let travelStartDate = null; // Date 객체
-let travelEndDate = null;   // Date 객체
+let travelStartDate = null; 
+let travelEndDate = null;   
 
 
 window.__CTX__ = '${pageContext.request.contextPath}';
@@ -503,17 +564,17 @@ let __locJustOpened = false;
 
 const __CTX = window.__CTX__ || '';
 const __URL_PARAMS = new URLSearchParams(location.search);
-const __RCD_NO__ = __URL_PARAMS.get('rcdNo'); // ✅ 수정 모드면 값 있음
+const __RCD_NO__ = __URL_PARAMS.get('rcdNo'); // 수정 모드면 값 있음
 
 let isEditMode = !!__RCD_NO__;
 let editingRcdNo = isEditMode ? Number(__RCD_NO__) : null;
 
-// ✅ 수정 모드에서 기존 커버/이미지 유지용
+// 수정 모드에서 기존 커버/이미지 유지용
 let existingCoverAttachNo = null;
 
 
 function applyScheduleToEditor(schedule) {
-	  // ✅ 배열이 아니면 빈 배열로 강제
+	  // 배열이 아니면 빈 배열로 강제
 	  const detailsRaw = schedule && schedule.tripScheduleDetailsList;
 	  const details = Array.isArray(detailsRaw) ? detailsRaw.filter(Boolean) : [];
 
@@ -536,7 +597,7 @@ function applyScheduleToEditor(schedule) {
 	    const places = Array.isArray(placesRaw) ? placesRaw.filter(Boolean) : [];
 
 	    places.forEach(p => {
-	      const info = extractPlaceInfo(p);   // ✅ 이제 null-safe
+	      const info = extractPlaceInfo(p);   
 	      addPlaceBlockFromSchedule(info);
 	    });
 	  });
@@ -560,7 +621,7 @@ function resetEditorKeepFirstTextBlock() {
 	  if (ta) ta.value = '';
 }
 
-//✅ 전역 현재 일자 컨텍스트
+// 전역 현재 일자 컨텍스트
 let __CURRENT_DAY_NO__ = null;
 let __CURRENT_DAY_DATE__ = null;
 
@@ -575,31 +636,33 @@ function addDayHeaderBlock(dayNo, dateStr) {
 	  
 	  block.dataset.fromSchedule = "1";
 	  
-	  // ✅ day/date를 dataset으로 저장
+	  // day/date를 dataset으로 저장
 	  block.dataset.dayNo = String(dayNo ?? '');
 	  block.dataset.dateStr = String(dateStr ?? '');
 
-	  // ✅ 현재 컨텍스트 갱신
+	  // 현재 컨텍스트 갱신
 	  __CURRENT_DAY_NO__ = dayNo ?? null;
 	  __CURRENT_DAY_DATE__ = dateStr ?? null;
 
 	  block.innerHTML =
-	    '<div class="block-actions">' +
-	      '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
-	      '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + currentId + ')"><i class="bi bi-chevron-down"></i></button>' +
-	      '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + currentId + ')"><i class="bi bi-trash"></i></button>' +
-	    '</div>' +
-	    '<div class="day-header">' +
-	      '<span class="day-badge">DAY ' + dayNo + '</span>' +
-	      ' ' +
-	      '<span class="day-date">' + (dateStr || '') + '</span>' +
-	    '</div>';
+		  '<div class="block-actions">' +
+		    '<button type="button" class="block-action-btn" onclick="moveBlockUp(' + currentId + ')"><i class="bi bi-chevron-up"></i></button>' +
+		    '<button type="button" class="block-action-btn" onclick="moveBlockDown(' + currentId + ')"><i class="bi bi-chevron-down"></i></button>' +
+		    '<button type="button" class="block-action-btn delete" onclick="deleteBlock(' + currentId + ')"><i class="bi bi-trash"></i></button>' +
+		  '</div>' +
+		  '<div class="day-header">' +
+		    '<span class="day-badge">' +
+		      '<span class="day-dot">DAY ' + dayNo + '</span>' +
+		      '<span class="day-date">' + (dateStr || '') + '</span>' +
+		    '</span>' +
+		  '</div>';
+
 
 	  editor.appendChild(block);
 }
 
 function extractPlaceInfo(placeVO) {
-	  placeVO = placeVO || {};               // ✅ null-safe
+	  placeVO = placeVO || {};               
 	  const tp = (placeVO.tourPlace || {});
 
 	  const plcNo = tp.plcNo || placeVO.placeId || placeVO.destId || null;
@@ -638,7 +701,7 @@ function addPlaceBlockFromSchedule(info) {
 	    block.dataset.plcNo = String(info.plcNo);
 	  }
 	  
-	//일자/날짜 + 장소정보를 dataset에 저장
+	 //일자/날짜 + 장소정보를 dataset에 저장
 	  block.dataset.day = (__CURRENT_DAY_NO__ != null ? String(__CURRENT_DAY_NO__) : '');
 	  block.dataset.date = (__CURRENT_DAY_DATE__ || '');
 
@@ -705,7 +768,7 @@ function resetLinkedScheduleUI() {
 	
 	  // 커버: 일정에서 자동 세팅한 경우만 제거
 	  if (coverImageData && coverImageData.fromSchedule) {
-	    removeCoverImage();   // 기존 함수 그대로 사용
+	    removeCoverImage();   
 	  }
 	
 	  // 위치 원복
@@ -743,7 +806,7 @@ function initEditModeUI() {
 	  const btn = document.getElementById('submitBtn');
 	  if (btn) {
 	    btn.textContent = '수정';
-	    btn.onclick = submitTravellog; // 그대로
+	    btn.onclick = submitTravellog; 
 	  }
 }
 
@@ -788,7 +851,7 @@ function toThumbUrlIfNeeded(pathOrUrl) {
 	  // 이미 searchthumbnail 형태면 그대로
 	  if (s.includes('/file/searchthumbnail?path=')) return s;
 
-	  // ✅ 404 나는 /travellog/cover/... 같은 URL이면 "path"로 간주해서 컨트롤러로 우회
+	  // 404 나는 /travellog/cover/... 같은 URL이면 "path"로 간주해서 컨트롤러로 우회
 	  //    (서버가 path 기반으로만 서빙한다는 전제)
 	  //    만약 d.coverPath가 진짜 filePath(/upload/...)라면 이것도 그대로 인코딩되어 들어감.
 	  return __CTX + '/file/searchthumbnail?path=' + encodeURIComponent(s);
@@ -834,7 +897,6 @@ function fillFormForEdit(d) {
 	  renderTags();
 
 	  // 일정 연결(있는 경우)
-	    // 일정 연결(있는 경우)
 	  if (d.schdlNo) {
 	    const schTitle = d.schdlNm || d.schdlName || d.scheduleTitle || '연결된 일정';
 	
@@ -850,22 +912,19 @@ function fillFormForEdit(d) {
 	    document.getElementById('linkedScheduleTitle').textContent = schTitle;
 	    document.getElementById('linkedScheduleLocation').textContent = selectedLocationName || '';
 	
-	    // ✅ 날짜는 YYYY-MM-DD로 정리해서 표시
+	    // 날짜는 YYYY-MM-DD로 정리해서 표시
 	    const sYmd = toYmdString(d.startDt);
 	    const eYmd = toYmdString(d.endDt);
 	
 	    document.getElementById('linkedScheduleDates').textContent =
-	      (sYmd && eYmd) ? (sYmd + ' - ' + eYmd) : '';
-	
-	    // (선택) dateValue도 같이 통일하고 싶으면:
-	    // if (sYmd && eYmd) document.getElementById('dateValue').textContent = sYmd + ' ~ ' + eYmd;
+	      (sYmd && eYmd) ? (sYmd + ' - ' + eYmd) : '';	
 	  }
 
 
 	  // 커버 (중요: 기존 커버는 “파일 업로드 없이도 유지”해야 함)
 	  existingCoverAttachNo = d.attachNo || null;
 
-	  // ✅ coverPath가 오면, 무조건 접근 가능한 URL로 변환해서 src에 넣기
+	  // coverPath가 오면, 무조건 접근 가능한 URL로 변환해서 src에 넣기
 	  if (d.coverPath) {
 	    const coverUrl = toThumbUrlIfNeeded(d.coverPath);
 	    document.getElementById('coverImg').src = coverUrl;
@@ -885,7 +944,7 @@ function fillFormForEdit(d) {
 	  // 에디터 초기화(첫 블록 포함 싹 지우고 재구성)
 	  const editor = document.getElementById('blogEditor');
 	  editor.innerHTML = '';
-	  bodyImageFiles = []; // ✅ 수정에서 새로 추가하는 파일만 여기 들어가야 함
+	  bodyImageFiles = []; // 수정에서 새로 추가하는 파일만 여기 들어가야 함
 
 	  blocks.forEach(b => {
 	    const type = (b.blockType || b.type || '').toString().toUpperCase();
@@ -938,7 +997,7 @@ function fillFormForEdit(d) {
 	    } catch (e) {}
 	  }
 
-	  // 2) "DAY 1 2024-01-01" 같은 문자열로 저장된 경우(너 현재 collectBlocksForSave가 이렇게 저장했었음)
+	  // 2) "DAY 1 2024-01-01" 같은 문자열로 저장된 경우
 	  const m = t.match(/^DAY\s*([0-9]+)\s*(.*)$/i);
 	  if (m) return { dayNo: m[1], dateStr: (m[2] || '').trim() };
 
@@ -958,13 +1017,13 @@ function fillFormForEdit(d) {
 		    b.attchNo,
 		    b.attach_no,
 		    b.ATTACH_NO,
-		    b.targetPk,     // 어떤 구현은 TARGET_PK에 attachNo를 넣기도 함
+		    b.targetPk,     // TARGET_PK에 attachNo를 넣기도 함
 		    b.targetNo,
 		    b.fileNo
 		  ];
 
 		  for (const v of candidates) {
-		    if (v === 0) return 0; // 혹시 0을 유효값으로 쓰는 구조면 살림(보통은 아니지만 방어)
+		    if (v === 0) return 0; // 혹시 0을 유효값으로 쓰는 구조면 살림(방어)
 		    if (v != null && String(v).trim() !== '') return Number(v);
 		  }
 		  return null;
@@ -972,7 +1031,6 @@ function fillFormForEdit(d) {
 
 		function pickExistingImagePath(b) {
 		  if (!b) return '';
-		  // 서버가 내려주는 이미지 경로 키 후보
 		  return (
 		    b.imgPath ||
 		    b.imageUrl ||
@@ -997,13 +1055,13 @@ function fillFormForEdit(d) {
 		  block.className = 'editor-block image-block';
 		  block.dataset.blockId = currentId;
 
-		  // ✅✅ 핵심: 기존 이미지 유지용 attachNo를 dataset에 반드시 박는다
+		  // 핵심: 기존 이미지 유지용 attachNo를 dataset에 반드시 넣는다
 		  const existingAttachNo = pickExistingAttachNo(b);
 		  if (existingAttachNo != null) {
 		    block.dataset.attachNo = String(existingAttachNo);
 		  }
 
-		  // ✅ 기존 블록은 새 업로드가 아니므로 fileIdx는 절대 넣지 않는다 (혹시 남아있으면 제거)
+		  // 기존 블록은 새 업로드가 아니므로 fileIdx는 절대 넣지 않는다 (혹시 남아있으면 제거)
 		  delete block.dataset.fileIdx;
 
 		  block.innerHTML =
@@ -1019,13 +1077,6 @@ function fillFormForEdit(d) {
 
 		  editor.appendChild(block);
 
-		  // 🔎 디버그: 기존 이미지 블록이 attachNo를 제대로 갖는지 확인
-		  console.log('[edit:image] restored', {
-		    blockId: currentId,
-		    attachNo: block.dataset.attachNo,
-		    rawPath,
-		    imgUrl
-		  });
 		}
 
 
@@ -1062,9 +1113,6 @@ function fillFormForEdit(d) {
 // 모달 인스턴스
 let scheduleModal, placeBlockModal, previewModal;
 
-// 컨텍스트 경로
-// const contextPath = '${pageContext.request.contextPath}';
-
 document.addEventListener('DOMContentLoaded', function() {
     // 모달 초기화
     scheduleModal = new bootstrap.Modal(document.getElementById('scheduleModal'));
@@ -1075,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.getElementById('travelDateRange');
 	if (dateInput && typeof flatpickr !== 'undefined') {
 	
-	  // ✅ 이미 다른 곳에서 flatpickr가 붙어있다면 제거
+	  // 이미 다른 곳에서 flatpickr가 붙어있다면 제거
 	  if (dateInput._flatpickr) {
 	    dateInput._flatpickr.destroy();
 	  }
@@ -1086,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', function() {
 	    mode: 'range',
 	    allowInput: true,
 	
-	    // ✅ 혹시 다른 곳에서 min/max 걸려도 여기서 "해제" 강제
+	    // 혹시 다른 곳에서 min/max 걸려도 여기서 "해제" 강제
 	    minDate: null,
 	    maxDate: null,
 	
@@ -1105,8 +1153,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     const scheduleId = urlParams.get('schedule');
     if (scheduleId) {
-        // TODO: 서버에서 일정 정보를 가져와서 자동 연결
-        console.log('Schedule ID from URL:', scheduleId);
+        // 서버에서 일정 정보를 가져와서 자동 연결
     }
     
     // ⭐ 여기로 위치 자동완성 init을 넣기
@@ -1135,44 +1182,40 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 		function initLocationAutocomplete() {
-			  console.log('[loc] init');
 
 			  const input = document.getElementById('locationInput');
 			  const box = document.getElementById('locationSuggestions');
 			  if (!input || !box) {
-			    console.log('[loc] init failed: input/box not found');
 			    return;
 			  }
 
-			  // ✅ input 기준으로 중복 바인딩 방지
+			  // input 기준으로 중복 바인딩 방지
 			  if (input.dataset.locBound === '1') {
-			    console.log('[loc] already bound (input)');
 			    return;
 			  }
 			  input.dataset.locBound = '1';
 
 			  function handleQuery() {
 			    const q = (input.value || '').trim();
-			    console.log('[loc] input=', q);
 			    debounceFetchRegions(q);
 			  }
 
-			  // ✅ focus: 열기
+			  // focus: 열기
 			  input.addEventListener('focus', function () {
 			    openLocationSuggestions();
 			  }, true);
 
-			  // ✅ 실제 타이핑: input에 직접 바인딩(가장 확실)
+			  // 실제 타이핑: input에 직접 바인딩
 			  input.addEventListener('input', function () {
 			    handleQuery();
 			  }, true);
 
-			  // ✅ 한글 IME 조합 끝
+			  // 한글 IME 조합 끝
 			  input.addEventListener('compositionend', function () {
 			    handleQuery();
 			  }, true);
 
-			  // ✅ 혹시 input 이벤트가 이상하면 keyup로 보강
+			  // 혹시 input 이벤트가 이상하면 keyup로 보강
 			  input.addEventListener('keyup', function (e) {
 			    const k = e.key;
 			    if (k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight' || k === 'Escape' || k === 'Enter') return;
@@ -1187,7 +1230,7 @@ document.addEventListener('DOMContentLoaded', function() {
 			    }
 			  }, true);
 
-			  // 바깥 클릭 닫기(이건 document가 편함)
+			  // 바깥 클릭 닫기
 			  document.addEventListener('click', function (e) {
 			    const inputArea = document.getElementById('locationInputArea');
 			    if (!inputArea) return;
@@ -1198,7 +1241,6 @@ document.addEventListener('DOMContentLoaded', function() {
 			    }
 			  }, true);
 
-			  console.log('[loc] bound OK (direct input listeners)');
 			}
 
 
@@ -1233,12 +1275,12 @@ function collectBlocksForSave() {
 			        caption: block.querySelector('.image-caption')?.value || ''
 			      };
 
-			      // ✅ 새 파일이면 fileIdx
+			      // 새 파일이면 fileIdx
 			      if (fileIdxRaw != null && fileIdxRaw !== '') {
 			        payload.fileIdx = Number(fileIdxRaw);
 			      }
 
-			      // ✅ 기존 이미지 유지면 attachNo
+			      // 기존 이미지 유지면 attachNo
 			      if (attachNoRaw != null && attachNoRaw !== '') {
 			        payload.attachNo = Number(attachNoRaw);
 			      }
@@ -1254,7 +1296,6 @@ function collectBlocksForSave() {
 			    }
 
 			    // DAY_HEADER (진짜 타입으로 보내자: day-header)
-			    // DAY_HEADER (진짜 타입으로 보내자: day-header)
 				if (block.classList.contains('day-header-block')) {
 				  const dayVal = block.dataset.dayNo || '';
 				  const dateVal = block.dataset.dateStr || '';
@@ -1262,7 +1303,7 @@ function collectBlocksForSave() {
 				  result.push({
 				    type: 'day-header',
 				    order,
-				    // ✅ 서버가 기대하는 키로 맞추기
+				    // 서버가 기대하는 키로 맞추기
 				    day: dayVal !== '' ? Number(dayVal) : null,
 				    date: dateVal || null
 				  });
@@ -1356,10 +1397,10 @@ function addImageBlocks(event) {
             return;
         }
 
-        // ✅ 여기 추가 (파일을 전역 배열에 보관)
+        // 여기 추가 (파일을 전역 배열에 보관)
         bodyImageFiles.push(file);
         
-        const fileIdx = bodyImageFiles.length - 1; // 플러스
+        const fileIdx = bodyImageFiles.length - 1; 
         
 
         const reader = new FileReader();
@@ -1371,7 +1412,7 @@ function addImageBlocks(event) {
             block.className = 'editor-block image-block';
             block.dataset.blockId = currentId;
             
-            block.dataset.fileIdx = fileIdx;	// 플러스
+            block.dataset.fileIdx = fileIdx;	
             
             block.innerHTML =
                 '<div class="block-actions">' +
@@ -1388,7 +1429,6 @@ function addImageBlocks(event) {
         reader.readAsDataURL(file);
     });
 
-    // ❗ 이건 유지해도 됨 (input 초기화)
     event.target.value = '';
 }
 
@@ -1416,7 +1456,6 @@ function addPlaceBlock() {
 }
 
 // 장소 블록을 에디터에 추가
-// ✅ 장소 블록을 에디터에 추가 (plcNo 포함 버전)
 function addPlaceToEditor(plcNo, name, address, imageUrl) {
   blockIdCounter++;
   const currentId = blockIdCounter;
@@ -1425,12 +1464,12 @@ function addPlaceToEditor(plcNo, name, address, imageUrl) {
   block.className = 'editor-block place-block';
   block.dataset.blockId = currentId;
 
-  // ✅ 저장용 plcNo 세팅 (가장 중요)
+  // 저장용 plcNo 세팅 
   if (plcNo != null && plcNo !== '') {
     block.dataset.plcNo = String(plcNo);
   }
 
-  // (선택) 수동 추가 장소는 day/date가 없으니 비워둬도 됨
+  // 수동 추가 장소는 day/date가 없으니 비워둬도 됨
   block.dataset.day = '';
   block.dataset.date = '';
 
@@ -1525,9 +1564,6 @@ function initStarRatingHover() {
         }
     });
 }
-
-// 초기화 시 호버 효과 등록
-
 
 // 블록 위로 이동
 function moveBlockUp(blockId) {
@@ -1626,14 +1662,14 @@ function selectScheduleFromList(schedule) {
 		if (titleInput && !titleInput.value.trim()) {
 		  titleInput.value = (schedule.title || '') + ' 여행기';
 		
-		  // ✅ "일정 연결로 자동 채움" 표시
+		  // "일정 연결로 자동 채움" 표시
 		  titleInput.dataset.autoFromSchedule = "1";
-		  titleInput.dataset.autoTitleValue = titleInput.value; // (선택) 참고용
+		  titleInput.dataset.autoTitleValue = titleInput.value; 
 		}
 
-		// 커버 자동(비어있을 때만) - ✅ attach 기반일 때만
+		// 커버 자동(비어있을 때만) - attach 기반일 때만
 		if (!coverImageData) {
-		  // 1) attachPath가 있으면 이걸로 썸네일 URL 만들기(가장 확실)
+		  // 1) attachPath가 있으면 이걸로 썸네일 URL 만들기
 		  if (schedule.coverAttachPath) {
 		    const coverUrl = window.__CTX__ + '/file/searchthumbnail?path=' + encodeURIComponent(schedule.coverAttachPath);
 
@@ -1719,19 +1755,11 @@ function toggleSettingInput(type) {
     }
 }
 
-// 위치 검색
-
-
-
-
 //====== 위치 자동완성(지역) ======
 let regionAbortController = null;
 let regionDebounceTimer = null;
 
-// DOMContentLoaded에서 이벤트를 "JS로" 묶어주면 JSP onfocus/oninput 없어도 됨.
-// 너는 이미 onfocus/oninput을 걸어놨으니, 아래 init만 추가해도 OK.
 async function openLocationSuggestions() {
-	  console.log('[loc] open');
 
 	  const input = document.getElementById('locationInput');
 	  if (!input) return;
@@ -1739,7 +1767,7 @@ async function openLocationSuggestions() {
 	  const v = (input.value || '').trim();
 	  const q = (v && v !== (selectedLocationName || '')) ? v : '';
 
-	  // ✅ 열릴 때(패널 열기 직후)만 한번 select
+	  // 열릴 때(패널 열기 직후)만 한번 select
 	  if (__locJustOpened) {
 	    __locJustOpened = false;
 	    input.select();
@@ -1760,7 +1788,6 @@ function onLocationInput(e) {
 	  if (!el) return;
 
 	  const q = (el.value || '').trim();
-	  console.log('[loc] input=', q);
 
 	  // 방향키/ESC/ENTER는 keyup에서 걸러주기(옵션)
 	  if (e && e.type === 'keyup') {
@@ -1775,17 +1802,14 @@ function onLocationInput(e) {
 // 실제 호출 + 렌더
 async function fetchAndRenderRegions(query) {
 	
-	console.log('[loc] base=', window.__CTX__);
 	const url = window.__CTX__ + '/api/regions?keyword=' + encodeURIComponent(query || '') + '&size=10';
-	console.log('[loc] url=', url);
 	
-	console.log('[loc] fetch query=', query);
-  const suggestions = document.getElementById('locationSuggestions');
-  if (!suggestions) return;
-//base는 ''(루트)일 수도 있으니 체크하지 않는다
-const base = (window.__CTX__ ?? '');
+  	const suggestions = document.getElementById('locationSuggestions');
+  	if (!suggestions) return;
+	//base는 ''(루트)일 수도 있으니 체크하지 않는다
+	const base = (window.__CTX__ ?? '');
 
-if (!suggestions) return;  
+	if (!suggestions) return;  
 
   suggestions.style.display = 'block';
 
@@ -1793,78 +1817,74 @@ if (!suggestions) return;
   if (regionAbortController) regionAbortController.abort();
   regionAbortController = new AbortController();
 
-  try {
-    const url = base + '/api/regions?keyword=' + encodeURIComponent(query || '') + '&size=10';
-
-    const res = await fetch(url, {
-      method: 'GET',
-      credentials: 'include',
-      signal: regionAbortController.signal
-    });
-    
-    console.log('[loc] res status=', res.status);
-
-    if (!res.ok) throw new Error('지역 검색 실패');
-
-    const list = await res.json();
-
-    console.log('[loc] list len=', Array.isArray(list)? list.length : 'not array', list);
-    
-    // 목록 비우고 시작
-    suggestions.innerHTML = '';
-
-    // 결과 없을 때
-    if (!Array.isArray(list) || list.length === 0) {
-      const msg = document.createElement('div');
-      msg.className = 'location-empty';
-
-      if (!query || query.length === 0) {
-        // 포커스 시 기본목록이 비는 경우: "없음" 대신 안내문만
-        msg.textContent = '지역을 입력하면 목록이 표시됩니다';
-      } else {
-        msg.textContent = '검색 결과가 없습니다';
-      }
-
-      suggestions.appendChild(msg);
-      suggestions.style.display = 'block';
-      return;
-    }
-
-    // 결과 렌더: innerHTML 문자열로 만들지 말고 DOM으로 만들기(안전/EL 충돌 없음)
-    for (let i = 0; i < list.length; i++) {
-      const r = list[i] || {};
-      const nm = (r.rgnNm || '').toString();
-      const sub = (r.rgnDetail || '').toString();
-      const no = (r.rgnNo == null ? '' : String(r.rgnNo));
-
-      const item = document.createElement('div');
-      item.className = 'location-item';
-      item.setAttribute('data-no', no);
-
-      const icon = document.createElement('i');
-      icon.className = 'bi bi-geo-alt';
-
-      const span = document.createElement('span');
-      span.textContent = nm;
-
-      if (sub && sub.length > 0) {
-        const small = document.createElement('small');
-        small.style.opacity = '0.7';
-        small.textContent = ' (' + sub + ')';
-        span.appendChild(small);
-      }
-
-      item.appendChild(icon);
-      item.appendChild(span);
-
-      item.addEventListener('click', function () {
-        selectRegionItem(no, nm);
-      });
-
-      suggestions.appendChild(item);
-    }
-
-    suggestions.style.display = 'block';
+  	try {
+	    const url = base + '/api/regions?keyword=' + encodeURIComponent(query || '') + '&size=10';
+	
+	    const res = await fetch(url, {
+	      method: 'GET',
+	      credentials: 'include',
+	      signal: regionAbortController.signal
+	    });
+	    
+	    if (!res.ok) throw new Error('지역 검색 실패');
+	
+	    const list = await res.json();
+	
+	    // 목록 비우고 시작
+	    suggestions.innerHTML = '';
+	
+	    // 결과 없을 때
+	    if (!Array.isArray(list) || list.length === 0) {
+	      const msg = document.createElement('div');
+	      msg.className = 'location-empty';
+	
+	      if (!query || query.length === 0) {
+	        // 포커스 시 기본목록이 비는 경우: "없음" 대신 안내문만
+	        msg.textContent = '지역을 입력하면 목록이 표시됩니다';
+	      } else {
+	        msg.textContent = '검색 결과가 없습니다';
+	      }
+	
+	      suggestions.appendChild(msg);
+	      suggestions.style.display = 'block';
+	      return;
+	    }
+	
+	    // 결과 렌더: innerHTML 문자열로 만들지 말고 DOM으로 만들기(안전/EL 충돌 없음)
+	    for (let i = 0; i < list.length; i++) {
+	      const r = list[i] || {};
+	      const nm = (r.rgnNm || '').toString();
+	      const sub = (r.rgnDetail || '').toString();
+	      const no = (r.rgnNo == null ? '' : String(r.rgnNo));
+	
+	      const item = document.createElement('div');
+	      item.className = 'location-item';
+	      item.setAttribute('data-no', no);
+	
+	      const icon = document.createElement('i');
+	      icon.className = 'bi bi-geo-alt';
+	
+	      const span = document.createElement('span');
+	      span.textContent = nm;
+	
+	      if (sub && sub.length > 0) {
+	        const small = document.createElement('small');
+	        small.style.opacity = '0.7';
+	        small.textContent = ' (' + sub + ')';
+	        span.appendChild(small);
+	      }
+	
+	      item.appendChild(icon);
+	      item.appendChild(span);
+	
+	      item.addEventListener('click', function () {
+	        selectRegionItem(no, nm);
+	      });
+	
+	      suggestions.appendChild(item);
+	    }
+	
+	    suggestions.style.display = 'block';
 
   } catch (e) {
     // abort는 정상 흐름
@@ -1974,7 +1994,7 @@ async function fetchAndRenderPlaces(keyword) {
   const base = (window.__CTX__ ?? '');
   const q = (keyword || '').trim();
 
-  // (추천) 지역 선택했으면 rgnNo 같이 보내기
+  // 지역 선택했으면 rgnNo 같이 보내기
   const rgnNo = (selectedLocationCode || '').trim();
 
   const url =
@@ -2038,13 +2058,13 @@ async function fetchAndRenderPlaces(keyword) {
   }
 }
 
-// ✅ 기존 searchPlaceForBlock을 서버 검색으로 교체
+// 기존 searchPlaceForBlock을 서버 검색으로 교체
 function searchPlaceForBlock(event) {
   const q = (event.target.value || '').trim();
   debouncePlaceSearch(q);
 }
 
-// ✅ 모달 열릴 때도 기본 로딩(지역 선택되어 있으면 그 지역 인기/전체)
+// 모달 열릴 때도 기본 로딩(지역 선택되어 있으면 그 지역 인기/전체)
 function addPlaceBlock() {
   placeBlockModal.show();
   const input = document.getElementById('placeSearchInput');
@@ -2102,13 +2122,14 @@ function previewTravellog() {
         } else if (block.classList.contains('divider-block')) {
             contentHtml += '<hr class="preview-divider">';
         } else if (block.classList.contains('day-header-block')) {
-            const dayBadge = block.querySelector('.day-badge').textContent;
-            const dayDate = block.querySelector('.day-date').textContent;
-            contentHtml += '<div class="preview-day-header">' +
-                '<span class="preview-day-badge">' + dayBadge + '</span>' +
-                '<span class="preview-day-date">' + dayDate + '</span>' +
-            '</div>';
-        } else if (block.classList.contains('place-block')) {
+        	  const dayDot = block.querySelector('.day-dot')?.textContent || '';
+        	  const dayDate = block.querySelector('.day-date')?.textContent || '';
+
+        	  contentHtml += '<div class="preview-day-header">' +
+        	      '<span class="preview-day-badge">' + dayDot + '</span>' +
+        	      '<span class="preview-day-date">' + dayDate + '</span>' +
+        	    '</div>';
+        	} else if (block.classList.contains('place-block')) {
             const placeImg = block.querySelector('.place-block-content img').src;
             const placeName = block.querySelector('.place-block-info h4').textContent;
             const placeAddress = block.querySelector('.place-block-info p').textContent;
@@ -2183,9 +2204,6 @@ function collectFormData() {
     };
 }
 
-// 플러스
-
-
 
 // 뒤로가기
 function goBack() {
@@ -2223,7 +2241,7 @@ function goBack() {
 
 
 function getMainStoryText() {
-	  // ✅ "여행 이야기를 작성하세요..."가 들어있는 첫 text-block textarea만 사용
+	  // "여행 이야기를 작성하세요..."가 들어있는 첫 text-block textarea만 사용
 	  const firstTextArea = document.querySelector('#blogEditor .text-block textarea');
 	  return firstTextArea ? firstTextArea.value.trim() : '';
 	}
@@ -2264,13 +2282,13 @@ function submitTravellog() {
     travelEndDate = fp.selectedDates[1];
   }
 
-  // ✅ Date 객체만 허용
+  // Date 객체만 허용
   if (!isValidDate(travelStartDate) || !isValidDate(travelEndDate)) {
     showToast('여행 기간을 선택해주세요.', 'error');
     return;
   }
 
-  // ✅ 제목(이미 있던 필수)
+  // 제목(이미 있던 필수)
   const titleEl = document.getElementById('blogTitle');
   const title = titleEl.value.trim();
   if (!title) {
@@ -2279,14 +2297,14 @@ function submitTravellog() {
     return;
   }
 
-  // ✅ 커버 이미지 필수
+  // 커버 이미지 필수
   // 1) 직접 업로드한 파일이 있는지
   const coverInput = document.getElementById('coverImageInput');
   const hasCoverFile = coverInput?.files?.length > 0;
 
   // 2) 일정에서 자동 세팅된 coverImageData(이미지 URL)도 인정할지 여부
   //    -> "진짜 업로드만 허용"이면 hasCoverFile만 체크하면 됨
-// ✅ 일정에서 자동세팅된 건 'attachPath or attachNo'가 있을 때만 인정
+// 일정에서 자동세팅된 건 'attachPath or attachNo'가 있을 때만 인정
 const hasAutoCover = !!(
   coverImageData &&
   (
@@ -2297,7 +2315,7 @@ const hasAutoCover = !!(
   )
 );
 
-//✅ 일정에서 자동세팅된 커버인지(attachPath/attachNo 있을 때)
+//일정에서 자동세팅된 커버인지(attachPath/attachNo 있을 때)
 const hasScheduleCover = !!(
   coverImageData &&
   coverImageData.fromSchedule &&
@@ -2317,7 +2335,7 @@ if (!hasCoverFile && !hasAutoCover) {
 	  return;
 	}
 
-  // ✅ 본문(원하면 유지)
+  // 본문
   const mainContent = getMainStoryText();
   if (!mainContent) {
     showToast('여행 이야기를 입력해주세요.', 'error');
@@ -2333,35 +2351,31 @@ if (!hasCoverFile && !hasAutoCover) {
 	  const base = window.__CTX__;
 	  
 	  const req = {
-		schdlNo: linkedSchedule ? linkedSchedule.schdlNo : null,                 // ✅ 일정 연결 지금 안함
-	    rcdTitle: title,               // ✅ RCD_TITLE
-	    rcdContent: mainContent,       // ✅ RCD_CONTENT (첫 텍스트만)
+		schdlNo: linkedSchedule ? linkedSchedule.schdlNo : null,                 
+	    rcdTitle: title,               
+	    rcdContent: mainContent,      
 	    tripDaysCd: null,
-	    locCd: selectedLocationCode, // ✅ REGION.RGN_NO를 문자열로 저장
+	    locCd: selectedLocationCode, 
 	    
-	    // ✅ 날짜는 YYYY-MM-DD 문자열로 보내기 (서버에서 DATE로 변환/매핑)
+	    // 날짜는 YYYY-MM-DD 문자열로 보내기 (서버에서 DATE로 변환/매핑)
 	    startDt: formatDateToYMD(travelStartDate),
 	    endDt: formatDateToYMD(travelEndDate),
 
-	    openScopeCd: document.getElementById('visibility').value === 'public' ? 'PUBLIC' : 'PRIVATE', // ✅ OPEN_SCOPE_CD
-	    mapDispYn: document.getElementById('showOnMap').checked ? 'Y' : 'N',      // ✅ MAP_DISP_YN
-	    replyEnblYn: document.getElementById('allowComments').checked ? 'Y' : 'N', // ✅ REPLY_ENBL_YN
-	    // attachNo는 ✅ 서버가 coverFile 저장 후 생성해서 TRIP_RECORD.ATTACH_NO에 넣는 구조 권장
+	    openScopeCd: document.getElementById('visibility').value === 'public' ? 'PUBLIC' : 'PRIVATE', 
+	    mapDispYn: document.getElementById('showOnMap').checked ? 'Y' : 'N',     
+	    replyEnblYn: document.getElementById('allowComments').checked ? 'Y' : 'N', 
+	    // attachNo는 서버가 coverFile 저장 후 생성해서 TRIP_RECORD.ATTACH_NO에 넣는 구조 권장
 	    
 	    tags: tags,
 	    
 	    coverAttachNo: (!hasCoverFile && hasScheduleCover && coverImageData.attachNo) ? Number(coverImageData.attachNo) : null
 	  };
 
-	  console.log('REQ JSON =>', req);
-	  
 	  const formData = new FormData();
 	  
-	  // 플러스
-	  // blocks JSON 추가
 	  const blocks = collectBlocksForSave();
 	  
-	  // ✅ 디버그/검증: 기존 이미지인데 attachNo가 없는 블록이 있으면 바로 알림
+	  // 디버그/검증: 기존 이미지인데 attachNo가 없는 블록이 있으면 바로 알림
 	  blocks.forEach((b, i) => {
 	    if (b.type === 'image') {
 	      const hasNew = (b.fileIdx != null);
@@ -2393,7 +2407,7 @@ if (!hasCoverFile && !hasAutoCover) {
 	    formData.append("coverFile", coverFileInput.files[0]);
 	  }
 
-	  // ✅ 수정모드면 기존 커버 attachNo 유지(파일 업로드 안 할 때)
+	  // 수정모드면 기존 커버 attachNo 유지(파일 업로드 안 할 때)
 	  if (isEditMode && !hasCoverFile && existingCoverAttachNo) {
 	    req.attachNo = Number(existingCoverAttachNo);
 	  }
@@ -2450,7 +2464,7 @@ function initTravelDatePickerForce() {
 	    mode: 'range',
 	    allowInput: true,
 
-	    // ✅ 과거/미래 모두 허용
+	    // 과거/미래 모두 허용
 	    minDate: null,
 	    maxDate: null,
 	    disable: [],
@@ -2490,7 +2504,7 @@ async function loadScheduleFull(schdlNo) {
 	    } catch (e) {
 	      console.error('[schedule apply error]', e);
 
-	      // ✅ 에러 메시지 노출(원인 즉시 파악)
+	      // 에러 메시지 노출
 	      const msg = (e && (e.message || e.toString())) ? (e.message || e.toString()) : 'unknown error';
 	      showToast('일정 적용 오류: ' + msg, 'error');
 	    } finally {
@@ -2501,8 +2515,6 @@ async function loadScheduleFull(schdlNo) {
 	  frame.src = url;
 	}
 
-
-
 </script>
 
-<%@ include file="../common/footer.jsp" %>
+<%@ include file="../common/footer.jsp"%>

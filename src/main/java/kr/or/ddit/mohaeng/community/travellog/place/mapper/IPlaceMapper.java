@@ -9,5 +9,5 @@ import kr.or.ddit.mohaeng.community.travellog.place.dto.PlaceSearchRes;
 
 @Mapper
 public interface IPlaceMapper {
-    List<PlaceSearchRes> selectPlaces(Map<String, Object> param);
+	List<PlaceSearchRes> selectPlaces(Map<String, Object> param);
 }

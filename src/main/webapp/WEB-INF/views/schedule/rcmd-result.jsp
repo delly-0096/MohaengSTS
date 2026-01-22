@@ -512,7 +512,7 @@ function regenerateDay(day) {
 
 function saveSchedule() {
     // 로그인 체크
-    const isLoggedIn = ${not empty sessionScope.loginUser};
+    const isLoggedIn = ${not empty sessionScope.loginMember};
 
     if (!isLoggedIn) {
         sessionStorage.setItem('returnUrl', window.location.href);
@@ -593,9 +593,9 @@ function initDurationData() {
     	let dDateDay = durDate.getDate();
 
         let dDay = i + 1;
-
+        console.log(aiRcmdData[i].schdlNm);
         dayData[dDay] = {
-            theme: '',
+            theme: aiRcmdData[i].schdlNm || '',
             date: ''
         };
         
@@ -613,7 +613,7 @@ function initDurationData() {
         $("main .schedule-main").append(`
             <div class="schedule-day" id="day\${i + 1}" data-day="\${i + 1}" style="display: \${i === 0 ? 'block' : 'none'};">
                 <div class="schedule-day-header">
-                    <h2 class="schedule-day-title">\${i + 1}일차 - 일정 제목</h2>
+                    <h2 class="schedule-day-title">\${i + 1}일차 - \${aiRcmdData[i].schdlNm}</h2>
                     <div class="schedule-day-actions">
                         <button class="btn btn-outline btn-sm" onclick="regenerateDay(\${i + 1})">
                             <i class="bi bi-arrow-clockwise me-1"></i>다시 추천

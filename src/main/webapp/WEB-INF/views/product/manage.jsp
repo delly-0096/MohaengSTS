@@ -136,7 +136,8 @@
 			                </div>
 			                <div class="product-info">
 			                    <div class="product-category">${prod.prodCtgryType}</div>
-			                    <h3 class="product-name">${prod.tripProdTitle}</h3>
+			                    <c:set var="title" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accName : prod.tripProdTitle}"/>
+			                    <h3 class="product-name">${title}</h3>
 			                    <div class="product-meta">
 			                        <span><i class="bi bi-geo-alt"></i>${prod.ctyNm}</span><!-- 지역 코드 -->
 			                        <span>
@@ -208,7 +209,6 @@
 					                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원
 			                        		</c:when>
 			                        		<c:otherwise>
-	<%-- 				                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원 --%>
 												<div>아직 안불러옴</div>
 			                        		</c:otherwise>
 			                        	</c:choose>
@@ -216,7 +216,7 @@
 			                    </div>
 			                </div>
 			                <div class="product-actions">
-			                    <a href="/product/manage/tourDetail/${prod.tripProdNo}" class="btn btn-outline btn-sm">
+			                    <a href="/business/product/tourDetail/${prod.tripProdNo}" class="btn btn-outline btn-sm">
 			                        <i class="bi bi-eye"></i> 상세보기
 			                    </a>
 			                    <button class="btn btn-outline btn-sm" onclick="editProduct(this)"
@@ -331,6 +331,8 @@
                             </select>
                         </div>
                     </div>
+                    
+                    
                     <div class="mb-3" id="productNameField">
                         <label class="form-label">상품명 <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="tripProdTitle" placeholder="상품명을 입력하세요" required>
@@ -400,7 +402,7 @@
 	                        </div>
 	                        <div class="col-md-4">
 	                            <label class="form-label">최대 인원</label>
-	                            <input type="number" class="form-control" name="prodInfo.prodMaxPeople" placeholder="10" min="1">
+	                            <input type="number" class="form-control" name="prodInfo.prodMaxPeople" placeholder="10" min="1" max="15"/>
 	                        </div>
 	                    </div>
 	
@@ -689,7 +691,7 @@
                     <!-- 공통파트 -->
                     <div id="commonSaleSection">
 					    <div class="form-section-title">
-					        <i class="bi bi-calendar-check me-2"></i>판매 기간 및 대표 이미지
+					        <i class="bi bi-calendar-check me-2"></i>판매 기간 및 이미지
 					    </div>
 					    <div class="row mb-3">
 					        <div class="col-md-6">
@@ -701,21 +703,23 @@
 					            <input type="text" class="form-control date-picker" name="saleEndDt" placeholder="종료일 선택" required>
 					        </div>
 					    </div>
-					
                         
 					    <div class="mb-3">
-					        <label class="form-label">상품 대표 이미지 <span class="text-danger">*</span></label>
-					        <input type="file" class="form-control" name="mainImage" accept="image/*" onchange="renderMainImagePreview(this)" required>
+					        <label class="form-label">상품 이미지 <span class="text-danger">*</span></label>
+					        <input type="file" class="form-control" name="mainImage" accept="image/*" onchange="renderImageList(this)" multiple />
 					        <div id="mainImagePreview" class="mt-2"></div>
-					        <div class="form-text">상품 리스트에 노출될 대표 사진입니다.</div>
+					        <div class="form-text">권장 크기: 800x600px, 최대 5MB</div>
 					    </div>
-					    
-                        <input type="hidden" name="image.attachNo" />상품 이미지
+                        <input type="hidden" name="image.attachNo" />
                         <div class="productImageList"></div>
+					    
 					
 					    <div id="accommodationAdditionalImages" style="display: none;">
-					        <label class="form-label">숙소 상세 이미지 (최대 5장)</label>
-					        <input type="file" class="form-control" name="subImages" accept="image/*" multiple onchange="renderSubImagesPreview(this)">
+					        <label class="form-label">숙소 대표이미지</label>
+<!-- 					        <input type="file" class="form-control" name="" accept="image/*" onchange="renderSubImagesPreview(this)"/> -->
+							<img alt="객실" src="accommodation.accFilePath">
+					        <label class="form-label">숙소 이미지</label>
+<!-- 					        <input type="file" name="accommodation.accFileNo" accept="image/*" multiple/> -->
 					        <div id="subImagesPreview" class="productImageList mt-2"></div>
 					    </div>
 					</div>
@@ -848,20 +852,35 @@ async function editProduct(data) {
         
 		// 숙박 타입일때 그만큼 방 만들기
 		// 빈 폼 생성 (이 함수 안에서 name이 순서대로 부여되어야 함)
-		if (data.prodCtgryType === 'accommodation' && data.roomTypeList) {
-			data.roomTypeList.forEach((room, index) => addRoomType());
-        }
+		if (data.prodCtgryType === 'accommodation' && data.accommodation) {
+	        const acc = data.accommodation;
+
+	        // 방 목록 동적 생성 및 매핑 (prefix 없이 roomTypeList[index]... 로 바로 꽂음)
+	        if (acc.roomTypeList && acc.roomTypeList.length > 0) {
+	            acc.roomTypeList.forEach(() => addRoomType());
+	            renderProductData({ roomTypeList: acc.roomTypeList });
+	        }
+	        acc.roomTypeList = null;
+
+	        // 숙소 상세 정보 매핑 (name="accommodation.addr1" 등)
+	        renderProductData(acc, "accommodation");
+	        
+	        // [중요] 이미 처리한 객체는 원본에서 참조 제거 (무한루프 및 중복매핑 방지)
+	        data.accommodation = null; 
+	    }
 		
 		// 시간 담기
         if(data.prodTimeList && data.prodTimeList.length > 0){
         	bookingTimes = data.prodTimeList.map(time => time.rsvtAvailableTime);
         	renderBookingTimes();
+        	data.prodTimeList = null;
         }
         
 		// 사진 담기
         if(data.imageList && data.imageList.length > 0 ){
         	imageList = [...data.imageList];	// 여기서 꺼내서 쓰자
         	renderImageList();
+        	data.imageList = null;
         }
         
 		renderProductData(data);	// 상품 불러오기
@@ -883,7 +902,7 @@ async function editProduct(data) {
         
 		// 방 수만큼 넣어야됨
 		modal.show()
-        setTimeout(() => {modal.show()}, 300);
+//         setTimeout(() => {modal.show()}, 300);
     } catch (error) {
         console.error("데이터 로드 중 error 발생: ", error);
     }
@@ -892,7 +911,10 @@ async function editProduct(data) {
 // 수정할 상품 사진 modal에 세팅 - imageData는 선택시 썸네일 보여주려고
 function renderImageList(imageData = ""){
 	// imageList = 5개까지만 가능
-	console.log("imageData : ", imageData.value);
+// 	console.log("imageData : ", imageData.files[0]);	// 이래야 사진 정보 볼수 있다. - 왜냐면 얘는 list타입의 객체? File이라는 객체여서
+// 	const form = new FormData(imageData.value);
+// 	console.log("form : ", form);
+	
 	let html = ``;
 	if(imageList.length >= 5){
 		showToast("사진은 5개까지만 가능합니다!!", "error");
@@ -908,6 +930,7 @@ function renderImageList(imageData = ""){
     }
     else {
         html = imageList.map((image, index) => {
+//         	if({image})	// 사진은 담기면 어떻게 될까요??
             return `<img src="${pageContext.request.contextPath}/upload/product/\${image.filePath}" 
                 alt="\${image.tripProdTitle}" id="image\${index}">`
         }).join('');
@@ -916,7 +939,7 @@ function renderImageList(imageData = ""){
     }
     // hidden input에 JSON으로 저장
 //     console.log("JSON.stringify(imageList) : ", JSON.stringify(imageList));
-//     document.getElementById('bookingTimesInput').value = JSON.stringify(imageList);
+//     document.getElementById(' ').value = imageList;
 // 사진정보는 어떻게 hidden 에 넣어말어
 }
 
@@ -927,10 +950,19 @@ function renderProductData(data, prefix = ""){
     Object.keys(data).forEach(key => {
         const value = data[key];
         const nameAttr = prefix ? `\${prefix}.\${key}` : key;
+        console.log("nameAttr : , ", nameAttr, ",  key  : ", key);
+        
+        if (key === "roomTypeList" && Array.isArray(value)) {
+            value.forEach((room, index) => {
+                // 이미 addRoomType()으로 생성된 행에 값을 채움
+                renderProductData(room, `roomTypeList[\${index}]`);
+            });
+            return;
+        }
         
         if (value !== null && typeof value === 'object' && key !== "prodTimeList") {	// key가 prodTimeList일때 value는 object
             // value가 객체(prodSale, prodInfo 등)인 경우 재귀 호출
-//             console.log("object key : ", key);
+            console.log("object key : ", key);
             renderProductData(value, nameAttr);
         } else {
             // 실제 DOM 요소 찾기
@@ -941,7 +973,8 @@ function renderProductData(data, prefix = ""){
                 else if(key === "saleStartDt" || key === "saleEndDt"){
                 	let dateSet = data[key].split("T");
                 	tag.value = dateSet[0];
-                }  else tag.value = value ?? '';	  // 일반 text, number, hidden 등 value가 null이나 undefined일 경우는 ''가 된다
+                }  
+                else tag.value = value ?? '';	  // 일반 text, number, hidden 등 value가 null이나 undefined일 경우는 ''가 된다
             }
         }
     });
@@ -957,7 +990,7 @@ async function saveProduct(data) {
 	
     // update
     if(data.innerText === "수정"){
-		const res = await axios.post(`/product/manage/editProduct`, formData);
+		const res = await axios.post(`/business/product/editProduct`, formData);
    		console.log("saveProduct res.data : " + res.data);
    		if(res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
    		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
@@ -965,7 +998,7 @@ async function saveProduct(data) {
     
     // insert 구현해야된다
     else {
-		const res = await axios.post(`/product/manage/insert`, formData);
+		const res = await axios.post(`/business/product/insert`, formData);
    		console.log("saveProduct res.data : " + res.data);
    		if(res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
    		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
@@ -979,7 +1012,7 @@ function toggleProductStatus(data) {
 	const { id, status } = data.dataset;
 	
     if (confirm('상품 상태를 변경하시겠습니까?')) {
-        axios.post(`/product/manage/changeProductStatus`, {
+        axios.post(`/business/product/changeProductStatus`, {
         	tripProdNo : id,
         	approveStatus : status
         })
@@ -999,7 +1032,7 @@ function toggleProductStatus(data) {
 function deleteProduct(data) {
 	const { id } = data.dataset;
     if (confirm('정말 삭제하시겠습니까?\n삭제된 상품은 복구할 수 없습니다.')) {
-        axios.post(`/product/manage/removeProduct`, {
+        axios.post(`/business/product/removeProduct`, {
         	tripProdNo : id
         })
         .then(res => {
@@ -1379,7 +1412,7 @@ function toggleCategoryFields() {
 // ==================== 객실 타입 관리 ====================
 function addRoomType() {
 	// 처음에는 아무것도 없기에 0부터 시작
-	const index = roomTypeIndexContainer.children.length;
+	const index = roomTypeContainer.children.length;
 	// 객실 타입 \${index + 1}은 화면에만 보여지는 것
 	
     const roomHtml =
@@ -1390,47 +1423,47 @@ function addRoomType() {
                     <i class="bi bi-x"></i> 삭제
                 </button>
             </div>
-            <input type="hidden" name="roomTypeList[\${index}].roomNo" />
+            <input type="hidden" name="roomTypeList[\${index}].roomTypeNo" />
             <div class="row mb-3">
                 <div class="col-md-4">
                     <label class="form-label">객실명 <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control" name="roomName" placeholder="예: 디럭스 트윈">
+                    <input type="text" class="form-control" name="roomTypeList[\${index}].roomName" placeholder="예: 디럭스 트윈">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">기준 인원 <span class="text-danger">*</span></label>
-                    <input type="number" class="form-control" name="roomCapacity" placeholder="2" min="1">
+                    <input type="number" class="form-control" name="roomTypeList[\${index}].baseGuestCount" placeholder="2" min="1">
                 </div>
                 <div class="col-md-4">
                     <label class="form-label">최대 인원</label>
-                    <input type="number" class="form-control" name="roomMaxCapacity" placeholder="4" min="1">
+                    <input type="number" class="form-control" name="roomTypeList[\${index}].maxGuestCount" placeholder="4" min="1">
                 </div>
             </div>
             <div class="row mb-3">
                 <div class="col-md-3">
                     <label class="form-label">1박 가격 <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <input type="number" class="form-control" name="roomPrice" placeholder="0">
+                        <input type="number" class="form-control" name="roomTypeList[\${index}].price" placeholder="0">
                         <span class="input-group-text">원</span>
                     </div>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">할인율</label>
                     <div class="input-group">
-                        <input type="number" class="form-control" name="roomDiscount" placeholder="0" min="0" max="100">
+                        <input type="number" class="form-control" name="roomTypeList[\${index}].discount" placeholder="0" min="0" max="100">
                         <span class="input-group-text">%</span>
                     </div>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">잔여 객실 <span class="text-danger">*</span></label>
                     <div class="input-group">
-                        <input type="number" class="form-control" name="roomStock" placeholder="0" min="0">
+                        <input type="number" class="form-control" name="roomTypeList[\${index}].totalRoomCount" placeholder="0" min="0">
                         <span class="input-group-text">실</span>
                     </div>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">객실 크기</label>
                     <div class="input-group">
-                        <input type="number" class="form-control" name="roomSize" placeholder="0">
+                        <input type="number" class="form-control" name="roomTypeList[\${index}].roomSize" placeholder="0">
                         <span class="input-group-text">㎡</span>
                     </div>
                 </div>
@@ -1446,7 +1479,7 @@ function addRoomType() {
                 <label class="form-label">침대 타입</label>
                 <div class="form-check-group">
                     <div class="form-check form-check-inline">
-                        <input class="form-check-input" type="checkbox" name="bedType" value="single" id="bedSingle">
+                        <input class="form-check-input" type="checkbox" name="roomTypeList[\${index}].bedType" value="single" id="bedSingle">
                         <label class="form-check-label" for="bedSingle">싱글</label>
                     </div>
                     <div class="form-check form-check-inline">
@@ -1462,7 +1495,7 @@ function addRoomType() {
                         <label class="form-check-label" for="bedKing">킹</label>
                     </div>
                     <div class="form-check form-check-inline">
-                        '<input class="form-check-input" type="checkbox" name="bedType" value="ondol" id="bedOndol">
+                        <input class="form-check-input" type="checkbox" name="bedType" value="ondol" id="bedOndol">
                         <label class="form-check-label" for="bedOndol">온돌</label>
                     </div>
                 </div>

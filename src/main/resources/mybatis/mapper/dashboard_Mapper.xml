@@ -2,15 +2,31 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.mypage.dashboard.mapper.ICompanyDashboardMapper">
 
+	<resultMap type="kr.or.ddit.mohaeng.vo.PaymentVO" id="paymentMap">
+		<id property="payNo" column="pay_no"/>
+		<result property="payNo" column="pay_no"/>
+		<result property="memNo" column="mem_no"/>
+		<result property="memName" column="payment_mem_name"/>
+		<result property="payTotalAmt" column="pay_total_amt"/>
+		<result property="payStatus" column="pay_status"/>
+		<collection property="tripProdList" resultMap="tripProdListMap"/>
+	</resultMap>
+	
+	<resultMap type="kr.or.ddit.mohaeng.vo.TripProdListVO" id="tripProdListMap">
+		<id property="prodListNo" column="prod_list_no"/>
+		<result property="prodListNo" column="prod_list_no"/>
+		<result property="tripProdName" column="trip_prod_title"/>
+	</resultMap>
+
   <!-- KPI -->
-  <select id="selectKpi" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$Kpi">
+  <select id="selectKpi" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$Kpi" parameterType="int">
     SELECT
       NVL((
         SELECT SUM(pl.PAY_PRICE)
         FROM TRIP_PROD_LIST pl
         JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
         JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = pl.TRIP_PROD_NO
-        WHERE tp.COMP_NO = #{compNo}
+        WHERE tp.COMP_NO = (SELECT C.COMP_NO FROM COMPANY C WHERE C.MEM_NO = #{memNo})
           AND p.PAY_STATUS = 'DONE'
           AND p.PAY_DT >= TRUNC(SYSDATE, 'MM')
         AND p.PAY_DT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
@@ -22,7 +38,7 @@
         FROM TRIP_PROD_LIST pl
         JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
         JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = pl.TRIP_PROD_NO
-        WHERE tp.COMP_NO = #{compNo}
+        WHERE tp.COMP_NO = (SELECT C.COMP_NO FROM COMPANY C WHERE C.MEM_NO = #{memNo})
           AND p.PAY_STATUS = 'DONE'
           AND p.PAY_DT >= TRUNC(SYSDATE, 'MM')
           AND p.PAY_DT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
@@ -31,7 +47,7 @@
       NVL((
         SELECT COUNT(*)
         FROM TRIP_PROD tp
-        WHERE tp.COMP_NO = #{compNo}
+        WHERE tp.COMP_NO = (SELECT C.COMP_NO FROM COMPANY C WHERE C.MEM_NO = #{memNo})
           AND NVL(tp.DEL_YN, 'N') = 'N'
           AND tp.APPROVE_STATUS = '판매중'
           AND tp.SALE_START_DT &lt;= SYSDATE
@@ -39,36 +55,10 @@
       ), 0) AS sellingProductCount
     FROM DUAL
   </select>
-
-  <!-- 월별 매출 (최근 N개월, 0 포함) -->
-  <select id="selectMonthlySalesChart" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$MonthlySalesPoint">
-    SELECT
-      m.month_key AS month,
-      NVL(s.sales, 0) AS sales
-    FROM (
-      SELECT TO_CHAR(ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -(LEVEL-1)), 'YYYY-MM') AS month_key
-      FROM DUAL
-      CONNECT BY LEVEL &lt;= #{months}
-    ) m
-    LEFT JOIN (
-      SELECT
-        TO_CHAR(p.PAY_DT, 'YYYY-MM') AS month_key,
-        SUM(pl.PAY_PRICE) AS sales
-      FROM TRIP_PROD_LIST pl
-      JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
-      JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = pl.TRIP_PROD_NO
-      WHERE tp.COMP_NO = #{compNo}
-        AND p.PAY_STATUS = 'DONE'
-        AND p.PAY_DT &gt;= ADD_MONTHS(TRUNC(SYSDATE, 'MM'), -(#{months}-1))
-        AND p.PAY_DT &lt;  ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
-      GROUP BY TO_CHAR(p.PAY_DT, 'YYYY-MM')
-    ) s
-    ON s.month_key = m.month_key
-    ORDER BY m.month_key
-  </select>
-
+  
   <!-- TOP 상품 (이번달) -->
   <select id="selectTopProducts" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$TopTripProd">
+    <![CDATA[
     SELECT *
     FROM (
       SELECT
@@ -83,11 +73,12 @@
       WHERE tp.COMP_NO = #{compNo}
         AND p.PAY_STATUS = 'DONE'
         AND p.PAY_DT >= TRUNC(SYSDATE, 'MM')
-        AND p.PAY_DT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
+        AND p.PAY_DT < ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
       GROUP BY tp.TRIP_PROD_NO, tp.TRIP_PROD_TITLE, tp.APPROVE_STATUS
       ORDER BY sales DESC, reservationCount DESC
     )
-    WHERE ROWNUM &lt;= #{limit}
+    WHERE ROWNUM <= #{limit}
+    ]]>
   </select>
 
   <!-- 판매중 상품 수 (인터페이스에 있어서 XML에도 반드시 있어야 함) -->
@@ -97,8 +88,21 @@
     WHERE tp.COMP_NO = #{compNo}
       AND NVL(tp.DEL_YN,'N')='N'
       AND tp.APPROVE_STATUS='판매중'
-      AND tp.SALE_START_DT &lt;= SYSDATE
-      AND tp.SALE_END_DT >= SYSDATE
+      <![CDATA[
+	      AND tp.SALE_START_DT <= SYSDATE
+	      AND tp.SALE_END_DT >= SYSDATE
+      ]]>
   </select>
-
+  
+  <select id="selectPaymentList" parameterType="int" resultMap="paymentMap">
+	select
+		p.pay_no, p.mem_no,
+		(select mem_name from member m where p.mem_no = m.mem_no) as payment_mem_name,
+		pay_total_amt, pay_status,
+		trip_prod_title, comp_no, tp.mem_no
+	from payment p left outer join trip_prod_list tpl on(p.pay_no = tpl.pay_no)
+				   left outer join trip_prod tp on(tpl.trip_prod_no = tp.trip_prod_no)
+	where tp.mem_no = #{memNo}
+	order by p.pay_no desc
+  </select>
 </mapper>

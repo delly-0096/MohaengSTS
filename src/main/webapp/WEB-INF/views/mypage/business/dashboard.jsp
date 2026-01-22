@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
 <c:set var="pageTitle" value="기업 대시보드" />
 <c:set var="pageCss" value="mypage" />
@@ -20,17 +22,17 @@
                 <div class="stats-grid">
                     <div class="stat-card primary">
                         <div class="stat-icon"><i class="bi bi-currency-won"></i></div>
-                        <div class="stat-value" id="monthlySales">0</div>
+                        <div class="stat-value" id="monthlySales">${dashboard.kpi.monthlySales}</div>
                         <div class="stat-label">이번 달 매출</div>
                     </div>
                     <div class="stat-card secondary">
-                        <div class="stat-icon"><i class="bi bi-cart-check"></i></div>
-                        <div class="stat-value" id="monthlyReservations">0</div>
+                        <div class="stat-icon"><i class="bi bi-cart-check"></i></div>   
+                        <div class="stat-value" id="monthlyReservations">${dashboard.kpi.monthlyReservations}</div>
                         <div class="stat-label">이번 달 예약</div>
                     </div>
                     <div class="stat-card accent">
                         <div class="stat-icon"><i class="bi bi-box-seam"></i></div>
-                        <div class="stat-value" id="sellingProductCount">0</div>
+                        <div class="stat-value" id="sellingProductCount">${dashboard.kpi.sellingProductCount}</div>
                         <div class="stat-label">등록 상품</div>
                     </div>
                     <div class="stat-card warning">
@@ -63,10 +65,39 @@
                                             <th>상태</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="recentResvTbody">
-										  <tr><td colspan="5" class="text-muted text-center">불러오는 중...</td></tr>
-									</tbody>
-
+                                    <tbody>
+                                    	<c:choose>
+                                    		<c:when test="${empty paymentList }">
+                                    			<tr>
+                                    				<td colspan="5">조회하신 결제 내역이 존재하지 않습니다.</td>
+                                    			</tr>	
+                                    		</c:when>
+                                    		<c:otherwise>
+                                    			<c:forEach items="${paymentList }" var="payment">
+                                    				<c:set value="" var="etc"/>
+                                    				<c:if test="${fn:length(payment.tripProdList) > 1 }">
+                                    					<c:set value="외 ${fn:length(payment.tripProdList)-1 }개" var="etc"/>
+                                    				</c:if>
+                                    				<tr>
+			                                            <td>${payment.payNo }</td>
+			                                            <td>${payment.tripProdList[0].tripProdName } ${etc }</td>
+			                                            <td>${payment.memName }</td>
+			                                            <td class="text-primary fw-bold"><fmt:formatNumber value="${payment.payTotalAmt }" pattern="#,###,###"/> 원</td>
+			                                            <td>
+			                                            	<c:choose>
+			                                            		<c:when test="${payment.payStatus eq 'DONE' }">
+			                                            			<span class="payment-status completed">확정</span>
+			                                            		</c:when>
+			                                            		<c:otherwise>
+			                                            			<span class="payment-status">취소</span>
+			                                            		</c:otherwise>
+			                                            	</c:choose>
+			                                            </td>
+			                                        </tr>
+                                    			</c:forEach>
+                                    		</c:otherwise>
+                                    	</c:choose>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -90,7 +121,7 @@
 							</div>
 
 
-                            <div class="notification-list">
+                   		 <!-- <div class="notification-list">
                                 <div class="notification-item unread">
                                     <div class="notification-icon order">
                                         <i class="bi bi-cart-check"></i>
@@ -128,13 +159,13 @@
                                     <div class="notification-content">
                                         <h4>정산 완료</h4>
                                         <p>2월 정산금 입금 완료</p>
-                                    </div>
-                                    <span class="notification-time">어제</span>
+                                    </div> 
+                                    <span class="notification-time">어제</span>  -->
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
+                </div> 
 
                 <!-- 상품 현황 -->
                 <div class="content-section">

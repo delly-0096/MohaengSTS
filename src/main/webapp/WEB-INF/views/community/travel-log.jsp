@@ -1,9 +1,7 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8"
-	pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 <%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
-<%@ taglib uri="http://www.springframework.org/security/tags"
-	prefix="sec"%>
+<%@ taglib uri="http://www.springframework.org/security/tags" prefix="sec"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 <c:set var="pageTitle" value="여행기록" />
@@ -22,7 +20,7 @@
 
 
 <sec:authorize access="isAuthenticated()">
-		  <sec:authentication property="name" var="loginName"/>
+	<sec:authentication property="name" var="loginName" />
 </sec:authorize>
 
 <div class="travellog-page">
@@ -76,12 +74,10 @@
 
 
 					<div class="travellog-card-header">
-						<!-- 프로필 이미지: 지금 VO에 없으니 임시 고정(나중에 memProfile 등 컬럼/조인으로 교체) -->
 						<c:set var="pp" value="${row.profilePath}" />
 
 						<c:choose>
 							<c:when test="${not empty pp and pp != 'null'}">
-								<!-- pp가 /profile/... 이면 /upload + pp 로만 만든다 (추가 결합 금지) -->
 								<img src="<c:url value='/upload${pp}'/>"
 									class="travellog-avatar" alt="프로필"
 									onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';" />
@@ -103,29 +99,19 @@
 								</c:choose>
 							</span>
 
-
-							<!-- 지역코드(locCd)로 표시 (지금 리스트VO에 없으면 이 줄은 지우거나, ListVO에 locCd 추가 필요) -->
 							<span class="travellog-location">${row.locName}</span>
 						</div>
 
 						<div class="travellog-more-wrapper">
-							<!-- 	                    <button class="travellog-more-btn" -->
-							<!--     onclick="event.stopPropagation(); toggleCardMenu(this)"> -->
-
-							<!-- 	                        <i class="bi bi-three-dots"></i> -->
-							<!-- 	                    </button> -->
-
 							<div class="travellog-card-menu">
 								<c:if
 									test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
 									<!-- 신고하기: id/title을 실제 데이터로 -->
-									<button
-  type="button"
-  data-rcdno="${row.rcdNo}"
-  data-title="${fn:escapeXml(row.rcdTitle)}"
-  onclick="reportTravellogFromBtn(this)">
-  <i class="bi bi-flag"></i> 신고하기
-</button>
+									<button type="button" data-rcdno="${row.rcdNo}"
+										data-title="${fn:escapeXml(row.rcdTitle)}"
+										onclick="reportTravellogFromBtn(this)">
+										<i class="bi bi-flag"></i> 신고하기
+									</button>
 								</c:if>
 							</div>
 						</div>
@@ -146,9 +132,6 @@
 									alt="여행사진">
 							</c:otherwise>
 						</c:choose>
-
-						<!-- 이미지 수: DB에 없으니 일단 숨기거나 임시 -->
-						<!-- 	                <span class="travellog-image-count"><i class="bi bi-images"></i> 1</span> -->
 					</div>
 
 					<div class="travellog-card-actions">
@@ -167,24 +150,16 @@
 						</button>
 
 
-
-
-
 						<button class="travellog-action-btn btn-share"
 							style="margin-left: auto;"
 							onclick="handleShare(event, ${row.rcdNo});">
 							<i class="bi bi-send"></i>
 						</button>
-
-
-
 					</div>
 
 					<div class="travellog-card-content">
 
-						<p class="travellog-text">
-							${row.rcdTitle}
-						</p>
+						<p class="travellog-text">${row.rcdTitle}</p>
 
 						<p class="travellog-date">
 							<fmt:formatDate value="${row.regDt}" pattern="yyyy-MM-dd" />
@@ -242,14 +217,12 @@
 					aria-label="Close"></button>
 			</div>
 			<div class="modal-body p-0" id="travellogModalBody">
-				<!-- 동적 콘텐츠 -->
 			</div>
 		</div>
 	</div>
 </div>
 
 <style>
-/* 기업회원 안내 메시지 */
 .business-notice {
 	color: #666;
 	font-size: 14px;
@@ -263,7 +236,6 @@
 	color: var(--primary-color);
 }
 
-/* 더보기 버튼 드롭다운 */
 .travellog-more-wrapper {
 	position: relative;
 }
@@ -307,7 +279,6 @@
 	background: #fef2f2;
 }
 
-/* 여행기록 상세 모달 */
 .travellog-detail-modal .modal-content {
 	border: none;
 	border-radius: 16px;
@@ -340,7 +311,6 @@
 	cursor: not-allowed;
 }
 
-/* 커버 이미지 */
 .detail-cover {
 	position: relative;
 	height: 300px;
@@ -362,12 +332,10 @@
 	background: linear-gradient(transparent, rgba(0, 0, 0, 0.3));
 }
 
-/* 본문 컨테이너 */
 .detail-container {
 	padding: 24px 32px 32px;
 }
 
-/* 작성자 카드 */
 .detail-author-card {
 	display: flex;
 	align-items: center;
@@ -419,7 +387,6 @@
 	cursor: not-allowed;
 }
 
-/* 제목 */
 .detail-title {
 	font-size: 28px;
 	font-weight: 700;
@@ -428,7 +395,6 @@
 	line-height: 1.3;
 }
 
-/* 여행 정보 */
 .detail-trip-info {
 	display: flex;
 	gap: 20px;
@@ -447,7 +413,6 @@
 	color: var(--primary-color);
 }
 
-/* 인트로 */
 .detail-intro {
 	font-size: 16px;
 	line-height: 1.7;
@@ -455,7 +420,6 @@
 	margin-bottom: 24px;
 }
 
-/* 구분선 */
 .detail-divider {
 	border: none;
 	height: 1px;
@@ -463,7 +427,6 @@
 	margin: 24px 0;
 }
 
-/* 일차 섹션 */
 .detail-day-section {
 	margin-bottom: 32px;
 }
@@ -490,7 +453,6 @@
 	color: #64748b;
 }
 
-/* 장소 카드 */
 .detail-place-card {
 	background: #f8fafc;
 	border-radius: 16px;
@@ -574,7 +536,6 @@
 	margin: 0;
 }
 
-/* 아웃트로 */
 .detail-outro {
 	background: linear-gradient(135deg, rgba(74, 144, 217, 0.08),
 		rgba(102, 126, 234, 0.08));
@@ -591,7 +552,6 @@
 	font-style: italic;
 }
 
-/* 태그 */
 .detail-tags {
 	display: flex;
 	flex-wrap: wrap;
@@ -607,7 +567,6 @@
 	font-size: 13px;
 }
 
-/* 액션 바 */
 .detail-actions {
 	display: flex;
 	gap: 8px;
@@ -653,7 +612,6 @@
 	color: #dc2626;
 }
 
-/* 댓글 섹션 */
 .detail-comments-section {
 	margin-top: 24px;
 }
@@ -777,7 +735,6 @@
 	cursor: not-allowed;
 }
 
-/* 반응형 */
 @media ( max-width : 768px) {
 	.detail-container {
 		padding: 20px 16px;
@@ -806,12 +763,25 @@ var viewCount = 0;
 
 var cp = '<c:out value="${pageContext.request.contextPath}" />';
 
-//authRole 기준(앞에서 말한대로)
 var ROLE = (document.getElementById('authRole')?.textContent || '').trim() || 'ANON';
 
 var isLoggedIn = (ROLE !== 'ANON');
 var isMember   = (ROLE === 'ROLE_MEMBER');
 var isBusiness = (ROLE === 'ROLE_BUSINESS');
+
+function applyBusinessDisabledUI(root) {
+	  if (!isBusiness) return;
+
+	  const scope = root || document;
+
+	  // 버튼들 비활성처럼 보이게(스타일)
+	  scope.querySelectorAll('.travellog-card-actions .travellog-action-btn').forEach(btn => {
+	    btn.classList.add('is-disabled');
+	    btn.setAttribute('aria-disabled', 'true');
+	  });
+
+}
+
 
 
 function goComment(rcdNo){
@@ -837,31 +807,6 @@ function escapeHtml(text) {
         .replace(/'/g, '&#039;');
 }
 var travellogModal = null;
-
-/* document.addEventListener('DOMContentLoaded', function () {
-	  if (isBusiness) {
-	    // 공유 버튼도 통일감 있게 "비활성 UI" 처리
-	    document.querySelectorAll('.travellog-card-actions .btn-share').forEach(btn => {
-	      btn.classList.add('is-disabled');        // 비활성처럼 보이게
-	      btn.setAttribute('aria-disabled', 'true');
-	    });
-
-	    // 나머지 버튼도 동일하게
-	    document.querySelectorAll('.travellog-card-actions .travellog-action-btn:not(.btn-share)').forEach(btn => {
-	      btn.classList.add('is-disabled');
-	      btn.setAttribute('aria-disabled', 'true');
-	    });
-	  }
-	  
-	// 오버레이 안쪽 클릭은 닫히지 않게(배경 클릭만 닫히도록)
-	  const overlayContent = document.querySelector('#loginOverlay .login-overlay-content');
-	  overlayContent?.addEventListener('click', function(e){ e.stopPropagation(); });
-	}); */
-
-
-
-
-
 
 
 // 좋아요 토글
@@ -889,7 +834,7 @@ function toggleListLike(btn, rcdNo) {
     icon.className = data.liked ? 'bi bi-heart-fill' : 'bi bi-heart';
     count.textContent = data.likeCount;
     
- 	// ✅ 카드 dataset.like 갱신 (정렬/표시 일관성)
+ 	// 카드 dataset.like 갱신 (정렬/표시 일관성)
     const card = btn.closest('.travellog-card');
     if (card) card.dataset.like = String(data.likeCount);
   })
@@ -900,33 +845,11 @@ function toggleListLike(btn, rcdNo) {
 }
 
 
-
-// 북마크 토글
-/* function toggleBookmark(btn, id) {
-	if (isBusiness) return;
-    if (!isMember) {
-        showLoginOverlay();
-        return;
-    }
-
-    btn.classList.toggle('bookmarked');
-    const icon = btn.querySelector('i');
-
-    if (btn.classList.contains('bookmarked')) {
-        icon.className = 'bi bi-bookmark-fill';
-        showToast('북마크에 저장되었습니다.', 'success');
-    } else {
-        icon.className = 'bi bi-bookmark';
-        showToast('북마크가 해제되었습니다.', 'info');
-    }
-} */
-
 // 공유
-// 공유 (✅ 절대 URL로 복사)
 function shareTravellog(id) {
   const path = cp + '/community/travel-log/detail?rcdNo=' + id;
 
-  // ✅ 도메인(호스트) + contextPath + path
+  // 도메인(호스트) + contextPath + path
   const url = new URL(path, location.origin).href;
 
   // HTTPS/localhost면 clipboard API 동작
@@ -943,29 +866,6 @@ function shareTravellog(id) {
   // http 환경(또는 권한 문제) fallback
   prompt('복사해서 사용하세요:', url);
 }
-
-
-
-
-/* // 모달 열기
-function openTravellogModal(id) {
-    if (!travellogModal) {
-        travellogModal = new bootstrap.Modal(
-            document.getElementById('travellogModal')
-        );
-    }
-
-    document.getElementById('travellogModalBody').innerHTML =
-        '<div style="padding:40px;text-align:center;">불러오는 중...</div>';
-
-    fetch(contextPath + '/community/travel-log/detail-frag?rcdNo=' + id)
-        .then(res => res.text())
-        .then(html => {
-            document.getElementById('travellogModalBody').innerHTML = html;
-            travellogModal.show();
-        });
-} */
-
 
 // 상세 좋아요 토글
 function toggleDetailLike(btn) {
@@ -988,28 +888,6 @@ function toggleDetailLike(btn) {
     }
 }
 
-/* // 상세 북마크 토글
-function toggleDetailBookmark(btn) {
-    if (!isMember) {
-        showLoginOverlay();
-        travellogModal.hide();
-        return;
-    }
-    btn.classList.toggle('active');
-    var icon = btn.querySelector('i');
-    var text = btn.querySelector('span');
-
-    if (btn.classList.contains('active')) {
-        icon.className = 'bi bi-bookmark-fill';
-        text.textContent = '저장됨';
-        showToast('북마크에 저장되었습니다.', 'success');
-    } else {
-        icon.className = 'bi bi-bookmark';
-        text.textContent = '저장';
-        showToast('북마크가 해제되었습니다.', 'info');
-    }
-} */
-
 // 공유
 function shareDetail() {
     showToast('링크가 복사되었습니다.', 'success');
@@ -1023,15 +901,12 @@ function showLoginOverlay() {
 // ==================== 인피니티 스크롤 ====================
 var currentPage = 1;
 
-
-
 //==================== 인피니티 스크롤 + 서버 로딩 ====================
 let isLoadingMore = false;
 let hasMoreData = true;
 
-// ✅ 서버 API 엔드포인트(네 프로젝트에 맞춰 수정)
+// 서버 API 엔드포인트
 const LIST_API = cp + '/api/travel-log/records'; 
-// 만약 실제가 /api/community/travel-log/records 이면 여기만 바꿔줘
 
 function getLoginMemId() {
 	  return '<c:out value="${loginName}" default="" />';
@@ -1045,7 +920,7 @@ function getActiveFilter() {
   return document.querySelector('.travellog-filter.active')?.dataset?.filter || 'all';
 }
 
-// ✅ 최초 1페이지(서버렌더) 카드들도 index 부여
+// 최초 1페이지(서버렌더) 카드들도 index 부여
 function ensureInitialIndex() {
   const grid = getGrid();
   if (!grid) return;
@@ -1054,25 +929,6 @@ function ensureInitialIndex() {
   });
 }
 
-// ✅ 필터 클릭 → 서버 기준으로 "새로 로드"
-/* function applyFilter(filter) {
-  const grid = getGrid();
-  if (!grid) return;
-
-  grid.dataset.filter = filter;
-  grid.dataset.page = '1';
-  hasMoreData = true;
-
-  // ✅ 서버렌더 카드 전부 비우고(필터에 맞는 1페이지를 다시 받음)
-  grid.innerHTML = '';
-
-  // loader/end UI 초기화
-  document.getElementById('scrollEnd').style.display = 'none';
-  document.getElementById('scrollLoader').style.display = 'block';
-
-  // ✅ 첫 페이지 다시 로딩
-  loadMoreTravellogs(true);
-} */
 function applyFilter(filter) {
 	  const grid = getGrid();
 	  if (!grid) return;
@@ -1084,11 +940,9 @@ function applyFilter(filter) {
 
 	  document.getElementById('scrollEnd').style.display = 'none';
 
-	  // ✅ 비로그인: 로더 안 보여주고, 첫 페이지를 서버에서 새로 받는 건 허용할지 정책 선택
+	  // 비로그인: 로더 안 보여주고, 첫 페이지를 서버에서 새로 받는 건 허용할지 정책 선택
 	  if (!isLoggedIn) {
 	    stopInfiniteScrollForAnon();
-	    // 여기서 "필터 적용 자체를 막고 오버레이 띄우기"도 가능
-	    // showLoginOverlay();
 	    showLoginOverlay();
 	  }
 
@@ -1097,25 +951,6 @@ function applyFilter(filter) {
 	  loadMoreTravellogs(true);
 }
 
-// ✅ IntersectionObserver 초기화
-/* function initInfiniteScroll() {
-  const loader = document.getElementById('scrollLoader');
-  if (!loader) return;
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach((entry) => {
-      if (!entry.isIntersecting) return;
-      if (isLoadingMore || !hasMoreData) return;
-      loadMoreTravellogs(false);
-    });
-  }, {
-    root: null,
-    rootMargin: '150px',
-    threshold: 0
-  });
-
-  observer.observe(loader);
-} */
 let infiniteObserver = null;
 
 function initInfiniteScroll() {
@@ -1159,7 +994,7 @@ function showLoginOverlay() {
 	  el.classList.add('active');
 	  document.body.style.overflow = 'hidden';
 
-	  // ✅ 비로그인일 때만 무한스크롤 끊기
+	  // 비로그인일 때만 무한스크롤 끊기
 	  if (!isLoggedIn) stopInfiniteScrollForAnon();
 }
 
@@ -1171,17 +1006,12 @@ function hideLoginOverlay() {
 	  document.body.style.overflow = '';
 }
 
-	
-	
-
-
-
-// ✅ 서버에서 목록 가져와서 카드 append
+// 서버에서 목록 가져와서 카드 append
 async function loadMoreTravellogs(isFirstPage) {
   const grid = getGrid();
   if (!grid) return;
 
-  // ✅ 비로그인은 무한로딩 자체 금지
+  // 비로그인은 무한로딩 자체 금지
    if (!isLoggedIn) {
     showLoginOverlay();          // 오버레이 띄우고
     stopInfiniteScrollForAnon(); // 로더/옵저버 끊고
@@ -1197,10 +1027,10 @@ async function loadMoreTravellogs(isFirstPage) {
   const size = Number(grid.dataset.size || '12');
   const filter = grid.dataset.filter || 'all';
 
-  // ✅ 다음에 가져올 page 계산
+  // 다음에 가져올 page 계산
   const nextPage = isFirstPage ? 1 : (currentPage + 1);
 
-  // ✅ 서버 요청 URL 구성
+  // 서버 요청 URL 구성
   const url = new URL(LIST_API, window.location.origin);
   url.searchParams.set('page', String(nextPage));
   url.searchParams.set('size', String(size));
@@ -1210,14 +1040,13 @@ async function loadMoreTravellogs(isFirstPage) {
     const res = await fetch(url.toString(), { credentials: 'include' });
     if (!res.ok) throw new Error('list api failed: ' + res.status);
 
-    /** @type {{page:number,size:number,total:number,items:any[]}} */
     const data = await res.json();
 
     const items = data.content || [];
     const total = Number(data.totalElements || 0);
     const totalPages = Number(data.totalPages || 0);
 
-    // ✅ 더 없음 처리
+    // 더 없음 처리
     if (items.length === 0 || nextPage > totalPages) {
       hasMoreData = false;
       loader.style.display = 'none';
@@ -1225,30 +1054,24 @@ async function loadMoreTravellogs(isFirstPage) {
       return;
     }
 
-    // ✅ 카드 생성 + append
+    // 카드 생성 + append
     const startIndex = grid.querySelectorAll('.travellog-card').length;
     items.forEach((row, i) => {
       const cardEl = buildCardElement(row, startIndex + i);
       grid.appendChild(cardEl);
     });
 
-    // ✅ page 업데이트
+    // page 업데이트
     grid.dataset.page = String(nextPage);
 
-    // ✅ 마지막 페이지면 종료 표시
+    // 마지막 페이지면 종료 표시
     if (nextPage >= totalPages) {
       hasMoreData = false;
       loader.style.display = 'none';
       document.getElementById('scrollEnd').style.display = 'block';
     }
 
-    // ✅ 기업회원 버튼 비활성 UI 유지(추가된 카드에도)
-    if (isBusiness) {
-      grid.querySelectorAll('.travellog-card-actions .travellog-action-btn').forEach(btn => {
-        btn.classList.add('is-disabled');
-        btn.setAttribute('aria-disabled', 'true');
-      });
-    }
+
 
   } catch (e) {
     console.error(e);
@@ -1260,7 +1083,7 @@ async function loadMoreTravellogs(isFirstPage) {
 }
 
 
-//✅ 카드 DOM 만들기 (JSP EL 충돌 방지 버전: 템플릿리터럴)
+//카드 DOM 만들기 (JSP EL 충돌 방지 버전: 템플릿리터럴)
 function buildCardElement(row, index) {
   const rcdNo = Number(row.rcdNo);
   const likeCount = Number(row.likeCount || 0);
@@ -1440,15 +1263,6 @@ function buildCardElement(row, index) {
   return card;
 }
 
-
-
-
-// ✅ 서버에서 내려오는 regDt가 문자열/타임스탬프일 수 있으니 유연하게
-
-
-
-
-
 function formatDate(value) {
 	  // 1) 숫자면 epoch(ms)로 가정
 	  if (typeof value === 'number') {
@@ -1466,25 +1280,11 @@ function formatDate(value) {
 function pad2(n){ return (n < 10 ? '0' : '') + n; }
 
 
-
-
-
-// ✅ 좋아요 토글 후 dataset.like도 갱신(인기정렬/표시 일관성)
+// 좋아요 토글 후 dataset.like도 갱신(인기정렬/표시 일관성)
 const _origToggleListLike = toggleListLike;
 toggleListLike = function(btn, rcdNo){
   _origToggleListLike(btn, rcdNo);
-  // _origToggleListLike 안의 fetch가 끝난 뒤에 dataset 갱신해야 정확함
-  // 그래서 기존 fetch then 안에서 같이 처리하도록 아래처럼 약간만 고쳐주는 게 베스트.
 };
-
-
-
-
-
-
-
-
-
 
 
 //카드 HTML 생성 (인피니티로 추가되는 카드에도 동일 정책 적용)
@@ -1530,13 +1330,6 @@ function createTravellogCard(data) {
         + '<i class="bi bi-chat"></i>'
         + '<span>' + data.comments + '</span>'
       + '</button>'
-
-      // 북마크
-/*       + '<button class="travellog-action-btn' + disabledClass + '"'
-        + disabledAttr
-        + ' onclick="event.stopPropagation(); toggleBookmark(this, ' + data.id + ')">'
-        + '<i class="bi bi-bookmark"></i>'
-      + '</button>' */
 
       // 공유(기업회원도 가능하게 둘 거면 disabled 처리 제외 가능)
       + '<button class="travellog-action-btn" style="margin-left:auto;" onclick="event.stopPropagation(); shareTravellog(' + data.id + ')">'
@@ -1603,10 +1396,8 @@ function reportTravellogComment(commentId, commentText) {
 }
 
 // openTravellogModal 함수 수정 - 현재 ID 저장
-// var originalOpenTravellogModal = openTravellogModal;
 openTravellogModal = function(id) {
     currentTravellogId = id;
-//     var data = travellogData[id];
     if (data) {
         currentTravellogTitle = data.text ? data.text.substring(0, 50) + '...' : '';
     }
@@ -1623,126 +1414,101 @@ function showLoginOverlay() {
 	  if (!el) return;
 	  el.classList.add('active');
 	  document.body.style.overflow = 'hidden';
-	}
+}
 
-	function hideLoginOverlay() {
-	  const el = document.getElementById('loginOverlay');
-	  if (!el) return;
-	  el.classList.remove('active');
-	  document.body.style.overflow = '';
-	}
+function hideLoginOverlay() {
+  const el = document.getElementById('loginOverlay');
+  if (!el) return;
+  el.classList.remove('active');
+  document.body.style.overflow = '';
+}
 
-	// 배경 클릭하면 닫히게(원하면 유지)
-	document.addEventListener('click', function(e){
-	  const overlay = document.getElementById('loginOverlay');
-	  if (!overlay) return;
-	  if (overlay.classList.contains('active') && e.target === overlay) {
-	    hideLoginOverlay();
+// 배경 클릭하면 닫히게(원하면 유지)
+document.addEventListener('click', function(e){
+  const overlay = document.getElementById('loginOverlay');
+  if (!overlay) return;
+  if (overlay.classList.contains('active') && e.target === overlay) {
+    hideLoginOverlay();
+  }
+});
+
+// ESC로 닫기(원하면 유지)
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') hideLoginOverlay();
+});
+
+function guardShare(e){
+	  if (e) e.preventDefault();
+
+	  // 기업회원: 공유 불가
+	  if (isBusiness) {
+	    // 조용히 막고 싶으면 return false만
+	    if (typeof showToast === 'function') showToast('기업회원은 공유할 수 없습니다.', 'info');
+	    return false;
 	  }
-	});
 
-	// ESC로 닫기(원하면 유지)
-	document.addEventListener('keydown', function(e){
-	  if (e.key === 'Escape') hideLoginOverlay();
-	});
+	  // 비회원/일반회원: 공유 가능
+	  return true;
+}
 
-/* 	function goComment(rcdNo) {
-		  // 기업회원: 아예 동작 안 함(이미 disabled 걸지만 안전하게)
-		  if (isBusiness) return;
+function handleShare(e, rcdNo){
+	  // 카드 클릭(goDetail)로 이벤트 전파되는 거 확실히 차단
+	  e.preventDefault();
+	  e.stopPropagation();
+	  if (e.stopImmediatePropagation) e.stopImmediatePropagation();
 
-		  // 비회원: 오버레이
-		  if (!isMember) {
-		    showLoginOverlay();
-		    return;
-		  }
+	  // 기업회원이면 안내만
+	  if (isBusiness) {
+	    if (typeof showToast === 'function') showToast('기업회원은 공유할 수 없습니다.', 'info');
+	    else alert('기업회원은 공유할 수 없습니다.');
+	    return;
+	  }
 
-		  // 일반회원: 상세로 이동 + 댓글 위치로(원하면 #commentSection)
-		  location.href = contextPath + '/community/travel-log/detail?rcdNo=' + rcdNo + '#commentSection';
-		} */
+	  // 비회원/일반회원: 링크 복사 실행
+	  shareTravellog(rcdNo);
+}
 
-		function guardShare(e){
-			  if (e) e.preventDefault();
+document.addEventListener('DOMContentLoaded', function () {
+	  ensureInitialIndex();
 
-			  // 기업회원: 공유 불가
-			  if (isBusiness) {
-			    // 조용히 막고 싶으면 return false만
-			    if (typeof showToast === 'function') showToast('기업회원은 공유할 수 없습니다.', 'info');
-			    return false;
-			  }
+	  applyBusinessDisabledUI(document);
+	  
+	  // 탭 클릭 이벤트
+	  document.querySelectorAll('.travellog-filter').forEach(tab => {
+	    tab.addEventListener('click', function () {
+	      document.querySelectorAll('.travellog-filter').forEach(t => t.classList.remove('active'));
+	      this.classList.add('active');
 
-			  // 비회원/일반회원: 공유 가능
-			  return true;
-			}
+	      applyFilter(this.dataset.filter); // 서버 재조회
+	    });
+	  });
 
-		function handleShare(e, rcdNo){
-			  // 카드 클릭(goDetail)로 이벤트 전파되는 거 확실히 차단
-			  e.preventDefault();
-			  e.stopPropagation();
-			  if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+	  // 최초: 서버렌더 1페이지가 이미 보이므로, grid 상태만 맞춰두고 무한스크롤 시작
+	  const grid = getGrid();
+	  if (grid) {
+	    grid.dataset.filter = 'all';
+	    grid.dataset.page = '1';
+	  }
 
-			  // 기업회원이면 안내만
-			  if (isBusiness) {
-			    if (typeof showToast === 'function') showToast('기업회원은 공유할 수 없습니다.', 'info');
-			    else alert('기업회원은 공유할 수 없습니다.');
-			    return;
-			  }
-
-			  // 비회원/일반회원: 링크 복사 실행
-			  shareTravellog(rcdNo);
-			}
-
-		console.log('showToast =', typeof window.showToast, window.showToast);
-		
-		
-		
-
-			
-			document.addEventListener('DOMContentLoaded', function () {
-				  ensureInitialIndex();
-
-				  // ✅ 탭 클릭 이벤트
-				  document.querySelectorAll('.travellog-filter').forEach(tab => {
-				    tab.addEventListener('click', function () {
-				      document.querySelectorAll('.travellog-filter').forEach(t => t.classList.remove('active'));
-				      this.classList.add('active');
-
-				      applyFilter(this.dataset.filter); // 서버 재조회
-				    });
-				  });
-
-				  // ✅ 최초: 서버렌더 1페이지가 이미 보이므로, grid 상태만 맞춰두고 무한스크롤 시작
-				  const grid = getGrid();
-				  if (grid) {
-				    grid.dataset.filter = 'all';
-				    grid.dataset.page = '1';
-				  }
-
-				  initInfiniteScroll();
-				});
-
-			
+	  initInfiniteScroll();
+});
 
 
+function sortCards(grid, cards, type) {
+  const key = (type === 'like') ? 'like' : 'bookmark';
 
-			function sortCards(grid, cards, type) {
-			  const key = (type === 'like') ? 'like' : 'bookmark';
+  cards.sort((a, b) => {
+    const aVal = parseInt(a.dataset[key] || 0, 10);
+    const bVal = parseInt(b.dataset[key] || 0, 10);
+    return bVal - aVal;
+  }).forEach(card => grid.appendChild(card));
+}
 
-			  cards.sort((a, b) => {
-			    const aVal = parseInt(a.dataset[key] || 0, 10);
-			    const bVal = parseInt(b.dataset[key] || 0, 10);
-			    return bVal - aVal;
-			  }).forEach(card => grid.appendChild(card));
-			}
-			
-
-			
-			const LOGIN_MEM_ID = '<c:out value="${loginName}" default="" />';
+const LOGIN_MEM_ID = '<c:out value="${loginName}" default="" />';
 
 
 
 </script>
-
-
 
 <c:set var="pageJs" value="community" />
 <%@ include file="../common/footer.jsp"%>

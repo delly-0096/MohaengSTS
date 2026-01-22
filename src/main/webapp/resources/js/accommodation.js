@@ -5,10 +5,12 @@
 
 // ==================== 전역 변수 설정 ====================
 
+const cp = document.querySelector('meta[name="context-path"]')?.content || '';
 var accomCurrentPage = 1;
 var accomPageSize = 12; 
 var accomIsLoading = false;
 var accomHasMore = true;
+
 
 // ==================== 인피니티 스크롤 로직 ====================
 document.addEventListener('DOMContentLoaded', function() {
@@ -59,124 +61,206 @@ function initAccomInfiniteScroll() {
 }
 
 function loadMore() {
-    if (accomIsLoading || !accomHasMore) return;
+	if (accomIsLoading || !accomHasMore) return;
 
-    accomIsLoading = true;
-    const loader = document.getElementById('accomScrollLoader');
-	const endDiv = document.getElementById('accomScrollEnd');
-    if(loader) loader.style.display = 'flex';
+	    accomIsLoading = true;
+	    const loader = document.getElementById('accomScrollLoader');
+	    const endDiv = document.getElementById('accomScrollEnd');
+	    if(loader) loader.style.display = 'flex';
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const areaCode = urlParams.get('areaCode') || '';
+			// 화면에 있는 필터값
+		    const accCatCd = document.querySelector('select[name="accCatCd"]')?.value || '';
+		    const priceRange = document.querySelector('select[name="priceRange"]')?.value || '';
+		    const starGrade = document.querySelector('select[name="starGrade"]')?.value || '';
+		    const sortBy = document.getElementById('sortBy')?.value || 'recommend';
+		    const keyword = document.getElementById('keyword')?.value || '';
 
-    fetch(`${contextPath}/product/accommodation/more?page=${accomCurrentPage + 1}&areaCode=${areaCode}`)        
-	.then(res => res.json())
-    .then(data => {
-			console.log("서버 응답 전체 데이터:", data); // 여기가 명당이야!
-			    const list = data.accList;
-			    console.log("숙소 리스트만:", list);
-			
-			if (!list || list.length === 0) {
-			    accomHasMore = false;
-                if(loader) loader.style.display = 'none';
-				if (accomCurrentPage > 1 && endDiv) {
-				                    endDiv.style.display = 'block';
-				}
-                return;
-            }
+		    const urlParams = new URLSearchParams(window.location.search);
+		    const areaCode = urlParams.get('areaCode') || '';
 
-            const grid = document.querySelector('.accommodation-grid');
-            
-            list.forEach((accom, index) => {
-                const accomHtml = createAccommodationCard(accom); 
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = accomHtml;
-                const newCard = tempDiv.firstElementChild;
+		    const requestUrl = `${contextPath}/product/accommodation/api/loadMore?` 
+		        + `page=${accomCurrentPage + 1}`
+		        + `&pageSize=${accomPageSize}`
+		        + `&accCatCd=${accCatCd}`
+		        + `&priceRange=${priceRange}`
+		        + `&starGrade=${starGrade}`
+		        + `&sortBy=${sortBy}`
+		        + `&areaCode=${areaCode}`
+		        + `&keyword=${keyword}`;
 
-                newCard.style.opacity = '0';
-                newCard.style.transform = 'translateY(20px)';
-                grid.appendChild(newCard);
+	    // 모든 파라미터를 URLSearchParams로 변환 
+	    fetch(`${contextPath}/product/accommodation/api/loadMore?` + new URLSearchParams(params))        
+	    .then(res => res.json())
+	    .then(data => {
+	        console.log("서버 응답 전체 데이터:", data); 
+			const list = data.accList || data.list;
+	        console.log("필터 유지된 추가 리스트:", list);
+	        
+	        if (!list || list.length === 0) {
+	            accomHasMore = false;
+	            if(loader) loader.style.display = 'none';
+	            if (accomCurrentPage > 1 && endDiv) {
+	                endDiv.style.display = 'block';
+	            }
+	            return;
+	        }
 
-                setTimeout(() => {
-                    newCard.style.transition = 'all 0.4s ease';
-                    newCard.style.opacity = '1';
-                    newCard.style.transform = 'translateY(0)';
-                }, index * 100);
-            });
+	        const grid = document.querySelector('.accommodation-grid');
+	        
+	        list.forEach((accom, index) => {
+	            const accomHtml = createAccommodationCard(accom); 
+	            const tempDiv = document.createElement('div');
+	            tempDiv.innerHTML = accomHtml;
+	            const newCard = tempDiv.firstElementChild;
 
-			loader = document.getElementById('accomScrollLoader');
-			            const endDiv = document.getElementById('accomScrollEnd');
-			            grid.appendChild(loader); // 로더를 맨 아래로 다시 이동
-			            grid.appendChild(endDiv); // 종료 메시지도 맨 아래로 이동
+	            newCard.style.opacity = '0';
+	            newCard.style.transform = 'translateY(20px)';
+	            grid.appendChild(newCard);
 
-            accomHasMore = data.hasMore;
-			
-			if (!accomHasMore && endDiv) {
-			                if(loader) loader.style.display = 'none';
-			                endDiv.style.display = 'block';
-			}
-			
-            accomCurrentPage++;
-			
-			setTimeout(() => {
-			                accomIsLoading = false;
-			            }, 300);
-        })
-        .catch(err => {
-            console.error("데이터 로드 실패:", err);
-            accomIsLoading = false;
-        });
+	            setTimeout(() => {
+	                newCard.style.transition = 'all 0.4s ease';
+	                newCard.style.opacity = '1';
+	                newCard.style.transform = 'translateY(0)';
+	            }, index * 100);
+	        });
+
+	        // 요소 재정렬
+	        const currentLoader = document.getElementById('accomScrollLoader');
+	        const currentEndDiv = document.getElementById('accomScrollEnd');
+	        grid.appendChild(currentLoader); 
+	        grid.appendChild(currentEndDiv); 
+
+	        accomHasMore = data.hasMore;
+	        
+	        if (!accomHasMore && endDiv) {
+	            if(currentLoader) currentLoader.style.display = 'none';
+	            endDiv.style.display = 'block';
+	        }
+	        
+	        accomCurrentPage++;
+	        
+	        setTimeout(() => {
+	            accomIsLoading = false;
+	        }, 300);
+	    })
+	    .catch(err => {
+	        console.error("데이터 로드 실패:", err);
+	        accomIsLoading = false;
+	    });
 }
 
 // ======= 필터된 데이터로 목록을 새로고침하는 함수 =============
+function refreshAccomList() {
+	const loader = document.getElementById('accomScrollLoader');
+	    if(loader) loader.style.display = 'block';
+
+	    const params = {
+	        page: 1,
+	        pageSize: accomPageSize,
+	        accCatCd: document.querySelector('select[name="accCatCd"]')?.value || '',
+	        priceRange: document.querySelector('select[name="priceRange"]')?.value || '',
+	        starGrade: document.querySelector('select[name="starGrade"]')?.value || '',
+	        sortBy: document.getElementById('sortBy')?.value || 'recommend',
+	        areaCode: document.getElementById('areaCode')?.value || '',
+	        keyword: document.getElementById('keyword')?.value || ''
+	    };
+
+	    fetch(`${cp}/product/accommodation/api/loadMore?` + new URLSearchParams(params))
+	        .then(res => res.json())
+	        .then(data => {
+	            const listContainer = document.getElementById('accommodationList');
+	            if (!listContainer) return;
+
+	            // 기존 목록 지우기 (확실하게!)
+	            listContainer.innerHTML = ''; 
+
+	            // 2. 중요: 컨트롤러에서 보낸 이름 "accList"로 확인하기
+	            const currentList = data.accList || data.list; // 혹시 모르니 둘 다 체크!
+
+	            if (currentList && currentList.length > 0) {
+	                // 3. 렌더링 함수에 리스트 전달
+	                renderAccomList(currentList); 
+	                
+	                // 4. 더보기 상태 업데이트 (data.hasMore도 컨트롤러에 있음!)
+	                accomHasMore = data.hasMore;
+	                if (!accomHasMore && loader) loader.style.display = 'none';
+	                
+	            } else {
+	                listContainer.innerHTML = '<div class="no-result" style="padding:50px; text-align:center;">조건에 맞는 숙소가 없습니다.</div>';
+	                accomHasMore = false;
+	                if(loader) loader.style.display = 'none';
+	            }
+	        })
+	        .catch(err => {
+	            console.error('필터링 오류:', err);
+	            if(loader) loader.style.display = 'none';
+	        });
+}
 
 /**
- * 필터된 데이터로 목록을 새로고침하는 함수
+ * 서버에서 받은 숙소 리스트를 HTML로 변환해서 화면에 출력
  */
-function refreshAccomList() {
-    // 로더 다시 보여주기
-    const loader = document.getElementById('accomScrollLoader');
-    if(loader) loader.style.display = 'block';
+function renderAccomList(accList) {
+    const listContainer = document.getElementById('accommodationList');
+    if (!listContainer) return;
 
-    // 현재 모든 필터 값 수집 (JSP에 있는 id/name과 일치 확인!)
-    const params = {
-        page: 1,
-        pageSize: accomPageSize,
-        accCatCd: document.querySelector('select[name="accCatCd"]')?.value || '',
-        priceRange: document.querySelector('select[name="priceRange"]')?.value || '',
-        starGrade: document.querySelector('select[name="starGrade"]')?.value || '',
-        sortBy: document.getElementById('sortBy')?.value || 'recommend',
-        areaCode: document.getElementById('areaCode')?.value || '',
-        keyword: document.getElementById('keyword')?.value || ''
-    };
+    // 만약 데이터가 없으면 안내 문구 출력
+    if (!accList || accList.length === 0) {
+        listContainer.innerHTML = '<div class="no-result" style="padding:100px; text-align:center; width:100%;">검색 결과가 없습니다.</div>';
+        return;
+    }
 
-    // AJAX로 필터링된 목록 요청
-    fetch(`${cp}/product/accommodation/loadMore?` + new URLSearchParams(params))
-        .then(res => res.json())
-        .then(data => {
-            const listContainer = document.getElementById('accommodationList');
-            if (!listContainer) return;
+    // 데이터를 하나씩 돌면서 HTML 카드 생성
+    accList.forEach(acc => {
+        const html = `
+            <div class="col-md-4 mb-4">
+                <div class="card tour-card h-100" onclick="location.href='${cp}/product/accommodation/${acc.tripProdNo}'">
+                    <div class="position-relative">
+                        <img src="${acc.accFilePath || cp + '/resources/images/no-image.png'}" class="card-img-top" alt="${acc.accName}">
+                        <div class="wishlist-icon">
+                            <i class="far fa-heart"></i>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">${acc.accName}</h5>
+                            <span class="badge bg-primary">${acc.starGrade}성급</span>
+                        </div>
+                        <p class="card-text text-muted mb-2">
+                            <i class="fas fa-map-marker-alt me-1"></i> ${acc.addr1}
+                        </p>
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="text-warning me-2">
+                                ${renderStars(acc.avgRating)} </div>
+                            <small class="text-muted">(${acc.reviewCount})</small>
+                        </div>
+                        <div class="text-end">
+                            <span class="fs-5 fw-bold">${acc.finalPrice.toLocaleString()}원</span>
+                            <small class="text-muted"> / 1박</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        listContainer.insertAdjacentHTML('beforeend', html);
+    });
+}
 
-            // 핵심: 기존 목록 지우기
-            listContainer.innerHTML = ''; 
-
-            if (data.list && data.list.length > 0) {
-                // 새로운 목록 그리기 (기존에 쓰던 렌더링 함수가 있다면 호출!)
-                // 예: data.list.forEach(item => appendItemToList(item));
-                renderAccomList(data.list); 
-                
-                // 가져온 데이터가 pageSize보다 적으면 더보기 종료
-                if (data.list.length < accomPageSize) {
-                    accomHasMore = false;
-                    if(loader) loader.style.display = 'none';
-                }
-            } else {
-                listContainer.innerHTML = '<div class="no-result">조건에 맞는 숙소가 없습니다.</div>';
-                accomHasMore = false;
-                if(loader) loader.style.display = 'none';
-            }
-        })
-        .catch(err => console.error('필터링 오류:', err));
+/**
+ * 평점에 따른 별 모양 생성 함수 (간지용!)
+ */
+function renderStars(rating) {
+    let stars = '';
+    for (let i = 1; i <= 5; i++) {
+        if (i <= rating) {
+            stars += '<i class="fas fa-star"></i>';
+        } else if (i - 0.5 <= rating) {
+            stars += '<i class="fas fa-star-half-alt"></i>';
+        } else {
+            stars += '<i class="far fa-star"></i>';
+        }
+    }
+    return stars;
 }
 
 // ==================== 카드 생성 함수 ====================
@@ -439,7 +523,7 @@ document.getElementById('accommodationSearchForm')?.addEventListener('submit', f
 
 //==========================================================
 // 결제 버튼 클릭 시 검색바의 날짜와 인원을 들고 튀는 함수
-function goBooking(accNo, roomTypeNo) {
+function goBooking(accNo, roomTypeNo, tripProdNo) {
 		const urlParams = new URLSearchParams(window.location.search);
 	// 1. 검색바에 입력된 값들 가져오기
 		const startDate = urlParams.get('startDate') || document.getElementById('checkIn').value;
@@ -455,8 +539,8 @@ function goBooking(accNo, roomTypeNo) {
 
 	    // 3. 최종 결제 주소 생성 (우리가 만든 컨트롤러 주소와 매칭)
 	    // contextPath는 header.jsp에 있다고 했으니 그대로 사용!
-	    const url = contextPath + "/product/accommodation/" + accNo + "/booking" +
-	                "?roomNo=" + roomTypeNo +
+	    const url = contextPath + "/product/accommodation/" + roomTypeNo + "/booking" +
+	                "?tripProdNo=" + tripProdNo +
 	                "&startDate=" + startDate +
 	                "&endDate=" + endDate +
 	                "&adultCount=" + adultCount;

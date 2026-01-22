@@ -7,6 +7,7 @@
 <c:set var="pageCss" value="product" />
 
 <%@ include file="../common/header.jsp" %>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/accommodation.css">
 
 <div class="product-page">
     <!-- 헤더 -->
@@ -75,7 +76,7 @@
                 </div>
                 <div class="filter-group">
                     <label>가격대</label>
-                    <select class="form-select">
+                    <select class="form-select" name="priceRange">
                         <option value="">전체</option>
                         <option value="0-50000">5만원 이하</option>
                         <option value="50000-100000">5~10만원</option>
@@ -85,7 +86,7 @@
                 </div>
                 <div class="filter-group">
                     <label>등급</label>
-                    <select class="form-select">
+                    <select class="form-select" name="starGrade">
                         <option value="">전체</option>
                         <option value="5">5성급</option>
                         <option value="4">4성급</option>
@@ -94,7 +95,7 @@
                 </div>
                 <div class="filter-group">
                     <label>정렬</label>
-                    <select class="form-select" id="sortBy">
+                    <select class="form-select" id="sortBy" name="sortBy">
                         <option value="recommend">추천순</option>
                         <option value="price_low">가격 낮은순</option>
                         <option value="price_high">가격 높은순</option>
@@ -128,7 +129,8 @@
             <div class="accommodation-grid">
                 <c:forEach items="${accList }" var="acc">
                 <div class="accommodation-card" data-accommodation-id="${acc.accNo}">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo }" class="accommodation-image">
+                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }" class="accommodation-image">
+                       ${acc.tripProdNo }
                         <img src="${acc.accFilePath}" alt="${acc.accName}">
                         <span class="accommodation-badge">인기</span>
                     </a>
@@ -141,7 +143,7 @@
                             <span>4.8</span>
                             <span class="review-count">(1,234)</span>
                         </div>
-                        <a href="${pageContext.request.contextPath}/product/accommodation/${acc.accNo }" class="accommodation-name-link">
+                        <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }" class="accommodation-name-link">
                             <h3 class="accommodation-name">${acc.accName}</h3>
                         </a>
 
@@ -229,7 +231,7 @@
 								    </div>
 								
 								    <button type="button" class="btn btn-primary btn-sm" style="border-radius: 6px; padding: 6px 15px;"
-								            onclick="goBooking(${acc.accNo}, ${room.roomTypeNo})">결제</button>
+								            onclick="goBooking(${acc.accNo}, ${room.roomTypeNo}, ${acc.tripProdNo })">결제</button>
 								</div>
                             </c:forEach>
                             </div>
@@ -269,306 +271,9 @@
 			</c:if>
     </div>
 
-<style>
-/* 검색 드롭다운 스타일 */
-/* 드롭다운 전체 박스 크기 조절 */
-.auto-dropdown {
-    max-height: 300px;
-    overflow-y: auto;
-    border: 1px solid #ddd;
-    background: #fff;
-    position: absolute;
-    width: 100%;
-    z-index: 1000;
-}
 
-/* 개별 항목 글씨 크기 줄이기 */
-.auto-dropdown .list-group-item {
-    padding: 6px 10px !important; /* 상하 여백 줄임 */
-    font-size: 13px !important;    /* 리더가 원한 작은 글씨! */
-    border: none;
-    border-bottom: 1px solid #f0f0f0;
-    cursor: pointer;
-}
-
-/* 아이콘 크기 조절 */
-.auto-dropdown .bi {
-    font-size: 11px;
-    margin-right: 5px;
-}
-.auto-dropdown .list-group-item {
-    padding: 8px 12px;     /* 상하 간격을 좁혀서 더 많이 보이게 */
-    font-size: 14px;       /* 기본보다 살짝 줄임 (원래 보통 16px) */
-    color: #333;           /* 글자색을 좀 더 깔끔하게 */
-    white-space: nowrap;   /* 글자가 길어도 줄바꿈 안 되게 */
-    overflow: hidden;
-    text-overflow: ellipsis; /* 너무 길면 ... 처리 */
-}
-
-.region-item strong {
-    pointer-events: none; /* 글씨를 눌러도 부모인 li가 이벤트를 받게 함 */
-}
-
-.auto-dropdown .bi-geo-alt-fill {
-    font-size: 12px;
-    margin-right: 8px;
-}
-
-/* 금액 영역 전체 컨테이너 */
-.accommodation-price-row {
-    display: flex;
-    justify-content: space-between; /* 가격과 결제버튼 양끝 정렬 */
-    align-items: flex-end; /* 바닥 기준 정렬 */
-/*     margin-top: 2px; */
-}
-
-.accommodation-price {
-    display: flex;
-    align-items: baseline; /* 텍스트 베이스라인에 맞춤 */
-    flex-wrap: nowrap; /* 절대 줄바꿈 금지 */
-    gap: 6px; /* 요소 사이 간격 */
-}
-
-/* 10% OFF 뱃지 */
-.discount-badge {
-	display: inline-block;  
-    width: auto;            
-    background-color: #ffeded;
-    color: #e74c3c;
-    padding: 2px 8px;       
-    border-radius: 4px;
-    margin-bottom: 1px;
-}
-
-/* 원래 가격 (취소선) */
-.original-price {
-    color: #999;
-    text-decoration: line-through;
-    font-size: 14px;
-    white-space: nowrap;
-}
-
-/* 실제 결제 가격 (빨간색) */
-.price {
-    color: #e74c3c;
-    font-size: 20px; /* 크기 살짝 조정 */
-    font-weight: 800;
-    line-height: 1;
-    white-space: nowrap;
-}
-
-/* / 1박 텍스트 */
-.per-night {
-    font-size: 13px;
-    color: #666;
-    margin-left: 2px;
-}
-
-/* 숙소 카드 드롭다운 스타일 */
-.accommodation-price .price-label {
-    display: block;
-    font-size: 11px;
-    color: var(--gray-medium);
-    margin-bottom: 2px;
-}
-
-.accommodation-select-btn {
-    white-space: nowrap;
-}
-
-.accommodation-select-btn i {
-    margin-left: 4px;
-    transition: transform 0.3s ease;
-}
-
-.accommodation-card.active .accommodation-select-btn i {
-    transform: rotate(180deg);
-}
-
-/* 결제 드롭다운 */
-.accommodation-booking-dropdown {
-    display: none;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    border-radius: 0 0 12px 12px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    z-index: 100;
-}
-
-.accommodation-card.active .accommodation-booking-dropdown {
-    display: block;
-}
-
-.booking-dropdown-content {
-    padding: 16px;
-}
-
-.room-options {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.room-option {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    background: #f8fafc;
-    border-radius: 10px;
-    border: 1px solid #e2e8f0;
-    transition: all 0.2s ease;
-}
-
-.room-option:hover {
-    border-color: var(--primary-color);
-    background: #f0f7ff;
-}
-
-.room-option-info h6 {
-    font-size: 15px;
-    font-weight: 600;
-    margin: 0 0 6px 0;
-    color: #333;
-}
-
-.room-option-info p {
-    font-size: 13px;
-    color: #666;
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.room-option-info p i {
-    color: var(--primary-color);
-}
-
-/* 잔여 객실 수 스타일 */
-.room-stock {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    font-weight: 500;
-    padding: 3px 8px;
-    border-radius: 4px;
-    margin-top: 6px;
-}
-
-.room-stock.available {
-    color: #10b981;
-    background: #ecfdf5;
-}
-
-.room-stock.low {
-    color: #f59e0b;
-    background: #fffbeb;
-}
-
-.room-stock.soldout {
-    color: #ef4444;
-    background: #fef2f2;
-}
-
-.room-option-price {
-    text-align: right;
-    margin-right: 16px;
-}
-
-.room-option-price .price {
-    font-size: 18px;
-    font-weight: 700;
-    color: var(--primary-color);
-}
-
-.room-option-price .per-night {
-    font-size: 12px;
-    color: #666;
-}
-
-/* 숙소 이미지/이름 링크 스타일 */
-a.accommodation-image {
-    display: block;
-    position: relative;
-    aspect-ratio: 4/3;
-    overflow: hidden;
-}
-
-a.accommodation-image img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-a.accommodation-image:hover img {
-    transform: scale(1.05);
-}
-
-.accommodation-name-link {
-    text-decoration: none;
-    color: inherit;
-}
-
-.accommodation-name-link:hover .accommodation-name {
-    color: var(--primary-color);
-}
-
-/* 인원 선택 스타일 */
-.guest-counter-wrapper {
-    display: flex;
-    align-items: center;
-    background: var(--white-color);
-    border: 2px solid var(--gray-light);
-    border-radius: var(--radius-md);
-    padding: 12px 16px;
-    font-size: 15px;
-}
-.counter-controls {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-left: auto;
-}
-.btn-count {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    border: 1px solid var(--primary-color);
-    background: #fff;
-    color: var(--primary-color);
-    font-weight: bold;
-    cursor: pointer;
-}
-.btn-count:hover {
-    background: var(--primary-color);
-    color: #fff;
-}
-#adultCount {
-    width: 30px;
-    border: none;
-    text-align: center;
-    font-weight: bold;
-}
-
-/* 검색 결과가 없을 경우 */
-.no-result-wrapper {
-        display: flex;
-        flex-direction: column;
-        align-items: center;  /* 가로 중앙 */
-        justify-content: center; /* 세로 중앙 (필요시) */
-        min-height: 400px;    /* 너무 딱 붙어있지 않게 높이 확보 */
-        width: 100%;
-    }
-</style>
 <script src="${pageContext.request.contextPath}/resources/js/accommodation.js"></script>
 <script>
-
 window.addEventListener('load', function() {
     if (typeof initSearch === 'function') {
         initSearch({

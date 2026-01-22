@@ -8,28 +8,16 @@ import kr.or.ddit.mohaeng.vo.CommentsVO;
 @Mapper
 public interface ICommentsMapper {
 
-    List<CommentsVO> selectCommentsByTarget(
-        @Param("targetType") String targetType,
-        @Param("targetNo") Long targetNo,
-        @Param("loginMemberNo") Long loginMemberNo
-    );
+	List<CommentsVO> selectCommentsByTarget(@Param("targetType") String targetType, @Param("targetNo") Long targetNo,
+			@Param("loginMemberNo") Long loginMemberNo);
 
-    int insertComment(CommentsVO vo);
+	int insertComment(CommentsVO vo);
 
-    int updateCommentContent(
-        @Param("cmntNo") Long cmntNo,
-        @Param("writerNo") Long writerNo,
-        @Param("content") String content
-    );
+	int updateCommentContent(@Param("cmntNo") Long cmntNo, @Param("writerNo") Long writerNo,
+			@Param("content") String content);
 
-    int softDeleteComment(
-        @Param("cmntNo") Long cmntNo,
-        @Param("writerNo") Long writerNo
-    );
+	int softDeleteComment(@Param("cmntNo") Long cmntNo, @Param("writerNo") Long writerNo);
 
-    int countByTarget(
-        @Param("targetType") String targetType,
-        @Param("targetNo") Long targetNo
-    );
+	int countByTarget(@Param("targetType") String targetType, @Param("targetNo") Long targetNo);
 
 }

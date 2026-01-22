@@ -61,7 +61,7 @@ function updateGuest(type, delta) {
 /* =======================
    4. 객실 선택 및 렌더링
 ======================= */
-function selectRoom(roomId, roomName, price, baseGuest, maxGuest, extraFee) {
+function selectRoom(roomId, roomName, price, baseGuest, maxGuest, extraFee, unitPrice) {
 	// 현재 선택한 인원수 합계 계산
 	const currentTotal = state.guests.adult + state.guests.child;
 	
@@ -80,7 +80,8 @@ function selectRoom(roomId, roomName, price, baseGuest, maxGuest, extraFee) {
     state.selectedRooms.push({
         id: roomId,
         name: roomName,
-        price: price,
+        displayPrice: price,	// 할인가
+		unitPrice: unitPrice, // 판매단가
         baseGuest: baseGuest,
 		maxGuest: maxGuest,
         extraFee: extraFee
@@ -110,7 +111,7 @@ function renderSelectedRooms() {
                     <i class="bi bi-x-circle-fill"></i>
                 </button>
             </div>
-            <div class="text-end text-primary" style="font-weight:bold;">${room.price.toLocaleString()}원</div>
+            <div class="text-end text-primary" style="font-weight:bold;">${room.displayPrice.toLocaleString()}원</div>
         </div>
     `).join('');
 
@@ -162,7 +163,7 @@ function updateTotalPrice() {
     const totalGuests = state.guests.adult + state.guests.child;
 
     state.selectedRooms.forEach(room => {
-        let roomPrice = room.price;
+        let roomPrice = room.displayPrice;
         // 기준 인원 초과 시 추가 요금 발생
         if (totalGuests > room.baseGuest) {
             roomPrice += (totalGuests - room.baseGuest) * room.extraFee;
@@ -205,16 +206,25 @@ function handleBookingSubmit(e) {
 
     const checkIn = document.getElementById('checkInDate').value;
     const checkOut = document.getElementById('checkOutDate').value;
-
     // 여러 개 선택 시 처리 (일단 첫 번째 객실 번호로 보냄, 필요시 수정)
     const roomNos = state.selectedRooms.map(r => r.id).join(',');
+	const firstRoomNo = state.selectedRooms[0].id;
 
-    location.href = `${state.contextPath}/product/accommodation/${state.accNo}/booking` +
-                    `?roomNo=${roomNos}` + 
-                    `&startDate=${checkIn}` +
-                    `&endDate=${checkOut}` +
-                    `&adultCount=${state.guests.adult}` +
-                    `&childCount=${state.guests.child}`;
+	const tripProdNo = document.getElementById('tripProdNo').value;
+	const finalTripProdNo = tripProdNo || TRIP_PROD_NO;
+	const unitPrice = state.selectedRooms[0].unitPrice; // 할인 전 단가 추출
+
+	var url = state.contextPath + "/product/accommodation/" + firstRoomNo + "/booking" +
+	              "?tripProdNo=" + finalTripProdNo + 
+				  "&price=" + unitPrice +
+	              "&roomNo=" + roomNos +       
+	              "&startDate=" + checkIn +
+	              "&endDate=" + checkOut +
+	              "&adultCount=" + state.guests.adult +
+	              "&childCount=" + state.guests.child;
+				  
+	console.log("최종 이동 주소:", url);
+    location.href = url;
 }
 window.handleBookingSubmit = handleBookingSubmit;
 

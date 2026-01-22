@@ -108,12 +108,12 @@ public class BusinessProductsVO {
 	private List<AttachFileDetailVO> imageList;			// 전체 사진 가져오기 - attachNo로
 	
 	private List<AccOptionVO> optionList;				// 추가옵션 - 숙소와 1대n
-	private List<AccResvOptionVO> resOptionList;		// 숙소 예약옵션 - 추가옵션과 1대1
-	private List<AccResvVO> resList;					// 숙소 예약 - 숙소 예약옵션과 1대1, 객실타입과 1대n
+	private List<AccResvOptionVO> resvOptionList;		// 숙소 예약옵션 - 추가옵션과 1대1
+	private List<AccResvVO> resvList;					// 숙소 예약 - 숙소 예약옵션과 1대1, 객실타입과 1대n
 
 	// 여기 안에 feature, facility가 다 있음
-	private List<RoomTypeVO> roomTypeList;				// 객실타입 - 숙소 와 1대n
+//	private List<RoomTypeVO> roomTypeList;				// 객실타입 - 숙소 와 1대n
 //	private List<RoomFacilityVO> roomFacilityList;		// 객실 내 시설 - 객싵타입과 1대1
 //	private List<RoomFeatureVO> roomFeatureList;		// 객실 내 특징 - 객실 타입과 1대1
-	private List<RoomVO> rooms;						// 객실	- 객실타입과 1대n
+//	private List<RoomVO> rooms;						// 객실	- 객실타입과 1대n
 }

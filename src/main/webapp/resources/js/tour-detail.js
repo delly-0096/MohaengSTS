@@ -520,10 +520,10 @@ function appendReview(rv) {
         avatarHtml = '<i class="bi bi-person"></i>';
     }
     
-    // 본인 리뷰인 경우 수정/삭제 드롭다운 추가
-    var dropdownHtml = '';
+    // 본인 리뷰인 경우 수정/삭제 드롭다운
+    var actionHtml = '';
     if (loginMemNo && loginMemNo === rv.memNo) {
-        dropdownHtml = 
+        actionHtml = 
             '<div class="dropdown">' +
                 '<button class="btn-more" type="button" data-bs-toggle="dropdown">' +
                     '<i class="bi bi-three-dots-vertical"></i>' +
@@ -535,6 +535,13 @@ function appendReview(rv) {
                         '<i class="bi bi-trash me-2"></i>삭제</a></li>' +
                 '</ul>' +
             '</div>';
+	} else if (isLoggedIn && loginMemType !== 'BUSINESS') {
+        var reviewContent = escapeHtml(rv.prodReview);
+        var shortContent = reviewContent.length > 30 ? reviewContent.substring(0, 30) + '...' : reviewContent;
+        actionHtml = 
+            '<button class="btn-more" type="button" onclick="openReportModal(\'review\', \'' + rv.prodRvNo + '\', \'' + shortContent.replace(/'/g, "\\'") + '\', \'' + rv.memNo + '\')">' +
+                '<i class="bi bi-flag"></i>' +
+            '</button>';
     }
     
     // 리뷰 이미지 HTML 생성
@@ -561,7 +568,7 @@ function appendReview(rv) {
                 '</div>' +
                 '<div class="d-flex align-items-center gap-2">' +
                     '<div class="review-rating">' + starsHtml + '</div>' +
-                    dropdownHtml +
+                    actionHtml +
                 '</div>' +
             '</div>' +
             '<div class="review-content">' +
@@ -1280,6 +1287,30 @@ function appendInquiry(inq, serverLoginMemNo) {
     } else {
         questionHtml = '<p><strong>Q.</strong> ' + escapeHtml(inq.prodInqryCn) + '</p>';
     }
+	
+	// 문의 액션 버튼 (본인: 수정/삭제, 타인: 신고)
+    var inquiryActionHtml = '';
+    if (isOwner && !isAnswered) {
+        inquiryActionHtml = 
+            '<div class="dropdown">' +
+                '<button class="btn-more" type="button" data-bs-toggle="dropdown">' +
+                    '<i class="bi bi-three-dots-vertical"></i>' +
+                '</button>' +
+                '<ul class="dropdown-menu dropdown-menu-end">' +
+                    '<li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditInquiryModal(' + inq.prodInqryNo + ', \'' + inq.inquiryCtgry + '\', \'' + escapeHtml(inq.prodInqryCn).replace(/'/g, "\\'") + '\', \'' + inq.secretYn + '\')">' +
+                        '<i class="bi bi-pencil me-2"></i>수정</a></li>' +
+                    '<li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteInquiry(' + inq.prodInqryNo + ')">' +
+                        '<i class="bi bi-trash me-2"></i>삭제</a></li>' +
+                '</ul>' +
+            '</div>';
+    } else if (isLoggedIn && !isBusiness && !isOwner && !isSecretInq) {
+        var inquiryContent = escapeHtml(inq.prodInqryCn);
+        var shortContent = inquiryContent.length > 30 ? inquiryContent.substring(0, 30) + '...' : inquiryContent;
+        inquiryActionHtml = 
+            '<button class="btn-more" type="button" onclick="openReportModal(\'inquiry\', \'' + inq.prodInqryNo + '\', \'' + shortContent.replace(/'/g, "\\'") + '\', \'' + inq.inquiryMemNo + '\')">' +
+                '<i class="bi bi-flag"></i>' +
+            '</button>';
+    }
     
     // 답변 내용
     var answerHtml = '';
@@ -1289,11 +1320,24 @@ function appendInquiry(inq, serverLoginMemNo) {
                            String(replyDate.getMonth() + 1).padStart(2, '0') + '.' + 
                            String(replyDate.getDate()).padStart(2, '0');
         
+	   var replyActionHtml = '';
+       if (isLoggedIn && !isBusiness) {
+           var replyContent = escapeHtml(inq.replyCn);
+           var shortReplyContent = replyContent.length > 30 ? replyContent.substring(0, 30) + '...' : replyContent;
+           replyActionHtml = 
+               '<button class="btn-more btn-more-sm" type="button" onclick="openReportModal(\'reply\', \'' + inq.prodInqryNo + '\', \'' + shortReplyContent.replace(/'/g, "\\'") + '\', \'' + inq.replyMemNo + '\')">' +
+                   '<i class="bi bi-flag"></i>' +
+               '</button>';
+       }
+						   
         answerHtml = 
             '<div class="inquiry-item-answer">' +
                 '<div class="answer-header">' +
                     '<span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>' +
-                    '<span class="answer-date">' + replyDateStr + '</span>' +
+					'<div class="d-flex align-items-center gap-2">' +
+						'<span class="answer-date">' + replyDateStr + '</span>' +
+						replyActionHtml +
+					'</div>' +
                 '</div>' +
                 '<p><strong>A.</strong> ' + escapeHtml(inq.replyCn) + '</p>' +
             '</div>';
@@ -1308,7 +1352,10 @@ function appendInquiry(inq, serverLoginMemNo) {
                     '<span class="inquiry-date">' + regDateStr + '</span>' +
                     (isSecretInq ? '<span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>' : '') +
                 '</div>' +
-                '<span class="inquiry-status ' + statusClass + '">' + statusText + '</span>' +
+				'<div class="d-flex align-items-center gap-2">' +
+	                '<span class="inquiry-status ' + statusClass + '">' + statusText + '</span>' +
+					inquiryActionHtml +
+				'</div>' +
             '</div>' +
             '<div class="inquiry-item-question">' + questionHtml + '</div>' +
             answerHtml +
@@ -2145,4 +2192,50 @@ function initBookingDatePicker() {
         disableMobile: true,
         position: 'below'
     });
+}
+
+// ==================== 북마크 기능 ====================
+function toggleTourBookmark() {
+    if (!isLoggedIn) {
+        sessionStorage.setItem('returnUrl', window.location.href);
+        showToast('로그인이 필요한 서비스입니다.', 'warning');
+        setTimeout(function() {
+            window.location.href = CONTEXT_PATH + '/member/login';
+        }, 1000);
+        return;
+    }
+    
+    fetch(CONTEXT_PATH + '/tour/' + TRIP_PROD_NO + '/bookmark', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(function(response) {
+        return response.json();
+    })
+    .then(function(data) {
+        if (data.success) {
+            showToast(data.message, data.bookmarked ? 'success' : 'info');
+            updateBookmarkButton(data.bookmarked);
+        } else {
+            showToast(data.message, 'warning');
+        }
+    })
+    .catch(function(error) {
+        console.error('Error:', error);
+        showToast('처리 중 오류가 발생했습니다.', 'error');
+    });
+}
+
+function updateBookmarkButton(bookmarked) {
+    var btn = document.getElementById('bookmarkBtn');
+    btn.dataset.bookmarked = bookmarked;
+    isBookmarked = bookmarked;
+    
+    if (bookmarked) {
+        btn.innerHTML = '<i class="bi bi-bookmark-fill me-2"></i>북마크 삭제';
+    } else {
+        btn.innerHTML = '<i class="bi bi-bookmark me-2"></i>북마크';
+    }
 }

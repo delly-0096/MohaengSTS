@@ -19,7 +19,7 @@ public class ReportApiController {
 
     private final IReportService reportService;
 
-    // ✅ 일반회원만 신고 가능
+    // 일반회원만 신고 가능
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<?> create(@RequestBody ReportVO req,
@@ -39,7 +39,7 @@ public class ReportApiController {
         req.setProcStatus("WAIT");
 
         int inserted = reportService.createReport(req);
-        return ResponseEntity.ok(inserted); // ✅ 1이면 정상 insert
+        return ResponseEntity.ok(inserted); // 1이면 정상 insert
     }
 
 }

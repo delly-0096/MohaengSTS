@@ -116,11 +116,12 @@ public class CustomUserDetails implements UserDetails, OAuth2User {
 	public int getMemNo() {
 		return member.getMemNo();
 	}
-
-	public int getCompNo() {
-
-		return 0;
-	}
+	
+	/*
+	 * public int getCompNo() {
+	 * 
+	 * return 0; }
+	 */
 	
 
 }

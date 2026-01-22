@@ -64,4 +64,8 @@ public interface ITripScheduleService {
 	public void aiInsertStyleKeyword();
 
 	public List<TourPlaceVO> selectStyleMatchPlace(Params params);
+
+	public void matchLegalDongCode();
+
+	public void updateDefaultImg();
 }

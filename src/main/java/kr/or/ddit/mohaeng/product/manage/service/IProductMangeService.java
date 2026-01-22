@@ -1,4 +1,4 @@
-package kr.or.ddit.mohaeng.business.service;
+package kr.or.ddit.mohaeng.product.manage.service;
 
 import java.util.List;
 
@@ -7,7 +7,7 @@ import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
 
-public interface IBusinessProductService {
+public interface IProductMangeService {
 	
 	/**
 	 * <p>본인 상품 목록 조회</p>
@@ -16,7 +16,6 @@ public interface IBusinessProductService {
 	 * @param tripProd (memNo)
 	 * @return 상품목록
 	 */
-//	public List<TripProdVO> getProductlist(TripProdVO tripProd);
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts);
 	/**
 	 * <p>기업 상품 현황 통계</p>

@@ -1,7 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
 public class LikesStatusVO {
-    private boolean liked;     // isLiked
+    private boolean liked;     
     private long likeCount;
 
     public LikesStatusVO() {}

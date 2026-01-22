@@ -5,6 +5,7 @@
 
 // 1. 전역 설정값 (중앙 관리)
 let bookingConfig = {
+	unitPrice : 0,
     roomPricePerNight: 0,
     nights: 0,
     extraGuestPrice: 30000,
@@ -18,8 +19,32 @@ let bookingConfig = {
 
 // 2. 초기화 (엔트리 포인트)
 function initBooking(config) {
+	// 설정값 복사 (여기 config에 파라미터로 넘어온 인원수가 담겨져 있어야 함)
     bookingConfig = { ...bookingConfig, ...config };
+	
+	// 인원수 input 요소 가져오기 (결제 페이지에 있는 ID 확인)
+	const adultInput = document.getElementById('adultCount');
+	const childInput = document.getElementById('childCount');
+	const infantInput = document.getElementById('infantCount');
     
+	// 넘어온 값이 있을 경우 화면에 출력
+	if (adultInput && bookingConfig.adultCount) {
+	        adultInput.value = bookingConfig.adultCount;
+	    }
+	if (childInput && bookingConfig.childCount) {
+	        childInput.value = bookingConfig.childCount;
+	    }
+	if (infantInput && bookingConfig.infantCount) {
+		       infantInput.value = bookingConfig.childCount;
+	}
+	
+	// 세팅된 인원수로 가격 계산기 한 번 돌려주기
+	updateGuestPriceWithPolicy(
+	        parseInt(adultInput?.value || 2), 
+	        parseInt(childInput?.value || 0), 
+	        parseInt(infantInput?.value || 0)
+	 );
+		
     // UI 동적 생성
     setupGuestOptions(config.baseGuestCount, config.maxGuestCount); // 인원수
     setupArrivalTimeOptions(config.checkInTime);                    // 도착시간
@@ -341,11 +366,11 @@ function updateGuestPriceWithPolicy(adult, child, infant) {
     if (remainingBase > 0) {
         remainingBase -= child;
         if (remainingBase < 0) {
-            extraFee += Math.abs(remainingBase) * (bookingConfig.extraGuestPrice * 0.75); // 아동은 70%
+            extraFee += Math.floor(Math.abs(remainingBase) * (bookingConfig.extraGuestPrice * 0.75)); // 아동은 70%
         }
     } else {
         // 이미 성인이 기준인원을 넘었다면 아동은 전원 추가금 (50%)
-        extraFee += child * (bookingConfig.extraGuestPrice * 0.75);
+        extraFee += Math.floor(child * (bookingConfig.extraGuestPrice * 0.75));
     }
 
     // 화면 갱신
@@ -394,6 +419,8 @@ function collectBookingData() {
     const adultCnt = parseInt(document.getElementById('adultCount').value);
     const childCnt = parseInt(document.getElementById('childCount').value);
     const infantCnt = parseInt(document.getElementById('infantCount').value);
+	const nights = bookingConfig.nights;
+	const unitPrice = bookingConfig.unitPrice;
 
     // 추가 옵션 체크박스 수집
     const addons = [];
@@ -403,13 +430,15 @@ function collectBookingData() {
 
     // 최종 데이터 객체 생성 (AccResvVO 구조와 일치시켜야 함)
     const bookingData = {
+		// 상품 번호
+		tripProdNo: bookingConfig.tripProdNo || document.querySelector('input[name="tripProdNo"]')?.value,
         // 기본 정보
         roomTypeNo: bookingConfig.roomNo,           // 객실 번호
         startDt: bookingConfig.startDt,     // 체크인 날짜
         endDt: bookingConfig.endDt,         // 체크아웃 날짜
 		
 		//숙박 일수
-		stayDays: bookingConfig.nights,
+		stayDays: nights,
         
         // 결제자 정보
         bookerName: document.getElementById('bookerName').value,
@@ -425,7 +454,12 @@ function collectBookingData() {
         resvRequest: document.getElementById('resvRequest').value, 
 
         // 금액 정보
-        resvPrice: (bookingConfig.roomPricePerNight * bookingConfig.nights) + 
+		// 판매 단가
+		price: unitPrice,
+		roomTotalPrice: unitPrice * nights,
+		extraFee: bookingConfig.currentExtraFee || 0,
+		// 총 결제 예정 금액
+		resvPrice: (unitPrice * nights) + 
                    (bookingConfig.currentExtraFee || 0) + 
                    (bookingConfig.addonsTotal || 0),
         

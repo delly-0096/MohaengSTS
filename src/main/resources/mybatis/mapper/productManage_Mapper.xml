@@ -1,0 +1,469 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper">
+
+	<!-- 여행상품 -->
+	<resultMap id="tripPordMap" type="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
+		<id property="tripProdNo" column="TRIP_PROD_NO"/>
+		<result property="compNo" column="COMP_NO" />
+	    <result property="memNo" column="MEM_NO" />
+	    <result property="prodCtgryType" column="PROD_CTGRY_TYPE" />
+	    <result property="approveStatus" column="APPROVE_STATUS" />
+	    <result property="tripProdTitle" column="TRIP_PROD_TITLE" />
+	    <result property="tripProdContent" column="TRIP_PROD_CONTENT" />
+	    <result property="saleStartDt" column="SALE_START_DT" />
+	    <result property="saleEndDt" column="SALE_END_DT" />
+	    <result property="attachNo" column="ATTACH_NO" />
+	    <result property="viewCnt" column="VIEW_CNT" />
+	    <result property="regDt" column="REG_DT" />
+	    <result property="modDt" column="MOD_DT" />
+	    <result property="aprvYn" column="APRV_YN" />
+	    <result property="rejRsn" column="REJ_RSN" />
+	    <result property="rejDt" column="REJ_DT" />
+	    <result property="resDt" column="RES_DT" />
+	    <result property="delYn" column="DEL_YN" />
+	    <result property="delDt" column="DEL_DT" />
+	    <result property="ctyNm" column="CTY_NM" />
+		
+		<!-- db에 없는 것들 -->
+		<result property="avgRating" column="AVG_RATING" />
+	    <result property="reviewCount" column="REVIEW_COUNT" />
+	    <result property="recommendCount" column="RECOMMEND_COUNT" />
+	    <result property="thumbImage" column="THUMB_IMAGE" />
+	    
+	    <!-- 화면에 보여줄 가격 -->
+	    <result property="displayPrice" column="DISPLAY_PRICE" />
+	    
+		<!-- 숙박 -->
+		<association property="accommodation" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accMap"/>
+		
+		<!-- 상품 관련 -->
+		<association property="prodSale" resultMap="prodSaleMap"/>
+		<association property="prodInfo" resultMap="prodInfoMap"/>
+		<association property="prodPlace" resultMap="prodPlaceMap"/>
+		
+		<!-- 구입 상품 목록 판매량 확인용 -->
+        <collection property="prodList" resultMap="prodListMap"/>
+<!--         <collection property="roomTypeList" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomTypeMap"/> -->
+	</resultMap>
+	
+	<!-- 구입 상품 목록 이걸로 판매량 확인하기 -->
+	<resultMap id="prodListMap" type="kr.or.ddit.mohaeng.vo.TripProdListVO">
+	    <id property="prodListNo" column="PROD_LIST_NO" />
+	    <result property="payNo" column="PAY_NO" />
+	    <result property="tripProdNo" column="TRIP_PROD_NO" />
+	    <result property="unitPrice" column="UNIT_PRICE" />
+	    <result property="discountAmt" column="DISCOUNT_AMT" />
+	    <result property="payPrice" column="PAY_PRICE" />
+	    <result property="quantity" column="QUANTITY" />
+	    <result property="resvDt" column="RESV_DT" />
+	    <result property="useTime" column="USE_TIME" />
+	    <result property="rsvMemo" column="RSV_MEMO" />
+	</resultMap>
+	
+	<!-- 상품 판매 정보 -->
+	<resultMap id="prodSaleMap" type="kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO">
+		<id property="tripProdNo" column="TRIP_PROD_NO" />
+	    <result property="price" column="PRICE" />
+	    <result property="netprc" column="NETPRC" />
+	    <result property="discount" column="DISCOUNT" />
+	    <result property="leadTime" column="LEAD_TIME" />
+	    <result property="totalStock" column="TOTAL_STOCK" />
+	    <result property="curStock" column="CUR_STOCK" />
+	</resultMap>
+	
+	<!-- 상품 이용안내 -->
+	<resultMap id="prodInfoMap" type="kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO">
+		<id property="tripProdNo" column="TRIP_PROD_NO" />
+	    <result property="prodRuntime" column="PROD_RUNTIME" />
+	    <result property="prodDuration" column="PROD_DURATION" />
+	    <result property="prodMinPeople" column="PROD_MIN_PEOPLE" />
+	    <result property="prodMaxPeople" column="PROD_MAX_PEOPLE" />
+	    <result property="prodLimAge" column="PROD_LIM_AGE" />
+	    <result property="prodInclude" column="PROD_INCLUDE" />
+	    <result property="prodExclude" column="PROD_EXCLUDE" />
+	    <result property="prodNotice" column="PROD_NOTICE" />
+	</resultMap>
+	
+	<!-- 여행상품 관광지 -->
+	<resultMap id="prodPlaceMap" type="kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO">
+		<id property="prodPlcNo" column="PROD_PLC_NO" />
+	    <result property="tripProdNo" column="TRIP_PROD_NO" />
+	    <result property="addr1" column="ADDR1" />
+	    <result property="addr2" column="ADDR2" />
+	</resultMap>
+	
+	<!--  tripProd 컬럼 -->
+	<sql id="tripProdColumns">
+	      t.TRIP_PROD_NO
+	    , t.COMP_NO
+	    , t.MEM_NO
+	    , t.PROD_CTGRY_TYPE
+	    , t.APPROVE_STATUS
+	    , t.TRIP_PROD_TITLE
+	    , t.TRIP_PROD_CONTENT
+	    , t.SALE_START_DT
+	    , t.SALE_END_DT
+	    , t.ATTACH_NO
+	    , t.VIEW_CNT
+	    , t.REG_DT
+	    , t.MOD_DT
+	    , t.APRV_YN
+	    , t.DEL_YN
+	    , t.CTY_NM
+	</sql>
+	
+	<!--  tripProdSale 컬럼 -->
+	<sql id="prodSaleColumns">
+	      s.PRICE
+	    , s.NETPRC
+	    , s.DISCOUNT
+	    , s.LEAD_TIME
+	    , s.TOTAL_STOCK
+	    , s.CUR_STOCK
+	</sql>
+	
+	<!--  tripProdInfo 컬럼 -->
+	<sql id="prodInfoColumns">
+	      i.PROD_RUNTIME
+	    , i.PROD_DURATION
+	    , i.PROD_MIN_PEOPLE
+	    , i.PROD_MAX_PEOPLE
+	    , i.PROD_LIM_AGE
+	    , i.PROD_INCLUDE
+	    , i.PROD_EXCLUDE
+	    , i.PROD_NOTICE
+	</sql>
+	
+	<!--  tripProdPlace 컬럼 -->
+	<sql id="prodPlaceColumns">
+	      p.PROD_PLC_NO
+	    , p.ADDR1
+	    , p.ADDR2
+	</sql>
+	
+	<!-- 숙소 재고, 판매량 정보가 애매함. 숙소는 roomTypeList와 다른 것들 적용해야되서 -->
+	<!-- 본인 기업회원 상품 목록 -->
+	<select id="getProductlist" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="tripPordMap">
+        SELECT *
+        FROM (
+            SELECT ROWNUM AS rn, a.*
+            FROM (
+                SELECT
+                    <include refid="tripProdColumns" />
+                    , <include refid="prodSaleColumns"/>
+                    , <include refid="prodInfoColumns"/>
+                    <!-- 가격에서 할인 가격도 가져와야됨 -->
+                    , acc.ACC_NO
+	                , acc.ACC_NAME
+	                , CASE 
+	                    WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
+	                    THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
+	                    ELSE s.PRICE 
+	                END AS DISPLAY_PRICE
+                    , r.AVG_RATING 
+                    , r.REVIEW_COUNT
+                    , r.RECOMMEND_COUNT,
+					(SELECT AFD.FILE_PATH 
+					 FROM ATTACH_FILE_DETAIL AFD 
+					 WHERE AFD.ATTACH_NO = t.ATTACH_NO 
+					   AND AFD.USE_YN = 'Y' 
+					   AND ROWNUM = 1) AS THUMB_IMAGE
+                FROM TRIP_PROD t
+                LEFT JOIN ACCOMMODATION acc ON t.TRIP_PROD_NO = acc.TRIP_PROD_NO
+                LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
+                LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
+                LEFT JOIN (
+                    SELECT 
+                        TRIP_PROD_NO
+                        , ROUND(AVG(RATING), 1) AS AVG_RATING
+                        , COUNT(*) AS REVIEW_COUNT
+                        , COUNT(CASE WHEN RCMDTN_YN = 'Y' THEN 1 END) AS RECOMMEND_COUNT
+                    FROM PROD_REVIEW
+                    GROUP BY TRIP_PROD_NO
+                ) r ON t.TRIP_PROD_NO = r.TRIP_PROD_NO
+                WHERE (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
+                AND t.MEM_NO = #{memNo}
+                <!-- 검색어 -->
+                <if test="keyword != null and keyword != ''">
+                    AND (t.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%'
+                         OR t.TRIP_PROD_CONTENT LIKE '%' || #{keyword} || '%')
+                </if>
+                <!-- 카테고리 -->
+                <if test="prodCtgryType != null and prodCtgryType !=''">
+                	AND t.PROD_CTGRY_TYPE = #{prodCtgryType}
+                </if>
+       			ORDER BY  t.TRIP_PROD_NO ASC
+            ) a
+            <![CDATA[
+            WHERE ROWNUM <= #{page} * #{pageSize}
+            ]]>
+        )
+        <![CDATA[
+        WHERE rn > (#{page} - 1) * #{pageSize}
+        ]]>
+	</select>
+	
+	<!-- 숙소정보 불러오기 사용 안할 거임-->
+	<select id="getAccommodationList" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+		SELECT
+		    A.ACC_NO,
+		    A.TRIP_PROD_NO,
+		    A.ACC_CAT_CD,
+		    A.ACC_NAME,
+		    A.ADDR1,
+		    A.ADDR2,
+		    T.MEM_NO
+		FROM
+		    ACCOMMODATION A
+		INNER JOIN TRIP_PROD T ON (A.TRIP_PROD_NO = T.TRIP_PROD_NO)
+		WHERE T.MEM_NO = #{memNo}
+	</select>
+	
+	<!-- 상품 현황 통계 + 숙박도 포함 해야됨 -->
+	<select id="getProductAggregate" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+		SELECT 
+			COUNT(*) AS totalCount
+			, COUNT(CASE WHEN TP.APPROVE_STATUS = '판매중' THEN TP.APPROVE_STATUS END) AS approveCount
+		    , COUNT(CASE WHEN TP.APPROVE_STATUS = '판매중지' THEN TP.APPROVE_STATUS END) AS unapproveCount
+			, SUM(TPS.TOTAL_STOCK - TPS.CUR_STOCK) AS totalSales
+		FROM TRIP_PROD TP
+		INNER JOIN TRIP_PROD_SALE TPS ON (TP.TRIP_PROD_NO = TPS.TRIP_PROD_NO)
+		WHERE TP.MEM_NO = #{memNo}
+		AND (TP.DEL_YN = 'N' OR TP.DEL_YN IS NULL)
+	</select>
+	
+	<!-- 상세 페이지 이동시, 숙소는 포함 안됨 -->	
+<!-- 	<select id="detail" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+        SELECT
+            TRIP_PROD_NO, COMP_NO, MEM_NO, PROD_CTGRY_TYPE, APPROVE_STATUS,
+            TRIP_PROD_TITLE, TRIP_PROD_CONTENT, SALE_START_DT, SALE_END_DT,
+            ATTACH_NO, VIEW_CNT, REG_DT, MOD_DT, CTY_NM
+        FROM TRIP_PROD
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+          AND (DEL_YN = 'N' OR DEL_YN IS NULL)
+    </select> -->
+	
+	<!-- 숙소 정보도 다 담을까 -->
+	<!-- 상품, 상품 이용안내, 상품 가격, 상품 장소 -->
+	<select id="retrieveProductDetail" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="tripPordMap">
+		SELECT
+			<include refid="tripProdColumns"/>
+			, <include refid="prodSaleColumns"/>
+			, <include refid="prodInfoColumns"/>
+			, <include refid="prodPlaceColumns"/>
+			
+			, (SELECT AFD.FILE_PATH 
+				 FROM ATTACH_FILE_DETAIL AFD 
+				 WHERE AFD.ATTACH_NO = t.ATTACH_NO 
+				   AND AFD.USE_YN = 'Y' 
+				   AND ROWNUM = 1) AS THUMB_IMAGE
+		FROM TRIP_PROD t
+		LEFT JOIN TRIP_PROD_SALE s ON (t.TRIP_PROD_NO = s.TRIP_PROD_NO)
+		LEFT JOIN TRIP_PROD_INFO i ON (t.TRIP_PROD_NO = i.TRIP_PROD_NO)
+		LEFT JOIN TRIP_PROD_PLACE p ON (t.TRIP_PROD_NO = p.TRIP_PROD_NO)
+	   WHERE t.TRIP_PROD_NO = #{tripProdNo}
+	</select>
+	
+	<!-- 숙소정보 가져오기 -->
+	<select id="retrieveAccomodationDetail" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accMap">
+		SELECT 
+	        <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accommodationColumns">
+	        	<property name="alias" value="A."/>
+	        </include>
+	        , <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accFacilityColumns">
+	        	<property name="alias" value="AF."/>
+	        </include>
+	        , <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accOptionColumns">
+	        	<property name="alias" value="AO."/>
+	        </include>
+	        , <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomTypeColumns">
+	        	<property name="alias" value="RT."/>
+	        </include>
+	        , <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomFacilityColumns">
+	        	<property name="alias" value="RF."/>
+	        </include>
+	        , <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomFeatureColumns">
+	        	<property name="alias" value="RFT."/>
+	        </include>
+	        <!-- room 추가 -->
+	        , <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomColumns">
+	        	<property name="alias" value="R."/>
+	        </include>
+        FROM ACCOMMODATION A
+		LEFT JOIN ACC_FACILITY AF ON A.ACC_NO = AF.ACC_NO
+		LEFT JOIN ACC_OPTION AO ON A.ACC_NO = AO.ACC_NO
+		LEFT JOIN ROOM_TYPE RT ON A.ACC_NO = RT.ACC_NO
+		LEFT JOIN ROOM_FACILITY RF ON RT.ROOM_TYPE_NO = RF.ROOM_TYPE_NO
+		LEFT JOIN ROOM_FEATURE RFT ON RT.ROOM_TYPE_NO = RFT.ROOM_TYPE_NO
+		LEFT JOIN ROOM R ON RT.ROOM_TYPE_NO = R.ROOM_TYPE_NO
+		WHERE A.ACC_NO = #{accNo}
+		ORDER BY RT.ROOM_TYPE_NO ASC, AO.ACC_OPTION_NO ASC, R.ROOM_INFO_NO ASC
+	</select>
+	
+	
+	<!-- 예약 가능 시간-->
+	<select id="retrieveProdTimeList" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
+		SELECT
+		    TIME_INFO_NO
+		    , TRIP_PROD_NO
+		    , RSVT_AVAILABLE_TIME
+		FROM PROD_TIME_INFO
+	   WHERE TRIP_PROD_NO = #{tripProdNo}
+	   ORDER BY TIME_INFO_NO
+	</select>
+	
+	<!-- 상품 사진 목록 -->
+	<select id="retrieveProdImages" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultType="kr.or.ddit.mohaeng.vo.AttachFileDetailVO">
+		SELECT
+		    FILE_NO
+		    , ATTACH_NO
+		    , FILE_NAME
+		    , FILE_ORIGINAL_NAME
+		    , FILE_EXT
+		    , FILE_SIZE
+		    , FILE_PATH
+		    , FILE_GB_CD
+		    , MIMY_TYPE
+		    , USE_YN
+		FROM ATTACH_FILE_DETAIL
+	   WHERE ATTACH_NO = #{attachNo}
+	     AND USE_YN = 'Y'
+	   ORDER BY FILE_NO
+	</select>
+
+	<!-- 판매중인 상품, 상품 이용안내, 상품 가격, 상품 장소, 숙소 정보, 숙소 보유시설 정보 변경 -->
+	<!-- 판매중인 상품 정보 변경 -->
+	<update id="modifyTripProduct" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
+	    UPDATE TRIP_PROD
+	    SET 
+	        APPROVE_STATUS = '판매중지'
+	        <if test="prodCtgryType != null and prodCtgryType != ''">
+	        , PROD_CTGRY_TYPE = #{prodCtgryType}
+	        </if>
+	        , TRIP_PROD_TITLE = #{tripProdTitle}
+	        , TRIP_PROD_CONTENT = #{tripProdContent}
+	        , SALE_START_DT = #{saleStartDt}
+	        , SALE_END_DT = #{saleEndDt}
+	        <if test="attachNo != null and attachNo != ''">
+	        , ATTACH_NO = #{attachNo}
+	        </if>
+	        <if test="ctyNm != null and ctyNm != ''">
+	        , CTY_NM = #{ctyNm}
+	        </if>
+	        , APRV_YN = 'N'
+	        , MOD_DT = SYSDATE
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 상품 가격 정보 변경 -->
+	<update id="modifyProdSale" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO">
+	    UPDATE TRIP_PROD_SALE
+	    SET 
+	        PRICE = #{price}
+	        , NETPRC = #{netprc}
+	        , DISCOUNT = #{discount}
+	        , LEAD_TIME = #{leadTime}
+	        , TOTAL_STOCK = #{totalStock}
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 상품 이용안내 정보 변경 -->
+	<update id="modifyProdInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO">
+	    UPDATE TRIP_PROD_INFO
+	    SET 
+	        PROD_RUNTIME = #{prodRuntime}
+	        , PROD_DURATION = #{prodDuration}
+	        , PROD_MIN_PEOPLE = #{prodMinPeople}
+	        , PROD_MAX_PEOPLE = #{prodMaxPeople}
+	        , PROD_LIM_AGE = #{prodLimAge}
+	        , PROD_INCLUDE = #{prodInclude}
+	        , PROD_EXCLUDE = #{prodExclude}
+	        , PROD_NOTICE = #{prodNotice}
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 상품 장소, 숙소 정보, 숙소 보유시설 정보 변경 -->
+	<update id="modifyProdPlace" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO">
+	    UPDATE TRIP_PROD_PLACE
+	    SET 
+	        ADDR1 = #{addr1}
+	        , ADDR2 = #{addr2}
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 숙소 정보 변경 () -->
+	<update id="modifyAccommodation" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	    UPDATE ACCOMMODATION
+	    SET
+	        ACC_CAT_CD = #{accCatCd}
+	        , ACC_FILE_NO = #{accFileNo}
+	        , STAR_GRADE = #{starGrade}
+	        , ZIP = #{zip}
+	        , ADDR1 = #{addr1}
+	        , ADDR2 = #{addr2}
+	        , TOTAL_ROOM_CNT = #{totalRoomCnt}
+	        , API_CONTENT_ID = #{apiContentId}
+	        , ACC_NAME = #{accName}
+	        , ACC_FILE_PATH = #{accFilePath}
+	        , AREA_CODE = #{areaCode}
+	        , SIGUNGU_CODE = #{sigunguCode}
+	        , MAPX = #{mapx}
+	        , MAPY = #{mapy}
+	        , LDONG_REGN_CD = #{ldongRegnCd}
+	        , LDONG_SIGNGU_CD = #{ldongSignguCd}
+	        , OVERVIEW = #{overview}
+	        , TEL = #{tel}
+	        , CHECK_IN_TIME = #{checkInTime}
+	        , CHECK_OUT_TIME = #{checkOutTime}
+	    WHERE
+	        ACC_NO = #{accNo}
+	</update>
+	
+	
+	<!-- 숙소 보유시설 정보 변경 -->
+
+
+
+	<!-- 예약 가능 시간 삭제 -->
+	<delete id="deleteProdTimeInfo" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">
+		DELETE FROM PROD_TIME_INFO 
+     	 WHERE TRIP_PROD_NO = #{tripProdNo}
+	</delete>
+	
+	<!-- 예약 가능 시간 추가(수정, 등록 같이 사용) -->
+	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
+		INSERT INTO PROD_TIME_INFO (
+	          TIME_INFO_NO
+	        , TRIP_PROD_NO
+	        , RSVT_AVAILABLE_TIME
+	    )
+	    SELECT SEQ_PROD_TIME_INFO.NEXTVAL, A.*
+	    FROM (
+	        <foreach collection="list" item="time" separator="UNION ALL">
+	            SELECT 
+	                  #{time.tripProdNo}
+	                , #{time.rsvtAvailableTime}
+	            FROM DUAL
+	        </foreach>
+	    ) A
+	</insert>
+	
+	
+	<!-- 상품 판매 정보 변경 -->
+	<update id="updateProductStatus" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+		UPDATE TRIP_PROD
+		    SET APPROVE_STATUS = #{approveStatus}
+		    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+
+	<!-- 판매 상품 삭제 -->
+	<update id="deleteProductStatus" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+		UPDATE TRIP_PROD
+		    SET 
+		    del_yn = 'Y'
+    		, del_dt = SYSDATE
+		    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+
+</mapper>

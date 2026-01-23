@@ -506,3 +506,59 @@ function escapeHtml(text) {
     div.textContent = text;
     return div.innerHTML;
 }
+
+/*=========================
+	10. 븍마크 로직
+==========================*/
+
+function addToBookmark() {
+    // JSP에서 선언한 isLoggedIn 변수 활용
+    if (!isLoggedIn) {
+        if (confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+            sessionStorage.setItem('returnUrl', window.location.href);
+            location.href = cp + '/member/login';
+        }
+        return;
+    }
+
+    // 리더의 컨트롤러 주소와 변수(cp, TRIP_PROD_NO)에 딱 맞춤
+    fetch(`${cp}/product/accommodation/${TRIP_PROD_NO}/bookmark`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // 토스트 알림 (showToast 함수가 있다고 가정)
+            showToast(data.message, 'success');
+            
+            // 하트 아이콘 UI 변경 (ID가 bookmarkIcon인 경우)
+            const icon = document.getElementById('bookmarkIcon');
+            if (icon) {
+                if (data.bookmarked) {
+                    icon.classList.replace('bi-heart', 'bi-heart-fill');
+                    icon.style.color = 'red';
+                } else {
+                    icon.classList.replace('bi-heart-fill', 'bi-heart');
+                    icon.style.color = '';
+                }
+            }
+        } else {
+            showToast(data.message, 'error');
+        }
+    })
+    .catch(err => {
+        console.error("북마크 처리 중 에러:", err);
+        showToast("처리 중 오류가 발생했습니다.", "error");
+    });
+}
+
+// 페이지 로드시
+document.addEventListener('DOMContentLoaded', function() {
+    	if (typeof initMap === 'function') initMap();
+	    if (typeof initGalleryNavigation === 'function') initGalleryNavigation();
+	    
+	    // 리더의 프로젝트에 장바구니가 없다면 loadCart 등은 빼도 돼!
+	    console.log("숙소 상세 페이지 로드 완료 (TRIP_PROD_NO: " + TRIP_PROD_NO + ")");
+});
+

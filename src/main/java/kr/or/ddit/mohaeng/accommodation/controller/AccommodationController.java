@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.accommodation.service.IAccommodationService;
 import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
@@ -34,6 +35,7 @@ import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
+import kr.or.ddit.mohaeng.vo.MemberVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 import lombok.extern.slf4j.Slf4j;
 
@@ -1046,6 +1048,50 @@ public class AccommodationController {
         
         return result;
     }
-
+    
+    // 북마크 토글 (등록/삭제 통합)
+    @PostMapping("/product/accommodation/{tripProdNo}/bookmark")
+    @ResponseBody
+    public Map<String, Object> toggleBookmark(
+    		@PathVariable int tripProdNo,
+    		@AuthenticationPrincipal CustomUserDetails user
+    		) {
+        Map<String, Object> result = new HashMap<>();
+        
+        
+        if (user == null) {
+            result.put("success", false);
+            result.put("message", "로그인이 필요합니다.");
+            return result;
+        }
+        
+        int memNo = user.getMember().getMemNo();
+        
+        try {
+            // 현재 북마크 상태 확인
+            boolean isBookmarked = tripProdService.checkAccommodationBookmark(memNo, tripProdNo);
+            
+            if (isBookmarked) {
+                // 북마크 삭제
+                tripProdService.deleteAccommodationBookmark(memNo, tripProdNo);
+                result.put("success", true);
+                result.put("bookmarked", false);
+                result.put("message", "북마크가 삭제되었습니다.");
+            } else {
+                // 북마크 등록
+                tripProdService.insertAccommodationBookmark(memNo, "ACCOMMODATION", tripProdNo);
+                result.put("success", true);
+                result.put("bookmarked", true);
+                result.put("message", "북마크에 추가되었습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "처리 중 오류가 발생했습니다.");
+        }
+        
+        return result;
+    }
+ 
 }
 

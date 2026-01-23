@@ -72,5 +72,29 @@ public class TripProdServiceImpl implements ITripProdService {
 	public int deleteBookmark(int memNo, int tripProdNo) {
 		return mapper.deleteBookmark(memNo, tripProdNo);
 	}
+	
+	/**
+	 * 숙박 북마크
+	 */
 
+	@Override
+	public boolean checkAccommodationBookmark(int memNo, int tripProdNo) {
+		return mapper.checkBookmark(memNo, tripProdNo) > 0;
+	}
+
+	@Override
+	public int insertAccommodationBookmark(int memNo, String type, int tripProdNo) {
+	    int restored = mapper.restoreAccommodationBookmark(memNo, tripProdNo);
+	    
+	    if (restored == 0) {
+	        return mapper.insertAccommodationBookmark(memNo, type, tripProdNo);
+	    }
+	    
+	    return restored;
+	}
+
+	@Override
+	public int deleteAccommodationBookmark(int memNo, int tripProdNo) {
+		return mapper.deleteAccommodationBookmark(memNo, tripProdNo);
+	}
 }

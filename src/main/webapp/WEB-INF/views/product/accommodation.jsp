@@ -130,11 +130,11 @@
                 <c:forEach items="${accList }" var="acc">
                 <div class="accommodation-card" data-accommodation-id="${acc.accNo}">
                     <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }" class="accommodation-image">
-                       ${acc.tripProdNo }
                         <img src="${acc.accFilePath}" alt="${acc.accName}">
                         <span class="accommodation-badge">인기</span>
                     </a>
-                    <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">
+                    <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)"
+                    		data-trip-prod-no="${acc.tripProdNo}">
                         <i class="bi bi-bookmark"></i>
                     </button>
                     <div class="accommodation-body">

@@ -552,4 +552,53 @@ function goBooking(accNo, roomTypeNo, tripProdNo) {
 	// JSP에서 호출할 수 있게 window에 등록
 	window.goBooking = goBooking;
 	
-	
+//==================== 북마크 로직====================
+function toggleAccommodationBookmark(event, btnEl) {
+    // 이벤트 전파 방지 (카드를 클릭해서 상세페이지로 이동하는 걸 막음)
+    event.preventDefault();
+    event.stopPropagation();
+
+    // 로그인 체크
+    if (!isLoggedIn) {
+        if (confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+            location.href = cp + '/member/login';
+        }
+        return;
+    }
+
+    // tripProdNo 찾아오기
+    // HTML 구조상 버튼의 부모(card)나 형제 요소에서 찾는다
+    // 버튼을 감싸는 .accommodation-card에서 data 속성을 읽는 것
+    const cardEl = btnEl.closest('.accommodation-card');
+    
+	// tripProdNo를 링크 주소에 쓰고 있음 
+    // HTML에 tripProdNo를 저장해두는 data 속성 추가
+    const tripProdNo = btnEl.dataset.tripProdNo; 
+
+    if (!tripProdNo) {
+        console.error("상품 번호를 찾을 수 없습니다.");
+        return;
+    }
+
+    // 4. 서버와 통신 (상세 페이지에서 썼던 그 주소 그대로!)
+    fetch(`${cp}/product/accommodation/${tripProdNo}/bookmark`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // 5. 아이콘 및 UI 변경
+            const icon = btnEl.querySelector('i');
+            if (data.bookmarked) {
+                icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');
+                btnEl.classList.add('active'); // CSS로 색깔 주고 싶을 때
+            } else {
+                icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');
+                btnEl.classList.remove('active');
+            }
+            showToast(data.message, 'success');
+        }
+    })
+    .catch(err => console.error("북마크 에러:", err));
+}

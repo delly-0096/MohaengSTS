@@ -435,10 +435,29 @@ public class TripScheduleController {
 	        String dates[] = dateItem.split(" ~ ");
 	        
 	        String tripStyleCatList[] = objectMapper.convertValue(
-	        		preferenceNode.get("tripStyleCatList"), 
-	        	    new TypeReference<String[]>() {}
-	        	);
+        		preferenceNode.get("tripStyleCatList"), 
+        	    new TypeReference<String[]>() {}
+        	);
 	        
+	        String excludeList[] = null;
+	        String exclude = "";
+	        if(preferenceNode.get("excludeList") != null) {
+		        excludeList = objectMapper.convertValue(
+	        		preferenceNode.get("excludeList"), 
+	        		new TypeReference<String[]>() {}
+	        	);
+		        
+		        for(int i = 0; i < excludeList.length; i++) {
+		        	if(i != 0) {
+		        		exclude += ", ";
+		        	}
+		        	
+		        	exclude += excludeList[i];
+		        }
+		        
+	        }
+	        
+
 	        List<Params> tripStyleList = tripScheduleService.selectTripStyleList(tripStyleCatList);
 	        
 	        String styles = "";
@@ -615,6 +634,9 @@ public class TripScheduleController {
 		            [참고할 관광지 DB 데이터]
 		            '%s'
 		            
+		            [사용자가 재요청한 관광지 리스트]
+		            '%s'
+		            
 					[지시사항]
 					1. 후보군 내에서 위경도 기반으로 가장 가까운 순서대로 동선을 짜라.
 					2. 순수 JSON만 출력하라.
@@ -626,6 +648,8 @@ public class TripScheduleController {
 					8. 첫날 시작 좌표는 '%s'이다.
 					9. [참고할 관광지 DB 데이터]는 시/도, 시군구 로 정렬되어있다.
 					10. 일별로 여행의 제목을 지을 수 있으면 지어줘
+					11. 여행자가 [사용자가 재요청한 관광지 리스트]는 관광지 키값들이 추천순서대로존재하는 항목이야 해당 항목에 데이터가 있을경우
+						되도록 해당 관광지들은 추천 우선순위에서 후순위로 둘 것
 					
 		        	예시형태 : {result : [{
 		        		schdlDt : 1,
@@ -671,7 +695,7 @@ public class TripScheduleController {
 		        	check : 판단에 시간이 가장 오래걸린 작업정보}
 		            """,formattedDate, region, travelers, duration+1, styles
 		               , paceStr, budgetStr, accommodations, transportStr
-		               , finalPrompt, aiInputData, coordinate);
+		               , finalPrompt, aiInputData, exclude, coordinate);
 //			9. check 라는 key로 가장 시간이 오래소요된 작업에 대한 설명과 개선방향이나 추가할 프롬프트 관련 피드백을 해줘 (초단위 시간 알려줄 수 있으면 더 좋음)
 //			12. 만약 축제나 행사등의 경우 운영 기간 외의 장소는 제외해
 //			13. 운영기간이나 비용정보가 정형화가 부족할 경우 너의 내부정보가 더 정형화가 잘 되어있으면 그쪽에 따를 것

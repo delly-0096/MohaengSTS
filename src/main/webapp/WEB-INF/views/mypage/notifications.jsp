@@ -57,6 +57,10 @@
                 <!-- 알림 목록 -->
                 <div class="content-section">
                     <div class="notification-list">
+                       <div class="notification-list">
+
+						
+                       
                         <!-- 읽지 않은 알림 -->
                         <div class="notification-item unread" data-type="payment">
                             <label class="notification-checkbox">

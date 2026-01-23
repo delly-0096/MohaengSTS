@@ -2,6 +2,7 @@ package kr.or.ddit.mohaeng.file.service;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -408,5 +409,28 @@ public class FileServiceImpl implements IFileService{
 	    }
 	    
 	    return attachNo;
+	}
+
+	@Transactional
+	@Override
+	public void syncFiles(Integer attachNo, List<Integer> currentFileNos) {
+		// 기존 attachNo와 이거와 매칭되는 fileNo
+		
+		if(currentFileNos == null && currentFileNos.size() < 0) {
+			log.info("currentFileNos가 존재하지 않습니다.");
+			return;
+		}
+		
+		Map<String, Object> paramMap = new HashMap<>();
+	    paramMap.put("attachNo", attachNo);
+	    paramMap.put("currentFileNos", currentFileNos);
+	    
+	    int result = fileMapper.deleteMissingFiles(paramMap);
+	    if(result > 0) {
+	    	log.info("존재하지 않는 파일을 삭제했습니다.");
+	    }else {
+	    	log.info("존재하지 않는 파일이 없습니다.");
+	    }
+		
 	}
 }

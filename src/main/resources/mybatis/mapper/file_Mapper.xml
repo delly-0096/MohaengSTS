@@ -75,4 +75,17 @@
 	    )
 	</insert>
 	
+	<!-- 기존에 매칭되었지만 없어진 fileNo삭제 -->
+	<update id="deleteMissingFiles" parameterType="map">
+	    UPDATE ATTACH_FILE_DETAIL
+	       SET USE_YN = 'N'
+	     WHERE ATTACH_NO = #{attachNo}
+	     <if test="currentFileNos != null and currentFileNos.size() > 0">
+	       AND FILE_NO NOT IN 
+	       <foreach collection="currentFileNos" item="no" open="(" close=")" separator=",">
+	           #{no}
+	       </foreach>
+	     </if>
+	</update>
+	
 </mapper>

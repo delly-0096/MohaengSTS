@@ -84,4 +84,13 @@ public interface IFileService {
      */
 	public int addFilesToAttach(Integer attachNo, List<MultipartFile> files, String subPath, String fileGbCd, int regId);
 
+	/**
+	 * <p>기존 번호와 받은 번호를 비교해서 없는 번호의 파일 useYn을 n으로 변경</p>
+	 * @date 2026.01.22
+	 * @author sdg
+	 * @param attachNo 기존의 attachNo
+	 * @param currentFileNos 수정시 받아온 남아있는 attachNo
+	 */
+	public void syncFiles(Integer attachNo, List<Integer> currentFileNos);
+
 }

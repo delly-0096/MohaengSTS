@@ -126,7 +126,7 @@ public interface IProductMangeMapper {
 	 * <p>숙소 정보 변경</p>
 	 * @author sdg
 	 * @date 2026-01-20
-	 * @param accommodationVO
+	 * @param accommodationVO 총객실 수, 체크인, 체크아웃
 	 * @return 결과 0, 1
 	 */
 	public int modifyAccommodation(AccommodationVO accommodationVO);
@@ -141,6 +141,26 @@ public interface IProductMangeMapper {
 	 */
 	public int modifyAccOption(AccOptionVO accOptionVO);
 	
+	/**
+	 * 숙소와 1대 다
+	 * <p>추가 옵션 정보 변경</p>
+	 * @author sdg
+	 * @date 2026-01-20
+	 * @param accommodationVO
+	 * @return 결과 0, 1
+	 */
+	public int insertAccOption(AccOptionVO accOptionVO);
+
+	
+	// 만약 예약한 건 수 가 있다면 해당 건은 삭제는 불가
+	/** 숙소와 1대다
+	 * <p>객실 타입 정보 변경</p>
+	 * @author sdg
+	 * @date 2026-01-20
+	 * @param roomTypeVO
+	 * @return 결과 0, 1
+	 */
+	public int modifyRoomType(List<RoomTypeVO> roomTypeVO);
 	
 	/** 숙소와 1대1
 	 * <p>숙박 보유시설 정보 변경</p>
@@ -152,15 +172,6 @@ public interface IProductMangeMapper {
 	public int modifyAccFacility(AccFacilityVO accFacilityVO);
 	
 	
-	// 만약 예약한 건 수 가 있다면 해당 건은 삭제는 불가
-	/** 숙소와 1대다
-	 * <p>객실 타입 정보 변경</p>
-	 * @author sdg
-	 * @date 2026-01-20
-	 * @param roomTypeVO
-	 * @return 결과 0, 1
-	 */
-	public int modifyRoomTypeVO(List<RoomTypeVO> roomTypeVO);
 	
 	/** 객실타입과 1대1
 	 * <p>객실 내 시설 정보 변경</p>

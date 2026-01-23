@@ -2,6 +2,8 @@ package kr.or.ddit.mohaeng.product.manage.service;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
@@ -72,5 +74,15 @@ public interface IProductMangeService {
 	 * @return ok, badRequest
 	 */
 	public ServiceResult deleteProductStatus(TripProdVO tripProd);
+	
+	/**
+	 * <p>상품 등록</p>
+	 * @author sdg
+	 * @date 2026-01-23
+	 * @param businessProducts	등록 상품 정보
+	 * @param uploadFiles		등록 파일 정보
+	 * @return ok, badRequest
+	 */
+	public ServiceResult insertProduct(BusinessProductsVO businessProducts, List<MultipartFile> uploadFiles);
 
 }

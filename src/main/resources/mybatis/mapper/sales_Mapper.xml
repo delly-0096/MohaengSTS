@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.mypage.sales.mapper.ISalesMapper">
+
+    <!-- 이번 달 매출 합계 -->
+    <select id="getThisMonthSales" parameterType="int" resultType="Integer">
+        SELECT NVL(SUM(s.NET_SALES), 0)
+        FROM SALES s
+        JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+        JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        WHERE tp.MEM_NO = #{memNo}
+          AND TO_CHAR(s.SALE_DT, 'YYYY-MM') = TO_CHAR(SYSDATE, 'YYYY-MM')
+          AND s.SETTLE_STAT_CD != '취소'
+    </select>
+    
+    <!-- 지난 달 매출 합계 -->
+    <select id="getLastMonthSales" parameterType="int" resultType="Integer">
+        SELECT NVL(SUM(s.NET_SALES), 0)
+        FROM SALES s
+        JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+        JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        WHERE tp.MEM_NO = #{memNo}
+          AND TO_CHAR(s.SALE_DT, 'YYYY-MM') = TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'YYYY-MM')
+          AND s.SETTLE_STAT_CD != '취소'
+    </select>
+    
+    <!-- 정산 예정액 (이번 달, 정산대기/정산가능 상태, 수수료 10%) -->
+    <select id="getPendingSettle" parameterType="int" resultType="Integer">
+        SELECT NVL(SUM(s.NET_SALES * 0.9), 0)
+        FROM SALES s
+        JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+        JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        WHERE tp.MEM_NO = #{memNo}
+          AND TO_CHAR(s.SALE_DT, 'YYYY-MM') = TO_CHAR(SYSDATE, 'YYYY-MM')
+          AND s.SETTLE_STAT_CD IN ('정산대기', '정산가능')
+    </select>
+    
+    <!-- 지난달 정산 완료액 -->
+    <select id="getLastMonthSettle" parameterType="int" resultType="Integer">
+        SELECT NVL(SUM(s.NET_SALES * 0.9), 0)
+        FROM SALES s
+        JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+        JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        WHERE tp.MEM_NO = #{memNo}
+          AND TO_CHAR(s.SALE_DT, 'YYYY-MM') = TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'YYYY-MM')
+          AND s.SETTLE_STAT_CD = '정산완료'
+    </select>
+    
+    <!-- 월별 매출 추이 -->
+    <select id="getMonthlySales" parameterType="kr.or.ddit.mohaeng.vo.SalesVO" resultType="kr.or.ddit.mohaeng.vo.SalesVO">
+        SELECT
+            TO_CHAR(s.SALE_DT, 'YYYY-MM') AS saleMonth,
+            SUM(s.NET_SALES) AS monthlyTotal
+        FROM SALES s
+        JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+        JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        WHERE tp.MEM_NO = #{memNo}
+          AND s.SETTLE_STAT_CD != '취소'
+        <if test="startDate != null and startDate != ''">
+            AND s.SALE_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+        </if>
+        <if test="endDate != null and endDate != ''">
+            <![CDATA[
+            AND s.SALE_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+            ]]>
+        </if>
+        GROUP BY TO_CHAR(s.SALE_DT, 'YYYY-MM')
+        ORDER BY saleMonth ASC
+    </select>
+    
+    <!-- 매출 상세 내역 목록 -->
+    <select id="getSalesList" parameterType="kr.or.ddit.mohaeng.vo.SalesVO" resultType="kr.or.ddit.mohaeng.vo.SalesVO">
+        SELECT *
+        FROM (
+            SELECT ROWNUM AS rn, a.*
+            FROM (
+                SELECT
+                    s.SALE_NO,
+                    s.PROD_LIST_NO,
+                    s.SALE_DT,
+                    s.NET_SALES,
+                    s.SETTLE_STAT_CD,
+                    tpl.PAY_NO,
+                    tpl.PAY_PRICE,
+                    tpl.QUANTITY,
+                    tpl.RESV_DT,
+                    tpl.USE_TIME,
+                    tp.TRIP_PROD_TITLE,
+                    m.MEM_NM AS buyerName,
+                    p.PAY_DT,
+                    ROUND(s.NET_SALES * 0.1) AS commission,
+                    ROUND(s.NET_SALES * 0.9) AS settleAmt
+                FROM SALES s
+                JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+                JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+                JOIN PAYMENT p ON tpl.PAY_NO = p.PAY_NO
+                JOIN MEMBER m ON p.MEM_NO = m.MEM_NO
+                WHERE tp.MEM_NO = #{memNo}
+                <if test="startDate != null and startDate != ''">
+                    AND s.SALE_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+                </if>
+                <if test="endDate != null and endDate != ''">
+                    <![CDATA[
+                    AND s.SALE_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+                    ]]>
+                </if>
+                <if test="status != null and status != ''">
+                    AND s.SETTLE_STAT_CD = #{status}
+                </if>
+                <if test="keyword != null and keyword != ''">
+                    AND (
+                        tp.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%'
+                        OR m.MEM_NM LIKE '%' || #{keyword} || '%'
+                        OR TO_CHAR(tpl.PAY_NO) LIKE '%' || #{keyword} || '%'
+                    )
+                </if>
+                ORDER BY s.SALE_DT DESC, s.SALE_NO DESC
+            ) a
+            <![CDATA[
+            WHERE ROWNUM <= #{page} * #{pageSize}
+            ]]>
+        )
+        <![CDATA[
+        WHERE rn > (#{page} - 1) * #{pageSize}
+        ]]>
+    </select>
+    
+    <!-- 매출 상세 내역 총 건수 -->
+    <select id="getSalesCount" parameterType="kr.or.ddit.mohaeng.vo.SalesVO" resultType="int">
+        SELECT COUNT(*)
+        FROM SALES s
+        JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+        JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        JOIN PAYMENT p ON tpl.PAY_NO = p.PAY_NO
+        JOIN MEMBER m ON p.MEM_NO = m.MEM_NO
+        WHERE tp.MEM_NO = #{memNo}
+        <if test="startDate != null and startDate != ''">
+            AND s.SALE_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+        </if>
+        <if test="endDate != null and endDate != ''">
+            <![CDATA[
+            AND s.SALE_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+            ]]>
+        </if>
+        <if test="status != null and status != ''">
+            AND s.SETTLE_STAT_CD = #{status}
+        </if>
+        <if test="keyword != null and keyword != ''">
+            AND (
+                tp.TRIP_PROD_TITLE LIKE '%' || #{keyword} || '%'
+                OR m.MEM_NM LIKE '%' || #{keyword} || '%'
+                OR TO_CHAR(tpl.PAY_NO) LIKE '%' || #{keyword} || '%'
+            )
+        </if>
+    </select>
+    
+    <!-- 조회 기간 내 합계 -->
+    <select id="getSalesSummary" parameterType="kr.or.ddit.mohaeng.vo.SalesVO" resultType="kr.or.ddit.mohaeng.vo.SalesVO">
+        SELECT 
+            NVL(SUM(CASE WHEN s.SETTLE_STAT_CD != '취소' THEN s.NET_SALES ELSE 0 END), 0) AS netSales,
+            NVL(SUM(CASE WHEN s.SETTLE_STAT_CD != '취소' THEN ROUND(s.NET_SALES * 0.1) ELSE 0 END), 0) AS commission,
+            NVL(SUM(CASE WHEN s.SETTLE_STAT_CD != '취소' THEN ROUND(s.NET_SALES * 0.9) ELSE 0 END), 0) AS settleAmt
+        FROM SALES s
+        JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+        JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        WHERE tp.MEM_NO = #{memNo}
+        <if test="startDate != null and startDate != ''">
+            AND s.SALE_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+        </if>
+        <if test="endDate != null and endDate != ''">
+            <![CDATA[
+            AND s.SALE_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+            ]]>
+        </if>
+        <if test="status != null and status != ''">
+            AND s.SETTLE_STAT_CD = #{status}
+        </if>
+    </select>
+    
+    <!-- 동종업계 비교 통계 (해당 기간 내) -->
+    <select id="getIndustryComparison" parameterType="kr.or.ddit.mohaeng.vo.SalesVO" resultType="kr.or.ddit.mohaeng.vo.SalesVO">
+        SELECT
+            my_stats.MY_SALES AS netSales,
+            my_stats.MY_RESV_CNT AS resvCount,
+            my_stats.MY_AVG_RATING AS avgRating,
+            my_stats.MY_REBOOKING_RATE AS rebookingRate,
+            my_stats.MY_CANCEL_RATE AS cancelRate,
+            avg_stats.AVG_SALES AS avgSales,
+            avg_stats.AVG_RESV_CNT AS avgResvCount,
+            avg_stats.AVG_RATING AS industryAvgRating,
+            avg_stats.AVG_REBOOKING_RATE AS avgRebookingRate,
+            avg_stats.AVG_CANCEL_RATE AS avgCancelRate,
+            avg_stats.TOTAL_COMPANY_CNT AS totalCompanyCnt,
+            my_stats.MY_RANK AS myRank
+        FROM (
+            SELECT
+                NVL(SUM(s.NET_SALES), 0) AS MY_SALES,
+                COUNT(DISTINCT tpl.PROD_LIST_NO) AS MY_RESV_CNT,
+                (SELECT NVL(ROUND(AVG(pr.RATING), 1), 0) 
+                 FROM PROD_REVIEW pr 
+                 JOIN TRIP_PROD tp2 ON pr.TRIP_PROD_NO = tp2.TRIP_PROD_NO 
+                 WHERE tp2.MEM_NO = #{memNo}) AS MY_AVG_RATING,
+                0 AS MY_REBOOKING_RATE,
+                NVL(ROUND(SUM(CASE WHEN s.SETTLE_STAT_CD = '취소' THEN 1 ELSE 0 END) * 100.0 
+                    / NULLIF(COUNT(*), 0), 1), 0) AS MY_CANCEL_RATE,
+                (SELECT COUNT(*) + 1
+                 FROM (
+                     SELECT tp3.MEM_NO, SUM(s2.NET_SALES) AS TOTAL_SALES
+                     FROM SALES s2
+                     JOIN TRIP_PROD_LIST tpl2 ON s2.PROD_LIST_NO = tpl2.PROD_LIST_NO
+                     JOIN TRIP_PROD tp3 ON tpl2.TRIP_PROD_NO = tp3.TRIP_PROD_NO
+                     WHERE s2.SETTLE_STAT_CD != '취소'
+                     <if test="startDate != null and startDate != ''">
+                         AND s2.SALE_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+                     </if>
+                     <if test="endDate != null and endDate != ''">
+                         <![CDATA[
+                         AND s2.SALE_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+                         ]]>
+                     </if>
+                     GROUP BY tp3.MEM_NO
+                     HAVING SUM(s2.NET_SALES) > (
+                         SELECT NVL(SUM(s3.NET_SALES), 0)
+                         FROM SALES s3
+                         JOIN TRIP_PROD_LIST tpl3 ON s3.PROD_LIST_NO = tpl3.PROD_LIST_NO
+                         JOIN TRIP_PROD tp4 ON tpl3.TRIP_PROD_NO = tp4.TRIP_PROD_NO
+                         WHERE tp4.MEM_NO = #{memNo}
+                           AND s3.SETTLE_STAT_CD != '취소'
+                         <if test="startDate != null and startDate != ''">
+                             AND s3.SALE_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+                         </if>
+                         <if test="endDate != null and endDate != ''">
+                             <![CDATA[
+                             AND s3.SALE_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+                             ]]>
+                         </if>
+                     )
+                 )) AS MY_RANK
+            FROM SALES s
+            JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+            JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+            WHERE tp.MEM_NO = #{memNo}
+            <if test="startDate != null and startDate != ''">
+                AND s.SALE_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+            </if>
+            <if test="endDate != null and endDate != ''">
+                <![CDATA[
+                AND s.SALE_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+                ]]>
+            </if>
+        ) my_stats,
+        (
+            SELECT
+                NVL(ROUND(AVG(company_sales.TOTAL_SALES), 0), 0) AS AVG_SALES,
+                NVL(ROUND(AVG(company_sales.RESV_CNT), 0), 0) AS AVG_RESV_CNT,
+                NVL(ROUND(AVG(company_sales.AVG_RATING), 1), 0) AS AVG_RATING,
+                0 AS AVG_REBOOKING_RATE,
+                NVL(ROUND(AVG(company_sales.CANCEL_RATE), 1), 0) AS AVG_CANCEL_RATE,
+                COUNT(DISTINCT company_sales.MEM_NO) AS TOTAL_COMPANY_CNT
+            FROM (
+			    SELECT
+			        tp.MEM_NO,
+			        SUM(s.NET_SALES) AS TOTAL_SALES,
+			        COUNT(DISTINCT tpl.PROD_LIST_NO) AS RESV_CNT,
+			        (SELECT NVL(ROUND(AVG(pr.RATING), 1), 0) 
+			         FROM PROD_REVIEW pr 
+			         JOIN TRIP_PROD tp2 ON pr.TRIP_PROD_NO = tp2.TRIP_PROD_NO 
+			         WHERE tp2.MEM_NO = tp.MEM_NO) AS AVG_RATING,
+			        NVL(ROUND(SUM(CASE WHEN s.SETTLE_STAT_CD = '취소' THEN 1 ELSE 0 END) * 100.0 
+			            / NULLIF(COUNT(*), 0), 1), 0) AS CANCEL_RATE
+			    FROM SALES s
+			    JOIN TRIP_PROD_LIST tpl ON s.PROD_LIST_NO = tpl.PROD_LIST_NO
+			    JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+			    WHERE 1=1
+			    <if test="startDate != null and startDate != ''">
+			        AND s.SALE_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+			    </if>
+			    <if test="endDate != null and endDate != ''">
+			        <![CDATA[
+			        AND s.SALE_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+			        ]]>
+			    </if>
+			    GROUP BY tp.MEM_NO
+			) company_sales
+        ) avg_stats
+    </select>
+    
+</mapper>

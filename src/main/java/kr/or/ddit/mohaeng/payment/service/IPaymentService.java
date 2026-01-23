@@ -14,4 +14,9 @@ public interface IPaymentService {
 	 * @return api 응답 객체
 	 */
 	public Map<String, Object> confirmPayment(PaymentVO paymentVO);
+
+	/**
+	 * 이용일 지나면 정산가능 상태변경
+	 */
+	public int updateSettleStatus();
 }

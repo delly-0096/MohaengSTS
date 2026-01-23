@@ -108,4 +108,21 @@
 	    )
 	</insert>
 	
+	
+	<!-- 이용일 지나면 정산가능 상태 변경 -->
+	<update id="updateSettleStatus">
+	    UPDATE SALES
+	    SET SETTLE_STAT_CD = '정산가능'
+	    WHERE SETTLE_STAT_CD = '정산대기'
+	      AND PROD_LIST_NO IN (
+	          SELECT tpl.PROD_LIST_NO
+	          FROM TRIP_PROD_LIST tpl
+	          JOIN PAYMENT p ON tpl.PAY_NO = p.PAY_NO
+	          <![CDATA[
+	          WHERE tpl.RESV_DT < TRUNC(SYSDATE)
+	          ]]>
+	            AND p.PAY_STATUS = 'DONE'
+	      )
+	</update>
+	
 </mapper>

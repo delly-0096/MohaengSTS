@@ -454,4 +454,12 @@ public class PaymentServiceImpl implements IPaymentService {
 	    return result;
 	}
 
+	/**
+	 * 이용일 지나면 정산가능 상태 변경
+	 */
+	@Override
+	public int updateSettleStatus() {
+		return payMapper.updateSettleStatus();
+	}
+
 }

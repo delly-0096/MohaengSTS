@@ -40,4 +40,9 @@ public class BookMarkServiceImpl implements IBookMarkService {
 		return bookMarkMapper.selectBookmarkStats(memNo);
 	}
 
+	@Override
+	public int deleteBookmarks(int memNo, List<Integer> bmkNos) {
+		return bookMarkMapper.deleteBookmarks(memNo, bmkNos);
+	}
+
 }

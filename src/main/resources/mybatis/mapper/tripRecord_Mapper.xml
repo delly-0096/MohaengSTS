@@ -1,565 +1,650 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
 <mapper namespace="kr.or.ddit.mohaeng.community.travellog.record.mapper.ITripRecordMapper">
 
-	<!-- 목록 COUNT -->
-	<select id="selectTripRecordListCount" parameterType="map"
-		resultType="long">
-		SELECT COUNT(*)
-		FROM TRIP_RECORD tr
-		WHERE 1=1
-		<if test="keyword != null and keyword != ''">
-			AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
-			OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
-		</if>
-
-		<!-- 공개범위 정책: - my-spot: 내 글만(공개/비공개 모두) - 그 외(all/popular-spot): PUBLIC만 -->
-		<choose>
-			<when test="filter == 'my-spot'">
-				<if test="loginMemNo != null">
-					AND tr.MEM_NO = #{loginMemNo}
-				</if>
-				<if test="loginMemNo == null">
-					AND 1 = 0
-				</if>
-			</when>
-			<otherwise>
-				AND tr.OPEN_SCOPE_CD = 'PUBLIC'
-			</otherwise>
-		</choose>
-
-		<if
-			test="openScopeCd != null and openScopeCd != '' and filter != 'my-spot'">
-			AND tr.OPEN_SCOPE_CD = #{openScopeCd}
-		</if>
+    <!-- 목록 COUNT -->
+	<select id="selectTripRecordListCount" parameterType="map" resultType="long">
+	    SELECT COUNT(*)
+	    FROM TRIP_RECORD tr
+	    WHERE 1=1
+	      <if test="keyword != null and keyword != ''">
+	        AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
+	             OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
+	      </if>
+	
+	      <!-- ✅ 공개범위 정책:
+	           - my-spot: 내 글만(공개/비공개 모두)
+	           - 그 외(all/popular-spot): PUBLIC만 -->
+	      <choose>
+	        <when test="filter == 'my-spot'">
+	          <if test="loginMemNo != null">
+	            AND tr.MEM_NO = #{loginMemNo}
+	          </if>
+	          <if test="loginMemNo == null">
+	            AND 1 = 0
+	          </if>
+	        </when>
+	        <otherwise>
+	          AND tr.OPEN_SCOPE_CD = 'PUBLIC'
+	        </otherwise>
+	      </choose>
+	
+	      <!-- openScopeCd는 my-spot에서 적용하면 PRIVATE가 빠질 수 있어 제외 -->
+	      <if test="openScopeCd != null and openScopeCd != '' and filter != 'my-spot'">
+	        AND tr.OPEN_SCOPE_CD = #{openScopeCd}
+	      </if>
 	</select>
 
 
-	<!-- 목록 -->
-	<select id="selectTripRecordList" parameterType="map"
-		resultType="kr.or.ddit.mohaeng.vo.TripRecordListVO">
+    <!-- 목록 -->
+	<select id="selectTripRecordList"
+        parameterType="map"
+        resultType="kr.or.ddit.mohaeng.vo.TripRecordListVO">
 
-		SELECT
-		tr.RCD_NO AS rcdNo,
-		tr.RCD_TITLE AS rcdTitle,
-		tr.REG_DT AS regDt,
-		tr.MEM_NO AS memNo,
-		m.MEM_ID AS memId,
-		tr.VIEW_CNT AS viewCnt,
-		tr.OPEN_SCOPE_CD AS openScopeCd,
-		tr.LOC_CD AS locCd,
-		mu.NICKNAME AS nickname,
-		RG.RGN_NM AS locName,
+	    SELECT
+	        tr.RCD_NO        AS rcdNo,
+	        tr.RCD_TITLE     AS rcdTitle,
+	        tr.REG_DT        AS regDt,
+	        tr.MEM_NO        AS memNo,
+	        m.MEM_ID         AS memId,
+	        tr.VIEW_CNT      AS viewCnt,
+	        tr.OPEN_SCOPE_CD AS openScopeCd,
+	        tr.LOC_CD        AS locCd,
+	        mu.NICKNAME      AS nickname,
+	        RG.RGN_NM        AS locName,
+	
+	        -- ✅ 프로필(작성자)
+	        CASE
+			  WHEN prof.FILE_PATH IS NULL THEN NULL
+			  WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
+			  WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
+			  ELSE prof.FILE_PATH || prof.FILE_NAME
+			END AS profilePath,
 
-		CASE
-		WHEN prof.FILE_PATH IS NULL THEN NULL
-		WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
-		WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
-		ELSE prof.FILE_PATH || prof.FILE_NAME
-		END AS profilePath,
-
-
-		tr.ATTACH_NO AS attachNo,
-
-		CASE
-		WHEN afd.FILE_PATH IS NULL THEN NULL
-		WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
-		WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
-		ELSE afd.FILE_PATH || afd.FILE_NAME
-		END AS coverPath,
-
-		NVL(lk.like_cnt, 0) AS likeCount,
-		NVL(cm.cmnt_cnt, 0) AS commentCount,
-
-		CASE
-		WHEN #{loginMemNo} IS NULL THEN 0
-		WHEN EXISTS (
-		SELECT 1
-		FROM LIKES l2
-		WHERE l2.LIKES_CAT_CD = 'TRIP_RECORD'
-		AND l2.LIKES_KEY = tr.RCD_NO
-		AND l2.MEM_NO = #{loginMemNo}
-		) THEN 1
-		ELSE 0
-		END AS myLiked
-
-		FROM TRIP_RECORD tr
-		JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
-		LEFT JOIN REGION RG
-		ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
-		LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
-
-		LEFT JOIN (
-		SELECT attach_no,
-		file_path,
-		file_name,
-		ROW_NUMBER() OVER (
-		PARTITION BY attach_no
-		ORDER BY reg_dt DESC, file_no DESC
-		) AS rn
-		FROM ATTACH_FILE_DETAIL
-		WHERE use_yn = 'Y'
-		AND file_gb_cd = 'PROFILE'
+	
+	        tr.ATTACH_NO     AS attachNo,
+	        
+	        CASE
+			  WHEN afd.FILE_PATH IS NULL THEN NULL
+			  WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
+			  WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
+			  ELSE afd.FILE_PATH || afd.FILE_NAME
+			END AS coverPath,
+	
+	        NVL(lk.like_cnt, 0)   AS likeCount,
+	        NVL(cm.cmnt_cnt, 0)   AS commentCount,
+	        NVL(bm.bmk_cnt, 0)    AS bookmarkCount,
+	
+	        CASE
+	          WHEN #{loginMemNo} IS NULL THEN 0
+	          WHEN EXISTS (
+	              SELECT 1
+	              FROM LIKES l2
+	              WHERE l2.LIKES_CAT_CD = 'TRIP_RECORD'
+	                AND l2.LIKES_KEY    = tr.RCD_NO
+	                AND l2.MEM_NO       = #{loginMemNo}
+	          ) THEN 1
+	          ELSE 0
+	        END AS myLiked
+	
+	    FROM TRIP_RECORD tr
+	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
+	    LEFT JOIN REGION RG
+  			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
+	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
+	
+	    -- 프로필 1장 (MEMBER.MEM_PROFILE = attach_no)
+	    LEFT JOIN (
+		    SELECT attach_no,
+		           file_path,
+		           file_name,
+		           ROW_NUMBER() OVER (
+		             PARTITION BY attach_no
+		             ORDER BY reg_dt DESC, file_no DESC
+		           ) AS rn
+		    FROM ATTACH_FILE_DETAIL
+		    WHERE use_yn = 'Y'
+		      AND file_gb_cd = 'PROFILE'
 		) prof
-		ON prof.attach_no = m.MEM_PROFILE
-		AND prof.rn = 1
+		  ON prof.attach_no = m.MEM_PROFILE
+		 AND prof.rn = 1
 
-		LEFT JOIN (
-		SELECT attach_no, MIN(file_no) AS file_no
-		FROM ATTACH_FILE_DETAIL
-		WHERE use_yn = 'Y'
-		AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
-		GROUP BY attach_no
-		) afd_pick
-		ON afd_pick.attach_no = tr.ATTACH_NO
-
-		LEFT JOIN ATTACH_FILE_DETAIL afd
-		ON afd.ATTACH_NO = afd_pick.ATTACH_NO
-		AND afd.FILE_NO = afd_pick.FILE_NO
-		AND afd.USE_YN = 'Y'
-
-		LEFT JOIN (
-		SELECT LIKES_KEY, COUNT(*) AS like_cnt
-		FROM LIKES
-		WHERE LIKES_CAT_CD = 'TRIP_RECORD'
-		GROUP BY LIKES_KEY
-		) lk ON lk.LIKES_KEY = tr.RCD_NO
-
-		LEFT JOIN (
-		SELECT TARGET_NO, COUNT(*) AS cmnt_cnt
-		FROM COMMENTS
-		WHERE TARGET_TYPE = 'TRIP_RECORD'
-		GROUP BY TARGET_NO
-		) cm ON cm.TARGET_NO = tr.RCD_NO
-
-		WHERE 1=1
-		<if test="keyword != null and keyword != ''">
-			AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
-			OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
-		</if>
-
-		<choose>
-			<when test="filter == 'my-spot'">
-				<if test="loginMemNo != null">
-					AND tr.MEM_NO = #{loginMemNo}
-				</if>
-				<if test="loginMemNo == null">
-					AND 1 = 0
-				</if>
-			</when>
-			<otherwise>
-				AND tr.OPEN_SCOPE_CD = 'PUBLIC'
-			</otherwise>
-		</choose>
-
-		<if
-			test="openScopeCd != null and openScopeCd != '' and filter != 'my-spot'">
-			AND tr.OPEN_SCOPE_CD = #{openScopeCd}
-		</if>
-
-		<choose>
-			<when test="filter == 'popular-spot'">
-				ORDER BY NVL(lk.like_cnt, 0) DESC, tr.RCD_NO DESC
-			</when>
-			<otherwise>
-				ORDER BY tr.RCD_NO DESC
-			</otherwise>
-		</choose>
-
-		OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
+	
+	    -- 커버 1장 (TRIP_RECORD.ATTACH_NO)
+	    LEFT JOIN (
+	        SELECT attach_no, MIN(file_no) AS file_no
+	        FROM ATTACH_FILE_DETAIL
+	        WHERE use_yn = 'Y'
+	          AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
+	        GROUP BY attach_no
+	    ) afd_pick
+	      ON afd_pick.attach_no = tr.ATTACH_NO
+	
+	    LEFT JOIN ATTACH_FILE_DETAIL afd
+	      ON afd.ATTACH_NO = afd_pick.ATTACH_NO
+	     AND afd.FILE_NO   = afd_pick.FILE_NO
+	     AND afd.USE_YN    = 'Y'
+	
+	    LEFT JOIN (
+	        SELECT LIKES_KEY, COUNT(*) AS like_cnt
+	        FROM LIKES
+	        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
+	        GROUP BY LIKES_KEY
+	    ) lk ON lk.LIKES_KEY = tr.RCD_NO
+	
+	    LEFT JOIN (
+	        SELECT TARGET_NO, COUNT(*) AS cmnt_cnt
+	        FROM COMMENTS
+	        WHERE TARGET_TYPE = 'TRIP_RECORD'
+	        GROUP BY TARGET_NO
+	    ) cm ON cm.TARGET_NO = tr.RCD_NO
+	
+	    LEFT JOIN (
+	        SELECT CONTENT_ID, COUNT(*) AS bmk_cnt
+	        FROM BOOKMARK
+	        WHERE CONTENT_TYPE = 'TRIP_RECORD'
+	          AND DEL_YN = 'N'
+	        GROUP BY CONTENT_ID
+	    ) bm ON bm.CONTENT_ID = tr.RCD_NO
+	
+	    WHERE 1=1
+	  <if test="keyword != null and keyword != ''">
+	    AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
+	         OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
+	  </if>
+	
+	  <!-- 공개범위 정책:
+	       - my-spot: 내 글만(공개/비공개 모두)
+	       - 그 외(all/popular-spot): PUBLIC만 -->
+	  <choose>
+	    <when test="filter == 'my-spot'">
+	      <if test="loginMemNo != null">
+	        AND tr.MEM_NO = #{loginMemNo}
+	      </if>
+	      <if test="loginMemNo == null">
+	        AND 1 = 0
+	      </if>
+	    </when>
+	    <otherwise>
+	      AND tr.OPEN_SCOPE_CD = 'PUBLIC'
+	    </otherwise>
+	  </choose>
+	
+	  <!-- openScopeCd는 my-spot에서 적용하면 PRIVATE가 빠질 수 있어 제외 -->
+	  <if test="openScopeCd != null and openScopeCd != '' and filter != 'my-spot'">
+	    AND tr.OPEN_SCOPE_CD = #{openScopeCd}
+	  </if>
+	
+	<choose>
+	  <when test="filter == 'popular-spot'">
+	    ORDER BY NVL(lk.like_cnt, 0) DESC, tr.RCD_NO DESC
+	  </when>
+	  <otherwise>
+	    ORDER BY tr.RCD_NO DESC
+	  </otherwise>
+	</choose>
+	
+	OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
 
 	</select>
+	
 
 
+    <!-- 상세 -->
+    <select id="selectTripRecordDetail"
+        parameterType="map"
+        resultType="kr.or.ddit.mohaeng.vo.TripRecordDetailVO">
+	
+	    SELECT
+	        tr.RCD_NO        AS rcdNo,
+	        tr.SCHDL_NO      AS schdlNo,
+	        tr.MEM_NO        AS memNo,
+	        m.MEM_ID         AS memId,
+	        tr.RCD_TITLE     AS rcdTitle,
+	        tr.RCD_CONTENT   AS rcdContent,
+	        tr.VIEW_CNT      AS viewCnt,
+	        tr.TRIP_DAYS_CD  AS tripDaysCd,
+	        tr.LOC_CD        AS locCd,
+	        tr.ATTACH_NO     AS attachNo,
+	        tr.REG_DT        AS regDt,
+	        tr.START_DT      AS startDt,
+	        tr.END_DT        AS endDt,
+	        tr.OPEN_SCOPE_CD AS openScopeCd,
+	        tr.MAP_DISP_YN   AS mapDispYn,
+	        tr.REPLY_ENBL_YN AS replyEnblYn,
+	        RG.RGN_NM        AS locName,
+	        ts.SCHDL_NM AS schdlNm,
+	        (
+			  SELECT h.TAG_NAME
+			  FROM HASHTAG h
+			  WHERE h.RCD_NO = tr.RCD_NO
+			    AND ROWNUM = 1
+			) AS tagName,
+	
+	        CASE
+			  WHEN afd.FILE_PATH IS NULL THEN NULL
+			  WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
+			  WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
+			  ELSE afd.FILE_PATH || afd.FILE_NAME
+			END AS coverPath,
+			
+	        mu.NICKNAME      AS nickname,
+	
+	        -- ✅ 프로필 경로
+	        CASE
+			  WHEN prof.FILE_PATH IS NULL THEN NULL
+			  WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
+			  WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
+			  ELSE prof.FILE_PATH || prof.FILE_NAME
+			END AS profilePath,
 
-	<!-- 상세 -->
-	<select id="selectTripRecordDetail" parameterType="map"
-		resultType="kr.or.ddit.mohaeng.vo.TripRecordDetailVO">
-
-		SELECT
-		tr.RCD_NO AS rcdNo,
-		tr.SCHDL_NO AS schdlNo,
-		tr.MEM_NO AS memNo,
-		m.MEM_ID AS memId,
-		tr.RCD_TITLE AS rcdTitle,
-		tr.RCD_CONTENT AS rcdContent,
-		tr.VIEW_CNT AS viewCnt,
-		tr.TRIP_DAYS_CD AS tripDaysCd,
-		tr.LOC_CD AS locCd,
-		tr.ATTACH_NO AS attachNo,
-		tr.REG_DT AS regDt,
-		tr.START_DT AS startDt,
-		tr.END_DT AS endDt,
-		tr.OPEN_SCOPE_CD AS openScopeCd,
-		tr.MAP_DISP_YN AS mapDispYn,
-		tr.REPLY_ENBL_YN AS replyEnblYn,
-		RG.RGN_NM AS locName,
-		ts.SCHDL_NM AS schdlNm,
-		(
-		SELECT h.TAG_NAME
-		FROM HASHTAG h
-		WHERE h.RCD_NO = tr.RCD_NO
-		AND ROWNUM = 1
-		) AS tagName,
-
-		CASE
-		WHEN afd.FILE_PATH IS NULL THEN NULL
-		WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
-		WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
-		ELSE afd.FILE_PATH || afd.FILE_NAME
-		END AS coverPath,
-
-		mu.NICKNAME AS nickname,
-
-		CASE
-		WHEN prof.FILE_PATH IS NULL THEN NULL
-		WHEN prof.FILE_NAME IS NULL THEN prof.FILE_PATH
-		WHEN prof.FILE_PATH LIKE '%' || prof.FILE_NAME THEN prof.FILE_PATH
-		ELSE prof.FILE_PATH || prof.FILE_NAME
-		END AS profilePath,
-
-
-		(SELECT COUNT(*) FROM LIKES
-		WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO) AS likeCount,
-
-		(SELECT COUNT(*) FROM COMMENTS
-		WHERE TARGET_TYPE='TRIP_RECORD' AND TARGET_NO=tr.RCD_NO) AS commentCount,
-
-		CASE
-		WHEN #{loginMemNo} IS NULL THEN 0
-		WHEN EXISTS (
-		SELECT 1 FROM LIKES
-		WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO AND
-		MEM_NO=#{loginMemNo}
-		) THEN 1 ELSE 0
-		END AS myLiked,
-
-		FROM TRIP_RECORD tr
-		JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
-		LEFT JOIN TRIP_SCHEDULE ts
-		ON ts.SCHDL_NO = tr.SCHDL_NO
-		LEFT JOIN REGION RG
-		ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
-		LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
-
-		LEFT JOIN (
-		SELECT attach_no,
-		file_path,
-		file_name,
-		ROW_NUMBER() OVER (
-		PARTITION BY attach_no
-		ORDER BY reg_dt DESC, file_no DESC
-		) AS rn
-		FROM ATTACH_FILE_DETAIL
-		WHERE use_yn = 'Y'
-		AND file_gb_cd = 'PROFILE'
+	
+	        (SELECT COUNT(*) FROM LIKES
+	          WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO) AS likeCount,
+	
+	        (SELECT COUNT(*) FROM COMMENTS
+	          WHERE TARGET_TYPE='TRIP_RECORD' AND TARGET_NO=tr.RCD_NO) AS commentCount,
+	
+	        (SELECT COUNT(*) FROM BOOKMARK
+	          WHERE CONTENT_TYPE='TRIP_RECORD' AND CONTENT_ID=tr.RCD_NO AND DEL_YN='N') AS bookmarkCount,
+	
+	        CASE
+	          WHEN #{loginMemNo} IS NULL THEN 0
+	          WHEN EXISTS (
+	              SELECT 1 FROM LIKES
+	              WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO AND MEM_NO=#{loginMemNo}
+	          ) THEN 1 ELSE 0
+	        END AS myLiked,
+	
+	        CASE
+	          WHEN #{loginMemNo} IS NULL THEN 0
+	          WHEN EXISTS (
+	              SELECT 1 FROM BOOKMARK
+	              WHERE CONTENT_TYPE='TRIP_RECORD' AND CONTENT_ID=tr.RCD_NO AND MEM_NO=#{loginMemNo} AND DEL_YN='N'
+	          ) THEN 1 ELSE 0
+	        END AS bookmarked
+	
+	    FROM TRIP_RECORD tr
+	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
+	    LEFT JOIN TRIP_SCHEDULE ts
+  			ON ts.SCHDL_NO = tr.SCHDL_NO
+	    LEFT JOIN REGION RG
+  			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
+	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
+	
+	    -- ✅ 프로필 1장
+	    LEFT JOIN (
+		    SELECT attach_no,
+		           file_path,
+		           file_name,
+		           ROW_NUMBER() OVER (
+		             PARTITION BY attach_no
+		             ORDER BY reg_dt DESC, file_no DESC
+		           ) AS rn
+		    FROM ATTACH_FILE_DETAIL
+		    WHERE use_yn = 'Y'
+		      AND file_gb_cd = 'PROFILE'
 		) prof
-		ON prof.attach_no = m.MEM_PROFILE
-		AND prof.rn = 1
+		  ON prof.attach_no = m.MEM_PROFILE
+		 AND prof.rn = 1
 
-		LEFT JOIN (
-		SELECT attach_no, MIN(file_no) AS file_no
-		FROM ATTACH_FILE_DETAIL
-		WHERE use_yn = 'Y'
-		AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
-		GROUP BY attach_no
-		) afd_pick
-		ON afd_pick.attach_no = tr.ATTACH_NO
-
-		LEFT JOIN ATTACH_FILE_DETAIL afd
-		ON afd.attach_no = afd_pick.attach_no
-		AND afd.file_no = afd_pick.file_no
-		AND afd.use_yn = 'Y'
-
-		WHERE tr.RCD_NO = #{rcdNo}
-		<if test="loginMemNo == null">
-			AND tr.OPEN_SCOPE_CD = 'PUBLIC'
-		</if>
-		<if test="loginMemNo != null">
-			AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
-		</if>
+	
+	    -- ✅ 커버 1장
+	    LEFT JOIN (
+	        SELECT attach_no, MIN(file_no) AS file_no
+	        FROM ATTACH_FILE_DETAIL
+	        WHERE use_yn = 'Y'
+	          AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
+	        GROUP BY attach_no
+	    ) afd_pick
+	      ON afd_pick.attach_no = tr.ATTACH_NO
+	
+	    LEFT JOIN ATTACH_FILE_DETAIL afd
+	      ON afd.attach_no = afd_pick.attach_no
+	     AND afd.file_no   = afd_pick.file_no
+	     AND afd.use_yn    = 'Y'
+	
+	    WHERE tr.RCD_NO = #{rcdNo}
+	      <if test="loginMemNo == null">
+	        AND tr.OPEN_SCOPE_CD = 'PUBLIC'
+	      </if>
+	      <if test="loginMemNo != null">
+	        AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
+	      </if>
 	</select>
+    
 
-	<update id="increaseViewCnt" parameterType="long">
-		UPDATE TRIP_RECORD
-		SET VIEW_CNT = NVL(VIEW_CNT, 0) + 1
-		WHERE RCD_NO = #{rcdNo}
-	</update>
+    <update id="increaseViewCnt" parameterType="long">
+        UPDATE TRIP_RECORD
+        SET VIEW_CNT = NVL(VIEW_CNT, 0) + 1
+        WHERE RCD_NO = #{rcdNo}
+    </update>
 
-	<select id="selectWriterMemNo" parameterType="long"
-		resultType="long">
-		SELECT MEM_NO FROM TRIP_RECORD WHERE RCD_NO = #{rcdNo}
-	</select>
+    <select id="selectWriterMemNo" parameterType="long" resultType="long">
+        SELECT MEM_NO FROM TRIP_RECORD WHERE RCD_NO = #{rcdNo}
+    </select>
 
-	<update id="updateTripRecord"
-		parameterType="kr.or.ddit.mohaeng.vo.TripRecordVO">
-		UPDATE TRIP_RECORD
-		<set>
-			SCHDL_NO = #{schdlNo},
-			RCD_TITLE = #{rcdTitle},
-			RCD_CONTENT = #{rcdContent},
-			TRIP_DAYS_CD = #{tripDaysCd},
-			LOC_CD = #{locCd},
+    <!-- INSERT: 시퀀스는 팀 규칙상 SEQ_TRIP_RECORD 필요 -->
+<!--     <insert id="insertTripRecord" parameterType="kr.or.ddit.mohaeng.vo.TripRecordVO">
+        <selectKey keyProperty="rcdNo" resultType="long" order="BEFORE">
+            SELECT SEQ_TRIP_RECORD.NEXTVAL FROM DUAL
+        </selectKey>
+        INSERT INTO TRIP_RECORD (
+            RCD_NO, SCHDL_NO, MEM_NO, RCD_TITLE, RCD_CONTENT,
+            VIEW_CNT, TRIP_DAYS_CD, LOC_CD, ATTACH_NO,
+            REG_DT, START_DT, END_DT,
+            OPEN_SCOPE_CD, MAP_DISP_YN, REPLY_ENBL_YN
+        ) VALUES (
+            #{rcdNo}, #{schdlNo}, #{memNo}, #{rcdTitle}, #{rcdContent},
+            0, #{tripDaysCd}, #{locCd}, #{attachNo},
+            SYSDATE, #{startDt}, #{endDt},
+            #{openScopeCd}, #{mapDispYn}, #{replyEnblYn}
+        )
+    </insert> -->
 
-			<!-- attachNo가 null이 아닐 때만 커버 갱신 -->
-			<if test="attachNo != null">
-				ATTACH_NO = #{attachNo},
-			</if>
+    <update id="updateTripRecord" parameterType="kr.or.ddit.mohaeng.vo.TripRecordVO">
+  UPDATE TRIP_RECORD
+  <set>
+    SCHDL_NO      = #{schdlNo},
+    RCD_TITLE     = #{rcdTitle},
+    RCD_CONTENT   = #{rcdContent},
+    TRIP_DAYS_CD  = #{tripDaysCd},
+    LOC_CD        = #{locCd},
 
-			START_DT = #{startDt},
-			END_DT = #{endDt},
-			OPEN_SCOPE_CD = #{openScopeCd},
-			MAP_DISP_YN = #{mapDispYn},
-			REPLY_ENBL_YN = #{replyEnblYn}
-		</set>
-		WHERE RCD_NO = #{rcdNo}
-	</update>
+    <!-- ✅ attachNo가 null이 아닐 때만 커버 갱신 -->
+    <if test="attachNo != null">
+      ATTACH_NO     = #{attachNo},
+    </if>
+
+    START_DT      = #{startDt},
+    END_DT        = #{endDt},
+    OPEN_SCOPE_CD = #{openScopeCd},
+    MAP_DISP_YN   = #{mapDispYn},
+    REPLY_ENBL_YN = #{replyEnblYn}
+  </set>
+  WHERE RCD_NO = #{rcdNo}
+</update>
 
 
-	<delete id="deleteTripRecord" parameterType="long">
-		DELETE FROM TRIP_RECORD WHERE RCD_NO = #{rcdNo}
-	</delete>
-
+    <delete id="deleteTripRecord" parameterType="long">
+        DELETE FROM TRIP_RECORD WHERE RCD_NO = #{rcdNo}
+    </delete>
+    
 	<!-- TripRecordMapper.xml -->
-	<insert id="insertTripRecord" parameterType="map">
-		<selectKey keyProperty="req.rcdNo" resultType="long"
-			order="BEFORE">
-			SELECT SEQ_TRIP_RECORD.NEXTVAL FROM DUAL
-		</selectKey>
+<insert id="insertTripRecord" parameterType="map">
+  <selectKey keyProperty="req.rcdNo" resultType="long" order="BEFORE">
+    SELECT SEQ_TRIP_RECORD.NEXTVAL FROM DUAL
+  </selectKey>
 
-		INSERT INTO TRIP_RECORD (
-		RCD_NO, SCHDL_NO, MEM_NO,
-		RCD_TITLE, RCD_CONTENT,
-		TRIP_DAYS_CD, LOC_CD, ATTACH_NO,
-		REG_DT, START_DT, END_DT,
-		OPEN_SCOPE_CD, MAP_DISP_YN, REPLY_ENBL_YN,
-		VIEW_CNT
-		) VALUES (
-		#{req.rcdNo}, #{req.schdlNo}, #{memNo},
-		#{req.rcdTitle}, #{req.rcdContent},
-		#{req.tripDaysCd}, #{req.locCd}, #{req.attachNo},
-		SYSDATE, #{req.startDt}, #{req.endDt},
-		#{req.openScopeCd}, #{req.mapDispYn}, #{req.replyEnblYn},
-		0
-		)
-	</insert>
+  INSERT INTO TRIP_RECORD (
+    RCD_NO, SCHDL_NO, MEM_NO,
+    RCD_TITLE, RCD_CONTENT,
+    TRIP_DAYS_CD, LOC_CD, ATTACH_NO,
+    REG_DT, START_DT, END_DT,
+    OPEN_SCOPE_CD, MAP_DISP_YN, REPLY_ENBL_YN,
+    VIEW_CNT
+  ) VALUES (
+    #{req.rcdNo}, #{req.schdlNo}, #{memNo},
+    #{req.rcdTitle}, #{req.rcdContent},
+    #{req.tripDaysCd}, #{req.locCd}, #{req.attachNo},
+    SYSDATE, #{req.startDt}, #{req.endDt},
+    #{req.openScopeCd}, #{req.mapDispYn}, #{req.replyEnblYn},
+    0
+  )
+</insert>
 
-	<select id="nextConnNo" resultType="long">
-		SELECT SEQ_TRIP_RECORD_CONN.NEXTVAL FROM DUAL
-	</select>
+	
+<!-- nextConnNo -->
+<select id="nextConnNo" resultType="long">
+  SELECT SEQ_TRIP_RECORD_CONN.NEXTVAL FROM DUAL
+</select>
 
-	<insert id="insertTripRecordSeq">
-		INSERT INTO TRIP_RECORD_SEQ (RCD_CONN_NO, RCD_NO, RCD_ORDER, BLOCK_TYPE,
-		TARGET_PK)
-		VALUES (#{connNo}, #{rcdNo}, #{order}, #{blockType}, #{targetPk})
-	</insert>
+<!-- TRIP_RECORD_SEQ -->
+<insert id="insertTripRecordSeq">
+  INSERT INTO TRIP_RECORD_SEQ (RCD_CONN_NO, RCD_NO, RCD_ORDER, BLOCK_TYPE, TARGET_PK)
+  VALUES (#{connNo}, #{rcdNo}, #{order}, #{blockType}, #{targetPk})
+</insert>
 
-	<insert id="insertTripRecordTxt">
-		INSERT INTO TRIP_RECORD_TXT (RCT_TXT_NO, RCD_CONN_NO, TXT_CONN)
-		VALUES (RAWTOHEX(SYS_GUID()), #{connNo}, #{text})
-	</insert>
+<!-- TRIP_RECORD_TXT : PK는 SYS_GUID() -->
+<insert id="insertTripRecordTxt">
+  INSERT INTO TRIP_RECORD_TXT (RCT_TXT_NO, RCD_CONN_NO, TXT_CONN)
+  VALUES (RAWTOHEX(SYS_GUID()), #{connNo}, #{text})
+</insert>
 
-	<insert id="insertTripRecordImg">
-		INSERT INTO TRIP_RECORD_IMG (RCD_IMG_NO, RCD_CONN_NO, RCD_IMG, RCD_IMG_DESC)
-		VALUES (RAWTOHEX(SYS_GUID()), #{connNo}, #{attachNo}, #{desc})
-	</insert>
+<!-- TRIP_RECORD_IMG : PK는 SYS_GUID(), attachNo는 RCD_IMG 컬럼 -->
+<insert id="insertTripRecordImg">
+  INSERT INTO TRIP_RECORD_IMG (RCD_IMG_NO, RCD_CONN_NO, RCD_IMG, RCD_IMG_DESC)
+  VALUES (RAWTOHEX(SYS_GUID()), #{connNo}, #{attachNo}, #{desc})
+</insert>
 
-	<select id="nextTourPlaceReviewSeq" resultType="long">
-		SELECT SEQ_TOUR_PLACE_REVIEW.NEXTVAL FROM DUAL
-	</select>
+<!-- ===== TOUR_PLACE_REVIEW PK 시퀀스 ===== -->
+<select id="nextTourPlaceReviewSeq" resultType="long">
+  SELECT SEQ_TOUR_PLACE_REVIEW.NEXTVAL FROM DUAL
+</select>
 
-	<insert id="insertTourPlaceReview">
-		INSERT INTO TOUR_PLACE_REVIEW (
-		PLACE_REVIEW_NO,
-		RCD_CONN_NO,
-		MEM_NO,
-		PLC_NO,
-		REVIEW_CONN,
-		RATING,
-		REG_DT
-		) VALUES (
-		#{placeReviewNo},
-		#{rcdConnNo},
-		#{memNo},
-		#{plcNo},
-		#{reviewConn},
-		#{rating},
-		SYSDATE
-		)
-	</insert>
-
-	<update id="updateCoverAttachNo">
-		UPDATE TRIP_RECORD
-		SET ATTACH_NO = #{attachNo}
-		WHERE RCD_NO = #{rcdNo}
-	</update>
-
-	<!-- ===== 첨부 저장 ===== -->
-	<select id="nextAttachNo" resultType="long">
-		SELECT SEQ_ATTACH_FILE.NEXTVAL FROM DUAL
-	</select>
-
-	<select id="nextFileNo" resultType="long">
-		SELECT SEQ_ATTACH_FILE_DETAIL.NEXTVAL FROM DUAL
-	</select>
-
-	<insert id="insertAttachFile">
-		INSERT INTO ATTACH_FILE (ATTACH_NO, REG_ID, REG_DT)
-		VALUES (#{attachNo}, #{regId}, TO_CHAR(SYSDATE,'RR/MM/DD'))
-	</insert>
-
-	<insert id="insertAttachFileDetail">
-		INSERT INTO ATTACH_FILE_DETAIL
-		(FILE_NO, ATTACH_NO, FILE_NAME, FILE_ORIGINAL_NAME, FILE_EXT, FILE_SIZE,
-		FILE_PATH, FILE_GB_CD, MIMY_TYPE, USE_YN, REG_ID, REG_DT)
-		VALUES
-		(#{fileNo}, #{attachNo}, #{fileName}, #{originalName}, #{ext}, #{size},
-		#{path}, #{fileGbCd}, #{mimyType}, #{useYn}, #{regId}, SYSDATE)
-	</insert>
-
-	<insert id="upsertHashtagText">
-		MERGE INTO HASHTAG h
-		USING (
-		SELECT #{rcdNo} AS RCD_NO,
-		#{tagText} AS TAG_TEXT
-		FROM DUAL
-		) s
-		ON (h.RCD_NO = s.RCD_NO)
-		WHEN MATCHED THEN
-		UPDATE SET h.TAG_NAME = s.TAG_TEXT,
-		h.REG_DT = SYSDATE
-		WHEN NOT MATCHED THEN
-		INSERT (HSTG_NO, RCD_NO, TAG_NAME, REG_DT)
-		VALUES (SEQ_HASHTAG.NEXTVAL, s.RCD_NO, s.TAG_TEXT, SYSDATE)
-	</insert>
-
-	<select id="selectTripRecordBlocks" parameterType="long"
-		resultType="kr.or.ddit.mohaeng.vo.TripRecordBlockVO">
-
-		SELECT
-		s.RCD_ORDER AS "order",
-		s.BLOCK_TYPE AS "blockType",
-		s.TARGET_PK AS "targetPk",
-		t.TXT_CONN AS "text",
-		i.RCD_IMG AS "attachNo",
-		i.RCD_IMG_DESC AS "desc",
-		afd.FILE_PATH AS "imgPath",
-		pr.PLACE_REVIEW_NO AS "placeReviewNo",
-		pr.PLC_NO AS "plcNo",
-		pr.RATING AS "rating",
-		pr.REVIEW_CONN AS "reviewConn",
-		p.PLC_NM AS "plcNm",
-		p.PLC_ADDR1 AS "plcAddr1",
-		p.PLC_ADDR2 AS "plcAddr2",
-		p.DEFAULT_IMG AS "defaultImg",
-		p.ATTACH_NO AS "placeAttachNo",
-		pafd.FILE_PATH AS "placeImgPath"
-
-		FROM TRIP_RECORD_SEQ s
-
-		LEFT JOIN TRIP_RECORD_TXT t
-		ON s.BLOCK_TYPE = 'TEXT'
-		AND s.TARGET_PK = TO_CHAR(t.RCD_CONN_NO)
-
-		LEFT JOIN TRIP_RECORD_IMG i
-		ON s.BLOCK_TYPE = 'IMAGE'
-		AND s.TARGET_PK = TO_CHAR(i.RCD_CONN_NO)
-
-		LEFT JOIN (
-		SELECT attach_no, MIN(file_no) AS file_no
-		FROM ATTACH_FILE_DETAIL
-		WHERE use_yn = 'Y'
-		AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
-		GROUP BY attach_no
-		) pick
-		ON pick.attach_no = i.RCD_IMG
-
-		LEFT JOIN ATTACH_FILE_DETAIL afd
-		ON afd.attach_no = pick.attach_no
-		AND afd.file_no = pick.file_no
-		AND afd.use_yn = 'Y'
-
-		LEFT JOIN TOUR_PLACE_REVIEW pr
-		ON s.BLOCK_TYPE = 'PLACE'
-		AND s.TARGET_PK = TO_CHAR(pr.PLACE_REVIEW_NO)
-
-		LEFT JOIN TOUR_PLACE p
-		ON p.PLC_NO = pr.PLC_NO
-
-		LEFT JOIN (
-		SELECT attach_no, MIN(file_no) AS file_no
-		FROM ATTACH_FILE_DETAIL
-		WHERE use_yn = 'Y'
-		GROUP BY attach_no
-		) p_pick
-		ON p_pick.attach_no = p.ATTACH_NO
-
-		LEFT JOIN ATTACH_FILE_DETAIL pafd
-		ON pafd.attach_no = p_pick.attach_no
-		AND pafd.file_no = p_pick.file_no
-		AND pafd.use_yn = 'Y'
-
-		WHERE s.RCD_NO = #{rcdNo}
-		ORDER BY s.RCD_ORDER ASC
-
-	</select>
+<!-- ===== TOUR_PLACE_REVIEW INSERT ===== -->
+<insert id="insertTourPlaceReview">
+  INSERT INTO TOUR_PLACE_REVIEW (
+    PLACE_REVIEW_NO,
+    RCD_CONN_NO,
+    MEM_NO,
+    PLC_NO,
+    REVIEW_CONN,
+    RATING,
+    REG_DT
+  ) VALUES (
+    #{placeReviewNo},
+    #{rcdConnNo},
+    #{memNo},
+    #{plcNo},
+    #{reviewConn},
+    #{rating},
+    SYSDATE
+  )
+</insert>
 
 
-	<!-- ===================== 블록 삭제 정리 ===================== -->
 
-	<delete id="deleteTourPlaceReviewByRcdNo">
-		DELETE FROM TOUR_PLACE_REVIEW pr
-		WHERE pr.RCD_CONN_NO IN (
-		SELECT s.RCD_CONN_NO
-		FROM TRIP_RECORD_SEQ s
-		WHERE s.RCD_NO = #{rcdNo}
-		AND s.BLOCK_TYPE = 'PLACE'
-		)
-	</delete>
+<!-- 커버 attachNo -->
+<update id="updateCoverAttachNo">
+  UPDATE TRIP_RECORD
+     SET ATTACH_NO = #{attachNo}
+   WHERE RCD_NO = #{rcdNo}
+</update>
 
-	<delete id="deleteTripRecordImgByRcdNo">
-		DELETE FROM TRIP_RECORD_IMG i
-		WHERE i.RCD_CONN_NO IN (
-		SELECT s.RCD_CONN_NO
-		FROM TRIP_RECORD_SEQ s
-		WHERE s.RCD_NO = #{rcdNo}
-		AND s.BLOCK_TYPE = 'IMAGE'
-		)
-	</delete>
+<!-- ===== 첨부 저장 ===== -->
+<select id="nextAttachNo" resultType="long">
+  SELECT SEQ_ATTACH_FILE.NEXTVAL FROM DUAL
+</select>
 
-	<delete id="deleteTripRecordTxtByRcdNo">
-		DELETE FROM TRIP_RECORD_TXT t
-		WHERE t.RCD_CONN_NO IN (
-		SELECT s.RCD_CONN_NO
-		FROM TRIP_RECORD_SEQ s
-		WHERE s.RCD_NO = #{rcdNo}
-		AND s.BLOCK_TYPE = 'TEXT'
-		)
-	</delete>
+<select id="nextFileNo" resultType="long">
+  SELECT SEQ_ATTACH_FILE_DETAIL.NEXTVAL FROM DUAL
+</select>
 
-	<delete id="deleteTripRecordSeqByRcdNo">
-		DELETE FROM TRIP_RECORD_SEQ
-		WHERE RCD_NO = #{rcdNo}
-	</delete>
+<insert id="insertAttachFile">
+  INSERT INTO ATTACH_FILE (ATTACH_NO, REG_ID, REG_DT)
+  VALUES (#{attachNo}, #{regId}, TO_CHAR(SYSDATE,'RR/MM/DD'))
+</insert>
 
-	<delete id="deleteHashtagByRcdNo">
-		DELETE FROM HASHTAG
-		WHERE RCD_NO = #{rcdNo}
-	</delete>
+<insert id="insertAttachFileDetail">
+  INSERT INTO ATTACH_FILE_DETAIL
+  (FILE_NO, ATTACH_NO, FILE_NAME, FILE_ORIGINAL_NAME, FILE_EXT, FILE_SIZE,
+   FILE_PATH, FILE_GB_CD, MIMY_TYPE, USE_YN, REG_ID, REG_DT)
+  VALUES
+  (#{fileNo}, #{attachNo}, #{fileName}, #{originalName}, #{ext}, #{size},
+   #{path}, #{fileGbCd}, #{mimyType}, #{useYn}, #{regId}, SYSDATE)
+</insert>
 
-	<!-- ===================== 커뮤니티 연관 삭제 ===================== -->
+<insert id="upsertHashtagText">
+  MERGE INTO HASHTAG h
+  USING (
+    SELECT #{rcdNo} AS RCD_NO,
+           #{tagText} AS TAG_TEXT
+    FROM DUAL
+  ) s
+  ON (h.RCD_NO = s.RCD_NO)
+  WHEN MATCHED THEN
+    UPDATE SET h.TAG_NAME = s.TAG_TEXT,
+               h.REG_DT   = SYSDATE
+  WHEN NOT MATCHED THEN
+    INSERT (HSTG_NO, RCD_NO, TAG_NAME, REG_DT)
+    VALUES (SEQ_HASHTAG.NEXTVAL, s.RCD_NO, s.TAG_TEXT, SYSDATE)
+</insert>
 
-	<delete id="deleteLikesByRcdNo">
-		DELETE FROM LIKES
-		WHERE LIKES_CAT_CD = 'TRIP_RECORD'
-		AND LIKES_KEY = #{rcdNo}
-	</delete>
 
-	<delete id="deleteCommentsByRcdNo">
-		DELETE FROM COMMENTS
-		WHERE TARGET_TYPE = 'TRIP_RECORD'
-		AND TARGET_NO = #{rcdNo}
-	</delete>
+
+<select id="selectTripRecordBlocks"
+        parameterType="long"
+        resultType="kr.or.ddit.mohaeng.vo.TripRecordBlockVO">
+
+  SELECT
+    s.RCD_ORDER          AS "order",
+    s.BLOCK_TYPE         AS "blockType",
+    s.TARGET_PK          AS "targetPk",
+
+    /* ===== TEXT ===== */
+    t.TXT_CONN           AS "text",
+
+    /* ===== IMAGE ===== */
+    i.RCD_IMG            AS "attachNo",    
+    i.RCD_IMG_DESC       AS "desc",
+    afd.FILE_PATH        AS "imgPath",
+
+    /* ===== PLACE (리뷰) ===== */
+    pr.PLACE_REVIEW_NO   AS "placeReviewNo",
+    pr.PLC_NO            AS "plcNo",
+    pr.RATING            AS "rating",
+    pr.REVIEW_CONN       AS "reviewConn",
+
+    /* ===== PLACE (장소) ===== */
+    p.PLC_NM             AS "plcNm",
+    p.PLC_ADDR1          AS "plcAddr1",
+    p.PLC_ADDR2          AS "plcAddr2",
+    p.DEFAULT_IMG        AS "defaultImg",
+    p.ATTACH_NO          AS "placeAttachNo",
+    pafd.FILE_PATH       AS "placeImgPath"
+
+  FROM TRIP_RECORD_SEQ s
+
+  /* ===== TEXT ===== */
+  LEFT JOIN TRIP_RECORD_TXT t
+    ON s.BLOCK_TYPE = 'TEXT'
+   AND s.TARGET_PK  = TO_CHAR(t.RCD_CONN_NO)
+
+  /* ===== IMAGE ===== */
+  LEFT JOIN TRIP_RECORD_IMG i
+    ON s.BLOCK_TYPE = 'IMAGE'
+   AND s.TARGET_PK  = TO_CHAR(i.RCD_CONN_NO)
+
+  LEFT JOIN (
+    SELECT attach_no, MIN(file_no) AS file_no
+    FROM ATTACH_FILE_DETAIL
+    WHERE use_yn = 'Y'
+      AND file_gb_cd IN ('ATTACH', 'TRIP_SCHEDULE')
+    GROUP BY attach_no
+  ) pick
+    ON pick.attach_no = i.RCD_IMG
+
+  LEFT JOIN ATTACH_FILE_DETAIL afd
+    ON afd.attach_no = pick.attach_no
+   AND afd.file_no   = pick.file_no
+   AND afd.use_yn    = 'Y'
+
+  /* ===== PLACE ===== */
+  LEFT JOIN TOUR_PLACE_REVIEW pr
+    ON s.BLOCK_TYPE = 'PLACE'
+   AND s.TARGET_PK  = TO_CHAR(pr.PLACE_REVIEW_NO)
+
+  LEFT JOIN TOUR_PLACE p
+    ON p.PLC_NO = pr.PLC_NO
+
+  /* 장소 대표 이미지 1장 */
+  LEFT JOIN (
+    SELECT attach_no, MIN(file_no) AS file_no
+    FROM ATTACH_FILE_DETAIL
+    WHERE use_yn = 'Y'
+    GROUP BY attach_no
+  ) p_pick
+    ON p_pick.attach_no = p.ATTACH_NO
+
+  LEFT JOIN ATTACH_FILE_DETAIL pafd
+    ON pafd.attach_no = p_pick.attach_no
+   AND pafd.file_no   = p_pick.file_no
+   AND pafd.use_yn    = 'Y'
+
+  WHERE s.RCD_NO = #{rcdNo}
+  ORDER BY s.RCD_ORDER ASC
+
+</select>
+
+
+<!-- ===================== 블록 삭제 정리 ===================== -->
+
+<delete id="deleteTourPlaceReviewByRcdNo">
+  DELETE FROM TOUR_PLACE_REVIEW pr
+   WHERE pr.RCD_CONN_NO IN (
+     SELECT s.RCD_CONN_NO
+       FROM TRIP_RECORD_SEQ s
+      WHERE s.RCD_NO = #{rcdNo}
+        AND s.BLOCK_TYPE = 'PLACE'
+   )
+</delete>
+
+<delete id="deleteTripRecordImgByRcdNo">
+  DELETE FROM TRIP_RECORD_IMG i
+   WHERE i.RCD_CONN_NO IN (
+     SELECT s.RCD_CONN_NO
+       FROM TRIP_RECORD_SEQ s
+      WHERE s.RCD_NO = #{rcdNo}
+        AND s.BLOCK_TYPE = 'IMAGE'
+   )
+</delete>
+
+<delete id="deleteTripRecordTxtByRcdNo">
+  DELETE FROM TRIP_RECORD_TXT t
+   WHERE t.RCD_CONN_NO IN (
+     SELECT s.RCD_CONN_NO
+       FROM TRIP_RECORD_SEQ s
+      WHERE s.RCD_NO = #{rcdNo}
+        AND s.BLOCK_TYPE = 'TEXT'
+   )
+</delete>
+
+<delete id="deleteTripRecordSeqByRcdNo">
+  DELETE FROM TRIP_RECORD_SEQ
+   WHERE RCD_NO = #{rcdNo}
+</delete>
+
+<delete id="deleteHashtagByRcdNo">
+  DELETE FROM HASHTAG
+   WHERE RCD_NO = #{rcdNo}
+</delete>
+
+<!-- ===================== (선택) 커뮤니티 연관 삭제 ===================== -->
+
+<delete id="deleteLikesByRcdNo">
+  DELETE FROM LIKES
+   WHERE LIKES_CAT_CD = 'TRIP_RECORD'
+     AND LIKES_KEY = #{rcdNo}
+</delete>
+
+<delete id="deleteBookmarkByRcdNo">
+  DELETE FROM BOOKMARK
+   WHERE CONTENT_TYPE = 'TRIP_RECORD'
+     AND CONTENT_ID = #{rcdNo}
+</delete>
+
+<delete id="deleteCommentsByRcdNo">
+  DELETE FROM COMMENTS
+   WHERE TARGET_TYPE = 'TRIP_RECORD'
+     AND TARGET_NO = #{rcdNo}
+</delete>
+
+
+
+    
 
 </mapper>

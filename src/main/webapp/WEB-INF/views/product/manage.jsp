@@ -237,11 +237,12 @@
 			                        <i class="bi bi-pencil"></i> 수정
 			                    </button>
 			                    <button class="btn btn-outline btn-sm" onclick="toggleProductStatus(this)"
-			                    	data-id="${prod.tripProdNo}" data-status="${prod.approveStatus}">
+			                    	data-id="${prod.tripProdNo}" data-status="${prod.approveStatus}" data-aprv="${prod.aprvYn}">
 			                        <i class="bi bi-pause"></i> 
 			                        ${prod.approveStatus == '판매중' ? '중지' : '재개'}
+			                        <!-- 승인여부도 따져야됨 -->
+			                        <!-- prod.aprvYn == 'Y' ? '승인' : 'wait = 대기' / 'N = 불허' -->
 			                    </button>
-			                    <!-- prod.aprvYn == 'Y' ? '승인' : 'wait = 대기' / 'N = 불허' -->
 			                    <button class="btn btn-outline btn-sm text-danger" onclick="deleteProduct(this)"
 			                    	data-id="${prod.tripProdNo}">
 			                        <i class="bi bi-trash"></i> 삭제
@@ -300,7 +301,6 @@
                         <div class="col-md-4" id="regionField">
                             <label class="form-label">지역 <span class="text-danger">*</span></label>
                             <select class="form-select" name="ctyNm">
-                            	<!-- 일단 나중에 상의 -->
                                 <option value="">선택하세요</option>
                                 <optgroup label="수도권">
                                     <option value="1">서울</option>
@@ -349,11 +349,14 @@
                         <label class="form-label">상품명 <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" name="tripProdTitle" placeholder="상품명을 입력하세요" required>
                     </div>
+                    <!-- 숙소 정보 있으면 이 필드 input readOnly -->
                     <div class="mb-3" id="accommodationNameField" style="display:none;">
                         <label class="form-label">숙소명 <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" name="accommodation.accName" placeholder="숙소명 입력하세요" required>
+                        <input type="text" class="form-control" name="accommodation.accName" placeholder="숙소명 입력하세요" readonly required>
+                        <label class="form-label">숙소 전화번호<span class="text-danger">*</span></label>
+                        <!-- 수정가능 -->
+                        <input type="text" class="form-control" name="accommodation.tel" placeholder="010-1234-1234" readonly required>
                     </div>
-                    
                     <div class="mb-3" id="locationField">
                         <label class="form-label">위치 정보 <span class="text-danger">*</span></label>
                         <div id="prodAddress">
@@ -369,7 +372,7 @@
 	                        </div>
 	                        <input type="text" class="form-control mt-2" name="prodPlace.addr2" placeholder="상세주소 (건물명, 층, 호수 등)"/>
                         </div>
-                        <div id="accommodationAddress" style="display:none;">
+                        <div id="accommodationAddressTag" style="display:none;">
 	                        <div class="row g-2">
 	                            <div class="col-md-10">
 	                                <input type="text" class="form-control" name="accommodation.addr1" id="accommodationAddress" placeholder="숙소 주소를 검색하세요" required readonly>
@@ -388,18 +391,23 @@
 						    <div id="registerMap" style="width: 100%; height: 250px; border-radius:12px; border: 1px solid #ddd;"></div>
 						</div>
 
-                        
 					    <!-- 숙박용 -->
                         <input type="hidden" name="accommodation.mapy" id="productLatitude"/>
                         <input type="hidden" name="accommodation.mapx" id="productLongitude"/>
-					    
-<!-- 					    <input type="hidden" class="form-control mt-2" id="detailAddressInput" 
-					           placeholder="상세주소 (건물명, 층, 호수 등)" oninput="syncDetailAddress(this.value)"> -->
+                        <input type="hidden" name="accommodation.apiContentId"/>
+                        <input type="hidden" name="accommodation.zip"/>
+                        
+                        <input type="hidden" name="accommodation.areaCode"/>
+                        <input type="hidden" name="accommodation.sigunguCode"/>
+                        <input type="hidden" name="accommodation.ldongRegnCd"/>
+                        <input type="hidden" name="accommodation.ldongSignguCd"/>
                     </div>
                     
+                    <!-- 상품인지 숙박인지에 따라 readOnly가 바뀜 -->
                     <div class="mb-3" id="descriptionField">
                         <label class="form-label" id="prodContent">상품 설명 <span class="text-danger">*</span></label>
                         <textarea class="form-control" name="tripProdContent" rows="4" placeholder="상품에 대한 상세 설명을 입력하세요"></textarea>
+                        <textarea class="form-control" name="accommodation.overview" rows="4" placeholder="숙소에 대한 상세 설명을 입력하세요" style="display: none"></textarea>
                     </div>
 					
                     <!-- 이용 안내 섹션 (기본 상품용) -->
@@ -409,7 +417,6 @@
 	                    </div>
 	                    <div class="row mb-3">
 	                        <div class="col-md-4">
-	                        	<!-- 시간을 ~로 해야될지 감이 안잡힌다 -->
 	                            <label class="form-label">운영 시간 <span class="text-danger">*</span></label>
 	                            <input type="text" class="form-control" name="prodInfo.prodRuntime" placeholder="예: 09:00 ~ 18:00" required>
 	                        </div>
@@ -687,8 +694,13 @@
 					
 					    <div id="accommodationAdditionalImages" style="display: none;">
 					        <label class="form-label">숙소 대표이미지</label>
-<!-- 					        <input type="file" class="form-control" name="" accept="image/*" onchange="renderSubImagesPreview(this)"/> -->
+					        <!-- 값 받아지는지 보고 hidden으로 변경 예정 -->
+					        <img id="accPreviewImg" src="/resources/images/no-image.png" alt="숙소 대표 이미지" 
+					        	style="width:300px; height:200px; object-fit:cover;"/>
+					        	
+					        <input type="text" class="form-control" name="accommodation.accFilePath"/>
 					        <label class="form-label">숙소 이미지</label>
+					        <!-- 그리고 결국엔 attachNo가 accFileNo랑도 같기에 뭘 어떻게 할까 -->
 <!-- 					        <input type="file" name="accommodation.accFileNo" accept="image/*" multiple/> -->
 					        <div id="subImagesPreview" class="productImageList mt-2"></div>
 					    </div>
@@ -719,13 +731,14 @@
 let modal = null;			// 모달 객체
 let bookingTimes = [];		// 예약 가능 시간 목록
 let imageList = [];			// 이미지 정보 목록
-// let deleteFileNos = []; 	// 서버로 보낼 삭제 명단 (함수 밖 전역 변수)
 
 let timeListContainer;		// 예약가능시간 출력란
 let imageContainer;			// 사진출력란
 let roomTypeContainer;		// 숙소 타입 출력란
 let addOptionsContainer; 	// 추가 옵션 출력란
 let category;				// 카테고리
+let citySelector;			// 도시 선택
+let accommodationAddress;	// 숙소의 addr1
 
 let startDatePicker;
 let endDatePicker;
@@ -744,15 +757,15 @@ document.addEventListener('DOMContentLoaded', function() {
 	imageContainer = document.querySelector(".productImageList");
 	roomTypeContainer = document.getElementById('roomTypeContainer');
 	addOptionsContainer = document.getElementById('addOptionsContainer');
-	
 	// 지도 api용 객체
 	kakao.maps.load(function() {
-        geocoder = new kakao.maps.services.Geocoder(); // 여기서 초기화!
-        console.log("Geocoder 준비 완료");
-    });
+        geocoder = new kakao.maps.services.Geocoder();
+	});
 	
-	// 카테고리 
-	category = document.getElementById('productCategory');
+	accommodationAddress = document.getElementById('accommodationAddress');	// 숙소 api의 주소 담기 위한 것
+	
+	category = document.getElementById('productCategory');		// 카테고리
+	citySelector = document.querySelector("[name='ctyNm']");	// 도시 설정
 	
 	const startDateInput = document.querySelector('input[name="startDate"]');
 	const endDateInput = document.querySelector('input[name="endDate"]');
@@ -791,6 +804,10 @@ function setModalForNew() {
 	
     document.getElementById('productForm').reset();
     
+	// 카테고리, 도시선택 selector 초기화
+	category.disabled = false;
+	citySelector.disabled = false;
+    
     if (startDatePicker) startDatePicker.clear();
     if (endDatePicker) {
         endDatePicker.clear();
@@ -822,21 +839,15 @@ async function editProduct(data) {
 	const { id, no } = data.dataset;	// tripProdNo랑 accNo
 	console.log("editProduct : id, no" +  id  + " " + no);
 	
+	// 카테고리, 도시선택 selector 초기화
+	category.disabled = false;
+	citySelector.disabled = false;
+	
+	
 	timeListContainer.innerHTML = ``;
 	imageContainer.innerHTML = ``;
 	roomTypeContainer.innerHTML = ``;
 	addOptionsContainer.innerHTML = ``;
-	
-// 	const searchAccBtn = document.getElementById('searchAccBtn');			// 검색버튼 수정시에는 비활성화
-// 	const searchProdBtn = document.getElementById('searchProdBtn');			// 검색버튼 수정시에는 비활성화
-// 	if(document.querySelector("#update").style.display === "block") {
-// 		searchAccBtn.style.display = "none";
-// 		searchProdBtn.style.display = "none";
-// 	}
-// 	else {
-// 		searchAccBtn.style.display = "block";
-// 		searchProdBtn.style.display = "block";
-// 	}
 	
 	bookingTimes = [];
 	imageList = [];
@@ -847,20 +858,20 @@ async function editProduct(data) {
 		
         const response = await axios.post(`/product/manage/productDetail`, requestData);
         const data = response.data;
-        console.log("data : ", data);
         // 미리 세팅
         category.value = data.prodCtgryType;
 		toggleCategoryFields();
         
+		
 		// 숙박 타입일때 그만큼 방 만들기
 		if (data.prodCtgryType === 'accommodation' && data.accommodation) {
 	        const acc = data.accommodation;
 
-	        // accFileNo를 어디에 담아야됨 사진 키
-	        if(acc.accFilePath) {
-	        	accImage = `<img src="\${acc.accFilePath}" alt="사진"/>`;
-	        	console.log("accFilePath : ", accImage);
-	        }
+	        // accFileNo를 어디에 담아야됨 사진 키 -> 이거는 잘하자
+// 	        if(acc.accFilePath) {
+// 	        	accImage = `<img src="\${acc.accFilePath}" alt="사진"/>`;
+// 	        	console.log("accFilePath : ", accImage);
+// 	        }
 	        
 	        // 룸 타입 화면 랜더잉
 	        if (acc.roomTypeList) {
@@ -873,7 +884,6 @@ async function editProduct(data) {
 	        acc.roomTypeList = null;
 			
 	        // 추가옵션 화면 랜더링
-	        
 	        if(acc.accOptionList){
 	            acc.accOptionList = acc.accOptionList.filter(opt => opt && opt.accOptionNo);
 	            if(acc.accOptionList.length > 0){
@@ -884,8 +894,6 @@ async function editProduct(data) {
 	        acc.accOptionList = null;
 	        
 	        renderProductData(acc, "accommodation");
-	        
-	        // [중요] 이미 처리한 객체는 원본에서 참조 제거 (무한루프 및 중복매핑 방지)
 	        data.accommodation = null; 
 	    }
 		
@@ -923,6 +931,19 @@ async function editProduct(data) {
 		    // 좌표가 없으면 지도 섹션을 숨김
 		} else document.getElementById('mapSection').style.display = 'none';
 		
+		// 숙소 상품의 경우 검색 불가
+		if (data.prodCtgryType === 'accommodation') {
+		    // 숙박 상품 수정 시 주소 검색 버튼 비활성화
+		    const searchAccBtn = document.getElementById('searchAccBtn');
+		    if (searchAccBtn) {
+		        searchAccBtn.disabled = true; // 버튼 비활성화
+		        searchAccBtn.title = "숙소 위치는 변경할 수 없습니다. 상세 주소만 수정하세요.";
+		    }
+		    accommodationAddress.readOnly = true;
+		    citySelector.disabled = true;
+		    category.disabled = true;
+		}
+		
 		// 방 수만큼 넣어야됨
 		modal.show()
     } catch (error) {
@@ -956,10 +977,6 @@ function renderImageList(imageData = ""){
         };
         reader.readAsDataURL(file);
 	} else displayImages();
-	
-//     console.log("JSON.stringify(imageList) : ", JSON.stringify(imageList));
-//     document.getElementById(' ').value = imageList;
-// 사진정보는 어떻게 hidden 에 넣어말어
 }
 
 //2. 실제로 화면에 이미지를 출력하는 함수
@@ -991,12 +1008,6 @@ function displayImages() {
 function removeImage(index) {
 	if (confirm("이 이미지를 삭제하시겠습니까?")) {
         const target = imageList[index];
-
-        // 삭제할 배열의 인덱스 값을 여기에 담음
-//         if (target && target.fileNo) {
-//             deleteFileNos.push(target.fileNo);
-//             console.log("삭제될 파일 번호 추가됨:", target.fileNo);
-//         }
 
         imageList.splice(index, 1); // 배열에서 제거
         displayImages(); // 화면 갱신
@@ -1042,49 +1053,31 @@ function renderProductData(data, prefix = ""){
 async function saveProduct(data) {
 	const isUpdate = (data.innerText === "수정");
     
-//     const roomData = document.querySelectorAll("roomTypeContainer");
-//     const roomOption = document.querySelectorAll("addOptionsContainer");
-    
-//     const roomTypeList = Array.from(roomData).map((roomType, index) => {
-//     	console.log("roomType")
-//     });
+    // 전송을 위해 카테고리, 도시 선택지
+    citySelector.disabled = false;
+    category.disabled = false;
     
     const form = document.getElementById('productForm');
     if(!form) return; 
     const formData = new FormData(form);
     
-//     const productData = getFormDataAsObject(form);
     
     // 숙소가 아닐경우는 시간 담아야됨
-    if (category.value !== 'accommodation') {
-    	formData.append("bookingTimesString", bookingTimes.join(","));
-    }
+    if (category.value !== 'accommodation') formData.append("bookingTimesString", bookingTimes.join(","));
     
-    // 사진때문에 BLob로 변겅
-//     formData.append("productData", new Blob([JSON.stringify(productData)], {
-//         type: "application/json"
-//     }));
-    
-    // 삭제할 번호를 담은 list
-//     if (deleteFileNos.length > 0) {
-//         deleteFileNos.forEach(no => formData.append("deleteFileNos", no));
-//     }
-    
-	// 현재 있는 것들    
+	// 현재 있는 사진의 fileNo
     const currentFileNos = imageList
 	    .filter(img => !img.isNew && img.fileNo != null)
 	    .map(img => img.fileNo);
-	
-	// 2. 서버로 번호들 전송 (Integer 리스트로 매핑됨)
 	currentFileNos.forEach(no => formData.append("currentFileNos", no));
 	
-	// 3. 새로 추가된 파일 객체 전송
+	// 새로 추가된 파일 객체 전송
 	imageList.forEach(img => {
 	    if (img.isNew && img.fileObj) formData.append("uploadFiles", img.fileObj); 
 	});
     
     try {
-        const url = isUpdate ? '/product/manage/editProduct' : '/product/manage/insert';
+        const url = isUpdate ? '/product/manage/editProduct' : '/product/manage/registerProduct';
 
         const res = await axios.post(url, formData, {
             headers: { 
@@ -1094,66 +1087,23 @@ async function saveProduct(data) {
 
         if (res.data === "OK") {
             showToast(isUpdate ? '수정되었습니다.' : '성공적으로 등록되었습니다.', 'success');
+            if (modal) modal.hide();
             setTimeout(() => location.reload(), 1500);
-        } else {
-            showToast('처리에 실패했습니다.', 'warning');
-        }
+        } else showToast('처리에 실패했습니다.', 'warning');
     } catch (error) {
         console.error("전송 에러:", error);
         showToast('서버 통신 중 오류가 발생했습니다.', 'error');
     }
-    
-    
-	
-    // update
-//     if(data.innerText === "수정"){
-//     	console.log("proudctForm : ", form);
-// 		const res = await axios.post(`/product/manage/editProduct`, formData);
-//    		console.log("saveProduct res.data : " + res.data);
-//    		if(res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
-//    		else showToast('상품 정보 수정에 실패했습니다.', 'warning');	
-//     } 
-    
-//     // insert 구현해야된다
-//     else {
-// 		const res = await axios.post(`/product/manage/insert`, formData);
-//    		if (res.data == "OK") showToast('상품 정보 수정이 완료되었습니다.', 'success');
-//    		else showToast('상품 정보 수정에 실패했습니다.', 'warning');
-//     }
-    
-//     if (modal) modal.hide();
-//     location.reload();
-}
-
-// 전송데이터 변환 (숙박, 사진이 포함되어있는 경우는 크기가 너무커서 json으로 바꿔줘야됨)
-function getFormDataAsObject(form) {
-    const formData = new FormData(form);
-    const obj = {};
-
-    formData.forEach((value, key) => {
-        // 'accommodation.accName' 같은 키를 ['.'] 기준으로 쪼개서 객체 생성
-        if (value instanceof File) return;
-        
-        const keys = key.split('.');
-        let current = obj;
-
-        for (let i = 0; i < keys.length; i++) {
-            const k = keys[i];
-            if (i === keys.length - 1) {
-                current[k] = value; // 마지막 키에 값 할당
-            } else {
-                current[k] = current[k] || {}; // 중간 키는 객체로 생성
-                current = current[k];
-            }
-        }
-    });
-    return obj;
 }
 
 // 상품 상태 변경 - update
 function toggleProductStatus(data) {
-	const { id, status } = data.dataset;
-	
+	const { id, status, aprv } = data.dataset;
+	if(aprv !== 'Y') {
+		showToast('판매 승인되지 않은 상품의 상태 변경은 허가되지 않습니다.', 'error');
+		return;
+	}
+    
     if (confirm('상품 상태를 변경하시겠습니까?')) {
         axios.post(`/product/manage/changeProductStatus`, {
         	tripProdNo : id,
@@ -1240,9 +1190,8 @@ function renderBookingTimes() {
         }).join('');
         timeListContainer.innerHTML = html;
     }
-    // hidden input에 JSON으로 저장
+    
     document.getElementById('bookingTimesInput').value = bookingTimes.join(',');
-    // JSON.stringify(bookingTimes) 시간 정보만 담김 -> rsvtAvailableTime이거에 매칭 시켜야됨
 }
 
 // 시간 포맷 변환 (HH:MM -> 오전/오후 표시)
@@ -1255,7 +1204,7 @@ function formatTime(time) {
     return period + ' ' + displayHour + ':' + minute;
 }
 
-// 프리셋 시간 추가
+// 프리셋 시간 추가 - 필터링 걸어야됨
 function addPresetTimes(type) {
     var presets = {
         'morning': ['09:00', '10:00', '11:00'],
@@ -1287,16 +1236,24 @@ function addPresetTimes(type) {
 
 // 주소 검색 (카카오 주소 API)
 function searchAddress() {
+	// 주소 가져오고
+	
     new daum.Postcode({
         oncomplete: function(data) {
             // 주소 정보 설정
-            const address = data.roadAddress || data.jibunAddress;
-            const isAcc = category.value === 'accommodation'; // 현재 숙박 카테고리인지 확인
+            console.log("asdfasdf");
+            const address = data.roadAddress || data.address; 	// 도로명 주소 우선
+            const hotelName = data.buildingName;            	// 건물명 (관광 API 검색 키워드)
+            const sidoCode = data.bcode.substring(0, 2);    	// 법정동 코드 앞 2자리 (시도 매핑용)
+            const isAcc = category.value === 'accommodation';	// true false
+            console.log("asdfasdf123");
 
             // 1. 주소 텍스트 입력
-            if (isAcc) document.getElementById('accommodationAddress').value = address;
+            if (isAcc) accommodationAddress.value = address;	// roadAddress 받아야됨
             else document.getElementById('productAddress').value = address;
-
+         	console.log("data : ", data)
+            document.querySelector("[name='accommodation.zip']").value = data.zonecode;
+            console.log("zone code");
             // 2. 좌표 검색 (카카오 API)
             geocoder.addressSearch(address, function(result, status) {
                 if (status === kakao.maps.services.Status.OK) {
@@ -1316,6 +1273,9 @@ function searchAddress() {
                     updateModalMap(coords);
                 }
             });
+            
+         	// 3. [핵심] 숙박 카테고리이고 건물명이 있다면 관광 API 호출
+            if (isAcc && hotelName) searchTourApi(hotelName, sidoCode);
         }
     }).open();
 }
@@ -1342,24 +1302,51 @@ function updateModalMap(coords) {
     }, 200);
 }
 
-// function initAccommodationMap(address, placeName) {
-//     const mapContainer = document.getElementById('map');
-//     if (!mapContainer) return;
+// 숙소 정보를 가져오기 위한 관광 api 호출
+async function searchTourApi(hotelName, sidoCode) {
+    try {
+    	console.log("hotelName : ", hotelName);
+    	console.log("sidoCode : ", sidoCode);
+    	
+    	// keyword 는 accName, sido
+        // 서버에 검색 요청 ( hotelName: "신라호텔", sidoCode: "11" )
+//         const response = await axios.get(`/api/acc/searc0h`, {
+        const response = await axios.get(`/batch/accmmodation/search`, {
+        	accommodation: { accName: hotelName, ldongRegnCd: sidoCode }
+        });	// accName, sidoCode
+        const data = response.data; // 서버에서 준 숙소 정보 객체
 
-//     const mapOption = { center: new kakao.maps.LatLng(33.450701, 126.570667), level: 3 };
-//     const map = new kakao.maps.Map(mapContainer, mapOption);
-
-//     geocoder.addressSearch(address, function(result, status) {
-//          if (status === kakao.maps.services.Status.OK) {
-//             const coords = new kakao.maps.LatLng(result[0].y, result[0].x);
-//             new kakao.maps.Marker({ map: map, position: coords });
-//             new kakao.maps.InfoWindow({
-//                 content: `<div style="width:150px;text-align:center;padding:6px 0;">\${placeName}</div>`
-//             }).open(map, marker);
-//             map.setCenter(coords);
-//         } 
-//     });
-// }
+        // 텍스트 자동 입력
+        if (data && data.apiContentId) {
+            
+            // api 연결 id
+            document.querySelector("[name='accommodation.apiContentId']").value = data.apiContentId;
+            if(data.accName) {
+            	// notNull 이여서 일단 넣는다
+            	document.querySelector("[name='accommodation.accName']").value = data.accName;
+            	// let tripProdTitle = document.querySelector("[name='tripProdTitle']").value = data.accName;
+            }
+            if(data.tel) document.querySelector("[name='accommodation.tel']").value = data.tel;
+            if(data.overview) document.querySelector("[name='accommodation.overview']").value = data.overview;
+            
+            // 2. 좌표 및 이미지 세팅
+//             document.querySelector("[name='mapx']").value = data.mapx;
+//             document.querySelector("[name='mapy']").value = data.mapy;
+            
+            // 3. 사진 미리보기 업데이트
+            if (data.accFilePath) {
+                document.querySelector("#accPreviewImg").src = data.accFilePath;
+                document.querySelector("#accPreviewImg").alt = data.accName;
+                // hidden 필드가 있다면 거기에도 경로 저장
+                document.querySelector("[name='accommodation.accFilePath']").value = data.accFilePath;
+            }
+            alert("관광 API에서 숙소 정보를 찾아 자동으로 채웠습니다!");
+        }
+    } catch (err) {
+        console.error("API 매칭 데이터가 없습니다. 직접 입력해주세요.", err);
+        showToast("API 매칭 데이터가 없습니다. ", "error");
+    }
+}
 
 // ===== 상품 선택 기능 =====
 // 전체 선택/해제
@@ -1421,7 +1408,7 @@ function getSelectedProductIds() {
     return ids;
 }
 
-// 선택 상품 중지
+// 선택 상품 중지 -> axios사용
 function pauseSelectedProducts() {
 	// status 바구기
     var selectedIds = getSelectedProductIds();
@@ -1570,15 +1557,20 @@ function toggleCategoryFields() {
     
     const prodContent = document.getElementById('prodContent');		// 상품 내용 - category따라서 내용 바꾸기
 	const tripProdContent = document.querySelector("[name='tripProdContent']"); // place hoder 바꾸기
+	const overview = document.querySelector("[name='accommodation.overview']"); // 숙발일떄 보여줄 것
    
     // 숙박 섹션들
     const accommodationFields = document.getElementById('accommodationFields');						// 숙소 필드
     const accommodationNameField = document.getElementById('accommodationNameField');				// 숙소명
     const accommodationDescriptionField = document.getElementById('accommodationDescriptionField');	// 숙소설명
 	const accommodationAdditionalImages = document.getElementById('accommodationAdditionalImages');	// 숙박에서만 보여줄것
-	const accommodationAddress = document.getElementById('accommodationAddress');					// 숙소 주소
+	const accommodationAddressTag = document.getElementById('accommodationAddressTag');					// 숙소 주소
 //     const accomImageField = document.getElementById('accomImageField');
     
+	// 해당 필드의 값들 초기화 해주기
+
+	
+	
     // 모든 섹션 초기화 (숨기기)
     accommodationFields.style.display = 'none';
     accommodationAdditionalImages.style.display = 'none';
@@ -1594,8 +1586,11 @@ function toggleCategoryFields() {
         prodAddress.style.display = 'none';
         productNameField.style.display = 'none';
         prodContent.innerText= "숙소 설명";
+        tripProdContent.style.display = 'none';
         
-        accommodationAddress.style.display = 'block';
+        
+        overview.style.display = 'block';
+        accommodationAddressTag.style.display = 'block';
         accommodationFields.style.display = 'block';
         accommodationNameField.style.display = 'block';
 //         accomImageField.style.display = 'block';
@@ -1611,9 +1606,12 @@ function toggleCategoryFields() {
         defaultPriceSection.style.display = 'block';
         prodAddress.style.display = 'block';
         prodContent.innerText= "상품 설명";
+        tripProdContent.style.display = 'block';
         
+        
+        overview.style.display = 'none';
         accommodationFields.style.display = 'none';
-        accommodationAddress.style.display = 'none';
+        accommodationAddressTag.style.display = 'none';
         accommodationNameField.style.display = 'none';
 	    accommodationAdditionalImages.style.display = 'none';
     }
@@ -1667,7 +1665,7 @@ function addRoomType() {
 		            </div>
 		        </div>
 		        <div class="col-md-3">
-		            <label class="form-label">잔여 객실 <span class="text-danger">*</span></label>
+		            <label class="form-label">객실 수<span class="text-danger">*</span></label>
 		            <div class="input-group">
 		                <input type="number" class="form-control" name="roomTypeList[\${index}].totalRoomCount" placeholder="0" min="0">
 		                <span class="input-group-text">실</span>
@@ -1697,7 +1695,6 @@ function addRoomType() {
 		                <option value="double">더블</option>
 		                <option value="queen">퀸</option>
 		                <option value="king">킹</option>
-		                <option value="ondol">온돌</option>
 		            </select>
 		        </div>
 		    </div>

@@ -3,6 +3,8 @@ package kr.or.ddit.mohaeng.admin.accommodation.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,7 +26,7 @@ public class AdminAccommodaionController {
 	/**
 	 * 숙박 관리 목록 조회
 	 */
-	
+	@GetMapping
 	public ResponseEntity<PaginationInfoVO<AccommodationVO>> getAccommodationList(
 			@RequestParam(defaultValue = "1") int currentPage
 			,@RequestParam(defaultValue = "") String searchWord
@@ -39,5 +41,22 @@ public class AdminAccommodaionController {
 		}
 		adminAccService.getAccommodationList(pagInfoVO);
 		return ResponseEntity.ok(pagInfoVO);
+	}
+	
+	/**
+	 * 숙박 상세 조회
+	 */
+	@GetMapping("/{tripProdNo}")
+	public ResponseEntity<AccommodationVO> getAccommodationDetail(@PathVariable("tripProdNo") int tripProdNo){
+		log.debug("[ADMIN][ACCOMMODATION] detail request tripProdNo={}", tripProdNo);
+		
+		AccommodationVO accommodationDetail =
+				adminAccService.getAccommodationDetail(tripProdNo);
+		
+		if(accommodationDetail == null) {
+			return ResponseEntity.notFound().build();
+		}
+		
+		return ResponseEntity.ok(accommodationDetail);
 	}
 }

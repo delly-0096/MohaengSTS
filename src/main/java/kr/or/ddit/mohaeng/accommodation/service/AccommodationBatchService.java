@@ -314,7 +314,7 @@ public class AccommodationBatchService {
 
     private String buildCommonUrl(String contentId) {
         return UriComponentsBuilder
-                .fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailCommon1")
+                .fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/detailCommon1")
                 .queryParam("serviceKey", serviceKey)
                 .queryParam("contentId", contentId)
                 .queryParam("defaultYN", "Y")
@@ -329,7 +329,7 @@ public class AccommodationBatchService {
 
     private String buildIntroUrl(String contentId) {
         return UriComponentsBuilder
-                .fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailIntro1")
+                .fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/detailIntro1")
                 .queryParam("serviceKey", serviceKey)
                 .queryParam("contentId", contentId)
                 .queryParam("contentTypeId", "32")
@@ -342,7 +342,7 @@ public class AccommodationBatchService {
 
     private String buildRoomUrl(String contentId) {
         return UriComponentsBuilder
-                .fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailInfo1")
+                .fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/detailInfo1")
                 .queryParam("serviceKey", serviceKey)
                 .queryParam("contentId", contentId)
                 .queryParam("contentTypeId", "32")

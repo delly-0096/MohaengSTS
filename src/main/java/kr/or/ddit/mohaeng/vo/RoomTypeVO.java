@@ -59,6 +59,10 @@ public class RoomTypeVO {
 	 * 숙소 번호
 	 */
 	private int accNo;
+	/**
+	 * 여행 상품 일련키
+	 */
+	private int tripProdNo;
 	
 	
 	private RoomFeatureVO feature;
@@ -72,4 +76,6 @@ public class RoomTypeVO {
     
 	private int accFileNo; //이미지 번호
 	private String accFilePath; // 이미지 경로
+	
+	private Integer totalRooms;	// 전체 객실 수
 }

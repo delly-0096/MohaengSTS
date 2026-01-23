@@ -406,11 +406,7 @@
 	    WHERE TRIP_PROD_NO = #{tripProdNo}
 	</update>
 	
-	<!-- 숙소 정보 변경 () -->
-	<update id="modifyAccommodation" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO">
-	    UPDATE ACCOMMODATION
-	    SET
-	        ACC_CAT_CD = #{accCatCd}
+	<!-- 	        ACC_CAT_CD = #{accCatCd}
 	        , ACC_FILE_NO = #{accFileNo}
 	        , STAR_GRADE = #{starGrade}
 	        , ZIP = #{zip}
@@ -429,15 +425,47 @@
 	        , OVERVIEW = #{overview}
 	        , TEL = #{tel}
 	        , CHECK_IN_TIME = #{checkInTime}
+	        , CHECK_OUT_TIME = #{checkOutTime} -->
+	        
+	<!-- 숙소 정보 변경 () -->
+	<update id="modifyAccommodation" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	    UPDATE ACCOMMODATION
+	    SET
+	        TOTAL_ROOM_CNT = #{totalRoomCnt}
+	        , CHECK_IN_TIME = #{checkInTime}
 	        , CHECK_OUT_TIME = #{checkOutTime}
 	    WHERE
 	        ACC_NO = #{accNo}
 	</update>
 	
-	
 	<!-- 숙소 보유시설 정보 변경 -->
-
-
+	<update id="modifyAccFacility" parameterType="kr.or.ddit.mohaeng.vo.AccFacilityVO">
+		UPDATE ACC_FACILITY
+	       SET WIFI_YN          = #{wifiYn}
+	         , PARKING_YN       = #{parkingYn}
+	         , BREAKFAST_YN     = #{breakfastYn}
+	         , POOL_YN          = #{poolYn}
+	         , GYM_YN           = #{gymYn}
+	         , SPA_YN           = #{spaYn}
+	         , RESTAURANT_YN    = #{restaurantYn}
+	         , BAR_YN           = #{barYn}
+	         , ROOM_SERVICE_YN  = #{roomServiceYn}
+	         , LAUNDRY_YN       = #{laundryYn}
+	         , SMOKING_AREA_YN  = #{smokingAreaYn}
+	         , PET_FRIENDLY_YN  = #{petFriendlyYn}
+	     WHERE ACC_NO = #{accNo}
+	</update>
+	
+	<!-- 추가 옵션 정보 변경 -->
+	<update id="modifyAccOption" parameterType="kr.or.ddit.mohaeng.vo.AccOptionVO">
+		UPDATE ACC_OPTION
+	       SET ACC_OPTION_NM = #{accOptionNm}
+	           , ACC_OPTION_PRICE = #{accOptionPrice}
+	           , PERSONNEL_COUNT = #{personnelCount}
+	     WHERE ACC_OPTION_NO = #{accOptionNo}
+	</update>
+	
+	
 
 	<!-- 예약 가능 시간 삭제 -->
 	<delete id="deleteProdTimeInfo" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO">

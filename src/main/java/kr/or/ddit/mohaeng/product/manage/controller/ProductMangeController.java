@@ -228,33 +228,41 @@ public class ProductMangeController {
 	}
 	
 	/**
+	 * @param tripProd 수정한 상품 정보
+	 */
+	/**
 	 * <p>투어상품 상세 수정</p>
 	 * @author sdg
 	 * @date 2026-01-18
-	 * @param tripProd 수정한 상품 정보
+	 * @param customUser		로그인한 객체 정보
+	 * @param businessProducts	수정할 상품 객체
+	 * @param currentFileNos	상품의 attachNo번호의 fileNo목록
+	 * @param uploadFiles		새로 추가한 사진 파일 List
 	 * @return 성공 여부
 	 */
 	@ResponseBody
 	@PostMapping("/product/manage/editProduct")
 	public ResponseEntity<String> editProduct(
+			@AuthenticationPrincipal CustomUserDetails customUser, 
 			BusinessProductsVO businessProducts,
-			@RequestParam(value="currentFileNos", required=false) List<Integer> currentFileNos,	 // 유지할 번호들
-		    @RequestParam(value = "uploadFiles", required = false) List<MultipartFile> uploadFiles ){
+			@RequestParam(value= "currentFileNos", required=false) List<Integer> currentFileNos,	 	// 유지할 번호들
+		    @RequestParam(value = "uploadFiles", required = false) List<MultipartFile> uploadFiles ){	// 새로 등록할 파일
 		
 		log.info("editProduct.businessProducts : {}", businessProducts);
 		log.info("editProduct.prodSale : {}", businessProducts.getProdSale());
 		
-		log.info("uploadFiles : {} uploadFiles 개수 : {}", uploadFiles);
-//		fileService.updateFile();
-		int s = 0;
-		
 		log.info("currentFileNos : {} currentFileNos 개수 : {}", currentFileNos, currentFileNos.size());
+		log.info("uploadFiles : {} uploadFiles : {}", uploadFiles);
 		
-		fileService.syncFiles(businessProducts.getAttachNo(), currentFileNos);
+		fileService.syncFiles(businessProducts.getAttachNo(), currentFileNos);	// 기존 번호에서 사라진
+		
+		int s = 0;
 		if(s == 0) {
 			return new ResponseEntity<String>(HttpStatus.OK);
 		}
 		
+		int memNo = customUser.getMember().getMemNo();
+		businessProducts.setMemNo(memNo);
 		ServiceResult result = manageService.modifyProduct(businessProducts);
 	    // 2. 새 파일 추가
 	    if (uploadFiles != null && !uploadFiles.isEmpty()) {
@@ -271,5 +279,47 @@ public class ProductMangeController {
 		}
 		
 	}
+	
+	/**
+	 * <p>상품 등록</p>
+	 * @author sdg
+	 * @date 2026-01-23
+	 * @param customUser		로그인한 객체 정보
+	 * @param businessProducts	수정할 상품 객체
+	 * @param currentFileNos	상품의 attachNo번호의 fileNo목록
+	 * @param uploadFiles		새로 추가한 사진 파일 List
+	 * @return 성공 여부
+	 */
+	@ResponseBody
+	@PostMapping("/product/manage/registerProduct")
+	public ResponseEntity<String> registerProduct(
+			@AuthenticationPrincipal CustomUserDetails customUser, 
+			BusinessProductsVO businessProducts,
+			@RequestParam(value = "uploadFiles", required = false) List<MultipartFile> uploadFiles ){	// 새로 등록할 파일
+		
+		log.info("editProduct.businessProducts : {}", businessProducts);
+		log.info("editProduct.prodSale : {}", businessProducts.getProdSale());
+		
+		log.info("uploadFiles : {} uploadFiles : {}", uploadFiles);
+		
+		
+		int memNo = customUser.getMember().getMemNo();
+		businessProducts.setMemNo(memNo);
+		ServiceResult result = manageService.insertProduct(businessProducts, uploadFiles);
+		// 2. 새 파일 추가
+		if (uploadFiles != null && !uploadFiles.isEmpty()) {
+			// 여기서 수정 실행
+//	    	ServiceResult result = manageService.modifyProduct(businessProducts);
+		}
+		
+		if (result == ServiceResult.OK) {
+			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
+		} else {
+			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+		}
+		
+	}
+	
+	
 	
 }

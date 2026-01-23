@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper;
@@ -103,7 +104,6 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			}
 		}
 		
-		
 		return prodVO;
 	}
 	
@@ -134,6 +134,8 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			
 			// accommodation update
 			// 업데이트
+			accStatus = manageMapper.modifyAccommodation(accommodation);
+			
 			
 			int optionStatus = 0;
 			// 1 대 n
@@ -180,6 +182,10 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			// 예약은 못건들일거야.
 			// 각자 어떻게 해야될지 모르것따.
 			
+			// 사진 숙소일경우 accommodation의 accFileNo없는 파일은 insert 
+			// -> 기존nos에 있는 것들과 비교해서 같은 attachNo부여하고 index로 
+			
+			
 			
 			if (baseStatus == 4) {
 		        log.info("수정 최종 성공");
@@ -212,7 +218,8 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			
 			// 결과 비교
 			baseStatus = productstatus + saleStatus + infoStatus + placeStatus;	// 4
-			// 숙소 
+			
+			// 사진 정보 List<MultipartFile> 받고 attachDetail에서 관리하기 -> 새로운 파일에 attachNo 설정해주기
 			
 			// 예약가능시간(예약 가능 시간)
 			int productTimetatus = 0;
@@ -277,6 +284,11 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		} else {
 			return result = ServiceResult.FAILED;
 		}
+	}
+
+	@Override
+	public ServiceResult insertProduct(BusinessProductsVO businessProducts, List<MultipartFile> uploadFiles) {
+		return null;
 	}
 
 }

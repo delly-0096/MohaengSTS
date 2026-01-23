@@ -22,4 +22,5 @@ public interface IPaymentMapper {
 	public int getCurrentStock(int tripProdNo);
 	public int updateSoldOut(int tripProdNo);
 	public int insertSales(SalesVO sales);
+	public int updateSettleStatus();
 }

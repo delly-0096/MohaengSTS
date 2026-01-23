@@ -843,7 +843,6 @@ async function editProduct(data) {
 	category.disabled = false;
 	citySelector.disabled = false;
 	
-	
 	timeListContainer.innerHTML = ``;
 	imageContainer.innerHTML = ``;
 	roomTypeContainer.innerHTML = ``;
@@ -1237,23 +1236,20 @@ function addPresetTimes(type) {
 // 주소 검색 (카카오 주소 API)
 function searchAddress() {
 	// 주소 가져오고
-	
     new daum.Postcode({
         oncomplete: function(data) {
             // 주소 정보 설정
-            console.log("asdfasdf");
             const address = data.roadAddress || data.address; 	// 도로명 주소 우선
             const hotelName = data.buildingName;            	// 건물명 (관광 API 검색 키워드)
             const sidoCode = data.bcode.substring(0, 2);    	// 법정동 코드 앞 2자리 (시도 매핑용)
             const isAcc = category.value === 'accommodation';	// true false
-            console.log("asdfasdf123");
 
             // 1. 주소 텍스트 입력
             if (isAcc) accommodationAddress.value = address;	// roadAddress 받아야됨
             else document.getElementById('productAddress').value = address;
          	console.log("data : ", data)
             document.querySelector("[name='accommodation.zip']").value = data.zonecode;
-            console.log("zone code");
+         	document.querySelector("[name='accommodation.ldongRegnCd']").value = sidoCode;
             // 2. 좌표 검색 (카카오 API)
             geocoder.addressSearch(address, function(result, status) {
                 if (status === kakao.maps.services.Status.OK) {
@@ -1271,11 +1267,13 @@ function searchAddress() {
                 	// 지도 위치 갱신
                     const coords = new kakao.maps.LatLng(y, x);
                     updateModalMap(coords);
+                    
+		         	// 3. [핵심] 숙박 카테고리이고 건물명이 있다면 관광 API 호출
+		            if (isAcc && hotelName) searchTourApi(hotelName, sidoCode, x, y);
+                }else{
+                	showToast("좌표를 불러오지 못했습니다.", "warning");
                 }
             });
-            
-         	// 3. [핵심] 숙박 카테고리이고 건물명이 있다면 관광 API 호출
-            if (isAcc && hotelName) searchTourApi(hotelName, sidoCode);
         }
     }).open();
 }
@@ -1303,17 +1301,21 @@ function updateModalMap(coords) {
 }
 
 // 숙소 정보를 가져오기 위한 관광 api 호출
-async function searchTourApi(hotelName, sidoCode) {
+async function searchTourApi(hotelName, sidoCode, mapx, mapy) {
     try {
     	console.log("hotelName : ", hotelName);
     	console.log("sidoCode : ", sidoCode);
     	
-    	// keyword 는 accName, sido
         // 서버에 검색 요청 ( hotelName: "신라호텔", sidoCode: "11" )
-//         const response = await axios.get(`/api/acc/searc0h`, {
         const response = await axios.get(`/batch/accommodation/search`, {
-        	params: { accName: hotelName, ldongRegnCd: sidoCode }
-        });	// accName, sidoCode
+        	params: { 
+        		accName: hotelName, 
+        		ldongRegnCd: sidoCode,
+        		mapx: mapx,
+                mapy: mapy
+       		}
+        });
+        
         const data = response.data; // 서버에서 준 숙소 정보 객체
 
         // 텍스트 자동 입력
@@ -1340,8 +1342,8 @@ async function searchTourApi(hotelName, sidoCode) {
                 // hidden 필드가 있다면 거기에도 경로 저장
                 document.querySelector("[name='accommodation.accFilePath']").value = data.accFilePath;
             }
-            alert("관광 API에서 숙소 정보를 찾아 자동으로 채웠습니다!");
-        }
+            alert(`[\${data.accName}] 정보를 성공적으로 가져왔습니다.`);
+        } else alert(`정보를 못가져왔습니다.`);
     } catch (err) {
         console.error("API 매칭 데이터가 없습니다. 직접 입력해주세요.", err);
         showToast("API 매칭 데이터가 없습니다. ", "error");
@@ -1587,7 +1589,7 @@ function toggleCategoryFields() {
         productNameField.style.display = 'none';
         prodContent.innerText= "숙소 설명";
         tripProdContent.style.display = 'none';
-        
+        tripProdContent.value = "";	// 토글 바뀌면 초기화
         
         overview.style.display = 'block';
         accommodationAddressTag.style.display = 'block';
@@ -1607,7 +1609,6 @@ function toggleCategoryFields() {
         prodAddress.style.display = 'block';
         prodContent.innerText= "상품 설명";
         tripProdContent.style.display = 'block';
-        
         
         overview.style.display = 'none';
         accommodationFields.style.display = 'none';
@@ -1650,28 +1651,37 @@ function addRoomType() {
 	            </div>
 	        </div>
 	        <div class="row mb-3">
-		        <div class="col-md-3">
+		        <div class="col-md-4">
 		            <label class="form-label">1박 가격 <span class="text-danger">*</span></label>
 		            <div class="input-group">
 		                <input type="number" class="form-control" name="roomTypeList[\${index}].price" placeholder="0">
 		                <span class="input-group-text">원</span>
 		            </div>
 		        </div>
-		        <div class="col-md-3">
+		        <div class="col-md-4">
 		            <label class="form-label">할인율</label>
 		            <div class="input-group">
 		                <input type="number" class="form-control" name="roomTypeList[\${index}].discount" placeholder="0" min="0" max="100">
 		                <span class="input-group-text">%</span>
 		            </div>
 		        </div>
-		        <div class="col-md-3">
+		        <div class="col-md-4">
+		            <label class="form-label">인원 추가 비용<span class="text-danger">*</span></label>
+		            <div class="input-group">
+		                <input type="number" class="form-control" name="roomTypeList[\${index}].extraGuestFee" placeholder="0" min="0">
+		                <span class="input-group-text">원</span>
+		            </div>
+		        </div>
+		    </div>
+	        <div class="row mb-3">
+		        <div class="col-md-4">
 		            <label class="form-label">객실 수<span class="text-danger">*</span></label>
 		            <div class="input-group">
 		                <input type="number" class="form-control" name="roomTypeList[\${index}].totalRoomCount" placeholder="0" min="0">
 		                <span class="input-group-text">실</span>
 		            </div>
 		        </div>
-		        <div class="col-md-3">
+		        <div class="col-md-4" style="magin-right:10px;">
 		            <label class="form-label">객실 크기</label>
 		            <div class="input-group">
 		                <input type="number" class="form-control" name="roomTypeList[\${index}].roomSize" placeholder="23">

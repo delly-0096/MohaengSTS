@@ -56,6 +56,10 @@
             <div class="header-right">
                     <sec:authorize access="isAuthenticated()">
 					    <sec:authentication property="principal.memProfilePath" var="profileImgUrl"/>
+					    <!-- 로그인 상태 - 내 일정 -->
+					    <button class="header-notification-btn" onclick="openScheduleModal()" title="내 일정">
+						    <i class="bi bi-calendar3"></i>
+						</button>
                         <!-- 로그인 상태 - 알림 버튼 -->
                         <button class="header-notification-btn" onclick="toggleNotificationPanel()" title="알림">
                             <i class="bi bi-bell"></i>
@@ -120,6 +124,31 @@
             </div>
         </div>
     </header>
+    
+    <!-- 캘린더 -->
+    <sec:authorize access="isAuthenticated()">
+	    <div class="modal fade" id="scheduleModal" tabindex="-1" aria-labelledby="scheduleModalLabel" aria-hidden="true" style="z-index: 9999;">
+	        <div class="modal-dialog modal-lg modal-dialog-centered"> <div class="modal-content">
+	                <div class="modal-header">
+	                    <h5 class="modal-title" id="scheduleModalLabel"><i class="bi bi-calendar3 me-2"></i>내 일정 한 눈에 보기</h5>
+	                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	                </div>
+	                <div class="modal-body">
+	                    <div class="calendar-legend mb-3" style="font-size: 0.85em; display: flex; gap: 10px; justify-content: flex-end;">
+	                        <span class="legend-item"><span class="legend-dot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#1f6feb; margin-right:5px;"></span>다가오는 여행</span>
+	                        <span class="legend-item"><span class="legend-dot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#3fb950; margin-right:5px;"></span>진행중</span>
+	                        <span class="legend-item"><span class="legend-dot" style="display:inline-block; width:10px; height:10px; border-radius:50%; background:#6e7681; margin-right:5px;"></span>완료</span>
+	                    </div>
+	                    <div id="headerScheduleCalendar" style="min-height: 450px;"></div>
+	                </div>
+	                <div class="modal-footer">
+	                    <a href="${pageContext.request.contextPath}/schedule/my" class="btn btn-outline-primary btn-sm">전체 보기</a>
+	                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">닫기</button>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	</sec:authorize>
 
     <!-- 사이드 메뉴 오버레이 -->
     <div class="side-menu-overlay" id="sideMenuOverlay" onclick="toggleSideMenu()"></div>
@@ -398,7 +427,10 @@
             </div>
         </div>
     </sec:authorize>
-
+	
+	<!-- FullCalendar JS (CDN) -->
+	<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.js'></script>
+	<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.5/main.min.css' rel='stylesheet' />
     <!-- 로그인 상태 전역 변수 및 사이드 메뉴 함수 -->
     <script>
     var isLoggedIn =
@@ -467,6 +499,70 @@
             if (typeof showToast === 'function') {
                 showToast('모든 알림을 읽음 처리했습니다.', 'success');
             }
+        }
+        
+     // ---- 헤더용 캘린더 ----
+        let scheduleModalObj = null; // 전역 변수로 관리 (재사용 목적)
+        let headerCalendar = null;
+
+        async function openScheduleModal() {
+            const modalEl = document.getElementById('scheduleModal');
+            if (!modalEl) return;
+
+            // 모달 객체가 없으면 새로 만들고, 있으면 기존꺼 쓰기 (그림자 중첩 방지 핵심!)
+            if (!scheduleModalObj) {
+                scheduleModalObj = new bootstrap.Modal(modalEl);
+            }
+            
+            // 모달 띄우기
+            scheduleModalObj.show();
+
+            // 모달이 '완전히 떴을 때' 캘린더를 그려야 크기가 안 깨져 (setTimeout 대신 이벤트 사용)
+            modalEl.addEventListener('shown.bs.modal', async function () {
+                const calendarEl = document.getElementById('headerScheduleCalendar');
+                
+                if (!headerCalendar) {
+                    // 처음 열 때만 초기화
+                    headerCalendar = new FullCalendar.Calendar(calendarEl, {
+                        initialView: 'dayGridMonth',
+                        locale: 'ko',
+                        height: 450,
+                        headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+                        events: async function(info, successCallback, failureCallback) {
+                            try {
+                                const res = await fetch('${pageContext.request.contextPath}/api/schedule/list');
+                                
+                                // 404 에러 등 체크
+                                if(!res.ok) throw new Error("서버 에러");
+                                
+                                const data = await res.json();
+                                
+                                const events = data.map(s => ({
+                                    id: s.schdlNo,
+                                    title: s.schdlNm,
+                                    start: s.schdlStartDt,
+                                    end: s.calendarEndDt,
+                                    // 상태에 따른 클래스 추가 (upcoming, ongoing, completed)
+                                    className: 'fc-event-' + (s.schdlStatus ? s.schdlStatus.toLowerCase() : 'upcoming'),
+                                    extendedProps: { ...s }
+                                }));
+                                successCallback(events);
+                            } catch (e) {
+                                console.error("일정 로딩 실패", e);
+                                failureCallback(e);
+                            }
+                        },
+                        eventClick: function(info) {
+                            location.href = `${pageContext.request.contextPath}/schedule/view/${info.event.id}`;
+                        }
+                    });
+                    headerCalendar.render();
+                } else {
+                    // 이미 캘린더가 있으면 크기 재조정 + 데이터 갱신
+                    headerCalendar.updateSize();
+                    headerCalendar.refetchEvents();
+                }
+            }, { once: true }); // 이 이벤트 리스너는 한 번만 실행
         }
     </script>
 

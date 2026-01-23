@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
 	import java.util.List;
+import java.util.Map;
 
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import lombok.Data;
@@ -12,7 +13,10 @@ import lombok.Data;
 	  private List<MonthlySalesPoint> monthlySalesChart;
 	  private List<TopTripProd> topProducts;
 	  private List<TripProdVO> productList;
-	  
+	  private List<Map<String, Object>> categoryRatio;
+	  private List<Map<String, Object>> upcomingReservations;
+	  private List<Map<String, Object>> recentReviews;
+	  private int todayArrivalCount;
 	  
 	  @Data
 	  public static class Kpi {
@@ -25,6 +29,7 @@ import lombok.Data;
 	  public static class MonthlySalesPoint {
 	    private String month; // YYYY-MM
 	    private long sales;
+	    private long total;   // 해당 월의 매출액
 	  }
 
 	  @Data

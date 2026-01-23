@@ -26,12 +26,23 @@ public interface ICompanyDashboardMapper {
 	 */
 	public List<PaymentVO> selectPaymentList(int memNo);
 	public List<TopTripProd> selectTopProducts(Map<String, Object> topParam);
-	
-
-	public List<MonthlySalesPoint> selectMonthlySalesChart(int compNo, int i);
-
 	public List<TopTripProd> selectTopProducts(int compNo, int i);
+	
+	// 매출현황
+	public List<MonthlySalesPoint> selectMonthlySalesChart(int compNo, int i);
 
 	// 내 상품현황
 	public List<TripProdVO> selectMyProductList(int compNo);
+
+	// 상품 카테고리 현황
+	public List<Map<String, Object>> selectCategoryRatio(int compNo);
+
+	// 다가오는 예약 현황
+	public List<Map<String, Object>> selectUpcomingReservations(int compNo);
+
+	// 최근 리뷰
+	public List<Map<String, Object>> selectRecentReviews(int compNo);
+
+	// 오늘 이용 상품 수
+	public int selectTodayArrivalCount(int compNo);
 }

@@ -7,6 +7,8 @@
 <c:set var="pageCss" value="mypage" />
 
 <%@ include file="../../common/header.jsp" %>
+<!-- chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script> 
 
 <div class="mypage business-mypage">
     <div class="container">
@@ -43,6 +45,55 @@
                 </div>
 
                 <div class="row">
+					<!-- 차트 영역 -->
+					<div class="dashboard-charts-row" style="display: flex; gap: 10px;">
+						<div class="content-section" style="flex: 1; min-width: 0; "> <div class="section-header">
+					            <h3><i class="bi bi-pie-chart"></i> 상품 구성</h3>
+					        </div>
+					       <div class="chart-container" style="
+						        position: relative; flex: 1; display: flex;  justify-content: center;
+						        align-items: center; min-height: 250px; padding: 10px;
+						    ">
+					            <canvas id="categoryChart"></canvas>
+					        </div>
+					    </div>
+					    
+					    <div class="content-section" style="flex: 3; min-width: 0; display: flex; flex-direction: column;"> <div class="section-header">
+					            <h3><i class="bi bi-graph-up"></i> 매출 현황 (최근 6개월)</h3>
+					        </div>
+					        <div class="chart-container" style="
+					        	justify-content: center;
+						        position: relative; 
+						        height: 280px;   
+						        width: 95%;         
+						        margin: auto;   
+						    ">
+					            <canvas id="myChart" style="max-width: 95%; max-height: 95%;"></canvas>
+					        </div>
+					    </div>
+					</div>
+					
+					<div class="dashboard-row" style="display: flex; gap: 20px; margin-top: 20px;">
+					    <div class="content-section" style="flex: 1; min-width: 0;">
+					        <div class="section-header" style="display: flex; justify-content: space-between;">
+					            <h3><i class="bi bi-calendar-check"></i> 다가오는 예약</h3>
+					            <span class="badge bg-primary">오늘 ${dashboard.todayArrivalCount}건</span>
+					        </div>
+					        <div class="list-container" id="upcomingReservations" style="height: 300px; overflow-y: auto;">
+					            <ul class="list-group list-group-flush">
+					                </ul>
+					        </div>
+					    </div>
+					
+					    <div class="content-section" style="flex: 1; min-width: 0;">
+					        <div class="section-header">
+					            <h3><i class="bi bi-chat-left-dots"></i> 최근 리뷰</h3>
+					        </div>
+					        <div class="list-container" id="recentReviews" style="height: 300px; overflow-y: auto;">
+					            </div>
+					    </div>
+					</div>
+					
                     <!-- 최근 예약 -->
                     <div class="col-lg-8">
                         <div class="content-section">
@@ -212,8 +263,9 @@
 				        </c:choose>
                     </div>
                 </div>
+                				
             </div>
-           </div>
+		</div>
 
 
 <script>
@@ -226,9 +278,9 @@
     if (!res.ok) throw new Error("HTTP " + res.status);
 
     const data = await res.json();
+    
+    // KPI 데이터 채우기
     const kpi = data.kpi || {};
-
-    // 숫자 포맷
     const won = (n) => (n ?? 0).toLocaleString("ko-KR") + "원";
     const num = (n) => (n ?? 0).toLocaleString("ko-KR");
 
@@ -236,15 +288,102 @@
     document.querySelector("#monthlyReservations").textContent = num(kpi.monthlyReservations);
     document.querySelector("#sellingProductCount").textContent = num(kpi.sellingProductCount);
 
-    // topProducts로 '상품 현황' 일부도 채우고 싶으면 여기서 렌더링 가능
-    // console.log(data);
+    // 매출 현황 꺾은선 그래프
+    const salesData = data.monthlySalesChart || [];
+    const salesLabels = salesData.map(item => item.month); // 진짜 월 데이터
+    const salesTotals = salesData.map(item => item.total); // 진짜 금액 데이터
+
+    const salesCtx = document.getElementById('myChart').getContext('2d');
+    new Chart(salesCtx, {
+        type: 'line',
+        data: {
+            labels: salesLabels.length ? salesLabels : ['데이터 없음'], 
+            datasets: [{
+                label: '월별 매출액',
+                data: salesTotals.length ? salesTotals : [0],
+                borderColor: '#1f6feb',
+                backgroundColor: 'rgba(31, 111, 235, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString() + '원' } }
+            }
+        }
+    });
+
+    // 상품 카테고리 비중 (도넛 차트)
+    const categoryData = data.categoryRatio || []; // 서버에서 준 리스트 (없으면 빈배열)
+    
+    // DB값이 'ACCOMMODATION'이면 '숙박', 그 외엔 '투어'로 이름표 바꿔주기
+    const catLabels = categoryData.map(item => item.type === 'accommodation' ? '숙박' : '투어/체험');
+    const catCounts = categoryData.map(item => item.cnt);
+
+    const pieCtx = document.getElementById('categoryChart').getContext('2d');
+    new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: catLabels.length ? catLabels : ['상품 없음'],
+            datasets: [{
+                data: catCounts.length ? catCounts : [1], // 데이터 없으면 회색 원이라도 나오게
+                backgroundColor: ['#1f6feb', '#3fb950', '#dddddd'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            cutout: '70%',
+            plugins: { legend: { position: 'bottom' } }
+        }
+    });
 
   } catch (e) {
     console.error("대시보드 로딩 실패:", e);
   }
+  
+//1. 다가오는 예약 리스트 렌더링
+  const resvList = document.querySelector("#upcomingReservations ul");
+  const reservations = data.upcomingReservations || [];
+
+  if(reservations.length > 0) {
+      resvList.innerHTML = reservations.map(r => `
+          <li class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                  <strong style="font-size: 1.1em;">\${r.memName}</strong>
+                  <div style="font-size: 0.85em; color: #666;">\${r.prodName}</div>
+              </div>
+              <span class="badge bg-light text-dark border">\${r.resvDate}</span>
+          </li>
+      `).join('');
+  } else {
+      resvList.innerHTML = '<li class="list-group-item text-center">예약 일정이 없습니다.</li>';
+  }
+
+// 2. 최근 리뷰 피드 렌더링
+const reviewDiv = document.querySelector("#recentReviews");
+const reviews = data.recentReviews || [];
+
+if(reviews.length > 0) {
+    reviewDiv.innerHTML = reviews.map(v => `
+        <div class="review-card" style="padding: 15px; border-bottom: 1px solid #eee;">
+            <div class="d-flex justify-content-between">
+                <span style="font-weight: bold;">\${v.memName}</span>
+                <span style="color: #ffc107;">\${'★'.repeat(v.reviewStar)}</span>
+            </div>
+            <div style="font-size: 0.9em; color: #444; margin-top: 5px;" class="text-truncate">
+                \${v.reviewContent}
+            </div>
+            <div style="font-size: 0.8em; color: #999; margin-top: 5px;">\${v.regDate}</div>
+        </div>
+    `).join('');
+} else {
+    reviewDiv.innerHTML = '<div class="text-center" style="padding: 50px;">등록된 리뷰가 없습니다.</div>';
+}
 })();
 </script>
-
 
 <style>
 /* 알림 리스트 */

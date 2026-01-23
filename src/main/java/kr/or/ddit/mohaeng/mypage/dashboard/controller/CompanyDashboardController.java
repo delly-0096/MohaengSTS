@@ -53,9 +53,9 @@ public class CompanyDashboardController {
 	  return "mypage/business/dashboard";
   }
   
-  @GetMapping("/mypage/business/notifications")
-	public String notificationsView() {
-		return "mypage/business/notifications";
-}
+	/*
+	 * @GetMapping("/mypage/business/notifications") public String
+	 * notificationsView() { return "mypage/business/notifications"; }
+	 */
   
 }

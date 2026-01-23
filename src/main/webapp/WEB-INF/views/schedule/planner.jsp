@@ -831,11 +831,6 @@ async function viewItemDetail(itemId) {
 		}
 	}
 	
-// 	document.querySelectorAll(".planner-item").forEach(()=>{
-// 		itemContentId = this;
-// 		console.log(itemContentId);
-// 	});	
-	
     const modal = new bootstrap.Modal(document.getElementById('placeDetailModal'));
     
     document.getElementById('placeDetailBody').innerHTML = `
@@ -849,11 +844,7 @@ async function viewItemDetail(itemId) {
 	modal.show();
 	
     let placeItem = await searchPlaceDetail(itemContentId, contenttypeId);
-// 	placeItem.plcDesc = (placeItem.plcDesc).replaceAll('\n', '<br>');
 	console.log(placeItem);
-	
-// 	console.log(placeItem.expguide)
-// 	                 onerror="this.src='https://via.placeholder.com/400x300?text=성산일출봉'">
 
 	let plcDesc = (placeItem.plcDesc+"").replaceAll(/\\n/g, '<br>');
 	console.log("plcDesc:  " + plcDesc)
@@ -962,6 +953,17 @@ function saveSchedule() {
             let plannerDayList = document.querySelectorAll(".planner-day");
             
             let plannerItems = document.querySelectorAll(".planner-item");
+
+            let tempSchdlTitles = [];
+
+            plannerDayList.forEach(dayItem => {
+                let day = dayItem.dataset.day;
+                let dayTheme = dayItem.querySelector(".planner-day-theme").innerText;
+                
+                tempSchdlTitles.push({ day: day, title: dayData[day].theme });
+            });
+
+            sessionStorage.setItem('tempSchdlTitles', JSON.stringify(tempSchdlTitles));
 
             plannerItems.forEach(item => {
                 let parentItem = item.closest(".planner-day");
@@ -1497,10 +1499,23 @@ function initTemplate() {
 function initReturn() {
 	let tempPlanDataList = sessionStorage.getItem("tempPlanDataList");
 	let tempSchdlNm = sessionStorage.getItem("tempSchdlNm");
+    let tempSchdlTitles = sessionStorage.getItem("tempSchdlTitles");
 	
 	let planDataList = JSON.parse(tempPlanDataList);
-    console.log(planDataList);
-	
+	let tempSchdlTitleList = JSON.parse(tempSchdlTitles);
+
+    console.log(tempSchdlTitleList);
+
+    for(let i = 0; i <= tempSchdlTitleList.length-1; i++) {
+        let day = tempSchdlTitleList[i].day;
+        let theme = tempSchdlTitleList[i].title;
+        console.log(theme);
+        
+        if(theme != '') {
+            $("#dayTheme"+day).text("- " + theme);
+        }
+    }
+
 	if(planDataList && planDataList.length > 0) {
 		document.querySelector("#schdlNm").innerText = tempSchdlNm;
 		

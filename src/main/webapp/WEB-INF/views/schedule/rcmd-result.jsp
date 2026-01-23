@@ -7,6 +7,16 @@
 <%@ include file="../common/header.jsp" %>
 
 <div class="ai-result-page">
+    <div id="loadingOverlay" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" 
+        style="background: rgba(0, 0, 0, 0.5); z-index: 9999;">
+        <div class="text-center text-white">
+            <div class="spinner-border" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">일정을 다시 생성하고 있습니다...</div>
+        </div>
+    </div>
+
     <!-- 헤더 (추천 유형에 따라 동적 변경) -->
     <div class="ai-result-header" id="resultHeader">
         <h1 id="resultTitle"><i class="bi bi-stars text-warning me-2"></i>AI 추천 일정</h1>
@@ -383,22 +393,16 @@ let endDt = "";
 let diffDay = 0;
 let duration = 0;
 
-let dayData = {
-    1: { theme: '', date: '' },
-    2: { theme: '', date: '' },
-    3: { theme: '', date: '' },
-    4: { theme: '', date: '' }
-};
+let dayData = [];
+let schdlTitles = [];
 
-const aiRcmdData = JSON.parse(sessionStorage.getItem('aiRcmdData') || '{}');
-const preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
+let aiRcmdData = JSON.parse(sessionStorage.getItem('aiRcmdData') || '{}');
+let preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}');
 
 // 선호도 데이터 로드
 document.addEventListener('DOMContentLoaded', function() {
     // 저장 모달 초기화
     saveScheduleModal = new bootstrap.Modal(document.getElementById('saveScheduleModal'));
-
-    console.log(aiRcmdData);
 
     if (preferenceData.destination) {
         document.getElementById('tripDestination').textContent = preferenceData.destination + " 여행";
@@ -445,12 +449,12 @@ function selectDay(day) {
     currentDay = day;
 }
 
-function viewDetail(type, id) {
+async function viewDetail(itemContentId, contenttypeId) {
     // 모달 표시
     const modal = new bootstrap.Modal(document.getElementById('detailModal'));
 
     // 상세 정보 로드 (실제 구현 시 AJAX)
-    document.getElementById('detailModalTitle').textContent = type === 'place' ? '관광지 상세정보' : '맛집 상세정보';
+    document.getElementById('detailModalTitle').textContent = '상세정보';
     document.getElementById('detailModalBody').innerHTML = `
         <div class="text-center py-4">
             <div class="spinner-border text-primary" role="status">
@@ -462,28 +466,31 @@ function viewDetail(type, id) {
 
     modal.show();
 
+    let placeItem = await searchPlaceDetail(itemContentId, contenttypeId);
+    
+	console.log(placeItem);
+
     // 데모용 콘텐츠
     setTimeout(function() {
         document.getElementById('detailModalBody').innerHTML =
             '<div class="row">' +
                 '<div class="col-md-6">' +
-                    '<img src="https://images.unsplash.com/photo-1578469645742-46cae010e5d4?w=400&h=300&fit=crop&q=80" ' +
-                         'alt="성산일출봉" class="w-100 rounded-3 mb-3">' +
+                    '<img src="' + placeItem.defaultImg + '" ' +
+                         'alt="' + placeItem.plcNm + '" class="w-100 rounded-3 mb-3">' +
                 '</div>' +
                 '<div class="col-md-6">' +
-                    '<h4>성산일출봉</h4>' +
+                    '<h4>' + placeItem.plcNm + '</h4>' +
                     '<p class="text-muted mb-3">' +
-                        '<i class="bi bi-geo-alt me-1"></i>제주 서귀포시 성산읍 성산리 114' +
+                        '<i class="bi bi-geo-alt me-1"></i>' + placeItem.plcAddr1 +
                     '</p>' +
                     '<div class="mb-3">' +
-                        '<span class="badge bg-primary me-1">관광명소</span>' +
-                        '<span class="badge bg-secondary">유네스코 세계자연유산</span>' +
+                        '<span class="badge bg-primary me-1">' + placeItem.placeTypeName + '</span>' +
+                        // '<span class="badge bg-secondary">유네스코 세계자연유산</span>' +
                     '</div>' +
-                    '<p>해발 182m의 수성화산체로, 제주도 동쪽 해안에 위치한 우리나라 최대의 화산 분화구입니다.</p>' +
+                    '<p>' + placeItem.plcDesc + '</p>' +
                     '<hr>' +
-                    '<p class="mb-1"><strong>운영시간:</strong> 일출 1시간 전 ~ 20:00</p>' +
-                    '<p class="mb-1"><strong>입장료:</strong> 성인 5,000원</p>' +
-                    '<p class="mb-1"><strong>주차:</strong> 가능 (유료)</p>' +
+                    '<p class="mb-1"><strong>운영시간:</strong> ' + placeItem.operationHours + '</p>' +
+                    '<p class="mb-1"><strong>입장료:</strong> ' + (placeItem.plcPrice ? placeItem.plcPrice : 'X') + '</p>' +
                     '<div class="d-flex gap-2 mt-3">' +
                         '<span class="text-warning"><i class="bi bi-star-fill"></i></span>' +
                         '<span class="fw-bold">4.7</span>' +
@@ -492,10 +499,25 @@ function viewDetail(type, id) {
                 '</div>' +
             '</div>';
     }, 500);
+
+
 }
 
-function removeItem(day, itemIndex) {
+function removeItem(day, contentid) {
     if (confirm('이 장소를 일정에서 제거하시겠습니까?')) {
+
+    let targetTimeline = $(document).find(`#day\${day}`);
+    console.log("targetTimeline : " + targetTimeline);
+    // 3. 해당 타임라인 안에서 삭제할 아이템을 찾습니다.
+    let targetItem = targetTimeline.find(`.timeline-item[data-contentid="\${contentid}"]`);
+
+    targetItem.remove();
+
+    let targetItems = targetTimeline.find(`.timeline-item`);
+    targetItems.each(function(index) {
+        $(this).find('.timeline-dot').text(index + 1);
+    });
+
         showToast('장소가 제거되었습니다.', 'success');
     }
 }
@@ -505,8 +527,10 @@ function addPlace(day) {
 }
 
 function regenerateDay(day) {
-    if (confirm('이 날의 일정을 다시 추천받으시겠습니까?')) {
-        showToast('일정을 다시 생성하고 있습니다...', 'info');
+    if (confirm('이 날의 일정을 다시 추천받으시겠습니까? \n기존 일정을 고려하기위해 더 많은 시간이 소요될 수 있습니다.')) {
+        showLoadingLayout();
+        // showToast('일정을 다시 생성하고 있습니다...', 'info');
+        aiResult();
     }
 }
 
@@ -557,12 +581,6 @@ function confirmSaveSchedule() {
     saveScheduleModal.hide();
 
     confirmSaveScheduleData();
-
-    // 일정 저장 (실제 구현 시 AJAX)
-    showToast('일정이 ' + visibilityLabels[selectedVisibility] + '로 저장되었습니다!', 'success');
-    setTimeout(function() {
-        window.location.href = '${pageContext.request.contextPath}/schedule/my';
-    }, 1500);
 }
 
 function initDurationData() {
@@ -593,11 +611,18 @@ function initDurationData() {
     	let dDateDay = durDate.getDate();
 
         let dDay = i + 1;
-        console.log(aiRcmdData[i].schdlNm);
+        
         dayData[dDay] = {
             theme: aiRcmdData[i].schdlNm || '',
             date: ''
         };
+
+        schdlTitles.push({
+            day: dDay,
+            title: aiRcmdData[i].schdlNm || ''
+        });
+
+        sessionStorage.setItem('tempSchdlTitles', JSON.stringify(schdlTitles));
         
         let dayTabHtml = `
             <div class="day-tab \${i === 0 ? 'active' : ''}" data-day="\${i + 1}" onclick="selectDay(\${i + 1})">
@@ -620,7 +645,7 @@ function initDurationData() {
                         </button>
                     </div>
                 </div>
-                <div class="timeline">
+                <div class="timeline" id="day\${i + 1}-timeline">
                     <!-- \${i + 1}일차 일정 내용 -->
                 </div>
                 <button class="add-place-btn" onclick="addPlace(\${i + 1})">
@@ -641,16 +666,42 @@ function initDurationData() {
         </div>
     `);
 
+    sessionStorage.setItem('scheduleDuration', duration);
+    sessionStorage.setItem('tempSchdlNm', $("#tripDestination").text().trim());
     initDataDisplay();
 }
 
 function initDataDisplay() {
+
+    let itemId = 100;
+    let tempPlanDataList = [];
+
     aiRcmdData.forEach(scheduleDate => {
         let schdlDt = scheduleDate.schdlDt;
         scheduleDate.tourPlaceList.forEach(tourPlace => {
+
+            tempPlanDataList.push({
+                day: schdlDt,
+                itemId: itemId++,
+                contentid: tourPlace.No,
+                contenttypeid: tourPlace.placeInfo.placeType,
+                startTime: tourPlace.S,
+                endTime: tourPlace.T,
+                cost: "0",
+                itemCategory: tourPlace.placeInfo.placeTypeName,
+                itemName: tourPlace.Nm,
+                latitude: tourPlace.placeInfo.latitude || "0",
+                longitude: tourPlace.placeInfo.longitude || "0",
+            });
+
+
             // 일정 데이터를 화면에 표시하는 로직
             $(`#day\${schdlDt} .timeline`).append(`
-                <div class="timeline-item">
+                <div class="timeline-item" data-contentid="\${tourPlace.No}" 
+                     data-contenttypeid="\${tourPlace.placeInfo.placeType}" 
+                     data-start-time="\${tourPlace.S}" 
+                     data-end-time="\${tourPlace.T}"
+                     data-order="\${tourPlace.O}">
                     <div class="timeline-dot">\${tourPlace.O}</div>
                     <div class="timeline-time">\${tourPlace.S} - \${tourPlace.T}</div>
                     <div class="timeline-card">
@@ -664,10 +715,10 @@ function initDataDisplay() {
                                     <i class="bi bi-geo-alt"></i> \${tourPlace.placeInfo.fullNm}
                                 </p>
                                 <div class="timeline-card-actions">
-                                    <button class="btn btn-outline btn-sm" onclick="viewDetail('place', 1)">
+                                    <button class="btn btn-outline btn-sm" onclick="viewDetail(\${tourPlace.No}, \${tourPlace.placeInfo.placeType})">
                                         상세보기
                                     </button>
-                                    <button class="btn btn-text btn-sm" onclick="removeItem(1, 1)">
+                                    <button class="btn btn-text btn-sm" onclick="removeItem(\${schdlDt}, \${tourPlace.No})">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -678,6 +729,8 @@ function initDataDisplay() {
             `)
         });
     });
+
+    sessionStorage.setItem('tempPlanDataList', JSON.stringify(tempPlanDataList));
 }
 
 function confirmSaveScheduleData() {
@@ -709,7 +762,8 @@ function confirmSaveScheduleData() {
         };
 
         // 해당 일차의 장소 아이템들 수집
-        const items = document.querySelectorAll('#day' + d + 'Items .planner-item');
+        const items = document.querySelectorAll('#day' + d + '-timeline .timeline-item');
+        console.log(items.length);
         items.forEach((item, index) => {
             detailObj.places.push({
                 placeId: item.dataset.contentid,        // PLACE_ID
@@ -718,15 +772,15 @@ function confirmSaveScheduleData() {
                 placeEndTime: item.dataset.endTime,     // 방문종료시간
                 placeOrder: index + 1,                  // 순서 (순차적으로)
                 // DB에는 없지만 필요시 전달할 추가 정보
-                plcNm: item.querySelector('.planner-item-name').innerText,
-                planCost: item.dataset.cost.replace(/[^0-9]/g, '')
+                plcNm: item.querySelector('.timeline-card-title').innerText,
+                planCost: '0'
             });
         });
 
         masterData.details.push(detailObj);
     }
-
-    // 데이터 유효성 검사
+    console.log(masterData);
+    // // 데이터 유효성 검사
     if (masterData.details.every(d => d.places.length === 0)) {
         showToast('최소 하나 이상의 장소를 추가해야 저장 가능합니다.', 'warning');
         return;
@@ -746,9 +800,17 @@ function confirmSaveScheduleData() {
             // 성공 시 세션 스토리지 정리 (앞서 질문하신 특정 아이템 삭제)
             sessionStorage.removeItem('tempPlanDataList');
             sessionStorage.removeItem('tempSchdlNm');
+            sessionStorage.removeItem('aiRcmdData');
+
             setTimeout(() => {
                 window.location.href = '${pageContext.request.contextPath}/schedule/my';
             }, 1000);
+
+            // 일정 저장 (실제 구현 시 AJAX)
+            showToast('일정이 ' + visibilityLabels[selectedVisibility] + '로 저장되었습니다!', 'success');
+            setTimeout(function() {
+                window.location.href = '${pageContext.request.contextPath}/schedule/my';
+            }, 1500);
         } else {
             showToast('저장 중 오류가 발생했습니다.', 'danger');
         }
@@ -757,6 +819,124 @@ function confirmSaveScheduleData() {
         console.error('Save Error:', err);
         showToast('서버 통신 실패', 'danger');
     });
+}
+
+// 장소 상세정보 조회
+async function viewItemDetail(itemId) {
+	let itemContentId = "";
+	let contenttypeId = "";
+	
+	let plannerItems = $(".planner-items").children();
+	
+	for(let i = 0; i < plannerItems.length && itemContentId == ""; i++) {
+		let plannerItem = $(".planner-items").children().eq(i)
+		if(itemId == plannerItem.attr("data-item-id")) {
+			itemContentId = plannerItem.attr("data-contentid")
+			contenttypeId = plannerItem.attr("data-contenttypeid")
+		}
+	}
+	
+    const modal = new bootstrap.Modal(document.getElementById('placeDetailModal'));
+    
+    document.getElementById('placeDetailBody').innerHTML = `
+	    <div class="text-center">
+			<div class="spinner-border text-primary" style="width: 10rem; height: 10rem;" role="status">
+			  <span class="visually-hidden">Loading...</span>
+			</div>
+		</div>
+	`
+	
+	modal.show();
+	
+    let placeItem = await searchPlaceDetail(itemContentId, contenttypeId);
+	console.log(placeItem);
+
+	let plcDesc = (placeItem.plcDesc+"").replaceAll(/\\n/g, '<br>');
+	console.log("plcDesc:  " + plcDesc)
+	let operationHours = (placeItem.operationHours+"").replaceAll(/\\n/g, '<br>');
+	let plcPrice = (placeItem.plcPrice+"").replaceAll(/\\n/g, '<br>');
+	
+    document.getElementById('placeDetailBody').innerHTML =	`
+        <div class="text-center">
+            <img src="\${placeItem.defaultImg}"
+                 alt="\${placeItem.plcNm}" class="w-100 rounded mb-3">
+
+            <h5>\${placeItem.plcNm}</h5>
+            <p class="text-muted mb-3">\${placeItem.plcAddr1}</p>
+            <p style="white-space: pre-wrap; word-break: break-all;">\${plcDesc}</p>
+            <hr>
+            <div class="d-flex justify-content-around text-center">
+                <div class="col">
+                    <i class="bi bi-clock text-primary mb-1" style="font-size: 24px;"></i>
+                    <p class="mb-0 small">\${operationHours}</p>
+                </div>
+                <div class="col">
+                    <i class="bi bi-currency-dollar text-primary mb-1" style="font-size: 24px;"></i>
+                    <p class="mb-0 small">\${ placeItem.plcPrice ? plcPrice : 'x' }</p>
+                </div>
+                <div class="col">
+                    <i class="bi bi-star-fill text-warning mb-1" style="font-size: 24px;"></i>
+                    <p class="mb-0 small">4.7점</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function searchPlaceDetail(contentId, contenttypeId) {
+	const response = await fetch("/schedule/common/searchPlaceDetail?contentId="+contentId+"&contenttypeId="+contenttypeId);
+	
+	const dataList = await response.json();
+	console.log(dataList)
+	
+	return dataList;
+}
+
+async function aiResult() {
+    let excludeList = [];
+
+    for (let d = 1; d <= duration; d++) {
+        // 해당 일차의 장소 아이템들 수집
+        const items = document.querySelectorAll('#day' + d + '-timeline .timeline-item');
+        items.forEach((item, index) => {
+            excludeList.push(
+                item.dataset.contentid
+            );
+        });
+    }
+
+    preferenceData = {
+        ...preferenceData,
+        excludeList: excludeList
+    };
+
+    console.log(preferenceData);
+    // AI 결과 처리 로직
+    let response = await fetch('${pageContext.request.contextPath}/schedule/rcmd-result', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(preferenceData)
+    });
+
+    let responseData = await response.json();
+    sessionStorage.setItem('aiRcmdData', JSON.stringify(responseData));
+    hideLoadingLayout();
+    location.href = '${pageContext.request.contextPath}/schedule/rcmd-result';
+}
+
+
+// 로딩 시작
+function showLoadingLayout() {
+    const loader = document.getElementById('loadingOverlay');
+    loader.classList.remove('d-none');
+}
+
+// 로딩 종료
+function hideLoadingLayout() {
+    const loader = document.getElementById('loadingOverlay');
+    loader.classList.add('d-none');
 }
 </script>
 

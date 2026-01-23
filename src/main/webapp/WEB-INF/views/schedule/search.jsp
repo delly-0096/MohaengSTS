@@ -865,6 +865,8 @@ function handleRecommendTypeNext() {
 
 // planner 페이지로 이동
 function goToPlanner() {
+    sessionStorage.clear();
+
     // 기본 정보 저장
     var preferenceData = {
         departure: document.getElementById('departure').value,

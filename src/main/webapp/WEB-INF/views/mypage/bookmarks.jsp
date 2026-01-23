@@ -19,51 +19,55 @@
 				</div>
 
 				<!-- 통계 카드 -->
-				<div class="stats-grid">
-					<div class="stat-card primary">
-						<div class="stat-icon">
-							<i class="bi bi-bookmark-fill"></i>
+				<c:if test="${showStats eq 'Y'}">
+					<div class="stats-grid">
+						<div class="stat-card primary">
+							<div class="stat-icon">
+								<i class="bi bi-bookmark-fill"></i>
+							</div>
+							<div class="stat-value">${stats.TOTAL_CNT}</div>
+							<div class="stat-label">전체 북마크</div>
 						</div>
-						<div class="stat-value">${stats.TOTAL_CNT}</div>
-						<div class="stat-label">전체 북마크</div>
-					</div>
-					<div class="stat-card secondary">
-						<div class="stat-icon">
-							<i class="bi bi-calendar3"></i>
+						<div class="stat-card secondary">
+							<div class="stat-icon">
+								<i class="bi bi-calendar3"></i>
+							</div>
+							<div class="stat-value">${stats.SCHEDULE_CNT}</div>
+							<div class="stat-label">일정</div>
 						</div>
-						<div class="stat-value">${stats.SCHEDULE_CNT}</div>
-						<div class="stat-label">일정</div>
-					</div>
-					<div class="stat-card accent">
-						<div class="stat-icon">
-							<i class="bi bi-building"></i>
+						<div class="stat-card accent">
+							<div class="stat-icon">
+								<i class="bi bi-building"></i>
+							</div>
+							<div class="stat-value">${stats.ACCOMMODATION_CNT}</div>
+							<div class="stat-label">숙소</div>
 						</div>
-						<div class="stat-value">${stats.ACCOMMODATION_CNT}</div>
-						<div class="stat-label">숙소</div>
-					</div>
-					<div class="stat-card warning">
-						<div class="stat-icon">
-							<i class="bi bi-ticket-perforated"></i>
+						<div class="stat-card warning">
+							<div class="stat-icon">
+								<i class="bi bi-ticket-perforated"></i>
+							</div>
+							<div class="stat-value">${stats.TOUR_CNT}</div>
+							<div class="stat-label">투어/체험/티켓</div>
 						</div>
-						<div class="stat-value">${stats.TOUR_CNT}</div>
-						<div class="stat-label">투어/체험/티켓</div>
-					</div>
-				</div> 
+					</div> 
+				</c:if>
 
-				<div class="bookmark-search">
-	                <form class="bookmark-search-input" id="searchForm" method="post">
-	                	<input type="hidden" name="page" id="page"/>
-	                </form>
-            	</div>
-				            
-				<!-- 탭 -->
-				<div class="mypage-tabs mb-4">
-					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'all' }">active</c:if>" data-category="all">전체</button>
-					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'schedule' }">active</c:if>" data-category="schedule">일정</button>
-					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'accommodation' }">active</c:if>" data-category="accommodation">숙소</button>
-					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'tour' }">active</c:if>" data-category="tour">투어/체험/티켓</button>
-				</div>
-
+					<div class="bookmark-search">
+		                <form class="bookmark-search-input" id="searchForm" method="post">
+		                	<input type="hidden" name="page" id="page"/>
+		                </form>
+	            	</div>
+					            
+					<!-- 탭 -->
+					<div class="mypage-tabs mb-4">
+						<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'all' }">active</c:if>" data-category="all">전체</button>
+						<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'schedule' }">active</c:if>" data-category="schedule">일정</button>
+						<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'accommodation' }">active</c:if>" data-category="accommodation">숙소</button>
+						<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'tour' }">active</c:if>" data-category="tour">투어/체험/티켓</button>
+					</div>
+				
+				
+				
 				<!-- 북마크 그리드 -->
 				<div class="content-section">
 					<!-- 선택 삭제 툴바 -->
@@ -109,7 +113,8 @@
 											<c:set value="${pageContext.request.contextPath}/tour/${bookmark.contentId }" var="link"/>
 										</c:when>
 									</c:choose>
-									<div class="bookmark-card" data-link="${link }" data-category="${fn:toLowerCase(bookmark.contentType) }" data-id="${fn:toLowerCase(bookmark.contentType) }-1">
+									<div class="bookmark-card" data-link="${link }" data-bmkno="${bookmark.bmkNo}" 
+										data-category="${fn:toLowerCase(bookmark.contentType) }" data-id="${fn:toLowerCase(bookmark.contentType) }-1">
 										<label class="card-checkbox"> 
 											<input type="checkbox" onchange="updateSelection()"> 
 											<span class="checkmark">
@@ -119,10 +124,18 @@
 			
 										<!-- 이미지 구현 해야함............. -->
 										<div class="bookmark-card-image">
-											<img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=300&fit=crop&q=80" alt="제주도">
-											<button class="bookmark-remove active" onclick="removeScheduleBookmark(this)">
-												<i class="bi bi-bookmark-fill"></i>
-											</button>
+										    <c:choose>
+										        <c:when test="${fn:startsWith(bookmark.thumbImg, 'http')}">
+										            <img src="${bookmark.thumbImg}" alt="${bookmark.title}">
+										        </c:when>
+										        <c:otherwise>
+										            <img src="${pageContext.request.contextPath}/resources${bookmark.thumbImg}" alt="${bookmark.title}">
+										        </c:otherwise>
+										    </c:choose>
+										    
+										    <button class="bookmark-remove active" onclick="removeScheduleBookmark(this)">
+										        <i class="bi bi-bookmark-fill"></i>
+										    </button>
 										</div>
 			
 										<div class="bookmark-card-content">
@@ -164,153 +177,162 @@
 	</div>
 </div>
 
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
 $(function(){
-	let category = $(".mypage-tab");
-	let pagingArea = $("#pagingArea");
-	let searchForm = $("#searchForm");
-	
-	pagingArea.on("click", "a", function(e){
-		e.preventDefault();
-		let pageNo = $(this).data("page");
-		searchForm.find("#page").val(pageNo);
-		searchForm.submit();
-	});
-	
-	category.on("click", function(){
-		let category = $(this).data("category");
-		location.href = "${pageContext.request.contextPath}/mypage/bookmarks?contentType=" + category;
-	});
-});
-
-//helper: 현재 탭 기준으로 "화면에 보이는 카드들"만 가져오기
-function getVisibleCardsByActiveTab() {
-    var activeTab = document.querySelector('.mypage-tab.active');
-    var activeCategory = activeTab ? activeTab.dataset.category : 'all';
-
-    var cards = Array.from(document.querySelectorAll('.bookmark-card'));
-
-    if (activeCategory === 'all') return cards;
-    return cards.filter(function(c){ return c.dataset.category === activeCategory; });
-} 
-
-//카드 클릭하면 상세로 이동
-document.querySelectorAll('.bookmark-card').forEach(function(card) {
-  card.addEventListener('click', function(e) {
-    // 체크박스/북마크버튼 눌렀을 땐 이동 막기
-    if (e.target.closest('.card-checkbox') || e.target.closest('.bookmark-remove')) return;
-
-    var link = card.dataset.link;
-    if (link) location.href = link;   // replace 쓰지 말 것!
-  });
-});
-
-// 전체 선택 토글 
-function toggleSelectAll() {
-    var selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    var isChecked = selectAllCheckbox.checked;
-
-    var visibleCards = getVisibleCardsByActiveTab();
-    visibleCards.forEach(function(card) {
-        var checkbox = card.querySelector('.card-checkbox input[type="checkbox"]');
-        if (checkbox) {
-            checkbox.checked = isChecked;
-            card.classList.toggle('selected', isChecked);
-        }
+    // 현재 접속한 경로를 자동으로 인식 (/mypage/bookmarks 또는 /schedule/bookmark)
+    const currentPath = window.location.pathname;
+    
+    let pagingArea = $("#pagingArea");
+    let searchForm = $("#searchForm");
+    
+    // 페이징 이벤트 수정
+    pagingArea.on("click", "a", function(e){
+        e.preventDefault();
+        let pageNo = $(this).data("page");
+        
+        // action 주소를 현재 경로로 설정하여 다른 메뉴에서도 자기 자신을 호출하게 함
+        searchForm.attr("action", currentPath); 
+        searchForm.find("#page").val(pageNo);
+        searchForm.submit();
+    });
+    
+    // 탭 클릭 이벤트 수정
+    $(".mypage-tab").on("click", function(){
+        let category = $(this).data("category");
+        // [수정] 고정된 주소 대신 currentPath 사용
+        location.href = currentPath + "?contentType=" + category;
     });
 
-    updateSelection();
-}
+    // 카드 클릭 이벤트 (상세 이동)
+    $(document).on('click', '.bookmark-card', function(e) {
+        if ($(e.target).closest('.card-checkbox, .bookmark-remove').length) return;
+        var link = $(this).data("link");
+        if (link) location.href = link;
+    });
 
-// 선택 상태 업데이트 
-function updateSelection() {
-    var visibleCards = getVisibleCardsByActiveTab();
-    var selectedCount = 0;
-    var totalCount = visibleCards.length;
+    window.updateSelection = function() {
+        let visibleCards = $(".bookmark-card");
+        let selectedCards = $(".bookmark-card").filter(function() {
+            return $(this).find(".card-checkbox input").is(":checked");
+        });
 
-    visibleCards.forEach(function(card) {
-        var checkbox = card.querySelector('.card-checkbox input[type="checkbox"]');
-        if (checkbox && checkbox.checked) {
-            selectedCount++;
-            card.classList.add('selected');
+        let selectedCount = selectedCards.length;
+        let totalCount = visibleCards.length;
+
+        $(".bookmark-card").removeClass("selected");
+        selectedCards.addClass("selected");
+
+        $("#selectedCount").text(selectedCount + "개 선택됨");
+
+        let selectAll = $("#selectAllCheckbox");
+        if (totalCount > 0 && selectedCount === totalCount) {
+            selectAll.prop("checked", true).prop("indeterminate", false);
+        } else if (selectedCount > 0) {
+            selectAll.prop("checked", false).prop("indeterminate", true);
         } else {
-            card.classList.remove('selected');
+            selectAll.prop("checked", false).prop("indeterminate", false);
+        }
+
+        let deleteBtn = $("#deleteSelectedBtn");
+        if (selectedCount > 0) {
+            deleteBtn.prop("disabled", false).css({"cursor": "pointer", "opacity": "1"});
+        } else {
+            deleteBtn.prop("disabled", true).css({"cursor": "not-allowed", "opacity": "0.6"});
+        }
+    };
+
+    window.toggleSelectAll = function() {
+        let isChecked = $("#selectAllCheckbox").is(":checked");
+        $(".card-checkbox input").prop("checked", isChecked);
+        updateSelection();
+    };
+
+    window.cancelSelection = function() {
+        $(".card-checkbox input").prop("checked", false);
+        $("#selectAllCheckbox").prop("checked", false).prop("indeterminate", false);
+        updateSelection();
+    };
+});
+
+// 삭제 함수 내의 URL도 유동적으로 변경
+function deleteBookmarksFromServer(bmkNos) {
+    const currentPath = window.location.pathname; // 현재 경로 인식
+    const token = $("meta[name='_csrf']").attr("content");
+    const header = $("meta[name='_csrf_header']").attr("content");
+
+    $.ajax({
+        // 현재 경로 뒤에 /delete를 붙여 요청
+        url: currentPath + "/delete", 
+        type: "POST",
+        contentType: "application/json",
+        data: JSON.stringify({ bmkNos: bmkNos }),
+        beforeSend: function(xhr) {
+            if(token && header) xhr.setRequestHeader(header, token);
+        },
+        success: function(res) {
+            if (res === "SUCCESS") {
+                Swal.fire({ icon: 'success', title: '삭제 완료', confirmButtonColor: '#3085d6' }).then(() => {
+                    location.reload(); 
+                });
+            } else {
+                Swal.fire('실패', '삭제 처리에 실패했습니다.', 'error');
+            }
+        },
+        error: function() { Swal.fire('오류', '서버 통신 중 오류가 발생했습니다.', 'error'); }
+    });
+}
+
+// 선택 삭제 함수
+function deleteSelectedBookmarks() {
+    const selectedBmkNos = [];
+    $(".bookmark-card.selected").each(function() {
+        const bmkNo = $(this).data("bmkno");
+        if(bmkNo) selectedBmkNos.push(parseInt(bmkNo));
+    });
+
+    if (selectedBmkNos.length === 0) return;
+
+    // confirm 대용 SweetAlert
+    Swal.fire({
+        title: '정말 삭제하시겠습니까?',
+        text: selectedBmkNos.length + "개의 북마크가 목록에서 제거됩니다.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '삭제',
+        cancelButtonText: '취소'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deleteBookmarksFromServer(selectedBmkNos);
         }
     });
-
-    document.getElementById('selectedCount').textContent = selectedCount + '개 선택됨';
-
-    var selectAllCheckbox = document.getElementById('selectAllCheckbox');
-    if (totalCount > 0 && selectedCount === totalCount) {
-        selectAllCheckbox.checked = true;
-        selectAllCheckbox.indeterminate = false;
-    } else if (selectedCount > 0) {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = true;
-    } else {
-        selectAllCheckbox.checked = false;
-        selectAllCheckbox.indeterminate = false;
-    }
-
-    document.getElementById('deleteSelectedBtn').disabled = (selectedCount === 0);
 }
 
-// 선택 취소 
-function cancelSelection() {
-    document.querySelectorAll('.card-checkbox input[type="checkbox"]').forEach(function(checkbox) {
-        checkbox.checked = false;
-        var card = checkbox.closest('.bookmark-card, .schedule-card');
-        if (card) card.classList.remove('selected');
-    });
-
-    var all = document.getElementById('selectAllCheckbox');
-    all.checked = false;
-    all.indeterminate = false;
-
-    updateSelection();
-}
-
-// 선택 삭제
-function deleteSelectedBookmarks() {
-    var selectedCards = document.querySelectorAll('.bookmark-card.selected, .schedule-card.selected');
-
-    if (selectedCards.length === 0) {
-        showToast('선택된 북마크가 없습니다.', 'warning');
-        return;
-    }
-
-    if (!confirm(selectedCards.length + '개의 북마크를 삭제하시겠습니까?')) return;
-
-    selectedCards.forEach(function(card, index) {
-        setTimeout(function() {
-            card.style.transition = 'all 0.3s ease';
-            card.style.opacity = '0';
-            card.style.transform = 'scale(0.8)';
-            setTimeout(function() { card.remove(); }, 300);
-        }, index * 100);
-    });
-
-    setTimeout(function() {
-        cancelSelection();
-        showToast(selectedCards.length + '개의 북마크가 삭제되었습니다.', 'success');
-    }, selectedCards.length * 100 + 350);
-}
-
-// 일정 전용 북마크 해제
+// 개별 삭제 함수
 function removeScheduleBookmark(btn) {
     event.stopPropagation();
-    if (!confirm('일정 북마크를 삭제하시겠습니까?')) return;
+    const card = $(btn).closest('.bookmark-card');
+    const bmkNo = card.data("bmkno");
 
-    var card = btn.closest('.schedule-card');
-    card.style.animation = 'fadeOut 0.3s ease';
-    setTimeout(function() { card.remove(); }, 300);
-
-    if (typeof showToast === 'function') showToast('일정 북마크가 삭제되었습니다.', 'info');
-
-    updateSelection();
+    Swal.fire({
+        title: '북마크 삭제',
+        text: "해당 북마크를 삭제하시겠습니까?",
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: '삭제',
+        cancelButtonText: '취소'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            deleteBookmarksFromServer([bmkNo]);
+        }
+    });
 }
-
-
 
 </script>
 

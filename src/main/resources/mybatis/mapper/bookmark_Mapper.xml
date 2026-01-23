@@ -35,9 +35,14 @@
 	                <when test="searchType == 'schedule'">
 	                    SELECT 
 	                        BMK_NO, TRUNC(TO_DATE(SCHDL_END_DT, 'YYYY-MM-DD') - TO_DATE(SCHDL_START_DT, 'YYYY-MM-DD')) AS bmk_day_count,
-	                        '-' as addr1, 0 as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, SCHDL_NM AS title
+	                        '-' as addr1, 0 as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, SCHDL_NM AS title,
+	                        COALESCE(
+	                            (SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD WHERE AFD.ATTACH_NO = ts.ATTACH_NO AND ROWNUM = 1),
+	                            ts.LINK_THUMBNAIL,
+	                            'https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&amp;h=300&amp;fit=crop&amp;q=80'
+	                        ) AS thumbImg
 	                    FROM bookmark b LEFT OUTER JOIN trip_schedule ts ON(b.content_id = ts.SCHDL_NO)
-	                    WHERE b.DEL_YN = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'SCHEDULE'
+	                    WHERE b.DEL_YN = 'N' AND b.MEM_NO = #{memNo} AND b.CONTENT_TYPE = 'SCHEDULE'
 	                </when>
 	
 	                <when test="searchType == 'accommodation'">
@@ -45,9 +50,13 @@
 	                        BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count,
 	                        (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN ACCOMMODATION a ON(TP.TRIP_PROD_NO = a.TRIP_PROD_NO) WHERE TP.TRIP_PROD_NO = b.content_id) AS addr1,
 	                        (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price,
-	                        CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title
+	                        CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title,
+	                        NVL(
+	                            (SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD WHERE AFD.ATTACH_NO = tp.ATTACH_NO AND ROWNUM = 1),
+	                            'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&amp;h=300&amp;fit=crop&amp;q=80'
+	                        ) AS thumbImg
 	                    FROM bookmark b LEFT OUTER JOIN trip_prod tp ON(b.content_id = tp.trip_prod_no)
-	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'ACCOMMODATION'
+	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND b.CONTENT_TYPE = 'ACCOMMODATION'
 	                </when>
 	
 	                <when test="searchType == 'tour'">
@@ -55,23 +64,44 @@
 	                        BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count,
 	                        (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN TRIP_PROD_PLACE TPP ON(TP.TRIP_PROD_NO = TPP.TRIP_PROD_NO) where tp.trip_prod_no = b.content_id) AS addr1,
 	                        (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price,
-	                        CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title
+	                        CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title,
+	                        NVL(
+	                            (SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD WHERE AFD.ATTACH_NO = tp.ATTACH_NO AND ROWNUM = 1),
+	                            'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&amp;h=300&amp;fit=crop&amp;q=80'
+	                        ) AS thumbImg
 	                    FROM bookmark b LEFT OUTER JOIN trip_prod tp ON(b.content_id = tp.trip_prod_no)
-	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'TOUR'
+	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND b.CONTENT_TYPE = 'TOUR'
 	                </when>
 	
 	                <otherwise>
-	                    SELECT BMK_NO, TRUNC(TO_DATE(SCHDL_END_DT, 'YYYY-MM-DD') - TO_DATE(SCHDL_START_DT, 'YYYY-MM-DD')) AS bmk_day_count, '-' as addr1, 0 as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, SCHDL_NM AS title
+	                    SELECT 
+	                        BMK_NO, TRUNC(TO_DATE(SCHDL_END_DT, 'YYYY-MM-DD') - TO_DATE(SCHDL_START_DT, 'YYYY-MM-DD')) AS bmk_day_count,
+	                        '-' as addr1, 0 as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, SCHDL_NM AS title,
+	                        COALESCE((SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD WHERE AFD.ATTACH_NO = ts.ATTACH_NO AND ROWNUM = 1), ts.LINK_THUMBNAIL, 'https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&amp;h=300&amp;fit=crop&amp;q=80') AS thumbImg
 	                    FROM bookmark b LEFT OUTER JOIN trip_schedule ts ON(b.content_id = ts.SCHDL_NO)
-	                    WHERE b.DEL_YN = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'SCHEDULE'
+	                    WHERE b.DEL_YN = 'N' AND b.MEM_NO = #{memNo} AND b.CONTENT_TYPE = 'SCHEDULE'
+	                    
 	                    UNION ALL
-	                    SELECT BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count, (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN ACCOMMODATION a ON(TP.TRIP_PROD_NO = a.TRIP_PROD_NO) WHERE TP.TRIP_PROD_NO = b.content_id) AS addr1, (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title
+	                    
+	                    SELECT 
+	                        BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count,
+	                        (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN ACCOMMODATION a ON(TP.TRIP_PROD_NO = a.TRIP_PROD_NO) WHERE TP.TRIP_PROD_NO = b.content_id) AS addr1,
+	                        (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price,
+	                        CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title,
+	                        NVL((SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD WHERE AFD.ATTACH_NO = tp.ATTACH_NO AND ROWNUM = 1), 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=400&amp;h=300&amp;fit=crop&amp;q=80') AS thumbImg
 	                    FROM bookmark b LEFT OUTER JOIN trip_prod tp ON(b.content_id = tp.trip_prod_no)
-	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'ACCOMMODATION'
+	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND b.CONTENT_TYPE = 'ACCOMMODATION'
+	                    
 	                    UNION ALL
-	                    SELECT BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count, (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN TRIP_PROD_PLACE TPP ON(TP.TRIP_PROD_NO = TPP.TRIP_PROD_NO) where tp.trip_prod_no = b.content_id) AS addr1, (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price, CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title
+	                    
+	                    SELECT 
+	                        BMK_NO, TRUNC(SALE_END_DT - SALE_START_DT) AS bmk_day_count,
+	                        (SELECT ADDR1 FROM TRIP_PROD TP LEFT OUTER JOIN TRIP_PROD_PLACE TPP ON(TP.TRIP_PROD_NO = TPP.TRIP_PROD_NO) where tp.trip_prod_no = b.content_id) AS addr1,
+	                        (SELECT price FROM trip_prod tp LEFT OUTER JOIN trip_prod_sale tps ON(tp.trip_prod_no = tps.trip_prod_no) WHERE tp.trip_prod_no = b.content_id) as price,
+	                        CONTENT_TYPE, b.MEM_NO, CONTENT_ID, b.REG_DT, TRIP_PROD_TITLE AS title,
+	                        NVL((SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD WHERE AFD.ATTACH_NO = tp.ATTACH_NO AND ROWNUM = 1), 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400&amp;h=300&amp;fit=crop&amp;q=80') AS thumbImg
 	                    FROM bookmark b LEFT OUTER JOIN trip_prod tp ON(b.content_id = tp.trip_prod_no)
-	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND content_type = 'TOUR'
+	                    WHERE b.del_yn = 'N' AND b.MEM_NO = #{memNo} AND b.CONTENT_TYPE = 'TOUR'
 	                </otherwise>
 	            </choose>
 	        ) a
@@ -90,5 +120,16 @@
 	    FROM bookmark
 	    WHERE MEM_NO = #{memNo} AND DEL_YN = 'N'
 	</select>
+	
+	<update id="deleteBookmarks" parameterType="map">
+	    UPDATE bookmark
+	    SET DEL_YN = 'Y',
+	        DEL_DT = SYSDATE
+	    WHERE MEM_NO = #{memNo}
+	      AND BMK_NO IN 
+	    <foreach collection="bmkNos" item="no" open="(" separator="," close=")">
+	        #{no}
+	    </foreach>
+	</update>
 	
 </mapper>

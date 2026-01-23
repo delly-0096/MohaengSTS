@@ -19,4 +19,6 @@ public class BookmarkVO {
     private String addr1;			// 숙소 및 투어시 주소정보
     private int price;				// 숙소 및 투어시 상품가격
     private String title;			// 일정명, 상품명
+    
+    private String thumbImg; 		// 이미지 경로 또는 URL을 담을 필드
 }

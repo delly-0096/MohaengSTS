@@ -1311,8 +1311,8 @@ async function searchTourApi(hotelName, sidoCode) {
     	// keyword 는 accName, sido
         // 서버에 검색 요청 ( hotelName: "신라호텔", sidoCode: "11" )
 //         const response = await axios.get(`/api/acc/searc0h`, {
-        const response = await axios.get(`/batch/accmmodation/search`, {
-        	accommodation: { accName: hotelName, ldongRegnCd: sidoCode }
+        const response = await axios.get(`/batch/accommodation/search`, {
+        	params: { accName: hotelName, ldongRegnCd: sidoCode }
         });	// accName, sidoCode
         const data = response.data; // 서버에서 준 숙소 정보 객체
 

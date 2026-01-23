@@ -148,8 +148,8 @@ public class TourApiService {
 	                    .queryParam("overviewYN", "Y")
 	                    .queryParam("telNoYN", "Y")
 	                    .queryParam("_type", "json")
-	                    .queryParam("MobileOS", "ETC")
-	                    .queryParam("MobileApp", "AppTest")
+	                    .queryParam("MobileOS", "WEB")
+	                    .queryParam("MobileApp", "Mohaeng")
 	                    .build().toUriString();
 
 	            JsonNode commonRes = restClient.get().uri(URI.create(commonUrl)).retrieve().body(JsonNode.class);
@@ -168,8 +168,8 @@ public class TourApiService {
                     .queryParam("contentId", acc.getApiContentId())
                     .queryParam("contentTypeId", "32")
                     .queryParam("_type", "json")
-                    .queryParam("MobileOS", "ETC")
-                    .queryParam("MobileApp", "AppTest")
+                    .queryParam("MobileOS", "WEB")
+                    .queryParam("MobileApp", "Mohaeng")
                     .build().toUriString();
 
             JsonNode introRes = restClient.get().uri(URI.create(introUrl)).retrieve().body(JsonNode.class);
@@ -230,8 +230,8 @@ public class TourApiService {
 	                .queryParam("contentId", acc.getApiContentId())
 	                .queryParam("contentTypeId", "32")
 	                .queryParam("_type", "json")
-	                .queryParam("MobileOS", "ETC")
-	                .queryParam("MobileApp", "AppTest")
+	                .queryParam("MobileOS", "WEB")
+	                .queryParam("MobileApp", "Mohaeng")
 	                .build().toUriString();
 
 	        JsonNode roomRes = restClient.get().uri(URI.create(roomUrl)).retrieve().body(JsonNode.class);
@@ -298,6 +298,152 @@ public class TourApiService {
 	    } catch (Exception e) {
 	        log.error("객실 정보 업데이트 중 에러 (ID:{}): {}", acc.getAccNo(), e.getMessage());
 	    }
-	} 
+	}
+
+
+	/**
+	 * <p>숙소 정보 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-23
+	 * @param accommodation (accName, areaCode)
+	 * @return 상세 정보 채워진 Accommodation
+	 */
+	public AccommodationVO getDetailedAccommodation(AccommodationVO accommodation) {
+		
+		String contentId = fetchContentIdByName(accommodation.getAccName(), accommodation.getAreaCode());
+		if (contentId == null) {
+	        log.warn("숙소를 찾을 수 없어 상세 정보를 불러오지 못했습니다: {}", accommodation.getAccName());
+	        return null;
+	    }
+		
+		AccommodationVO resultVO = new AccommodationVO();
+		accommodation.setApiContentId(contentId);
+		resultVO.setAccName(accommodation.getAccName());
+		resultVO.setAreaCode(accommodation.getAreaCode());
+		resultVO.setLdongRegnCd(accommodation.getLdongRegnCd());
+		
+		try {
+	        // 3. 공통 정보 & 소개 정보 채우기 (이미지, 개요, 체크인/아웃, 부대시설)
+	        fillCommonAndIntroData(accommodation);
+
+	        // 4. 객실 목록 정보 채우기 (객실명, 가격, 객실 시설)
+	        List<RoomTypeVO> roomTypeList = fetchRoomTypeList(accommodation);
+	        accommodation.setRoomTypeList(roomTypeList);
+
+	        log.info("숙소 상세 데이터 통합 로드 완료: {}", accommodation.getAccName());
+	        return accommodation;
+
+	    } catch (Exception e) {
+	        log.error("상세 데이터 조립 중 에러 발생: {}", e.getMessage());
+	        return accommodation; // 에러가 나더라도 찾은 부분까지는 반환
+	    }
+	}
+
+	/**
+	 * <p>contentId 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-23
+	 * @param accName 숙소명
+	 * @param areaCode 시군구 지역코드
+	 * @return contentId
+	 */
+	private String fetchContentIdByName(String accName, String areaCode) {
+		try {
+			
+			String url = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/searchKeyword2")
+				    .queryParam("serviceKey", serviceKey)
+				    .queryParam("MobileOS", "WEB")
+				    .queryParam("MobileApp", "Mohaeng")
+				    .queryParam("keyword", accName)
+				    .queryParam("areaCode", areaCode)
+				    .queryParam("contentTypeId", "32")
+				    .queryParam("_type", "json")
+				    .build().toUriString();
+
+		    JsonNode res = restClient.get().uri(URI.create(url)).retrieve().body(JsonNode.class);
+		    JsonNode item = getFirstItem(res);
+		    
+		    if (item != null) {
+	            String contentId = item.path("contentid").asText();
+	            log.info("KorService2 검색 성공: '{}' -> {}", accName, contentId);
+	            return contentId;
+	        }
+	        
+	        return null;
+		}catch (Exception e) {
+			log.error("관광 API 키워드 검색 중 예외 발생 [숙소명: {}]: {}", accName, e.getMessage());
+	        return null;
+		}
+	}
+	
+	/**
+	 * <p>contentId 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-23
+	 * @param accommodation 
+	 */
+	private void fillCommonAndIntroData(AccommodationVO accommodation) {
+		try {
+	        // [STEP 1] detailCommon2: 개요 및 대표이미지
+	        String commonUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/detailCommon2")
+	                .queryParam("serviceKey", serviceKey)
+	                .queryParam("contentId", accommodation.getApiContentId())
+	                .queryParam("defaultYN", "Y").queryParam("overviewYN", "Y")
+	                .queryParam("firstImageYN", "Y").queryParam("telNoYN", "Y")
+	                .queryParam("_type", "json").queryParam("MobileOS", "WEB").queryParam("MobileApp", "Mohaeng")
+	                .build().toUriString();
+
+	        JsonNode commonRes = restClient.get().uri(URI.create(commonUrl)).retrieve().body(JsonNode.class);
+	        JsonNode commonItem = getFirstItem(commonRes);
+	        
+	        if (commonItem != null) {
+	        	accommodation.setOverview(commonItem.path("overview").asText(""));		// 내용 디폴트값
+	        	accommodation.setTel(commonItem.path("infocenterlodging").asText(""));	// 전화번호 세팅
+	        	accommodation.setAccFilePath(commonItem.path("firstimage").asText(""));	// 대표이미지
+	        }
+
+	        // [STEP 2] detailIntro2: 체크인/아웃 및 부대시설 키워드 추출
+	        String introUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService2/detailIntro2")
+	                .queryParam("serviceKey", serviceKey)
+	                .queryParam("contentId", accommodation.getApiContentId())
+	                .queryParam("contentTypeId", "32")
+	                .queryParam("_type", "json").queryParam("MobileOS", "WEB").queryParam("MobileApp", "Mohaeng")
+	                .build().toUriString();
+
+	        JsonNode introRes = restClient.get().uri(URI.create(introUrl)).retrieve().body(JsonNode.class);
+	        JsonNode introItem = getFirstItem(introRes);
+
+	        // 해당 값 없을 경우 default 세팅
+	        if (introItem != null) {
+	        	accommodation.setCheckInTime(introItem.path("checkintime").asText("15:00"));
+	        	accommodation.setCheckOutTime(introItem.path("checkouttime").asText("11:00"));
+
+	            // 시설 정보 VO 생성 (DB 저장X, 반환용)
+	            AccFacilityVO facility = new AccFacilityVO();
+	            String sub = introItem.path("subfacility").asText("");
+	            
+	            facility.setParkingYn(introItem.path("parkinglodging").asText("").contains("가능") ? "Y" : "N");
+	            facility.setWifiYn(sub.contains("와이파이") || sub.contains("인터넷") ? "Y" : "N");
+	            facility.setPoolYn(sub.contains("수영장") ? "Y" : "N");
+	            facility.setPetFriendlyYn(introItem.path("petlodging").asText("").contains("가능") ? "Y" : "N");
+	            
+	            // 완성된 시설 객체를 숙소 VO에 합체
+	            accommodation.setAccFacility(facility); 
+	        }
+	    } catch (Exception e) {
+	        log.error("공통/소개 정보 채우기 실패: {}", e.getMessage());
+	    }
+	}
+	
+	
+	/**
+	 * <p>객실타입</p>
+	 * @param accommodation
+	 * @return
+	 */
+	private List<RoomTypeVO> fetchRoomTypeList(AccommodationVO accommodation) {
+		return null;
+	}
+
 }
 

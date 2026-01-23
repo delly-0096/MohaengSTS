@@ -105,4 +105,24 @@
 	where tp.mem_no = #{memNo}
 	order by p.pay_no desc
   </select>
+  
+  <select id="selectMyProductList" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+	    SELECT 
+	        A.TRIP_PROD_NO,
+	        A.TRIP_PROD_TITLE as title,
+	        A.APPROVE_STATUS,
+	        A.PROD_CTGRY_TYPE,
+	        A.VIEW_CNT,
+	        A.REG_DT,
+	        B.PRICE 
+	    FROM TRIP_PROD A
+	    LEFT OUTER JOIN (
+	        SELECT TRIP_PROD_NO, MAX(UNIT_PRICE) KEEP (DENSE_RANK LAST ORDER BY PROD_LIST_NO) AS PRICE
+	        FROM TRIP_PROD_LIST
+	        GROUP BY TRIP_PROD_NO
+	    ) B ON A.TRIP_PROD_NO = B.TRIP_PROD_NO
+	    WHERE A.MEM_NO = #{memNo} 
+	      AND A.DEL_YN = 'N'      
+	    ORDER BY A.REG_DT DESC   
+  </select>
 </mapper>

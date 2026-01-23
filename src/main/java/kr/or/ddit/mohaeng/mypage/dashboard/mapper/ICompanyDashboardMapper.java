@@ -6,6 +6,7 @@ import java.util.Map;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.CompanyDashboardVO;
 import kr.or.ddit.mohaeng.vo.CompanyDashboardVO.MonthlySalesPoint;
 import kr.or.ddit.mohaeng.vo.CompanyDashboardVO.TopTripProd;
@@ -30,4 +31,7 @@ public interface ICompanyDashboardMapper {
 	public List<MonthlySalesPoint> selectMonthlySalesChart(int compNo, int i);
 
 	public List<TopTripProd> selectTopProducts(int compNo, int i);
+
+	// 내 상품현황
+	public List<TripProdVO> selectMyProductList(int compNo);
 }

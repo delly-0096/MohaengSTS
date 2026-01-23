@@ -164,8 +164,7 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div> 
+                    </div> 
 
                 <!-- 상품 현황 -->
                 <div class="content-section">
@@ -177,63 +176,45 @@
                     </div>
 
                     <div class="product-manage-list">
-                        <div class="product-manage-item">
-                            <div class="product-manage-info">
-                                <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=80&h=80&fit=crop&q=80" alt="상품">
-                                <div class="product-manage-details">
-                                    <h4>제주 스쿠버다이빙 체험</h4>
-                                    <span class="category">투어/체험</span>
-                                    <div class="price">68,000원</div>
-                                </div>
-                            </div>
-                            <div class="product-stats">
-                                <div class="product-stat">
-                                    <div class="value">156</div>
-                                    <div class="label">조회</div>
-                                </div>
-                                <div class="product-stat">
-                                    <div class="value">32</div>
-                                    <div class="label">예약</div>
-                                </div>
-                                <div class="product-stat">
-                                    <div class="value">4.9</div>
-                                    <div class="label">평점</div>
-                                </div>
-                            </div>
-                            <span class="product-status active">판매중</span>
-                        </div>
-
-                        <div class="product-manage-item">
-                            <div class="product-manage-info">
-                                <img src="https://images.unsplash.com/photo-1551632811-561732d1e306?w=80&h=80&fit=crop&q=80" alt="상품">
-                                <div class="product-manage-details">
-                                    <h4>한라산 트레킹 투어</h4>
-                                    <span class="category">투어/체험</span>
-                                    <div class="price">85,000원</div>
-                                </div>
-                            </div>
-                            <div class="product-stats">
-                                <div class="product-stat">
-                                    <div class="value">89</div>
-                                    <div class="label">조회</div>
-                                </div>
-                                <div class="product-stat">
-                                    <div class="value">15</div>
-                                    <div class="label">예약</div>
-                                </div>
-                                <div class="product-stat">
-                                    <div class="value">4.7</div>
-                                    <div class="label">평점</div>
-                                </div>
-                            </div>
-                            <span class="product-status active">판매중</span>
-                        </div>
+                        <c:choose>
+				            <c:when test="${empty dashboard.productList}"> <div class="noti-empty">등록된 상품이 없습니다.</div>
+				            </c:when>
+				            <c:otherwise>
+				                <c:forEach items="${dashboard.productList}" var="prod">
+				                    <div class="product-manage-item">
+				                        <div class="product-manage-info">
+				                            <img src="${not empty prod.thumbImage ? prod.thumbImage : 'https://via.placeholder.com/80'}" alt="상품">
+				                            <div class="product-manage-details">
+				                            <a href="${pageContext.request.contextPath}${prod.prodCtgryType eq 'accommodation' ? '/product/accommodation' : '/tour'}/${prod.tripProdNo}" 
+       												style="text-decoration: none; color: inherit;">
+				                                <h4>${prod.title}</h4>
+				                                </a>
+				                                <span class="category">${prod.prodCtgryType eq 'ACCOMMODATION' ? '숙박' : '투어/체험'}</span>
+				                                <div class="price"><fmt:formatNumber value="${prod.price}" pattern="#,###"/>원</div>
+				                            </div>
+				                        </div>
+				                        <div class="product-stats">
+				                            <div class="product-stat">
+				                                <div class="value">${prod.viewCount}</div> <div class="label">조회</div>
+				                            </div>
+				                            <div class="product-stat">
+				                                <div class="value">${prod.resvCount}</div> <div class="label">예약</div>
+				                            </div>
+				                            <div class="product-stat">
+				                                <div class="value">${not empty prod.rating ? prod.rating : '0.0'}</div>
+				                                <div class="label">평점</div>
+				                            </div>
+				                        </div>
+				                        <span class="product-status active">판매중</span>
+				                    </div>
+				                </c:forEach>
+				            </c:otherwise>
+				        </c:choose>
                     </div>
                 </div>
             </div>
-        </div>
-    </div>
-</div>
+           </div>
+
 
 <script>
 (async function () {

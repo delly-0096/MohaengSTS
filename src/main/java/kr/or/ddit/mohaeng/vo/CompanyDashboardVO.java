@@ -1,7 +1,9 @@
 package kr.or.ddit.mohaeng.vo;
 
 	import java.util.List;
-	import lombok.Data;
+
+import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
+import lombok.Data;
 
 
 	@Data
@@ -9,6 +11,7 @@ package kr.or.ddit.mohaeng.vo;
 	  private Kpi kpi;
 	  private List<MonthlySalesPoint> monthlySalesChart;
 	  private List<TopTripProd> topProducts;
+	  private List<TripProdVO> productList;
 	  
 	  
 	  @Data

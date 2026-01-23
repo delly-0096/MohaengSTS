@@ -7,11 +7,11 @@
 	<sql id="searchCondition">
 		<!-- 검색어(상품명, 리뷰내용, 회원명, 기업명)  -->
 		<if test="searchKeyword != null and searchKeyword !=''">
-			AND(
-					TP.TRIP_PROD_TITLE LIKE '%' || #{searchKeyword} || '%'
-				 OR PR.PROD_REVIEW LIKE '%' || #{searchKeyword} || '%'
-				 OR M.MEM_NAME LIKE '%' || #{searchKeyword} || '%'
-				 OR C.BZMN_NM LIKE '%' || #{searchKeyword} || '%'
+			AND ( <!--AND와 ( 사이에 공백 필수!   -->
+				TP.TRIP_PROD_TITLE LIKE '%' || #{searchKeyword} || '%'
+			 OR PR.PROD_REVIEW LIKE '%' || #{searchKeyword} || '%'
+			 OR M.MEM_NAME LIKE '%' || #{searchKeyword} || '%'
+			 OR C.BZMN_NM LIKE '%' || #{searchKeyword} || '%'
 			)
 		</if>
 
@@ -54,7 +54,7 @@
 				,PR.MEM_NO
 				,PR.PROD_REVIEW
 				,PR.PROD_REGDATE
-				,PR.PROD_UPDTDATE
+				,PR.PROD_UDTDATE
 				,PR.RATING
 				,PR.ATTACH_NO
 				,PR.RCMDTN_YN
@@ -123,7 +123,7 @@
 			,PR.MEM_NO
 			,PR.PROD_REVIEW
 			,PR.PROD_REGDATE
-			,PR.PROD_UPDTDATE
+			,PR.PROD_UDTDATE
 			,PR.RATING
 			,PR.ATTACH_NO
 			,PR.RCMDTN_YN
@@ -145,7 +145,7 @@
 		UPDATE PROD_REVIEW
 		SET
 			 REVIEW_STATUS = #{reviewStatus}
-			,PROD_UPDTDATE = SYSDATE
+			,PROD_UDTDATE = SYSDATE
 		WHERE PROD_RV_NO = #{prodRvNo}
 	</update>
 

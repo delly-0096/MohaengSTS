@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -35,9 +37,6 @@ public class TourApiService {
 
 	@Autowired
 	private IAccommodationMapper accMapper;
-	
-	
-	
 	
 	@Value("${tour.api.key}")
     private String serviceKey;
@@ -308,38 +307,173 @@ public class TourApiService {
 	 * <p>숙소 정보 가져오기</p>
 	 * @author sdg
 	 * @date 2026-01-23
-	 * @param accommodation (accName, areaCode, ldongRegnCd)
+	 * @param accommodation (lDongRegnCd, ldongSignguCd, zone, roadAddress, address, jibunAddress)
 	 * @return 상세 정보 채워진 Accommodation
 	 */
 	public AccommodationVO getDetailedAccommodation(AccommodationVO accommodation) {
 		
-		String contentId = null;
-	    if (accommodation.getMapx() != null && accommodation.getMapy() != null) {
-	        contentId = fetchContentIdByLocation(accommodation);
-	    }
-	    
-		if (contentId == null) {
-			contentId = fetchContentIdByName(accommodation);
-	        log.warn("검색 결과 없음");
-	        return null;
-	    }
+//		String contentId = null;
+//	    if (accommodation.getMapx() != null && accommodation.getMapy() != null) {
+//	        contentId = fetchContentIdByLocation(accommodation);
+//	    }
+//	    
+//		if (contentId == null) {
+//			contentId = fetchContentIdByName(accommodation);
+//	        log.warn("검색 결과 없음");
+//	        return null;
+//	    }
 		
-		accommodation.setApiContentId(contentId);
+		
+    	log.info("accommodation.lDongRegnCd : {}", accommodation.getLdongRegnCd());
+    	log.info("accommodation.ldongSignguCd : {}", accommodation.getLdongSignguCd());
+    	log.info("accommodation.zone : {}", accommodation.getZone());
+    	log.info("accommodation .roadAddress: {}", accommodation.getRoadAddress());
+    	log.info("accommodation.address : {}", accommodation.getAddress());
+    	log.info("accommodation.jibunAddress : {}", accommodation.getJibunAddress());
+    	
+    	accommodation = fetchContentIdByCd(accommodation);
+    	
+		return null;
+//		accommodation.setApiContentId(contentId);
 		// 3. 공통 정보 & 소개 정보 채우기 (이미지, 개요, 체크인/아웃, 숙소보유시설)
-		fillCommonAndIntroData(accommodation);
+//		fillCommonAndIntroData(accommodation);
+//		
+//		try {
+//	        // 4. 객실 목록 정보 채우기 (객실명, 가격, 객실 시설)
+//	        List<RoomTypeVO> roomTypeList = fetchRoomTypeList(accommodation);
+//	        accommodation.setRoomTypeList(roomTypeList);
+//	        log.info("숙소 상세 데이터 통합 로드 완료: {}", accommodation.getAccName());
+//	        return accommodation;
+//	    } catch (Exception e) {
+//	        log.error("상세 데이터 조립 중 에러 발생: {}", e.getMessage());
+//	        return accommodation; // 에러가 나더라도 찾은 부분까지는 반환
+//	    }
 		
-		try {
-	        // 4. 객실 목록 정보 채우기 (객실명, 가격, 객실 시설)
-	        List<RoomTypeVO> roomTypeList = fetchRoomTypeList(accommodation);
-	        accommodation.setRoomTypeList(roomTypeList);
-	        log.info("숙소 상세 데이터 통합 로드 완료: {}", accommodation.getAccName());
-	        return accommodation;
-	    } catch (Exception e) {
-	        log.error("상세 데이터 조립 중 에러 발생: {}", e.getMessage());
-	        return accommodation; // 에러가 나더라도 찾은 부분까지는 반환
-	    }
+		
+		// 해볼것 
+		/*
+		 search할것
+		 // 얘네는 그냥 스크립트에서 설정해서 보내기. 받을 변수가 있으니까
+		 String lDongRegnCd = bcode.substring(0, 2);    // 시도 (예: 50)
+    	 String lDongSignguCd = bcode.substring(2, 5);  // 시군구 (예: 110)
+    	  
+    	  이걸 해서 나온 List.
+    	  밑의 것들과 매칭시 하나읙 밧이 나옴
+    	  
+    	  String zonecode  = zipcode와 매칭 
+    	  String roadAddress = addr1과 매칭
+    	  String address = addr1과 매칭
+    	  String jibunAddress = addr1과 매칭
+    	  
+    	  http://apis.data.go.kr/B551011/KorService2/searchStay2?serviceKey=인증키&numOfRows=50&pageNo=1&MobileOS=ETC&MobileApp=AppTest&_type=json&lDongRegnCd=50&lDongSignguCd=110
+    	  
+    	  
+    	  주차, 체크인 시간 등등
+    	  http://apis.data.go.kr/B551011/KorService2/detailInfo2
+			핵심 파라미터: contentId, contentTypeId=32
+			
+			
+			객실 정보 (객실수, 객실 타입 등)
+			Endpoint: http://apis.data.go.kr/B551011/KorService2/detailInfo2
+			
+			핵심 파라미터: contentId, contentTypeId=32
+		 */
 	}
 
+	/**
+	 * @param accommodation (시군구 코드, 시도 코드, 우편번호, 도로명주소, 주소, 지번 주소)
+	 * @return 숙소 정보
+	 */
+	private AccommodationVO fetchContentIdByCd(AccommodationVO accommodation) {
+		try {
+			String baseUrl = "http://apis.data.go.kr/B551011/KorService2/searchStay2";
+			
+			StringBuilder urlBuilder = new StringBuilder(baseUrl);
+			urlBuilder.append("?serviceKey=" + serviceKey);
+			urlBuilder.append("&_type=json&MobileOS=ETC&MobileApp=Mohaeng&numOfRows=50");
+			urlBuilder.append("&lDongRegnCd=" + accommodation.getLdongRegnCd());
+			urlBuilder.append("&lDongSignguCd=" + accommodation.getLdongSignguCd());
+			
+			// restTemplate 설정
+			RestTemplate restTemplate = new RestTemplate();
+			DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory();
+			factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE); 
+			restTemplate.setUriTemplateHandler(factory);
+			
+			String jsonResponse = restTemplate.getForObject(urlBuilder.toString(), String.class);
+			
+			// 3. Jackson 파싱
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode root = objectMapper.readTree(jsonResponse);
+			JsonNode items = root.path("response").path("body").path("items").path("item");
+			
+			if (items.isArray()) {
+	            for (JsonNode node : items) {
+	                if (isMatch(node, accommodation)) {
+	                    return bindData(accommodation, node); // 매칭 성공 시 데이터 바인딩 후 즉시 반환
+	                }
+	            }
+	        } else if (items.isObject()) {
+	            if (isMatch(items, accommodation)) {
+	                return bindData(accommodation, items);
+	            }
+	        }
+			
+			log.info("accommodation.lDongRegnCd : {}", accommodation.getLdongRegnCd());
+			log.info("accommodation.ldongSignguCd : {}", accommodation.getLdongSignguCd());
+			log.info("accommodation.zone : {}", accommodation.getZone());
+			log.info("accommodation .roadAddress: {}", accommodation.getRoadAddress());
+			log.info("accommodation.address : {}", accommodation.getAddress());
+			log.info("accommodation.jibunAddress : {}", accommodation.getJibunAddress());
+			return null;
+			
+		} catch(Exception e){
+			log.error("에러 발생 : {}", e.getMessage());
+		}
+		return null;
+	}
+
+	
+	/**
+	 * <p>겹치는 것이 있는지 확인</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 * @param node	  (api 응답객체)
+	 * @param target (시군구 코드, 시도 코드, 우편번호, 도로명주소, 주소, 지번 주소)
+	 * @return true, false
+	 */
+	private boolean isMatch(JsonNode node, AccommodationVO target) {
+	    String apiAddr = node.path("addr1").asText().replaceAll("\\s", "");
+	    String apiZip = node.path("zipcode").asText();
+	    
+	    String targetRoad = target.getRoadAddress().replaceAll("\\s", "");
+	    String targetZip = target.getZone();
+
+	    // 우편번호가 같거나, 도로명 주소가 포함 관계일 때 매칭 성공으로 간주
+	    return apiZip.equals(targetZip) || apiAddr.contains(targetRoad) || targetRoad.contains(apiAddr);
+	}
+	
+	/**
+	 * <p>숙소 데이터 세팅</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 * @param vo (시군구 코드, 시도 코드, 우편번호, 도로명주소, 주소, 지번 주소)
+	 * @param node (api 응답객체)
+	 * @return 숙소정보를 담은 객체
+	 */
+	private AccommodationVO bindData(AccommodationVO vo, JsonNode node) {
+		
+		log.info("node : {}", node);
+	    vo.setApiContentId(node.path("contentid").asText());
+	    vo.setAccName(node.path("title").asText());
+	    vo.setTel(node.path("tel").asText());
+	    vo.setAccFilePath(node.path("firstimage").asText());
+	    
+	    
+	    // 추가로 필요한 필드들 세팅...
+	    return vo;
+	}
+	
 	/**
 	 * [신규] 좌표 기반 주변 숙소 검색
 	 */
@@ -608,5 +742,8 @@ public class TourApiService {
 	    return val.equalsIgnoreCase("Y") || val.contains("있음") || val.equals("1");
 	}
 
+	
+	
+	
 }
 

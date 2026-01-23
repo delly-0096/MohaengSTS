@@ -747,6 +747,8 @@ let endDatePicker;
 let regMap = null;    // 등록/수정 모달용 지도 객체
 let regMarker = null; // 모달 지도 마커
 let geocoder; // 주소 변환기 (전역 1개만 생성)
+let mapSection = null;	// 지도
+let searchAccBtn = null;
 let accImage;
 document.addEventListener('DOMContentLoaded', function() {
 	const modalElem = document.getElementById('productModal');
@@ -760,9 +762,11 @@ document.addEventListener('DOMContentLoaded', function() {
 	// 지도 api용 객체
 	kakao.maps.load(function() {
         geocoder = new kakao.maps.services.Geocoder();
+        mapSection = document.getElementById('mapSection');	// 지도
 	});
 	
 	accommodationAddress = document.getElementById('accommodationAddress');	// 숙소 api의 주소 담기 위한 것
+	searchAccBtn = document.getElementById('searchAccBtn');					// 검색 버튼
 	
 	category = document.getElementById('productCategory');		// 카테고리
 	citySelector = document.querySelector("[name='ctyNm']");	// 도시 설정
@@ -807,7 +811,10 @@ function setModalForNew() {
 	// 카테고리, 도시선택 selector 초기화
 	category.disabled = false;
 	citySelector.disabled = false;
-    
+	searchAccBtn.disabled = false;	// 검색 버튼 초기화
+	
+	mapSection.style.display = "none";
+	
     if (startDatePicker) startDatePicker.clear();
     if (endDatePicker) {
         endDatePicker.clear();
@@ -922,7 +929,6 @@ async function editProduct(data) {
 		const lng = document.getElementById('productLongitude').value;
 
 		if (lat && lng) {
-		    const mapSection = document.getElementById('mapSection');
 		    if (mapSection) mapSection.style.display = 'block';
 		    
 		    const coords = new kakao.maps.LatLng(lat, lng);
@@ -933,7 +939,6 @@ async function editProduct(data) {
 		// 숙소 상품의 경우 검색 불가
 		if (data.prodCtgryType === 'accommodation') {
 		    // 숙박 상품 수정 시 주소 검색 버튼 비활성화
-		    const searchAccBtn = document.getElementById('searchAccBtn');
 		    if (searchAccBtn) {
 		        searchAccBtn.disabled = true; // 버튼 비활성화
 		        searchAccBtn.title = "숙소 위치는 변경할 수 없습니다. 상세 주소만 수정하세요.";
@@ -1239,17 +1244,39 @@ function searchAddress() {
     new daum.Postcode({
         oncomplete: function(data) {
             // 주소 정보 설정
-            const address = data.roadAddress || data.address; 	// 도로명 주소 우선
-            const hotelName = data.buildingName;            	// 건물명 (관광 API 검색 키워드)
-            const sidoCode = data.bcode.substring(0, 2);    	// 법정동 코드 앞 2자리 (시도 매핑용)
+            console.log("data.roadAddress : ",data.roadAddress );
+            console.log("data.address : ",data.address );
+            console.log("data : ", data);
+//             const address = data.roadAddress || data.address; 	// 도로명 주소 우선
+//             const hotelName = data.buildingName;            	// 건물명 (관광 API 검색 키워드)
+//             const sidoCode = data.bcode.substring(0, 2);    	// 법정동 코드 앞 2자리 (시도 매핑용)
             const isAcc = category.value === 'accommodation';	// true false
 
+            
+            // 필요 데이터 = data.bcode, data
+//             data.bcode		//  sidoCode와 signuguCode로 보낼것
+            const ldongRegnCd = data.bcode.substring(0, 2);	// 법정동 시도
+            const ldongSignguCd = data.bcode.substring(2, 5);	// 법정동 시군구
+            const zone = data.zonecode	// 숙소 api의 zipcode와 매칭 할 
+            // addr1과 매칭할 것들
+            const roadAddress = data.roadAddress;
+            const address = data.address;
+            const jibunAddress = data.jibunAddress;
+            
+            const matchData = {
+           		ldongRegnCd : ldongRegnCd,
+           		ldongSignguCd : ldongSignguCd,
+           		zone : zone,
+           		roadAddress : roadAddress,
+           		address : address,
+           		jibunAddress : jibunAddress
+            }
+            
             // 1. 주소 텍스트 입력
             if (isAcc) accommodationAddress.value = address;	// roadAddress 받아야됨
             else document.getElementById('productAddress').value = address;
-         	console.log("data : ", data)
-            document.querySelector("[name='accommodation.zip']").value = data.zonecode;
-         	document.querySelector("[name='accommodation.ldongRegnCd']").value = sidoCode;
+            document.querySelector("[name='accommodation.zip']").value = zone;
+         	document.querySelector("[name='accommodation.ldongRegnCd']").value = ldongRegnCd;
             // 2. 좌표 검색 (카카오 API)
             geocoder.addressSearch(address, function(result, status) {
                 if (status === kakao.maps.services.Status.OK) {
@@ -1269,7 +1296,7 @@ function searchAddress() {
                     updateModalMap(coords);
                     
 		         	// 3. [핵심] 숙박 카테고리이고 건물명이 있다면 관광 API 호출
-		            if (isAcc && hotelName) searchTourApi(hotelName, sidoCode, x, y);
+		            if (isAcc) searchTourApi(matchData);
                 }else{
                 	showToast("좌표를 불러오지 못했습니다.", "warning");
                 }
@@ -1301,19 +1328,13 @@ function updateModalMap(coords) {
 }
 
 // 숙소 정보를 가져오기 위한 관광 api 호출
-async function searchTourApi(hotelName, sidoCode, mapx, mapy) {
+async function searchTourApi(matchData) {
     try {
-    	console.log("hotelName : ", hotelName);
-    	console.log("sidoCode : ", sidoCode);
+    	console.log("matchData : ", matchData);
     	
         // 서버에 검색 요청 ( hotelName: "신라호텔", sidoCode: "11" )
         const response = await axios.get(`/batch/accommodation/search`, {
-        	params: { 
-        		accName: hotelName, 
-        		ldongRegnCd: sidoCode,
-        		mapx: mapx,
-                mapy: mapy
-       		}
+        	params: matchData
         });
         
         const data = response.data; // 서버에서 준 숙소 정보 객체

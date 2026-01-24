@@ -231,24 +231,154 @@ window.handleBookingSubmit = handleBookingSubmit;
 /* =======================
    7. 갤러리 이미지 변경
 ======================= */
-function changeMainImage(imgEl, index) {
-    const mainImg = document.getElementById('mainImage');
-    const badge = document.querySelector('.gallery-badge');
+// ==================== [숙소] 상품 이미지 관리 ====================
+var newImageFiles = [];
+var isUploadingImages = false;
+
+// 시큐리티 CSRF 토큰 정보 (JSP 메타태그에서 읽어옴)
+const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+
+function openImageUploadModal() {
+    newImageFiles = [];
+    document.getElementById('newImagesPreview').innerHTML = '';
     
-    // 메인 이미지 주소 교체
-    mainImg.src = imgEl.src;
+    // 부트스트랩 모달 띄우기
+    var modalElement = document.getElementById('imageUploadModal');
+    if(modalElement) {
+        var modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        loadCurrentImages();
+    }
+}
+
+// 1. 현재 등록된 이미지 목록 불러오기 (Ajax)
+function loadCurrentImages() {
+    var grid = document.getElementById('currentImagesGrid');
+    if(!grid) return;
+
+    // 경로를 accommodation용 API로 수정!
+    fetch(`${cp}/product/accommodation/${TRIP_PROD_NO}/images`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.images && data.images.length > 0) {
+                let html = '';
+                data.images.forEach((img, index) => {
+                    html += `
+                        <div class="current-image-item ${index === 0 ? 'main-image' : ''}" data-file-no="${img.FILE_NO}">
+                            <img src="${cp}/upload/product/${img.FILE_PATH}" alt="상품 이미지">
+                            <button class="delete-btn" onclick="deleteProductImage(${img.FILE_NO})">
+                                <i class="bi bi-x"></i>
+                            </button>
+                            ${index === 0 ? '<span class="main-badge">대표</span>' : ''}
+                        </div>`;
+                });
+                grid.innerHTML = html;
+            } else {
+                grid.innerHTML = '<div class="no-images-message"><i class="bi bi-image"></i><p>등록된 이미지가 없습니다.</p></div>';
+            }
+        });
+}
+
+// 2. 이미지 삭제 (시큐리티 토큰 필수!)
+function deleteProductImage(fileNo) {
+    if (!confirm('이 이미지를 삭제하시겠습니까?')) return;
     
-    // 배지 텍스트 업데이트 (예: 2/12)
-    if (badge) {
-        badge.innerHTML = `<i class="bi bi-images me-1"></i>${index}/12`;
+    fetch(`${cp}/product/accommodation/${TRIP_PROD_NO}/image/delete`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json',
+            [csrfHeader]: csrfToken // 시큐리티 헤더 추가
+        },
+        body: JSON.stringify({ fileNo: fileNo })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('이미지가 삭제되었습니다.');
+            loadCurrentImages();
+            refreshGallery(); // 메인 갤러리 새로고침
+        } else {
+            alert(data.message || '삭제에 실패했습니다.');
+        }
+    });
+}
+
+// 3. 이미지 업로드 (FormData 활용)
+function uploadProductImages() {
+    if (isUploadingImages) return;
+    if (newImageFiles.length === 0) {
+        bootstrap.Modal.getInstance(document.getElementById('imageUploadModal')).hide();
+        return;
     }
     
-    // 선택된 이미지 강조 효과 (필요시)
-    document.querySelectorAll('.gallery-grid img').forEach(img => img.style.opacity = '0.6');
-    imgEl.style.opacity = '1';
+    isUploadingImages = true;
+    const submitBtn = document.querySelector('#imageUploadModal .btn-primary');
+    const originalText = submitBtn.innerHTML;
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>처리 중...';
+    
+    const formData = new FormData();
+    newImageFiles.forEach(file => formData.append('files', file));
+    
+    fetch(`${cp}/product/accommodation/${TRIP_PROD_NO}/image/upload`, {
+        method: 'POST',
+        headers: { [csrfHeader]: csrfToken }, // 시큐리티 헤더 추가 (FormData이므로 Content-Type은 생략)
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            newImageFiles = [];
+            loadCurrentImages();
+            refreshGallery(); // 메인 갤러리 새로고침
+            bootstrap.Modal.getInstance(document.getElementById('imageUploadModal')).hide();
+        } else {
+            alert(data.message);
+        }
+    })
+    .finally(() => {
+        isUploadingImages = false;
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
 }
-window.changeMainImage = changeMainImage;
 
+// 4. 메인 화면 갤러리 동적 갱신
+function refreshGallery() {
+    fetch(`${cp}/product/accommodation/${TRIP_PROD_NO}/images`)
+    .then(res => res.json())
+    .then(data => {
+        const mainGallery = document.querySelector('.accommodation-gallery');
+        if(!mainGallery || !data.success) return;
+
+        const images = data.images;
+        if(images.length > 0) {
+            // 메인 이미지 업데이트
+            document.getElementById('mainImage').src = `${cp}/upload/product/${images[0].FILE_PATH}`;
+            
+            // 그리드 부분 업데이트 (팀원의 grid 레이아웃에 맞춰 그림)
+            const grid = document.querySelector('.gallery-grid');
+            let gridHtml = '';
+            
+            // 2~4번째 이미지
+            for(let i=1; i < Math.min(images.length, 4); i++) {
+                gridHtml += `<img src="${cp}/upload/product/${images[i].FILE_PATH}" onclick="changeMainImage(this.src, ${i+1})">`;
+            }
+            
+            // 5번째 이미지 이상일 때 +N 오버레이
+            if(images.length > 4) {
+                gridHtml += `
+                    <div class="gallery-more" onclick="openGalleryModal()">
+                        <img src="${cp}/upload/product/${images[4].FILE_PATH}">
+                        <div class="gallery-more-overlay"><span>+${images.length - 4}</span></div>
+                    </div>`;
+            }
+            grid.innerHTML = gridHtml;
+        }
+    });
+}
 /* =======================
    8. 숙소 신고 기능 
 ======================= */
@@ -425,18 +555,28 @@ function openReviewImage(src) {
 // 1. 문의 등록하기
 document.addEventListener('DOMContentLoaded', function() {
     const inquiryForm = document.getElementById('inquiryForm');
+    
     if (inquiryForm) {
         inquiryForm.addEventListener('submit', function(e) {
             e.preventDefault();
+			
 
-            // 로그인 체크 (시큐리티 isLoggedIn 변수 활용)
             if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) {
                 alert('로그인이 필요한 서비스입니다.');
                 return;
             }
 
+            // [수정 포인트 1] accNo 대신 서버가 필요로 하는 tripProdNo를 가져와야 해!
+            // HTML 어딘가에 tripProdNo가 숨겨져 있어야 함 (예: hidden input)
+            const tripProdNo = TRIP_PROD_NO; 
+            
+            if (!tripProdNo) {
+                console.error("상품 번호(tripProdNo)를 찾을 수가 없어요");
+                return;
+            }
+
             const inquiryData = {
-                accNo: accNo, // 리더의 숙소 번호
+                // [수정 포인트 2] VO 구조에 맞춰서 데이터 세팅 (accNo가 아니라 tripProdNo가 핵심)
                 inquiryCtgry: document.getElementById('inquiryType').value,
                 prodInqryCn: document.getElementById('inquiryContent').value.trim(),
                 secretYn: document.getElementById('inquirySecret').checked ? 'Y' : 'N'
@@ -447,8 +587,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Ajax 요청 (투어 친구가 쓴 경로를 숙소 경로로 살짝 수정)
-            fetch(CONTEXT_PATH + '/accommodation/inquiry/insert', {
+            // [수정 포인트 3] URL을 서버의 @PostMapping 구조와 똑같이 맞춰야 해!
+            // PathVariable {tripProdNo}가 주소 중간에 들어감
+            fetch(`${cp}/product/accommodation/${tripProdNo}/inquiry/insert`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(inquiryData)
@@ -457,9 +598,12 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 if (data.success) {
                     alert('문의가 등록되었습니다.');
-                    location.reload(); // 가장 깔끔한 방법!
+                    location.reload(); 
+                } else {
+                    alert(data.message || '등록 실패');
                 }
-            });
+            })
+            .catch(err => console.error("문의 등록 통신 에러:", err));
         });
     }
 });
@@ -469,6 +613,8 @@ var inquiryPage = 1;
 function loadMoreInquiries() {
     inquiryPage++;
     const btn = document.querySelector('#inquiryMoreBtn button');
+	const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+	const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
     
     fetch(`${CONTEXT_PATH}/accommodation/inquiries?accNo=${accNo}&page=${inquiryPage}`)
         .then(res => res.json())

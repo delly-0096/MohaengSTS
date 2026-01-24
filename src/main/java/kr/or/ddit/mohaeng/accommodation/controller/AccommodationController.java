@@ -70,11 +70,11 @@ public class AccommodationController {
 	@GetMapping("/product/accommodation")
 	public String accommodationPage(
 			AccommodationVO acc,
+			@RequestParam(value="tripProdNo", required=false, defaultValue="0") int tripProdNo,
 			@RequestParam(value="accNo", required=false) Integer accNo,
 			@RequestParam(value="areaCode", required=false) String areaCode,
 			@RequestParam(value="keyword", required=false) String keyword,
 			Model model) {
-		
 		log.info("검색 객체 확인: " + acc);
 	    // 날짜 기본 세팅
 	    if(acc.getStartDate() == null || acc.getStartDate().isEmpty()) {
@@ -85,7 +85,13 @@ public class AccommodationController {
 	    if(areaCode != null) acc.setAreaCode(areaCode);
 	    if(keyword != null) acc.setKeyword(keyword);
 	    if(accNo != null) acc.setAccNo(accNo);
-		
+	    
+	    if (tripProdNo > 0) {
+	        List<ProdReviewVO> review = reviewService.getReviewPaging(tripProdNo, 1, 5); 
+	        ProdReviewVO reviewStat = reviewService.getStat(tripProdNo);
+	        model.addAttribute("reviewStat", reviewStat);
+	    }
+	    
 		acc.setPage(1);
 	    acc.setPageSize(12);
 	    acc.setStartRow(1);
@@ -572,7 +578,7 @@ public class AccommodationController {
     /**
      * 상세 페이지 문의 등록
      */
-    @PostMapping("/product/accommodation/{tripProdNo}/inquiry")
+    @PostMapping("/product/accommodation/{tripProdNo}/inquiry/insert")
     @ResponseBody
     public Map<String, Object> insertInquiry(
             @PathVariable int tripProdNo,

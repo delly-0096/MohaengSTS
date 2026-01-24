@@ -199,4 +199,7 @@ public interface IMemberMapper {
 	// memUser테이블에 insert
 	public void insertMemUser(MemUserVO memUser);
 
+	// 결제시 메일 발송을 위한 회원 select
+	public MemberVO getMemberInfo(int memNo);
+
 }

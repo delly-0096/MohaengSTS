@@ -70,7 +70,6 @@ public class AccommodationController {
 	@GetMapping("/product/accommodation")
 	public String accommodationPage(
 			AccommodationVO acc,
-			@RequestParam(value="tripProdNo", required=false, defaultValue="0") int tripProdNo,
 			@RequestParam(value="accNo", required=false) Integer accNo,
 			@RequestParam(value="areaCode", required=false) String areaCode,
 			@RequestParam(value="keyword", required=false) String keyword,
@@ -85,12 +84,6 @@ public class AccommodationController {
 	    if(areaCode != null) acc.setAreaCode(areaCode);
 	    if(keyword != null) acc.setKeyword(keyword);
 	    if(accNo != null) acc.setAccNo(accNo);
-	    
-	    if (tripProdNo > 0) {
-	        List<ProdReviewVO> review = reviewService.getReviewPaging(tripProdNo, 1, 5); 
-	        ProdReviewVO reviewStat = reviewService.getStat(tripProdNo);
-	        model.addAttribute("reviewStat", reviewStat);
-	    }
 	    
 		acc.setPage(1);
 	    acc.setPageSize(12);

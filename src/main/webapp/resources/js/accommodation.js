@@ -78,15 +78,16 @@ function loadMore() {
 		    const urlParams = new URLSearchParams(window.location.search);
 		    const areaCode = urlParams.get('areaCode') || '';
 
-		    const requestUrl = `${contextPath}/product/accommodation/api/loadMore?` 
-		        + `page=${accomCurrentPage + 1}`
-		        + `&pageSize=${accomPageSize}`
-		        + `&accCatCd=${accCatCd}`
-		        + `&priceRange=${priceRange}`
-		        + `&starGrade=${starGrade}`
-		        + `&sortBy=${sortBy}`
-		        + `&areaCode=${areaCode}`
-		        + `&keyword=${keyword}`;
+			const params = {
+			    page: accomCurrentPage + 1,
+			    pageSize: accomPageSize,
+			    accCatCd: document.querySelector('select[name="accCatCd"]')?.value || '',
+			    priceRange: document.querySelector('select[name="priceRange"]')?.value || '',
+			    starGrade: document.querySelector('select[name="starGrade"]')?.value || '',
+			    sortBy: document.getElementById('sortBy')?.value || 'recommend',
+			    areaCode: new URLSearchParams(window.location.search).get('areaCode') || '',
+			    keyword: document.getElementById('keyword')?.value || ''
+			};
 
 	    // 모든 파라미터를 URLSearchParams로 변환 
 	    fetch(`${contextPath}/product/accommodation/api/loadMore?` + new URLSearchParams(params))        
@@ -547,7 +548,16 @@ document.getElementById('accommodationSearchForm')?.addEventListener('submit', f
 
 //==========================================================
 // 결제 버튼 클릭 시 검색바의 날짜와 인원을 들고 튀는 함수
-function goBooking(accNo, roomTypeNo, tripProdNo) {
+function goBooking(accNo, roomTypeNo, tripProdNo, price) {
+	
+	// 로그인 체크
+	if (!isLoggedIn) {
+	    if (confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+	        location.href = cp + '/member/login';
+	    }
+	    return;
+	}
+	
 		const urlParams = new URLSearchParams(window.location.search);
 	// 1. 검색바에 입력된 값들 가져오기
 		const startDate = urlParams.get('startDate') || document.getElementById('checkIn').value;

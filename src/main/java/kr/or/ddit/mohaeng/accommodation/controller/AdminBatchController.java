@@ -48,6 +48,8 @@ public class AdminBatchController {
     	log.info("accommodation.address : {}", accommodation.getAddress());
     	log.info("accommodation.jibunAddress : {}", accommodation.getJibunAddress());
     	
+    	// area code 지정해줘야됨
+    	
 //    	String areaCode = accommodation.getLdongRegnCd();				// 법정동 시도코드
     	
 //    	accommodation.setAreaCode(convertToTourApiAreaCode(areaCode));	// 지역코드로 변경

@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import kr.or.ddit.mohaeng.admin.accommodation.dto.AdminAccommodationDTO;
 import kr.or.ddit.mohaeng.admin.accommodation.mapper.IAdminAccommodationMapper;
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccOptionVO;
@@ -100,6 +101,72 @@ public class AdminAccommodationServiceImpl implements IAdminAccommodationService
 	    accommodation.setAccOptionList(accOptionList);
 		
 		return accommodation;
+	}
+
+	/**
+	 * 상품 최종 승인
+	 * @author kdrs
+	 * @date 2026.01.25
+	 */
+	@Override
+	@Transactional
+	public int approveAccommodation(int tripProdNo) {
+		log.info(" {}번 상품 승인 ", tripProdNo);
+		return adminAccMapper.updateApproveStatus(tripProdNo);
+	}
+
+	/**
+	 * 판매 상태 토글
+	 * @author kdrs
+	 * @date 2026.01.25
+	 */
+	@Override
+	@Transactional
+	public int toggleSaleStatus(Map<String, Object> params) {
+		log.info("{}번 상품 상태 변경(DEL_YN: {}) 들어갑니다!", 
+                params.get("tripProdNo"), params.get("delYn"));
+       return adminAccMapper.toggleSaleStatus(params);
+	}
+
+	/**
+	 * 숙소 수정
+	 * @author kdrs
+	 * @date 2026.01.25
+	 */
+	@Override
+    @Transactional
+    public int updateAccommodation(AdminAccommodationDTO accDto) {
+		// 1. 여행 상품 공통 정보 수정
+        adminAccMapper.updateTripProduct(accDto);
+        
+        // 2. 숙소 상세 정보 수정
+        int result = adminAccMapper.updateAccommodation(accDto);
+        
+        // 3. 편의시설 정보 수정
+        if (accDto.getAccFacility() != null) {
+            adminAccMapper.updateAccFacility(accDto.getAccFacility());
+        }
+        
+        // 4. 객실 정보 (Delete-Insert)
+        if (accDto.getRoomTypeList() != null) {
+            adminAccMapper.deleteRoomTypesByAccNo(accDto.getAccNo());
+            for (RoomTypeVO room : accDto.getRoomTypeList()) {
+                room.setAccNo(accDto.getAccNo());
+                adminAccMapper.insertRoomType(room);
+            }
+        }
+        
+        return result; // 수정 성공 여부(행 수) 반환!
+        }
+
+	/**
+	 * 숙소 논리 삭제
+	 * @author kdrs
+	 * @date 2026.01.25
+	 */
+	@Override
+	public int deleteAccommodation(int tripProdNo) {
+		return adminAccMapper.logicalDeleteTripProduct(tripProdNo);
 	}
 
 }

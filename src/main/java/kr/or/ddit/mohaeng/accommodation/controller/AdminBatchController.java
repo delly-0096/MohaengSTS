@@ -48,18 +48,13 @@ public class AdminBatchController {
     	log.info("accommodation.address : {}", accommodation.getAddress());
     	log.info("accommodation.jibunAddress : {}", accommodation.getJibunAddress());
     	
-    	// area code 지정해줘야됨
-    	
-//    	String areaCode = accommodation.getLdongRegnCd();				// 법정동 시도코드
-    	
-//    	accommodation.setAreaCode(convertToTourApiAreaCode(areaCode));	// 지역코드로 변경
-    	
-    	// 시군구 코드를 지역코들로 맞추기
-    	
     	AccommodationVO result = apiService.getDetailedAccommodation(accommodation);
     	log.info("result : {}", result);
-        return ResponseEntity.ok(result);
-//    	return null;
+    	if(result == null) {
+    		return ResponseEntity.badRequest().build();
+    	}else {
+    		return ResponseEntity.ok(result);
+    	}
     }
     
     

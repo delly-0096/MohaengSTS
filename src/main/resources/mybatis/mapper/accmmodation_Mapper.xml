@@ -29,6 +29,9 @@
 	    <result property="finalPrice" column="FINAL_PRICE"/>
 	    <result property="maxDiscount" column="MAX_DISCOUNT"/>
 	    
+	    <result property="apiContentId" column="API_CONTENT_ID"/>
+	    <result property="tripProdNo" column="TRIP_PROD_NO"/>
+	    
 	    <!-- accFacility 타입 객체 -->
 	    <association property="accFacility" resultMap="accFacilityMap"/>
 			
@@ -195,6 +198,7 @@
 	<sql id="accommodationColumns">
 		  ${alias}ACC_NO
 		, ${alias}TRIP_PROD_NO
+		, ${alias}API_CONTENT_ID
         , ${alias}ACC_NAME
         , ${alias}ADDR1
         , ${alias}ADDR2
@@ -212,7 +216,6 @@
         , ${alias}CHECK_IN_TIME
         , ${alias}CHECK_OUT_TIME
         , ${alias}ZIP
-        , ${alias}TRIP_PROD_NO
         , ${alias}LDONG_REGN_CD
   	  	, ${alias}LDONG_SIGNGU_CD
 	</sql>

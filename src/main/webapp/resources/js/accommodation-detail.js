@@ -192,38 +192,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const endDateParam = urlParams.get('endDate');   
     const adultParam = urlParams.get('adultCount');
 
-    // 1. 인풋에 값 먼저 넣기
-    if(startDateParam) document.getElementById('checkInDate').value = startDateParam;
-    if(endDateParam) document.getElementById('checkOutDate').value = endDateParam;
+    // [1] 인원수 처리는 먼저 해도 됨 (input이 아니니까)
     if(adultParam) {
         const adultEl = document.getElementById('adultCount');
         if(adultEl) adultEl.textContent = adultParam;
         state.guests.adult = parseInt(adultParam);
     }
 
-    // 2. Flatpickr 초기화
-    const fpIn = flatpickr("#checkInDate", {
-        dateFormat: "Y-m-d",
-        minDate: "today",
-        defaultDate: startDateParam || "today",
-        onChange: function(selectedDates, dateStr) {
-            const nextDay = new Date(selectedDates[0]);
-            nextDay.setDate(nextDay.getDate() + 1);
-            fpOut.set('minDate', nextDay);
-            calculateNights();
-        }
-    });
-
+    // [2] fpOut을 먼저 초기화하거나 변수 선언을 미리 잡아둬야 함
     const fpOut = flatpickr("#checkOutDate", {
         dateFormat: "Y-m-d",
-        minDate: startDateParam ? new Date(new Date(startDateParam).getTime() + 86400000) : "today",
+        // 체크인 날짜가 있으면 그 다음날, 없으면 내일
+        minDate: startDateParam 
+                 ? new Date(new Date(startDateParam).getTime() + 86400000) 
+                 : new Date().fp_incr(1),
         defaultDate: endDateParam || new Date().fp_incr(1),
         onChange: function() {
             calculateNights();
         }
     });
 
-    calculateNights(); // 초기 박수 계산
+    // [3] fpIn 초기화 (여기서 fpOut의 minDate를 조절)
+    const fpIn = flatpickr("#checkInDate", {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        defaultDate: startDateParam || "today",
+        onChange: function(selectedDates, dateStr) {
+            if (selectedDates.length > 0) {
+                const nextDay = new Date(selectedDates[0]);
+                nextDay.setDate(nextDay.getDate() + 1);
+                
+                // 체크아웃 최소 날짜 업데이트
+                fpOut.set('minDate', nextDay);
+                
+                // 만약 기존 체크아웃 날짜가 새 시작일보다 빠르면 날짜 조정
+                if (new Date(document.getElementById('checkOutDate').value) <= selectedDates[0]) {
+                    fpOut.setDate(nextDay);
+                }
+            }
+            calculateNights();
+        }
+    });
+
+    // [4] 라이브러리 세팅이 끝난 후 input value를 다시 한번 확정해줌
+    if(startDateParam) document.getElementById('checkInDate').value = startDateParam;
+    if(endDateParam) document.getElementById('checkOutDate').value = endDateParam;
+
+    // [5] 마지막으로 박수 계산!
+    setTimeout(() => {
+        calculateNights();
+    }, 100); // 라이브러리 렌더링 시간을 위해 아주 살짝 딜레이
 });
 /* =======================
    6. 예약 제출 (다중 선택 대응)

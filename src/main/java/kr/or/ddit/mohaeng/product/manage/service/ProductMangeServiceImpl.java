@@ -337,11 +337,111 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			
 		}else {
 			// 상품 등록
-			
+			return insertTripProductDetail(businessProducts, tripProdNO);
 			
 		}
 		
-		return null;
+//		return null;
+	}
+	
+	
+	/**
+	 * <p>상품판매정보, 상품이용안내, 여행 상품 관광지 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param businessProducts 상품
+	 * @param tripProdNo 상품 번호
+	 * @return ok, failed
+	 */
+	private ServiceResult insertTripProductDetail(BusinessProductsVO businessProducts, int tripProdNO) {
+		ServiceResult result = null;
+		if(tripProdNO == 0) {
+			return result = ServiceResult.FAILED;
+		}
+		
+		int status = 0;
+		
+		log.info("insertProduct - insertTripProductDetail  상품 판매정보 등록");
+		
+		// 상품 판매 정보
+		TripProdSaleVO prodSaleVO = businessProducts.getProdSale();
+		prodSaleVO.setTripProdNo(tripProdNO);
+		int price = prodSaleVO.getPrice() != 0 ? prodSaleVO.getPrice() : 0;
+		int discount = (prodSaleVO.getDiscount() != null && prodSaleVO.getDiscount() != 0 ) ? prodSaleVO.getDiscount() : 0;
+		int netprc = prodSaleVO.getNetprc();
+		
+		if(discount > 0) {
+			price = netprc - discount;
+			prodSaleVO.setPrice(price);
+		}
+		status = manageMapper.insertTripProdSale(prodSaleVO);
+		if(status <= 0) {
+			log.info("insertProduct - insertTripProductDetail 상품 판매정보 등록 실패");
+			return result = ServiceResult.FAILED;
+		}
+		log.info("insertProduct - insertTripProductDetail 상품 판매정보 등록 성공");
+		status = 0;
+
+		
+		// 상품 관광지 정보
+		TripProdPlaceVO placeVO = businessProducts.getProdPlace();
+		placeVO.setTripProdNo(tripProdNO);
+		log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록");
+		status= manageMapper.insertTripProdPlace(placeVO);
+		if(status <= 0) {
+			log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록 실패");
+			return result = ServiceResult.FAILED;
+		}
+		log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록 성공");
+		status = 0;
+		
+		// 상품 이용안내
+		TripProdInfoVO prodInfoVO = businessProducts.getProdInfo();
+		prodInfoVO.setTripProdNo(tripProdNO);
+		log.info("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록");
+		status = manageMapper.insertTripProdInfo(prodInfoVO);
+		if(status <= 0) {
+			log.info("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록 실패");
+			return result = ServiceResult.FAILED;
+		}
+		
+		log.info("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록 성공");
+		status = 0;
+		
+		// 여행 가능 시간 정보
+		List<ProdTimeInfoVO> prodTimeInfoList = businessProducts.getProdTimeList();
+		if(prodTimeInfoList != null && prodTimeInfoList.size() <= 0) {
+			// 없어도 가능하게 해?
+			return result = ServiceResult.FAILED;
+		}
+		// 정보 있을때
+		return insertTripProdTimeInfo(prodTimeInfoList, tripProdNO);
+	}
+	
+	/**
+	 * <p>예약 가능 시간 등록</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param prodTimeInfoList	숙소 시간 정보
+	 * @param tripProdNO 		상품 키
+	 * @return
+	 */
+	private ServiceResult insertTripProdTimeInfo(List<ProdTimeInfoVO> prodTimeInfoList, int tripProdNO) {
+		ServiceResult result = null;
+		int status = 0;
+		int count = prodTimeInfoList.size();
+		
+		for(ProdTimeInfoVO prodTimeInfoVO : prodTimeInfoList) {
+			prodTimeInfoVO.setTripProdNo(tripProdNO);
+			status = manageMapper.insertProdTimeInfo(prodTimeInfoList);
+			log.info("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 성공");
+			if(status <= 0) {
+				log.info("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 실패");
+				return result = ServiceResult.FAILED;
+			}
+		}
+		
+		return (count == status) ? ServiceResult.OK : ServiceResult.FAILED;
 	}
 	
 	

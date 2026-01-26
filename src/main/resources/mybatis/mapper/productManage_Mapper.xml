@@ -715,4 +715,61 @@
 		)
 	</insert>
 	
+	
+	<!-- 상품 판매 정보 등록 -->
+	<insert id="insertTripProdSale" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO">
+		insert into TRIP_PROD_SALE(
+			TRIP_PROD_NO
+			, <include refid="prodSaleColumns">
+				<property name="alias" value=""/>
+			</include>
+		)values(
+			#{tripProdNo}
+			, #{price}
+		    , #{netprc}
+		    , #{discount}
+		    , #{leadTime}
+		    , #{totalStock}
+		    , #{curStock}
+		)
+	</insert>
+	
+	<!-- 상품 관광지 정보 등록 -->
+	<insert id="insertTripProdPlace" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO" useGeneratedKeys="true">
+		<selectKey keyProperty="prodPlcNo" resultType="int" order="BEFORE">
+			select SEQ_TRIP_PROD_PLACE.nextVal from dual
+		</selectKey>
+		insert into TRIP_PROD_PLACE(
+			TRIP_PROD_NO
+			, <include refid="prodPlaceColumns">
+				<property name="alias" value=""/>
+			</include>
+		)values(
+			#{tripProdNo}
+			, #{prodPlcNo}
+		    , #{addr1}
+		    , #{addr2}
+		)
+	</insert>
+	
+	<!-- 상품 이용안내 정보 등록 -->
+	<insert id="insertTripProdInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO">
+		insert into TRIP_PROD_INFO(
+			TRIP_PROD_NO
+			, <include refid="prodInfoColumns">
+				<property name="alias" value=""/>
+			</include>
+		)values(
+			#{tripProdNo}
+			, #{prodRuntime}
+		    , #{prodDuration}
+		    , #{prodMinPeople}
+		    , #{prodMaxPeople}
+		    , #{prodLimAge}
+		    , #{prodInclude}
+		    , #{prodExclude}
+		    , #{prodNotice}
+		)
+	</insert>
+	
 </mapper>

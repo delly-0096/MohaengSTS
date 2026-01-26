@@ -310,4 +310,32 @@ public interface IProductMangeMapper {
 	 * @return 결과 0, 1
 	 */
 	public int insertRoom(RoomVO roomVO);
+
+	
+	/**
+	 * <p>상품 판매 정보 등록</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param prodSaleVO 상품 판매 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertTripProdSale(TripProdSaleVO prodSaleVO);
+
+	/**
+	 * <p>상품 관광지 정보 등록</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param placeVO 상품 관광지 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertTripProdPlace(TripProdPlaceVO placeVO);
+
+	/**
+	 * <p>상품 이용안내 정보 등록</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param prodInfoVO 상품 이용안내 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertTripProdInfo(TripProdInfoVO prodInfoVO);
 }

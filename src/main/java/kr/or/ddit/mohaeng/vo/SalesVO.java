@@ -64,4 +64,12 @@ public class SalesVO {
     private Double avgCancelRate;       // 업계 평균 취소율
     private Integer totalCompanyCnt;    // 전체 업체 수
     private Integer myRank;             // 내 순위
+    
+    // 상품별 정산 집계용
+    private Integer tripProdNo;         // 상품번호
+    private Integer settleCount;        // 정산가능 건수
+
+    // 상품별 페이징용
+    private int productPage = 1;
+    private int productPageSize = 10;
 }

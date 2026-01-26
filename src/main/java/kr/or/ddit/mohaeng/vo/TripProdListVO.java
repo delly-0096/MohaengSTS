@@ -5,7 +5,7 @@ import lombok.Data;
 @Data
 public class TripProdListVO {
     private Integer prodListNo;    // 구입상품목록번호 (PK)
-    private Integer payNo;         // 결제번호 (FK)
+    private Integer payNo;         	// 결제번호 (FK)
     private Integer tripProdNo;    // 여행상품일련번호 (FK)
     private String tripProdName;	// 여행상품일련번호에 따른 여행상품명
     private Integer unitPrice;     // 판매단가

@@ -211,6 +211,7 @@ public class PaymentServiceImpl implements IPaymentService {
 			    // 투어 인원 정보 추가
 			    int quantity = paymentVO.getTripProdList().get(0).getQuantity();
 			    responseBody.put("quantity", quantity + "명");
+			    responseBody.put("payNo", paymentVO.getPayNo());
 			    
 			} else if(paymentVO.getProductType().equals("accommodation")) { // ★ 여기 추가!
                 // 1. 숙소 예약 로직 호출

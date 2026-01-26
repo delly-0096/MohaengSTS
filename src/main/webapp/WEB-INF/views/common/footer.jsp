@@ -103,6 +103,7 @@
 	    <div class="chatbot-header">
 	        <div class="chatbot-title">
 	            <i class="bi bi-robot me-2"></i>모행 AI 챗봇
+        		<span class="chatbot-powered">Powered by Claude</span>
 	        </div>
 	        <div class="chatbot-header-btns">
 		        <!-- 대화 초기화 버튼 추가 -->

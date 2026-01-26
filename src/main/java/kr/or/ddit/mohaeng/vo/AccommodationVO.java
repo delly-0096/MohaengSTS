@@ -86,6 +86,8 @@ public class AccommodationVO {
     // 옵션 목록
     private List<AccOptionVO> accOptionList;
     
+    // 이미지 목록
+    private List<AttachFileDetailVO> imageList;
     
     // ACC_FACILITY
     private String wifiYn; /* WiFi 제공 여부 */

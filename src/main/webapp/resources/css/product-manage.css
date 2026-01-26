@@ -541,6 +541,57 @@
     }
 }
 
+/* 사진들을 감싸는 컨테이너 */
+.productImageList {
+    display: flex;          /* 가로 정렬 */
+    flex-wrap: wrap;       /* 공간 부족 시 다음 줄로 */
+    gap: 15px;             /* 사진 사이 간격 */
+    padding: 10px 0;
+    align-items: flex-start;
+}
+
+/* 개별 사진 아이템 박스 */
+.image-item {
+    position: relative;
+    width: 120px;          /* 박스 크기 고정 */
+    height: 120px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    overflow: visible;     /* X 버튼이 밖으로 살짝 나가도 보이게 */
+}
+
+/* 이미지 스타일 */
+.image-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;     /* 비율 유지하며 꽉 채움 */
+    border-radius: 7px;
+}
+
+/* 삭제 버튼 (X) */
+.remove-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+
+
 /* 숙박/항공 전용 스타일 */
 .room-type-container {
     display: flex;

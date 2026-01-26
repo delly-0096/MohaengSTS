@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.accommodation.mapper.IAdminAccommodationMapper">
+
+	<sql id="accommodationSearch">
+		<if test="searchWord != null and searchWord != ''">
+			<choose>
+				<when test="searchType == 'name'">
+					AND a.ACC_NAME LIKE '%' || #{searchWord} || '%'
+				</when>
+				<when test="searchType == 'addr'">
+					AND a.ADDR1 LIKE '%' || #{searchWord} || '%'
+				</when>
+				<otherwise>
+					AND (
+						a.ACC_NAME LIKE '%' || #{searchWord} || '%' 
+						OR ADDR1 LIKE '%' || #{searchWord} || '%'
+					)
+				</otherwise>
+			</choose>
+		</if>
+	</sql>
+	
+	<!-- 숙박 전체 목록 count -->
+	<select id="getAccommodationCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int" >
+		SELECT COUNT(*)
+		  FROM ACCOMMODATION a
+		  INNER JOIN TRIP_PROD tp
+		  		ON a.TRIP_PROD_NO = tp.TRIP_PROD_NO
+		  <where>
+			   1=1
+			  <include refid="accommodationSearch" />
+		  </where>
+	</select>
+	
+	<!-- 숙박 전체 목록 조회 -->
+	<select id="getAccommodationList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+	      SELECT b.*
+	  FROM (
+	      SELECT
+	          <!-- 숙소 -->
+	          a.ACC_NO
+	        , a.TRIP_PROD_NO
+	        , a.ACC_NAME
+	        , a.ACC_CAT_CD
+	        , a.STAR_GRADE
+	        , a.ADDR1
+	        , a.ADDR2
+	        , a.AREA_CODE
+	        , a.SIGUNGU_CODE
+	        , a.MAPX
+	        , a.MAPY
+	        , a.TEL
+	        , a.CHECK_IN_TIME
+	        , a.CHECK_OUT_TIME
+	        , a.OVERVIEW
+	
+	         <!-- 상품 -->
+	        , tp.TRIP_PROD_TITLE
+	        , tp.APPROVE_STATUS
+	        , tp.SALE_START_DT
+	        , tp.SALE_END_DT
+	        , tp.APRV_YN
+	        , tp.DEL_YN
+	        , tp.CTY_NM          AS AREA_CODE_PROD
+	
+	          <!-- 객실 집계 -->
+	        , NVL(rt.TOTAL_ROOMS, 0) AS TOTAL_ROOMS
+	        , NVL(rt.MIN_PRICE, 0) AS MIN_PRICE
+	
+	          <!-- 페이징 -->
+	        , ROW_NUMBER() OVER (ORDER BY tp.TRIP_PROD_NO DESC) AS rnum
+	
+	      FROM ACCOMMODATION a
+	
+	      <!-- 상품 (1:1) -->
+	      INNER JOIN TRIP_PROD tp
+	        ON a.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	
+	      <!-- 객실 타입 집계 (1:N → 1:1) -->
+	      LEFT JOIN (
+	          SELECT
+	              ACC_NO
+	            , SUM(TOTAL_ROOM_COUNT) AS TOTAL_ROOMS
+	            , MIN(PRICE * (1 - NVL(DISCOUNT, 0) / 100)) AS MIN_PRICE
+	          FROM ROOM_TYPE
+	          GROUP BY ACC_NO
+	      ) rt
+	        ON a.ACC_NO = rt.ACC_NO
+	
+		      <include refid="accommodationSearch" />
+		  ) b
+		  WHERE b.rnum BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<!-- ==================숙박 상세 조회=================== -->
+	<!-- 여행 상품 1:1 숙박 조회 -->
+	<select id="selectAccommodationBase"
+        parameterType="int"
+        resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
+		    SELECT
+		          a.ACC_NO
+		        , a.TRIP_PROD_NO
+		        , a.ACC_NAME
+		        , a.ACC_CAT_CD
+		        , a.STAR_GRADE
+		        , a.ADDR1
+		        , a.ADDR2
+		        , a.AREA_CODE
+		        , a.SIGUNGU_CODE
+		        , a.MAPX
+		        , a.MAPY
+		        , a.TEL
+		        , a.CHECK_IN_TIME
+		        , a.CHECK_OUT_TIME
+		        , a.OVERVIEW
+		
+		        , tp.TRIP_PROD_TITLE
+		        , tp.APPROVE_STATUS
+		        , tp.SALE_START_DT
+		        , tp.SALE_END_DT
+		        , tp.APRV_YN
+		        , tp.DEL_YN
+		        , tp.CTY_NM AS AREA_CODE_PROD
+		
+		    FROM TRIP_PROD tp
+		    INNER JOIN ACCOMMODATION a
+		        ON tp.TRIP_PROD_NO = a.TRIP_PROD_NO
+		    WHERE tp.TRIP_PROD_NO = #{tripProdNo}
+		</select>
+
+	<!-- 숙박 객실 조회 -->
+	<select id="selectRoomTypesByTripProdNo"
+        parameterType="int"
+        resultType="kr.or.ddit.mohaeng.vo.RoomTypeVO">
+	    SELECT
+	          rt.ROOM_TYPE_NO
+	        , rt.ACC_NO
+	        , rt.ROOM_NAME
+	        , rt.BASE_GUEST_COUNT
+	        , rt.MAX_GUEST_COUNT
+	        , rt.BED_COUNT
+	        , rt.BED_TYPE_CD
+	        , rt.TOTAL_ROOM_COUNT
+	        , rt.PRICE
+	        , rt.DISCOUNT
+	        , rt.EXTRA_GUEST_FEE
+	        , rt.ROOM_SIZE
+	        , rt.BREAKFAST_YN
+	    FROM ROOM_TYPE rt
+	    INNER JOIN ACCOMMODATION a
+	        ON rt.ACC_NO = a.ACC_NO
+	    WHERE a.TRIP_PROD_NO = #{tripProdNo}
+	</select>
+	
+	<!-- 숙박 시설 조회 -->
+	<select id="selectAccommodationFacilityByTripProdNo"
+        parameterType="int"
+        resultType="kr.or.ddit.mohaeng.vo.AccFacilityVO">
+	    SELECT
+	          af.ACC_NO
+	        , af.WIFI_YN
+	        , af.PARKING_YN
+	        , af.BREAKFAST_YN
+	        , af.POOL_YN
+	        , af.GYM_YN
+	        , af.SPA_YN
+	        , af.RESTAURANT_YN
+	        , af.BAR_YN
+	        , af.ROOM_SERVICE_YN
+	        , af.LAUNDRY_YN
+	        , af.SMOKING_AREA_YN
+	        , af.PET_FRIENDLY_YN
+	    FROM ACC_FACILITY af
+	    INNER JOIN ACCOMMODATION a
+	        ON af.ACC_NO = a.ACC_NO
+	    WHERE a.TRIP_PROD_NO = #{tripProdNo}
+	</select>
+	
+	<!-- 객실 시설 조회 -->
+	<select id="selectRoomFacilitiesByTripProdNo"
+        parameterType="int"
+        resultType="kr.or.ddit.mohaeng.vo.RoomFacilityVO">
+		    SELECT
+		          rf.ROOM_TYPE_NO
+		        , rf.AIR_CON_YN
+		        , rf.TV_YN
+		        , rf.MINIBAR_YN
+		        , rf.FRIDGE_YN
+		        , rf.SAFE_BOX_YN
+		        , rf.HAIR_DRYER_YN
+		        , rf.BATHTUB_YN
+		        , rf.TOILETRIES_YN
+		    FROM ROOM_FACILITY rf
+		    INNER JOIN ROOM_TYPE rt
+		        ON rf.ROOM_TYPE_NO = rt.ROOM_TYPE_NO
+		    INNER JOIN ACCOMMODATION a
+		        ON rt.ACC_NO = a.ACC_NO
+		    WHERE a.TRIP_PROD_NO = #{tripProdNo}
+	</select>
+	
+	<!-- 객실 추가옵션 조회 -->
+	<select id="selectAccommodationOptionByTripProdNo"
+		parameterType="int"
+		resultType="kr.or.ddit.mohaeng.vo.AccOptionVO">
+		SELECT
+	          ao.ACC_OPTION_NO
+	        , ao.ACC_NO
+	        , ao.ACC_OPTION_NM
+	        , ao.ACC_OPTION_PRICE
+	        , ao.PERSONNEL_COUNT
+	    FROM ACC_OPTION ao
+	    INNER JOIN ACCOMMODATION a
+	        ON ao.ACC_NO = a.ACC_NO
+	    WHERE a.TRIP_PROD_NO = #{tripProdNo}
+	</select>
+	
+	<!-- 객실 이미지 조회 -->
+	<select id="selectAccommodationImages"
+        parameterType="int"
+        resultType="kr.or.ddit.mohaeng.vo.AttachFileDetailVO">
+	    SELECT
+	          afd.FILE_NO
+	        , afd.ATTACH_NO
+	        , afd.FILE_NAME
+	        , afd.FILE_ORIGINAL_NAME
+	        , afd.FILE_PATH
+	        , afd.MIMY_TYPE
+	        , afd.USE_YN
+	    FROM ATTACH_FILE_DETAIL afd
+	    WHERE afd.ATTACH_NO = #{attachNo}
+	      AND afd.USE_YN = 'Y'
+	    ORDER BY afd.FILE_NO
+	</select>
+	
+</mapper>

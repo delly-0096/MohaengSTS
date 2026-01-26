@@ -199,7 +199,7 @@
                         <div class="booking-dropdown-content">
                             <div class="room-options">
                             <c:set var="lastRoomName" value="" />
-                            <c:forEach items="${acc.roomList }" var="room">
+                            <c:forEach items="${acc.roomTypeList }" var="room">
                             	<c:if test="${room.roomName ne lastRoomName}"/>
                             	<div class="room-option" style="padding: 15px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center;">
 								    <div class="room-option-info" style="flex: 1;">

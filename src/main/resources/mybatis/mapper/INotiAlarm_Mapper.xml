@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.mypage.notifications.mapper.INotiAlarmMapper">
+
+
+<select id="selectAlarmCount"
+        parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO"
+        resultType="int">
+		  SELECT COUNT(*)
+		  FROM ALARM
+		  WHERE MEM_NO = #{memNo}
+</select>
+
+  <select id="selectUnreadAlarmCount" resultType="int" parameterType="int">
+    SELECT COUNT(*)
+    FROM ALARM
+    WHERE MEM_NO = #{value}
+      AND NVL(READ_YN,'N') = 'N'
+  </select>
+
+  <select id="selectAlarmList"
+          parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO">
+      <![CDATA[   
+    SELECT *
+    FROM (
+      SELECT t.*, ROWNUM rn
+      FROM (
+        SELECT
+          ALARM_NO,
+          MEM_NO,
+          SENDER,
+          ALARM_TYPE,
+          ALARM_CONT,
+          MOVE_URL,
+          READ_YN,
+          READ_DT,
+          REG_DT
+        FROM ALARM
+        WHERE MEM_NO = #{memNo}
+        ORDER BY REG_DT DESC
+      ) t
+      WHERE ROWNUM >= #{endRow}
+    )
+    WHERE rn <= #{startRow}
+      ]]>
+  </select>
+  
+  <!-- 안읽은 알림 개수 -->
+<select id="selectUnreadCount" parameterType="int" resultType="int">
+  SELECT COUNT(*)
+  FROM ALARM
+  WHERE MEM_NO = #{memNo}
+    AND READ_YN = 'N'
+</select>
+
+<!-- 알림 1건 읽음 처리 -->
+<update id="updateReadOne" parameterType="map">
+  UPDATE ALARM
+  SET READ_YN = 'Y',
+      READ_DT = SYSDATE
+  WHERE ALARM_NO = #{alarmNo}
+    AND MEM_NO = #{memNo}
+    AND READ_YN = 'N'
+</update>
+
+<!-- 알림 등록 -->
+<insert id="insertAlarm"
+        parameterType="kr.or.ddit.mohaeng.vo.AlarmVO">
+  INSERT INTO ALARM (
+    ALARM_NO,
+    MEM_NO,
+    SENDER,
+    ALARM_TYPE,
+    ALARM_CONT,
+    MOVE_URL,
+    READ_YN,
+    REG_DT
+  ) VALUES (
+    SEQ_ALARM.NEXTVAL,
+    #{memNo},
+    #{sender},
+    #{alarmType},
+    #{alarmCont},
+    #{moveUrl},
+    'N',
+    SYSDATE
+  )
+</insert>
+
+</mapper>

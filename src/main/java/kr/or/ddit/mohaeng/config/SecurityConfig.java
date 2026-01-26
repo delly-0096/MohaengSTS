@@ -96,7 +96,7 @@ public class SecurityConfig {
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
-			"/batch/load-acc-detail"
+			"/batch/load-acc-detail",
 	};
 
 	// 일반회원 허용 url test
@@ -119,7 +119,8 @@ public class SecurityConfig {
 			"/",
 			"/error",
 			"/mohaeng",
-			"/.well-known/**"		// 크롬 개발자 도구로의 요청
+			"/.well-known/**",		// 크롬 개발자 도구로의 요청
+			"/batch/accmmodation/search"
 	};
 
 
@@ -129,7 +130,8 @@ public class SecurityConfig {
 			"/api/schedule/**",
 			"/api/admin/schedule/**",
 			"/api/admin/notices/thumbnail/**",
-			"/api/admin/inquiry/**"
+			"/api/admin/inquiry/**",
+			"/api/admin/products/**"
 		};
 
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {

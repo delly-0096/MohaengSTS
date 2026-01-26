@@ -54,6 +54,7 @@
 
             <!-- 헤더 우측 영역 -->
             <div class="header-right">
+           
                     <sec:authorize access="isAuthenticated()">
 					    <sec:authentication property="principal.memProfilePath" var="profileImgUrl"/>
                         <!-- 로그인 상태 - 알림 버튼 -->
@@ -280,6 +281,7 @@
                             </a>
                         </sec:authorize>
                     </div>
+                    </div>
                     </sec:authorize>
                 </div>
 
@@ -331,6 +333,7 @@
     </div>
 
     <!-- 알림 패널 (로그인 시에만 표시) -->
+    
     <sec:authorize access="isAuthenticated()">
         <div class="notification-overlay" id="notificationOverlay" onclick="closeNotificationPanel()"></div>
         <div class="notification-panel" id="notificationPanel">
@@ -468,6 +471,53 @@
                 showToast('모든 알림을 읽음 처리했습니다.', 'success');
             }
         }
+        //setInterval
+     
+
+        (() => {
+        	  
+        	  const contextPath = '${pageContext.request.contextPath}';
+        	  const badge = document.getElementById('notificationBadge');
+        	  if (!badge) return;
+
+        	  const api = (p) => contextPath + (p.startsWith('/') ? p : '/' + p);
+        	  
+        	  let lastCount = -1;
+        	  
+        	  async function fetchUnreadCount(){
+        	    try{
+        	      const res = await fetch(api('/api/alarm/unread-count'), {
+        	        credentials: 'same-origin'
+        	      });
+        	      const cnt = await res.json();
+        	      if(lastCount !== -1 && cnt > lastCount){
+        	          const btn = document.querySelector('.header-notification-btn');
+        	          if(btn){
+        	            btn.classList.remove('notification-pulse');
+        	            void btn.offsetWidth; // 애니메이션 리셋
+        	            btn.classList.add('notification-pulse');
+        	          }
+        	      }
+        	      
+        	      lastCount = cnt;
+        	      
+        	      if(cnt > 0){
+        	        badge.textContent = cnt > 99 ? '99+' : cnt;
+        	        badge.style.display = 'inline-block';
+        	      }else{
+        	        badge.style.display = 'none';
+        	      }
+        	    }catch(e){
+        	      console.error('unread-count error', e);
+        	    }
+        	  }
+
+        	  // 🔹 최초 로딩 시 1회
+        	  fetchUnreadCount();
+
+        	  // 🔹 10초마다 갱신
+        	  setInterval(fetchUnreadCount, 10000);
+        	})(); 
     </script>
 
     <!-- 메인 콘텐츠 시작 -->

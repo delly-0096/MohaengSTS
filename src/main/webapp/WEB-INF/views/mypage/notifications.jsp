@@ -57,6 +57,10 @@
                 <!-- 알림 목록 -->
                 <div class="content-section">
                     <div class="notification-list">
+                       <div class="notification-list">
+
+						
+                       
                         <!-- 읽지 않은 알림 -->
                         <div class="notification-item unread" data-type="payment">
                             <label class="notification-checkbox">
@@ -352,6 +356,86 @@ function deleteAllNotifications() {
         showToast('모든 알림이 삭제되었습니다.', 'info');
     }
 }
+<!-- ✅ 알림 실시간(뱃지) + 클릭 읽음처리 (애니메이션 제거/중복인터벌 방지/안전파싱) -->
+<script>
+(function(){
+  if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) return;
+
+  const contextPath = '${pageContext.request.contextPath}';
+  const api = (p) => contextPath + (p.startsWith('/') ? p : '/' + p);
+
+  const badge = document.getElementById('notificationBadge');
+
+  function setBadge(cnt){
+    if(!badge) return;
+    const n = Number(cnt);
+    if(Number.isFinite(n) && n > 0){
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.style.display = 'inline-block';
+    }else{
+      badge.style.display = 'none';
+    }
+  }
+
+  async function fetchUnreadCount(){
+    const res = await fetch(api('/api/alarm/unread-count'), { credentials:'same-origin' });
+
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if(!res.ok) return 0;
+    if(!ct.includes('application/json')) return 0;
+
+    const data = await res.json();
+    const n = Number(data);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  async function tick(){
+    try{
+      const cnt = await fetchUnreadCount();
+      setBadge(cnt);
+    }catch(e){
+      setBadge(0);
+    }
+  }
+
+  // ✅ 헤더가 중복 include 되는 경우 대비: interval 중복 생성 방지
+  if (window.__alarmTickTimer) {
+    clearInterval(window.__alarmTickTimer);
+    window.__alarmTickTimer = null;
+  }
+
+  tick();
+  window.__alarmTickTimer = setInterval(tick, 30000);
+
+  // ✅ 알림 아이템 클릭: 읽음 처리 + 이동
+  document.addEventListener('click', async (e)=>{
+    const item = e.target.closest('.alarm-item');
+    if(!item) return;
+
+    const alarmNo = Number(item.dataset.alarmNo || 0);
+    const moveUrl = item.dataset.moveUrl || '';
+
+    if(alarmNo){
+      try{
+        await fetch(api('/api/alarm/read'), {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ alarmNo })
+        });
+        item.classList.remove('unread');
+        tick();
+      }catch(err){
+        // 조용히 무시
+      }
+    }
+
+    if(moveUrl){
+      location.href = contextPath + moveUrl;
+    }
+  });
+})();
 </script>
-</body>
-</html>
+</script>
+
+
+

@@ -2659,3 +2659,14 @@
     height: 1px;
     background: var(--gray-light);
 }
+/* 🔔 새 알림 강조 애니메이션 */
+.notification-pulse{
+  animation: bellPulse 0.6s ease-in-out 2;
+}
+
+@keyframes bellPulse{
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+

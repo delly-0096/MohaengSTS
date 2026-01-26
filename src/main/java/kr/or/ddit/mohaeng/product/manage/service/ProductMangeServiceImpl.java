@@ -5,6 +5,8 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper;
@@ -72,13 +74,12 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			List<AttachFileDetailVO> accommodationImages = new ArrayList<>();
 			
 			int fileNo = accommodation.getAccFileNo() != 0 ? accommodation.getAccFileNo() : 0;
-			accommodationImages = manageMapper.retrieveProdImages(businessProducts);
+			accommodationImages = manageMapper.retrieveProdImages(businessProducts);	// 여기에 들어있는 것은 accFileNo
+			// 숙소용 사진은 accommodation에 있음
+			// accommodation에 있는 것
 			if(accommodationImages != null && accommodationImages.size() > 0) {
 				prodVO.setImageList(accommodationImages);
 			}
-			
-			// 숙소용 사진은 accommodation에 있음
-			// accommodation에 있는 것
 			
 		// 숙소가 아닐때는 이렇게
 		} else {
@@ -103,15 +104,16 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			}
 		}
 		
-		
 		return prodVO;
 	}
 	
 	@Override
-//	@Transactional
+	@Transactional
 	public ServiceResult modifyProduct(BusinessProductsVO businessProducts) {
 		ServiceResult result = null;
 		
+		log.info("modifyProduct 실행");
+	
 		int tripProdNo = businessProducts.getTripProdNo();
 		int baseStatus = 0;
 		// 변수 바뀔수도, 1대1관계들 update -> 상품, 상품 이용안내, 상품 가격, 상품 장소
@@ -126,17 +128,20 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			// 여기에 숙박과 관련된 모든 정보 있음
 			int accStatus = 0;
 			AccommodationVO accommodation = businessProducts.getAccommodation();
+			log.info("accommodation : {}", accommodation);
 			int accNo = businessProducts.getAccNo();
 			accommodation.setTripProdNo(tripProdNo);
 			
 			// accommodation update
 			// 업데이트
+			accStatus = manageMapper.modifyAccommodation(accommodation);
 			
 			
 			int optionStatus = 0;
 			// 1 대 n
 			// accOption update
 			List<AccOptionVO> accOptionList = accommodation.getAccOptionList();
+			log.info("accOptionList : {}", accOptionList);
 			for(AccOptionVO accOptionVO : accOptionList) {
 				accOptionVO.setAccNo(accNo);
 			}
@@ -177,6 +182,10 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			// 예약은 못건들일거야.
 			// 각자 어떻게 해야될지 모르것따.
 			
+			// 사진 숙소일경우 accommodation의 accFileNo없는 파일은 insert 
+			// -> 기존nos에 있는 것들과 비교해서 같은 attachNo부여하고 index로 
+			
+			
 			
 			if (baseStatus == 4) {
 		        log.info("수정 최종 성공");
@@ -209,7 +218,8 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			
 			// 결과 비교
 			baseStatus = productstatus + saleStatus + infoStatus + placeStatus;	// 4
-			// 숙소 
+			
+			// 사진 정보 List<MultipartFile> 받고 attachDetail에서 관리하기 -> 새로운 파일에 attachNo 설정해주기
 			
 			// 예약가능시간(예약 가능 시간)
 			int productTimetatus = 0;
@@ -274,6 +284,11 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		} else {
 			return result = ServiceResult.FAILED;
 		}
+	}
+
+	@Override
+	public ServiceResult insertProduct(BusinessProductsVO businessProducts, List<MultipartFile> uploadFiles) {
+		return null;
 	}
 
 }

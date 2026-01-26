@@ -57,7 +57,53 @@
                 <!-- 알림 목록 -->
                 <div class="content-section">
                     <div class="notification-list">
-                        <!-- 읽지 않은 알림 -->
+                        <c:choose>
+						    <c:when test="${empty alarmList}">
+						      <div class="notification-item">
+						        <div class="notification-content">
+						          <h4>알림이 없습니다</h4>
+						          <p>새로운 알림이 들어오면 여기에 표시됩니다.</p>
+						        </div>
+						      </div>
+						    </c:when>
+						
+						    <c:otherwise>
+						      <c:forEach items="${alarmList}" var="a">
+						        <div class="notification-item ${a.readYn eq 'Y' ? '' : 'unread'}"
+						             data-type="${empty a.alarmType ? 'system' : a.alarmType}">
+						
+						          <label class="notification-checkbox">
+						            <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
+						          </label>
+						
+						          <!-- 아이콘(타입에 따라 다르게) -->
+						          <div class="notification-icon ${empty a.alarmType ? 'system' : a.alarmType}">
+						            <c:choose>
+						              <c:when test="${a.alarmType eq 'order'}"><i class="bi bi-cart-check"></i></c:when>
+						              <c:when test="${a.alarmType eq 'review'}"><i class="bi bi-star"></i></c:when>
+						              <c:when test="${a.alarmType eq 'inquiry'}"><i class="bi bi-chat-dots"></i></c:when>
+						              <c:otherwise><i class="bi bi-bell"></i></c:otherwise>
+						            </c:choose>
+						          </div>
+						
+						          <div class="notification-content">
+						            <!-- 제목이 ALARM_CONT 하나뿐이면 제목/내용 구분 없이 찍기 -->
+						            <h4>${a.sender}</h4>
+						            <p>${a.alarmCont}</p>
+						          </div>
+						
+						          <span class="notification-time">
+						            <c:out value="${a.regDt}" />
+						          </span>
+						        </div>
+						      </c:forEach>
+						    </c:otherwise>
+						  </c:choose>
+						
+						</div>
+						<h3 style="color:red;">alarmList = ${alarmList}</h3>
+						
+                      <!-- 읽지 않은 알림 
                         <div class="notification-item unread" data-type="order">
                             <label class="notification-checkbox">
                                 <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
@@ -100,7 +146,7 @@
                             <span class="notification-time">3시간 전</span>
                         </div>
 
-                        <!-- 읽은 알림 -->
+                        읽은 알림
                         <div class="notification-item" data-type="order">
                             <label class="notification-checkbox">
                                 <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
@@ -199,7 +245,7 @@
                             <span class="notification-time">2024.02.25</span>
                         </div>
                     </div>
-                </div>
+                </div> -->
 
                 <!-- 페이지네이션 -->
                 <div class="pagination-container">

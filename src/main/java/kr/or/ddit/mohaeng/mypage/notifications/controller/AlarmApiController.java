@@ -4,12 +4,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import kr.or.ddit.mohaeng.mypage.notifications.service.IAlarmService;
@@ -73,5 +75,13 @@ public class AlarmApiController {
 	        return "ok";
 	    }
 
-	  
+	    @PostMapping("/mypage/notifications/readAll")
+	    @ResponseBody
+	    public ResponseEntity<?> readAll(
+	            @AuthenticationPrincipal CustomUserDetails user
+	    ) {
+	        alarmService.readAll(user.getMemNo());
+	        return ResponseEntity.ok().build();
+	    }
+
 }

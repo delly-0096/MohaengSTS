@@ -206,25 +206,36 @@
                 </div>
 
                 <!-- 페이지네이션 -->
-                <div class="pagination-container">
-                    <nav>
-                        <ul class="pagination">
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        </div>
-    </div>
+              <div class="pagination-container">
+  <nav>
+    <ul class="pagination">
+      <c:if test="${pagingVO.startPage > 1}">
+        <li class="page-item">
+          <a class="page-link"
+             href="?type=${type}&page=${pagingVO.startPage - pagingVO.blockSize}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+      </c:if>
+
+      <c:forEach var="p" begin="${pagingVO.startPage}"
+                 end="${pagingVO.endPage < pagingVO.totalPage ? pagingVO.endPage : pagingVO.totalPage}">
+        <li class="page-item ${p == pagingVO.currentPage ? 'active' : ''}">
+          <a class="page-link" href="?type=${type}&page=${p}">${p}</a>
+        </li>
+      </c:forEach>
+
+      <c:if test="${pagingVO.endPage < pagingVO.totalPage}">
+        <li class="page-item">
+          <a class="page-link" href="?type=${type}&page=${pagingVO.endPage + 1}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </c:if>
+    </ul>
+  </nav>
 </div>
+
 
 <c:set var="pageJs" value="mypage" />
 <c:set var="hasInlineScript" value="true" />
@@ -434,7 +445,6 @@ function deleteAllNotifications() {
     }
   });
 })();
-</script>
 </script>
 
 

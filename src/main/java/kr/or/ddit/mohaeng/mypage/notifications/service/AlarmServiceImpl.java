@@ -57,6 +57,11 @@ public class AlarmServiceImpl implements IAlarmService {
 	  public List<AlarmVO> selectAlramList(int memNo) {
 		return notiAlarmMapper.selectAlramList(memNo);
 	  }
+	  @Override
+	  public void readAll(int memNo) {
+		  notiAlarmMapper.updateAllRead(memNo);
+		
+	  }
 
 
 }

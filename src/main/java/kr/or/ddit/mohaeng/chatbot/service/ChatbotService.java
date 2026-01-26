@@ -61,11 +61,10 @@ public class ChatbotService {
                 - 투어/체험/티켓 검색 (/tour)
                 - 회원가입 안내(/member/register)
                 - 로그인 안내(/member/login)
-                - 여행톡 커뮤니티 조회 (/community/talk)
                 - 여행기록 조회 (/community/travel-log)
                 - 자주 묻는 질문 (/support/faq)
                 - 공지사항 (/support/notice)
-                - 1:1 문의 (/support/inquiry)
+                - 1:1 문의(운영자 문의) (/support/inquiry)
 
                 [안내 사항]
                 - 예약/결제는 로그인 후 이용 가능
@@ -85,7 +84,9 @@ public class ChatbotService {
                 - 예약/결제 내역 (/mypage/payments)
                 - 포인트 내역 (/mypage/points)
                 - 알림 내역 (/mypage/notifications)
-                - 1:1 문의 (/support/inquiry)
+                - 자주 묻는 질문 (/support/faq)
+                - 공지사항 (/support/notice)
+                - 1:1 문의(운영자 문의) (/support/inquiry)
                 """;
             case "B" -> """
                 [기업회원 이용 가능 기능]
@@ -97,6 +98,9 @@ public class ChatbotService {
                 - 상품 등록/관리 (/mypage/business/products)
                 - 알림 내역 (/mypage/business/notifications)
                 - 통계 (/mypage/business/statistics)
+                - 자주 묻는 질문 (/support/faq)
+                - 공지사항 (/support/notice)
+                - 1:1 문의(운영자 문의) (/support/inquiry)
 
                 [안내 사항]
                 - 일반회원용 기능(일정 만들기, 여행톡 등)은 이용 불가
@@ -115,6 +119,7 @@ public class ChatbotService {
                 [투어/체험/티켓 페이지 URL 규칙]
                 기본: /tour
                 정렬 파라미터: ?sortBy=값
+                - 추천순: ?sortBy=recommend
                 - 인기순: ?sortBy=popular
                 - 평점순: ?sortBy=rating
                 - 낮은가격순: ?sortBy=price_low
@@ -122,8 +127,10 @@ public class ChatbotService {
                 
                 카테고리 파라미터: &category=값
                 - 투어: tour
-                - 체험: experience
-                - 티켓: ticket
+                - 액티비티: activity
+                - 입장권/티켓: ticket
+                - 클래스/체험: class
+                - 교통/이동: transfer
 
                 [URL 조합 예시]
                 - 인기 투어 → /tour?sortBy=popular&category=tour

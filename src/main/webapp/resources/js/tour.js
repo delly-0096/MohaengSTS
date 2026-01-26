@@ -28,6 +28,7 @@ var tourCurrentPage = 1;
 var tourIsLoading = false;
 var tourHasMore = true;
 var tourPageSize = 12;
+var tourObserver = null;
 
 // ==================== 인기 검색어 변수 ====================
 var currentKeywordIndex = 0;
@@ -39,6 +40,9 @@ var cart = [];
 
 // ==================== 페이지 로드시 초기화 ====================
 document.addEventListener('DOMContentLoaded', function() {
+	// URL 파라미터 읽어서 필터 초기화
+	initFromUrlParams();
+
 	// 품절 상품 처리 (결제 페이지에서 리다이렉트된 경우)
     var urlParams = new URLSearchParams(window.location.search);
     var soldout = urlParams.get('soldout');
@@ -213,19 +217,19 @@ function buildFilterUrl(page) {
 function initTourInfiniteScroll() {
     var loader = document.getElementById('tourScrollLoader');
 
-    var observer = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting && !tourIsLoading && tourHasMore) {
-                loadMore();
-            }
-        });
+	tourObserver = new IntersectionObserver(function(entries) {
+       entries.forEach(function(entry) {
+           if (entry.isIntersecting && !tourIsLoading && tourHasMore) {
+               loadMore();
+           }
+       });
     }, {
-        root: null,
-        rootMargin: '100px',
-        threshold: 0
+       root: null,
+       rootMargin: '100px',
+       threshold: 0
     });
 
-    observer.observe(loader);
+   	tourObserver.observe(loader);
 }
 
 function loadMore() {
@@ -317,7 +321,7 @@ function createTourCard(data) {
     // 대표 이미지 처리
     var defaultImage = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80';
     var imageUrl = data.thumbImage 
-        ? CONTEXT_PATH + '/upload/product/' + data.thumbImage 
+        ? CONTEXT_PATH + '/upload' + data.thumbImage 
         : defaultImage;
 
 	var minPeople = data.prodMinPeople || 1;
@@ -422,6 +426,7 @@ function applyFilter() {
                 endDiv.style.display = 'block';
             } else {
                 loader.style.display = 'flex';
+				reinitInfiniteScroll();
             }
             
             tourIsLoading = false;
@@ -693,4 +698,99 @@ function checkout() {
     sessionStorage.setItem('tourCartCheckout', JSON.stringify(cart));
 	var prodIds = cart.map(function(item) { return item.id; }).join(',');
     window.location.href = CONTEXT_PATH + '/tour/cart/booking?prodIds=' + prodIds;
+}
+
+// ==================== URL 파라미터로 필터 초기화 ====================
+function initFromUrlParams() {
+    var urlParams = new URLSearchParams(window.location.search);
+    
+    // 검색 파라미터
+    var keyword = urlParams.get('keyword');
+    var destination = urlParams.get('destination');
+    var category = urlParams.get('category');
+    var tourDate = urlParams.get('tourDate');
+    var people = urlParams.get('people');
+    
+    // 필터 파라미터
+    var priceMin = urlParams.get('priceMin');
+    var priceMax = urlParams.get('priceMax');
+    var leadTime = urlParams.get('leadTime');
+    var sortBy = urlParams.get('sortBy');
+    
+    // 변수 초기화
+    if (keyword) {
+        currentKeyword = keyword;
+        document.getElementById('keyword').value = keyword;
+    }
+    if (destination) {
+        currentDestination = destination;
+        document.getElementById('destination').value = destination;
+    }
+    if (category) {
+        currentCategory = category;
+        document.getElementById('category').value = category;
+    }
+    if (tourDate) {
+        currentTourDate = tourDate;
+        document.getElementById('tourDate').value = tourDate;
+    }
+    if (people) {
+        currentPeople = parseInt(people);
+        document.getElementById('people').value = people;
+    }
+    
+    // 가격 필터 UI 설정
+    if (priceMin !== null || priceMax !== null) {
+        currentPriceMin = priceMin ? parseInt(priceMin) : null;
+        currentPriceMax = priceMax ? parseInt(priceMax) : null;
+        
+        // select 값 설정
+        var priceFilter = document.getElementById('priceFilter');
+        if (currentPriceMax === 30000) priceFilter.value = '0';
+        else if (currentPriceMin === 30000 && currentPriceMax === 50000) priceFilter.value = '3';
+        else if (currentPriceMin === 50000 && currentPriceMax === 100000) priceFilter.value = '5';
+        else if (currentPriceMin === 100000) priceFilter.value = '10';
+    }
+    
+    // 소요시간 필터
+    if (leadTime) {
+        currentLeadTime = parseInt(leadTime);
+        document.getElementById('leadTimeFilter').value = leadTime;
+    }
+    
+    // 정렬
+    if (sortBy) {
+        currentSortBy = sortBy;
+        document.getElementById('sortBy').value = sortBy;
+    }
+    
+    // URL에 파라미터가 있으면 서버에서 이미 필터링된 데이터가 왔으므로
+    // 결과 헤더 업데이트
+    if (keyword || destination || category || tourDate || sortBy) {
+        updateResultsHeader(totalCount);
+    }
+}
+
+function reinitInfiniteScroll() {
+    var loader = document.getElementById('tourScrollLoader');
+    
+    // 기존 observer 해제
+    if (tourObserver) {
+        tourObserver.disconnect();
+    }
+    
+    // 새 observer 생성
+    tourObserver = new IntersectionObserver(function(entries) {
+        entries.forEach(function(entry) {
+            if (entry.isIntersecting && !tourIsLoading && tourHasMore) {
+                loadMore();
+            }
+        });
+    }, {
+        root: null,
+        rootMargin: '100px',
+        threshold: 0
+    });
+    
+    tourObserver.observe(loader);
 }

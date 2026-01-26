@@ -46,7 +46,7 @@ public class TripProdVO {
     private Integer priceMax;
     
     // 정렬용
-    private String sortBy;
+    private String sortBy = "recommend";
     
     // 가격, 정가, 할인율, 소요시간(카테고리형태)
     private Integer price;

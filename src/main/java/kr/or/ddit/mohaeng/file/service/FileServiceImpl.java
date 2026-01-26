@@ -388,6 +388,9 @@ public class FileServiceImpl implements IFileService{
 	            File targetFile = new File(targetDir, saveName);
 	            file.transferTo(targetFile);
 	            
+	            String filePath = "/" + subPath + "/" + saveName;
+	            log.info("저장될 FILE_PATH: {}", filePath);
+	            
 	            // DB 저장
 	            AttachFileDetailVO detailVO = new AttachFileDetailVO();
 	            detailVO.setAttachNo(attachNo);
@@ -395,7 +398,7 @@ public class FileServiceImpl implements IFileService{
 	            detailVO.setFileOriginalName(originalName);
 	            detailVO.setFileExt(ext);
 	            detailVO.setFileSize(file.getSize());
-	            detailVO.setFilePath(saveName);
+	            detailVO.setFilePath("/" + subPath + "/" + saveName);
 	            detailVO.setFileGbCd(fileGbCd);
 	            detailVO.setMimyType(file.getContentType());
 	            detailVO.setRegId(regId);

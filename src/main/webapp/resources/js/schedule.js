@@ -99,7 +99,13 @@ class KakaoMapHelper {
         sameCategoryMarkers.forEach((m, index) => {
             const currentPos = m.getPosition();
             path.push(currentPos);
-
+			
+			let plannerItems = document.querySelectorAll(".planner-item")
+			
+			for(let i = 0; i < plannerItems.length; i++) {
+				console.log(plannerItems[i].dataset.contentid);
+			}
+			console.log(m.customData.id);
             // 3-1. 순서가 적힌 마커 이미지로 변경
             m.setImage(this.getMarkerForIndexImage(category, index));
 

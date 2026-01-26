@@ -234,7 +234,6 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	public List<TripScheduleVO> selectTripScheduleList(int memNo) {
 		List<TripScheduleVO> scheduleList = iTripScheduleMapper.selectTripScheduleList(memNo);
 		if(scheduleList.size() > 0) {
-			System.out.println("scheduleList : " + scheduleList);
 			
 			for(TripScheduleVO tripSchedule : scheduleList) {
 			    List<String> displayPlaceNames = new ArrayList<>(); // 화면에 표시할 2개만 담을 리스트

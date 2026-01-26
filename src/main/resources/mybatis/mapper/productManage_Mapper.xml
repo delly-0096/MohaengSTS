@@ -141,6 +141,18 @@
 	    , ${alias}ADDR2
 	</sql>
 	
+	<sql id="prodListColumns">
+		  ${alias}PROD_LIST_NO
+	    , ${alias}PAY_NO
+	    , ${alias}TRIP_PROD_NO
+	    , ${alias}UNIT_PRICE
+	    , ${alias}DISCOUNT_AMT
+	    , ${alias}PAY_PRICE
+	    , ${alias}QUANTITY
+	    , ${alias}RESV_DT
+	    , ${alias}USE_TIME
+	    , ${alias}RSV_MEMO
+	</sql>
 	
 	<!-- 
 	, CASE
@@ -178,6 +190,7 @@
                     , acc.ACC_NO
 	                , acc.ACC_NAME
 	                , acc.TOTAL_ROOM_CNT
+	                , acc.ACC_FILE_PATH
 	                , CASE
 	                    WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
 	                    THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
@@ -789,5 +802,17 @@
 		    , #{prodNotice}
 		)
 	</insert>
+	
+	<!-- 예약 내역 가져오기 -->
+	<select id="getReservation" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultType="kr.or.ddit.mohaeng.vo.TripProdListVO">
+		SELECT
+			<include refid="prodListColumns">
+				<property name="alias" value=""/>
+			</include>
+		FROM TRIP_PROD_LIST
+		WHERE TRIP_PROD_NO = #{tripProdNo} 
+	</select>
+	
+	<!-- 숙소 예약 내역 가져오기 -->
 	
 </mapper>

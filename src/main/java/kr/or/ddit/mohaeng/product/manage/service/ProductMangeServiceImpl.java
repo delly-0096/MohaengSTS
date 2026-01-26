@@ -10,7 +10,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.file.service.IFileService;
+import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
+import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
 import kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper;
+import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
+import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
@@ -25,6 +29,7 @@ import kr.or.ddit.mohaeng.vo.RoomFacilityVO;
 import kr.or.ddit.mohaeng.vo.RoomFeatureVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 import kr.or.ddit.mohaeng.vo.RoomVO;
+import kr.or.ddit.mohaeng.vo.TripProdListVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -39,6 +44,14 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 	// 사진 저장용
 	@Autowired
 	private IFileService fileService;
+	
+	// 문의 내역 가져오기
+	@Autowired
+	private ITripProdInquiryService inquiryService;
+	
+	// 리뷰 내역 가져오기
+	@Autowired
+	private IProdReviewService prodReviewService;
 	
 	@Override
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts) {
@@ -61,7 +74,9 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		// 상품 정보, 상품 이용안내, 상품 가격, 여행 상품 관광지
 		BusinessProductsVO prodVO = manageMapper.retrieveProductDetail(businessProducts);
 		log.info("retrieveProductDetail-retrieveProductDetail : {}", prodVO);
-
+		
+		int tripProdNo = prodVO.getTripProdNo();
+		
 		// 숙소 타입일 경우에는 이렇게
 		if(prodVO.getProdCtgryType().equals("accommodation")) {
 			int accNo = 0;
@@ -86,6 +101,9 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 				prodVO.setImageList(accommodationImages);
 			}
 			
+			// 숙소 예약 내역
+			
+			
 		// 숙소가 아닐때는 이렇게
 		} else {
 			List<ProdTimeInfoVO> prodTimeList = manageMapper.retrieveProdTimeList(prodVO);
@@ -107,7 +125,30 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			if(productImages != null && productImages.size() > 0) {
 				prodVO.setImageList(productImages);
 			}
+			
+			// 예약 내역 = tripProdList
+			List<TripProdListVO> prodList = new ArrayList<>();
+			prodList = manageMapper.getReservation(businessProducts);	// 번호
+			log.info("prodList : {}", prodList);
+			prodVO.setProdList(prodList);
 		}
+		
+		// 리뷰
+		List<ProdReviewVO> prodReviewList = new ArrayList<>();
+		prodReviewList = 
+				prodReviewService.getReviewPaging(tripProdNo, businessProducts.getPage(), businessProducts.getPageSize());
+		
+		log.info("prodReviewList : {}", prodReviewList);
+		prodVO.setProdReviewList(prodReviewList);
+		
+		// 문의사항
+		List<TripProdInquiryVO> inquiryList = new ArrayList<>();
+		inquiryList = 
+				inquiryService.getInquiryPaging(tripProdNo, businessProducts.getPage(), businessProducts.getPageSize());
+		log.info("inquiryList : {}", inquiryList);
+		prodVO.setProdInquiryList(inquiryList);
+		
+
 		
 		return prodVO;
 	}

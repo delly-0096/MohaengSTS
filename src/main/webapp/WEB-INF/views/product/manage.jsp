@@ -122,7 +122,7 @@
 		        	<c:forEach items="${prodList}" var="prod">
 			        	<c:set var="status" value="${prod.approveStatus }"/>
 			        	<c:set var="dataStatus" value="active"/>
-			        	<c:if test="${status == '판매중지'}">
+			        	<c:if test="${status == '판매중지' or prod.aprvYn eq 'N'}">
 				        	<c:set var="dataStatus" value="inactive"/>
 			        	</c:if>
 			        	<c:set var="accNo" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accNo : 0}"/>
@@ -131,13 +131,34 @@
 			                    <input type="checkbox" class="product-select-checkbox" value="${prod.tripProdNo}" onchange="toggleProductSelect(this)">
 			                </label>
 			                <div class="product-image">
-			                    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" alt="스쿠버다이빙">
+								<c:choose>
+									<c:when test="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation'}">
+						                    <img src="${prod.accommodation.accFilePath}" alt="${prod.accommodation.accName }">
+									</c:when>
+									<c:when test="${prod.prodCtgryType ne 'accommodation'}">
+					                    <img src="${pageContext.request.contextPath}/upload${prod.thumbImage}" 
+					                    alt="${prod.tripProdTitle}">
+				                   </c:when>
+				                   <c:otherwise>
+		                   			    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" 
+		                   			    alt="스쿠버다이빙">
+				                   </c:otherwise>
+								</c:choose>
 			                    <span class="product-status ${dataStatus}">
-			                    ${(not empty prod.aprvYn && prod.aprvYn == 'N') ? '승인대기' : (status == '판매중' ? '중지' : '재개')}
+			                    ${(not empty prod.aprvYn and prod.aprvYn == 'N') ? '승인대기' : status}
 			                    </span>
 			                </div>
 			                <div class="product-info">
-			                    <div class="product-category">${prod.prodCtgryType}</div>
+			                    <div class="product-category">
+                   	               	<c:choose>
+								        <c:when test="${prod.prodCtgryType eq 'tour'}">투어</c:when>
+								        <c:when test="${prod.prodCtgryType eq 'activity'}">액티비티</c:when>
+								        <c:when test="${prod.prodCtgryType eq 'ticket'}">입장권/티켓</c:when>
+								        <c:when test="${prod.prodCtgryType eq 'class'}">클래스/체험</c:when>
+								        <c:when test="${prod.prodCtgryType eq 'transfer'}">교통/이동</c:when>
+								        <c:otherwise>숙박</c:otherwise>
+								    </c:choose>
+			                    </div>
 			                    <c:set var="title" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accName : prod.tripProdTitle}"/>
 			                    <h3 class="product-name">${title}</h3>
 			                    <div class="product-meta">
@@ -166,7 +187,7 @@
 				                        </span>
 				                        <span class="discount-rate">${prod.prodSale.discount}% 할인</span>
 			                    	</c:when>
-			                    	<c:when test="${not empty prod.prodSale and prod.prodSale.netprc > 0 and empty prod.prodSale.discount}">
+			                    	<c:when test="${not empty prod.prodSale and prod.prodSale.netprc > 0 and (empty prod.prodSale.discount or prod.prodSale.discount == 0)}">
 			                    		<span class="sale-price">
 				                        	<fmt:formatNumber value="${prod.displayPrice}" pattern="#,###"/>원
 				                        </span>
@@ -215,7 +236,7 @@
 					                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원
 			                        		</c:when>
 			                        		<c:otherwise>
-												<div>아직 안불러옴</div>
+												<div>0원</div>
 			                        		</c:otherwise>
 			                        	</c:choose>
 			                        </span>
@@ -224,15 +245,16 @@
 			                <div class="product-actions">
 			                	<c:choose>
 			                		<c:when test="${accNo eq 0 }">
-					                    <a href="/product/manage/tourDetail/${prod.tripProdNo}" class="btn btn-outline btn-sm">
-					                        <!-- 상품일때 --><i class="bi bi-eye"></i> 상세보기
-					                    </a>
+					                    <button class="btn btn-outline btn-sm" onclick="showDetail(this)"
+					                    	data-id="${prod.tripProdNo}">
+					                        <i class="bi bi-eye"></i> 상세보기
+					                    </button>
 			                		</c:when>
 			                		<c:otherwise>
-					                    <a href="/product/manage/tourDetail/" class="btn btn-outline btn-sm">
-					                    <!-- 숙소일떄 -->
+					                    <button class="btn btn-outline btn-sm" onclick="showDetail(this)"
+					                    	data-id="${prod.tripProdNo}" data-no="${accNo}">
 					                        <i class="bi bi-eye"></i> 상세보기
-					                    </a>
+					                    </button>
 			                		</c:otherwise>
 			                	</c:choose>
 			                    <button class="btn btn-outline btn-sm" onclick="editProduct(this)"
@@ -707,6 +729,128 @@
     </div>
 </div>
 
+<!--  상품 상세보기 모달 -->
+<div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title border-start border-primary border-4 ps-2">상품 상세 조회</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body p-0"> <ul class="nav nav-tabs nav-fill" id="productDetailTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="info-tab" data-bs-toggle="tab" data-bs-target="#tab-info" type="button" role="tab">기본 정보</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reservation-tab" data-bs-toggle="tab" data-bs-target="#tab-reservation" type="button" role="tab">예약 현황</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="review-tab" data-bs-toggle="tab" data-bs-target="#tab-review" type="button" role="tab">리뷰 관리</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="qna-tab" data-bs-toggle="tab" data-bs-target="#tab-qna" type="button" role="tab">문의 내역</button>
+                    </li>
+                </ul>
+
+                <div class="tab-content p-4" id="productDetailTabContent">
+                    
+                    <div class="tab-pane fade show active" id="tab-info" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div id="detailImageCarousel" class="carousel slide" data-bs-ride="carousel">
+                                    <div class="carousel-inner" id="detailImages">
+                                        <div class="carousel-item active">
+                                        	<!-- 여기 컨테이너 선택해서 뿌려주기 -->
+                                            <img src="https://via.placeholder.com/400x300" class="d-block w-100 rounded" alt="상품이미지">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <h3 id="view-title" class="fw-bold mb-3">상품명</h3>
+                                <div class="mb-2">
+                                	<span class="badge bg-primary me-2" id="view-category">카테고리</span>
+                                	<span id="view-address" class="text-muted">위치 정보</span>
+                               	</div>
+                                <hr>
+                                <div class="row g-3">
+                                
+                                    <div class="col-6"><strong>정가:</strong> <span id="view-netprc">0</span>원</div>
+                                    <div class="col-6"><strong>판매가:</strong> <span id="view-price" class="text-danger fw-bold">0</span>원</div>
+                                    <div class="col-6"><strong>현재 재고:</strong> <span id="view-curStock">0</span>개</div>
+                                    <div class="col-6"><strong>판매 기간:</strong> <span id="view-date">yyyy.mm.dd ~ yyyy.mm.dd</span></div>
+                                </div>
+                                <div class="mt-4 p-3 bg-light rounded">
+                                    <h6><strong>상품 설명</strong></h6>
+                                    <!-- overview, tripProdContent -->
+                                    <p id="view-content" class="mb-0 text-secondary" style="white-space: pre-line;">설명 내용이 들어갑니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+					
+					<!-- 예약정보 -->
+                    <div class="tab-pane fade" id="tab-reservation" role="tabpanel">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>예약번호</th>
+                                        <th>예약자</th>
+                                        <th>예약일자</th>
+                                        <th>인원/객실</th>
+                                        <th>상태</th>
+                                        <th>결제금액</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="view-reservation-list">
+                                    <tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+					
+					<!-- 리뷰내역 -->
+                    <div class="tab-pane fade" id="tab-review" role="tabpanel">
+                        <div id="view-review-list">
+                            <div class="card mb-3 border-0 border-bottom">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <h6 class="fw-bold mb-0">사용자ID <span class="text-warning ml-2">★★★★☆</span></h6>
+                                        <small class="text-muted">2026-01-26</small>
+                                    </div>
+                                    <p class="small mb-0">상품이 너무 좋아요! 다시 이용하고 싶습니다.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+					<!-- 문의 내역 -->
+                    <div class="tab-pane fade" id="tab-qna" role="tabpanel">
+                        <div class="list-group list-group-flush" id="view-qna-list">
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1 fw-bold">문의 제목입니다. <span class="badge bg-secondary ms-2">답변대기</span></h6>
+                                    <small>2026-01-25</small>
+                                </div>
+                                <p class="mb-1 small">이 상품 아이가 참여 가능한가요?</p>
+                                <!-- 클릭시 답변남기기 -->
+                                <button class="btn btn-sm btn-link p-0">답변하기</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- 검색중 보여줄 것 -->
 <div id="loading-overlay" style="display: none;">
     <div class="spinner"></div>
@@ -724,6 +868,7 @@
 
 <script>
 let modal = null;			// 모달 객체
+let detailModal = null; 
 let bookingTimes = [];		// 예약 가능 시간 목록
 let imageList = [];			// 이미지 정보 목록
 
@@ -747,8 +892,12 @@ let searchAccBtn = null;
 let accImage;
 document.addEventListener('DOMContentLoaded', function() {
 	const modalElem = document.getElementById('productModal');
-    if (modalElem) modal = new bootstrap.Modal(modalElem);
+	const detailModalElem = document.getElementById('productDetailModal');
 	
+    if (modalElem) modal = new bootstrap.Modal(modalElem);
+    if (detailModalElem) detailModal = new bootstrap.Modal(detailModalElem);
+	
+    
     // 컨테이너 지정
 	timeListContainer = document.getElementById('bookingTimeList');
 	imageContainer = document.querySelector(".productImageList");
@@ -975,6 +1124,30 @@ async function editProduct(data) {
         console.error("데이터 로드 중 error 발생: ", error);
     }
 }
+
+// 상세보기용 모달
+async function showDetail (data){
+	const { id, no } = data.dataset;	// tripProdNo랑 accNo
+	console.log("showDetail : id, no" +  id  + " " + no);
+	const sendData = {tripProdNo : id};
+	
+	// 숙박
+	if(no != null) sendData.accNo = no;
+	
+	// axios 설정
+	try{
+		const res = await axios.post(`/product/manage/productDetail`, sendData);
+		console.log("res.data : ", res.data);
+		
+	}catch(err){
+		showToast("error 발생 !!", "error");
+	}
+	
+	
+	detailModal.show();
+} 
+
+
 
 // 수정할 상품 사진 modal에 세팅 - imageData는 선택시 썸네일 보여주려고
 function renderImageList(imageData = ""){

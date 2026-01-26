@@ -18,6 +18,7 @@ import kr.or.ddit.mohaeng.vo.RoomFacilityVO;
 import kr.or.ddit.mohaeng.vo.RoomFeatureVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 import kr.or.ddit.mohaeng.vo.RoomVO;
+import kr.or.ddit.mohaeng.vo.TripProdListVO;
 
 @Mapper
 public interface IProductMangeMapper {
@@ -338,4 +339,23 @@ public interface IProductMangeMapper {
 	 * @return 결과 0, 1
 	 */
 	public int insertTripProdInfo(TripProdInfoVO prodInfoVO);
+
+	/**
+	 * <p>상품 예약 내역 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param businessProducts (tripProdNo)
+	 * @return 예약 내역
+	 */
+	public List<TripProdListVO> getReservation(BusinessProductsVO businessProducts);
+	
+	/**
+	 * <p>숙소 예약 내역 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param businessProducts (tripProdNo)
+	 * @return 결과 0, 1
+	 */
+//	public List<E> getAccommodationResvervation(
+	
 }

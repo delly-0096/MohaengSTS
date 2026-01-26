@@ -1,21 +1,34 @@
 /**
  * schedule.js - 여행 플래너 통합 관리 스크립트
- * (카카오 맵 API 및 드래그 앤 드롭 기능 포함)
+ * (Kakao Maps API)
  */
+
+// 전역 색상 설정
+const colors = {
+    'default': 'black',
+    '0': 'black',
+    '1': '#0000FF', // 파랑
+    '2': '#FF0000', // 빨강
+    '3': '#FFA500', // 주황
+    '4': '#FF69B4', // 핑크
+    '5': '#228B22', // 초록
+    '6': '#800080', // 보라
+    '7': '#00CED1', // 민트
+    '8': '#FFD700', // 골드
+    '9': '#8B4513', // 브라운
+    '10': '#2F4F4F' // 다크그레이
+};
 
 class KakaoMapHelper {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
         this.map = null;
-        this.markers = [];
-        this.ps = new kakao.maps.services.Places();
-        this.geocoder = new kakao.maps.services.Geocoder();
-        this.infowindow = new kakao.maps.InfoWindow({ zIndex: 1 });
+        this.markers = []; // 전체 마커 저장
         
-        // 거리 측정 관련 상태
-        this.polyline = null; 
-        this.distanceOverlay = null; 
-        this.lastClickedMarker = null; 
+        // 상태 관리 변수들
+        this.pathLine = null;        // 현재 그려진 경로 선 (Polyline)
+        this.distanceOverlays = [];  // 거리 표시 오버레이 배열 (지우기 위해 저장)
+        this.activeOverlay = null;   // 현재 열린 인포윈도우 (CustomOverlay)
     }
 
     // 1. 지도 초기화
@@ -27,15 +40,26 @@ class KakaoMapHelper {
         };
         this.map = new kakao.maps.Map(this.container, options);
 
+        // 컨트롤 추가
         this.map.addControl(new kakao.maps.MapTypeControl(), kakao.maps.ControlPosition.TOPRIGHT);
         this.map.addControl(new kakao.maps.ZoomControl(), kakao.maps.ControlPosition.RIGHT);
+		
+		// [추가됨] 지도 빈 공간을 클릭하면 열려있는 오버레이 닫기
+	    kakao.maps.event.addListener(this.map, 'click', () => {
+	        if (this.activeOverlay) {
+	            this.activeOverlay.setMap(null);
+	            this.activeOverlay = null;
+	        }
+	    });
     }
 
-    // 2. 마커 추가 및 토글 로직 연결
+    // 2. 마커 추가
     addMarker(lat, lng, title, category, data = null) {
         const position = new kakao.maps.LatLng(lat, lng);
+        
+        // 초기 마커 이미지 (기본)
         const markerImage = this.getMarkerImage(category);
-	console.log(category);
+
         const marker = new kakao.maps.Marker({
             position: position,
             map: this.map,
@@ -43,153 +67,225 @@ class KakaoMapHelper {
             image: markerImage
         });
 
+        // 마커 객체에 데이터 저장
+        marker.category = category;
+        marker.originalTitle = title; // 타이틀 보존
         if (data) marker.customData = data;
 
-        // 마커 클릭 시 선택/해제 토글
+        // 클릭 이벤트 리스너 등록
         kakao.maps.event.addListener(marker, 'click', () => {
-            this.toggleMarkerSelection(marker, title);
+            // 1) 카테고리 경로 그리기 및 거리 계산 로직 실행
+            this.handleCategorySelection(category);
+            
+            // 2) 클릭한 마커 위에 커스텀 인포윈도우 토글
+            this.toggleInfoWindow(marker, title);
         });
 
         this.markers.push(marker);
         return marker;
     }
-	
-	getMarkerImage(category) {
-		const colors = {
-		    '1': '#0000FF', // 파랑 (Primary)
-			'default' : 'black', // 검정 ()
-		    '2': '#FF0000', // 빨강 (Danger)
-		    '3': '#FFA500', // 주황 (Warning)
-		    '4': '#FF69B4', // 핑크 (Highlight)
-		    '5': '#228B22', // 초록 (Nature)
-		    '6': '#800080', // 보라 (Luxury)
-		    '7': '#00CED1', // 하늘색/민트 (Water)
-		    '8': '#FFD700', // 금색/노랑 (Point)
-		    '9': '#8B4513', // 갈색 (Land/Wood)
-		    '10': '#2F4F4F' // 다크 그레이 (Neutral)
-		};
-		
-	    const color = colors[category] || colors['default'];
-		console.log("category : " + category);
-	    // SVG로 마커 모양 만들기 (동그라미 핀 모양)
-		// SVG 안에 카테고리 번호를 텍스트로 삽입
-		const svgMarker = `
-		        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24">
-		            <path fill="${color}" stroke="white" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-		            <circle fill="white" cx="12" cy="9" r="2.5"/>
-		        </svg>
-		    `;
-		/*const svgMarker = `
-		    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24">
-		        <path fill="${color}" stroke="white" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
-		        <text x="12" y="10" fill="white" font-size="8" font-family="Arial" text-anchor="middle" font-weight="bold">${category}</text>
-		    </svg>
-		`;*/
-		const imageSrc = 'data:image/svg+xml;base64,' + btoa(svgMarker);
-		const imageSize = new kakao.maps.Size(30, 30);
-		    
-		return new kakao.maps.MarkerImage(imageSrc, imageSize);
-	    /*const imageOption = { offset: new kakao.maps.Point(18, 36) };*/
-	    /*return new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);*/
-	}
 
-    // 3. 마커 선택 토글 및 거리 측정 로직
-    toggleMarkerSelection(marker, title) {
-        // [취소] 이미 선택된 마커를 다시 클릭한 경우
-        if (this.lastClickedMarker === marker) {
-            this.clearRouteDisplay();
-            this.infowindow.close();
-            this.lastClickedMarker = null;
-            return;
-        }
+    // [핵심 로직] 카테고리별 경로 연결 및 거리 표시
+    handleCategorySelection(category) {
+        // 1. 기존 오버레이(거리 표시) 및 선 제거
+        this.clearOverlays();
+        if (this.pathLine) this.pathLine.setMap(null);
 
-        // [선택] 이전 마커가 있다면 거리 계산
-        if (this.lastClickedMarker) {
-            this.drawRouteBetween(this.lastClickedMarker, marker);
-        }
+        // 2. 해당 카테고리 마커들 필터링
+        const sameCategoryMarkers = this.markers.filter(m => m.category === category);
+        const path = [];
+        
+        // 3. 순회하며 번호 매기기 및 거리 계산
+        sameCategoryMarkers.forEach((m, index) => {
+            const currentPos = m.getPosition();
+            path.push(currentPos);
 
-        // 상태 업데이트 및 정보창 표시
-        this.showInfoWindow(marker, title);
-        this.lastClickedMarker = marker;
-    }
+            // 3-1. 순서가 적힌 마커 이미지로 변경
+            m.setImage(this.getMarkerForIndexImage(category, index));
 
-    // [거리 계산] 선 그리기 및 오버레이 표시
-    drawRouteBetween(startMarker, endMarker) {
-        const startPos = startMarker.getPosition();
-        const endPos = endMarker.getPosition();
+            // 3-2. 이전 노드와 거리 계산 (index > 0 일 때만)
+            if (index > 0) {
+                const prevPos = sameCategoryMarkers[index - 1].getPosition();
+                const line = new kakao.maps.Polyline({ path: [prevPos, currentPos] });
+                const distance = line.getLength(); // 미터 단위
 
-        this.clearRouteDisplay();
+                // 중간 지점 좌표 계산
+                const midPos = new kakao.maps.LatLng(
+                    (prevPos.getLat() + currentPos.getLat()) / 2,
+                    (prevPos.getLng() + currentPos.getLng()) / 2
+                );
 
-        this.polyline = new kakao.maps.Polyline({
-            path: [startPos, endPos],
-            strokeWeight: 4,
-            strokeColor: '#FF4E50',
-            strokeOpacity: 0.8,
-            strokeStyle: 'dash'
-        });
-        this.polyline.setMap(this.map);
-
-        const distance = Math.round(this.polyline.getLength());
-        const midPos = new kakao.maps.LatLng(
-            (startPos.getLat() + endPos.getLat()) / 2,
-            (startPos.getLng() + endPos.getLng()) / 2
-        );
-
-        this.distanceOverlay = new kakao.maps.CustomOverlay({
-            map: this.map,
-            position: midPos,
-            content: `<div class="dotOverlay">거리: <span class="number">${distance}</span>m</div>`,
-            yAnchor: 1.5
-        });
-
-        // 실제 도로 길찾기 컨펌
-/*        setTimeout(() => {
-            if (confirm(`직선 거리 ${distance}m 확인되었습니다.\n실제 도로 기준 길찾기를 보시겠습니까?`)) {
-                const sLat = startPos.getLat(), sLng = startPos.getLng();
-                const eLat = endPos.getLat(), eLng = endPos.getLng();
-                const sName = encodeURIComponent(startMarker.getTitle());
-                const eName = encodeURIComponent(endMarker.getTitle());
-                window.open(`https://map.kakao.com/?sName=${sName}&sX=${sLng}&sY=${sLat}&eName=${eName}&eX=${eLng}&eY=${eLat}`, '_blank');
+                this.drawDistanceOverlay(midPos, distance);
             }
-        }, 100);*/
+        });
+
+        // 4. 경로 선 그리기
+        this.pathLine = new kakao.maps.Polyline({
+            map: this.map,
+            path: path,
+            strokeWeight: 3,
+            strokeColor: colors[category] || '#FF0000',
+            strokeOpacity: 0.8,
+            strokeStyle: 'solid'
+        });
     }
 
-    clearRouteDisplay() {
-        if (this.polyline) this.polyline.setMap(null);
-        if (this.distanceOverlay) this.distanceOverlay.setMap(null);
+    // 거리 텍스트 오버레이 그리기
+    drawDistanceOverlay(position, distance) {
+        const distanceText = distance < 1000 
+            ? Math.round(distance) + 'm' 
+            : (distance / 1000).toFixed(1) + 'km';
+
+        const content = `
+            <div style="
+                background: white; 
+                border: 1px solid #777; 
+                padding: 2px 6px; 
+                border-radius: 4px; 
+                font-size: 11px; 
+                font-weight: bold; 
+                color: #333;
+                box-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+            ">
+                ${distanceText}
+            </div>`;
+
+        const overlay = new kakao.maps.CustomOverlay({
+            position: position,
+            content: content,
+            yAnchor: 1.5,
+            zIndex: 3
+        });
+        
+        overlay.setMap(this.map);
+        this.distanceOverlays.push(overlay);
     }
 
-    showInfoWindow(marker, content) {
-        const html = `<div style="padding:10px; min-width:150px;">
-                        <div style="font-weight:bold; margin-bottom:5px;">${content}</div>
-                      </div>`;
-/*                        <div style="font-size:11px; color:#666;">한 번 더 클릭하면 선택이 해제됩니다.</div>*/
-        this.infowindow.setContent(html);
-        this.infowindow.open(this.map, marker);
-    }
-
-    clearMarkers() {
-        this.clearRouteDisplay();
-        this.markers.forEach(m => m.setMap(null));
-        this.markers = [];
-        this.lastClickedMarker = null;
-    }
-
-    fitBounds() {
-        if (this.markers.length === 0) return;
-        const bounds = new kakao.maps.LatLngBounds();
-        this.markers.forEach(m => bounds.extend(m.getPosition()));
-        this.map.setBounds(bounds);
-    }
-
-/*    getMarkerImage(category) {
-        let imageSrc = ''; 
-        switch(category) {
-            case '맛집': case 'FD6': imageSrc = '/images/icon_food.png'; break;
-            case '카페': case 'CE7': imageSrc = '/images/icon_cafe.png'; break;
-            case '관광지': case 'AT4': imageSrc = '/images/icon_spot.png'; break;
-            default: return null;
+    // 정보창(커스텀 오버레이) 토글
+    toggleInfoWindow(marker, content) {
+        // 이미 열려있는 창이 있다면 닫기
+        if (this.activeOverlay) {
+            this.activeOverlay.setMap(null); // 지도에서 제거
+            
+            // 방금 클릭한 게 이미 열려있던 그 마커라면? -> 닫고 끝냄 (토글)
+            if (this.activeOverlay.marker === marker) {
+                this.activeOverlay = null;
+                return;
+            }
         }
-        return new kakao.maps.MarkerImage(imageSrc, new kakao.maps.Size(34, 39));
-    }*/
+
+        // 새 오버레이 생성
+        const html = `
+            <div class="custom-infowindow" style="
+                position: relative;
+                background: #fff;
+                border: 2px solid #333;
+                border-radius: 8px;
+                padding: 10px;
+                min-width: 120px;
+                box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                bottom: 45px;
+                text-align: center;
+            ">
+                <div style="font-weight:bold; font-size:13px; margin-bottom: 2px;">${content}</div>
+                <div style="font-size:10px; color:#888;">한 번 더 클릭 시 닫기</div>
+                
+                <div style="
+                    position: absolute;
+                    bottom: -10px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 0; height: 0;
+                    border-top: 10px solid #333;
+                    border-left: 8px solid transparent;
+                    border-right: 8px solid transparent;
+                "></div>
+                <div style="
+                    position: absolute;
+                    bottom: -7px;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    width: 0; height: 0;
+                    border-top: 10px solid #fff;
+                    border-left: 8px solid transparent;
+                    border-right: 8px solid transparent;
+                "></div>
+            </div>`;
+
+        const overlay = new kakao.maps.CustomOverlay({
+            content: html,
+            map: this.map,
+            position: marker.getPosition(),
+            yAnchor: 1,
+            zIndex: 5
+        });
+
+        // 현재 오버레이 상태 저장
+        overlay.marker = marker;
+        this.activeOverlay = overlay;
+    }
+
+    // 초기 마커 이미지 생성
+    getMarkerImage(category) {
+        const color = colors[category] || colors['default'];
+        const svgMarker = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24">
+                <path fill="${color}" stroke="white" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                <text x="12" y="12" fill="white" font-size="8" font-family="Arial" text-anchor="middle" font-weight="bold">${category}</text>
+            </svg>`;
+        
+        return new kakao.maps.MarkerImage(
+            'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgMarker))),
+            new kakao.maps.Size(36, 36),
+            { offset: new kakao.maps.Point(18, 36) }
+        );
+    }
+
+    // 순서 번호 마커 이미지 생성
+    getMarkerForIndexImage(category, index) {
+        const color = colors[category] || '#000000';
+        const svgMarker = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24">
+                <path fill="${color}" stroke="white" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+                <text x="12" y="12" fill="white" font-size="8" font-family="Arial" text-anchor="middle" font-weight="bold">${index + 1}</text>
+            </svg>`;
+
+        return new kakao.maps.MarkerImage(
+            'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgMarker))),
+            new kakao.maps.Size(36, 36),
+            { offset: new kakao.maps.Point(18, 36) }
+        );
+    }
+
+    // 유틸리티: 거리 오버레이 및 데이터 초기화
+    clearOverlays() {
+        if (this.distanceOverlays) {
+            this.distanceOverlays.forEach(o => o.setMap(null));
+        }
+        this.distanceOverlays = [];
+    }
+	
+	// 지도 범위 재설정 (인자가 없으면 전체, 있으면 해당 카테고리만)
+	fitBounds(category = null) {
+	    const bounds = new kakao.maps.LatLngBounds();
+	    let targets = this.markers;
+
+	    // 1. 특정 카테고리가 지정되었다면 필터링
+	    if (category) {
+	        targets = this.markers.filter(m => m.category === category);
+	    }
+
+	    // 2. 마커가 하나도 없으면 실행하지 않음
+	    if (targets.length === 0) return;
+
+	    // 3. 마커들의 좌표를 빈(bounds) 영역에 모두 포함시킴
+	    targets.forEach(marker => {
+	        bounds.extend(marker.getPosition());
+	    });
+
+	    // 4. 지도 범위를 재설정 (약간의 여백과 함께 이동)
+	    this.map.setBounds(bounds);
+	}
+	
+	
 }

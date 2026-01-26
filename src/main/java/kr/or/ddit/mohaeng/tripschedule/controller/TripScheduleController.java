@@ -628,8 +628,6 @@ public class TripScheduleController {
 		            [이동 수단]
 		            '%s'
 		            
-		            [위치 클러스터별 동선]
-		            '%s'
 		            
 		            [참고할 관광지 DB 데이터]
 		            '%s'
@@ -695,7 +693,8 @@ public class TripScheduleController {
 		        	check : 판단에 시간이 가장 오래걸린 작업정보}
 		            """,formattedDate, region, travelers, duration+1, styles
 		               , paceStr, budgetStr, accommodations, transportStr
-		               , finalPrompt, aiInputData, exclude, coordinate);
+		               , aiInputData, exclude, coordinate);
+	        
 //			9. check 라는 key로 가장 시간이 오래소요된 작업에 대한 설명과 개선방향이나 추가할 프롬프트 관련 피드백을 해줘 (초단위 시간 알려줄 수 있으면 더 좋음)
 //			12. 만약 축제나 행사등의 경우 운영 기간 외의 장소는 제외해
 //			13. 운영기간이나 비용정보가 정형화가 부족할 경우 너의 내부정보가 더 정형화가 잘 되어있으면 그쪽에 따를 것
@@ -799,7 +798,7 @@ public class TripScheduleController {
 	                .entity(new ParameterizedTypeReference<JsonNode>() {});
 	        stopWatch.stop();
 ////	        
-	        System.out.println(aiResult.toPrettyString());
+//	        System.out.println(aiResult.toPrettyString());
 	        
 	        System.out.println(stopWatch.prettyPrint()); // 전체적인 소요 시간 및 태스크별 비율
 	        System.out.println("Total Time: " + stopWatch.getTotalTimeMillis() + "ms");
@@ -808,7 +807,7 @@ public class TripScheduleController {
 	        model.addAttribute("data", preferenceData);
 	        model.addAttribute("result", aiResult);
 	        
-	        System.out.println("message : " + message);
+//	        System.out.println("message : " + message);
 	        
 	        
 			ObjectMapper mapper = new ObjectMapper();

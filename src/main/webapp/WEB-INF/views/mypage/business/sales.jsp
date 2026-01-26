@@ -1,10 +1,13 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt"%>
 
 <c:set var="pageTitle" value="매출 집계" />
 <c:set var="pageCss" value="mypage" />
 
-<%@ include file="../../common/header.jsp" %>
+<%@ include file="../../common/header.jsp" %><!-- SheetJS (엑셀 다운로드) -->
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <div class="mypage business-mypage">
     <div class="container">
@@ -20,22 +23,32 @@
                 <div class="stats-grid">
                     <div class="stat-card primary">
                         <div class="stat-icon"><i class="bi bi-currency-won"></i></div>
-                        <div class="stat-value">3,250,000</div>
+                        <div class="stat-value">
+                            <fmt:formatNumber value="${stats.thisMonthSales}" pattern="#,###"/>원
+                        </div>
                         <div class="stat-label">이번 달 매출</div>
                     </div>
                     <div class="stat-card secondary">
                         <div class="stat-icon"><i class="bi bi-graph-up-arrow"></i></div>
-                        <div class="stat-value">+15%</div>
+                        <div class="stat-value">
+                            <c:choose>
+                                <c:when test="${stats.growthRate >= 0}">+</c:when>
+                            </c:choose>${stats.growthRate}%
+                        </div>
                         <div class="stat-label">전월 대비</div>
                     </div>
                     <div class="stat-card accent">
                         <div class="stat-icon"><i class="bi bi-wallet2"></i></div>
-                        <div class="stat-value">2,437,500</div>
+                        <div class="stat-value">
+                            <fmt:formatNumber value="${stats.pendingSettle}" pattern="#,###"/>원
+                        </div>
                         <div class="stat-label">정산 예정</div>
                     </div>
                     <div class="stat-card warning">
                         <div class="stat-icon"><i class="bi bi-check2-circle"></i></div>
-                        <div class="stat-value">2,850,000</div>
+                        <div class="stat-value">
+                            <fmt:formatNumber value="${stats.lastMonthSettle}" pattern="#,###"/>원
+                        </div>
                         <div class="stat-label">지난달 정산</div>
                     </div>
                 </div>
@@ -44,16 +57,16 @@
                 <div class="content-section">
                     <div class="d-flex gap-3 align-items-center flex-wrap">
                         <div class="d-flex gap-2">
-                            <button class="btn btn-outline btn-sm active">이번 달</button>
-                            <button class="btn btn-outline btn-sm">지난 달</button>
-                            <button class="btn btn-outline btn-sm">최근 3개월</button>
-                            <button class="btn btn-outline btn-sm">최근 6개월</button>
+                            <button class="btn btn-outline btn-sm period-btn active" data-period="thisMonth">이번 달</button>
+                            <button class="btn btn-outline btn-sm period-btn" data-period="lastMonth">지난 달</button>
+                            <button class="btn btn-outline btn-sm period-btn" data-period="3months">최근 3개월</button>
+                            <button class="btn btn-outline btn-sm period-btn" data-period="6months">최근 6개월</button>
                         </div>
                         <div class="d-flex gap-2 ms-auto">
-                            <input type="date" class="form-control form-control-sm" style="width: 150px;">
+                            <input type="date" class="form-control form-control-sm" style="width: 150px;" id="startDate">
                             <span class="align-self-center">~</span>
-                            <input type="date" class="form-control form-control-sm" style="width: 150px;">
-                            <button class="btn btn-primary btn-sm">조회</button>
+                            <input type="date" class="form-control form-control-sm" style="width: 150px;" id="endDate">
+                            <button class="btn btn-primary btn-sm" id="searchDateBtn">조회</button>
                         </div>
                     </div>
                 </div>
@@ -62,47 +75,15 @@
                 <div class="content-section">
                     <div class="section-header">
                         <h3><i class="bi bi-graph-up"></i> 월별 매출 추이</h3>
-                        <button class="btn btn-outline btn-sm">
-                            <i class="bi bi-download me-2"></i>엑셀 다운로드
-                        </button>
                     </div>
 
                     <div class="sales-chart-container">
-                        <!-- 차트 플레이스홀더 -->
-                        <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;">
-                            <div class="text-center">
-                                <i class="bi bi-bar-chart" style="font-size: 48px; color: var(--primary-color);"></i>
-                                <p class="mt-2 text-muted">Chart.js 등을 사용하여 차트 구현</p>
-                            </div>
-                        </div>
+                        <canvas id="salesChart" style="width: 100%; height: 300px;"></canvas>
                     </div>
 
                     <!-- 월별 요약 -->
-                    <div class="row text-center">
-                        <div class="col-md-3">
-                            <div class="p-3 bg-light rounded">
-                                <small class="text-muted">1월</small>
-                                <h5 class="mb-0">2,150,000원</h5>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 bg-light rounded">
-                                <small class="text-muted">2월</small>
-                                <h5 class="mb-0">2,850,000원</h5>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 bg-light rounded">
-                                <small class="text-muted">3월</small>
-                                <h5 class="mb-0 text-primary">3,250,000원</h5>
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="p-3 bg-light rounded">
-                                <small class="text-muted">누적</small>
-                                <h5 class="mb-0 text-success">8,250,000원</h5>
-                            </div>
-                        </div>
+                    <div class="row text-center" id="monthlySummary">
+                        <!-- 동적으로 생성됨 -->
                     </div>
                 </div>
 
@@ -119,11 +100,11 @@
                             <div class="comparison-rank-card">
                                 <div class="rank-badge">
                                     <i class="bi bi-trophy-fill"></i>
-                                    <span>12위</span>
+                                    <span id="myRank">-위</span>
                                 </div>
                                 <div class="rank-info">
                                     <div class="rank-label">동종업계 순위</div>
-                                    <div class="rank-total">전체 156개 업체 중</div>
+                                    <div class="rank-total">전체 <span id="totalCompanyCnt">0</span>개 업체 중</div>
                                 </div>
                             </div>
                         </div>
@@ -131,11 +112,11 @@
                             <div class="comparison-rank-card">
                                 <div class="rank-badge up">
                                     <i class="bi bi-graph-up-arrow"></i>
-                                    <span>상위 8%</span>
+                                    <span id="rankPercent">-%</span>
                                 </div>
                                 <div class="rank-info">
                                     <div class="rank-label">매출 상위</div>
-                                    <div class="rank-total">지난달 대비 2단계 상승</div>
+                                    <div class="rank-total" id="rankChange">-%</div>
                                 </div>
                             </div>
                         </div>
@@ -143,176 +124,100 @@
                             <div class="comparison-rank-card">
                                 <div class="rank-badge highlight">
                                     <i class="bi bi-award-fill"></i>
-                                    <span>+23%</span>
+                                    <span id="salesDiffPercent">-</span>
                                 </div>
                                 <div class="rank-info">
                                     <div class="rank-label">평균 대비 매출</div>
-                                    <div class="rank-total">업계 평균보다 높음</div>
+                                    <div class="rank-total" id="salesDiffText">-</div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
                     <!-- 상세 비교 지표 -->
-                    <div class="comparison-metrics">
-                        <div class="comparison-item">
-                            <div class="comparison-header">
-                                <span class="metric-name">월 매출</span>
-                                <div class="metric-values">
-                                    <span class="my-value">3,250,000원</span>
-                                    <span class="vs">vs</span>
-                                    <span class="avg-value">2,640,000원</span>
-                                </div>
-                            </div>
-                            <div class="comparison-bar-container">
-                                <div class="comparison-bar">
-                                    <div class="bar-fill my-bar" style="width: 100%;"></div>
-                                </div>
-                                <div class="comparison-bar">
-                                    <div class="bar-fill avg-bar" style="width: 81%;"></div>
-                                </div>
-                            </div>
-                            <div class="comparison-legend">
-                                <span class="legend-item my"><i class="bi bi-circle-fill"></i> 우리 업체</span>
-                                <span class="legend-item avg"><i class="bi bi-circle-fill"></i> 업계 평균</span>
-                                <span class="diff-badge positive">+23%</span>
-                            </div>
-                        </div>
-
-                        <div class="comparison-item">
-                            <div class="comparison-header">
-                                <span class="metric-name">월 예약 수</span>
-                                <div class="metric-values">
-                                    <span class="my-value">47건</span>
-                                    <span class="vs">vs</span>
-                                    <span class="avg-value">32건</span>
-                                </div>
-                            </div>
-                            <div class="comparison-bar-container">
-                                <div class="comparison-bar">
-                                    <div class="bar-fill my-bar" style="width: 100%;"></div>
-                                </div>
-                                <div class="comparison-bar">
-                                    <div class="bar-fill avg-bar" style="width: 68%;"></div>
-                                </div>
-                            </div>
-                            <div class="comparison-legend">
-                                <span class="legend-item my"><i class="bi bi-circle-fill"></i> 우리 업체</span>
-                                <span class="legend-item avg"><i class="bi bi-circle-fill"></i> 업계 평균</span>
-                                <span class="diff-badge positive">+47%</span>
-                            </div>
-                        </div>
-
-                        <div class="comparison-item">
-                            <div class="comparison-header">
-                                <span class="metric-name">평균 평점</span>
-                                <div class="metric-values">
-                                    <span class="my-value">4.8점</span>
-                                    <span class="vs">vs</span>
-                                    <span class="avg-value">4.2점</span>
-                                </div>
-                            </div>
-                            <div class="comparison-bar-container">
-                                <div class="comparison-bar">
-                                    <div class="bar-fill my-bar" style="width: 96%;"></div>
-                                </div>
-                                <div class="comparison-bar">
-                                    <div class="bar-fill avg-bar" style="width: 84%;"></div>
-                                </div>
-                            </div>
-                            <div class="comparison-legend">
-                                <span class="legend-item my"><i class="bi bi-circle-fill"></i> 우리 업체</span>
-                                <span class="legend-item avg"><i class="bi bi-circle-fill"></i> 업계 평균</span>
-                                <span class="diff-badge positive">+14%</span>
-                            </div>
-                        </div>
-
-                        <div class="comparison-item">
-                            <div class="comparison-header">
-                                <span class="metric-name">재예약률</span>
-                                <div class="metric-values">
-                                    <span class="my-value">18%</span>
-                                    <span class="vs">vs</span>
-                                    <span class="avg-value">22%</span>
-                                </div>
-                            </div>
-                            <div class="comparison-bar-container">
-                                <div class="comparison-bar">
-                                    <div class="bar-fill my-bar" style="width: 82%;"></div>
-                                </div>
-                                <div class="comparison-bar">
-                                    <div class="bar-fill avg-bar" style="width: 100%;"></div>
-                                </div>
-                            </div>
-                            <div class="comparison-legend">
-                                <span class="legend-item my"><i class="bi bi-circle-fill"></i> 우리 업체</span>
-                                <span class="legend-item avg"><i class="bi bi-circle-fill"></i> 업계 평균</span>
-                                <span class="diff-badge negative">-18%</span>
-                            </div>
-                        </div>
-
-                        <div class="comparison-item">
-                            <div class="comparison-header">
-                                <span class="metric-name">취소율</span>
-                                <div class="metric-values">
-                                    <span class="my-value">5%</span>
-                                    <span class="vs">vs</span>
-                                    <span class="avg-value">8%</span>
-                                </div>
-                            </div>
-                            <div class="comparison-bar-container">
-                                <div class="comparison-bar">
-                                    <div class="bar-fill my-bar good" style="width: 62%;"></div>
-                                </div>
-                                <div class="comparison-bar">
-                                    <div class="bar-fill avg-bar" style="width: 100%;"></div>
-                                </div>
-                            </div>
-                            <div class="comparison-legend">
-                                <span class="legend-item my"><i class="bi bi-circle-fill"></i> 우리 업체</span>
-                                <span class="legend-item avg"><i class="bi bi-circle-fill"></i> 업계 평균</span>
-                                <span class="diff-badge positive">-37% (양호)</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 개선 제안 -->
-                    <div class="improvement-tips">
-                        <h5><i class="bi bi-lightbulb me-2"></i>개선 포인트</h5>
-                        <div class="tips-list">
-                            <div class="tip-item warning">
-                                <i class="bi bi-exclamation-circle"></i>
-                                <div class="tip-content">
-                                    <strong>재예약률이 평균보다 낮습니다.</strong>
-                                    <p>리뷰 작성 고객에게 재예약 할인 쿠폰을 제공해보세요.</p>
-                                </div>
-                            </div>
-                            <div class="tip-item success">
-                                <i class="bi bi-check-circle"></i>
-                                <div class="tip-content">
-                                    <strong>평균 평점이 우수합니다!</strong>
-                                    <p>높은 평점을 유지하며 리뷰 수를 늘려 신뢰도를 높이세요.</p>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="comparison-metrics" id="comparisonMetrics">
+                        <!-- 동적으로 생성됨 -->
                     </div>
                 </div>
+                
+                <!-- 상품별 정산 목록 -->
+				<div class="content-section">
+				    <div class="section-header">
+				        <h3><i class="bi bi-box-seam"></i> 상품별 정산 현황</h3>
+				        <button class="btn btn-primary btn-sm" id="settleRequestBtn" disabled>
+				            <i class="bi bi-cash-coin me-2"></i>정산 요청
+				        </button>
+				    </div>
+				
+				    <div class="table-responsive">
+				        <table class="sales-table product-sales-table">
+				            <thead>
+				                <tr>
+				                    <th style="width: 5%;">
+				                        <input type="checkbox" id="selectAllProducts" onclick="toggleAllProducts()">
+				                    </th>
+				                    <th>상품명</th>
+				                    <th style="width: 10%;">예약 건수</th>
+				                    <th style="width: 12%;">결제 금액</th>
+				                    <th style="width: 12%;">수수료</th>
+				                    <th style="width: 12%;">정산가능 금액</th>
+				                    <th style="width: 10%;">정산가능 건수</th>
+				                </tr>
+				            </thead>
+				            <tbody id="productSalesTableBody">
+				                <!-- 동적으로 생성됨 -->
+				            </tbody>
+				            <tfoot>
+							    <tr style="background: var(--light-color);">
+							        <td></td>
+							        <td class="text-end fw-bold">합계</td>
+							        <td></td>
+							        <td class="fw-bold text-end" id="productTotalNetSales">0원</td>
+							        <td class="text-danger fw-bold text-end" id="productTotalCommission">0원</td>
+							        <td class="fw-bold text-primary text-end" id="productTotalSettleAmt">0원</td>
+							        <td></td>
+							    </tr>
+							</tfoot>
+				        </table>
+				    </div>
+				    
+				    <!-- 데이터 없음 -->
+				    <div class="text-center py-5" id="noProductDataMessage" style="display: none;">
+				        <i class="bi bi-inbox" style="font-size: 48px; color: #ccc;"></i>
+				        <p class="mt-3 text-muted">조회된 데이터가 없습니다.</p>
+				    </div>
+				
+				    <!-- 페이지네이션 -->
+				    <div class="pagination-container">
+				        <nav>
+				            <ul class="pagination" id="productPagination">
+				                <!-- 동적으로 생성됨 -->
+				            </ul>
+				        </nav>
+				    </div>
+				</div>
 
                 <!-- 상세 내역 -->
                 <div class="content-section">
                     <div class="section-header">
                         <h3><i class="bi bi-list-ul"></i> 상세 내역</h3>
                         <div class="d-flex gap-2">
-                            <select class="form-select form-select-sm" style="width: 120px;">
-                                <option>전체 상태</option>
-                                <option>확정</option>
-                                <option>취소</option>
+	                        <button class="btn btn-outline btn-sm" id="excelDownloadBtn">
+				                <i class="bi bi-download me-2"></i>엑셀 다운로드
+				            </button>
+                            <select class="form-select form-select-sm" style="width: 120px;" id="statusFilter">
+                                <option value="">전체 상태</option>
+                                <option value="정산대기">정산대기</option>
+                                <option value="정산가능">정산가능</option>
+							    <option value="정산요청">정산요청</option>
+                                <option value="정산완료">정산완료</option>
+                                <option value="취소">취소</option>
                             </select>
                             <div class="search-input-wrapper">
                                 <input type="text" class="form-control form-control-sm"
                                        placeholder="예약번호, 상품명, 예약자 검색"
                                        style="width: 220px;" id="salesSearchInput">
-                                <button type="button" class="search-btn" onclick="searchSalesDetail()">
+                                <button type="button" class="search-btn" id="searchBtn">
                                     <i class="bi bi-search"></i>
                                 </button>
                             </div>
@@ -334,100 +239,33 @@
                                     <th>상태</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td>MH2403015</td>
-                                    <td>2024.03.15 14:32</td>
-                                    <td>제주 스쿠버다이빙 체험</td>
-                                    <td>김OO</td>
-                                    <td>2024.04.20</td>
-                                    <td>136,000원</td>
-                                    <td class="text-danger">-13,600원</td>
-                                    <td class="fw-bold">122,400원</td>
-                                    <td><span class="payment-status completed">확정</span></td>
-                                </tr>
-                                <tr>
-                                    <td>MH2403014</td>
-                                    <td>2024.03.14 11:20</td>
-                                    <td>한라산 트레킹 투어</td>
-                                    <td>이OO</td>
-                                    <td>2024.03.25</td>
-                                    <td>85,000원</td>
-                                    <td class="text-danger">-8,500원</td>
-                                    <td class="fw-bold">76,500원</td>
-                                    <td><span class="payment-status completed">확정</span></td>
-                                </tr>
-                                <tr>
-                                    <td>MH2403013</td>
-                                    <td>2024.03.13 16:45</td>
-                                    <td>제주 서핑 레슨</td>
-                                    <td>박OO</td>
-                                    <td>2024.03.20</td>
-                                    <td>65,000원</td>
-                                    <td class="text-danger">-6,500원</td>
-                                    <td class="fw-bold">58,500원</td>
-                                    <td><span class="payment-status completed">확정</span></td>
-                                </tr>
-                                <tr>
-                                    <td>MH2403012</td>
-                                    <td>2024.03.12 09:15</td>
-                                    <td>제주 스쿠버다이빙 체험</td>
-                                    <td>최OO</td>
-                                    <td>2024.03.18</td>
-                                    <td>204,000원</td>
-                                    <td class="text-danger">-20,400원</td>
-                                    <td class="fw-bold">183,600원</td>
-                                    <td><span class="payment-status completed">확정</span></td>
-                                </tr>
-                                <tr>
-                                    <td>MH2403011</td>
-                                    <td>2024.03.11 18:30</td>
-                                    <td>우도 자전거 투어</td>
-                                    <td>정OO</td>
-                                    <td>2024.03.15</td>
-                                    <td>45,000원</td>
-                                    <td>-</td>
-                                    <td>-</td>
-                                    <td><span class="payment-status cancelled">취소</span></td>
-                                </tr>
-                                <tr>
-                                    <td>MH2403010</td>
-                                    <td>2024.03.10 10:22</td>
-                                    <td>한라산 트레킹 투어</td>
-                                    <td>강OO</td>
-                                    <td>2024.03.16</td>
-                                    <td>170,000원</td>
-                                    <td class="text-danger">-17,000원</td>
-                                    <td class="fw-bold">153,000원</td>
-                                    <td><span class="payment-status completed">확정</span></td>
-                                </tr>
+                            <tbody id="salesTableBody">
+                                <!-- 동적으로 생성됨 -->
                             </tbody>
                             <tfoot>
                                 <tr style="background: var(--light-color);">
                                     <td colspan="5" class="text-end fw-bold">합계</td>
-                                    <td class="fw-bold">705,000원</td>
-                                    <td class="text-danger fw-bold">-66,000원</td>
-                                    <td class="fw-bold text-primary">594,000원</td>
+                                    <td class="fw-bold" id="totalNetSales">0원</td>
+                                    <td class="text-danger fw-bold" id="totalCommission">0원</td>
+                                    <td class="fw-bold text-primary" id="totalSettleAmt">0원</td>
                                     <td></td>
                                 </tr>
                             </tfoot>
                         </table>
+                    </div>
+                    
+                    <!-- 데이터 없음 -->
+                    <div class="text-center py-5" id="noDataMessage" style="display: none;">
+                        <i class="bi bi-inbox" style="font-size: 48px; color: #ccc;"></i>
+                        <p class="mt-3 text-muted">조회된 데이터가 없습니다.</p>
                     </div>
                 </div>
 
                 <!-- 페이지네이션 -->
                 <div class="pagination-container">
                     <nav>
-                        <ul class="pagination">
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                            </li>
+                        <ul class="pagination" id="pagination">
+                            <!-- 동적으로 생성됨 -->
                         </ul>
                     </nav>
                 </div>
@@ -436,69 +274,747 @@
     </div>
 </div>
 
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <c:set var="pageJs" value="mypage" />
 <c:set var="hasInlineScript" value="true" />
 <%@ include file="../../common/footer.jsp" %>
 
 <script>
-// 상세 내역 검색 기능
-function searchSalesDetail() {
-    const searchInput = document.getElementById('salesSearchInput');
-    const keyword = searchInput.value.trim().toLowerCase();
-    const tableRows = document.querySelectorAll('.sales-table tbody tr');
+// 전역 변수
+let salesChart = null;
+let currentPage = 1;
+const pageSize = 10;
+let currentStartDate = '';
+let currentEndDate = '';
+let productCurrentPage = 1;
+const productPageSize = 10;
+let selectedProducts = [];
 
-    // 검색어가 없으면 모든 행 표시
-    if (!keyword) {
-        tableRows.forEach(row => {
-            row.classList.remove('search-hidden', 'search-highlight');
+// 페이지 로드 시 실행
+document.addEventListener('DOMContentLoaded', function() {
+    // 이번 달 기간 설정
+    setThisMonth();
+    // 데이터 로드
+    loadAllData();
+    
+    // 이벤트 리스너 등록
+    initEventListeners();
+});
+
+// 이벤트 리스너 초기화
+function initEventListeners() {
+    // 기간 버튼 클릭
+    document.querySelectorAll('.period-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            
+            const period = this.dataset.period;
+            setPeriod(period);
+            loadAllData();
         });
-        return;
-    }
-
-    let foundCount = 0;
-
-    tableRows.forEach(row => {
-        const cells = row.querySelectorAll('td');
-        let rowText = '';
-
-        cells.forEach(cell => {
-            rowText += cell.textContent.toLowerCase() + ' ';
-        });
-
-        if (rowText.includes(keyword)) {
-            row.classList.remove('search-hidden');
-            row.classList.add('search-highlight');
-            foundCount++;
-        } else {
-            row.classList.add('search-hidden');
-            row.classList.remove('search-highlight');
+    });
+    
+    // 날짜 조회 버튼
+    document.getElementById('searchDateBtn').addEventListener('click', function() {
+        document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+        currentStartDate = document.getElementById('startDate').value;
+        currentEndDate = document.getElementById('endDate').value;
+        loadAllData();
+    });
+    
+    // 상태 필터 변경
+    document.getElementById('statusFilter').addEventListener('change', function() {
+        currentPage = 1;
+        loadSalesList();
+    });
+    
+    // 검색 버튼
+    document.getElementById('searchBtn').addEventListener('click', function() {
+        currentPage = 1;
+        loadSalesList();
+    });
+    
+    // 검색어 Enter
+    document.getElementById('salesSearchInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            currentPage = 1;
+            loadSalesList();
         }
     });
+}
 
-    // 검색 결과 토스트 메시지
-    if (foundCount > 0) {
-        showToast(foundCount + '건의 검색 결과가 있습니다.', 'success');
-    } else {
-        showToast('검색 결과가 없습니다.', 'warning');
+// 기간 설정
+function setPeriod(period) {
+    const today = new Date();
+    let startDate, endDate;
+    
+    switch(period) {
+        case 'thisMonth':
+            startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+            endDate = today;
+            break;
+        case 'lastMonth':
+            startDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+            endDate = new Date(today.getFullYear(), today.getMonth(), 0);
+            break;
+        case '3months':
+            startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
+            endDate = today;
+            break;
+        case '6months':
+            startDate = new Date(today.getFullYear(), today.getMonth() - 5, 1);
+            endDate = today;
+            break;
+    }
+    
+    currentStartDate = formatDate(startDate);
+    currentEndDate = formatDate(endDate);
+    
+    document.getElementById('startDate').value = currentStartDate;
+    document.getElementById('endDate').value = currentEndDate;
+}
+
+function setThisMonth() {
+    setPeriod('thisMonth');
+}
+
+// 날짜 포맷
+function formatDate(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return year + '-' + month + '-' + day;
+}
+
+// 전체 데이터 로드
+function loadAllData() {
+    const params = new URLSearchParams({
+        startDate: currentStartDate,
+        endDate: currentEndDate,
+        page: currentPage,
+        pageSize: pageSize
+    });
+    
+    fetch(contextPath + '/mypage/business/sales/data?' + params)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // 차트 업데이트
+                updateChart(data.monthlySales);
+                // 월별 요약 업데이트
+                updateMonthlySummary(data.monthlySales);
+                // 동종업계 비교 업데이트
+                updateComparison(data.comparison);
+                // 테이블 업데이트
+                renderSalesTable(data.list);
+                // 합계 업데이트
+                updateSummary(data.summary);
+                // 페이지네이션 업데이트
+                renderPagination(data.totalCount, data.totalPages);
+            } else {
+                showToast(data.message || '데이터를 불러오는데 실패했습니다.', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('데이터를 불러오는데 실패했습니다.', 'error');
+        });
+    
+    loadProductSales();
+}
+
+// 목록만 로드 (페이징, 검색, 필터)
+function loadSalesList() {
+    const params = new URLSearchParams({
+        startDate: currentStartDate,
+        endDate: currentEndDate,
+        page: currentPage,
+        pageSize: pageSize,
+        status: document.getElementById('statusFilter').value,
+        keyword: document.getElementById('salesSearchInput').value
+    });
+    
+    fetch(contextPath + '/mypage/business/sales/list?' + params)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderSalesTable(data.list);
+                updateSummary(data.summary);
+                renderPagination(data.totalCount, data.totalPages);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// 차트 업데이트
+function updateChart(monthlySales) {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    
+    const labels = monthlySales.map(item => item.saleMonth);
+    const data = monthlySales.map(item => item.monthlyTotal || 0);
+    
+    if (salesChart) {
+        salesChart.destroy();
+    }
+    
+    salesChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '월별 매출',
+                data: data,
+                backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y.toLocaleString() + '원';
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString() + '원';
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+// 월별 요약 업데이트
+function updateMonthlySummary(monthlySales) {
+    const container = document.getElementById('monthlySummary');
+    
+    if (!monthlySales || monthlySales.length === 0) {
+        container.innerHTML = '<div class="col-12"><p class="text-muted">데이터가 없습니다.</p></div>';
+        return;
+    }
+    
+    // 최근 3개월 + 누적
+    const recentMonths = monthlySales.slice(-3);
+    const total = monthlySales.reduce((sum, item) => sum + (item.monthlyTotal || 0), 0);
+    
+    let html = '';
+    recentMonths.forEach((item, index) => {
+        const isLast = index === recentMonths.length - 1;
+        html += '<div class="col-md-3">';
+        html += '<div class="p-3 bg-light rounded">';
+        html += '<small class="text-muted">' + item.saleMonth + '</small>';
+        html += '<h5 class="mb-0' + (isLast ? ' text-primary' : '') + '">' + (item.monthlyTotal || 0).toLocaleString() + '원</h5>';
+        html += '</div></div>';
+    });
+    
+    html += '<div class="col-md-3">';
+    html += '<div class="p-3 bg-light rounded">';
+    html += '<small class="text-muted">누적</small>';
+    html += '<h5 class="mb-0 text-success">' + total.toLocaleString() + '원</h5>';
+    html += '</div></div>';
+    
+    container.innerHTML = html;
+}
+
+// 동종업계 비교 업데이트
+function updateComparison(comparison) {
+    if (!comparison) {
+        return;
+    }
+    
+    // 순위 카드
+    document.getElementById('myRank').textContent = (comparison.myRank || '-') + '위';
+    document.getElementById('totalCompanyCnt').textContent = comparison.totalCompanyCnt || 0;
+    
+    // 상위 퍼센트 계산
+    if (comparison.totalCompanyCnt > 0) {
+        const percent = Math.round((comparison.myRank / comparison.totalCompanyCnt) * 100);
+        document.getElementById('rankPercent').textContent = percent + '%';
+        document.getElementById('rankChange').textContent = percent + '%';
+    }
+    
+    // 평균 대비 매출
+    const mySales = comparison.netSales || 0;
+    const avgSales = comparison.avgSales || 0;
+    if (avgSales > 0) {
+        const diff = Math.round(((mySales - avgSales) / avgSales) * 100);
+        document.getElementById('salesDiffPercent').textContent = (diff >= 0 ? '+' : '') + diff + '%';
+        document.getElementById('salesDiffText').textContent = diff >= 0 ? '업계 평균보다 높음' : '업계 평균보다 낮음';
+    }
+    
+    // 상세 비교 지표
+    renderComparisonMetrics(comparison);
+}
+
+// 비교 지표 렌더링
+function renderComparisonMetrics(c) {
+    const container = document.getElementById('comparisonMetrics');
+    
+    const metrics = [
+        { name: '월 매출', myValue: c.netSales, avgValue: c.avgSales, unit: '원', reverse: false },
+        { name: '월 예약 수', myValue: c.resvCount, avgValue: c.avgResvCount, unit: '건', reverse: false },
+        { name: '평균 평점', myValue: c.avgRating, avgValue: c.industryAvgRating, unit: '점', reverse: false, max: 5 },
+        { name: '취소율', myValue: c.cancelRate, avgValue: c.avgCancelRate, unit: '%', reverse: true }
+    ];
+    
+    let html = '';
+    metrics.forEach(m => {
+        const myVal = m.myValue || 0;
+        const avgVal = m.avgValue || 0;
+        const maxVal = m.max || Math.max(myVal, avgVal) || 1;
+        
+        const myPercent = Math.min((myVal / maxVal) * 100, 100);
+        const avgPercent = Math.min((avgVal / maxVal) * 100, 100);
+        
+        let diff = 0;
+        if (avgVal > 0) {
+            diff = Math.round(((myVal - avgVal) / avgVal) * 100);
+        }
+        
+        const isGood = m.reverse ? diff <= 0 : diff >= 0;
+        const diffClass = isGood ? 'positive' : 'negative';
+        const diffText = m.reverse && diff < 0 ? diff + '% (양호)' : (diff >= 0 ? '+' : '') + diff + '%';
+        
+        html += '<div class="comparison-item">';
+        html += '<div class="comparison-header">';
+        html += '<span class="metric-name">' + m.name + '</span>';
+        html += '<div class="metric-values">';
+        html += '<span class="my-value">' + (m.unit === '원' ? myVal.toLocaleString() : myVal) + m.unit + '</span>';
+        html += '<span class="vs">vs</span>';
+        html += '<span class="avg-value">' + (m.unit === '원' ? avgVal.toLocaleString() : avgVal) + m.unit + '</span>';
+        html += '</div></div>';
+        html += '<div class="comparison-bar-container">';
+        html += '<div class="comparison-bar"><div class="bar-fill my-bar' + (m.reverse && isGood ? ' good' : '') + '" style="width: ' + myPercent + '%;"></div></div>';
+        html += '<div class="comparison-bar"><div class="bar-fill avg-bar" style="width: ' + avgPercent + '%;"></div></div>';
+        html += '</div>';
+        html += '<div class="comparison-legend">';
+        html += '<span class="legend-item my"><i class="bi bi-circle-fill"></i> 우리 업체</span>';
+        html += '<span class="legend-item avg"><i class="bi bi-circle-fill"></i> 업계 평균</span>';
+        html += '<span class="diff-badge ' + diffClass + '">' + diffText + '</span>';
+        html += '</div></div>';
+    });
+    
+    container.innerHTML = html;
+}
+
+// 테이블 렌더링
+function renderSalesTable(list) {
+    const tbody = document.getElementById('salesTableBody');
+    const noData = document.getElementById('noDataMessage');
+    
+    if (!list || list.length === 0) {
+        tbody.innerHTML = '';
+        noData.style.display = 'block';
+        return;
+    }
+    
+    noData.style.display = 'none';
+    
+    let html = '';
+    list.forEach(sale => {
+        const statusClass = getStatusClass(sale.settleStatCd);
+        
+        html += '<tr>';
+        html += '<td>' + formatPayNo(sale.payDt, sale.payNo) + '</td>';
+        html += '<td>' + formatDateTime(sale.payDt) + '</td>';
+        html += '<td>' + (sale.tripProdTitle || '-') + '</td>';
+        html += '<td>' + sale.buyerName + '</td>';
+        html += '<td>' + formatDateOnly(sale.resvDt) + (sale.useTime ? ' ' + sale.useTime : '') + '</td>';
+        html += '<td>' + (sale.netSales || 0).toLocaleString() + '원</td>';
+        
+        if (sale.settleStatCd === '취소') {
+            html += '<td>-</td>';
+            html += '<td>-</td>';
+        } else {
+            html += '<td class="text-danger">-' + (sale.commission || 0).toLocaleString() + '원</td>';
+            html += '<td class="fw-bold">' + (sale.settleAmt || 0).toLocaleString() + '원</td>';
+        }
+        
+        html += '<td><span class="payment-status ' + statusClass + '">' + sale.settleStatCd + '</span></td>';
+        html += '</tr>';
+    });
+    
+    tbody.innerHTML = html;
+}
+
+// 상태 클래스
+function getStatusClass(status) {
+    switch(status) {
+        case '정산완료': return 'completed';
+        case '정산요청': return 'requested';
+        case '정산가능': return 'ready';
+        case '정산대기': return 'waiting';
+        case '취소': return 'cancelled';
+        default: return '';
     }
 }
 
-// Enter 키로 검색
-document.getElementById('salesSearchInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        searchSalesDetail();
+// 이름 마스킹
+function maskName(name) {
+    if (!name || name.length < 2) return name || '-';
+    return name.charAt(0) + 'O'.repeat(name.length - 1);
+}
+
+// 날짜 포맷 (yyyy.MM.dd HH:mm)
+function formatDateTime(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hour = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    return year + '.' + month + '.' + day + ' ' + hour + ':' + min;
+}
+
+// 날짜만 포맷 (yyyy.MM.dd)
+function formatDateOnly(dateStr) {
+    if (!dateStr) return '-';
+    const date = new Date(dateStr);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return year + '.' + month + '.' + day;
+}
+
+// 합계 업데이트
+function updateSummary(summary) {
+    if (!summary) return;
+    
+    document.getElementById('totalNetSales').textContent = (summary.netSales || 0).toLocaleString() + '원';
+    document.getElementById('totalCommission').textContent = '-' + (summary.commission || 0).toLocaleString() + '원';
+    document.getElementById('totalSettleAmt').textContent = (summary.settleAmt || 0).toLocaleString() + '원';
+}
+
+// 페이지네이션 렌더링
+function renderPagination(totalCount, totalPages) {
+    const container = document.getElementById('pagination');
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
     }
+    
+    let html = '';
+    
+    // 이전 버튼
+    html += '<li class="page-item' + (currentPage === 1 ? ' disabled' : '') + '">';
+    html += '<a class="page-link" href="#" onclick="goToPage(' + (currentPage - 1) + '); return false;"><i class="bi bi-chevron-left"></i></a>';
+    html += '</li>';
+    
+    // 페이지 번호
+    const startPage = Math.max(1, currentPage - 2);
+    const endPage = Math.min(totalPages, startPage + 4);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += '<li class="page-item' + (i === currentPage ? ' active' : '') + '">';
+        html += '<a class="page-link" href="#" onclick="goToPage(' + i + '); return false;">' + i + '</a>';
+        html += '</li>';
+    }
+    
+    // 다음 버튼
+    html += '<li class="page-item' + (currentPage === totalPages ? ' disabled' : '') + '">';
+    html += '<a class="page-link" href="#" onclick="goToPage(' + (currentPage + 1) + '); return false;"><i class="bi bi-chevron-right"></i></a>';
+    html += '</li>';
+    
+    container.innerHTML = html;
+}
+
+// 페이지 이동
+function goToPage(page) {
+    if (page < 1) return;
+    currentPage = page;
+    loadSalesList();
+    
+    // 테이블로 스크롤
+    document.querySelector('.sales-table').scrollIntoView({ behavior: 'smooth' });
+}
+
+function formatPayNo(payDt, payNo) {
+    if (!payDt || !payNo) return '-';
+    
+    // payDt에서 날짜 추출 (YYYYMMDD)
+    var date = new Date(payDt);
+    var dateStr = date.getFullYear() +
+                  String(date.getMonth() + 1).padStart(2, '0') +
+                  String(date.getDate()).padStart(2, '0');
+    
+    // payNo 8자리로 맞춤
+    var payNoStr = String(payNo).padStart(8, '0');
+    
+    return dateStr + payNoStr;  // 예: 2026012400000093
+}
+
+//상품별 매출 목록 로드
+function loadProductSales() {
+    const params = new URLSearchParams({
+        startDate: currentStartDate,
+        endDate: currentEndDate,
+        productPage: productCurrentPage,
+        productPageSize: productPageSize
+    });
+    
+    fetch(contextPath + '/mypage/business/sales/products?' + params)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderProductSalesTable(data.list);
+                updateProductSummary(data.summary);
+                renderProductPagination(data.totalCount, data.totalPages);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+}
+
+// 상품별 매출 테이블 렌더링
+function renderProductSalesTable(list) {
+    const tbody = document.getElementById('productSalesTableBody');
+    const noData = document.getElementById('noProductDataMessage');
+    
+    if (!list || list.length === 0) {
+        tbody.innerHTML = '';
+        noData.style.display = 'block';
+        return;
+    }
+    
+    noData.style.display = 'none';
+    
+    let html = '';
+    list.forEach(item => {
+        const isChecked = selectedProducts.includes(item.tripProdNo) ? 'checked' : '';
+        const isDisabled = item.settleCount === 0 ? 'disabled' : '';
+        
+        html += '<tr data-prod-no="' + item.tripProdNo + '">';
+        html += '<td style="text-align: center;"><input type="checkbox" class="product-checkbox" value="' + item.tripProdNo + '" ' + isChecked + ' ' + isDisabled + ' onchange="updateSelectedProducts()"></td>';
+        html += '<td>' + (item.tripProdTitle || '-') + '</td>';
+        html += '<td style="text-align: center;">' + (item.resvCount || 0) + '건</td>';
+        html += '<td style="text-align: right;">' + (item.netSales || 0).toLocaleString() + '원</td>';
+        html += '<td style="text-align: right;" class="text-danger">-' + (item.commission || 0).toLocaleString() + '원</td>';
+        html += '<td style="text-align: right;" class="fw-bold text-primary">' + (item.settleAmt || 0).toLocaleString() + '원</td>';
+        html += '<td style="text-align: center;">' + (item.settleCount || 0) + '건</td>';
+        html += '</tr>';
+    });
+    
+    tbody.innerHTML = html;
+    
+    // 전체 선택 체크박스 상태 업데이트
+    updateSelectAllState();
+}
+
+// 상품별 합계 업데이트
+function updateProductSummary(summary) {
+    if (!summary) return;
+    
+    document.getElementById('productTotalNetSales').textContent = (summary.netSales || 0).toLocaleString() + '원';
+    document.getElementById('productTotalCommission').textContent = '-' + (summary.commission || 0).toLocaleString() + '원';
+    document.getElementById('productTotalSettleAmt').textContent = (summary.settleAmt || 0).toLocaleString() + '원';
+}
+
+// 상품별 페이지네이션 렌더링
+function renderProductPagination(totalCount, totalPages) {
+    const container = document.getElementById('productPagination');
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = '';
+    
+    // 이전 버튼
+    html += '<li class="page-item' + (productCurrentPage === 1 ? ' disabled' : '') + '">';
+    html += '<a class="page-link" href="#" onclick="goToProductPage(' + (productCurrentPage - 1) + '); return false;"><i class="bi bi-chevron-left"></i></a>';
+    html += '</li>';
+    
+    // 페이지 번호
+    const startPage = Math.max(1, productCurrentPage - 2);
+    const endPage = Math.min(totalPages, startPage + 4);
+    
+    for (let i = startPage; i <= endPage; i++) {
+        html += '<li class="page-item' + (i === productCurrentPage ? ' active' : '') + '">';
+        html += '<a class="page-link" href="#" onclick="goToProductPage(' + i + '); return false;">' + i + '</a>';
+        html += '</li>';
+    }
+    
+    // 다음 버튼
+    html += '<li class="page-item' + (productCurrentPage === totalPages ? ' disabled' : '') + '">';
+    html += '<a class="page-link" href="#" onclick="goToProductPage(' + (productCurrentPage + 1) + '); return false;"><i class="bi bi-chevron-right"></i></a>';
+    html += '</li>';
+    
+    container.innerHTML = html;
+}
+
+// 상품 페이지 이동
+function goToProductPage(page) {
+    if (page < 1) return;
+    productCurrentPage = page;
+    loadProductSales();
+    
+    document.querySelector('.product-sales-table').scrollIntoView({ behavior: 'smooth' });
+}
+
+// 전체 선택 토글
+function toggleAllProducts() {
+    const selectAll = document.getElementById('selectAllProducts');
+    const checkboxes = document.querySelectorAll('.product-checkbox:not(:disabled)');
+    
+    checkboxes.forEach(cb => {
+        cb.checked = selectAll.checked;
+    });
+    
+    updateSelectedProducts();
+}
+
+// 선택된 상품 업데이트
+function updateSelectedProducts() {
+    const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+    selectedProducts = Array.from(checkboxes).map(cb => parseInt(cb.value));
+    
+    // 정산 요청 버튼 활성화/비활성화
+    const settleBtn = document.getElementById('settleRequestBtn');
+    settleBtn.disabled = selectedProducts.length === 0;
+    
+    // 전체 선택 체크박스 상태 업데이트
+    updateSelectAllState();
+}
+
+// 전체 선택 체크박스 상태 업데이트
+function updateSelectAllState() {
+    const selectAll = document.getElementById('selectAllProducts');
+    const checkboxes = document.querySelectorAll('.product-checkbox:not(:disabled)');
+    const checkedBoxes = document.querySelectorAll('.product-checkbox:checked');
+    
+    if (checkboxes.length === 0) {
+        selectAll.checked = false;
+        selectAll.disabled = true;
+    } else {
+        selectAll.disabled = false;
+        selectAll.checked = checkboxes.length === checkedBoxes.length;
+    }
+}
+
+// 정산 요청
+document.getElementById('settleRequestBtn').addEventListener('click', function() {
+    if (selectedProducts.length === 0) {
+        showToast('정산 요청할 상품을 선택해주세요.', 'warning');
+        return;
+    }
+    
+    if (!confirm('선택한 ' + selectedProducts.length + '개 상품의 정산을 요청하시겠습니까?')) {
+        return;
+    }
+    
+    fetch(contextPath + '/mypage/business/sales/settle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prodNoList: selectedProducts })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            selectedProducts = [];
+            loadAllData();  // 전체 데이터 새로고침
+        } else {
+            showToast(data.message || '정산 요청에 실패했습니다.', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showToast('정산 요청에 실패했습니다.', 'error');
+    });
 });
 
-// 검색어 지우면 초기화
-document.getElementById('salesSearchInput').addEventListener('input', function() {
-    if (this.value === '') {
-        const tableRows = document.querySelectorAll('.sales-table tbody tr');
-        tableRows.forEach(row => {
-            row.classList.remove('search-hidden', 'search-highlight');
+//엑셀 다운로드
+document.getElementById('excelDownloadBtn').addEventListener('click', function() {
+    // 전체 데이터 조회 (페이징 없이)
+    const params = new URLSearchParams({
+        startDate: currentStartDate,
+        endDate: currentEndDate,
+        page: 1,
+        pageSize: 9999  // 전체 조회
+    });
+    
+    fetch(contextPath + '/mypage/business/sales/list?' + params)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.list.length > 0) {
+                downloadExcel(data.list);
+            } else {
+                showToast('다운로드할 데이터가 없습니다.', 'warning');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('엑셀 다운로드에 실패했습니다.', 'error');
         });
-    }
 });
+
+// 엑셀 파일 생성 및 다운로드
+function downloadExcel(list) {
+    // 데이터 가공
+    const excelData = list.map(sale => ({
+        '예약번호': formatPayNo(sale.payDt, sale.payNo),
+        '예약일시': formatDateTime(sale.payDt),
+        '상품명': sale.tripProdTitle || '-',
+        '예약자': sale.buyerName || '-',
+        '이용일': formatDateOnly(sale.resvDt) + (sale.useTime ? ' ' + sale.useTime : ''),
+        '금액': sale.netSales || 0,
+        '수수료': sale.settleStatCd === '취소' ? 0 : (sale.commission || 0),
+        '정산액': sale.settleStatCd === '취소' ? 0 : (sale.settleAmt || 0),
+        '상태': sale.settleStatCd || '-'
+    }));
+    
+    // 워크시트 생성
+    const ws = XLSX.utils.json_to_sheet(excelData);
+    
+    // 컬럼 너비 설정
+    ws['!cols'] = [
+        { wch: 20 },  // 예약번호
+        { wch: 18 },  // 예약일시
+        { wch: 30 },  // 상품명
+        { wch: 10 },  // 예약자
+        { wch: 18 },  // 이용일
+        { wch: 12 },  // 금액
+        { wch: 12 },  // 수수료
+        { wch: 12 },  // 정산액
+        { wch: 10 }   // 상태
+    ];
+    
+    // 워크북 생성
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, '매출내역');
+    
+    // 파일명 생성 (매출내역_2026-01-01_2026-01-31.xlsx)
+    const fileName = '매출내역_' + currentStartDate + '_' + currentEndDate + '.xlsx';
+    
+    // 다운로드
+    XLSX.writeFile(wb, fileName);
+    
+    showToast('엑셀 다운로드가 완료되었습니다.', 'success');
+}
 </script>
 </body>
 </html>

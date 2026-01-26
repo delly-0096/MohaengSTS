@@ -17,6 +17,7 @@
 		<result property="checkInTime" column="CHECK_IN_TIME"/>
 		<result property="checkOutTime" column="CHECK_OUT_TIME"/>
 		<result property="accNo" column="ACC_NO"/>
+		<result property="memNo" column="MEM_NO"/>
 		<result property="tripProdNo" column="TRIP_PROD_NO"/>
 		<result property="accCatCd" column="ACC_CAT_CD"/>
 		<result property="accFileNo" column="ACC_FILE_NO"/>
@@ -28,6 +29,11 @@
 	    <result property="minPrice" column="MIN_PRICE"/>
 	    <result property="finalPrice" column="FINAL_PRICE"/>
 	    <result property="maxDiscount" column="MAX_DISCOUNT"/>
+	    <result property="avgRating" column="AVG_RATING" />
+    	<result property="reviewCount" column="REVIEW_COUNT" />
+	    
+	    <result property="apiContentId" column="API_CONTENT_ID"/>
+	    <result property="tripProdNo" column="TRIP_PROD_NO"/>
 	    
 	    <!-- accFacility 타입 객체 -->
 	    <association property="accFacility" resultMap="accFacilityMap"/>
@@ -195,6 +201,7 @@
 	<sql id="accommodationColumns">
 		  ${alias}ACC_NO
 		, ${alias}TRIP_PROD_NO
+		, ${alias}API_CONTENT_ID
         , ${alias}ACC_NAME
         , ${alias}ADDR1
         , ${alias}ADDR2
@@ -212,7 +219,6 @@
         , ${alias}CHECK_IN_TIME
         , ${alias}CHECK_OUT_TIME
         , ${alias}ZIP
-        , ${alias}TRIP_PROD_NO
         , ${alias}LDONG_REGN_CD
   	  	, ${alias}LDONG_SIGNGU_CD
 	</sql>
@@ -525,6 +531,8 @@
           , <include refid="roomTypeColumns"><property name="alias" value="RT."/></include>
           , <include refid="roomFacilityColumns"><property name="alias" value="RF."/></include>
           , <include refid="roomFeatureColumns"><property name="alias" value="RFT."/></include>
+          
+          , P.MEM_NO
         
           , (SELECT MIN(PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MIN_PRICE
           , (SELECT MAX(DISCOUNT) FROM ROOM_TYPE RT WHERE RT.ACC_NO = A.ACC_NO) AS MAX_DISCOUNT
@@ -532,6 +540,7 @@
              FROM ROOM_TYPE RT 
              WHERE RT.ACC_NO = A.ACC_NO) AS FINAL_PRICE
 	    FROM ACCOMMODATION A
+	    JOIN TRIP_PROD P ON A.TRIP_PROD_NO = P.TRIP_PROD_NO
 	    LEFT OUTER JOIN ACC_FACILITY AF ON A.ACC_NO = AF.ACC_NO
 	    LEFT OUTER JOIN ROOM_TYPE RT ON A.ACC_NO = RT.ACC_NO
 	    LEFT OUTER JOIN ROOM_FACILITY RF ON RT.ROOM_TYPE_NO = RF.ROOM_TYPE_NO

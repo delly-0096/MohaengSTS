@@ -513,7 +513,6 @@ document.addEventListener('DOMContentLoaded', async function() {
 // 	     { title: 'N서울타워', lat: 37.5511, lng: 126.9882, id: 2 },
 // 	     { title: '북촌한옥마을', lat: 37.5826, lng: 126.9830, id: 3 }
 	];
-	
 	tourPlaces.forEach(place => {
 	    // 마커 추가 (위도, 경도, 제목, 커스텀데이터)
 	    myMap.addMarker(place.lat, place.lng, place.title, { id: place.id });
@@ -810,7 +809,7 @@ function confirmAddPlace() {
     // 일정 탭으로 전환
     switchPlannerTab('itinerary');
 
-    myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, { id: selectedItem.id });
+    myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, selectedDay, { id: selectedItem.id });
 
 	myMap.fitBounds();
 	
@@ -1564,7 +1563,11 @@ function initReturn() {
 	        
     		itemsContainer.appendChild(newItem);
 		    initDragAndDropForItem(newItem);
-			myMap.addMarker(item.latitude, item.longitude, item.itemName, { id: item.itemId });
+
+			console.log(item.day);
+		    
+			myMap.addMarker(item.latitude, item.longitude, item.itemName, item.day, { id: item.itemId });
+			
 			myMap.fitBounds();
         });
 	}

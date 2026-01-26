@@ -32,13 +32,13 @@ public interface IProductMangeMapper {
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts);
 	
 	/**
-	 * <p>본인 판매 숙박상품 조회</p>
+	 * <p>등록된 숙소 정보 조회</p>
 	 * @author sdg
-	 * @date 2026-01-20
-	 * @param businessProd 회원id
+	 * @date 2026-01-24
+	 * @param accommodationVO api 키
 	 * @return 본인 상품
 	 */
-	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProd);
+	public AccommodationVO existsByApiContentId(AccommodationVO accommodationVO);
 	
 	/**
 	 * <p>기업 상품 현황 통계</p>
@@ -143,7 +143,7 @@ public interface IProductMangeMapper {
 	
 	/**
 	 * 숙소와 1대 다
-	 * <p>추가 옵션 정보 변경</p>
+	 * <p>추가 옵션 정보 변경 / 추가</p>
 	 * @author sdg
 	 * @date 2026-01-20
 	 * @param accommodationVO
@@ -238,5 +238,104 @@ public interface IProductMangeMapper {
 	 * @return 결과 0, 1
 	 */
 	public int deleteProductStatus(TripProdVO tripProd);
+
+	/**
+	 * <p>기업번호 얻기</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param memNo 회원 번호
+	 * @return 결과 0, 1
+	 */
+	public int getComp(int memNo);
 	
+	/**
+	 * <p>상품 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param businessProducts 상품 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertTripProudct(BusinessProductsVO businessProducts);
+
+	/**
+	 * <p>숙소 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param accommodationVO 숙소 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertAccommodation(AccommodationVO accommodationVO);
+
+	/**
+	 * <p>숙소 보유 시설 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param accFacilityVO 숙소 보유시설 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertAccFacility(AccFacilityVO accFacilityVO);
+
+	/**
+	 * <p>객실 타입 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param roomTypeVO 객실 타입 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertRoomType(RoomTypeVO roomTypeVO);
+	
+	/**
+	 * <p>객실 내 시설 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param facilityVO 객실 내 시설 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertRoomFcaility(RoomFacilityVO facilityVO);
+	
+	/**
+	 * <p>객실 내 특징 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param featureVO 객실 내 특징 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertRoomFeature(RoomFeatureVO featureVO);
+	
+	/**
+	 * <p>객실 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param roomVO 객실 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertRoom(RoomVO roomVO);
+
+	
+	/**
+	 * <p>상품 판매 정보 등록</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param prodSaleVO 상품 판매 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertTripProdSale(TripProdSaleVO prodSaleVO);
+
+	/**
+	 * <p>상품 관광지 정보 등록</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param placeVO 상품 관광지 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertTripProdPlace(TripProdPlaceVO placeVO);
+
+	/**
+	 * <p>상품 이용안내 정보 등록</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param prodInfoVO 상품 이용안내 정보
+	 * @return 결과 0, 1
+	 */
+	public int insertTripProdInfo(TripProdInfoVO prodInfoVO);
 }

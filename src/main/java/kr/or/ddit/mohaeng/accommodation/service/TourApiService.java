@@ -2,6 +2,9 @@ package kr.or.ddit.mohaeng.accommodation.service;
 
 
 import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -10,13 +13,17 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import jakarta.annotation.PostConstruct;
 import kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper;
+import kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper;
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.RoomFacilityVO;
@@ -34,270 +41,414 @@ public class TourApiService {
 	private IAccommodationMapper accMapper;
 	
 	
-	
+	@Autowired
+	private IProductMangeMapper mangeMapper;	// 존재 여부 체크
 	
 	@Value("${tour.api.key}")
     private String serviceKey;
 	
 	private final RestClient restClient = RestClient.create();
 	
-	@Transactional
-    public void fetchAndSaveAccommodations() {
-        log.info("데이터 수집 및 초기화 시작==========");
+	private RestTemplate restTemplate;	// api사용을 위해선는 객체
+	
+	/**
+	 * service로직 실행하자마자 실행됨
+	 * <p>API 사용을 위한 restTemplate 초기화</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 */
+	@PostConstruct
+    public void init() {
+        this.restTemplate = new RestTemplate();
+        DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory();
+        factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.NONE); 
+        this.restTemplate.setUriTemplateHandler(factory);
         
-        // 1. 기존 데이터 삭제 (새로 싹 받기 위해 도화지 비우기)
-        // mapper에 deleteAllAccommodation 쿼리가 없다면 그냥 실행해도 되지만, 
-        // 전체 수집할 때는 중복 체크를 빼고 삭제 후 넣는 게 가장 빨라!
-        // accMapper.deleteAllAccommodation(); 
-
-        // 2. 수집하고 싶은 지역 코드들 (1:서울, 3:대전, 6:부산, 31:경기, 32:강원, 39:제주)
-        String[] areaCodes = {"1", "3", "6", "31", "32", "39"};
-        
-        RestClient restClient = RestClient.create();
-        ObjectMapper mapper = new ObjectMapper();
-
-        for (String code : areaCodes) {
-            log.info("{}번 지역 수집 중...", code);
-            
-            // URL에 numOfRows=100 (한 번에 100개씩) 조절!
-            String url = "https://apis.data.go.kr/B551011/KorService2/searchStay2?MobileOS=WEB&MobileApp=Mohaeng"
-                    + "&areaCode=" + code 
-                    + "&_type=json"
-                    + "&pageNo=1"
-                    + "&numOfRows=100" 
-                    + "&serviceKey=" + serviceKey; // @Value로 받은 키 사용!
-            
-            try {
-                JsonNode responseNode = restClient.get()
-                        .uri(URI.create(url))
-                        .retrieve()
-                        .body(JsonNode.class);
-
-                JsonNode itemsNode = responseNode.path("response").path("body").path("items").path("item");
-                
-                if (itemsNode.isMissingNode()) {
-                    log.warn("{}번 지역에 데이터가 없습니다.", code);
-                    continue;
-                }
-
-                List<Map<String, String>> tourPlaceList = mapper.convertValue(itemsNode, new TypeReference<>() {});
-
-                for (Map<String, String> item : tourPlaceList) {
-                	String firstImage = item.get("firstimage");
-
-                    // ★ 이미지가 null이거나 비어있으면 저장하지 않고 그냥 넘어가기!
-                    if (firstImage == null || firstImage.trim().isEmpty()) {
-                        log.info("이미지 없는 숙소 '{}' 건너뜀", item.get("title"));
-                        continue; 
-                    }
-                    String apiContentId = item.get("contentid");
-                    
-                    // 중복 체크는 유지 (도화지를 안 비웠을 경우를 대비)
-                    if (accMapper.checkDuplicate(apiContentId) == 0) {
-                        AccommodationVO vo = new AccommodationVO();
-                        vo.setApiContentId(apiContentId);
-                        vo.setAccName(item.get("title"));
-                        vo.setAccCatCd(item.get("cat3"));
-                        vo.setAccFilePath(item.get("firstimage"));
-                        vo.setAreaCode(item.get("areacode"));
-                        vo.setSigunguCode(item.get("sigungucode"));
-                        vo.setZip(item.get("zipcode"));
-                        vo.setAddr1(item.get("addr1"));
-                        vo.setAddr2(item.get("addr2"));
-                        vo.setMapx(item.get("mapx"));
-                        vo.setMapy(item.get("mapy"));
-                        vo.setLdongRegnCd("L_REGN"); // 더미값
-                        vo.setLdongSignguCd("L_SIGNGU"); // 더미값
-                        
-                        accMapper.insertAccommodation(vo);
-                    }
-                }
-                log.info("{}번 지역 {}개 수집 완료!", code, tourPlaceList.size());
-                
-            } catch (Exception e) {
-                log.error("{}번 지역 수집 중 에러 발생: {}", code, e.getMessage());
-            }
-        }
-        log.info("모든 지역 데이터 수집 완료!");
+        log.info("TourApiService: RestTemplate 초기화 완료");
     }
-	
-	
-	// 1. 안전하게 아이템 가져오는 헬퍼 메소드 추가
-	private JsonNode getFirstItem(JsonNode res) {
-	    JsonNode items = res.path("response").path("body").path("items").path("item");
-	    if (items.isArray() && items.size() > 0) {
-	        return items.get(0);
-	    }
-	    return null; // 데이터 없으면 null 반환해서 터지는 거 방지!
+
+
+	/**
+	 * <p>숙소 정보 가져오기</p>
+	 * @author sdg
+	 * @date 2026-01-23
+	 * @param accommodation (lDongRegnCd, ldongSignguCd, zone, roadAddress, address, jibunAddress)
+	 * @return 상세 정보 채워진 Accommodation
+	 */
+	public AccommodationVO getDetailedAccommodation(AccommodationVO accommodation) {
+		
+    	log.info("accommodation.lDongRegnCd : {}", accommodation.getLdongRegnCd());
+    	log.info("accommodation.ldongSignguCd : {}", accommodation.getLdongSignguCd());
+    	log.info("accommodation.zone : {}", accommodation.getZone());
+    	log.info("accommodation .roadAddress: {}", accommodation.getRoadAddress());
+    	log.info("accommodation.address : {}", accommodation.getAddress());
+    	log.info("accommodation.jibunAddress : {}", accommodation.getJibunAddress());
+    	
+    	// 기본 값 세팅 - key값이 주요
+    	accommodation = fetchContentIdByCd(accommodation);	// contentId 존재
+    	
+    	return accommodation;
+		
+		// 해볼것 
+		/*
+		 search할것
+		 // 얘네는 그냥 스크립트에서 설정해서 보내기. 받을 변수가 있으니까
+		 String lDongRegnCd = bcode.substring(0, 2);    // 시도 (예: 50)
+    	 String lDongSignguCd = bcode.substring(2, 5);  // 시군구 (예: 110)
+    	  
+    	  이걸 해서 나온 List.
+    	  밑의 것들과 매칭시 하나읙 밧이 나옴
+    	  
+    	  String zonecode  = zipcode와 매칭 
+    	  String roadAddress = addr1과 매칭
+    	  String address = addr1과 매칭
+    	  String jibunAddress = addr1과 매칭
+    	  
+    	  http://apis.data.go.kr/B551011/KorService2/searchStay2?serviceKey=인증키&numOfRows=50&pageNo=1&MobileOS=ETC&MobileApp=AppTest&_type=json&lDongRegnCd=50&lDongSignguCd=110
+    	  
+    	  주차, 체크인 시간 등등
+    	  http://apis.data.go.kr/B551011/KorService2/detailInfo2
+			핵심 파라미터: contentId, contentTypeId=32
+			
+			객실 정보 (객실수, 객실 타입 등)
+			Endpoint: http://apis.data.go.kr/B551011/KorService2/detailInfo2
+			
+			핵심 파라미터: contentId, contentTypeId=32
+		 */
 	}
-	
 
-	public void updateAccommodationDetails() {
-	    // 1. 상세 정보가 비어있는 숙소 리스트를 DB에서 가져오기
-	    List<AccommodationVO> targetList = accMapper.selectListForDetailUpdate();
-	    RestClient restClient = RestClient.create();
-
-	    for (AccommodationVO acc : targetList) {
-	        try {
-	        	
-	            // [STEP 1] URL 조립 시 UriComponentsBuilder 사용 (인코딩 자동 해결)
-	            String commonUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailCommon1")
-	                    .queryParam("serviceKey", serviceKey)
-	                    .queryParam("contentId", acc.getApiContentId())
-	                    .queryParam("defaultYN", "Y")
-	                    .queryParam("overviewYN", "Y")
-	                    .queryParam("telNoYN", "Y")
-	                    .queryParam("_type", "json")
-	                    .queryParam("MobileOS", "ETC")
-	                    .queryParam("MobileApp", "AppTest")
-	                    .build().toUriString();
-
-	            JsonNode commonRes = restClient.get().uri(URI.create(commonUrl)).retrieve().body(JsonNode.class);
-	            JsonNode commonItem = getFirstItem(commonRes); // .get(0) 대신 안전
-            
-            if (commonItem != null) {
-                acc.setOverview(commonItem.path("overview").asText());
-                acc.setTel(commonItem.path("infocenterlodging").asText());
-                accMapper.updateAccommodationDetail(acc); // 설명/전화번호 업데이트
-                
-            }
-
-
-            String introUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailIntro1")
-                    .queryParam("serviceKey", serviceKey)
-                    .queryParam("contentId", acc.getApiContentId())
-                    .queryParam("contentTypeId", "32")
-                    .queryParam("_type", "json")
-                    .queryParam("MobileOS", "ETC")
-                    .queryParam("MobileApp", "AppTest")
-                    .build().toUriString();
-
-            JsonNode introRes = restClient.get().uri(URI.create(introUrl)).retrieve().body(JsonNode.class);
-            JsonNode introItem = getFirstItem(introRes);
-            
-            if (introItem != null) {
-            	acc.setCheckInTime(introItem.path("checkintime").asText("15:00"));
-            	acc.setCheckOutTime(introItem.path("checkouttime").asText("11:00"));
-            	
-                AccFacilityVO facilityVO = new AccFacilityVO();
-                facilityVO.setAccNo(acc.getAccNo());
-
-                String sub = introItem.path("subfacility").asText("");
-                String food = introItem.path("foodplace").asText("");
-                String parking = introItem.path("parkinglodging").asText("");
-                String cook = introItem.path("chkcooking").asText(""); // 취사 가능 여부
-
-                facilityVO.setParkingYn(parking.contains("가능") ? "Y" : "N");
-                facilityVO.setWifiYn(sub.contains("무선인터넷") || sub.contains("와이파이") ? "Y" : "N");
-                facilityVO.setPoolYn(sub.contains("수영장") ? "Y" : "N");
-                facilityVO.setBreakfastYn(introItem.path("breakfastlodging").asText("").contains("가능") ? "Y" : "N");
-                facilityVO.setPetFriendlyYn(introItem.path("petlodging").asText("").contains("가능") ? "Y" : "N");
-                facilityVO.setGymYn((sub.contains("헬스장") || sub.contains("피트니스") || sub.contains("체력단련")) ? "Y" : "N");
-                facilityVO.setSpaYn((sub.contains("스파") || sub.contains("사우나") || sub.contains("욕조") || sub.contains("마사지")) ? "Y" : "N");
-                facilityVO.setLaundryYn((sub.contains("세탁") || sub.contains("코인세탁") || sub.contains("드라이클리닝")) ? "Y" : "N");
-                facilityVO.setSmokingAreaYn(sub.contains("흡연구역") ? "Y" : "N");
-                
-                boolean hasRestaurant = food.length() > 2 || sub.contains("식당") || sub.contains("레스토랑") || sub.contains("카페");
-                facilityVO.setRestaurantYn(hasRestaurant ? "Y" : "N");
-                facilityVO.setBarYn((sub.contains("바") || sub.contains("라운지") || sub.contains("주점")) ? "Y" : "N");
-                
-                facilityVO.setRoomServiceYn(sub.contains("룸서비스") ? "Y" : "N");
-                
-                
-                accMapper.upsertAccFacility(facilityVO); // 시설 정보 MERGE INTO 실행
-                
-                updateRoomDetails(acc, restClient);
-
-                log.info("숙소 '{}' 전체 업데이트 성공!", acc.getAccName());
-                Thread.sleep(1000); // 매너 타임
-            }
-            
-            log.info("숙소 '{}' (ID:{}) 상세 및 시설 정보 업데이트 완료!", acc.getAccName(), acc.getAccNo());
-            Thread.sleep(1000); // API 서버 매너 지키기
-
-        } catch (Exception e) {
-            log.error("숙소 업데이트 중 에러 발생 (ID:{}): {}", acc.getAccNo(), e.getMessage());
-        }
-	    }
-	
-	}
-	@Transactional
-	public void updateRoomDetails(AccommodationVO acc, RestClient restClient) {
-	    try {
-	        // 1. detailInfo1 호출 (객실 정보 조회)
-	    	String roomUrl = UriComponentsBuilder.fromHttpUrl("https://apis.data.go.kr/B551011/KorService1/detailInfo1")
-	                .queryParam("serviceKey", serviceKey)
-	                .queryParam("contentId", acc.getApiContentId())
-	                .queryParam("contentTypeId", "32")
-	                .queryParam("_type", "json")
-	                .queryParam("MobileOS", "ETC")
-	                .queryParam("MobileApp", "AppTest")
-	                .build().toUriString();
-
-	        JsonNode roomRes = restClient.get().uri(URI.create(roomUrl)).retrieve().body(JsonNode.class);
-	        JsonNode roomItems = roomRes.path("response").path("body").path("items").path("item");
-
-	        // ★ 객실 데이터가 배열로 정상적으로 올 때만 반복문 실행!
-	        if (roomItems.isArray() && roomItems.size() > 0) {
-	            for (JsonNode room : roomItems) {
-	            RoomTypeVO roomType = new RoomTypeVO();
-	            roomType.setAccNo(acc.getAccNo());
-	            roomType.setRoomName(room.path("roomtitle").asText("기본 객실"));
-	            roomType.setBaseGuestCount(room.path("roombasecount").asInt(2));
-	            roomType.setMaxGuestCount(room.path("roommaxcount").asInt(4));
-	            roomType.setPrice(room.path("roomoffseasonminfee1").asInt(50000)); // 비성수기 요금 기준
-	            roomType.setRoomSize(room.path("roomsize1").asInt(0));
-
-	            // [STEP 1] ROOM_TYPE 저장 (Generated Keys로 roomTypeNo를 받아와야 함!)
-	            accMapper.insertRoomType(roomType);
-	            int roomTypeNo = roomType.getRoomTypeNo();
-
-	            // [STEP 2] ROOM_FACILITY (객실 내 시설) - API 텍스트 기반 매핑
-	            RoomFacilityVO facility = new RoomFacilityVO();
-	            facility.setRoomTypeNo(roomTypeNo);
-	            
-	            // API 응답 중 시설 관련 필드들 (roomaircondition, roomtv 등)
-	            facility.setAirConYn(room.path("roomaircondition").asText("N").equals("Y") ? "Y" : "N");
-	            facility.setTvYn(room.path("roomtv").asText("N").equals("Y") ? "Y" : "N");
-	            facility.setFridgeYn(room.path("roomrefrigerator").asText("N").equals("Y") ? "Y" : "N");
-	            facility.setHairDryerYn(room.path("roomhairdryer").asText("N").equals("Y") ? "Y" : "N");
-	            facility.setToiletriesYn(room.path("roomtoiletries").asText("N").equals("Y") ? "Y" : "N");
-	            // 나머지는 기본값 N
-	            accMapper.insertRoomFacility(facility);
-	            
-	         // [STEP 3] ROOM_FEATURE (객실 특징) 상세 매핑
-	            RoomFeatureVO feature = new RoomFeatureVO();
-	            feature.setRoomTypeNo(roomTypeNo);
-
-	            // API에서 텍스트 데이터 가져오기
-	            String intro = room.path("roomintro").asText(""); // 객실 소개글
-	            String roomCook = room.path("roomcook").asText(""); // 취사 여부 전용 필드
-
-	            // 1. 전망 관련 (소개글에서 키워드 추출)
-	            feature.setOceanViewYn((intro.contains("바다") || intro.contains("오션뷰") || intro.contains("해변")) ? "Y" : "N");
-	            feature.setMountainViewYn((intro.contains("산") || intro.contains("마운틴뷰") || intro.contains("숲")) ? "Y" : "N");
-	            feature.setCityViewYn((intro.contains("시티") || intro.contains("전망") || intro.contains("야경")) ? "Y" : "N");
-
-	            // 2. 공간 구성 관련
-	            feature.setLivingRoomYn((intro.contains("거실") || intro.contains("스위트") || intro.contains("분리형")) ? "Y" : "N");
-	            feature.setTerraceYn((intro.contains("테라스") || intro.contains("발코니") || intro.contains("베란다")) ? "Y" : "N");
-
-	            // 3. 서비스 및 기타
-	            // API에서 "무료취소" 정보는 잘 안 오지만, 보통 예약 정책 문자열에 포함되니 체크!
-	            feature.setFreeCancelYn(intro.contains("무료취소") || intro.contains("환불가능") ? "Y" : "N");
-	            feature.setNonSmokingYn((intro.contains("금연") || intro.contains("쾌적")) ? "Y" : "N");
-
-	            // 4. 취사 가능 여부 (전용 필드 우선, 없으면 소개글 체크)
-	            boolean canCook = roomCook.contains("가능") || intro.contains("취사") || intro.contains("주방") || intro.contains("싱크대");
-	            feature.setKitchenYn(canCook ? "Y" : "N");
-
-	            // DB에 쑤셔넣기 (Insert 실행)
-	            accMapper.insertRoomFeature(feature);
+	/**
+	 * <p>기본값 세팅을 위한 api 호출</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 * @param accommodation (법정동 시군구 코드, 법정동 시도 코드, 우편번호, 도로명주소, 주소, 지번 주소)
+	 * @return 숙소 정보
+	 */
+	private AccommodationVO fetchContentIdByCd(AccommodationVO accommodation) {
+		log.info("키값 찾기 : fetchContentIdByCd ");
+		try {
+			String baseUrl = "http://apis.data.go.kr/B551011/KorService2/searchStay2";
+			
+			StringBuilder urlBuilder = new StringBuilder(baseUrl);
+			urlBuilder.append("?serviceKey=" + serviceKey);
+			urlBuilder.append("&_type=json&MobileOS=ETC&MobileApp=Mohaeng&numOfRows=50");
+			urlBuilder.append("&lDongRegnCd=" + accommodation.getLdongRegnCd());
+			urlBuilder.append("&lDongSignguCd=" + accommodation.getLdongSignguCd());
+			
+			String jsonResponse = restTemplate.getForObject(urlBuilder.toString(), String.class);
+			
+			// 3. Jackson 파싱
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode root = objectMapper.readTree(jsonResponse);
+			JsonNode items = root.path("response").path("body").path("items").path("item");
+			
+			if (items.isArray()) {
+	            for (JsonNode node : items) {
+	                if (isMatch(node, accommodation)) {
+	                    bindData(accommodation, node); // 매칭 성공 시 데이터 바인딩 후 즉시 반환
+	                    break;
+	                }
+	            }
+	        } else if (items.isObject()) {
+	            if (isMatch(items, accommodation)) {
+	                bindData(accommodation, items);
 	            }
 	        }
+			
+			log.info("기본 데이터 세팅 완료 : {}", accommodation);
+			
+			// 반환 받은 값들 기본 데이터 매핑 한 vo 객체의 키 여부를 확인해서 실행
+			if (accommodation != null && accommodation.getApiContentId() != null) {
+
+				// 해당 id의 등록 여부
+				if(mangeMapper.existsByApiContentId(accommodation) == null) {
+					// 2. 상세 소개 정보 채우기 (입실/퇴실/주차/개요 등)
+					log.info("해당 키의 등록 정보 없음");
+					fillDetailData(accommodation);
+					// fetchRoomTypeList(accommodation);	// 이렇게 나눠야되나??
+					log.info("최종 매핑 완료 숙소명: {}", accommodation.getAccName());
+					return accommodation;
+				} else {
+					log.error("이미 등록된 숙소 입니다.");
+					return null;
+				}
+		    }
+			return null;
+			
+		} catch(Exception e){
+			log.error("에러 발생 : {}", e.getMessage());
+		}
+		return null;
+	}
+
+	
+	/**
+	 * <p>일치하는 데이터 찾기</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 * @param node	  (api 응답객체)
+	 * @param target (시군구 코드, 시도 코드, 우편번호, 도로명주소, 주소, 지번 주소)
+	 * @return true, false
+	 */
+	private boolean isMatch(JsonNode node, AccommodationVO target) {
+	    String apiAddr = node.path("addr1").asText().replaceAll("\\s", "");
+	    String apiZip = node.path("zipcode").asText();
+	    
+	    String targetRoad = target.getRoadAddress().replaceAll("\\s", "");
+	    String targetZip = target.getZone();
+
+	    // 우편번호가 같거나, 도로명 주소가 포함 관계일 때 매칭 성공으로 간주
+	    return apiZip.equals(targetZip) || apiAddr.contains(targetRoad) || targetRoad.contains(apiAddr);
+	}
+	
+	/**
+	 * <p>숙소 데이터 세팅</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 * @param vo (시군구 코드, 시도 코드, 우편번호, 도로명주소, 주소, 지번 주소)
+	 * @param node (api 응답객체)
+	 * @return 숙소정보를 담은 객체
+	 */
+	private AccommodationVO bindData(AccommodationVO vo, JsonNode node) {
+		// mapx,mapy는 지도 api의 것을 사용 이미 프론트에서 값 지정해줌
+		log.info("node : {}", node);
+	    vo.setApiContentId(node.path("contentid").asText());	// api id
+	    vo.setAccName(node.path("title").asText());				// 숙소명
+	    vo.setTel(node.path("tel").asText());					// 전화번호 - 없을수도 있음
+	    vo.setAccFilePath(node.path("firstimage").asText());	// 숙소 사진 경로
+	    vo.setAccCatCd(node.path("cat3").asText());				// 숙소 타입
+	    vo.setAreaCode(node.path("areacode").asText());			// 숙소 타입
+	    vo.setSigunguCode(node.path("sigungucode").asText());	// 시군구코드
+	    vo.setAddr1(node.path("addr1").asText());				// 주소 
+	    vo.setAddr2(node.path("addr2").asText());				// 상세주소 
+	    vo.setMapx(node.path("mapx").asText());					// x좌표
+	    vo.setMapy(node.path("mapy").asText());					// y좌표
+	    vo.setZip(node.path("zipcode").asText());				// 우편번호
+	    return vo;
+	}
+	
+	
+	/**
+	 * <p>숙소 소개</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 * @param accommodation (contentId)
+	 */
+	private void fillDetailData(AccommodationVO accommodation) {
+	    try {
+	    	String contentId = accommodation.getApiContentId();	// contentId api 용 id
+	    	
+	        // A. 소개 정보 조회 (detailIntro2) -> 입실/퇴실/주차장 정보
+	        StringBuilder introUrl = new StringBuilder("http://apis.data.go.kr/B551011/KorService2/detailIntro2");
+	        introUrl.append("?serviceKey=").append(serviceKey);
+	        introUrl.append("&_type=json&MobileOS=ETC&MobileApp=Mohaeng&contentTypeId=32");
+	        introUrl.append("&contentId=").append(contentId);
+	        
+	        String introRes = restTemplate.getForObject(introUrl.toString(), String.class);
+	        ObjectMapper mapper = new ObjectMapper();
+	        JsonNode introNode = mapper.readTree(introRes).path("response").path("body").path("items").path("item");
+
+	        // 결과가 리스트로 올 수도, 단일 객체로 올 수도 있으므로 안전하게 처리
+	        JsonNode detail = introNode.isArray() ? introNode.get(0) : introNode;
+	        
+	        log.info("숙소 정보 가져오기 detail : {}", detail);
+	        
+	        // 숙소보유 시설
+	        AccFacilityVO accFacility = new AccFacilityVO();
+	        if (!detail.isMissingNode()) {
+	        	accommodation.setCheckInTime(formatTime(detail.path("checkintime").asText()));	// 입실 시간
+	        	accommodation.setCheckOutTime(formatTime(detail.path("checkouttime").asText()));// 퇴실 시간
+	        	
+	        	// 총 객실수
+	        	String roomCountStr = detail.path("roomcount").asText("0");
+	            String roomCountOnlyNum = roomCountStr.replaceAll("[^0-9]", ""); // 숫자만 추출
+	            if(!roomCountOnlyNum.isEmpty()) {
+	                accommodation.setTotalRoomCnt(roomCountOnlyNum);
+	            }
+	            
+	            // 전화번호
+	        	if(accommodation.getTel() == null || accommodation.getTel().equals("")) {
+	        		accommodation.setTel(detail.path("infocenterlodging").asText());
+	        	}
+	        	
+	            // 만약 주차 여부를 overview 등에 합치고 싶다면 여기서 추출
+	            String parking = detail.path("parkinglodging").asText();
+	            accFacility.setParkingYn(parking.contains("가능") || parking.contains("유료") ? "Y" : "N");	// 주차장
+	            
+	            accFacility.setPoolYn(isTrue(detail.path("swimmingpool").asText()) ? "Y" : "N");			// 수영장
+	            accFacility.setGymYn(isTrue(detail.path("fitness").asText()) ? "Y" : "N");					// 피트니스
+	            accFacility.setSpaYn(isTrue(detail.path("sauna").asText()) ? "Y" : "N");					// 스파/사우나
+	            accFacility.setRestaurantYn(!detail.path("foodplace").asText().isEmpty() ? "Y" : "N");		// 레스토랑
+	            
+	            // 부가 시설
+	            String subFacility = detail.path("subfacility").asText("");
+	            if (!subFacility.isEmpty()) {
+	                if (subFacility.contains("세탁") && accFacility.getLaundryYn().equals("N")) {
+	                	accFacility.setLaundryYn("Y");
+	                }
+	                if (subFacility.contains("흡연") && accFacility.getSmokingAreaYn().equals("N")) {
+	                	accFacility.setSmokingAreaYn("Y");
+	                }
+	            }
+	             
+	             log.info("accFacility 일부 저장한 값 조회 : {}", accFacility);
+	        }
+
+	        log.info("공통 정보 조회 coomUrl로 이동");
+	        
+	        
+	        // B. 공통 정보 조회 (detailCommon2). 숙소 개요(Overview) + 반려동물 ,조식, 와이파이
+	        StringBuilder commonUrl = new StringBuilder("http://apis.data.go.kr/B551011/KorService2/detailCommon2");
+	        commonUrl.append("?serviceKey=").append(serviceKey);
+	        commonUrl.append("&_type=json&MobileOS=ETC&MobileApp=Mohaeng");
+	        commonUrl.append("&contentId=").append(contentId);
+	        
+	        String commonRes = restTemplate.getForObject(commonUrl.toString(), String.class);
+	        JsonNode commonNode = mapper.readTree(commonRes);
+			JsonNode items = commonNode.path("response").path("body").path("items").path("item");
+	        JsonNode commonDetail = items.isArray() ? items.get(0) : items;		// 배열 여부
+
+			log.info("공통 정보 API 원본 items 체크 : {}", items);
+			log.info("공통 정보 API 원본 commonDetail : {}", commonDetail);
+	        if (!commonDetail.isMissingNode()) {
+	            String overview = commonDetail.path("overview").asText("");
+	            accommodation.setOverview(overview);	// overView
+	            if(overview != null) {		// api에 없는 항목 overview에서 가져오기
+	            	accFacility.setPetFriendlyYn(overview.contains("반려동물") ? "Y" : "N");
+	                accFacility.setBreakfastYn(overview.contains("조식") ? "Y" : "N");
+	                accFacility.setWifiYn(overview.contains("와이파이") || overview.contains("WiFi") ? "Y" : "N");
+	                accFacility.setRoomServiceYn(overview.contains("룸서비스") ? "Y" : "N");
+	                accFacility.setLaundryYn(overview.contains("세탁") || overview.contains("코인세탁") ? "Y" : "N");
+	                accFacility.setPetFriendlyYn(overview.contains("반려동물") || overview.contains("애견") ? "Y" : "N");
+	                accFacility.setSmokingAreaYn(overview.contains("흡연구역") || overview.contains("흡연실") ? "Y" : "N");
+	            }
+	            log.info("최종 매핑된 overview : {}", overview);
+	            log.info("accFacility 반려동물등등추가 : {}", accFacility);
+	        } else {
+	            log.warn("아이템 노드를 찾을 수 없습니다. 응답 확인 필요: {}", commonRes);
+	        }
+
+	        
+	        log.info("객실 상세정보 검색 시작");
+	        // roomFacility, 
+	        // C. 객실 상세 정보 조회 (detailInfo2) -> RoomTypeVO 리스트 생성
+	        StringBuilder infoUrl = new StringBuilder("http://apis.data.go.kr/B551011/KorService2/detailInfo2");
+	        infoUrl.append("?serviceKey=").append(serviceKey);
+	        infoUrl.append("&_type=json&MobileOS=ETC&MobileApp=Mohaeng&contentTypeId=32");
+	        infoUrl.append("&contentId=").append(contentId);
+
+	        String infoRes = restTemplate.getForObject(infoUrl.toString(), String.class);
+	        JsonNode infoItems = mapper.readTree(infoRes).path("response").path("body").path("items").path("item");
+	        log.info("객실 상세정보 검색 결과 : {}", infoItems);
+	        if (!infoItems.isMissingNode()) {
+	            List<RoomTypeVO> roomTypeList = new ArrayList<>();
+	            
+	            // 데이터가 여러 개일 수도, 하나일 수도 있음
+	            if (infoItems.isArray()) {
+	                for (JsonNode item : infoItems) {
+	                    roomTypeList.add(mapRoomData(item));
+	                }
+	            } else {
+	                roomTypeList.add(mapRoomData(infoItems));
+	            }
+	            
+	            // wiif세팅
+	            if ("N".equals(accFacility.getWifiYn())) {
+	                boolean hasRoomInternet = roomTypeList.stream()
+	                        .anyMatch(room -> "Y".equals(room.getInternet()));
+	                
+	                if (hasRoomInternet) {
+	                    accFacility.setWifiYn("Y");
+	                }
+	            }
+	            
+	            log.info("와이파이 유무 : {}", accFacility.getWifiYn());
+	            accommodation.setAccFacility(accFacility);		// wifi 정보까지 담은것 추가
+	            accommodation.setRoomTypeList(roomTypeList);	// 상세정보 담긴것 출력
+	        }
+	        
 	    } catch (Exception e) {
-	        log.error("객실 정보 업데이트 중 에러 (ID:{}): {}", acc.getAccNo(), e.getMessage());
+	        log.error("상세 정보 세팅 중 에러: {}", e.getMessage());
 	    }
-	} 
+	}
+	
+	
+	/**<p>시간 정보에 한글있을때를 대비</p>
+	 * @param timeStr	시간 정보
+	 * @return
+	 */
+	private String formatTime(String timeStr) {
+	    if (timeStr == null || timeStr.isEmpty()) return "";
+
+	    // 1. "익일 12:00" -> "12:00" (숫자와 : 만 남기기)
+	    // 정규식 [^0-9:] 은 숫자와 콜론이 아닌 모든 문자를 제거합니다.
+	    String cleaned = timeStr.replaceAll("[^0-9:]", "").trim();
+
+	    // 2. 만약 결과가 "1200" 처럼 콜론이 빠진 경우 "12:00"으로 보정 (필요시)
+	    if (cleaned.length() == 4 && !cleaned.contains(":")) {
+	        cleaned = cleaned.substring(0, 2) + ":" + cleaned.substring(2);
+	    }
+	    
+	    // 3. 최종적으로 HH:mm 형식이 맞는지 확인 (예: 12:00)
+	    return cleaned;
+	}
+
+	// 
+	
+	/**
+	 * <p>RoomType객체 api 응답객체와 매핑</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 * @param item api 응답 값
+	 * @return 매칭된 RoomTypeVo객체
+	 */
+	private RoomTypeVO mapRoomData(JsonNode item) {
+		// roomInterNet이란게 있음 - Y일때는 wifi도 Y로 하기
+		RoomTypeVO roomTypeVO = new RoomTypeVO();	// 인터넷 추가해서 accommodation에 세팅
+		RoomFeatureVO featureVO = new RoomFeatureVO();
+		RoomFacilityVO facilityVO = new RoomFacilityVO();
+
+		// roomTypeVO 설정
+		roomTypeVO.setRoomName(item.path("roomtitle").asText());			// 방이름
+		roomTypeVO.setRoomSize(item.path("roomsize2").asInt(0));			// 2가 m^2
+		roomTypeVO.setPrice(item.path("roomoffseasonminfee1").asInt(0));	// 1박 요금
+		roomTypeVO.setBaseGuestCount(item.path("roombasecount").asInt(0));	// 최소 인원
+		roomTypeVO.setMaxGuestCount(item.path("roommaxcount").asInt(0));	// 최대 인원		
+		roomTypeVO.setTotalRoomCount(item.path("roomcount").asInt(0));		// 최대 인원		
+		roomTypeVO.setBreakfastYn("N");										// 조식 포함 여부 수동 설정하자(체크박스여서)
+		roomTypeVO.setBedTypeCd("single");									// 침대수 (수동 설정)
+		roomTypeVO.setInternet(isTrue(item.path("roominternet").asText()) ? "Y" : "N");		// interNet
+		// 숙소 특징
+		featureVO.setKitchenYn(isTrue(item.path("roomcook").asText()) ? "Y" : "N");// 부억 유무
+		
+		// 숙소내 시설
+		facilityVO.setAirConYn(isTrue(item.path("roomaircondition").asText()) ? "Y" : "N");		// 에어컨
+	    facilityVO.setHairDryerYn(isTrue(item.path("roomhairdryer").asText()) ? "Y" : "N");		// 헤어드라이
+	    facilityVO.setBathtubYn(isTrue(item.path("roombath").asText()) ? "Y" : "N");			// 욕조
+	    facilityVO.setTvYn(isTrue(item.path("roomtv").asText()) ? "Y" : "N");					// tv
+	    facilityVO.setFridgeYn(isTrue(item.path("roomrefrigerator").asText()) ? "Y" : "N");		// 냉장고
+	    facilityVO.setToiletriesYn(isTrue(item.path("roomtoiletries").asText()) ? "Y" : "N");	// 세면도구
+		
+		log.info("매칭 roomtypevO : {}", roomTypeVO);
+		log.info("매칭 featureVO 부억 : {}", featureVO.getKitchenYn());
+		log.info("매칭 facilityVO : {}", facilityVO);
+		
+		roomTypeVO.setFeature(featureVO);
+		roomTypeVO.setFacility(facilityVO);
+		return roomTypeVO;
+	}
+
+
+	/**
+	 * <p>숙소 관련 1의 값이 있는것들 필터링</p>
+	 * @author sdg
+	 * @date 2026-01-24
+	 * @param val	api 응답 값 (1, 있음, 가능)
+	 * @return true, false
+	 */
+	private boolean isTrue(String val) {
+	    if(val == null) return false;
+	    return val.equals("1") || val.contains("있음") || val.contains("가능") || val.equalsIgnoreCase("Y");
+	}
 }
 

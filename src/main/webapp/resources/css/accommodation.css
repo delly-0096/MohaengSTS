@@ -295,3 +295,34 @@ a.accommodation-image:hover img {
         min-height: 400px;    /* 너무 딱 붙어있지 않게 높이 확보 */
         width: 100%;
 }
+
+/* 1. 검색바 내에서 날짜 선택 구역의 비중을 높임 */
+.search-form-row {
+    display: flex;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+/* 날짜 폼 그룹을 다른 칸보다 1.5배 정도 더 넓게! */
+.search-form-row .form-group:has(#dateRange) {
+    flex: 1.5; 
+    min-width: 100px; /* 너무 줄어들지 않게 방어선 구축 */
+}
+
+/* 2. 입력창 안의 텍스트가 안 잘리도록 여백 조정 */
+#dateRange {
+    min-width: 150px;
+    font-size: 14px; /* 글자 크기를 살짝 조절하면 더 많이 들어감 */
+    padding-right: 5px;
+}
+
+/* 3. '몇박 몇일' 뱃지 디자인 살짝 다듬기 */
+#stayDuration {
+    background-color: var(--primary-light, #2d9a9a);
+    color: white;
+    border: none;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap; /* 절대 줄바꿈 금지! */
+    padding: 0 12px;
+}

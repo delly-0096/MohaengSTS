@@ -228,9 +228,6 @@ public class ProductMangeController {
 	}
 	
 	/**
-	 * @param tripProd 수정한 상품 정보
-	 */
-	/**
 	 * <p>투어상품 상세 수정</p>
 	 * @author sdg
 	 * @date 2026-01-18
@@ -244,9 +241,9 @@ public class ProductMangeController {
 	@PostMapping("/product/manage/editProduct")
 	public ResponseEntity<String> editProduct(
 			@AuthenticationPrincipal CustomUserDetails customUser, 
-			BusinessProductsVO businessProducts,
+		    @RequestPart("productData") BusinessProductsVO businessProducts,
 			@RequestParam(value= "currentFileNos", required=false) List<Integer> currentFileNos,	 	// 유지할 번호들
-		    @RequestParam(value = "uploadFiles", required = false) List<MultipartFile> uploadFiles ){	// 새로 등록할 파일
+		    @RequestPart(value = "uploadFiles", required = false) List<MultipartFile> uploadFiles ){	// 새로 등록할 파일
 		
 		log.info("editProduct.businessProducts : {}", businessProducts);
 		log.info("editProduct.prodSale : {}", businessProducts.getProdSale());
@@ -256,21 +253,15 @@ public class ProductMangeController {
 		
 		fileService.syncFiles(businessProducts.getAttachNo(), currentFileNos);	// 기존 번호에서 사라진
 		
-		int s = 0;
-		if(s == 0) {
-			return new ResponseEntity<String>(HttpStatus.OK);
-		}
-		
 		int memNo = customUser.getMember().getMemNo();
 		businessProducts.setMemNo(memNo);
+		// 파일도 같이 보내자
 		ServiceResult result = manageService.modifyProduct(businessProducts);
 	    // 2. 새 파일 추가
 	    if (uploadFiles != null && !uploadFiles.isEmpty()) {
 	    	// 여기서 수정 실행
 //	    	ServiceResult result = manageService.modifyProduct(businessProducts);
-	    	
 	    }
-		
 		
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
@@ -294,30 +285,36 @@ public class ProductMangeController {
 	@PostMapping("/product/manage/registerProduct")
 	public ResponseEntity<String> registerProduct(
 			@AuthenticationPrincipal CustomUserDetails customUser, 
-			BusinessProductsVO businessProducts,
-			@RequestParam(value = "uploadFiles", required = false) List<MultipartFile> uploadFiles ){	// 새로 등록할 파일
+		    @RequestPart("productData") BusinessProductsVO businessProducts, // JSON 구조가 VO의 계층과 일치하면 자동 매핑
+		    @RequestPart(value = "uploadFiles", required = false) List<MultipartFile> uploadFiles) {
+		log.info("registerProduct.숙박 : {}", businessProducts.getAccommodation());
+		log.info("registerProduct.숙박 보유 시설: {}", businessProducts.getAccommodation().getAccFacility());
+		log.info("registerProduct.숙박 옵션목록 : {}", businessProducts.getAccommodation().getAccOptionList());
 		
-		log.info("editProduct.businessProducts : {}", businessProducts);
-		log.info("editProduct.prodSale : {}", businessProducts.getProdSale());
+		log.info("registerProduct.숙박 룸타입: {}", businessProducts.getAccommodation().getRoomTypeList());
+		log.info("registerProduct.숙박 룸타입 별 시설: {}", businessProducts.getAccommodation().getRoomTypeList().get(0).getFacility());
+		log.info("registerProduct.숙박 룸타입 별 특징: {}", businessProducts.getAccommodation().getRoomTypeList().get(0).getFeature());
+//		log.info("registerProduct.prodSale : {}", businessProducts.getProdSale());
 		
 		log.info("uploadFiles : {} uploadFiles : {}", uploadFiles);
 		
-		
 		int memNo = customUser.getMember().getMemNo();
+		
 		businessProducts.setMemNo(memNo);
 		ServiceResult result = manageService.insertProduct(businessProducts, uploadFiles);
-		// 2. 새 파일 추가
-		if (uploadFiles != null && !uploadFiles.isEmpty()) {
-			// 여기서 수정 실행
-//	    	ServiceResult result = manageService.modifyProduct(businessProducts);
-		}
-		
 		if (result == ServiceResult.OK) {
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
 			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 		}
+//		return null;
 		
+//		// 2. 새 파일 추가
+//		if (uploadFiles != null && !uploadFiles.isEmpty()) {
+//			// 여기서 수정 실행
+//		}
+//		
+//		
 	}
 	
 	

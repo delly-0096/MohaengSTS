@@ -107,7 +107,7 @@ public class BusinessProductsVO {
     
 	private List<AttachFileDetailVO> imageList;			// 전체 사진 가져오기 - attachNo로
 	
-	private List<AccOptionVO> optionList;				// 추가옵션 - 숙소와 1대n
+//	private List<AccOptionVO> optionList;				// 추가옵션 - 숙소와 1대n
 	private List<AccResvOptionVO> resvOptionList;		// 숙소 예약옵션 - 추가옵션과 1대1
 	private List<AccResvVO> resvList;					// 숙소 예약 - 숙소 예약옵션과 1대1, 객실타입과 1대n
 

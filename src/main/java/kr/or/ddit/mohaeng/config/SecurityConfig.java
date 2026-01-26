@@ -90,13 +90,14 @@ public class SecurityConfig {
 			"/schedule/rcmd-result",
 			"/schedule/planner",
 			"/schedule/common/**",
-			"/product/accmmodation",
-			"/product/accmmodation-booking",
-			"/product/accmmodation-detail",
+			"/product/flight",
+			"/product/accommodation",
+			"/product/accommodation/**",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
 			"/batch/load-acc-detail",
+			"/batch/accommodation/search"
 	};
 
 	// 일반회원 허용 url test
@@ -105,9 +106,6 @@ public class SecurityConfig {
 			"/error",
 			"/mohaeng",
 			"/schedule/**",
-			"/product/accmmodation",
-			"/product/accmmodation-booking",
-			"/product/accmmodation-detail",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/oauth2/**",
 			"/login/oauth2/**"
@@ -119,8 +117,7 @@ public class SecurityConfig {
 			"/",
 			"/error",
 			"/mohaeng",
-			"/.well-known/**",		// 크롬 개발자 도구로의 요청
-			"/batch/accmmodation/search"
+			"/.well-known/**"		// 크롬 개발자 도구로의 요청
 	};
 
 

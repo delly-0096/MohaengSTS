@@ -17,4 +17,12 @@ public interface ITripProdService {
 	public boolean checkBookmark(int memNo, int tripProdNo);
 	public int insertBookmark(int memNo, String type, int tripProdNo);
 	public int deleteBookmark(int memNo, int tripProdNo);
+	
+	/**
+	 * 숙박 북마크
+	 */
+	public boolean checkAccommodationBookmark(int memNo, int tripProdNo);
+	public int insertAccommodationBookmark(int memNo, String type, int tripProdNo);
+	public int deleteAccommodationBookmark(int memNo, int tripProdNo);
+	
 }

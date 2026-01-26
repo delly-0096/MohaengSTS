@@ -21,6 +21,8 @@ import org.springframework.web.client.RestTemplate;
 import kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper;
 import kr.or.ddit.mohaeng.community.travellog.place.controller.PlaceApiController;
 import kr.or.ddit.mohaeng.flight.mapper.IFlightMapper;
+import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
+import kr.or.ddit.mohaeng.mailapi.service.MailService;
 import kr.or.ddit.mohaeng.payment.mapper.IPaymentMapper;
 import kr.or.ddit.mohaeng.vo.AccResvAgreeVO;
 import kr.or.ddit.mohaeng.vo.AccResvVO;
@@ -50,6 +52,12 @@ public class PaymentServiceImpl implements IPaymentService {
 	
 	@Autowired
 	private IAccommodationMapper accMapper;
+	
+	@Autowired
+	private IMemberMapper memberMapper;
+	
+	@Autowired
+	private MailService mailService;
 
     PaymentServiceImpl(PlaceApiController placeApiController) {
         this.placeApiController = placeApiController;
@@ -211,6 +219,7 @@ public class PaymentServiceImpl implements IPaymentService {
 			    // 투어 인원 정보 추가
 			    int quantity = paymentVO.getTripProdList().get(0).getQuantity();
 			    responseBody.put("quantity", quantity + "명");
+			    responseBody.put("payNo", paymentVO.getPayNo());
 			    
 			} else if(paymentVO.getProductType().equals("accommodation")) { // ★ 여기 추가!
                 // 1. 숙소 예약 로직 호출
@@ -229,7 +238,19 @@ public class PaymentServiceImpl implements IPaymentService {
                 	accMapper.insertAccResvAgree(resv);
                 	log.info("약관 동의 저장 완료 : {}", resv.getAccResvNo());
                 }
+                
 			}
+                
+			if (paymentVO.getPayNo() > 0) {
+                try {
+                    // 공통 메일 함수 호출
+                    sendCommonReservationEmail(paymentVO); 
+                    log.info("결제 완료 공통 메일 발송 성공!");
+                } catch (Exception e) {
+                    // 메일 발송 실패가 결제 전체의 실패는 아니므로 로그만 남김
+                    log.error("메일 발송 중 오류 발생: {}", e.getMessage());
+                }
+            }
 
 			return responseBody;
 		} 
@@ -239,6 +260,7 @@ public class PaymentServiceImpl implements IPaymentService {
 			return null;
 	}
 }
+
 	
 	/**
 	 * 숙박 상품 예약 확정 처리
@@ -460,6 +482,109 @@ public class PaymentServiceImpl implements IPaymentService {
 	@Override
 	public int updateSettleStatus() {
 		return payMapper.updateSettleStatus();
+	}
+	
+	private void sendCommonReservationEmail(PaymentVO payment) {
+	    // 1. 회원 정보 조회 (이메일, 이름)
+		MemberVO member = memberMapper.getMemberInfo(payment.getMemNo());
+	    if (member == null || member.getMemEmail() == null) return;
+
+	    String safeName = member.getMemName();
+	    // 2. 주문명 추출 (paymentVO에 담긴 정보가 없다면 responseBody나 DB에서 세팅된 resMsg 활용)
+	    // 리더가 말한 대로 PaymentInfoVO에 저장한 resMsg를 꺼내오자!
+	    String orderName = (payment.getPaymentKey() != null) ? "결제 상품" : "주문 상품"; 
+	    // 실제로는 결제 승인 후 저장된 resMsg를 꺼내오는 로직이 필요함
+	    // 여기서는 가독성을 위해 가공된 정보를 사용!
+	    
+	    String productIcon = "";
+	    String detailInfo = "";
+	    
+	    // 상품 타입별 아이콘 및 정보 분기
+	    switch (payment.getProductType()) {
+	        case "accommodation":
+	            productIcon = "🏠";
+	            AccResvVO resv = payment.getAccResvVO();
+	            detailInfo = String.format("체크인: %s / 체크아웃: %s", 
+	                new SimpleDateFormat("yyyy.MM.dd").format(resv.getStartDt()), 
+	                new SimpleDateFormat("yyyy.MM.dd").format(resv.getEndDt()));
+	            break;
+	        case "flight":
+	            productIcon = "✈️";
+	            detailInfo = "항공권 상세 정보는 마이페이지 예약 내역에서 확인 가능합니다.";
+	            break;
+	        default:
+	            productIcon = "🚩";
+	            detailInfo = "이용 예정일: " + (payment.getTripProdList() != null ? payment.getTripProdList().get(0).getResvDt() : "마이페이지 확인");
+	    }
+
+	    String subject = "[모행] 예약 및 결제가 정상적으로 완료되었습니다.";
+	    String formattedPrice = String.format("%,d", payment.getPayTotalAmt());
+
+	    // 3. 리더의 임시 비밀번호 템플릿 스타일을 입힌 결제 완료 HTML
+	    String html = """
+	        <!doctype html>
+	        <html lang="ko">
+	        <head>
+	          <meta charset="utf-8">
+	          <meta name="viewport" content="width=device-width,initial-scale=1">
+	          <title>Mohaeng 결제 완료 안내</title>
+	        </head>
+	        <body style="margin:0;padding:0;background:#f6f7fb;">
+	          <table role="presentation" width="100%%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;padding:24px 0;">
+	            <tr>
+	              <td align="center">
+	                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;background:#ffffff;border-radius:14px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.06);">
+	                  <tr>
+	                    <td style="padding:22px 28px;background:#111827;color:#ffffff;">
+	                      <div style="font-size:18px;font-weight:700;letter-spacing:-0.2px;">Mohaeng</div>
+	                      <div style="margin-top:6px;font-size:13px;opacity:0.85;">결제 완료 안내</div>
+	                    </td>
+	                  </tr>
+	                  <tr>
+	                    <td style="padding:26px 28px;color:#111827;">
+	                      <div style="font-size:16px;line-height:1.6;">
+	                        안녕하세요, <b>%s</b>님.<br>
+	                        선택하신 상품의 <b>결제 및 예약</b>이 정상적으로 완료되었습니다.
+	                      </div>
+	                      <div style="margin-top:18px;padding:16px 18px;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb;">
+	                        <div style="font-size:12px;color:#6b7280;margin-bottom:8px;">주문 내역 (%s)</div>
+	                        <div style="font-size:18px;font-weight:800;letter-spacing:-0.5px;color:#2563eb;">
+	                          %s
+	                        </div>
+	                        <div style="margin-top:10px;font-size:14px;color:#374151; font-weight: 600;">
+	                          결제 금액 : %s원
+	                        </div>
+	                        <div style="margin-top:6px;font-size:12px;color:#6b7280;">
+	                          %s
+	                        </div>
+	                      </div>
+	                      <div style="margin-top:18px;font-size:14px;line-height:1.7;color:#374151;">
+	                        자세한 예약 정보 및 티켓 확인은 마이페이지에서 확인하실 수 있습니다.
+	                      </div>
+	                      <div style="margin-top:16px;">
+	                        <a href="http://localhost:8272/mypage/payments"
+	                           style="display:inline-block;padding:12px 16px;border-radius:10px;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;">
+	                          예약 내역 확인하러 가기
+	                        </a>
+	                      </div>
+	                    </td>
+	                  </tr>
+	                  <tr>
+	                    <td style="padding:16px 28px;background:#f9fafb;color:#6b7280;font-size:11px;line-height:1.6;">
+	                      © Mohaeng. All rights reserved.<br>
+	                      이 메일은 발신 전용입니다. 이용해 주셔서 감사합니다.
+	                    </td>
+	                  </tr>
+	                </table>
+	              </td>
+	            </tr>
+	          </table>
+	        </body>
+	        </html>
+	        """.formatted(safeName, productIcon, payment.getOrderId(), formattedPrice, detailInfo); 
+	        // ※ payment.getOrderId() 대신 아까 말한 resMsg 변수를 넣어주면 돼!
+
+	    mailService.sendEmail(member.getMemEmail(), subject, member.getMemName() + "님 결제 완료", html);
 	}
 
 }

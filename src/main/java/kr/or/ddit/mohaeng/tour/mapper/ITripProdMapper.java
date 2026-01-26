@@ -23,4 +23,9 @@ public interface ITripProdMapper {
 	public int insertBookmark(@Param("memNo") int memNo, @Param("type") String type, @Param("tripProdNo") int tripProdNo);
 	public int deleteBookmark(@Param("memNo") int memNo, @Param("tripProdNo") int tripProdNo);
 	public int restoreBookmark(@Param("memNo") int memNo, @Param("tripProdNo") int tripProdNo);
+	// 숙박 북마크
+	public int checkAccommodationBookmark(@Param("memNo") int memNo, @Param("tripProdNo") int tripProdNo);
+	public int insertAccommodationBookmark(@Param("memNo") int memNo, @Param("type") String type, @Param("tripProdNo") int tripProdNo);
+	public int deleteAccommodationBookmark(@Param("memNo") int memNo, @Param("tripProdNo") int tripProdNo);
+	public int restoreAccommodationBookmark(@Param("memNo") int memNo, @Param("tripProdNo") int tripProdNo);
 }

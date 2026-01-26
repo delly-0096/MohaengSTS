@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.settlements.mapper.IAdminSettlementsMapper">
+
+	<!-- 전체 정산목록 가져오기 -->
+	<select id="selectSettleList" resultType="map">
+	    SELECT 
+	          S.SALE_NO 					AS SETTLENO
+	        , C.COMP_NO						AS COMPNO           
+	        , C.BZMN_NM 					AS COMPNAME              
+	        , C.BRNO 						AS BRNO                  
+	        , TO_CHAR(S.SALE_DT, 'YYYY-MM') AS SETTLEMONTH 
+	        , S.NET_SALES AS TOTALSALES       
+	        , (S.NET_SALES * 0.1) AS COMMISSION 
+	        , (S.NET_SALES * 0.9) AS SETTLEPAY  
+	        , S.SETTLE_STAT_CD AS STATUS
+	    FROM SALES S
+	    JOIN TRIP_PROD_LIST TPL ON S.PROD_LIST_NO = TPL.PROD_LIST_NO
+	    JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO    
+	    JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO                  
+	    ORDER BY S.SALE_DT DESC, S.SALE_NO DESC
+	</select>
+	
+	<!-- 모달 상세창 기업 정보 및 정산 요약 -->
+	<select id="getSettleEnterpriseInfo" parameterType="int" resultType="map">
+	    SELECT 
+	       TP.COMP_NO                   as "compNo"
+         , TO_CHAR(S.SALE_DT, 'YYYY-MM') AS "settleMonth"
+         , S.SALE_NO					as "saleNo"
+         , S.SETTLE_STAT_CD             as "status"
+         , C.BZMN_NM                    as "compName"       
+         , C.BRNO                       as "brNo"            
+         , C.RPRSV_NM                   as "ceoName"       
+         , C.COMP_TEL                   as "tel"          
+         , C.RPRSV_EMLADR               as "email"    
+         , C.BANK_CD                    as "bankName"     
+         , C.ACCOUNT_NO                 as "accountNo"  
+         , C.DEPOSITOR                  as "accountHolder"
+         , 10                			as "feeRate"
+         , SUM(S.NET_SALES)             as "totalSales"
+		 , ROUND(SUM(S.NET_SALES * 0.1), 0) as "commission"   
+         , ROUND(SUM(S.NET_SALES * 0.9), 0) as "settlePay"
+	    FROM SALES S
+	    JOIN TRIP_PROD_LIST TPL ON S.PROD_LIST_NO = TPL.PROD_LIST_NO
+	    JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+	    JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+	    WHERE S.SALE_NO = #{saleNo}
+	    GROUP BY 
+	    	TP.COMP_NO
+	      , TO_CHAR(S.SALE_DT, 'YYYY-MM')
+		  , S.SALE_NO
+		  , S.SETTLE_STAT_CD
+	      , C.BZMN_NM
+	      , C.BRNO
+	      , C.RPRSV_NM
+	      , C.COMP_TEL
+	      , C.RPRSV_EMLADR
+	      , C.BANK_CD
+	      , C.ACCOUNT_NO
+	      , C.DEPOSITOR
+	</select>
+	
+	<!-- 상품별 매출 요약 -->
+	<select id="getProductSalesSummary" resultType="map">
+	    SELECT 
+	        TP.TRIP_PROD_TITLE                                      as "prodName" 
+        , SUM(TPL.QUANTITY)                                         as "quantity"  
+        , SUM(S.NET_SALES)                                          as "amount"    
+        , ROUND(RATIO_TO_REPORT(SUM(S.NET_SALES)) OVER() * 100, 1)  as "share"
+	    FROM SALES S
+	    JOIN TRIP_PROD_LIST TPL ON S.PROD_LIST_NO = TPL.PROD_LIST_NO
+	    JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+	    WHERE TP.COMP_NO = #{compNo} 
+	      AND TO_CHAR(S.SALE_DT, 'YYYY-MM') = #{settleMonth}
+	    GROUP BY TP.TRIP_PROD_TITLE
+	    ORDER BY SUM(S.NET_SALES) DESC
+	</select>
+	
+	<!-- 주문 상세 내역 -->
+	<select id="getSettleOrderDetailList" resultType="map">
+	    SELECT 
+	          P.PAY_NO 								  as "orderNo"   
+	        , TO_CHAR(P.PAY_DT, 'YYYY-MM-DD HH24:MI') as "orderDate"
+	        , TP.TRIP_PROD_TITLE 				      as "prodName"
+	        , M.MEM_NAME 							  as "bookerName"   
+	        , TO_CHAR(TPL.RESV_DT, 'YYYY-MM-DD')	  as "useDate" 
+	        , S.NET_SALES 							  as "payAmount"
+	        , ROUND(S.NET_SALES * 0.1, 0)             as "orderFee"
+            , ROUND(S.NET_SALES * 0.9, 0)             as "orderSettlement"    
+	        , S.SETTLE_STAT_CD 						  as "status"	    
+	      FROM SALES S
+	    JOIN TRIP_PROD_LIST TPL ON S.PROD_LIST_NO = TPL.PROD_LIST_NO
+	    JOIN PAYMENT P ON TPL.PAY_NO = P.PAY_NO
+	    JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
+	    JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+	    WHERE TP.COMP_NO = #{compNo} 
+	      AND TO_CHAR(S.SALE_DT, 'YYYY-MM') = #{settleMonth}
+	</select>
+	
+	<!-- 정산 완료 update -->
+	<update id="updateSettleStatus">
+	    UPDATE SALES 
+	    SET SETTLE_STAT_CD = '정산완료', 
+	        SETTLE_DATE = SYSDATE 
+	    WHERE SALE_NO = #{saleNo}
+	</update>
+
+	<!-- 정산시 데이터 저장 -->
+	<insert id="insertSettlementHistory">
+	    INSERT INTO SETTLEMENT (SETTLE_NO, SETTLE_PAY, SETTLE_DT, COMP_NO)
+	    VALUES (SEQ_SETTLE.NEXTVAL, #{settlePay}, SYSDATE, #{compNo})
+	</insert>
+	
+	<!-- 통계 쿼리 -->
+	<select id="getSettleStats" resultType="map">
+	    SELECT 
+	          SUM(NET_SALES) AS totalSales /* */
+	        , SUM(NET_SALES * 0.1) AS totalFee
+	        , SUM(CASE WHEN SETTLE_STAT_CD = '정산완료' THEN (NET_SALES * 0.9) ELSE 0 END) AS completedSettlement /* */
+	        , SUM(CASE WHEN SETTLE_STAT_CD IN ('정산대기', '정산가능') THEN (NET_SALES * 0.9) ELSE 0 END) AS pendingSettlement /* */
+	    FROM SALES /* */
+	</select>
+
+</mapper>

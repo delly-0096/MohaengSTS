@@ -35,7 +35,7 @@ class KakaoMapHelper {
     addMarker(lat, lng, title, category, data = null) {
         const position = new kakao.maps.LatLng(lat, lng);
         const markerImage = this.getMarkerImage(category);
-
+	console.log(category);
         const marker = new kakao.maps.Marker({
             position: position,
             map: this.map,
@@ -53,6 +53,45 @@ class KakaoMapHelper {
         this.markers.push(marker);
         return marker;
     }
+	
+	getMarkerImage(category) {
+		const colors = {
+		    '1': '#0000FF', // 파랑 (Primary)
+			'default' : 'black', // 검정 ()
+		    '2': '#FF0000', // 빨강 (Danger)
+		    '3': '#FFA500', // 주황 (Warning)
+		    '4': '#FF69B4', // 핑크 (Highlight)
+		    '5': '#228B22', // 초록 (Nature)
+		    '6': '#800080', // 보라 (Luxury)
+		    '7': '#00CED1', // 하늘색/민트 (Water)
+		    '8': '#FFD700', // 금색/노랑 (Point)
+		    '9': '#8B4513', // 갈색 (Land/Wood)
+		    '10': '#2F4F4F' // 다크 그레이 (Neutral)
+		};
+		
+	    const color = colors[category] || colors['default'];
+		console.log("category : " + category);
+	    // SVG로 마커 모양 만들기 (동그라미 핀 모양)
+		// SVG 안에 카테고리 번호를 텍스트로 삽입
+		const svgMarker = `
+		        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24">
+		            <path fill="${color}" stroke="white" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+		            <circle fill="white" cx="12" cy="9" r="2.5"/>
+		        </svg>
+		    `;
+		/*const svgMarker = `
+		    <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24">
+		        <path fill="${color}" stroke="white" stroke-width="1.5" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+		        <text x="12" y="10" fill="white" font-size="8" font-family="Arial" text-anchor="middle" font-weight="bold">${category}</text>
+		    </svg>
+		`;*/
+		const imageSrc = 'data:image/svg+xml;base64,' + btoa(svgMarker);
+		const imageSize = new kakao.maps.Size(30, 30);
+		    
+		return new kakao.maps.MarkerImage(imageSrc, imageSize);
+	    /*const imageOption = { offset: new kakao.maps.Point(18, 36) };*/
+	    /*return new kakao.maps.MarkerImage(imageSrc, imageSize, imageOption);*/
+	}
 
     // 3. 마커 선택 토글 및 거리 측정 로직
     toggleMarkerSelection(marker, title) {
@@ -143,7 +182,7 @@ class KakaoMapHelper {
         this.map.setBounds(bounds);
     }
 
-    getMarkerImage(category) {
+/*    getMarkerImage(category) {
         let imageSrc = ''; 
         switch(category) {
             case '맛집': case 'FD6': imageSrc = '/images/icon_food.png'; break;
@@ -152,5 +191,5 @@ class KakaoMapHelper {
             default: return null;
         }
         return new kakao.maps.MarkerImage(imageSrc, new kakao.maps.Size(34, 39));
-    }
+    }*/
 }

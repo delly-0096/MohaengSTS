@@ -140,4 +140,17 @@ public class AccommodationVO {
     // 필터 기능 구현
     private String priceRange; // 가격대 (예: "50000-100000")
     private String sortBy;     // 정렬 기준 (recommend, price_low 등)
+    
+    
+    
+    // 숙소 api 필터링 할 변수
+    private String zone;
+    private String roadAddress;
+    private String address;
+    private String jibunAddress;
+    
+    
+    // 리뷰, 평점
+    private double avgRating; // 평균 별점
+    private int reviewCount;  // 리뷰 개수
 }

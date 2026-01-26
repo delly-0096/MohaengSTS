@@ -372,5 +372,49 @@
 	      AND CONTENT_ID = #{tripProdNo}
 	      AND DEL_YN = 'Y'
 	</update>
+	
+	
+	<!-- 숙박 -->
+	<!-- 북마크 여부 확인 -->
+	<select id="checkAccommodationBookmark" resultType="int">
+	    SELECT COUNT(*)
+	    FROM BOOKMARK
+	    WHERE MEM_NO = #{memNo}
+	      AND CONTENT_TYPE = 'ACCOMMODATION'
+	      AND CONTENT_ID = #{tripProdNo}
+	      AND DEL_YN = 'N'
+	</select>
+	
+	<!-- 북마크 등록 -->
+	<insert id="insertAccommodationBookmark">
+	    INSERT INTO BOOKMARK (
+	    BMK_NO, CONTENT_TYPE, MEM_NO, CONTENT_ID, REG_DT, DEL_YN
+	    ) VALUES (
+	    SEQ_BOOKMARK.NEXTVAL, 'ACCOMMODATION', #{memNo}, #{tripProdNo}, SYSDATE, 'N'
+	    )
+	</insert>
+	
+	<!-- 북마크 삭제 -->
+	<update id="deleteAccommodationBookmark">
+	    UPDATE BOOKMARK
+	    SET DEL_YN = 'Y',
+	        DEL_DT = SYSDATE
+	    WHERE MEM_NO = #{memNo}
+	      AND CONTENT_TYPE = 'ACCOMMODATION'
+	      AND CONTENT_ID = #{tripProdNo}
+	      AND DEL_YN = 'N'
+	</update>
+	
+	<!-- 북마크 복구 -->
+	<update id="restoreAccommodationBookmark">
+	    UPDATE BOOKMARK
+	    SET DEL_YN = 'N',
+	        DEL_DT = NULL,
+	        REG_DT = SYSDATE
+	    WHERE MEM_NO = #{memNo}
+	      AND CONTENT_TYPE = 'ACCOMMODATION'
+	      AND CONTENT_ID = #{tripProdNo}
+	      AND DEL_YN = 'Y'
+	</update>
 
 </mapper>

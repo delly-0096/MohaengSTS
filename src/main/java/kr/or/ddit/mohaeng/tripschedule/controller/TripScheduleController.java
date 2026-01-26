@@ -173,7 +173,7 @@ public class TripScheduleController {
 		
 		String urlString = "https://apis.data.go.kr/B551011/KorService2/areaBasedList2?MobileOS=WEB&MobileApp=mohaeng&_type=json"
 				+ "&arrange=Q"
-				+ "&pageNo=" + page + "&numOfRows=100"
+				+ "&pageNo=" + page + "&numOfRows=15"
 				+ "&serviceKey=n8J%2Bnn7gf89CR3axQIKR7ATCydVTUVMUV2oA%2BMfcwz56A%2BcvFS3fSNrKACRVe68G2t9iRj%2FCEY1dLXCr1cNejg%3D%3D";
 		
 		if(!areaCode.equals("")) {

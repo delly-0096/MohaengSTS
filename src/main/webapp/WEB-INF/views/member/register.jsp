@@ -210,7 +210,7 @@
                                 <input type="radio" name="gender" value="">
                                 <span class="gender-label">
                                     <i class="bi bi-dash"></i>
-                                    기타
+                                    미선택
                                 </span>
                             </label>
                         </div>

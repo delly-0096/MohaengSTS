@@ -105,4 +105,101 @@
 	where tp.mem_no = #{memNo}
 	order by p.pay_no desc
   </select>
+  
+  <select id="selectMyProductList" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+	    SELECT 
+	        A.TRIP_PROD_NO,
+	        A.TRIP_PROD_TITLE as title,
+	        A.APPROVE_STATUS,
+	        A.PROD_CTGRY_TYPE,
+	        A.VIEW_CNT,
+	        A.REG_DT,
+	        B.PRICE 
+	    FROM TRIP_PROD A
+	    LEFT OUTER JOIN (
+	        SELECT TRIP_PROD_NO, MAX(UNIT_PRICE) KEEP (DENSE_RANK LAST ORDER BY PROD_LIST_NO) AS PRICE
+	        FROM TRIP_PROD_LIST
+	        GROUP BY TRIP_PROD_NO
+	    ) B ON A.TRIP_PROD_NO = B.TRIP_PROD_NO
+	    WHERE A.MEM_NO = #{memNo} 
+	      AND A.DEL_YN = 'N'      
+	    ORDER BY A.REG_DT DESC   
+  </select>
+  
+  <!-- 최근 6개월 매출 차트 -->
+  <select id="selectMonthlySalesChart" resultType="map">
+    SELECT 
+        months.month AS "month",
+        NVL(SUM(p.PAY_TOTAL_AMT), 0) AS "total"
+    FROM (
+        SELECT TO_CHAR(ADD_MONTHS(SYSDATE, -LEVEL + 1), 'YYYY-MM') AS month
+        FROM DUAL
+        CONNECT BY LEVEL &lt;= 6
+    ) months
+    LEFT OUTER JOIN PAYMENT p ON TO_CHAR(p.PAY_DT, 'YYYY-MM') = months.month
+    LEFT OUTER JOIN TRIP_PROD_LIST tpl ON p.PAY_NO = tpl.PAY_NO
+    LEFT OUTER JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+    WHERE tp.MEM_NO = #{compNo} OR p.PAY_NO IS NULL
+    GROUP BY months.month
+    ORDER BY months.month ASC
+  </select>
+  
+  <!-- 상품 카테고리 비중 (파이차트) -->
+  <select id="selectCategoryRatio" resultType="map">
+    SELECT 
+        PROD_CTGRY_TYPE AS "type",
+        COUNT(*) AS "cnt"
+    FROM TRIP_PROD
+    WHERE MEM_NO = #{compNo}
+    GROUP BY PROD_CTGRY_TYPE
+  </select>
+ 	
+ 	<!-- 다가오는 예약 일정 -->
+	<select id="selectUpcomingReservations" resultType="map">
+	    SELECT * FROM (
+	        SELECT 
+	            (SELECT MEM_NAME FROM MEMBER m WHERE m.MEM_NO = p.MEM_NO) AS "memName",
+	            tp.TRIP_PROD_TITLE AS "prodName",
+	            TO_CHAR(tpl.RESV_DT, 'YYYY-MM-DD') AS "resvDate", 
+	            tpl.USE_TIME AS "useTime",                      
+	            tp.PROD_CTGRY_TYPE AS "type"                     
+	        FROM TRIP_PROD_LIST tpl
+	        JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	        JOIN PAYMENT p ON tpl.PAY_NO = p.PAY_NO              
+	        WHERE tp.MEM_NO = #{compNo}                          
+	          AND tpl.RESV_DT >= TRUNC(SYSDATE)                  
+	          -- AND p.PAY_STATUS = 'CONFIRMED'                
+	        ORDER BY tpl.RESV_DT ASC, tpl.USE_TIME ASC           
+	    ) WHERE ROWNUM &lt;= 5
+	</select>
+	
+	<!-- 최근 리뷰 피드 -->
+	<select id="selectRecentReviews" resultType="map">
+	    SELECT * FROM (
+	        SELECT 
+	            (SELECT MEM_NAME FROM MEMBER m WHERE m.MEM_NO = rv.MEM_NO) AS "memName", 
+	            rv.PROD_REVIEW AS "reviewContent",  
+	            rv.RATING AS "reviewStar",         
+	            TO_CHAR(rv.PROD_REGDATE, 'YYYY-MM-DD') AS "regDate", 
+	            tp.TRIP_PROD_TITLE AS "prodName"   
+	        FROM PROD_REVIEW rv
+	        JOIN TRIP_PROD tp ON rv.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	        WHERE tp.MEM_NO = #{compNo}            
+	          AND rv.REVIEW_STATUS = 'ACTIVE'    
+	        ORDER BY rv.PROD_REGDATE DESC          
+	    ) WHERE ROWNUM &lt;= 5
+	</select>
+	
+	<!-- 오늘 이용 상품 수 -->
+	<select id="selectTodayArrivalCount" resultType="int">
+	    SELECT 
+	        COUNT(*)
+	    FROM TRIP_PROD_LIST tpl
+	    JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	    JOIN PAYMENT p ON tpl.PAY_NO = p.PAY_NO
+	    WHERE tp.MEM_NO = #{compNo}
+	      AND TRUNC(tpl.RESV_DT) = TRUNC(SYSDATE) 
+	      AND p.CANCEL_DT IS NULL              
+	      AND p.PAY_STATUS != 'CANCEL'       
+	</select>
 </mapper>

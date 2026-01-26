@@ -33,14 +33,15 @@
                             <input type="hidden" name="areaCode" id="areaCode"><input type="hidden" name="accNo" id="accNo">
                             </div>
                     </div>
-                    <div class="form-group">
-                        <label class="form-label">체크인</label>
-                        <input type="text" class="form-control date-picker" id="checkIn" name="startDate" placeholder="날짜 선택">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label">체크아웃</label>
-                        <input type="text" class="form-control date-picker" id="checkOut" name="endDate" placeholder="날짜 선택">
-                    </div>
+						<div class="form-group">
+						    <label class="form-label">체크인 - 체크아웃</label>
+						    <div class="input-group">
+						        <input type="text" class="form-control range-picker-target" id="dateRange" placeholder="날짜 범위를 선택하세요" readonly>
+						        <span class="input-group-text" id="stayDuration">0박 0일</span>
+						    </div>
+						    <input type="hidden" id="checkIn" name="startDate">
+						    <input type="hidden" id="checkOut" name="endDate">
+						</div>
                     <div class="form-group">
 					    <label class="form-label">인원</label>
 					    <div class="guest-counter-wrapper">
@@ -130,18 +131,31 @@
                 <c:forEach items="${accList }" var="acc">
                 <div class="accommodation-card" data-accommodation-id="${acc.accNo}">
                     <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }" class="accommodation-image">
-                       ${acc.tripProdNo }
                         <img src="${acc.accFilePath}" alt="${acc.accName}">
-                        <span class="accommodation-badge">인기</span>
+                        <%-- 배지 로직 시작 --%>
+			            <c:choose>
+			                <%-- 1. 평점이 5점인 진짜 '인기' 숙소! --%>
+			                <c:when test="${acc.avgRating eq 5.0}">
+			                    <span class="accommodation-badge" style="background: #ff4757;">인기</span>
+			                </c:when>
+			                
+			                <%-- 2. 리뷰가 아예 없는 따끈따끈한 '신규' 숙소 --%>
+			                <c:when test="${acc.reviewCount eq 0}">
+			                    <span class="accommodation-badge" style="background: #1e90ff;">신규</span>
+			                </c:when>
+			                
+			                <%-- 3. 그 외에는 배지 노출 안 함 (깔끔!) --%>
+			            </c:choose>
                     </a>
-                    <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)">
+                    <button class="accommodation-bookmark" onclick="toggleAccommodationBookmark(event, this)"
+                    		data-trip-prod-no="${acc.tripProdNo}">
                         <i class="bi bi-bookmark"></i>
                     </button>
                     <div class="accommodation-body">
                         <div class="accommodation-rating">
                             <i class="bi bi-star-fill"></i>
-                            <span>4.8</span>
-                            <span class="review-count">(1,234)</span>
+                            <span>${acc.avgRating > 0 ? acc.avgRating : '-'}</span>
+                            <span class="review-count">(${acc.reviewCount})</span>
                         </div>
                         <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }" class="accommodation-name-link">
                             <h3 class="accommodation-name">${acc.accName}</h3>
@@ -231,7 +245,7 @@
 								    </div>
 								
 								    <button type="button" class="btn btn-primary btn-sm" style="border-radius: 6px; padding: 6px 15px;"
-								            onclick="goBooking(${acc.accNo}, ${room.roomTypeNo}, ${acc.tripProdNo })">결제</button>
+								            onclick="goBooking(${acc.accNo}, ${room.roomTypeNo}, ${acc.tripProdNo }, ${room.price * (100 - room.discount) / 100})">결제</button>
 								</div>
                             </c:forEach>
                             </div>

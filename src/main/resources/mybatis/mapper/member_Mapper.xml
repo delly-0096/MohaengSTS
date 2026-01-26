@@ -60,7 +60,8 @@
     		  , MEM_PASSWORD
     		  , MEM_NAME
     		  , MEM_EMAIL
-			  , (SELECT NICKNAME FROM MEM_USER WHERE MEM_NO = M.MEM_NO) AS NICKNAME 
+			  , (SELECT NICKNAME FROM MEM_USER WHERE MEM_NO = M.MEM_NO) AS NICKNAME
+			  , (SELECT TEL FROM MEM_USER WHERE MEM_NO = M.MEM_NO) AS TEL
 	          , MA.AUTH
     		  , C.FILE_PATH AS MEM_PROFILE_PATH
     	 FROM MEMBER M
@@ -354,6 +355,7 @@
 	    )
 	</insert>
 	
+	<!-- sns 회원 프로필 업데이트 -->
 	 <update id="updateSnsProfile" parameterType="kr.or.ddit.mohaeng.mypage.profile.dto.MemberUpdateDTO">
         UPDATE MEMBER
         SET
@@ -362,6 +364,20 @@
             UDT_DT = SYSDATE
         WHERE MEM_NO = #{memNo}
     </update>
+
+	<!-- 결제시 메일 발송을 위한 멤버 select -->
+    <select id="getMemberInfo" parameterType="int" resultMap="memberMap">
+	    SELECT 
+	          M.MEM_NO
+	        , M.MEM_ID
+	        , M.MEM_NAME
+	        , M.MEM_EMAIL
+	        , U.NICKNAME
+	        , U.TEL
+	    FROM MEMBER M
+	    LEFT OUTER JOIN MEM_USER U ON M.MEM_NO = U.MEM_NO
+	    WHERE M.MEM_NO = #{memNo}
+	</select>
 	
 	
 </mapper>

@@ -90,9 +90,9 @@ public class SecurityConfig {
 			"/schedule/rcmd-result",
 			"/schedule/planner",
 			"/schedule/common/**",
-			"/product/accmmodation",
-			"/product/accmmodation-booking",
-			"/product/accmmodation-detail",
+			"/product/flight",
+			"/product/accommodation",
+			"/product/accommodation/**",
 			"/mohaeng/**",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
@@ -105,9 +105,6 @@ public class SecurityConfig {
 			"/error",
 			"/mohaeng",
 			"/schedule/**",
-			"/product/accmmodation",
-			"/product/accmmodation-booking",
-			"/product/accmmodation-detail",
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/oauth2/**",
 			"/login/oauth2/**"

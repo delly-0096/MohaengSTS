@@ -1,25 +1,28 @@
 /**
- * 숙소 상세 페이지 전용 JS
+ * 숙소 상세 페이지 전용 JS (Final Version)
  */
 
 /* =======================
-   1. 전역 상태
+   1. 전역 상태 (중복 선언 삭제 및 통합)
 ======================= */
 var reviewPage = 1;
 var isLoadingReview = false;
 
+// 하나로 통합된 state 객체
 const state = {
     contextPath: '',
     accNo: '',
     accName: '',
-    selectedRooms: [], // 다중 선택 지원
+    tripProdNo: '',
+    selectedRooms: [], 
     guests: { adult: 2, child: 0 },
     nights: 0,
-    isLoggedIn: false
+    isLoggedIn: false,
+    isBusiness: false
 };
 
 /* =======================
-   2. 초기화
+   2. 초기화 (JSP에서 호출됨)
 ======================= */
 function initDetail(config) {
     Object.assign(state, config);
@@ -29,6 +32,9 @@ function initDetail(config) {
     const childEl = document.getElementById('childCount');
     if(adultEl) state.guests.adult = parseInt(adultEl.textContent) || 2;
     if(childEl) state.guests.child = parseInt(childEl.textContent) || 0;
+    
+    // 초기 박수 계산 및 금액 갱신
+    calculateNights();
 }
 window.initDetail = initDetail;
 
@@ -36,42 +42,44 @@ window.initDetail = initDetail;
    3. 인원 조절 로직
 ======================= */
 function updateGuest(type, delta) {
-	let newCount = state.guests[type] + delta;
-	
+    let newCount = state.guests[type] + delta;
+    
     if (type === 'adult' && newCount < 1) return;
     if (type === 'child' && newCount < 0) return;
 
-    // 선택된 방이 있다면, 그 방의 maxGuest를 넘지 않는지 확인
+    // 선택된 방이 있다면, 그 방들의 maxGuest 중 가장 작은 값을 넘지 않는지 확인 (방어 로직)
     if (state.selectedRooms.length > 0) {
-        const currentMax = state.selectedRooms[0].maxGuest;
         const totalAfter = (type === 'adult' ? newCount : state.guests.adult) 
                          + (type === 'child' ? newCount : state.guests.child);
-
-        if (totalAfter > currentMax) {
-            alert(`선택된 객실의 최대 수용 인원(${currentMax}명)을 초과할 수 없습니다.`);
-            return;
+        
+        // 선택된 모든 방에 대해 최대 인원 체크
+        for (let room of state.selectedRooms) {
+            if (totalAfter > room.maxGuest) {
+                alert(`선택된 객실(${room.name})의 최대 수용 인원(${room.maxGuest}명)을 초과할 수 없습니다.`);
+                return;
+            }
         }
     }
 
     state.guests[type] = newCount;
-    document.getElementById(type + 'Count').textContent = newCount;
-    updateTotalPrice();
+    const el = document.getElementById(type + 'Count');
+    if(el) el.textContent = newCount;
+    
+    updateTotalPrice(); // 인원 바뀌면 추가 요금 때문에 총액 갱신해야 함!
 }
+window.updateGuest = updateGuest;
 
 /* =======================
    4. 객실 선택 및 렌더링
 ======================= */
 function selectRoom(roomId, roomName, price, baseGuest, maxGuest, extraFee, unitPrice) {
-	// 현재 선택한 인원수 합계 계산
-	const currentTotal = state.guests.adult + state.guests.child;
-	
-	// 핵심: 최대 인원 체크
-	if (currentTotal > maxGuest) {
-	        alert(`이 객실은 최대 ${maxGuest}인까지만 이용 가능합니다. 인원수를 조정해주세요.`);
-	        return;
-	    }
-		
-	// 중복 선택 방지
+    const currentTotal = state.guests.adult + state.guests.child;
+    
+    if (currentTotal > maxGuest) {
+        alert(`이 객실은 최대 ${maxGuest}인까지만 이용 가능합니다. 인원수를 조정해주세요.`);
+        return;
+    }
+        
     if (state.selectedRooms.some(r => r.id === roomId)) {
         alert("이미 선택된 객실입니다.");
         return;
@@ -80,10 +88,10 @@ function selectRoom(roomId, roomName, price, baseGuest, maxGuest, extraFee, unit
     state.selectedRooms.push({
         id: roomId,
         name: roomName,
-        displayPrice: price,	// 할인가
-		unitPrice: unitPrice, // 판매단가
+        displayPrice: price,    // 할인가
+        unitPrice: unitPrice,   // 판매단가
         baseGuest: baseGuest,
-		maxGuest: maxGuest,
+        maxGuest: maxGuest,
         extraFee: extraFee
     });
     
@@ -136,56 +144,87 @@ function calculateNights() {
     if (inVal && outVal) {
         const inDate = new Date(inVal);
         const outDate = new Date(outVal);
-        state.nights = Math.ceil((outDate - inDate) / 86400000);
+        const diff = outDate - inDate;
+        state.nights = Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
     } else {
         state.nights = 0;
     }
-    updateTotalPrice();
+    updateTotalPrice(); 
 }
 window.calculateNights = calculateNights;
 
 function updateTotalPrice() {
-    // 1. 필요한 요소를 먼저 찾기 (id 일치 확인!)
     const totalEl = document.getElementById('totalPrice');
     const nightEl = document.getElementById('nightStayCount');
     const bookingBtn = document.getElementById('bookingBtn');
 
-    // 2. 방어 로직: 숙박 일수가 없거나 선택된 객실이 없을 때
     if (state.nights <= 0 || state.selectedRooms.length === 0) {
         if (totalEl) totalEl.textContent = '-';
         if (nightEl) nightEl.textContent = '객실과 날짜를 선택해주세요.';
-        if (bookingBtn) bookingBtn.disabled = true; // 예약 버튼 비활성화
+        if (bookingBtn) bookingBtn.disabled = true;
         return;
     }
 
-    // 3. 금액 계산 로직
     let totalAmount = 0;
     const totalGuests = state.guests.adult + state.guests.child;
 
     state.selectedRooms.forEach(room => {
         let roomPrice = room.displayPrice;
-        // 기준 인원 초과 시 추가 요금 발생
-        if (totalGuests > room.baseGuest) {
-            roomPrice += (totalGuests - room.baseGuest) * room.extraFee;
+        // 인원 추가 요금 계산
+        if (totalGuests > (room.baseGuest || 2)) {
+            const extraCount = totalGuests - (room.baseGuest || 2);
+            roomPrice += extraCount * (room.extraFee || 0);
         }
         totalAmount += (roomPrice * state.nights);
     });
 
-    // 4. 화면에 값 뿌려주기
-    if (totalEl) {
-        totalEl.textContent = totalAmount.toLocaleString() + '원';
-    }
-    
-    if (nightEl) {
-        nightEl.textContent = `${state.nights}박 기준 (추가 인원 요금 포함)`;
-    }
-
-    // 5. 결제 버튼 활성화
-    if (bookingBtn) {
-        bookingBtn.disabled = false;
-    }
+    if (totalEl) totalEl.textContent = totalAmount.toLocaleString() + '원';
+    if (nightEl) nightEl.textContent = `${state.nights}박 기준 (인원 추가 포함)`;
+    if (bookingBtn) bookingBtn.disabled = false;
 }
 
+/* =======================
+   6. 페이지 로드 및 Flatpickr (통합)
+======================= */
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const startDateParam = urlParams.get('startDate'); 
+    const endDateParam = urlParams.get('endDate');   
+    const adultParam = urlParams.get('adultCount');
+
+    // 1. 인풋에 값 먼저 넣기
+    if(startDateParam) document.getElementById('checkInDate').value = startDateParam;
+    if(endDateParam) document.getElementById('checkOutDate').value = endDateParam;
+    if(adultParam) {
+        const adultEl = document.getElementById('adultCount');
+        if(adultEl) adultEl.textContent = adultParam;
+        state.guests.adult = parseInt(adultParam);
+    }
+
+    // 2. Flatpickr 초기화
+    const fpIn = flatpickr("#checkInDate", {
+        dateFormat: "Y-m-d",
+        minDate: "today",
+        defaultDate: startDateParam || "today",
+        onChange: function(selectedDates, dateStr) {
+            const nextDay = new Date(selectedDates[0]);
+            nextDay.setDate(nextDay.getDate() + 1);
+            fpOut.set('minDate', nextDay);
+            calculateNights();
+        }
+    });
+
+    const fpOut = flatpickr("#checkOutDate", {
+        dateFormat: "Y-m-d",
+        minDate: startDateParam ? new Date(new Date(startDateParam).getTime() + 86400000) : "today",
+        defaultDate: endDateParam || new Date().fp_incr(1),
+        onChange: function() {
+            calculateNights();
+        }
+    });
+
+    calculateNights(); // 초기 박수 계산
+});
 /* =======================
    6. 예약 제출 (다중 선택 대응)
 ======================= */

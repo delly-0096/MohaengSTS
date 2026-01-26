@@ -1563,8 +1563,10 @@ function initReturn() {
 	        
     		itemsContainer.appendChild(newItem);
 		    initDragAndDropForItem(newItem);
+
+			console.log(item.day);
 		    
-			myMap.addMarker(item.latitude, item.longitude, item.itemName, { id: item.itemId });
+			myMap.addMarker(item.latitude, item.longitude, item.itemName, item.day, { id: item.itemId });
 			
 			myMap.fitBounds();
         });

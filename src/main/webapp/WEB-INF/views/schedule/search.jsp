@@ -159,6 +159,9 @@
                             <li><i class="bi bi-check2"></i> 다른 이용자 일정 참고</li>
                             <li><i class="bi bi-check2"></i> 이동 경로 최적화</li>
                         </ul>
+                        <ul class="plan-type-features">
+                            <li class="txt-right">Gemini API를 사용하여 생성됩니다.</li>
+                        </ul>
                     </div>
                 </label>
 
@@ -924,8 +927,8 @@ function nextStep(step) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
         console.log('Successfully moved to step:', step);
     } catch (error) {
-        console.error('Error in nextStep:', error);
-        alert('오류가 발생했습니다: ' + error.message);
+//         console.error('Error in nextStep:', error);
+//         alert('오류가 발생했습니다: ' + error.message);
     }
 }
 

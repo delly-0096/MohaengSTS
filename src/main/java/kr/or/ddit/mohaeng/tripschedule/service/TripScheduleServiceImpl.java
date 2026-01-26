@@ -568,8 +568,12 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 		
 		if(introItemNode != null) {
 			System.out.println("detailNode.path(\"response\").path(\"body\").path(\"totalCount\").equals(\"0\") : " + detailNode.path("response").path("body").path("totalCount").equals("0"));
-			operationHours = introItemNode.get(params.getString("operationhours")).asText();
-			plcPrice = introItemNode.get(params.getString("plcprice")).asText();
+			if(params.get("operationhours") != null && introItemNode.get(params.getString("operationhours")) != null) {
+				operationHours = introItemNode.get(params.getString("operationhours")).asText();
+			}
+			if(params.get("plcprice") != null && introItemNode.get(params.getString("plcprice")) != null) {
+				plcPrice = introItemNode.get(params.getString("plcprice")).asText();
+			}
 		} else {
 //	        String message = String.format("""
 //		            관광지 정보를 찾고 있어.

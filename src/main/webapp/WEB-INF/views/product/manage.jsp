@@ -760,11 +760,9 @@
                         <div class="row">
                             <div class="col-md-5">
                                 <div id="detailImageCarousel" class="carousel slide" data-bs-ride="carousel">
-                                    <div class="carousel-inner" id="detailImages">
-                                        <div class="carousel-item active">
-<!--                                         	<div id></div> -->
-                                        	<!-- 여기 컨테이너 선택해서 뿌려주기 -->
-<!--                                             <img src="https://via.placeholder.com/400x300" class="d-block w-100 rounded" alt="상품이미지"> -->
+                                    <div class="carousel-inner">
+                                        <div class="carousel-item active" id="detailImages">
+                                        	<!-- 사진 출력란 -->
                                         </div>
                                     </div>
                                 </div>
@@ -788,11 +786,66 @@
                                     <p id="view-content" class="mb-0 text-secondary" style="white-space: pre-line;">설명 내용이 들어갑니다.</p>
                                 </div>
                             </div>
+                            <!-- 숙소 옵션 나타내기 -->
+                            <div class="acc-section mt-4" id="facility" style="display: none">
+                            	<h3>편의시설</h3>
+                    			<div class="amenities-list">
+		                            <div class="amenity-item">
+			                            <i class="bi bi-wifi"></i>
+			                            <span>무료 WiFi</span>
+			                        </div>
+		                            <div class="amenity-item">
+			                            <i class="bi bi-p-circle"></i>
+			                            <span>무료 주차</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-water"></i>
+			                            <span>수영장</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-heart-pulse"></i>
+			                            <span>피트니스</span>
+			                        </div>
+		                            <div class="amenity-item">
+			                            <i class="bi bi-droplet"></i>
+			                            <span>스파/사우나</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-cup-hot"></i>
+			                            <span>조식 제공</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-shop"></i>
+			                            <span>레스토랑</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-cup-straw"></i>
+			                            <span>바/라운지</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-bell"></i>
+			                            <span>룸서비스</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-basket"></i>
+			                            <span>세탁 서비스</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-basket"></i>
+			                            <span>지정 흡연구역</span>
+			                        </div>
+			                        <div class="amenity-item">
+			                            <i class="bi bi-basket"></i>
+			                            <span>반려동물 입실 가능</span>
+			                        </div>
+			                	</div>
+	                        </div>
+	                        
                         </div>
                     </div>
 					<!-- 예약정보 -->
                     <div class="tab-pane fade" id="tab-reservation" role="tabpanel">
-                        <div class="table-responsive">
+                        <div class="table-responsive" id="accReserve" style="display: none;">
                             <table class="table table-hover align-middle">
                                 <thead class="table-light sticky-top" style="top: -1px; z-index: 10;">
                                     <tr>
@@ -805,8 +858,41 @@
                                     </tr>
                                 </thead>
                                 <tbody id="view-reservation-list">
-<!--                                 	상황에따른 변경 -->
 <!--                                     <tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr> -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <!-- 상품 예약 정보 -->
+                        <div class="table-responsive" id="prodReserve">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light sticky-top" style="top: -1px; z-index: 10;">
+                                    <tr>
+                                        <th>예약번호</th>
+                                        <th>예약자</th>
+                                        <th>예약일자</th>
+                                        <th>인원</th>
+                                        <th>상태</th>
+                                        <th>결제금액</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="view-reservation-list">
+<!--                                     <tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr> -->
+                                    <tr>
+                                    	<td>30</td>
+                                    	<td>김**</td>
+                                    	<td>2025-12-23</td>
+                                    	<td>3</td>
+                                    	<td>결제완료</td>
+                                    	<td>30,000원</td>
+                                    </tr>
+                                    <tr>
+                                    	<td>33</td>
+                                    	<td>이**</td>
+                                    	<td>2026-01-12</td>
+                                    	<td>2</td>
+                                    	<td>결제완료</td>
+                                    	<td>20,00원</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -815,13 +901,25 @@
 					<!-- 리뷰내역 -->
                     <div class="tab-pane fade" id="tab-review" role="tabpanel">
                         <div id="view-review-list">
+                        	<!-- 출력란 -->
                             <div class="card mb-3 border-0 border-bottom">
                                 <div class="card-body">
+                                	<!-- 리뷰내역 -->
                                     <div class="d-flex justify-content-between mb-2">
-                                        <h6 class="fw-bold mb-0">사용자ID <span class="text-warning ml-2">★★★★☆</span></h6>
-                                        <small class="text-muted">2026-01-26</small>
+                                        <h6 class="fw-bold mb-0">김** <span class="text-warning ml-2">★★★★☆</span></h6>
+                                        <small class="text-muted">2026-01-16</small>
                                     </div>
                                     <p class="small mb-0">상품이 너무 좋아요! 다시 이용하고 싶습니다.</p>
+                                </div>
+                            </div>
+                            <div class="card mb-3 border-0 border-bottom">
+                                <div class="card-body">
+                                	<!-- 리뷰내역 -->
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <h6 class="fw-bold mb-0">뽀삐 <span class="text-warning ml-2">★★★☆☆</span></h6>
+                                        <small class="text-muted">2025-12-26</small>
+                                    </div>
+                                    <p class="small mb-0">나쁘지 않았어요</p>
                                 </div>
                             </div>
                         </div>
@@ -1131,17 +1229,28 @@ async function showDetail (data){
 	console.log("showDetail : id, no" +  id  + " " + no);
 	const sendData = {tripProdNo : id};
 	
+	const facility = document.getElementById('facility');		// 숙소 보유시설
+	const accReserve = document.getElementById('accReserve');	// 숙소 예약내역
+	
+	facility.style.display = "none";
+	accReserve.style.display = "none";
+	
+	
 	let netprc = document.getElementById('view-netprc');		// 정가
 	let price = document.getElementById('view-price');			// 할인 가격	
 	let curStock = document.getElementById('view-curStock');	// 현재 재고
 	let saleDate = document.getElementById('view-date');		// 판매기간 2개 더하기
 	let content = document.getElementById('view-content');		// overview나 tripProdContent
 	
-	let prodTitle = document.getElementById('view-title');
-	let prodCategory = document.getElementById('view-category');
-	let prodAddr = document.getElementById('view-address');
+	let prodTitle = document.getElementById('view-title');		// 상품명
+	let prodCategory = document.getElementById('view-category');// 카테고리
+	let prodAddr = document.getElementById('view-address');		// 주소
 
 	let reservationList = document.getElementById('view-reservation-list');
+	let detailImagesContainner = document.getElementById('detailImages');
+	
+	
+	
 	// 숙박
 	if(no != null) sendData.accNo = no;
 	
@@ -1150,47 +1259,113 @@ async function showDetail (data){
 		const res = await axios.post(`/product/manage/productDetail`, sendData);
 		console.log("res.data : ", res.data);
 		
+		// 공통 정보
+		let selectCategory = res.data.prodCtgryType;
+		switch(selectCategory){
+			case 'accommodation' : 
+				selectCategory = "숙박";
+				break;
+			case 'activity' : 
+				selectCategory = "액티비티";
+				break;
+			case 'tour' : 
+				selectCategory = "투어";
+				break;
+			case 'ticket' : 
+				selectCategory = "입장권/티켓";
+				break;
+			case 'class' : 
+				selectCategory = "클래스/체험";
+				break;
+			default :
+				selectCategory = "교통/이동";
+				break;
+		}
+		prodCategory.innerHTML = selectCategory;		// 상품 카테고리
+		
 		// 숙박
-		if(res.data.accommodation){
+		if(res.data.accommodation && selectCategory === "숙박"){
 			console.log("res.data.accommodation : ", res.data.accommodation);
 			const accommodation = res.data.accommodation;
 			
-			prodTitle.innerHTML = accommodation.accName;
+			facility.style.display = "block";
+			accReserve.style.display = "block";
+
 			
-			let selectCategory = res.data.prodCtgryType;
-			switch(selectCategory){
-				case selectCategory == 'accommodation' : 
-					selectCategory = "숙박";
-				default :
-					selectCategory = "dd";
-			}
+			prodTitle.innerHTML = accommodation.accName;	// 상품명
+			content.innerHTML = 
+				accommodation.overview == null ? 
+						res.data.tripProdContent : accommodation.overview;		// 상품 내용
 			
-			prodCategory.innerHTML = selectCategory;
-			content.innerHTML = accommodation.overview;
+			let photo = `<img src="\${accommodation.accFilePath}" class="d-block w-100 rounded" alt="상품이미지">`;
+			detailImagesContainner.innerHTML = photo;
 			
-			saleDate.innerHTML = setTime(res.data.saleStartDt) + " ~ " + setTime(res.data.saleEndDt);
+			saleDate.innerHTML = setTime(res.data.saleStartDt) + " ~ " + setTime(res.data.saleEndDt);	// 판매 기간
 			console.log("accommodation.roomTypeList : ", accommodation.roomTypeList);
 
-			let reserveHtml = `<tr>`;
+			let reserveHtml = ``;
 			
 			// 예약 목록 출력 위한 것
 			let reservationRoomList = accommodation.roomTypeList;
+			
+			const cheapestRoom = reservationRoomList.reduce((prev, curr) => {
+			    // 가격이 0보다 큰 것 중에서 더 작은 값을 가진 객체를 반환
+			    return (prev.price > 0 && prev.price < curr.price) ? prev : curr;
+			});
+
+			// 2. 해당 객체에서 필요한 값 추출
+			const minPrice = cheapestRoom.price;   // 최저 판매가
+			const matchingDiscount = cheapestRoom.discount; // 그 최저가 방의 원래 정가
+
+			netprc.innerHTML = minPrice.toLocaleString();
+			price.innerHTML = matchingDiscount == 0 ?
+					minPrice.toLoacleString() : 
+					(minPrice - parseInt(minPrice * (matchingDiscount / 100))).toLocaleString();
+			
 			reservationRoomList.forEach((room) => {
 				console.log("room.예약 : ", room);
+				let roomName = room.roomName;	// 객실 명
+				
+				// 객실 가격 필터링 해야됨
+				
 				room.accResvList.forEach((acc) => {
-					// 6개를 만들어야됨
-					reserveHtml += `<td>\${acc.acc}</td>`
+					
+					let startDt = acc.startDt.split("T");
+					let endDt = acc.endDt.split("T");
+					let personCount = acc.adultCnt + acc.childCnt + acc.infantCnt;
+					
+					reserveHtml += `<tr>
+										<td>\${acc.accResvNo}</td>
+										<td>\${acc.memName}</td>
+										<td>\${startDt[0]} ~ \${endDt[0]}</td>
+										<td>\${personCount} / \${roomName}</td>
+										<td>\${acc.resvStatus}</td>
+										<td>\${acc.price}</td>
+									</tr>`
 					console.log("예약 : ", acc);
 				});
 			});
 			
-			reserveHtml += `<tr/>`
 			reservationList.innerHTML = reserveHtml;
 		}else{
 			// 상품
+			const prod = res.data;
+// 			const root = `\${pageContext.request.contextPath}`;
 			
+			prodTitle.innerHTML = prod.tripProdTitle;
+			content.innerHTML = prod.tripProdContent;
 			
-// 			console.log("asdfads")
+
+			const path = `${pageContext.request.contextPath}/upload\${prod.thumbImage}`;
+			let photo = `<img src="\${path}" class="d-block w-100 rounded" alt="상품이미지">`;
+			detailImagesContainner.innerHTML = photo;
+			
+			saleDate.innerHTML = setTime(prod.saleStartDt) + " ~ " + setTime(prod.saleEndDt);	// 판매 기간
+			
+
+			netprc.innerHTML = prod.prodSale.netprc.toLocaleString();
+			price.innerHTML =  prod.prodSale.price.toLocaleString();;
+			curStock.innerHTML = prod.prodSale.curStock;
 		}
 		
 	}catch(err){

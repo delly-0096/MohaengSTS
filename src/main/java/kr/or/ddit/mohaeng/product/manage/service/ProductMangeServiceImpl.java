@@ -90,7 +90,10 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			accommodationvo.setAccNo(accNo);
 			
 			AccommodationVO accommodation = manageMapper.retrieveAccomodationDetail(accommodationvo);
-			prodVO.setAccommodation(accommodation);
+			log.info("accommodation : 불러왔다 : {}", accommodation);
+			log.info("accommodation : 객실 타입 불러왔다 : {}", accommodation.getRoomTypeList());
+			
+//			prodVO.setAccommodation(accommodation);
 			log.info("retrieveAccomodationDetail : {}", accommodation.getRoomTypeList().size());
 			
 			List<AttachFileDetailVO> accommodationImages = new ArrayList<>();
@@ -107,10 +110,18 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			List<AccResvVO> accResvList = new ArrayList<>();
 			accResvList = manageMapper.getAccResvList(accommodationvo);
 			log.info("accResvList : {} ", accResvList);
-			if(accResvList.size() > 0 ) {
-				prodVO.setResvList(accResvList);
+			if(accResvList != null && accResvList.size() > 0 ) {
+				for(RoomTypeVO roomTypeVO : accommodation.getRoomTypeList()) {
+					List<AccResvVO> filteredResv = new ArrayList<>();
+				    for (AccResvVO accResvVO : accResvList) {
+				        if (roomTypeVO.getRoomTypeNo() == accResvVO.getRoomTypeNo()) {
+				            filteredResv.add(accResvVO);
+				        }
+				    }
+				    roomTypeVO.setAccResvList(filteredResv);
+				}
 			}
-			
+			prodVO.setAccommodation(accommodation);
 			
 		// 숙소가 아닐때는 이렇게
 		} else {

@@ -506,6 +506,54 @@
     cursor: not-allowed;
 }
 
+.acc-section {
+	padding-bottom: 24px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #eee;
+}
+
+.acc-section h3 {
+    font-weight: 700;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+}
+
+.acc-meta {
+	display: flex;
+    justify-content: space-between; /* 양 끝으로 요소를 배치 */
+    align-items: center;
+	padding-bottom: 24px;
+    margin-bottom: 3px;
+}
+
+
+/* 편의시설 */
+.amenities-list {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+}
+
+.amenity-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px;
+    background: #f8fafc;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #666;
+    text-align: center;
+}
+
+.amenity-item i {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+/**/
+
 /* 상품 체크박스 */
 .product-checkbox {
     display: flex;

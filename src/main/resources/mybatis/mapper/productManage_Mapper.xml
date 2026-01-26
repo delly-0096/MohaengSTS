@@ -421,7 +421,7 @@
 	<!-- 상품 장소, 숙소 정보, 숙소 보유시설 정보 변경 -->
 	<update id="modifyProdPlace" parameterType="kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO">
 	    UPDATE TRIP_PROD_PLACE
-	    SET 
+    	SET 
 	        ADDR1 = #{addr1}
 	        , ADDR2 = #{addr2}
 	    WHERE TRIP_PROD_NO = #{tripProdNo}
@@ -803,7 +803,7 @@
 		)
 	</insert>
 	
-	<!-- 예약 내역 가져오기 -->
+	<!-- 상품 예약 내역 가져오기 -->
 	<select id="getReservation" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultType="kr.or.ddit.mohaeng.vo.TripProdListVO">
 		SELECT
 			<include refid="prodListColumns">
@@ -814,5 +814,20 @@
 	</select>
 	
 	<!-- 숙소 예약 내역 가져오기 -->
+	<select id="getAccResvList" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accMap">
+		SELECT
+			A.ACC_NO
+			, A.ACC_NAME
+			, <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.roomTypeColumns">
+				<property name="alias" value="RT."/>
+			</include>
+			, <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accResvColumns">
+				<property name="alias" value="AR."/>
+			</include>
+		FROM ACCOMMODATION A
+		INNER JOIN ROOM_TYPE RT ON A.ACC_NO = RT.ACC_NO
+		INNER JOIN ACC_RESV AR ON RT.ROOM_TYPE_NO = AR.ROOM_TYPE_NO
+		WHERE RT.ACC_NO = #{accNo}
+	</select>
 	
 </mapper>

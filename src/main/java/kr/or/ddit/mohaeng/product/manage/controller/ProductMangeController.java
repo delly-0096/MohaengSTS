@@ -222,8 +222,10 @@ public class ProductMangeController {
 		log.info("deleteProduct : {}", tripProd);
 		ServiceResult result = manageService.deleteProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
+			log.info("성공! : {}", result);
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
+			log.info("실패! : {}", result);
 			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 		}
 	}

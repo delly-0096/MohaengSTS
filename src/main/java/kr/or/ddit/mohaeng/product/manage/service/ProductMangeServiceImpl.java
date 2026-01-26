@@ -22,6 +22,8 @@ import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccOptionVO;
+import kr.or.ddit.mohaeng.vo.AccResvOptionVO;
+import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
@@ -102,7 +104,9 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			}
 			
 			// 숙소 예약 내역
-			
+			List<AccResvVO> accResvList = new ArrayList<>();
+			accResvList = manageMapper.getAccResvList(accommodationvo);
+			log.info("accResvList : {} ", accResvList);
 			
 		// 숙소가 아닐때는 이렇게
 		} else {
@@ -147,8 +151,6 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 				inquiryService.getInquiryPaging(tripProdNo, businessProducts.getPage(), businessProducts.getPageSize());
 		log.info("inquiryList : {}", inquiryList);
 		prodVO.setProdInquiryList(inquiryList);
-		
-
 		
 		return prodVO;
 	}
@@ -421,10 +423,14 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		if(discount > 0) {
 			price = netprc - discount;
 			prodSaleVO.setPrice(price);
+		} else {
+			prodSaleVO.setPrice(netprc);
 		}
+		
+		
 		status = manageMapper.insertTripProdSale(prodSaleVO);
 		if(status <= 0) {
-			log.info("insertProduct - insertTripProductDetail 상품 판매정보 등록 실패");
+			log.error("insertProduct - insertTripProductDetail 상품 판매정보 등록 실패");
 			return result = ServiceResult.FAILED;
 		}
 		log.info("insertProduct - insertTripProductDetail 상품 판매정보 등록 성공");
@@ -437,7 +443,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록");
 		status= manageMapper.insertTripProdPlace(placeVO);
 		if(status <= 0) {
-			log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록 실패");
+			log.error("insertProduct - insertTripProductDetail 상품 관광지 정보 등록 실패");
 			return result = ServiceResult.FAILED;
 		}
 		log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록 성공");
@@ -449,7 +455,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		log.info("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록");
 		status = manageMapper.insertTripProdInfo(prodInfoVO);
 		if(status <= 0) {
-			log.info("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록 실패");
+			log.error("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록 실패");
 			return result = ServiceResult.FAILED;
 		}
 		
@@ -458,7 +464,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		
 		// 여행 가능 시간 정보
 		List<ProdTimeInfoVO> prodTimeInfoList = businessProducts.getProdTimeList();
-		if(prodTimeInfoList != null && prodTimeInfoList.size() <= 0) {
+		if(prodTimeInfoList == null && prodTimeInfoList.size() <= 0) {
 			// 없어도 가능하게 해?
 			return result = ServiceResult.FAILED;
 		}
@@ -485,7 +491,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			status = manageMapper.insertProdTimeInfo(prodTimeInfoVO);
 			log.info("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 성공");
 			if(status <= 0) {
-				log.info("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 실패");
+				log.error("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 실패");
 				return result = ServiceResult.FAILED;
 			}else {
 				totalSuccess += status;
@@ -511,7 +517,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		log.info("insertProduct - insertAccommodationDetail  숙소 등록");
 		status = manageMapper.insertAccommodation(accommodationVO);
 		if(status <= 0) {
-			log.info("insertProduct - insertAccommodationDetail 숙소 등록 실패");
+			log.error("insertProduct - insertAccommodationDetail 숙소 등록 실패");
 			return result = ServiceResult.FAILED;
 		}
 		log.info("insertProduct - insertAccommodationDetail 숙소 등록 성공");
@@ -526,7 +532,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		log.info("insertProduct - insertAccommodationDetail  숙소 보유시설 등록");
 		status = manageMapper.insertAccFacility(accFacilityVO);
 		if(status <= 0) {
-			log.info("insertProduct - insertAccommodationDetail 숙소 보유시설등록 실패");
+			log.error("insertProduct - insertAccommodationDetail 숙소 보유시설등록 실패");
 			return result = ServiceResult.FAILED;
 		}
 		log.info("insertProduct - insertAccommodationDetail 숙소 보유시설등록 성공");
@@ -542,7 +548,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 				status = manageMapper.insertAccOption(accOptionVO);
 			}
 			if(status <= 0) {
-				log.info("insertProduct - insertAccommodationDetail 숙소 옵션 등록 실패");
+				log.error("insertProduct - insertAccommodationDetail 숙소 옵션 등록 실패");
 				return result = ServiceResult.FAILED;
 			}
 			log.info("insertProduct - insertAccommodationDetail 숙소 옵션 등록 성공");
@@ -573,7 +579,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			roomTypeVO.setAccNo(accNo);
 			status = manageMapper.insertRoomType(roomTypeVO);
 			if(status <= 0) {
-				log.info("insertProduct - insertRoomTypes 객실 타입 등록 실패");
+				log.error("insertProduct - insertRoomTypes 객실 타입 등록 실패");
 				return result = ServiceResult.FAILED;
 			}
 			log.info("insertProduct - insertRoomTypes 객실 타입 등록 성공");
@@ -588,7 +594,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 				log.info("insertProduct - insertRoomTypes 객실 내 시설 등록");
 				status = manageMapper.insertRoomFcaility(facilityVO);
 				if(status <= 0) {
-					log.info("insertProduct - insertRoomTypes 객실 내 시설 등록 실패");
+					log.error("insertProduct - insertRoomTypes 객실 내 시설 등록 실패");
 					return result = ServiceResult.FAILED;
 				}
 				log.info("insertProduct - insertRoomTypes 객실 내 시설 등록 성공");
@@ -602,7 +608,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 				log.info("insertProduct - insertRoomTypes 객실 내 특징 등록");
 				status = manageMapper.insertRoomFeature(featureVO);
 				if(status <= 0) {
-					log.info("insertProduct - insertRoomTypes 객실 내 특징 등록 실패");
+					log.error("insertProduct - insertRoomTypes 객실 내 특징 등록 실패");
 					return result = ServiceResult.FAILED;
 				}
 				log.info("insertProduct - insertRoomTypes 객실 내 특징 등록 성공");
@@ -613,11 +619,13 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			int roomStatus = 0; 
 			roomStatus = insertRoom(roomTypeVO, roomTypeNo);
 			if(roomStatus <= 0) {
+				log.error("객실 등록 실패");
 				return result = ServiceResult.FAILED;
 			}
+			log.info("객실 등록 성공");
 		}
 		
-		return null;
+		return result = ServiceResult.OK;
 	}
 
 	

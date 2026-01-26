@@ -37,13 +37,6 @@ div[aria-describedby^="radix-"] {
     height: fit-content;
 }
 
-.summary-card {
-    border: none;
-    box-shadow: 0 10px 30px rgba(26, 127, 127, 0.08); /* 우리 다크 틸 그림자 */
-
-    overflow: hidden;
-}
-
 .summary-row.total {
     margin-top: 15px;
     padding-top: 15px;

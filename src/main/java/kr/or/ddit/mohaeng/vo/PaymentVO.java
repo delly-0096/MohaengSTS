@@ -9,7 +9,7 @@ import lombok.Data;
 public class PaymentVO {
 	// 결제
 	
-	private int payNo; 			// 결제키 (결제번호 || 주문번호) -> 각 결제 항목 약자 + 일자로 구현 예정
+	private int payNo; 			// 결제키 (결제번호 || 주문번호)
 	private int memNo; 			// 회원키
 	private String memName;		// 결제자
 	private String paymentKey;	// payment 키 - API에서도 사용

@@ -209,6 +209,110 @@ input, textarea, select {
     justify-content: space-between;
 }
 
+/* 헤더 모달 전용 캘린더 스타일 (Dark Teal & Harmony Theme) */
+#headerScheduleCalendar {
+    font-family: inherit;
+    padding: 10px;
+}
+
+/* 1. 요일 헤더 디자인 */
+#headerScheduleCalendar .fc-col-header-cell-cushion {
+    font-weight: 600;
+    color: var(--primary-dark, #156969);
+    padding: 8px 4px;
+    font-size: 13px;
+    text-decoration: none !important;
+}
+
+/* 2. [핵심수정] 오늘 날짜 하이라이트 - 일정 바와 구분되도록 개선 */
+#headerScheduleCalendar .fc-day-today {
+    background-color: rgba(26, 127, 127, 0.05) !important; /* 배경에 아주 연한 틸 톤 */
+}
+
+#headerScheduleCalendar .fc-day-today .fc-daygrid-day-number {
+    /* 배경은 화이트로 채워 가독성 확보, 테두리는 진한 틸 */
+    background-color: #ffffff !important; 
+    color: var(--primary-color, #1a7f7f) !important; 
+    border: 2px solid var(--primary-color, #1a7f7f) !important;
+    
+    /* 부드러운 사각형 (리더의 취향 반영) */
+    border-radius: 6px !important; 
+    font-weight: 800;
+    
+    /* 다른 숫자들과 어우러지는 최적의 크기 */
+    min-width: 34px;
+    height: 24px;
+    
+    display: inline-flex !important;
+    justify-content: center;
+    align-items: center;
+    
+    /* 위치 밸런스 조정 */
+    margin: 4px 4px 0 0 !important;
+    padding: 0 6px !important;
+    font-size: 12px;
+    line-height: 1;
+}
+
+/* 3. 일정 바 (Event Bars): 범례 색상과 100% 동기화 */
+#headerScheduleCalendar .fc-event {
+    border: none !important;
+    border-radius: 4px !important; /* 일정 바는 조금 더 날렵하게 */
+    padding: 4px 8px !important;
+    margin: 2px 4px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* 미세한 그림자로 가시성 확보 */
+    cursor: pointer !important;
+}
+
+#headerScheduleCalendar .fc-event-title {
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+}
+
+/* 상태별 컬러 (범례와 일치) */
+#headerScheduleCalendar .fc-event-upcoming { background-color: #2563eb !important; } /* 다가오는 여행: 블루 */
+#headerScheduleCalendar .fc-event-ongoing { background-color: #22c55e !important; }  /* 진행중: 그린 */
+#headerScheduleCalendar .fc-event-completed { background-color: #64748b !important; } /* 완료: 그레이 */
+
+/* 4. 버튼 및 툴바 커스텀 */
+#headerScheduleCalendar .fc-button-primary {
+    background: var(--primary-color, #1a7f7f) !important;
+    border: none !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+    padding: 6px 12px !important;
+}
+
+#headerScheduleCalendar .fc-button-primary:hover {
+    filter: brightness(90%);
+}
+
+#headerScheduleCalendar .fc-toolbar-title {
+    font-size: 1.1rem !important;
+    font-weight: 600;
+    color: var(--primary-dark, #156969);
+}
+
+/* 5. 달력 내부 선 및 일반 숫자 정리 */
+#headerScheduleCalendar .fc-scrollgrid {
+    border-radius: 12px;
+    overflow: hidden;
+    border-color: #e0eded !important;
+}
+
+#headerScheduleCalendar .fc-daygrid-day-number {
+    color: #445555;
+    font-size: 12px;
+    text-decoration: none !important;
+    padding: 4px 8px;
+    transition: color 0.2s;
+}
+
+#headerScheduleCalendar .fc-daygrid-day:hover .fc-daygrid-day-number {
+    color: var(--primary-color, #1a7f7f);
+}
+
 /* 헤더 우측 영역 */
 .header-right {
     display: flex;
@@ -1060,6 +1164,7 @@ input, textarea, select {
     bottom: 14px;
     transform: none;
 }
+
 
 /* ===== 자동완성 드롭다운 ===== */
 .autocomplete-dropdown {
@@ -2120,4 +2225,16 @@ input, textarea, select {
 
 .chatbot-clear:hover {
     opacity: 0.8;
+}
+
+/* 챗봇 Powered by 표시 */
+.chatbot-powered {
+    font-size: 10px;
+    font-weight: 400;
+    color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.15);
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
 }

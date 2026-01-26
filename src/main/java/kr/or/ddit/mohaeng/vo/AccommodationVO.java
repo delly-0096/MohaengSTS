@@ -150,4 +150,7 @@ public class AccommodationVO {
     private String jibunAddress;
     
     
+    // 리뷰, 평점
+    private double avgRating; // 평균 별점
+    private int reviewCount;  // 리뷰 개수
 }

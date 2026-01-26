@@ -372,7 +372,7 @@ async function processTourPayment(customData, payNo, orderName, payDt, person, t
 		if (response.ok) {
 			console.log("투어 결제 승인 성공:", resultData);
 			
-			payNo.innerHTML = resultData.orderId;
+			payNo.innerHTML = formatPayNo(resultData.approvedAt, resultData.payNo);
 			orderName.innerHTML = resultData.orderName;
 			
 			// 이용 예정일
@@ -487,6 +487,16 @@ async function processAccommodationPayment(customData, payNo, orderName, payDt, 
         document.querySelector(".payment-fail").style.display = "block";
     }
     
+}
+
+function formatPayNo(dateStr, payNo) {
+    // dateStr: "2026-01-24T14:30:52" 형식
+    var date = new Date(dateStr);
+    var datePart = date.getFullYear() +
+                   String(date.getMonth() + 1).padStart(2, '0') +
+                   String(date.getDate()).padStart(2, '0');
+    var payNoPart = String(payNo).padStart(8, '0');
+    return datePart + payNoPart;
 }
 </script>
 

@@ -78,15 +78,16 @@ function loadMore() {
 		    const urlParams = new URLSearchParams(window.location.search);
 		    const areaCode = urlParams.get('areaCode') || '';
 
-		    const requestUrl = `${contextPath}/product/accommodation/api/loadMore?` 
-		        + `page=${accomCurrentPage + 1}`
-		        + `&pageSize=${accomPageSize}`
-		        + `&accCatCd=${accCatCd}`
-		        + `&priceRange=${priceRange}`
-		        + `&starGrade=${starGrade}`
-		        + `&sortBy=${sortBy}`
-		        + `&areaCode=${areaCode}`
-		        + `&keyword=${keyword}`;
+			const params = {
+			    page: accomCurrentPage + 1,
+			    pageSize: accomPageSize,
+			    accCatCd: document.querySelector('select[name="accCatCd"]')?.value || '',
+			    priceRange: document.querySelector('select[name="priceRange"]')?.value || '',
+			    starGrade: document.querySelector('select[name="starGrade"]')?.value || '',
+			    sortBy: document.getElementById('sortBy')?.value || 'recommend',
+			    areaCode: new URLSearchParams(window.location.search).get('areaCode') || '',
+			    keyword: document.getElementById('keyword')?.value || ''
+			};
 
 	    // 모든 파라미터를 URLSearchParams로 변환 
 	    fetch(`${contextPath}/product/accommodation/api/loadMore?` + new URLSearchParams(params))        
@@ -398,10 +399,14 @@ $(document).ready(function() {
     const $areaCodeInput = $('#areaCode'); 
     const $accNoInput = $('#accNo');
 
+    // 자동완성 로직 (기존 유지)
     $input.on('input', function() {
         const keyword = $(this).val().trim();
         if (keyword.length < 1) { 
             $dropdown.hide(); 
+            // 글자를 다 지우면 hidden 값들도 초기화해주는 게 센스!
+            $areaCodeInput.val('');
+            $accNoInput.val('');
             return; 
         }
 
@@ -414,83 +419,103 @@ $(document).ready(function() {
                 }
 
                 let html = '<ul class="list-group shadow-sm">';
-				data.forEach(item => {
-				    const icon = item.TYPE === 'REGION'
-				        ? '<i class="bi bi-geo-alt-fill me-2 text-success"></i>'
-				        : '<i class="bi bi-house-door-fill me-2 text-primary"></i>';
-
-				    const cssClass = item.TYPE === 'REGION' ? 'region-item' : 'acc-item';
-
-				    html += `
-				        <li class="list-group-item list-group-item-action ${cssClass}" 
-				            data-id="${item.ID}" 
-				            data-type="${item.TYPE}"
-				            style="cursor:pointer;">
-				            ${icon}<strong>${item.NAME}</strong>
-				        </li>`;
+                data.forEach(item => {
+                    const icon = item.TYPE === 'REGION' ? '<i class="bi bi-geo-alt-fill me-2 text-success"></i>' : '<i class="bi bi-house-door-fill me-2 text-primary"></i>';
+                    const cssClass = item.TYPE === 'REGION' ? 'region-item' : 'acc-item';
+                    html += `<li class="list-group-item list-group-item-action ${cssClass}" data-id="${item.ID}" data-type="${item.TYPE}" style="cursor:pointer;">${icon}<strong>${item.NAME}</strong></li>`;
                 });
                 html += '</ul>';
                 $dropdown.html(html).show();
             });
     });
 
-    // 자동완성 클릭 처리
+    // 클릭 처리 (기존 유지 + 엔터 대응)
     $(document).on('mousedown', '.region-item, .acc-item', function(e) {
         e.preventDefault();
-        e.stopImmediatePropagation();
-
         const selectedName = $(this).find('strong').text().trim();
         const selectedId = $(this).data('id');
         const selectedType = $(this).data('type');
 
-        console.log("[선택]", selectedName, selectedId, selectedType);
-
-        $('#destination').val(selectedName);
+        $input.val(selectedName);
 
         if (selectedType === 'REGION') {
             $areaCodeInput.val(selectedId);
             $accNoInput.val('');
-        } else if (selectedType === 'ACCOMMODATION') {
+        } else {
             $accNoInput.val(selectedId);
             $areaCodeInput.val('');
         }
-
         $dropdown.empty().hide();
-
-        console.log("[저장 상태] areaCode:", $areaCodeInput.val(), "accNo:", $accNoInput.val());
     });
 
-    // 검색 버튼 눌렀을 때 검증
     $('#accommodationSearchForm').on('submit', function(e) {
-        const areaCode = $areaCodeInput.val();
-        const accNo = $accNoInput.val();
-        const dest = $('#destination').val();
+        const dest = $input.val().trim();
+        const startDate = $('#checkIn').val();
+        const endDate = $('#checkOut').val();
 
-        if (!dest) {
-            alert("목적지를 입력하거나 선택해주세요!");
+        // 목적지도 없고, 날짜도 없다면? 이때만 막는다!
+        if (!dest && (!startDate || !endDate)) {
+            alert("목적지를 입력하거나 여행 날짜를 선택해주세요!");
+            $input.focus();
             e.preventDefault();
             return;
         }
 
-        console.log("최종 검색 전송 -> areaCode:", areaCode, "accNo:", accNo, "keyword:", dest);
+        console.log("최종 검색 전송 -> 키워드:", dest, "지역코드:", $areaCodeInput.val(), "날짜:", startDate, "~", endDate);
+    });
+    
+    // 엔터 치면 드롭다운 닫기
+    $input.on('keydown', function(e) {
+        if (e.keyCode === 13) $dropdown.hide();
     });
 });
 // =================== 체크인 / 체크아웃 ======================
 document.addEventListener('DOMContentLoaded', () => {
-    const common = { locale: 'ko', dateFormat: 'Y-m-d', minDate: 'today' };
+    const dateRangeInput = document.getElementById('dateRange');
+    const checkInInput = document.getElementById('checkIn');
+    const checkOutInput = document.getElementById('checkOut');
+    const durationDisplay = document.getElementById('stayDuration');
 
-    const outPicker = flatpickr('#checkOut', {
-        ...common,
-        onChange: function(selectedDates) {
-            // 날짜 선택 시 로직 추가 가능
-        }
-    });
+    if (!dateRangeInput) return;
 
-    flatpickr('#checkIn', {
-        ...common,
-        onChange: function([date]) {
-            // 체크인 선택 시 체크아웃 최소 날짜를 다음날로 세정
-            outPicker.set('minDate', new Date(date.getTime() + 86400000));
+    // 기존에 걸려있을지 모르는 인스턴스를 제거하고 새로 깔끔하게 시작!
+    if (dateRangeInput._flatpickr) {
+        dateRangeInput._flatpickr.destroy();
+    }
+
+    flatpickr(dateRangeInput, {
+        mode: "range",
+        minDate: "today",
+        dateFormat: "Y-m-d",
+        locale: "ko",
+        showMonths: 2,         // 2달치 보여주는 게 범위 선택 시 "끊김" 느낌이 덜해!
+        disableMobile: "true", // 모바일 기본 키보드 방해 금지
+        
+        // 날짜 선택 시 로직
+        onChange: function(selectedDates, dateStr, instance) {
+            // 날짜가 1개만 선택됐을 때는 hidden 값을 비워줌 (방어 코드)
+            if (selectedDates.length < 2) {
+                checkInInput.value = "";
+                checkOutInput.value = "";
+                if (durationDisplay) durationDisplay.innerText = "0박 0일";
+                return;
+            }
+
+            // 날짜가 2개(시작, 끝) 모두 선택되었을 때
+            const start = selectedDates[0];
+            const end = selectedDates[1];
+            
+            // Hidden Input 업데이트
+            const startStr = instance.formatDate(start, "Y-m-d");
+            const endStr = instance.formatDate(end, "Y-m-d");
+            checkInInput.value = startStr;
+            checkOutInput.value = endStr;
+            
+            // 박수 계산
+            const diffDays = Math.round((end - start) / (1000 * 60 * 60 * 24));
+			if (durationDisplay) {
+			    durationDisplay.innerText = diffDays + "박 " + (diffDays + 1) + "일";
+			}
         }
     });
 });
@@ -523,7 +548,16 @@ document.getElementById('accommodationSearchForm')?.addEventListener('submit', f
 
 //==========================================================
 // 결제 버튼 클릭 시 검색바의 날짜와 인원을 들고 튀는 함수
-function goBooking(accNo, roomTypeNo, tripProdNo) {
+function goBooking(accNo, roomTypeNo, tripProdNo, price) {
+	
+	// 로그인 체크
+	if (!isLoggedIn) {
+	    if (confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+	        location.href = cp + '/member/login';
+	    }
+	    return;
+	}
+	
 		const urlParams = new URLSearchParams(window.location.search);
 	// 1. 검색바에 입력된 값들 가져오기
 		const startDate = urlParams.get('startDate') || document.getElementById('checkIn').value;
@@ -543,7 +577,8 @@ function goBooking(accNo, roomTypeNo, tripProdNo) {
 	                "?tripProdNo=" + tripProdNo +
 	                "&startDate=" + startDate +
 	                "&endDate=" + endDate +
-	                "&adultCount=" + adultCount;
+	                "&adultCount=" + adultCount + 
+					"&price=" + price;
 
 	    // 4. 이동!
 	    location.href = url;
@@ -552,4 +587,53 @@ function goBooking(accNo, roomTypeNo, tripProdNo) {
 	// JSP에서 호출할 수 있게 window에 등록
 	window.goBooking = goBooking;
 	
-	
+//==================== 북마크 로직====================
+function toggleAccommodationBookmark(event, btnEl) {
+    // 이벤트 전파 방지 (카드를 클릭해서 상세페이지로 이동하는 걸 막음)
+    event.preventDefault();
+    event.stopPropagation();
+
+    // 로그인 체크
+    if (!isLoggedIn) {
+        if (confirm("로그인이 필요한 서비스입니다. 로그인 페이지로 이동하시겠습니까?")) {
+            location.href = cp + '/member/login';
+        }
+        return;
+    }
+
+    // tripProdNo 찾아오기
+    // HTML 구조상 버튼의 부모(card)나 형제 요소에서 찾는다
+    // 버튼을 감싸는 .accommodation-card에서 data 속성을 읽는 것
+    const cardEl = btnEl.closest('.accommodation-card');
+    
+	// tripProdNo를 링크 주소에 쓰고 있음 
+    // HTML에 tripProdNo를 저장해두는 data 속성 추가
+    const tripProdNo = btnEl.dataset.tripProdNo; 
+
+    if (!tripProdNo) {
+        console.error("상품 번호를 찾을 수 없습니다.");
+        return;
+    }
+
+    // 4. 서버와 통신 (상세 페이지에서 썼던 그 주소 그대로!)
+    fetch(`${cp}/product/accommodation/${tripProdNo}/bookmark`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            // 5. 아이콘 및 UI 변경
+            const icon = btnEl.querySelector('i');
+            if (data.bookmarked) {
+                icon.classList.replace('bi-bookmark', 'bi-bookmark-fill');
+                btnEl.classList.add('active'); // CSS로 색깔 주고 싶을 때
+            } else {
+                icon.classList.replace('bi-bookmark-fill', 'bi-bookmark');
+                btnEl.classList.remove('active');
+            }
+            showToast(data.message, 'success');
+        }
+    })
+    .catch(err => console.error("북마크 에러:", err));
+}

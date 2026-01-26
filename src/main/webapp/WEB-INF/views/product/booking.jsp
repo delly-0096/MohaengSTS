@@ -664,9 +664,9 @@ async function main() {
 	bookingForm.addEventListener("submit", async function(e){
 		e.preventDefault();
 		
-		const timeStamp = Date.now();
+		var timeStamp = new Date().getTime();
 	    var tripProdList = [];
-	    var orderId = "";
+	    var orderId = "TOUR-" + ${member.memNo} + "-" + timeStamp;
 	    var orderName = "";
 
 	    <c:if test="${type eq 'cart'}">
@@ -692,7 +692,6 @@ async function main() {
 	                rsvMemo: document.getElementById('cartRequests_' + i).value
 	            });
 	        }
-	    	orderId = "TOUR-" + ${member.memNo} + "-" + timeStamp;
 	        orderName = cartItems.length > 1 
 	        ? cartItems[0].name + ' 외 ' + (cartItems.length - 1) + '건'
 	        : cartItems[0].name;
@@ -709,7 +708,6 @@ async function main() {
 	            useTime: document.getElementById('useTime').value,
 	            rsvMemo: document.getElementById('requests').value
 	        });
-	    	orderId = "TOUR-" + ${tp.tripProdNo} + "-" + ${member.memNo} + "-" + timeStamp;
     		orderName = "${tp.tripProdTitle}";
     	</c:if>
 	    

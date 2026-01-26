@@ -94,4 +94,10 @@ public class TripProdVO {
     private int approveCount;	// 판매중인 상품 수
     private int unapproveCount;	// 판매중지 상품 수
     private int totalSales;		// 총 판매량
+    
+    // 대시보드
+    private String title; 		// 제목
+    private int viewCount; 		// 조회수
+    private int resvCount;      // 예약수
+    private double rating;      // 평점
 }

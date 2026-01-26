@@ -7,6 +7,9 @@
 <c:set var="pageTitle" value="${acc.accName}" />
 <c:set var="pageCss" value="product" />
 
+<meta name="_csrf" content="${_csrf.token}"/>
+<meta name="_csrf_header" content="${_csrf.headerName}"/>
+
 <%@ include file="../common/header.jsp" %>
 <link rel="stylesheet" href="${pageContext.request.contextPath}/resources/css/accommodation-detail.css">
 <sec:authorize access="isAuthenticated()"><sec:authentication property="principal" var="user" /></sec:authorize>
@@ -25,27 +28,48 @@
 
         <!-- 갤러리 -->
         <div class="accommodation-gallery">
-            <div class="gallery-main">
-                <img src="${acc.accFilePath}"
-                     alt="${acc.accName}" id="mainImage">
-                <span class="gallery-badge"><i class="bi bi-images me-1"></i>1/12</span>
-            </div>
-            <div class="gallery-grid">
-                <img src="https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=300&h=200&fit=crop&q=80"
-                     alt="객실" onclick="changeMainImage(this, 2)">
-                <img src="https://images.unsplash.com/photo-1590490360182-c33d57733427?w=300&h=200&fit=crop&q=80"
-                     alt="욕실" onclick="changeMainImage(this, 3)">
-                <img src="https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=300&h=200&fit=crop&q=80"
-                     alt="수영장" onclick="changeMainImage(this, 4)">
-                <div class="gallery-more" onclick="openGalleryModal()">
-                    <img src="https://images.unsplash.com/photo-1540541338287-41700207dee6?w=300&h=200&fit=crop&q=80"
-                         alt="레스토랑">
-                    <div class="gallery-more-overlay">
-                        <span>+8</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+		    <div class="gallery-main">
+		        <c:choose>
+		            <c:when test="${not empty productImages}">
+		                <img src="${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}" 
+		                     alt="${acc.accName}" id="mainImage">
+		                <span class="gallery-badge">
+		                    <i class="bi bi-images me-1"></i>
+		                    <span id="currentImgIdx">1</span> / ${fn:length(productImages)}
+		                </span>
+		            </c:when>
+		            <c:otherwise>
+		                <img src="${acc.accFilePath}" alt="${acc.accName}" id="mainImage">
+		                <span class="gallery-badge"><i class="bi bi-images me-1"></i> 기본 이미지</span>
+		            </c:otherwise>
+		        </c:choose>
+		
+		        <sec:authorize access="hasRole('BUSINESS')">
+		            <c:if test="${user.member.memNo eq acc.memNo}">
+		                <button class="gallery-edit-btn" onclick="openImageUploadModal()" 
+		                        style="position: absolute; bottom: 15px; right: 15px; z-index: 10;">
+		                    <i class="bi bi-camera-fill me-1"></i> 이미지 관리
+		                </button>
+		            </c:if>
+		        </sec:authorize>
+		    </div>
+		
+		    <div class="gallery-grid">
+		        <c:forEach items="${productImages}" var="img" begin="1" end="3" varStatus="status">
+		            <img src="${pageContext.request.contextPath}/upload/product/${img.filePath}" 
+		                 alt="객실이미지" onclick="changeMainImage('${pageContext.request.contextPath}/upload/product/${img.filePath}', ${status.index + 1})">
+		        </c:forEach>
+		
+		        <c:if test="${fn:length(productImages) > 4}">
+		            <div class="gallery-more" onclick="openGalleryModal()">
+		                <img src="${pageContext.request.contextPath}/upload/product/${productImages[4].filePath}" alt="더보기">
+		                <div class="gallery-more-overlay">
+		                    <span>+${fn:length(productImages) - 4}</span>
+		                </div>
+		            </div>
+		        </c:if>
+		    </div>
+		</div>
 
         <div class="accommodation-detail-content">
             <!-- 숙소 정보 -->
@@ -456,8 +480,8 @@
 						                    </c:forEach>
 						                </div>
 						                <sec:authorize access="isAuthenticated()">
-    										<sec:authentication property="user.member.memNo" var="loginMemNo" />
-								                 <c:if test="${not empty loginMemNo == rv.memNo}">
+    										<sec:authentication property="principal.member.memNo" var="loginMemNo" />
+								                 <c:if test="${loginMemNo eq rv.memNo}">
 								                    <div class="dropdown">
 								                        <button class="btn-more" type="button" data-bs-toggle="dropdown">
 								                            <i class="bi bi-three-dots-vertical"></i>
@@ -546,6 +570,7 @@
             <div class="inquiry-form-card">
                 <h4><i class="bi bi-pencil-square me-2"></i>문의하기</h4>
                 <form id="inquiryForm">
+                <input type="hidden" id="tripProdNo" value="${acc.tripProdNo}">
                     <div class="form-group">
                         <label class="form-label">문의 유형</label>
                         <select class="form-control form-select" id="inquiryType" required>
@@ -634,7 +659,7 @@
 										        </c:otherwise>
 										    </c:choose>
 										    
-										    <c:if test="${loginMemNo == inq.inquiryMemNo && inq.inqryStatus ne 'DONE'}">
+										    <c:if test="${user.member.memNo eq inq.inquiryMemNo && inq.inqryStatus ne 'DONE'}">
 										        <div class="dropdown">
 										            <button class="btn-more" type="button" data-bs-toggle="dropdown">
 										                <i class="bi bi-three-dots-vertical"></i>
@@ -653,9 +678,11 @@
 			                        <!-- 문의 내용 -->
 			                        <div class="inquiry-item-question">
 			                            <c:choose>
-			                                <c:when test="${inq.secretYn eq 'Y' && loginMemNo != inq.memNo && !isBusiness}">
-			                                    <p class="secret-content"><i class="bi bi-lock me-1"></i>비밀글로 작성된 문의입니다.</p>
-			                                </c:when>
+			                                <c:when test="${inq.secretYn eq 'Y' && user.member.memNo ne inq.inquiryMemNo && !isBusiness}">
+										            <p class="secret-content">
+										                <i class="bi bi-lock me-1"></i>비밀글로 작성된 문의입니다.
+										            </p>
+										        </c:when>
 			                                <c:otherwise>
 			                                    <p><strong>Q.</strong> ${inq.prodInqryCn}</p>
 			                                </c:otherwise>
@@ -665,7 +692,7 @@
 			                        <!-- 답변 내용 (답변완료 시) -->
 									<c:if test="${inq.inqryStatus eq 'DONE' && not empty inq.replyCn}">
 									    <!-- 비밀글이 아니거나 본인인 경우만 답변 표시 -->
-									    <c:if test="${inq.secretYn ne 'Y' || loginMemNo == inq.memNo || isBusiness}">
+									    <c:when test="${inq.secretYn ne 'Y' || user.member.memNo eq inq.inquiryMemNo || isBusiness}">
 									    <div class="inquiry-item-answer" id="answer_${inq.prodInqryNo}">
 									        <div class="answer-header">
 									            <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
@@ -673,7 +700,7 @@
 									                <span class="answer-date">
 									                    <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
 									                </span>
-									                <c:if test="${isBusiness && loginMemNo == inq.replyMemNo}">
+									                <c:if test="${isBusiness && user.member.memNo eq acc.memNo}">
 									                    <div class="dropdown">
 									                        <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
 									                            <i class="bi bi-three-dots-vertical"></i>
@@ -690,11 +717,11 @@
 									        </div>
 									        <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
 									    </div>
-									    </c:if>
+									    </c:when>
 									</c:if>
 			                        
 			                        <!-- 기업회원 답변 영역 (답변대기 상태일 때만) -->
-			                       <c:if test="${isBusiness && inq.inqryStatus eq 'WAIT' && loginMemNo == acc.memNo}">
+			                       <c:if test="${isBusiness && inq.inqryStatus eq 'WAIT' && user.member.memNo eq acc.memNo}">
 			                        <div class="business-reply-section">
 			                            <button class="btn btn-sm btn-primary" onclick="toggleReplyForm(${inq.prodInqryNo})">
 			                                <i class="bi bi-reply me-1"></i>답변하기
@@ -863,10 +890,9 @@
         </div>
     </div>
 </div>
-
 <!-- 상품 이미지 수정 모달 (기업회원 전용) -->
-<sec:authorize access="hasRole('BUSINESS')" var="isBusiness">
-<c:if test="${loginMemNo == acc.memNo}">
+<sec:authorize access="hasRole('BUSINESS')">
+<c:if test="${user.member.memNo eq acc.memNo}">
 <div class="modal fade" id="imageUploadModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -912,11 +938,11 @@
 </div>
 </c:if>
 </sec:authorize>
-
 <script src="${pageContext.request.contextPath}/resources/js/accommodation-detail.js"></script>
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=0a4b8e6c128016aa0df7300b3ab799f1&libraries=services&autoload=false"></script>
 
 <script>
+
     const cp = document.querySelector('meta[name="context-path"]')?.content || '${pageContext.request.contextPath}';
     const TRIP_PROD_NO = "${acc.tripProdNo}";
     const mapInfo = {
@@ -928,11 +954,14 @@
 	var isLoggedIn = false;
     var loginMemNo = "";
     var isBusiness = false;
+    
     <sec:authorize access="isAuthenticated()">
     isLoggedIn = true;
     loginMemNo = "<sec:authentication property='principal.member.memNo'/>";
-    <sec:authorize access="hasRole('ROLE_BUSINESS')">
+    <c:set var="serverLoginNo"><sec:authentication property='principal.member.memNo'/></c:set>
+    <sec:authorize access="hasRole('BUSINESS')">
         isBusiness = true;
+        <c:set var="isBusinessServer" value="true" />
 	</sec:authorize>
 	</sec:authorize>
 	    

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.mypage.payments.mapper.IMyPaymentsMapper">
+
+    <select id="selectPaymentStats" parameterType="int" resultType="map">
+        SELECT 
+            COUNT(*) AS TOTAL_COUNT,
+            COUNT(CASE WHEN PAY_STATUS = 'DONE' THEN 1 END) AS COMPLETED_COUNT,
+            COUNT(CASE WHEN PAY_STATUS = 'WAIT' THEN 1 END) AS PENDING_COUNT,
+            NVL(SUM(PAY_TOTAL_AMT), 0) AS TOTAL_REVENUE
+        FROM PAYMENT
+        WHERE MEM_NO = #{memNo}
+    </select>
+
+    <select id="selectMyPaymentsCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+        SELECT COUNT(*) 
+        FROM PAYMENT 
+        WHERE MEM_NO = #{memNo}
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
+            AND PAY_STATUS = 
+            <choose>
+                <when test="searchType == 'completed'">'DONE'</when>
+                <when test="searchType == 'pending'">'WAIT'</when>
+                <when test="searchType == 'cancelled'">'CANCEL'</when>
+            </choose>
+        </if>
+    </select>
+
+    <select id="selectMyPaymentsList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.MyPaymentsVO">
+	    SELECT B.* FROM (
+	        SELECT A.*, ROWNUM RNUM FROM (
+	            SELECT * FROM (
+	                /* 1. 숙소 및 투어 상품 요약 */
+	                SELECT 
+	                    P.PAY_NO, P.PAY_DT, P.PAY_STATUS, P.PAY_TOTAL_AMT, P.USE_POINT, PI.TID,
+	                    (SELECT NVL(MIN(TP_SUB.TRIP_PROD_TITLE), '상품 정보 없음') || CASE WHEN COUNT(*) > 1 THEN ' 외 ' || (COUNT(*) - 1) || '건' ELSE '' END FROM TRIP_PROD_LIST TPL_SUB JOIN TRIP_PROD TP_SUB ON TPL_SUB.TRIP_PROD_NO = TP_SUB.TRIP_PROD_NO WHERE TPL_SUB.PAY_NO = P.PAY_NO) AS PROD_NAME,
+	                    (SELECT TO_CHAR(MIN(RESV_DT), 'YYYY.MM.DD') || DECODE(MIN(USE_TIME), NULL, '', ' (' || MIN(USE_TIME) || ')') FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO) AS USE_DATE,
+	                    (SELECT CASE WHEN COUNT(*) > 1 THEN COUNT(*) || '건' WHEN MAX(TP_UNIT.PROD_CTGRY_TYPE) = 'ACCOMMODATION' THEN SUM(TPL_UNIT.QUANTITY) || '박' ELSE SUM(TPL_UNIT.QUANTITY) || '명' END FROM TRIP_PROD_LIST TPL_UNIT JOIN TRIP_PROD TP_UNIT ON TPL_UNIT.TRIP_PROD_NO = TP_UNIT.TRIP_PROD_NO WHERE TPL_UNIT.PAY_NO = P.PAY_NO) AS OPTION_INFO,
+	                    (SELECT AFD.FILE_PATH || '/' || AFD.FILE_NAME FROM ATTACH_FILE_DETAIL AFD JOIN TRIP_PROD TP_IMG ON TP_IMG.ATTACH_NO = AFD.ATTACH_NO JOIN TRIP_PROD_LIST TPL_IMG ON TPL_IMG.TRIP_PROD_NO = TP_IMG.TRIP_PROD_NO WHERE TPL_IMG.PAY_NO = P.PAY_NO AND ROWNUM = 1) AS THUMB_IMG,
+	                    'TRIP' AS CATEGORY
+	                FROM PAYMENT P 
+	                JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
+	                WHERE P.MEM_NO = #{memNo}
+	                AND EXISTS (SELECT 1 FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO)
+	                <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
+	                    AND P.PAY_STATUS = <choose><when test="searchType == 'completed'">'DONE'</when><when test="searchType == 'pending'">'WAIT'</when><when test="searchType == 'cancelled'">'CANCEL'</when></choose>
+	                </if>
+	
+	                UNION ALL
+	
+	                /* 2. 항공권 상품 요약 */
+	                SELECT 
+	                    P.PAY_NO, P.PAY_DT, P.PAY_STATUS, P.PAY_TOTAL_AMT, P.USE_POINT, PI.TID,
+	                    (SELECT NVL(MIN(FP_SUB.FLIGHT_SYMBOL), '항공편') || ' 항공권' FROM FLIGHT_RESERVATION FR_SUB JOIN FLIGHT_PRODUCT FP_SUB ON FR_SUB.FLT_PROD_ID = FP_SUB.FLT_PROD_ID WHERE FR_SUB.PAY_NO = P.PAY_NO) AS PROD_NAME,
+	                    (SELECT TO_CHAR(MIN(FP_TIME.DEP_TIME), 'YYYY.MM.DD') || DECODE(TO_CHAR(MIN(FP_TIME.DEP_TIME), 'HH24:MI'), '00:00', '', ' (' || TO_CHAR(MIN(FP_TIME.DEP_TIME), 'HH24:MI') || ')') FROM FLIGHT_RESERVATION FR_TIME JOIN FLIGHT_PRODUCT FP_TIME ON FR_TIME.FLT_PROD_ID = FP_TIME.FLT_PROD_ID WHERE FR_TIME.PAY_NO = P.PAY_NO) AS USE_DATE,
+	                    /* B. 항공권 상품 요약 */
+						(SELECT COUNT(FPS.PASSENGER_ID) || '명'FROM FLIGHT_RESERVATION FR_SUB JOIN FLIGHT_PASSENGERS FPS ON FR_SUB.RESERVE_NO = FPS.RESERVE_NO WHERE FR_SUB.PAY_NO = P.PAY_NO) AS OPTION_INFO,
+	                    '/resources/images/default_flight.jpg' AS THUMB_IMG,
+	                    'FLIGHT' AS CATEGORY
+	                FROM PAYMENT P 
+	                JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
+	                WHERE P.MEM_NO = #{memNo}
+	                AND EXISTS (SELECT 1 FROM FLIGHT_RESERVATION WHERE PAY_NO = P.PAY_NO)
+	                <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
+	                    AND P.PAY_STATUS = <choose><when test="searchType == 'completed'">'DONE'</when><when test="searchType == 'pending'">'WAIT'</when><when test="searchType == 'cancelled'">'CANCEL'</when></choose>
+	                </if>
+	            ) ORDER BY PAY_DT DESC
+	        ) A
+	    ) B
+	    WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+	</select>
+	
+	<select id="selectReceiptDetailList" parameterType="int" resultType="map">
+	    /* 1. 숙소/투어 상품 상세 */
+	    SELECT 
+	        TP.TRIP_PROD_TITLE AS PROD_NAME,
+	        TPL.QUANTITY,
+	        TPL.UNIT_PRICE AS PRICE,
+	        TPL.PAY_PRICE AS ITEM_TOTAL_PRICE,
+	        TO_CHAR(TPL.RESV_DT, 'YYYY.MM.DD') || ' (' || TPL.USE_TIME || ')' AS USE_INFO
+	    FROM TRIP_PROD_LIST TPL
+	    JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+	    WHERE TPL.PAY_NO = #{payNo}
+	
+	    UNION ALL
+	
+	    /* 2. 항공권 상품 상세 (예약번호 기준으로 수량/금액 정밀 계산) */
+	    SELECT 
+	        FP.FLIGHT_SYMBOL || ' 항공권' AS PROD_NAME,
+	        /* 해당 예약번호(RESERVE_NO)에 매핑된 실제 탑승객 수 */
+	        (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS WHERE FPS.RESERVE_NO = FR.RESERVE_NO) AS QUANTITY,
+	        /* 1인당 단가: (총 결제액 + 사용포인트) / 전체 결제건 내 탑승객 총원 */
+	        (P.PAY_TOTAL_AMT + NVL(P.USE_POINT, 0)) / 
+	            (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_ALL 
+	             JOIN FLIGHT_RESERVATION FR_ALL ON FPS_ALL.RESERVE_NO = FR_ALL.RESERVE_NO 
+	             WHERE FR_ALL.PAY_NO = P.PAY_NO) AS PRICE,
+	        /* 해당 노선(가는편/오는편)의 합계 금액 */
+	        ((P.PAY_TOTAL_AMT + NVL(P.USE_POINT, 0)) / 
+	            (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_ALL 
+	             JOIN FLIGHT_RESERVATION FR_ALL ON FPS_ALL.RESERVE_NO = FR_ALL.RESERVE_NO 
+	             WHERE FR_ALL.PAY_NO = P.PAY_NO)) 
+	        * (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_SUB WHERE FPS_SUB.RESERVE_NO = FR.RESERVE_NO) AS ITEM_TOTAL_PRICE,
+	        TO_CHAR(FP.DEP_TIME, 'YYYY.MM.DD (HH24:MI)') AS USE_INFO
+	    FROM FLIGHT_RESERVATION FR
+	    JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID
+	    JOIN PAYMENT P ON FR.PAY_NO = P.PAY_NO
+	    WHERE FR.PAY_NO = #{payNo}
+	</select>
+		
+	<select id="selectPaymentMaster" parameterType="int" resultType="map">
+	    SELECT 
+	        P.PAY_NO,
+	        TO_CHAR(P.PAY_DT, 'YYYY.MM.DD HH24:MI:SS') AS PAY_DT,
+	        P.PAY_TOTAL_AMT,
+	        P.USE_POINT,
+	        P.PAY_STATUS,
+	        P.PAY_METHOD_CD,
+	        PI.TID AS ORDER_NO,
+	        M.MEM_NAME,
+	        M.MEM_EMAIL,
+	        
+	        /* 판매자 정보: 상품 정보를 통해 등록된 회사 정보를 가져옴 */
+	        C.BZMN_NM, 
+	        C.BRNO,    
+	        C.COMP_TEL AS COMP_TEL, 
+	        
+	        /* 금액 계산 로직 */
+	        CASE 
+	            WHEN EXISTS (SELECT 1 FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO) THEN 
+	                (SELECT SUM(UNIT_PRICE * QUANTITY) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO)
+	            ELSE (P.PAY_TOTAL_AMT + P.USE_POINT) 
+	        END AS PROD_TOTAL_PRICE, 
+	        
+	        /* 할인 로직 */
+	        CASE 
+	            WHEN EXISTS (SELECT 1 FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO) THEN 
+	                (SELECT SUM(NVL(DISCOUNT_AMT, 0)) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO)
+	            ELSE 0 
+	        END AS TOTAL_DISCOUNT 
+	        
+	    FROM PAYMENT P
+	    JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
+	    JOIN MEMBER M ON P.MEM_NO = M.MEM_NO -- 구매자(일반회원) 정보
+	    
+	    /* 상품 리스트 -> 상품 상세 -> 업체 순으로 연결 */
+	    LEFT OUTER JOIN (
+	        SELECT PAY_NO, TRIP_PROD_NO, ROW_NUMBER() OVER(PARTITION BY PAY_NO ORDER BY PROD_LIST_NO) AS RN 
+	        FROM TRIP_PROD_LIST
+	    ) TPL ON P.PAY_NO = TPL.PAY_NO AND TPL.RN = 1 -- 여러 상품 중 첫 번째 상품 기준
+	    LEFT OUTER JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+	    LEFT OUTER JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO -- 판매자(기업) 정보
+	    
+	    WHERE P.PAY_NO = #{payNo}
+	</select>
+
+</mapper>

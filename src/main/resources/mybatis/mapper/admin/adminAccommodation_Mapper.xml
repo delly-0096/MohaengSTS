@@ -60,7 +60,8 @@
 	        , tp.APPROVE_STATUS
 	        , tp.SALE_START_DT
 	        , tp.SALE_END_DT
-	        , tp.APRV_YN
+	        , tp.REG_DT
+	        , tp.APRV_YN		AS "aprvYn"
 	        , tp.DEL_YN
 	        , tp.CTY_NM          AS AREA_CODE_PROD
 	
@@ -108,19 +109,21 @@
 		        , a.ADDR2
 		        , a.AREA_CODE
 		        , a.SIGUNGU_CODE
-		        , a.MAPX
-		        , a.MAPY
+				, a.MAPX         					AS "mapx" 
+        		, a.MAPY          					AS "mapy"
 		        , a.TEL
 		        , a.CHECK_IN_TIME
 		        , a.CHECK_OUT_TIME
 		        , a.OVERVIEW
 		
 		        , tp.TRIP_PROD_TITLE
-		        , tp.APPROVE_STATUS
+				, tp.APRV_YN      					AS "aprvYn"
+        		, tp.APPROVE_STATUS 				AS "approveStatus"
 		        , tp.SALE_START_DT
 		        , tp.SALE_END_DT
 		        , tp.APRV_YN
-		        , tp.DEL_YN
+		        , TO_CHAR(tp.REG_DT, 'YYYY-MM-DD') 	AS "regDt"
+		        , tp.DEL_YN							AS "delYn"
 		        , tp.CTY_NM AS AREA_CODE_PROD
 		
 		    FROM TRIP_PROD tp
@@ -141,7 +144,7 @@
 	        , rt.MAX_GUEST_COUNT
 	        , rt.BED_COUNT
 	        , rt.BED_TYPE_CD
-	        , rt.TOTAL_ROOM_COUNT
+	        , rt.TOTAL_ROOM_COUNT				as "totalRoomCount"
 	        , rt.PRICE
 	        , rt.DISCOUNT
 	        , rt.EXTRA_GUEST_FEE
@@ -232,5 +235,82 @@
 	      AND afd.USE_YN = 'Y'
 	    ORDER BY afd.FILE_NO
 	</select>
+	
+	<!-- 판매 승인 -->
+	<update id="updateApproveStatus" parameterType="int">
+	    UPDATE TRIP_PROD
+	    SET APRV_YN = 'Y',
+	        APPROVE_STATUS = '판매중',
+	        MOD_DT = SYSDATE
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<!-- 판매 중지 -->
+	<update id="toggleSaleStatus" parameterType="map">
+	    UPDATE TRIP_PROD
+	    SET 
+	          DEL_YN = #{delYn}      
+	        , MOD_DT = SYSDATE
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
+	
+	<update id="updateTripProduct" parameterType="kr.or.ddit.mohaeng.admin.accommodation.dto.AdminAccommodationDTO">
+        UPDATE TRIP_PRODUCT
+        SET SALE_START_DT = #{saleStartDt},
+            SALE_END_DT = #{saleEndDt}
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+    </update>
+
+    <update id="updateAccommodation" parameterType="kr.or.ddit.mohaeng.admin.accommodation.dto.AdminAccommodationDTO">
+        UPDATE ACCOMMODATION
+        SET ACC_NAME = #{accName},
+            ACC_CAT_CD = #{accCatCd},
+            ADDR1 = #{addr1},
+            CHECK_IN_TIME = #{checkInTime},
+            CHECK_OUT_TIME = #{checkOutTime},
+            STAR_GRADE = #{starGrade},
+            MAPX = #{mapx},
+            MAPY = #{mapy},
+            OVERVIEW = #{overview}
+        WHERE ACC_NO = #{accNo}
+    </update>
+
+    <update id="updateAccFacility" parameterType="kr.or.ddit.mohaeng.vo.AccFacilityVO">
+        UPDATE ACC_FACILITY
+        SET WIFI_YN = #{wifiYn},
+            PARKING_YN = #{parkingYn},
+            BREAKFAST_YN = #{breakfastYn},
+            POOL_YN = #{poolYn},
+            GYM_YN = #{gymYn},
+            RESTAURANT_YN = #{restaurantYn},
+            BAR_YN = #{barYn},
+            SPA_YN = #{spaYn},
+            ROOM_SERVICE_YN = #{roomServiceYn},
+            LAUNDRY_YN = #{laundryYn},
+            PET_FRIENDLY_YN = #{petFriendlyYn},
+            SMOKING_AREA_YN = #{smokingAreaYn}
+        WHERE ACC_NO = #{accNo}
+    </update>
+
+    <delete id="deleteRoomTypesByAccNo" parameterType="int">
+        DELETE FROM ROOM_TYPE
+        WHERE ACC_NO = #{accNo}
+    </delete>
+
+    <insert id="insertRoomType" parameterType="kr.or.ddit.mohaeng.vo.RoomTypeVO">
+        INSERT INTO ROOM_TYPE (
+            ACC_NO, ROOM_NAME, PRICE, DISCOUNT, 
+            BASE_GUEST_COUNT, MAX_GUEST_COUNT, SIZE, BREAKFAST_YN
+        ) VALUES (
+            #{accNo}, #{roomName}, #{price}, #{discount}, 
+            #{baseGuestCount}, #{maxGuestCount}, #{size}, #{breakfastYn}
+        )
+    </insert>
+
+    <update id="logicalDeleteTripProduct" parameterType="int">
+        UPDATE TRIP_PRODUCT
+        SET DEL_YN = 'Y'
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+    </update>
 	
 </mapper>

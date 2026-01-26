@@ -1,14 +1,22 @@
 package kr.or.ddit.mohaeng.admin.accommodation.controller;
 
+import java.util.Map;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import kr.or.ddit.mohaeng.admin.accommodation.dto.AdminAccommodationDTO;
 import kr.or.ddit.mohaeng.admin.accommodation.service.IAdminAccommodationService;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
@@ -59,4 +67,38 @@ public class AdminAccommodaionController {
 		
 		return ResponseEntity.ok(accommodationDetail);
 	}
+	
+	// 상품 최종 승인
+    @PatchMapping("/approve/{tripProdNo}")
+    public ResponseEntity<?> approve(@PathVariable int tripProdNo) {
+        int result = adminAccService.approveAccommodation(tripProdNo);
+        if(result > 0) return ResponseEntity.ok("승인 완료!");
+        return ResponseEntity.status(500).body("승인 실패..");
+    }
+
+    // 판매 상태 토글 (판매중 <-> 중지)
+    @PatchMapping("/toggle-sale")
+    public ResponseEntity<?> toggleSale(@RequestBody Map<String, Object> params) {
+        // params: { tripProdNo: 123, delYn: 'Y' }
+        int result = adminAccService.toggleSaleStatus(params);
+        return ResponseEntity.ok(result);
+    }
+    
+    // 2. 숙소 수정
+    @PutMapping("/update")
+    public ResponseEntity<?> update(@RequestBody AdminAccommodationDTO accDto) {
+        log.info("숙소 수정 요청: {}", accDto.getAccNo());
+        int result = adminAccService.updateAccommodation(accDto);
+        if(result > 0) return ResponseEntity.ok("수정 완료!");
+        return ResponseEntity.status(500).body("수정 실패..");
+    }
+
+    // 3. 숙소 삭제 (논리 삭제: delYn = 'Y')
+    @DeleteMapping("/delete/{tripProdNo}")
+    public ResponseEntity<?> delete(@PathVariable int tripProdNo) {
+        log.info("숙소 삭제 요청: {}", tripProdNo);
+        int result = adminAccService.deleteAccommodation(tripProdNo);
+        if(result > 0) return ResponseEntity.ok("삭제 완료!");
+        return ResponseEntity.status(500).body("삭제 실패..");
+    }
 }

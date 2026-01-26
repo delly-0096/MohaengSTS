@@ -78,4 +78,5 @@ public class RoomTypeVO {
 	private String accFilePath; // 이미지 경로
 	
 	private Integer totalRooms;	// 전체 객실 수
+	private String internet;	// api로 wifi유무 넘길 변수
 }

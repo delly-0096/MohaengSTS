@@ -397,7 +397,7 @@ async function main() {
 	bookerName.value = customData.memName;
 	bookerPhone.value = customData.tel.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 	bookerEmail.value = customData.memEmail;
-	availablePoints.innerHTML = customData.point;
+	availablePoints.innerHTML = parseInt(customData.point).toLocaleString();
 	
 	if(customData.point >= 1000) document.querySelector("#usePointInput").disabled = false;
 	
@@ -882,10 +882,10 @@ function updateCountButtons() {
     if (passengerType.infant >= passengerType.adult) infantPlus.disabled = true;
 }
 
+// 사용 가능한 포인트
 function validPoints(point){
 	point.value = point.value.replace(/[^0-9]/g, '');	// 숫자만 가능하게
 	point.value = point.value.replace(/^0+/, '');		// 0으로 시작하는 것을 없앰
-	
 	if (point.value > customData.point){
 		point.focus();
 		point.select();
@@ -896,8 +896,12 @@ function validPoints(point){
 // 전체 포인트 사용
 function useAllPoints() {
 	console.log("customData.point : ", customData.point);
-    document.getElementById('usePointInput').value = customData.point;
+    document.getElementById('usePointInput').value = parseInt(customData.point).toLocalString();
 }
+
+// function getPureNumber(value) {
+//     return parseInt(value.replace(/,/g, ''), 10) || 0;
+// }
 
 // 포인트 적용
 function applyPoints() {

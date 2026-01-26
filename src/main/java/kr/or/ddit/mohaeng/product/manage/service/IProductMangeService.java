@@ -36,7 +36,7 @@ public interface IProductMangeService {
 	 * @param businessProducts (memNo)
 	 * @return 숙박상품목록
 	 */
-	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProducts);
+//	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProducts);
 
 	
 	/**

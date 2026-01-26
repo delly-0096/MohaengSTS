@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
+import kr.or.ddit.mohaeng.file.service.IFileService;
 import kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
@@ -35,15 +36,19 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 	@Autowired
 	private IProductMangeMapper manageMapper;
 	
+	// 사진 저장용
+	@Autowired
+	private IFileService fileService;
+	
 	@Override
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts) {
 		return manageMapper.getProductlist(businessProducts);
 	}
-	
-	@Override
-	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProducts) {
-		return manageMapper.getAccommodationList(businessProducts);
-	}
+//	
+//	@Override
+//	public List<AccommodationVO> getAccommodationList(BusinessProductsVO businessProducts) {
+//		return manageMapper.getAccommodationList(businessProducts);
+//	}
 	
 	@Override
 	public TripProdVO getProductAggregate(TripProdVO tripProd) {
@@ -287,8 +292,308 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 	}
 
 	@Override
+	@Transactional
 	public ServiceResult insertProduct(BusinessProductsVO businessProducts, List<MultipartFile> uploadFiles) {
+		ServiceResult result = null;
+		
+		// 기업번호 세팅
+		log.info("insertProduct - 기업번호 얻기");
+		int compNo = manageMapper.getComp(businessProducts.getMemNo());
+		log.info("insertProduct - 기업번호 얻기 : {}", compNo);
+		businessProducts.setCompNo(compNo);
+		
+		String category = businessProducts.getProdCtgryType();
+		
+		// 사진 등록 
+		int attachNo = 0;
+		if(category != null && category.equals("accommodation")) {
+			attachNo = fileService.saveFiles(uploadFiles, "product", "ACCOMMODATION", businessProducts.getMemNo());
+			businessProducts.getAccommodation().setAccFileNo(attachNo);
+			log.info("사진 등록은 ?? : {}", attachNo);
+		}
+		
+		if(category != null && !category.equals("accommodation")) {
+			attachNo = fileService.saveFiles(uploadFiles, "product", "PRODUCT", businessProducts.getMemNo());
+			businessProducts.setAttachNo(attachNo);
+		}
+		
+		
+		int status = 0;
+		// 상품 등록
+		status = manageMapper.insertTripProudct(businessProducts);
+		log.info("insertProduct - 상품 등록");
+		if(status <= 0) {
+			return result = ServiceResult.FAILED;
+		}
+		status = 0;
+		
+		int tripProdNO = businessProducts.getTripProdNo();	// 등록해서 얻은 tripProdkey
+		
+		// 숙소 등록
+		if(category != null && category.equals("accommodation")) {
+			AccommodationVO accommodationVO = businessProducts.getAccommodation();
+			accommodationVO.setTripProdNo(tripProdNO);
+			return insertAccommodationDetail(accommodationVO);
+			
+		}else {
+			// 상품 등록
+			return insertTripProductDetail(businessProducts, tripProdNO);
+			
+		}
+		
+//		return null;
+	}
+	
+	
+	/**
+	 * <p>상품판매정보, 상품이용안내, 여행 상품 관광지 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param businessProducts 상품
+	 * @param tripProdNo 상품 번호
+	 * @return ok, failed
+	 */
+	private ServiceResult insertTripProductDetail(BusinessProductsVO businessProducts, int tripProdNO) {
+		ServiceResult result = null;
+		if(tripProdNO == 0) {
+			return result = ServiceResult.FAILED;
+		}
+		
+		int status = 0;
+		
+		log.info("insertProduct - insertTripProductDetail  상품 판매정보 등록");
+		
+		// 상품 판매 정보
+		TripProdSaleVO prodSaleVO = businessProducts.getProdSale();
+		prodSaleVO.setTripProdNo(tripProdNO);
+		int price = prodSaleVO.getPrice() != 0 ? prodSaleVO.getPrice() : 0;
+		int discount = (prodSaleVO.getDiscount() != null && prodSaleVO.getDiscount() != 0 ) ? prodSaleVO.getDiscount() : 0;
+		int netprc = prodSaleVO.getNetprc();
+		
+		if(discount > 0) {
+			price = netprc - discount;
+			prodSaleVO.setPrice(price);
+		}
+		status = manageMapper.insertTripProdSale(prodSaleVO);
+		if(status <= 0) {
+			log.info("insertProduct - insertTripProductDetail 상품 판매정보 등록 실패");
+			return result = ServiceResult.FAILED;
+		}
+		log.info("insertProduct - insertTripProductDetail 상품 판매정보 등록 성공");
+		status = 0;
+
+		
+		// 상품 관광지 정보
+		TripProdPlaceVO placeVO = businessProducts.getProdPlace();
+		placeVO.setTripProdNo(tripProdNO);
+		log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록");
+		status= manageMapper.insertTripProdPlace(placeVO);
+		if(status <= 0) {
+			log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록 실패");
+			return result = ServiceResult.FAILED;
+		}
+		log.info("insertProduct - insertTripProductDetail 상품 관광지 정보 등록 성공");
+		status = 0;
+		
+		// 상품 이용안내
+		TripProdInfoVO prodInfoVO = businessProducts.getProdInfo();
+		prodInfoVO.setTripProdNo(tripProdNO);
+		log.info("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록");
+		status = manageMapper.insertTripProdInfo(prodInfoVO);
+		if(status <= 0) {
+			log.info("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록 실패");
+			return result = ServiceResult.FAILED;
+		}
+		
+		log.info("insertProduct - insertTripProductDetail 상품 이용안내 정보 등록 성공");
+		status = 0;
+		
+		// 여행 가능 시간 정보
+		List<ProdTimeInfoVO> prodTimeInfoList = businessProducts.getProdTimeList();
+		if(prodTimeInfoList != null && prodTimeInfoList.size() <= 0) {
+			// 없어도 가능하게 해?
+			return result = ServiceResult.FAILED;
+		}
+		// 정보 있을때
+		return insertTripProdTimeInfo(prodTimeInfoList, tripProdNO);
+	}
+	
+	/**
+	 * <p>예약 가능 시간 등록</p>
+	 * @author sdg
+	 * @date 2026-01-26
+	 * @param prodTimeInfoList	숙소 시간 정보
+	 * @param tripProdNO 		상품 키
+	 * @return
+	 */
+	private ServiceResult insertTripProdTimeInfo(List<ProdTimeInfoVO> prodTimeInfoList, int tripProdNO) {
+		ServiceResult result = null;
+		int status = 0;
+		int count = prodTimeInfoList.size();
+		
+		for(ProdTimeInfoVO prodTimeInfoVO : prodTimeInfoList) {
+			prodTimeInfoVO.setTripProdNo(tripProdNO);
+			status = manageMapper.insertProdTimeInfo(prodTimeInfoList);
+			log.info("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 성공");
+			if(status <= 0) {
+				log.info("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 실패");
+				return result = ServiceResult.FAILED;
+			}
+		}
+		
+		return (count == status) ? ServiceResult.OK : ServiceResult.FAILED;
+	}
+	
+	
+	/**
+	 * <p>숙소, 숙소 보유시설, 숙소 옵션목록 등록</p>
+	 * @author sdg
+	 * @date 2026-01-25
+	 * @param accommodationVO 숙소 상품 
+	 * @return ok, failed
+	 */
+	private ServiceResult insertAccommodationDetail(AccommodationVO accommodationVO) {
+		ServiceResult result = null;
+		int status = 0;
+		log.info("insertProduct - insertAccommodationDetail  숙소 등록");
+		status = manageMapper.insertAccommodation(accommodationVO);
+		if(status <= 0) {
+			log.info("insertProduct - insertAccommodationDetail 숙소 등록 실패");
+			return result = ServiceResult.FAILED;
+		}
+		log.info("insertProduct - insertAccommodationDetail 숙소 등록 성공");
+		status = 0;
+		
+		// 숙소 기본키
+		int accNo = accommodationVO.getAccNo();
+		
+		// 숙소 보유시설
+		AccFacilityVO accFacilityVO = accommodationVO.getAccFacility();
+		accFacilityVO.setAccNo(accNo);
+		log.info("insertProduct - insertAccommodationDetail  숙소 보유시설 등록");
+		status = manageMapper.insertAccFacility(accFacilityVO);
+		if(status <= 0) {
+			log.info("insertProduct - insertAccommodationDetail 숙소 보유시설등록 실패");
+			return result = ServiceResult.FAILED;
+		}
+		log.info("insertProduct - insertAccommodationDetail 숙소 보유시설등록 성공");
+		status = 0;
+				
+		// 숙소 옵션 
+		List<AccOptionVO> optionList = accommodationVO.getAccOptionList();
+		if(optionList != null && optionList.size() > 0) {
+			log.info("insertProduct - insertAccommodationDetail 숙소 옵션 등록");
+			// 키 세팅 하기
+			for(AccOptionVO accOptionVO : optionList) {
+				accOptionVO.setAccNo(accNo);
+				status = manageMapper.insertAccOption(accOptionVO);
+			}
+			if(status <= 0) {
+				log.info("insertProduct - insertAccommodationDetail 숙소 옵션 등록 실패");
+				return result = ServiceResult.FAILED;
+			}
+			log.info("insertProduct - insertAccommodationDetail 숙소 옵션 등록 성공");
+		}
+		status = 0;
+		
+		// 방 타입 list - roomFacility, roomFeature
+		List<RoomTypeVO> roomTypeList = accommodationVO.getRoomTypeList();
+		if(roomTypeList != null && roomTypeList.size() > 0) {
+			return insertRoomTypes(roomTypeList, accNo);
+		}
+		return result = ServiceResult.OK;
+	}
+
+	
+	/**
+	 * <p>객실 타입, 객실 내 특징, 객실 내 시설</p>
+	 * @param roomTypeList 객실 타입 객체
+	 * @param accNo	숙소 기본키
+	 * @return ok, failed
+	 */
+	private ServiceResult insertRoomTypes(List<RoomTypeVO> roomTypeList, int accNo) {
+		ServiceResult result = null;
+		log.info("insertProduct - insertRoomTypes 객실 타입 등록");
+		
+		int status = 0;
+		for(RoomTypeVO roomTypeVO : roomTypeList) {
+			roomTypeVO.setAccNo(accNo);
+			status = manageMapper.insertRoomType(roomTypeVO);
+			if(status <= 0) {
+				log.info("insertProduct - insertRoomTypes 객실 타입 등록 실패");
+				return result = ServiceResult.FAILED;
+			}
+			log.info("insertProduct - insertRoomTypes 객실 타입 등록 성공");
+			status = 0;
+			
+			int roomTypeNo = roomTypeVO.getRoomTypeNo();
+			
+			// 객실 내 시설
+			RoomFacilityVO facilityVO = roomTypeVO.getFacility();
+			facilityVO.setRoomTypeNo(roomTypeNo);
+			if(facilityVO != null) {
+				log.info("insertProduct - insertRoomTypes 객실 내 시설 등록");
+				status = manageMapper.insertRoomFcaility(facilityVO);
+				if(status <= 0) {
+					log.info("insertProduct - insertRoomTypes 객실 내 시설 등록 실패");
+					return result = ServiceResult.FAILED;
+				}
+				log.info("insertProduct - insertRoomTypes 객실 내 시설 등록 성공");
+				status = 0;
+			}
+			
+			// 객실 내 특징
+			RoomFeatureVO featureVO = roomTypeVO.getFeature();
+			featureVO.setRoomTypeNo(roomTypeNo);
+			if(featureVO != null) {
+				log.info("insertProduct - insertRoomTypes 객실 내 특징 등록");
+				status = manageMapper.insertRoomFeature(featureVO);
+				if(status <= 0) {
+					log.info("insertProduct - insertRoomTypes 객실 내 특징 등록 실패");
+					return result = ServiceResult.FAILED;
+				}
+				log.info("insertProduct - insertRoomTypes 객실 내 특징 등록 성공");
+				status = 0;
+			}
+			
+			// 객실 등록 (객실타입의 수 만큼의 객실 생성)
+			int roomStatus = 0; 
+			roomStatus = insertRoom(roomTypeVO, roomTypeNo);
+			if(roomStatus <= 0) {
+				return result = ServiceResult.FAILED;
+			}
+		}
+		
 		return null;
+	}
+
+	
+	/**
+	 * <p>객실</p>
+	 * @param roomTypeVO 객실 타입 정보
+	 * @param roomTypeNo 객실키
+	 * @return 1, 0
+	 */
+	private int insertRoom(RoomTypeVO roomTypeVO, int roomTypeNo) {
+		int count = roomTypeVO.getTotalRoomCount(); // 생성해야 할 객실 수
+	    int successCount = 0;
+
+	    log.info("insertProduct - insertRoom 시작 (생성 개수: {})", count);
+
+	    for (int i = 1; i <= count; i++) {
+	        RoomVO roomVO = new RoomVO();
+	        roomVO.setRoomTypeNo(roomTypeNo);
+	        
+	        int status = manageMapper.insertRoom(roomVO);
+	        if (status > 0) {
+	            successCount++;
+	        }
+	    }
+
+	    log.info("insertProduct - insertRoom 완료 (성공: {} / 전체: {})", successCount, count);
+
+	    // 모든 객실이 정상 등록되었는지 확인
+	    return (successCount == count) ? 1 : 0;
 	}
 
 }

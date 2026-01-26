@@ -53,6 +53,29 @@ class KakaoMapHelper {
         this.markers.push(marker);
         return marker;
     }
+	
+/*	getMarkerImage(category) {
+	    const colors = {
+	        'tour': '#FF0000', // 빨강
+	        'food': '#FFA500', // 주황
+	        'cafe': '#FF69B4', // 핑크
+	        'default': '#0000FF' // 파랑
+	    };
+	    const color = colors[category] || colors['default'];
+
+	    // SVG로 마커 모양 만들기 (동그라미 핀 모양)
+	    const svgMarker = `
+	        <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" viewBox="0 0 24 24">
+	            <path fill="${color}" stroke="white" stroke-width="2" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/>
+	            <circle fill="white" cx="12" cy="9" r="2.5"/>
+	        </svg>
+	    `;
+
+	    const imageSrc = 'data:image/svg+xml;base64,' + btoa(svgMarker);
+	    const imageSize = new kakao.maps.Size(30, 30);
+	    
+	    return new kakao.maps.MarkerImage(imageSrc, imageSize);
+	}*/
 
     // 3. 마커 선택 토글 및 거리 측정 로직
     toggleMarkerSelection(marker, title) {

@@ -321,7 +321,7 @@ function createTourCard(data) {
     // 대표 이미지 처리
     var defaultImage = 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80';
     var imageUrl = data.thumbImage 
-        ? CONTEXT_PATH + '/upload' + data.thumbImage 
+        ? CONTEXT_PATH + '/upload/' + data.thumbImage 
         : defaultImage;
 
 	var minPeople = data.prodMinPeople || 1;

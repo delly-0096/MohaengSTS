@@ -398,7 +398,7 @@ public class FileServiceImpl implements IFileService{
 	            detailVO.setFileOriginalName(originalName);
 	            detailVO.setFileExt(ext);
 	            detailVO.setFileSize(file.getSize());
-	            detailVO.setFilePath("/" + subPath + "/" + saveName);
+	            detailVO.setFilePath(subPath + "/" + saveName);
 	            detailVO.setFileGbCd(fileGbCd);
 	            detailVO.setMimyType(file.getContentType());
 	            detailVO.setRegId(regId);

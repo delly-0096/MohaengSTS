@@ -10,7 +10,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import kr.or.ddit.mohaeng.ServiceResult;
 import kr.or.ddit.mohaeng.file.service.IFileService;
+import kr.or.ddit.mohaeng.product.inquiry.service.ITripProdInquiryService;
+import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
 import kr.or.ddit.mohaeng.product.manage.mapper.IProductMangeMapper;
+import kr.or.ddit.mohaeng.product.review.service.IProdReviewService;
+import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdInfoVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdPlaceVO;
@@ -25,6 +29,7 @@ import kr.or.ddit.mohaeng.vo.RoomFacilityVO;
 import kr.or.ddit.mohaeng.vo.RoomFeatureVO;
 import kr.or.ddit.mohaeng.vo.RoomTypeVO;
 import kr.or.ddit.mohaeng.vo.RoomVO;
+import kr.or.ddit.mohaeng.vo.TripProdListVO;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -39,6 +44,14 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 	// 사진 저장용
 	@Autowired
 	private IFileService fileService;
+	
+	// 문의 내역 가져오기
+	@Autowired
+	private ITripProdInquiryService inquiryService;
+	
+	// 리뷰 내역 가져오기
+	@Autowired
+	private IProdReviewService prodReviewService;
 	
 	@Override
 	public List<BusinessProductsVO> getProductlist(BusinessProductsVO businessProducts) {
@@ -61,7 +74,9 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		// 상품 정보, 상품 이용안내, 상품 가격, 여행 상품 관광지
 		BusinessProductsVO prodVO = manageMapper.retrieveProductDetail(businessProducts);
 		log.info("retrieveProductDetail-retrieveProductDetail : {}", prodVO);
-
+		
+		int tripProdNo = prodVO.getTripProdNo();
+		
 		// 숙소 타입일 경우에는 이렇게
 		if(prodVO.getProdCtgryType().equals("accommodation")) {
 			int accNo = 0;
@@ -86,6 +101,9 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 				prodVO.setImageList(accommodationImages);
 			}
 			
+			// 숙소 예약 내역
+			
+			
 		// 숙소가 아닐때는 이렇게
 		} else {
 			List<ProdTimeInfoVO> prodTimeList = manageMapper.retrieveProdTimeList(prodVO);
@@ -107,7 +125,30 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			if(productImages != null && productImages.size() > 0) {
 				prodVO.setImageList(productImages);
 			}
+			
+			// 예약 내역 = tripProdList
+			List<TripProdListVO> prodList = new ArrayList<>();
+			prodList = manageMapper.getReservation(businessProducts);	// 번호
+			log.info("prodList : {}", prodList);
+			prodVO.setProdList(prodList);
 		}
+		
+		// 리뷰
+		List<ProdReviewVO> prodReviewList = new ArrayList<>();
+		prodReviewList = 
+				prodReviewService.getReviewPaging(tripProdNo, businessProducts.getPage(), businessProducts.getPageSize());
+		
+		log.info("prodReviewList : {}", prodReviewList);
+		prodVO.setProdReviewList(prodReviewList);
+		
+		// 문의사항
+		List<TripProdInquiryVO> inquiryList = new ArrayList<>();
+		inquiryList = 
+				inquiryService.getInquiryPaging(tripProdNo, businessProducts.getPage(), businessProducts.getPageSize());
+		log.info("inquiryList : {}", inquiryList);
+		prodVO.setProdInquiryList(inquiryList);
+		
+
 		
 		return prodVO;
 	}
@@ -235,15 +276,23 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			List<ProdTimeInfoVO> prodTimeInfoVO = businessProducts.getProdTimeList();
 			log.info("prodTimeInfoVO.길이 : {}", prodTimeInfoVO);
 			boolean isTimeSuccess = true; // 시간 처리 성공 여부 플래그
+			int totalSuccess = 0;
+//			int size
 			if (prodTimeInfoVO != null && !prodTimeInfoVO.isEmpty()) {
+				int insertCount = 0;
+				
 				for(ProdTimeInfoVO timeInfo : prodTimeInfoVO) {
 					timeInfo.setTripProdNo(tripProdNo);
+					insertCount = manageMapper.insertProdTimeInfo(timeInfo);
 				}
 				
-				int insertCount = manageMapper.insertProdTimeInfo(prodTimeInfoVO);
+				if(insertCount > 0 ) {
+					totalSuccess += insertCount; 
+				}
+				
 				log.info("시간 등록 개수: {}, 기대 개수: {}", insertCount, prodTimeInfoVO.size());
 				
-				if (insertCount != prodTimeInfoVO.size()) {
+				if (totalSuccess != prodTimeInfoVO.size()) {
 					isTimeSuccess = false;
 				}
 			}
@@ -338,7 +387,6 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		}else {
 			// 상품 등록
 			return insertTripProductDetail(businessProducts, tripProdNO);
-			
 		}
 		
 //		return null;
@@ -366,9 +414,9 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		// 상품 판매 정보
 		TripProdSaleVO prodSaleVO = businessProducts.getProdSale();
 		prodSaleVO.setTripProdNo(tripProdNO);
+		int netprc = prodSaleVO.getNetprc();
 		int price = prodSaleVO.getPrice() != 0 ? prodSaleVO.getPrice() : 0;
 		int discount = (prodSaleVO.getDiscount() != null && prodSaleVO.getDiscount() != 0 ) ? prodSaleVO.getDiscount() : 0;
-		int netprc = prodSaleVO.getNetprc();
 		
 		if(discount > 0) {
 			price = netprc - discount;
@@ -429,19 +477,24 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 	private ServiceResult insertTripProdTimeInfo(List<ProdTimeInfoVO> prodTimeInfoList, int tripProdNO) {
 		ServiceResult result = null;
 		int status = 0;
+		int totalSuccess = 0;
 		int count = prodTimeInfoList.size();
 		
 		for(ProdTimeInfoVO prodTimeInfoVO : prodTimeInfoList) {
 			prodTimeInfoVO.setTripProdNo(tripProdNO);
-			status = manageMapper.insertProdTimeInfo(prodTimeInfoList);
+			status = manageMapper.insertProdTimeInfo(prodTimeInfoVO);
 			log.info("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 성공");
 			if(status <= 0) {
 				log.info("insertProduct - insertTripProdTimeInfo 예약 가능 시간 등록 실패");
 				return result = ServiceResult.FAILED;
+			}else {
+				totalSuccess += status;
+				log.info("예약 시간 등록 성공 (현재 {}/{}건)", totalSuccess, count);
 			}
+			
 		}
 		
-		return (count == status) ? ServiceResult.OK : ServiceResult.FAILED;
+		return (count == totalSuccess) ? ServiceResult.OK : ServiceResult.FAILED;
 	}
 	
 	

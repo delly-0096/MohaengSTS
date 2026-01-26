@@ -218,7 +218,7 @@ public interface IProductMangeMapper {
 	 * @param tripProd 상품일련번호(tripProdNo)
 	 * @return 결과 0, 1
 	 */
-	public int insertProdTimeInfo(List<ProdTimeInfoVO> prodTimeInfoVO);
+	public int insertProdTimeInfo(ProdTimeInfoVO prodTimeInfoVO);
 
 	
 	/**

@@ -132,7 +132,9 @@
 			                </label>
 			                <div class="product-image">
 			                    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" alt="스쿠버다이빙">
-			                    <span class="product-status ${dataStatus}">${status}</span>
+			                    <span class="product-status ${dataStatus}">
+			                    ${(not empty prod.aprvYn && prod.aprvYn == 'N') ? '승인대기' : (status == '판매중' ? '중지' : '재개')}
+			                    </span>
 			                </div>
 			                <div class="product-info">
 			                    <div class="product-category">${prod.prodCtgryType}</div>
@@ -228,7 +230,8 @@
 			                		</c:when>
 			                		<c:otherwise>
 					                    <a href="/product/manage/tourDetail/" class="btn btn-outline btn-sm">
-					                        <!-- 상품일때 --><i class="bi bi-eye"></i> 숙소
+					                    <!-- 숙소일떄 -->
+					                        <i class="bi bi-eye"></i> 상세보기
 					                    </a>
 			                		</c:otherwise>
 			                	</c:choose>
@@ -240,6 +243,7 @@
 			                    	data-id="${prod.tripProdNo}" data-status="${prod.approveStatus}" data-aprv="${prod.aprvYn}">
 			                        <i class="bi bi-pause"></i> 
 			                        ${prod.approveStatus == '판매중' ? '중지' : '재개'}
+<%-- 			                        ${(not empty prod.aprvYn && prod.aprvYn == 'N') ? '승인대기' : (status == '판매중' ? '중지' : '재개')} --%>
 			                        <!-- 승인여부도 따져야됨 -->
 			                        <!-- prod.aprvYn == 'Y' ? '승인' : 'wait = 대기' / 'N = 불허' -->
 			                    </button>
@@ -1011,7 +1015,7 @@ function displayImages() {
 
     const html = imageList.map((image, index) => {
     	console.log("image, ", image);
-        const imgSrc = image.isNew ? image.filePath : `${pageContext.request.contextPath}/upload/product/\${image.filePath}`;
+        const imgSrc = image.isNew ? image.filePath : `${pageContext.request.contextPath}/upload\${image.filePath}`;
         
         return `
             <div class="image-item">
@@ -1473,6 +1477,7 @@ async function searchTourApi(matchData) {
 
             
             if(data.accName) document.querySelector("[name='tripProdTitle']").value = data.accName;
+            if(data.overview) document.querySelector("[name='tripProdTitleContent']").value = data.overview;
 			if(data.areaCode) citySelector.value = data.areaCode;            
             
             // 2. 좌표 및 이미지 세팅 -> 파일 no는 어차피 둘다 있음. 이거는 알아서 넣으면 되는것. 세팅도 내맘

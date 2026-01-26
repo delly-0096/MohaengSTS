@@ -482,7 +482,25 @@
 	</delete>
 	
 	<!-- 예약 가능 시간 추가(수정, 등록 같이 사용) -->
-	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
+	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO" useGeneratedKeys="true">
+		<selectKey keyProperty="timeInfoNo" resultType="int" order="BEFORE">
+			select seq_time_info.nextval from dual
+		</selectKey>
+		INSERT INTO PROD_TIME_INFO (
+	          TIME_INFO_NO
+	        , TRIP_PROD_NO
+	        , RSVT_AVAILABLE_TIME
+	    )values(
+	     	#{timeInfoNo}
+	        , #{tripProdNo}
+	        , #{rsvtAvailableTime}
+	    )
+	</insert>
+	
+<!-- 	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO" useGeneratedKeys="true">
+		<selectKey keyColumn="timeInfoNo" resultType="int" order="BEFORE">
+			select seq_prod_time_info.nextval form dual
+		</selectKey>
 		INSERT INTO PROD_TIME_INFO (
 	          TIME_INFO_NO
 	        , TRIP_PROD_NO
@@ -497,7 +515,7 @@
 	            FROM DUAL
 	        </foreach>
 	    ) A
-	</insert>
+	</insert> -->
 	
 	
 	<!-- 상품 판매 정보 변경 -->
@@ -538,13 +556,13 @@
 			, #{compNo}
 			, #{memNo}
 			, #{prodCtgryType}
-			, #{approveStatus}
+			, '판매중지'
 			, #{tripProdTitle}
 			, #{tripProdContent}
 			, #{saleStartDt}
 			, #{saleEndDt}
 			, #{attachNo}
-			, #{viewCnt}
+			, 0
 			, sysdate
 			, #{modDt}
 			, 'N'
@@ -730,7 +748,7 @@
 		    , #{discount}
 		    , #{leadTime}
 		    , #{totalStock}
-		    , #{curStock}
+		    , #{totalStock}
 		)
 	</insert>
 	

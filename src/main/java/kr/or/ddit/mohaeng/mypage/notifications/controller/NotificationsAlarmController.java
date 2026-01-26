@@ -43,7 +43,7 @@ public class NotificationsAlarmController {
 		
 		 // model.addAttribute("pagingVO", pagingVO);
 		  model.addAttribute("alarmlist",list);
-		 
+		    
 		return "mypage/business/notifications";
 	}
 	

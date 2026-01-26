@@ -11,4 +11,5 @@ public interface IProdReviewService {
 	public int deleteReview(int prodRvNo, int memNo);
 	public Integer getReviewAttachNo(int prodRvNo);
 	public int updateReviewAttachNo(int prodRvNo, int attachNo);
+	public int insertReview(ProdReviewVO vo);
 }

@@ -526,7 +526,7 @@ public class TripScheduleController {
 	        	        map.get("plcPrice")))
 	        	    .collect(Collectors.joining("\n"));
 	        
-	        String prompt = "(ID|이름|설명|주소|위도|경도|운영시간|비용):\n" + aiInputData;
+//	        String prompt = "(ID|이름|설명|주소|위도|경도|운영시간|비용):\n" + aiInputData;
 	        
 	        //여행기간
 	        int duration = 0;
@@ -604,17 +604,18 @@ public class TripScheduleController {
 	        String coordinate = regionData.get("latitude")+"(위도), "+regionData.get("longitude") + "(경도)";
 	        
 	        String message = String.format("""
-	        		너는 한국 여행 전문가야!
+	        		너는 '%s' 여행 전문가야!
 	        		
 	        		여행일정 추천해줘
 	        		현재일자 : '%s'
-		            여행지역 : '%s'
 		            여행인원 : '%s'명
 		            여행기간 %s일
-		            [참고할 관광지 DB 데이터] 값 역할 : (ID|이름|설명|시/도 코드|시/도|시군구 코드|시군구|주소|위도|경도|운영시간|비용)
 		            
 		            [선호하는 여행 스타일]
 		            '%s'
+		            
+		            [참고할 관광지 DB 데이터] 값 역할 : (ID|이름|설명|시/도 코드|시/도|시군구 코드|시군구|주소|위도|경도|운영시간|비용)
+		            %s
 		            
 		            [여행페이스]
 		            '%s'
@@ -623,7 +624,7 @@ public class TripScheduleController {
 		            '%s'
 		            
 		            [선호하는 숙소 유형]
-		           ' %s'
+		            '%s'
 		            
 		            [이동 수단]
 		            '%s'
@@ -631,8 +632,6 @@ public class TripScheduleController {
 		            [위치 클러스터별 동선]
 		            '%s'
 		            
-		            [참고할 관광지 DB 데이터]
-		            '%s'
 		            
 		            [사용자가 재요청한 관광지 리스트]
 		            '%s'
@@ -693,9 +692,13 @@ public class TripScheduleController {
 		        	},
 		        	],
 		        	check : 판단에 시간이 가장 오래걸린 작업정보}
-		            """,formattedDate, region, travelers, duration+1, styles
+		            """, region, formattedDate, travelers, duration+1, styles, aiInputData
 		               , paceStr, budgetStr, accommodations, transportStr
-		               , finalPrompt, aiInputData, exclude, coordinate);
+		               , finalPrompt, exclude, coordinate);
+	        
+//            [참고할 관광지 DB 데이터]
+//            '%s'
+	        
 //			9. check 라는 key로 가장 시간이 오래소요된 작업에 대한 설명과 개선방향이나 추가할 프롬프트 관련 피드백을 해줘 (초단위 시간 알려줄 수 있으면 더 좋음)
 //			12. 만약 축제나 행사등의 경우 운영 기간 외의 장소는 제외해
 //			13. 운영기간이나 비용정보가 정형화가 부족할 경우 너의 내부정보가 더 정형화가 잘 되어있으면 그쪽에 따를 것
@@ -799,7 +802,7 @@ public class TripScheduleController {
 	                .entity(new ParameterizedTypeReference<JsonNode>() {});
 	        stopWatch.stop();
 ////	        
-	        System.out.println(aiResult.toPrettyString());
+//	        System.out.println(aiResult.toPrettyString());
 	        
 	        System.out.println(stopWatch.prettyPrint()); // 전체적인 소요 시간 및 태스크별 비율
 	        System.out.println("Total Time: " + stopWatch.getTotalTimeMillis() + "ms");
@@ -808,7 +811,7 @@ public class TripScheduleController {
 	        model.addAttribute("data", preferenceData);
 	        model.addAttribute("result", aiResult);
 	        
-	        System.out.println("message : " + message);
+//	        System.out.println("message : " + message);
 	        
 	        
 			ObjectMapper mapper = new ObjectMapper();
@@ -827,6 +830,7 @@ public class TripScheduleController {
 					tourPlace.put("placeInfo", placeData);
 				}
 			}
+			System.out.println("aiResult :  " + aiResult.get("check"));
 			
 	        return new ResponseEntity<List<Map<String, Object>>>(resultList, HttpStatus.OK);
 	    } catch (Exception e) {
@@ -837,4 +841,5 @@ public class TripScheduleController {
 		
 //		return "schedule/rcmd-result";
 	}
+	
 }

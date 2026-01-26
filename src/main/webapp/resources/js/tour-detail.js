@@ -1860,7 +1860,7 @@ function loadCurrentImages() {
                     var imagePath = img.FILE_PATH;
                     
                     html += '<div class="current-image-item' + (index === 0 ? ' main-image' : '') + '" data-file-no="' + img.FILE_NO + '">' +
-                        '<img src="' + CONTEXT_PATH + '/upload/' + imagePath + '" alt="상품 이미지">' +
+                        '<img src="' + CONTEXT_PATH + '/upload' + imagePath + '" alt="상품 이미지">' +
                         '<button class="delete-btn" onclick="deleteProductImage(' + img.FILE_NO + ')">' +
                             '<i class="bi bi-x"></i>' +
                         '</button>' +
@@ -2047,7 +2047,7 @@ function refreshGallery() {
                 var firstImagePath = data.images[0].FILE_PATH;
                 
                 // 메인 이미지 업데이트
-                document.getElementById('mainImage').src = CONTEXT_PATH + '/upload/' + firstImagePath;
+                document.getElementById('mainImage').src = CONTEXT_PATH + '/upload' + firstImagePath;
                 
                 // 썸네일 업데이트
                 var thumbs = document.getElementById('galleryThumbs');

@@ -52,7 +52,7 @@ public class FileController {
 			try {
 				in.close();
 			} catch (Exception e) {
-			   e.printStackTrace();
+//			   e.printStackTrace();
 			}
 		}
 		

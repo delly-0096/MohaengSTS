@@ -158,8 +158,6 @@
                             <li><i class="bi bi-check2"></i> AI 기반 맞춤 추천</li>
                             <li><i class="bi bi-check2"></i> 다른 이용자 일정 참고</li>
                             <li><i class="bi bi-check2"></i> 이동 경로 최적화</li>
-                        </ul>
-                        <ul class="plan-type-features">
                             <li class="txt-right">Gemini API를 사용하여 생성됩니다.</li>
                         </ul>
                     </div>
@@ -179,6 +177,7 @@
                             <li><i class="bi bi-check2"></i> 자유로운 장소 선택</li>
                             <li><i class="bi bi-check2"></i> 드래그 앤 드롭 편집</li>
                             <li><i class="bi bi-check2"></i> 세부 시간 조정 가능</li>
+                            <li class="txt-right" style="height: 38.4px"></li>
                         </ul>
                     </div>
                 </label>

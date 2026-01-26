@@ -8,12 +8,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import jakarta.servlet.http.HttpSession;
 import kr.or.ddit.mohaeng.mypage.payments.service.IMyPaymentsService;
+import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
 import kr.or.ddit.mohaeng.vo.MyPaymentsVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 
@@ -23,6 +26,9 @@ public class MyPaymentsController {
     
     @Autowired
     private IMyPaymentsService myPaymentsService;
+    
+    @Autowired
+    private kr.or.ddit.mohaeng.product.review.service.IProdReviewService reviewService; 
 
     @GetMapping("/list")
     public String paymentList(
@@ -68,4 +74,112 @@ public class MyPaymentsController {
         
         return result;
     }
+    
+    /**
+     * 후기 등록 
+     */
+    @PostMapping("/review/insert")
+    @ResponseBody
+    public Map<String, Object> insertReview(ProdReviewVO vo, HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        Integer memNo = getMemNo(session);
+        
+        // 디버깅용: 파일이 넘어오는지 콘솔에서 확인
+        if(vo.getUploadFiles() != null) {
+            System.out.println("업로드 파일 개수: " + vo.getUploadFiles().length);
+        }
+
+        try {
+            vo.setMemNo(memNo);
+            // 서비스 호출 (파일 처리 로직이 포함된 서비스여야 함)
+            int status = reviewService.insertReview(vo); 
+            
+            if(status > 0) {
+                result.put("success", true);
+                result.put("message", "후기가 등록되었습니다.");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            result.put("success", false);
+            result.put("message", "등록 중 오류 발생");
+        }
+        return result;
+    }
+
+    /**
+     * 마이페이지용 후기 수정
+     */
+    @PostMapping("/review/update")
+    @ResponseBody
+    public Map<String, Object> updateReview(ProdReviewVO vo, HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        Integer memNo = getMemNo(session);
+        
+        try {
+            vo.setMemNo(memNo);
+            // DB 업데이트 실행 (매퍼의 updateReview 쿼리에 RCMDTN_YN 컬럼이 포함되어야 함)
+            int updated = reviewService.updateReview(vo);
+            if (updated > 0) {
+                result.put("success", true);
+                result.put("message", "리뷰가 수정되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "수정 권한이 없습니다.");
+            }
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "수정 중 오류 발생");
+        }
+        return result;
+    }
+    
+    @PostMapping("/review/delete")
+    @ResponseBody
+    public Map<String, Object> deleteReview(@RequestBody Map<String, Integer> payload, HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        
+        // JSON 데이터에서 prodRvNo 추출
+        Integer prodRvNo = payload.get("prodRvNo");
+        Integer memNo = getMemNo(session); // 세션에서 회원 번호 가져오기
+        
+        try {
+            // 서비스 호출 (상태를 'HIDDEN'으로 바꾸거나 실제 삭제 수행)
+            int deleted = reviewService.deleteReview(prodRvNo, memNo);
+            
+            if (deleted > 0) {
+                result.put("success", true);
+                result.put("message", "후기가 삭제되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "삭제 권한이 없거나 이미 삭제된 후기입니다.");
+            }
+        } catch (Exception e) {
+            result.put("success", false);
+            result.put("message", "삭제 중 오류가 발생했습니다.");
+        }
+        return result;
+    }
+    
+    /**
+     * 로그인 세션에서 memNo를 안전하게 추출하는 메서드
+     */
+    private Integer getMemNo(HttpSession session) {
+        Object loginMember = session.getAttribute("loginMember");
+        if (loginMember == null) {
+            return null;
+        }
+        
+        // 세션 저장 방식(Map 또는 VO)에 따라 처리
+        if (loginMember instanceof java.util.Map) {
+            Object memNoObj = ((java.util.Map<?, ?>) loginMember).get("memNo");
+            if (memNoObj instanceof Number) {
+                return ((Number) memNoObj).intValue();
+            }
+        } else if (loginMember instanceof kr.or.ddit.mohaeng.vo.MemberVO) {
+            return ((kr.or.ddit.mohaeng.vo.MemberVO) loginMember).getMemNo();
+        }
+        
+        return null;
+    }
+
 }

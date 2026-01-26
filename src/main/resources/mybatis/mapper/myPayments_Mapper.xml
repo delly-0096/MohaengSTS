@@ -73,34 +73,43 @@
 	<select id="selectReceiptDetailList" parameterType="int" resultType="map">
 	    /* 1. 숙소/투어 상품 상세 */
 	    SELECT 
+	        TPL.TRIP_PROD_NO,
 	        TP.TRIP_PROD_TITLE AS PROD_NAME,
 	        TPL.QUANTITY,
-	        TPL.UNIT_PRICE AS PRICE,
 	        TPL.PAY_PRICE AS ITEM_TOTAL_PRICE,
-	        TO_CHAR(TPL.RESV_DT, 'YYYY.MM.DD') || ' (' || TPL.USE_TIME || ')' AS USE_INFO
+	        TO_CHAR(TPL.RESV_DT, 'YYYY.MM.DD') || ' (' || TPL.USE_TIME || ')' AS USE_INFO,
+	        R.PROD_RV_NO,
+	        R.PROD_REVIEW,
+	        R.RATING,
+	        R.RCMDTN_YN,
+	        /* 기존 이미지 경로들 가져오기 */
+	        (SELECT LISTAGG(AFD.FILE_PATH || '/' || AFD.FILE_NAME, ',') WITHIN GROUP (ORDER BY AFD.FILE_NO)
+	         FROM ATTACH_FILE_DETAIL AFD 
+	         WHERE AFD.ATTACH_NO = R.ATTACH_NO AND AFD.USE_YN = 'Y') AS EXISTING_IMAGES
 	    FROM TRIP_PROD_LIST TPL
 	    JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+	    LEFT OUTER JOIN PROD_REVIEW R ON TPL.TRIP_PROD_NO = R.TRIP_PROD_NO 
+	        AND R.MEM_NO = (SELECT MEM_NO FROM PAYMENT WHERE PAY_NO = TPL.PAY_NO)
 	    WHERE TPL.PAY_NO = #{payNo}
 	
 	    UNION ALL
 	
-	    /* 2. 항공권 상품 상세 (예약번호 기준으로 수량/금액 정밀 계산) */
+	    /* 2. 항공권 상품 상세 */
 	    SELECT 
+	        NULL AS TRIP_PROD_NO,
 	        FP.FLIGHT_SYMBOL || ' 항공권' AS PROD_NAME,
-	        /* 해당 예약번호(RESERVE_NO)에 매핑된 실제 탑승객 수 */
 	        (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS WHERE FPS.RESERVE_NO = FR.RESERVE_NO) AS QUANTITY,
-	        /* 1인당 단가: (총 결제액 + 사용포인트) / 전체 결제건 내 탑승객 총원 */
-	        (P.PAY_TOTAL_AMT + NVL(P.USE_POINT, 0)) / 
-	            (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_ALL 
-	             JOIN FLIGHT_RESERVATION FR_ALL ON FPS_ALL.RESERVE_NO = FR_ALL.RESERVE_NO 
-	             WHERE FR_ALL.PAY_NO = P.PAY_NO) AS PRICE,
-	        /* 해당 노선(가는편/오는편)의 합계 금액 */
 	        ((P.PAY_TOTAL_AMT + NVL(P.USE_POINT, 0)) / 
 	            (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_ALL 
 	             JOIN FLIGHT_RESERVATION FR_ALL ON FPS_ALL.RESERVE_NO = FR_ALL.RESERVE_NO 
 	             WHERE FR_ALL.PAY_NO = P.PAY_NO)) 
 	        * (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_SUB WHERE FPS_SUB.RESERVE_NO = FR.RESERVE_NO) AS ITEM_TOTAL_PRICE,
-	        TO_CHAR(FP.DEP_TIME, 'YYYY.MM.DD (HH24:MI)') AS USE_INFO
+	        TO_CHAR(FP.DEP_TIME, 'YYYY.MM.DD (HH24:MI)') AS USE_INFO,
+	        NULL AS PROD_RV_NO,
+	        NULL AS PROD_REVIEW,
+	        NULL AS RATING,
+	        NULL AS RCMDTN_YN, /* ✅ 개수 맞춤 추가 */
+	        NULL AS EXISTING_IMAGES /* ✅ 개수 맞춤 추가 (총 10개 컬럼) */
 	    FROM FLIGHT_RESERVATION FR
 	    JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID
 	    JOIN PAYMENT P ON FR.PAY_NO = P.PAY_NO

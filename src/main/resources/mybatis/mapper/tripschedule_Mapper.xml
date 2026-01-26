@@ -127,7 +127,7 @@
 		    , TS.AI_RECOM_YN
 		    , TS.PUBLIC_YN
 		    , TS.REG_DT           AS TS_REG_DT
-		    , TS.MOD_DT           AS TS_MOD_DT
+		    , TO_CHAR(TS.MOD_DT, 'yyyy-MM-dd') AS TS_MOD_DT
 
 		    , TSD.SCHDL_DETAILS_NO
 		    , TSD.SCHDL_TITLE

@@ -29,11 +29,12 @@ public class TripScheduleScheduler {
 		tripScheduleService.aiInsertStyleKeyword();
     }
 	
-	@Scheduled(cron = "0 8 15 * * *")
+	@Scheduled(cron = "0 26 11 * * *")
 	public void updateTripSchedule2() {
 		log.info("자동화 작업 테스트용 스케줄러");
 //		tripScheduleService.matchLegalDongCode();
 //		tripScheduleService.updateTourPlaceInfo();
 //		tripScheduleService.updateDefaultImg();
+//		tripScheduleService.aiInsertStyleKeyword();
 	}
 }

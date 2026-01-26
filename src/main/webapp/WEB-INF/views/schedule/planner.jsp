@@ -515,13 +515,17 @@ document.addEventListener('DOMContentLoaded', async function() {
 	];
 	tourPlaces.forEach(place => {
 	    // 마커 추가 (위도, 경도, 제목, 커스텀데이터)
-	    myMap.addMarker(place.lat, place.lng, place.title, { id: place.id });
+	    myMap.addMarker(place.lat, place.lng, place.title, 0, { id: place.id, order : 0 });
 	});
 	
 	// 4. 마커가 다 보이도록 지도 줌 레벨 자동 조정
 	myMap.fitBounds();
 	
 	initReturn();
+	
+	$(".planner-item").on("click", function() {
+		console.log($(this));
+	})
 });
 
 // 일자 선택
@@ -810,8 +814,10 @@ function confirmAddPlace() {
     switchPlannerTab('itinerary');
 
     myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, selectedDay, { id: selectedItem.id });
-
+    
 	myMap.fitBounds();
+	
+	myMap.getAllMarkers();
 	
     selectedItem = null;
 }
@@ -862,7 +868,7 @@ async function viewItemDetail(itemId) {
             <div class="d-flex justify-content-around text-center">
                 <div class="col">
                     <i class="bi bi-clock text-primary mb-1" style="font-size: 24px;"></i>
-                    <p class="mb-0 small">\${operationHours}</p>
+                    <p class="mb-0 small">\${ operationHours != 'null' ? operationHours : 'x' }</p>
                 </div>
                 <div class="col">
                     <i class="bi bi-currency-dollar text-primary mb-1" style="font-size: 24px;"></i>
@@ -1353,9 +1359,15 @@ async function initTourPlaceList(areaCode) {
 	let items = dataList.response.body.items.item;
 	
 	let placeData = "";
-
+    let popPlaceData = "";
 	let outputCnt = 0;
-	
+	$("#placeAutocomplete").children("#autocomplete-section").html("");
+    $("#placeAutocomplete").children("#autocomplete-section").append(`
+        <div class="place-autocomplete-header">
+            <h6 class="mb-0">인기 장소</h6>
+        </div>
+    `);
+    let isPopular = areaCode != 0;
 	for(let i = 0; i < items.length && outputCnt < 15; i++) {
 		let tourPlace = items[i];
 		
@@ -1366,7 +1378,7 @@ async function initTourPlaceList(areaCode) {
 		             alt="\${ tourPlace.title }" class="search-result-image">
 		        <div class="search-result-content">
 		            <h5 class="search-result-name">\${ tourPlace.title }</h5>
-		            <span class="search-result-category">\${getContentTypeName(tourPlace.contenttypeid)} · 자연</span>
+		            <span class="search-result-category">\${getContentTypeName(tourPlace.contenttypeid)}</span>
 		            <div class="search-result-rating">
 		                <i class="bi bi-star-fill"></i>
 		                <span>4.8</span>
@@ -1381,6 +1393,20 @@ async function initTourPlaceList(areaCode) {
 			
 			outputCnt++;
 		}
+        if(isPopular) {
+            popPlaceData += `
+                <div class="place-autocomplete-item" onclick="selectPlace(\${tourPlace.contentid}, '\${ tourPlace.title }', '\${getContentTypeName(tourPlace.contenttypeid)}', '\${ tourPlace.mapy }', '\${ tourPlace.mapx }', '\${ tourPlace.contentid }', '\${ tourPlace.contenttypeid }')" style="display: flex;">
+                    <div class="place-autocomplete-icon">
+                        <img class="place-img" src="\${ tourPlace.firstimage }" alt="\${ tourPlace.title }" class="place-autocomplete-image">
+                    </div>
+                    <div class="place-autocomplete-info">
+                        <span class="place-autocomplete-name">\${ tourPlace.title }</span>
+                        <span class="place-autocomplete-category">\${getContentTypeName(tourPlace.contenttypeid)} · 자연</span>
+                    </div>
+                </div>
+            `
+            $("#placeAutocomplete").children("#autocomplete-section").append(popPlaceData);
+        }
 	}
 	
 	$("#searchResults").html(placeData);
@@ -1544,7 +1570,7 @@ function initReturn() {
 		        '</div>' +
 		        '<div class="planner-item-content">' +
 		            '<span class="planner-item-name">' + item.itemName + '</span>' +
-		            '<span class="planner-item-category">' + item.itemCategory + '</span>' +
+		            '<span class="planner-item-category"> ' + item.itemCategory + '</span>' +
 		        '</div>' +
 		        '<div class="planner-item-cost">' +
 		            '<input type="text" class="cost-input" value="0" placeholder="0" onclick="this.select()" onchange="updateItemCost(' + item.day + ', ' + item.itemId + ', this.value)">' +
@@ -1564,8 +1590,6 @@ function initReturn() {
     		itemsContainer.appendChild(newItem);
 		    initDragAndDropForItem(newItem);
 
-			console.log(item.day);
-		    
 			myMap.addMarker(item.latitude, item.longitude, item.itemName, item.day, { id: item.itemId });
 			
 			myMap.fitBounds();
@@ -1619,7 +1643,6 @@ function searchTourPlaceList(keyword, areaCode, page) {
 
         let placeData = "";
         let popPlaceData = "";
-
         let outputCnt = 0;
         
         for(let i = 0; i < items.length && outputCnt < 15; i++) {
@@ -1634,7 +1657,7 @@ function searchTourPlaceList(keyword, areaCode, page) {
                         alt="\${ tourPlace.title }" class="search-result-image">
                     <div class="search-result-content">
                         <h5 class="search-result-name">\${ tourPlace.title }</h5>
-                        <span class="search-result-category">\${getContentTypeName(tourPlace.contenttypeid)} · 자연</span>
+                        <span class="search-result-category">\${getContentTypeName(tourPlace.contenttypeid)}</span>
                         <div class="search-result-rating">
                             <i class="bi bi-star-fill"></i>
                             <span>4.8</span>
@@ -1669,7 +1692,6 @@ function searchTourPlaceList(keyword, areaCode, page) {
     });
 	searchPage++;
 }
-
 </script>
 
 <%@ include file="../common/footer.jsp" %>

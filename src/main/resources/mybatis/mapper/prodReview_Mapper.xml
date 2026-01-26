@@ -93,6 +93,7 @@
 	    UPDATE PROD_REVIEW
 	    SET PROD_REVIEW = #{prodReview},
 	        RATING = #{rating},
+	        RCMDTN_YN = #{rcmdtnYn}, 
 	        PROD_UDTDATE = SYSDATE
 	    WHERE PROD_RV_NO = #{prodRvNo}
 	      AND MEM_NO = #{memNo}
@@ -104,5 +105,19 @@
 	    WHERE PROD_RV_NO = #{prodRvNo}
 	      AND MEM_NO = #{memNo}
 	</delete>
+	
+	<!-- 리뷰 등록 -->
+	<insert id="insertReview" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
+	    <selectKey keyProperty="prodRvNo" resultType="int" order="BEFORE">
+	        SELECT SEQ_PROD_REVIEW.NEXTVAL FROM DUAL
+	    </selectKey>
+	    INSERT INTO PROD_REVIEW (
+	        PROD_RV_NO, TRIP_PROD_NO, MEM_NO, PROD_REVIEW, 
+	        PROD_REGDATE, RATING, ATTACH_NO, RCMDTN_YN, REVIEW_STATUS
+	    ) VALUES (
+	        #{prodRvNo}, #{tripProdNo}, #{memNo}, #{prodReview}, 
+	        SYSDATE, #{rating}, #{attachNo, jdbcType=INTEGER}, #{rcmdtnYn}, 'ACTIVE'
+	    )
+	</insert>
 
 </mapper>

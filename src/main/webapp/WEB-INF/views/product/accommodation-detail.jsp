@@ -342,13 +342,13 @@
 			            <div class="form-group">
 			                <label class="form-label">체크인</label>
 			                <input type="text" class="form-control date-picker" id="checkInDate"
-			                       placeholder="체크인 날짜" onchange="calculateNights()" required>
+			                       placeholder="체크인 날짜" value="${param.startDate}" onchange="calculateNights()" required>
 			            </div>
 			
 			            <div class="form-group">
 			                <label class="form-label">체크아웃</label>
 			                <input type="text" class="form-control date-picker" id="checkOutDate"
-			                       placeholder="체크아웃 날짜" onchange="calculateNights()" required>
+			                       placeholder="체크아웃 날짜" value="${param.endDate}" onchange="calculateNights()" required>
 			            </div>
 			
 			            <div class="form-group">
@@ -691,34 +691,40 @@
 			                        
 			                        <!-- 답변 내용 (답변완료 시) -->
 									<c:if test="${inq.inqryStatus eq 'DONE' && not empty inq.replyCn}">
-									    <!-- 비밀글이 아니거나 본인인 경우만 답변 표시 -->
-									    <c:when test="${inq.secretYn ne 'Y' || user.member.memNo eq inq.inquiryMemNo || isBusiness}">
-									    <div class="inquiry-item-answer" id="answer_${inq.prodInqryNo}">
-									        <div class="answer-header">
-									            <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
-									            <div class="d-flex align-items-center gap-2">
-									                <span class="answer-date">
-									                    <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
-									                </span>
-									                <c:if test="${isBusiness && user.member.memNo eq acc.memNo}">
-									                    <div class="dropdown">
-									                        <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
-									                            <i class="bi bi-three-dots-vertical"></i>
-									                        </button>
-									                        <ul class="dropdown-menu dropdown-menu-end">
-									                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
-									                                <i class="bi bi-pencil me-2"></i>수정</a></li>
-									                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
-									                                <i class="bi bi-trash me-2"></i>삭제</a></li>
-									                        </ul>
-									                    </div>
-									                </c:if>
+									    <c:if test="${inq.secretYn ne 'Y' || user.member.memNo eq inq.inquiryMemNo || isBusiness}">
+									        <div class="inquiry-item-answer" id="answer_${inq.prodInqryNo}">
+									            <div class="answer-header">
+									                <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
+									                <div class="d-flex align-items-center gap-2">
+									                    <span class="answer-date">
+									                        <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
+									                    </span>
+									                    <%-- 비즈니스 계정이면서 숙소 주인인 경우 수정/삭제 메뉴 표시 --%>
+									                    <c:if test="${isBusiness && user.member.memNo eq acc.memNo}">
+									                        <div class="dropdown">
+									                            <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
+									                                <i class="bi bi-three-dots-vertical"></i>
+									                            </button>
+									                            <ul class="dropdown-menu dropdown-menu-end">
+									                                <li>
+									                                    <a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
+									                                        <i class="bi bi-pencil me-2"></i>수정
+									                                    </a>
+									                                </li>
+									                                <li>
+									                                    <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
+									                                        <i class="bi bi-trash me-2"></i>삭제
+									                                    </a>
+									                                </li>
+									                            </ul>
+									                        </div>
+									                    </c:if>
+									                </div>
 									            </div>
+									            <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
 									        </div>
-									        <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
-									    </div>
-									    </c:when>
-									</c:if>
+									    </c:if> <%-- 695라인 조건문에 대한 닫는 태그 --%>
+									</c:if> <%-- 답변완료 조건문에 대한 닫는 태그 --%>
 			                        
 			                        <!-- 기업회원 답변 영역 (답변대기 상태일 때만) -->
 			                       <c:if test="${isBusiness && inq.inqryStatus eq 'WAIT' && user.member.memNo eq acc.memNo}">
@@ -942,37 +948,54 @@
 <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=0a4b8e6c128016aa0df7300b3ab799f1&libraries=services&autoload=false"></script>
 
 <script>
-
     const cp = document.querySelector('meta[name="context-path"]')?.content || '${pageContext.request.contextPath}';
     const TRIP_PROD_NO = "${acc.tripProdNo}";
     const mapInfo = {
-            addr: "${acc.addr1}",
-            name: "${acc.accName}"
-        };
+        addr: "${acc.addr1}",
+        name: "${acc.accName}"
+    };
 
-	 // 시큐리티로 로그인 정보 뽑기
-	var isLoggedIn = false;
+    // 1. [추가] URL에서 날짜 파라미터 직접 낚아채기!
+    const urlParams = new URLSearchParams(window.location.search);
+    const startDate = urlParams.get('startDate');
+    const endDate = urlParams.get('endDate');
+    const adultCount = urlParams.get('adultCount');
+
+    // 2. 시큐리티로 로그인 정보 뽑기
+    var isLoggedIn = false;
     var loginMemNo = "";
     var isBusiness = false;
     
     <sec:authorize access="isAuthenticated()">
     isLoggedIn = true;
     loginMemNo = "<sec:authentication property='principal.member.memNo'/>";
-    <c:set var="serverLoginNo"><sec:authentication property='principal.member.memNo'/></c:set>
     <sec:authorize access="hasRole('BUSINESS')">
         isBusiness = true;
-        <c:set var="isBusinessServer" value="true" />
-	</sec:authorize>
-	</sec:authorize>
-	    
+    </sec:authorize>
+    </sec:authorize>
     
+    // 3. 페이지 로드 시 인풋 박스에 날짜 꽂아넣기
+    document.addEventListener('DOMContentLoaded', function() {
+        if(startDate) document.getElementById('checkInDate').value = startDate;
+        if(endDate) document.getElementById('checkOutDate').value = endDate;
+        
+        // 초기 로드 시 박수 계산 실행 (JS 파일에 이 함수가 있어야 함!)
+        if(typeof calculateNights === 'function') {
+            calculateNights();
+        }
+    });
+
+    // 4. 초기화 함수 호출 (날짜 데이터 포함해서 전송!)
     initDetail({
         contextPath: cp,
         accNo: '${acc.accNo}',
         accName: '${acc.accName}',
         tripProdNo: '${acc.tripProdNo}',
         isLoggedIn: isLoggedIn, 
-        isBusiness: isBusiness
+        isBusiness: isBusiness,
+        startDate: startDate,
+        endDate: endDate,     
+        adultCount: adultCount 
     });
 
     function openEditInquiryModal(id, ctgry, content, secret) {
@@ -984,7 +1007,6 @@
         const modal = new bootstrap.Modal(document.getElementById('editInquiryModal'));
         modal.show();
     }
-
 </script>
 
 

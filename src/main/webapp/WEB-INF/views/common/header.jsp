@@ -54,6 +54,7 @@
 
             <!-- 헤더 우측 영역 -->
             <div class="header-right">
+           
                     <sec:authorize access="isAuthenticated()">
 					    <sec:authentication property="principal.memProfilePath" var="profileImgUrl"/>
 					    <!-- 로그인 상태 - 내 일정 -->
@@ -63,7 +64,7 @@
                         <!-- 로그인 상태 - 알림 버튼 -->
                         <button class="header-notification-btn" onclick="toggleNotificationPanel()" title="알림">
                             <i class="bi bi-bell"></i>
-                            <span class="notification-badge" id="notificationBadge">3</span>
+<!--                             <span class="notification-badge" id="notificationBadge">3</span> -->
                         </button>
                         <!-- 로그인 상태 - 마이페이지 링크 -->
 							<sec:authorize access="hasRole('BUSINESS')">
@@ -360,6 +361,7 @@
     </div>
 
     <!-- 알림 패널 (로그인 시에만 표시) -->
+    
     <sec:authorize access="isAuthenticated()">
         <div class="notification-overlay" id="notificationOverlay" onclick="closeNotificationPanel()"></div>
         <div class="notification-panel" id="notificationPanel">
@@ -466,6 +468,7 @@
 
         // 알림 패널 토글
         function toggleNotificationPanel() {
+        	let notificationListEle = document.querySelector("#notificationList");
             var panel = document.getElementById('notificationPanel');
             var overlay = document.getElementById('notificationOverlay');
 
@@ -473,6 +476,29 @@
                 panel.classList.toggle('active');
                 overlay.classList.toggle('active');
             }
+            
+            let html = ``;
+            axios.post(`/api/alarm/list`
+            ).then(res => {
+            	let list = res.data;	// 알람 목록
+            	list.map(function(v,i){
+            		let time = formatRelativeTime(`\${v.regDt}`);
+            		let type = checkType(`\${v.alarmType}`);
+            		html += `
+            			<div class="notification-item unread">
+	                        <div class="notification-icon second">
+	                            <i class="bi bi-check-circle"></i>
+	                        </div>
+	                        <div class="notification-content">
+	                            <p class="notification-text">\${v.alarmCont}</p>
+	                            <span class="notification-meta">\${type}</span>
+	                            <span class="notification-time">\${time}</span>
+	                        </div>
+	                    </div>
+            		`;
+            	});
+           		notificationListEle.innerHTML = html;
+            });
         }
 
         // 알림 패널 닫기
@@ -564,6 +590,109 @@
                 }
             }, { once: true }); // 이 이벤트 리스너는 한 번만 실행
         }
+        //setInterval
+     
+
+        (() => {
+        	  
+        	  const contextPath = '${pageContext.request.contextPath}';
+        	  const badge = document.getElementById('notificationBadge');
+        	  if (!badge) return;
+
+        	  const api = (p) => contextPath + (p.startsWith('/') ? p : '/' + p);
+        	  
+        	  let lastCount = -1;
+        	  
+        	  async function fetchUnreadCount(){
+        	    try{
+        	      const res = await fetch(api('/api/alarm/unread-count'), {
+        	        credentials: 'same-origin'
+        	      });
+        	      const cnt = await res.json();
+        	      if(lastCount !== -1 && cnt > lastCount){
+        	          const btn = document.querySelector('.header-notification-btn');
+        	          if(btn){
+        	            btn.classList.remove('notification-pulse');
+        	            void btn.offsetWidth; // 애니메이션 리셋
+        	            btn.classList.add('notification-pulse');
+        	          }
+        	      }
+        	      
+        	      lastCount = cnt;
+        	      
+        	      if(cnt > 0){
+        	        badge.textContent = cnt > 99 ? '99+' : cnt;
+        	        badge.style.display = 'inline-block';
+        	      }else{
+        	        badge.style.display = 'none';
+        	      }
+        	    }catch(e){
+        	      console.error('unread-count error', e);
+        	    }
+        	  }
+
+        	  // 🔹 최초 로딩 시 1회
+        	  fetchUnreadCount();
+
+        	  // 🔹 10초마다 갱신
+        	  setInterval(fetchUnreadCount, 10000);
+        	})(); 
+        
+        
+        
+        function checkType(typeCode){
+        	let type = '';
+        	if(typeCode != null || typeCode != ''){
+        		if(typeCode == 'POINT')
+        			type = '포인트';
+        		if(typeCode == 'PAYMENT')
+        			type = '결제';
+        		if(typeCode == 'TRAVEL_LOG')
+        			type = '여행기록';
+        		if(typeCode == 'TALK')
+        			type = '여행톡';
+        		if(typeCode == 'INQUIRY' || typeCode == 'PROD_INQUIRY')
+        			type = '문의';
+        		if(typeCode == 'REVIEW')
+        			type = '리뷰';
+        		if(typeCode == 'PROD')
+        			type = '상품';
+        		if(typeCode == 'SETTLEMENT')
+        			type = '정산';
+        	}
+        		
+        	return type;
+        }
+        
+        // '2026-01-26 14:00:20'과 같은 시간 데이터가 들어올 때, 몇분전/몇시간전/몇일전과 같은 내용 만들어주는 이벤트
+        function formatRelativeTime(dateString) {
+		    const start = new Date(dateString);
+		    const end = new Date(); // 현재 시간
+		
+		    // 두 날짜의 차이 (밀리초 단위)
+		    const diffInMs = end - start;
+		    
+		    // 밀리초를 각 단위로 변환
+		    const diffInSeconds = Math.floor(diffInMs / 1000);
+		    const diffInMinutes = Math.floor(diffInSeconds / 60);
+		    const diffInHours = Math.floor(diffInMinutes / 60);
+		    const diffInDays = Math.floor(diffInHours / 24);
+		
+		    // 출력 로직
+		    if (diffInSeconds < 60) {
+		        return "방금 전";
+		    } else if (diffInMinutes < 60) {
+		        return `\${diffInMinutes}분 전`;
+		    } else if (diffInHours < 24) {
+		        return `\${diffInHours}시간 전`;
+		    } else if (diffInDays < 30) {
+		        return `\${diffInDays}일 전`;
+		    } else {
+		        // 한 달 이상 차이 날 경우 날짜 그대로 출력 (예: 2026-01-13)
+		        return start.toISOString().split('T')[0];
+		    }
+		}
+        
     </script>
 
     <!-- 메인 콘텐츠 시작 -->

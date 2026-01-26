@@ -157,7 +157,7 @@
                             <span>${acc.avgRating > 0 ? acc.avgRating : '-'}</span>
                             <span class="review-count">(${acc.reviewCount})</span>
                         </div>
-                        <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }" class="accommodation-name-link">
+                        <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }?startDate=${param.startDate}&endDate=${param.endDate}&adultCount=${param.adultCount}" class="accommodation-name-link">
                             <h3 class="accommodation-name">${acc.accName}</h3>
                         </a>
 

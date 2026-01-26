@@ -520,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+
 //==================== 인원 수 조절 (검색바 전용) ====================
 window.updateCount = function(type, delta) {
     // 1. input 요소 찾기

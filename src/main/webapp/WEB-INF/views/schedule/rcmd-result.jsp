@@ -599,10 +599,12 @@ function initDurationData() {
     
     diffDay = getDaysDiff(startDt, endDt);
     duration = diffDay + 1;
-
+	
+    $(".text-muted").text(`(\${diffDay}박 \${duration}일)`);
+    
     $("#dayTabs").html("");
     $("main .schedule-main").html("");
-
+	
     for(let i = 0; i < duration; i++) {
         let durDate = new Date(startDt);
     	durDate.setDate(durDate.getDate() + i);

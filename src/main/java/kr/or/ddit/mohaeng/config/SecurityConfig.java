@@ -97,7 +97,9 @@ public class SecurityConfig {
 			"/.well-known/**",		// 크롬 개발자 도구로의 요청
 			"/upload/**",
 			"/batch/load-acc-detail",
-			"/batch/accommodation/search"
+			"/batch/accommodation/search",
+			"/support/faq/**",
+			"/support/notice/**"
 	};
 
 	// 일반회원 허용 url test

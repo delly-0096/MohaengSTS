@@ -311,7 +311,7 @@
                                 <a href="${pageContext.request.contextPath}/mypage/schedules" class="side-menu-item">
                                     <i class="bi bi-calendar-check me-2"></i>내 일정
                                 </a>
-                                <a href="${pageContext.request.contextPath}/mypage/payments" class="side-menu-item">
+                                <a href="${pageContext.request.contextPath}/mypage/payments/list" class="side-menu-item">
                                     <i class="bi bi-credit-card me-2"></i>결제 내역
                                 </a>
                                 <a href="${pageContext.request.contextPath}/mypage/points" class="side-menu-item">

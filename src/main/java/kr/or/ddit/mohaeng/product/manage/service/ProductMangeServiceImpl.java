@@ -107,6 +107,10 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			List<AccResvVO> accResvList = new ArrayList<>();
 			accResvList = manageMapper.getAccResvList(accommodationvo);
 			log.info("accResvList : {} ", accResvList);
+			if(accResvList.size() > 0 ) {
+				prodVO.setResvList(accResvList);
+			}
+			
 			
 		// 숙소가 아닐때는 이렇게
 		} else {
@@ -390,8 +394,6 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 			// 상품 등록
 			return insertTripProductDetail(businessProducts, tripProdNO);
 		}
-		
-//		return null;
 	}
 	
 	

@@ -488,6 +488,19 @@
     gap: 8px;
 }
 
+
+#productDetailTabContent {
+    min-height: 600px; /* 원하는 세로 높이만큼 조절하세요 */
+    max-height: 75vh;  /* 화면 높이의 75%까지만 커지도록 제한 */
+    overflow-y: auto;  /* 내용이 넘치면 스크롤 발생 */
+}
+
+/* 예약 현황 테이블이 너무 좁아 보이지 않게 여백 조정 */
+#tab-reservation .table-responsive {
+    min-height: 500px;
+}
+
+
 .selection-actions .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;

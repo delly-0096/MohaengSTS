@@ -733,7 +733,7 @@
 
 <!--  상품 상세보기 모달 -->
 <div class="modal fade" id="productDetailModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-light">
                 <h5 class="modal-title border-start border-primary border-4 ps-2">상품 상세 조회</h5>
@@ -756,13 +756,13 @@
                 </ul>
 
                 <div class="tab-content p-4" id="productDetailTabContent">
-                    
                     <div class="tab-pane fade show active" id="tab-info" role="tabpanel">
                         <div class="row">
                             <div class="col-md-5">
                                 <div id="detailImageCarousel" class="carousel slide" data-bs-ride="carousel">
                                     <div class="carousel-inner" id="detailImages">
                                         <div class="carousel-item active">
+<!--                                         	<div id></div> -->
                                         	<!-- 여기 컨테이너 선택해서 뿌려주기 -->
 <!--                                             <img src="https://via.placeholder.com/400x300" class="d-block w-100 rounded" alt="상품이미지"> -->
                                         </div>
@@ -777,7 +777,6 @@
                                	</div>
                                 <hr>
                                 <div class="row g-3">
-                                
                                     <div class="col-6"><strong>정가:</strong> <span id="view-netprc">0</span>원</div>
                                     <div class="col-6"><strong>판매가:</strong> <span id="view-price" class="text-danger fw-bold">0</span>원</div>
                                     <div class="col-6"><strong>현재 재고:</strong> <span id="view-curStock">0</span>개</div>
@@ -791,12 +790,11 @@
                             </div>
                         </div>
                     </div>
-					
 					<!-- 예약정보 -->
                     <div class="tab-pane fade" id="tab-reservation" role="tabpanel">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle">
-                                <thead class="table-light">
+                                <thead class="table-light sticky-top" style="top: -1px; z-index: 10;">
                                     <tr>
                                         <th>예약번호</th>
                                         <th>예약자</th>
@@ -807,7 +805,8 @@
                                     </tr>
                                 </thead>
                                 <tbody id="view-reservation-list">
-                                    <tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr>
+<!--                                 	상황에따른 변경 -->
+<!--                                     <tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr> -->
                                 </tbody>
                             </table>
                         </div>
@@ -842,7 +841,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
             
@@ -1133,6 +1131,17 @@ async function showDetail (data){
 	console.log("showDetail : id, no" +  id  + " " + no);
 	const sendData = {tripProdNo : id};
 	
+	let netprc = document.getElementById('view-netprc');		// 정가
+	let price = document.getElementById('view-price');			// 할인 가격	
+	let curStock = document.getElementById('view-curStock');	// 현재 재고
+	let saleDate = document.getElementById('view-date');		// 판매기간 2개 더하기
+	let content = document.getElementById('view-content');		// overview나 tripProdContent
+	
+	let prodTitle = document.getElementById('view-title');
+	let prodCategory = document.getElementById('view-category');
+	let prodAddr = document.getElementById('view-address');
+
+	let reservationList = document.getElementById('view-reservation-list');
 	// 숙박
 	if(no != null) sendData.accNo = no;
 	
@@ -1141,15 +1150,61 @@ async function showDetail (data){
 		const res = await axios.post(`/product/manage/productDetail`, sendData);
 		console.log("res.data : ", res.data);
 		
+		// 숙박
+		if(res.data.accommodation){
+			console.log("res.data.accommodation : ", res.data.accommodation);
+			const accommodation = res.data.accommodation;
+			
+			prodTitle.innerHTML = accommodation.accName;
+			
+			let selectCategory = res.data.prodCtgryType;
+			switch(selectCategory){
+				case selectCategory == 'accommodation' : 
+					selectCategory = "숙박";
+				default :
+					selectCategory = "dd";
+			}
+			
+			prodCategory.innerHTML = selectCategory;
+			content.innerHTML = accommodation.overview;
+			
+			saleDate.innerHTML = setTime(res.data.saleStartDt) + " ~ " + setTime(res.data.saleEndDt);
+			console.log("accommodation.roomTypeList : ", accommodation.roomTypeList);
+
+			let reserveHtml = `<tr>`;
+			
+			// 예약 목록 출력 위한 것
+			let reservationRoomList = accommodation.roomTypeList;
+			reservationRoomList.forEach((room) => {
+				console.log("room.예약 : ", room);
+				room.accResvList.forEach((acc) => {
+					// 6개를 만들어야됨
+					reserveHtml += `<td>\${acc.acc}</td>`
+					console.log("예약 : ", acc);
+				});
+			});
+			
+			reserveHtml += `<tr/>`
+			reservationList.innerHTML = reserveHtml;
+		}else{
+			// 상품
+			
+			
+// 			console.log("asdfads")
+		}
+		
 	}catch(err){
+		console.log("에러 원인 : ", err);
 		showToast("error 발생 !!", "error");
 	}
-	
-	
 	detailModal.show();
 } 
 
-
+// 시간 설정
+function setTime (date){
+	let format = date.split("T");
+	return format[0];
+}
 
 // 수정할 상품 사진 modal에 세팅 - imageData는 선택시 썸네일 보여주려고
 function renderImageList(imageData = ""){

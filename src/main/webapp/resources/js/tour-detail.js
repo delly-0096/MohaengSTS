@@ -549,7 +549,7 @@ function appendReview(rv) {
     if (rv.reviewImages && rv.reviewImages.length > 0) {
         imagesHtml = '<div class="review-images">';
         rv.reviewImages.forEach(function(img) {
-            imagesHtml += '<img src="' + CONTEXT_PATH + '/upload/review/' + img + '" alt="리뷰 이미지" onclick="openReviewImage(this.src)">';
+            imagesHtml += '<img src="' + CONTEXT_PATH + '/upload/' + img + '" alt="리뷰 이미지" onclick="openReviewImage(this.src)">';
         });
         imagesHtml += '</div>';
     }
@@ -852,7 +852,7 @@ function finishReviewUpdate(reviewId, rating, content) {
                     var imagesHtml = '<div class="review-images">';
                     data.images.forEach(function(img) {
                         var filePath = img.FILE_PATH || img.filePath;
-                        imagesHtml += '<img src="' + CONTEXT_PATH + '/upload/review/' + filePath + '" ' +
+                        imagesHtml += '<img src="' + CONTEXT_PATH + '/upload/' + filePath + '" ' +
                                       'alt="리뷰 이미지" onclick="openReviewImage(this.src)">';
                     });
                     imagesHtml += '</div>';
@@ -889,7 +889,7 @@ function updateReviewImagesUI(reviewItem) {
         var imagesHtml = '<div class="review-images">';
         editExistingImages.forEach(function(img) {
             var filePath = img.FILE_PATH || img.filePath;
-            imagesHtml += '<img src="' + CONTEXT_PATH + '/upload/review/' + filePath + '" ' +
+            imagesHtml += '<img src="' + CONTEXT_PATH + '/upload/' + filePath + '" ' +
                           'alt="리뷰 이미지" onclick="openReviewImage(this.src)">';
         });
         imagesHtml += '</div>';
@@ -961,7 +961,7 @@ function renderEditImagePreviews() {
         var fileNo = img.FILE_NO || img.fileNo;
         html += 
             '<div class="image-preview-item existing-image" data-file-no="' + fileNo + '">' +
-                '<img src="' + CONTEXT_PATH + '/upload/review/' + filePath + '" ' +
+                '<img src="' + CONTEXT_PATH + '/upload/' + filePath + '" ' +
                      'alt="기존 이미지" onclick="openReviewImage(this.src)">' +
                 '<button type="button" class="remove-btn" onclick="removeExistingImage(' + index + ', ' + fileNo + ')" title="삭제">&times;</button>' +
                 '<span class="image-badge existing">기존</span>' +
@@ -1858,9 +1858,6 @@ function loadCurrentImages() {
                 data.images.forEach(function(img, index) {
                     // FILE_PATH에 슬래시가 없으면 product/ 폴더 추가
                     var imagePath = img.FILE_PATH;
-                    if (imagePath && imagePath.indexOf('/') === -1) {
-                        imagePath = 'product/' + imagePath;
-                    }
                     
                     html += '<div class="current-image-item' + (index === 0 ? ' main-image' : '') + '" data-file-no="' + img.FILE_NO + '">' +
                         '<img src="' + CONTEXT_PATH + '/upload/' + imagePath + '" alt="상품 이미지">' +
@@ -2048,9 +2045,6 @@ function refreshGallery() {
             if (data.success && data.images && data.images.length > 0) {
                 // FILE_PATH 경로 처리 추가
                 var firstImagePath = data.images[0].FILE_PATH;
-                if (firstImagePath && firstImagePath.indexOf('/') === -1) {
-                    firstImagePath = 'product/' + firstImagePath;
-                }
                 
                 // 메인 이미지 업데이트
                 document.getElementById('mainImage').src = CONTEXT_PATH + '/upload/' + firstImagePath;
@@ -2060,9 +2054,6 @@ function refreshGallery() {
                 var html = '';
                 data.images.forEach(function(img, index) {
                     var imagePath = img.FILE_PATH;
-                    if (imagePath && imagePath.indexOf('/') === -1) {
-                        imagePath = 'product/' + imagePath;
-                    }
                     html += '<img src="' + CONTEXT_PATH + '/upload/' + imagePath + '" ' +
                         'alt="썸네일" onclick="changeMainImage(this, ' + index + ')"' +
                         (index === 0 ? ' class="active"' : '') + '>';

@@ -141,6 +141,18 @@
 	    , ${alias}ADDR2
 	</sql>
 	
+	<sql id="prodListColumns">
+		  ${alias}PROD_LIST_NO
+	    , ${alias}PAY_NO
+	    , ${alias}TRIP_PROD_NO
+	    , ${alias}UNIT_PRICE
+	    , ${alias}DISCOUNT_AMT
+	    , ${alias}PAY_PRICE
+	    , ${alias}QUANTITY
+	    , ${alias}RESV_DT
+	    , ${alias}USE_TIME
+	    , ${alias}RSV_MEMO
+	</sql>
 	
 	<!-- 
 	, CASE
@@ -178,6 +190,7 @@
                     , acc.ACC_NO
 	                , acc.ACC_NAME
 	                , acc.TOTAL_ROOM_CNT
+	                , acc.ACC_FILE_PATH
 	                , CASE
 	                    WHEN t.PROD_CTGRY_TYPE = 'accommodation' 
 	                    THEN (SELECT MIN(RT.PRICE) FROM ROOM_TYPE RT WHERE RT.ACC_NO = acc.ACC_NO)
@@ -482,7 +495,25 @@
 	</delete>
 	
 	<!-- 예약 가능 시간 추가(수정, 등록 같이 사용) -->
-	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
+	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO" useGeneratedKeys="true">
+		<selectKey keyProperty="timeInfoNo" resultType="int" order="BEFORE">
+			select seq_time_info.nextval from dual
+		</selectKey>
+		INSERT INTO PROD_TIME_INFO (
+	          TIME_INFO_NO
+	        , TRIP_PROD_NO
+	        , RSVT_AVAILABLE_TIME
+	    )values(
+	     	#{timeInfoNo}
+	        , #{tripProdNo}
+	        , #{rsvtAvailableTime}
+	    )
+	</insert>
+	
+<!-- 	<insert id="insertProdTimeInfo" parameterType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO" useGeneratedKeys="true">
+		<selectKey keyColumn="timeInfoNo" resultType="int" order="BEFORE">
+			select seq_prod_time_info.nextval form dual
+		</selectKey>
 		INSERT INTO PROD_TIME_INFO (
 	          TIME_INFO_NO
 	        , TRIP_PROD_NO
@@ -497,7 +528,7 @@
 	            FROM DUAL
 	        </foreach>
 	    ) A
-	</insert>
+	</insert> -->
 	
 	
 	<!-- 상품 판매 정보 변경 -->
@@ -538,13 +569,13 @@
 			, #{compNo}
 			, #{memNo}
 			, #{prodCtgryType}
-			, #{approveStatus}
+			, '판매중지'
 			, #{tripProdTitle}
 			, #{tripProdContent}
 			, #{saleStartDt}
 			, #{saleEndDt}
 			, #{attachNo}
-			, #{viewCnt}
+			, 0
 			, sysdate
 			, #{modDt}
 			, 'N'
@@ -730,7 +761,7 @@
 		    , #{discount}
 		    , #{leadTime}
 		    , #{totalStock}
-		    , #{curStock}
+		    , #{totalStock}
 		)
 	</insert>
 	
@@ -771,5 +802,17 @@
 		    , #{prodNotice}
 		)
 	</insert>
+	
+	<!-- 예약 내역 가져오기 -->
+	<select id="getReservation" parameterType="kr.or.ddit.mohaeng.vo.BusinessProductsVO" resultType="kr.or.ddit.mohaeng.vo.TripProdListVO">
+		SELECT
+			<include refid="prodListColumns">
+				<property name="alias" value=""/>
+			</include>
+		FROM TRIP_PROD_LIST
+		WHERE TRIP_PROD_NO = #{tripProdNo} 
+	</select>
+	
+	<!-- 숙소 예약 내역 가져오기 -->
 	
 </mapper>

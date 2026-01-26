@@ -1016,5 +1016,116 @@ function downloadExcel(list) {
     showToast('엑셀 다운로드가 완료되었습니다.', 'success');
 }
 </script>
+<style>
+/* ===== 정산 상태 스타일 추가 ===== */
+.payment-status.waiting {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.payment-status.ready {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+/* ===== 매출 상세 내역 테이블 컬럼 너비 ===== */
+.sales-table th {
+    text-align: center !important;
+}
+
+/* 컬럼 너비 */
+.sales-table th:nth-child(1),
+.sales-table td:nth-child(1) { width: 14%; }  /* 예약번호 */
+
+.sales-table th:nth-child(2),
+.sales-table td:nth-child(2) { width: 10%; }  /* 예약일시 */
+
+.sales-table th:nth-child(3),
+.sales-table td:nth-child(3) { width: auto; }  /* 상품명 */
+
+.sales-table th:nth-child(4),
+.sales-table td:nth-child(4) { width: 8%; }  /* 예약자 */
+
+.sales-table th:nth-child(5),
+.sales-table td:nth-child(5) { width: 10%; }  /* 이용일 */
+
+.sales-table th:nth-child(6),
+.sales-table td:nth-child(6) { width: 11%; }  /* 금액 */
+
+.sales-table th:nth-child(7),
+.sales-table td:nth-child(7) { width: 11%; }  /* 수수료 */
+
+.sales-table th:nth-child(8),
+.sales-table td:nth-child(8) { width: 11%; }  /* 정산액 */
+
+.sales-table th:nth-child(9),
+.sales-table td:nth-child(9) { width: 8%; }  /* 상태 */
+
+/* 데이터 셀 정렬 (td만) */
+.sales-table td:nth-child(4) { text-align: center; }  /* 예약자 */
+.sales-table td:nth-child(6),
+.sales-table td:nth-child(7),
+.sales-table td:nth-child(8) { text-align: right; }   /* 금액, 수수료, 정산액 */
+.sales-table td:nth-child(9) { text-align: center; }  /* 상태 */
+
+/* 합계 행 정렬 */
+.sales-table tfoot td:nth-child(2),
+.sales-table tfoot td:nth-child(3),
+.sales-table tfoot td:nth-child(4) {
+    text-align: right;
+}
+
+/* ===== 상품별 정산 테이블 ===== */
+.product-sales-table th {
+    text-align: center !important;
+}
+
+.product-sales-table td {
+    vertical-align: middle;
+}
+
+.product-sales-table input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.product-sales-table input[type="checkbox"]:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.product-sales-table tr:hover {
+    background: #f8fafc;
+}
+
+/* 정산요청 상태 */
+.payment-status.requested {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+/* ===== 상품별 정산 테이블 컬럼 너비 ===== */
+.product-sales-table th:nth-child(1),
+.product-sales-table td:nth-child(1) { width: 5%; }  /* 체크박스 */
+
+.product-sales-table th:nth-child(2),
+.product-sales-table td:nth-child(2) { width: auto; }  /* 상품명 - 자동 (넓게) */
+
+.product-sales-table th:nth-child(3),
+.product-sales-table td:nth-child(3) { width: 11%; }  /* 예약 건수 */
+
+.product-sales-table th:nth-child(4),
+.product-sales-table td:nth-child(4) { width: 11%; }  /* 결제 금액 */
+
+.product-sales-table th:nth-child(5),
+.product-sales-table td:nth-child(5) { width: 11%; }  /* 수수료 */
+
+.product-sales-table th:nth-child(6),
+.product-sales-table td:nth-child(6) { width: 11%; }  /* 정산가능 금액 */
+
+.product-sales-table th:nth-child(7),
+.product-sales-table td:nth-child(7) { width: 11%; }  /* 정산가능 건수 */
+</style>
 </body>
 </html>

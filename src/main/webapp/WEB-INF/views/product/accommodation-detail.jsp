@@ -691,34 +691,40 @@
 			                        
 			                        <!-- 답변 내용 (답변완료 시) -->
 									<c:if test="${inq.inqryStatus eq 'DONE' && not empty inq.replyCn}">
-									    <!-- 비밀글이 아니거나 본인인 경우만 답변 표시 -->
-									    <c:when test="${inq.secretYn ne 'Y' || user.member.memNo eq inq.inquiryMemNo || isBusiness}">
-									    <div class="inquiry-item-answer" id="answer_${inq.prodInqryNo}">
-									        <div class="answer-header">
-									            <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
-									            <div class="d-flex align-items-center gap-2">
-									                <span class="answer-date">
-									                    <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
-									                </span>
-									                <c:if test="${isBusiness && user.member.memNo eq acc.memNo}">
-									                    <div class="dropdown">
-									                        <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
-									                            <i class="bi bi-three-dots-vertical"></i>
-									                        </button>
-									                        <ul class="dropdown-menu dropdown-menu-end">
-									                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
-									                                <i class="bi bi-pencil me-2"></i>수정</a></li>
-									                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
-									                                <i class="bi bi-trash me-2"></i>삭제</a></li>
-									                        </ul>
-									                    </div>
-									                </c:if>
+									    <c:if test="${inq.secretYn ne 'Y' || user.member.memNo eq inq.inquiryMemNo || isBusiness}">
+									        <div class="inquiry-item-answer" id="answer_${inq.prodInqryNo}">
+									            <div class="answer-header">
+									                <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
+									                <div class="d-flex align-items-center gap-2">
+									                    <span class="answer-date">
+									                        <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
+									                    </span>
+									                    <%-- 비즈니스 계정이면서 숙소 주인인 경우 수정/삭제 메뉴 표시 --%>
+									                    <c:if test="${isBusiness && user.member.memNo eq acc.memNo}">
+									                        <div class="dropdown">
+									                            <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
+									                                <i class="bi bi-three-dots-vertical"></i>
+									                            </button>
+									                            <ul class="dropdown-menu dropdown-menu-end">
+									                                <li>
+									                                    <a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
+									                                        <i class="bi bi-pencil me-2"></i>수정
+									                                    </a>
+									                                </li>
+									                                <li>
+									                                    <a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
+									                                        <i class="bi bi-trash me-2"></i>삭제
+									                                    </a>
+									                                </li>
+									                            </ul>
+									                        </div>
+									                    </c:if>
+									                </div>
 									            </div>
+									            <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
 									        </div>
-									        <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
-									    </div>
-									    </c:when>
-									</c:if>
+									    </c:if> <%-- 695라인 조건문에 대한 닫는 태그 --%>
+									</c:if> <%-- 답변완료 조건문에 대한 닫는 태그 --%>
 			                        
 			                        <!-- 기업회원 답변 영역 (답변대기 상태일 때만) -->
 			                       <c:if test="${isBusiness && inq.inqryStatus eq 'WAIT' && user.member.memNo eq acc.memNo}">

@@ -1,5 +1,7 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib uri="jakarta.tags.functions" prefix="fn" %>
+<%@ taglib uri="jakarta.tags.fmt" prefix="fmt" %>
 
 <c:set var="pageTitle" value="결제 내역" />
 <c:set var="pageCss" value="mypage" />
@@ -18,183 +20,114 @@
 
                 <!-- 통계 카드 -->
                 <div class="stats-grid">
-                    <div class="stat-card primary">
-                        <div class="stat-icon"><i class="bi bi-credit-card"></i></div>
-                        <div class="stat-value">5</div>
-                        <div class="stat-label">전체 결제</div>
-                    </div>
-                    <div class="stat-card secondary">
-                        <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
-                        <div class="stat-value">3</div>
-                        <div class="stat-label">이용 완료</div>
-                    </div>
-                    <div class="stat-card accent">
-                        <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-                        <div class="stat-value">2</div>
-                        <div class="stat-label">예정된 이용</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
-                        <div class="stat-value">524,000</div>
-                        <div class="stat-label">총 결제금액</div>
-                    </div>
-                </div>
+				    <div class="stat-card primary">
+				    	<div class="stat-icon"><i class="bi bi-credit-card"></i></div>
+				        <div class="stat-value">${stats.TOTAL_COUNT}</div>
+				        <div class="stat-label">전체 결제</div>
+				    </div>
+				    <div class="stat-card secondary">
+				    	<div class="stat-icon"><i class="bi bi-check-circle"></i></div>
+				        <div class="stat-value">${stats.COMPLETED_COUNT}</div>
+				        <div class="stat-label">이용 완료</div>
+				    </div>
+				    <div class="stat-card accent">
+				    	<div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
+				        <div class="stat-value">${stats.PENDING_COUNT}</div>
+				        <div class="stat-label">예정된 이용</div>
+				    </div>
+				    <div class="stat-card">
+				    	<div class="stat-icon"><i class="bi bi-currency-dollar"></i></div>
+				        <div class="stat-value">
+				            <fmt:formatNumber value="${stats.TOTAL_REVENUE}" pattern="#,###"/>원
+				        </div>
+				        <div class="stat-label">총 결제금액</div>
+				    </div>
+				</div>
 
+				<div class="bookmark-search">
+				    <form class="bookmark-search-input" id="searchForm" method="get"> <input type="hidden" name="page" id="page"/>
+				        <input type="hidden" name="contentType" value="${contentType}"/> 
+				    </form>
+				</div>
+				
                 <!-- 탭 -->
-                <div class="mypage-tabs">
-                    <button class="mypage-tab active" data-filter="all">전체</button>
-                    <button class="mypage-tab" data-filter="completed">이용 완료</button>
-                    <button class="mypage-tab" data-filter="pending">이용 예정</button>
-                    <button class="mypage-tab" data-filter="cancelled">취소/환불</button>
-                </div>
+				<div class="mypage-tabs">
+					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'all' }">active</c:if>" data-category="all">전체</button>
+					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'completed' }">active</c:if>" data-category="completed">이용 완료</button>
+					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'pending' }">active</c:if>" data-category="pending">이용 예정</button>
+					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'cancelled' }">active</c:if>" data-category="cancelled">취소 완료</button>
+				</div>
 
                 <!-- 결제 내역 -->
                 <div class="content-section">
                     <div class="section-header">
                         <h3><i class="bi bi-list-ul"></i> 결제 내역</h3>
-                        <div class="d-flex gap-2">
+<!--                         <div class="d-flex gap-2">
                             <select class="form-select form-select-sm" style="width: 120px;">
                                 <option>최근 3개월</option>
                                 <option>최근 6개월</option>
                                 <option>최근 1년</option>
                                 <option>전체</option>
                             </select>
-                        </div>
+                        </div> -->
                     </div>
 
                     <div class="payment-list">
-                        <!-- 결제 1 - 예정 -->
-                        <div class="payment-item" data-status="pending" data-payment-id="1">
-                            <div class="payment-product">
-                                <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=120&h=120&fit=crop&q=80" alt="상품">
-                                <div class="payment-product-info">
-                                    <h4>제주 스쿠버다이빙 체험</h4>
-                                    <p>2024.04.20 (토) 14:00 | 2명</p>
-                                    <span class="payment-status pending">이용 예정</span>
-                                </div>
-                            </div>
-                            <div class="payment-amount">
-                                <div class="amount">136,000원</div>
-                                <div class="date">결제일: 2024.03.15</div>
-                            </div>
-                            <div class="payment-actions">
-                                <button class="btn btn-outline btn-sm" onclick="showReceipt(1)">
-                                    <i class="bi bi-receipt"></i> 영수증
-                                </button>
-                                <button class="btn btn-outline-danger btn-sm" onclick="showCancelConfirm(1)">
-                                    <i class="bi bi-x-circle"></i> 결제 취소
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 결제 2 - 예정 -->
-                        <div class="payment-item" data-status="pending" data-payment-id="2">
-                            <div class="payment-product">
-                                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?w=120&h=120&fit=crop&q=80" alt="상품">
-                                <div class="payment-product-info">
-                                    <h4>제주 신라 호텔</h4>
-                                    <p>2024.04.20 - 2024.04.22 (2박) | 디럭스룸</p>
-                                    <span class="payment-status pending">이용 예정</span>
-                                </div>
-                            </div>
-                            <div class="payment-amount">
-                                <div class="amount">320,000원</div>
-                                <div class="date">결제일: 2024.03.14</div>
-                            </div>
-                            <div class="payment-actions">
-                                <button class="btn btn-outline btn-sm" onclick="showReceipt(2)">
-                                    <i class="bi bi-receipt"></i> 영수증
-                                </button>
-                                <button class="btn btn-outline-danger btn-sm" onclick="showCancelConfirm(2)">
-                                    <i class="bi bi-x-circle"></i> 결제 취소
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 결제 3 - 완료 -->
-                        <div class="payment-item" data-status="completed" data-payment-id="3">
-                            <div class="payment-product">
-                                <img src="https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=120&h=120&fit=crop&q=80" alt="상품">
-                                <div class="payment-product-info">
-                                    <h4>부산 해운대 카약 체험</h4>
-                                    <p>2024.02.21 (수) 10:00 | 3명</p>
-                                    <span class="payment-status completed">이용 완료</span>
-                                </div>
-                            </div>
-                            <div class="payment-amount">
-                                <div class="amount">45,000원</div>
-                                <div class="date">결제일: 2024.02.15</div>
-                            </div>
-                            <div class="payment-actions">
-                                <button class="btn btn-outline btn-sm" onclick="showReceipt(3)">
-                                    <i class="bi bi-receipt"></i> 영수증
-                                </button>
-                                <button class="btn btn-primary btn-sm" onclick="openReviewModal(3)">
-                                    <i class="bi bi-star"></i> 후기 작성
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 결제 4 - 완료 (후기 작성 완료) -->
-                        <div class="payment-item" data-status="completed" data-payment-id="4">
-                            <div class="payment-product">
-                                <img src="https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=120&h=120&fit=crop&q=80" alt="상품">
-                                <div class="payment-product-info">
-                                    <h4>경주 전통 한과 만들기 체험</h4>
-                                    <p>2024.01.28 (일) 13:00 | 2명</p>
-                                    <span class="payment-status completed">이용 완료</span>
-                                </div>
-                            </div>
-                            <div class="payment-amount">
-                                <div class="amount">48,000원</div>
-                                <div class="date">결제일: 2024.01.20</div>
-                            </div>
-                            <div class="payment-actions">
-                                <button class="btn btn-outline btn-sm" onclick="showReceipt(4)">
-                                    <i class="bi bi-receipt"></i> 영수증
-                                </button>
-                                <span class="text-success"><i class="bi bi-check-circle-fill"></i> 후기 작성 완료</span>
-                            </div>
-                        </div>
-
-                        <!-- 결제 5 - 취소 -->
-                        <div class="payment-item" data-status="cancelled" data-payment-id="5">
-                            <div class="payment-product">
-                                <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=120&h=120&fit=crop&q=80" alt="상품">
-                                <div class="payment-product-info">
-                                    <h4>설악산 짚라인 체험</h4>
-                                    <p>2024.01.15 (월) 11:00 | 1명</p>
-                                    <span class="payment-status cancelled">취소 완료</span>
-                                </div>
-                            </div>
-                            <div class="payment-amount">
-                                <div class="amount"><del>35,000원</del></div>
-                                <div class="date">환불일: 2024.01.10</div>
-                            </div>
-                            <div class="payment-actions">
-                                <button class="btn btn-outline btn-sm" onclick="showRefundDetail(5)">
-                                    환불 상세
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+					    <c:choose>
+					        <%-- 1. 데이터가 존재하는 경우 --%>
+					        <c:when test="${not empty pagingVO.dataList}">
+					            <c:forEach var="pay" items="${pagingVO.dataList}"> 
+								    <div class="payment-item" data-status="${pay.payStatus}" data-payment-id="${pay.payNo}">
+								        <div class="payment-product">
+								            <img src="${pay.thumbImg}" alt="상품 이미지"> <div class="payment-product-info">
+								                <h4>${pay.prodName}</h4>
+								                <p>${pay.useDate} | ${pay.optionInfo}</p>
+								                <span class="payment-status ${pay.payStatus}">
+								                    <c:choose>
+								                        <c:when test="${pay.payStatus eq 'DONE'}">이용 완료</c:when>
+								                        <c:when test="${pay.payStatus eq 'WAIT'}">이용 예정</c:when>
+								                        <c:when test="${pay.payStatus eq 'CANCEL'}">취소 완료</c:when>
+								                        <c:otherwise>${pay.payStatus}</c:otherwise>
+								                    </c:choose>
+								                </span>
+								            </div>
+								        </div>
+								        
+								        <div class="payment-amount">
+								            <div class="amount"><fmt:formatNumber value="${pay.payTotalAmt}" pattern="#,###"/>원</div>
+								            <div class="date">
+								                <%-- 날짜 포맷: 2026.1.24 10:56:09 형식 --%>
+								                결제일: <fmt:parseDate value="${pay.payDt}" pattern="yyyy-MM-dd'T'HH:mm:ss" var="parsedPayDt" type="both" />
+								                <fmt:formatDate value="${parsedPayDt}" pattern="yyyy.M.d HH:mm:ss" />
+								            </div>
+								        </div>
+								        
+								        <div class="payment-actions">
+								            <button class="btn btn-outline btn-sm" onclick="showReceipt(${pay.payNo})">
+								                <i class="bi bi-receipt"></i> 영수증
+								            </button>
+								        </div>
+								    </div>
+								</c:forEach>
+					        </c:when>
+					        
+					        <%-- 2. 데이터가 존재하지 않는 경우 --%>
+					        <c:otherwise>
+					            <div class="no-data-message" style="text-align: center; padding: 50px 0; color: #64748b; width: 100%;">
+					                <i class="bi bi-exclamation-circle" style="font-size: 2rem; display: block; margin-bottom: 10px;"></i>
+					                <p>결제 내역이 존재하지 않습니다.</p>
+					            </div>
+					        </c:otherwise>
+					    </c:choose>
+					</div>
                 </div>
-
+                
                 <!-- 페이지네이션 -->
-                <div class="pagination-container">
-                    <nav>
-                        <ul class="pagination">
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
+				<div class="pagination-container" id="pagingArea">
+					<nav>
+						${pagingVO.pagingHTML }
+					</nav>
+				</div>
             </div>
         </div>
     </div>
@@ -212,100 +145,39 @@
             </div>
             <div class="modal-body">
                 <div class="receipt-content">
-                    <!-- 결제 상태 뱃지 -->
-                    <div class="receipt-status-badge" id="receiptStatusBadge">
-                        <span class="payment-status pending">이용 예정</span>
-                    </div>
+                    <div class="receipt-product-area"></div>
 
-                    <!-- 상품 정보 -->
-                    <div class="receipt-product">
-                        <img src="" alt="상품" id="receiptProductImage">
-                        <div class="receipt-product-info">
-                            <h4 id="receiptProductName">제주 스쿠버다이빙 체험</h4>
-                            <p id="receiptProductDate">2024.04.20 (토) 14:00</p>
-                            <p id="receiptProductOption">2명</p>
-                        </div>
-                    </div>
-
-                    <!-- 결제 정보 -->
                     <div class="receipt-section">
                         <h5>결제 정보</h5>
-                        <div class="receipt-row">
-                            <span>결제번호</span>
-                            <span id="receiptOrderNo">ORD-20240315-001234</span>
-                        </div>
-                        <div class="receipt-row">
-                            <span>결제일시</span>
-                            <span id="receiptPayDate">2024.03.15 14:32:15</span>
-                        </div>
-                        <div class="receipt-row">
-                            <span>결제수단</span>
-                            <span id="receiptPayMethod">신용카드</span>
-                        </div>
+                        <div class="receipt-row"><span>결제번호</span><span id="receiptOrderNo"></span></div>
+                        <div class="receipt-row"><span>결제일시</span><span id="receiptPayDate"></span></div>
+                        <div class="receipt-row"><span>결제수단</span><span id="receiptPayMethod"></span></div>
                     </div>
 
-                    <!-- 금액 정보 -->
                     <div class="receipt-section">
                         <h5>결제 금액</h5>
-                        <div class="receipt-row">
-                            <span>상품 금액</span>
-                            <span id="receiptOriginalPrice">150,000원</span>
-                        </div>
-                        <div class="receipt-row discount">
-                            <span>할인</span>
-                            <span id="receiptDiscount">-10,000원</span>
-                        </div>
-                        <div class="receipt-row discount">
-                            <span>포인트 사용</span>
-                            <span id="receiptPointUsed">-4,000원</span>
-                        </div>
-                        <div class="receipt-row total">
-                            <span>총 결제금액</span>
-                            <span id="receiptTotalPrice">136,000원</span>
-                        </div>
+                        <div class="receipt-row"><span>상품 금액</span><span id="receiptOriginalPrice">0원</span></div>
+                        <div class="receipt-row discount"><span>할인</span><span id="receiptDiscount">-0원</span></div>
+                        <div class="receipt-row discount"><span>포인트 사용</span><span id="receiptPointUsed">-0원</span></div>
+                        <div class="receipt-row total"><span>총 결제금액</span><span id="receiptTotalPrice">0원</span></div>
                     </div>
 
-                    <!-- 적립 정보 -->
                     <div class="receipt-section">
                         <h5>적립 정보</h5>
-                        <div class="receipt-row">
-                            <span>적립 포인트</span>
-                            <span id="receiptEarnedPoints" class="text-primary">+1,360P</span>
-                        </div>
+                        <div class="receipt-row"><span>적립 포인트</span><span id="receiptEarnedPoints" class="text-primary">0P</span></div>
                     </div>
-
-                    <!-- 결제자 정보 -->
+                    
                     <div class="receipt-section">
                         <h5>결제자 정보</h5>
-                        <div class="receipt-row">
-                            <span>결제자명</span>
-                            <span id="receiptCustomerName">${sessionScope.loginUser.userName}</span>
-                        </div>
-                        <div class="receipt-row">
-                            <span>연락처</span>
-                            <span id="receiptCustomerPhone">010-1234-5678</span>
-                        </div>
-                        <div class="receipt-row">
-                            <span>이메일</span>
-                            <span id="receiptCustomerEmail">${sessionScope.loginUser.email}</span>
-                        </div>
+                        <div class="receipt-row"><span>결제자명</span><span id="receiptMemName"></span></div>
+                        <div class="receipt-row"><span>이메일</span><span id="receiptMemEmail"></span></div>
                     </div>
 
-                    <!-- 판매자 정보 -->
                     <div class="receipt-section">
                         <h5>판매자 정보</h5>
-                        <div class="receipt-row">
-                            <span>상호명</span>
-                            <span id="receiptSellerName">제주다이빙센터</span>
-                        </div>
-                        <div class="receipt-row">
-                            <span>사업자번호</span>
-                            <span id="receiptSellerBizNo">123-45-67890</span>
-                        </div>
-                        <div class="receipt-row">
-                            <span>연락처</span>
-                            <span id="receiptSellerPhone">064-123-4567</span>
-                        </div>
+                        <div class="receipt-row"><span>상호명</span><span id="receiptCompName"></span></div>
+                        <div class="receipt-row"><span>사업자번호</span><span id="receiptBrno"></span></div>
+                        <div class="receipt-row"><span>연락처</span><span id="receiptCompTel"></span></div>
                     </div>
                 </div>
             </div>
@@ -318,6 +190,8 @@
         </div>
     </div>
 </div>
+
+
 
 <!-- 환불 상세 모달 -->
 <div class="modal fade" id="refundModal" tabindex="-1">
@@ -571,7 +445,151 @@
     </div>
 </div>
 
+
+
+<script type="text/javascript">
+$(function(){
+    let pagingArea = $("#pagingArea");
+    let searchForm = $("#searchForm");
+    let tabs = $(".mypage-tab");
+    
+    // 페이지 번호 클릭 시
+    pagingArea.on("click", "a", function(e){
+        e.preventDefault();
+        let pageNo = $(this).data("page");
+        searchForm.find("#page").val(pageNo);
+        searchForm.submit();
+    });
+    
+    // 탭(카테고리) 클릭 시
+    tabs.on("click", function(){
+        let selectedCategory = $(this).data("category"); 
+        location.href = "/mypage/payments/list?currentPage=1&contentType=" + selectedCategory;
+    });
+});
+
+function showReceipt(payNo) {
+    $.ajax({
+        url: "/mypage/payments/receiptDetail",
+        type: "get",
+        data: { payNo: payNo },
+        success: function(res) {
+            const master = res.master;
+            const details = res.details;
+
+            // 결제 정보 (한글 데이터 그대로 사용)
+            $("#receiptOrderNo").text(master.ORDER_NO); 
+            $("#receiptPayMethod").text(master.PAY_METHOD_CD); 
+
+            // 결제 금액 (쿼리에서 계산된 PROD_TOTAL_PRICE 등 사용)
+            // 결제 금액 (0원이어도 무조건 표시)
+            $("#receiptOriginalPrice").text(Number(master.PROD_TOTAL_PRICE).toLocaleString() + "원");
+            
+            // 할인 금액이 0이면 -0원, 있으면 해당 금액 표시
+            let discount = master.TOTAL_DISCOUNT ? master.TOTAL_DISCOUNT : 0;
+            $("#receiptDiscount").text("-" + Number(discount).toLocaleString() + "원");
+            
+            // 포인트 사용이 0이면 -0원, 있으면 해당 금액 표시
+            let usePoint = master.USE_POINT ? master.USE_POINT : 0;
+            $("#receiptPointUsed").text("-" + Number(usePoint).toLocaleString() + "원");
+            
+            $("#receiptTotalPrice").text(Number(master.PAY_TOTAL_AMT).toLocaleString() + "원");
+            
+            // 결제자 정보
+            $("#receiptMemName").text(master.MEM_NAME);   
+            $("#receiptMemEmail").text(master.MEM_EMAIL); 
+
+            // 판매자 정보
+            $("#receiptCompName").text(master.BZMN_NM || "정보 없음"); 
+            $("#receiptBrno").text(master.BRNO || "정보 없음");         
+            $("#receiptCompTel").text(master.COMP_TEL || "정보 없음");  
+
+            // 적립 정보 (10% 계산)
+            let earned = Math.floor(master.PAY_TOTAL_AMT * 0.1);
+            $("#receiptEarnedPoints").text("+" + earned.toLocaleString() + "P");
+            
+            // 상세 품목 동적 생성 
+            let detailHtml = "";
+			details.forEach(item => {
+			    // 항공권일 경우 기본 이미지 처리 (상황에 맞게 경로 수정)
+			    let thumbImg = item.PROD_NAME.includes('항공') 
+			                   ? '/resources/images/default_flight.jpg' 
+			                   : (item.THUMB_IMG || '/resources/images/no_image.jpg');
+			
+			    detailHtml += `
+			        <div class="receipt-product">
+			            <img src="\${thumbImg}" alt="상품 이미지" style="width: 60px; height: 60px; border-radius: 8px; object-fit: cover;">
+			            <div class="receipt-product-info" style="width:100%">
+			                <h4>\${item.PROD_NAME}</h4>
+			                <p>\${item.USE_INFO}</p>
+			                <p>\${item.QUANTITY}개 | \${Number(item.ITEM_TOTAL_PRICE).toLocaleString()}원</p>
+			            </div>
+			        </div>`;
+			});
+			$(".receipt-product-area").html(detailHtml);
+
+         	// 날짜 형식 변경 (2026.1.24 10:56:09)
+            let rawDate = master.PAY_DT; 
+            if(rawDate) {
+                let formattedDate = rawDate.replace(/-/g, '.').replace('T', ' ');
+                $("#receiptPayDate").text(formattedDate);
+            }
+
+            receiptModal.show();
+        },
+        error: function() {
+            alert("영수증 정보를 불러오는데 실패했습니다.");
+        }
+    });
+}
+
+
+let currentPaymentId = null;
+
+// Bootstrap 모달 인스턴스
+let receiptModal, refundModal, reviewModal, cancelConfirmModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
+    refundModal = new bootstrap.Modal(document.getElementById('refundModal'));
+    reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+    cancelConfirmModal = new bootstrap.Modal(document.getElementById('cancelConfirmModal'));
+});
+
+</script>
+
 <style>
+/* 이용 완료 아이콘 스타일 */
+.payment-status.DONE {
+	background-color: #08a94e; 
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* 이용 예정 아이콘 스타일 */
+.payment-status.WAIT {
+    background-color: #ff9f1c; 
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+}
+
+/* 취소 완료 아이콘 스타일 */
+.payment-status.CANCEL {
+	background-color: #cccccc; 
+    color: white;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
 /* 영수증 모달 스타일 */
 .receipt-content {
     padding: 0;
@@ -1145,366 +1163,6 @@
     }
 }
 </style>
-
-<script>
-// 결제 데이터 (실제로는 서버에서 가져옴)
-const paymentData = {
-    1: {
-        status: 'pending',
-        productName: '제주 스쿠버다이빙 체험',
-        productImage: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=120&h=120&fit=crop&q=80',
-        useDate: '2024.04.20 (토) 14:00',
-        option: '2명',
-        orderNo: 'ORD-20240315-001234',
-        payDate: '2024.03.15 14:32:15',
-        payMethod: '신용카드',
-        originalPrice: '150,000원',
-        discount: '-10,000원',
-        pointUsed: '-4,000원',
-        totalPrice: '136,000원',
-        earnedPoints: '+1,360P',
-        sellerName: '제주다이빙센터',
-        sellerBizNo: '123-45-67890',
-        sellerPhone: '064-123-4567'
-    },
-    2: {
-        status: 'pending',
-        productName: '제주 신라 호텔',
-        productImage: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=120&h=120&fit=crop&q=80',
-        useDate: '2024.04.20 - 2024.04.22 (2박)',
-        option: '디럭스룸',
-        orderNo: 'ORD-20240314-001122',
-        payDate: '2024.03.14 10:20:30',
-        payMethod: '신용카드',
-        originalPrice: '340,000원',
-        discount: '-20,000원',
-        pointUsed: '0원',
-        totalPrice: '320,000원',
-        earnedPoints: '+3,200P',
-        sellerName: '제주 신라 호텔',
-        sellerBizNo: '234-56-78901',
-        sellerPhone: '064-234-5678'
-    },
-    3: {
-        status: 'completed',
-        productName: '부산 해운대 카약 체험',
-        productImage: 'https://images.unsplash.com/photo-1472745942893-4b9f730c7668?w=120&h=120&fit=crop&q=80',
-        useDate: '2024.02.21 (수) 10:00',
-        option: '3명',
-        orderNo: 'ORD-20240215-003344',
-        payDate: '2024.02.15 16:45:00',
-        payMethod: '카카오페이',
-        originalPrice: '50,000원',
-        discount: '-5,000원',
-        pointUsed: '0원',
-        totalPrice: '45,000원',
-        earnedPoints: '+450P',
-        sellerName: '해운대카약센터',
-        sellerBizNo: '345-67-89012',
-        sellerPhone: '051-345-6789'
-    },
-    4: {
-        status: 'completed',
-        productName: '경주 전통 한과 만들기 체험',
-        productImage: 'https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=120&h=120&fit=crop&q=80',
-        useDate: '2024.01.28 (일) 13:00',
-        option: '2명',
-        orderNo: 'ORD-20240120-005566',
-        payDate: '2024.01.20 09:30:00',
-        payMethod: '신용카드',
-        originalPrice: '50,000원',
-        discount: '0원',
-        pointUsed: '-2,000원',
-        totalPrice: '48,000원',
-        earnedPoints: '+480P',
-        sellerName: '경주한과체험관',
-        sellerBizNo: '456-78-90123',
-        sellerPhone: '054-456-7890'
-    },
-    5: {
-        status: 'cancelled',
-        productName: '설악산 짚라인 체험',
-        productImage: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=120&h=120&fit=crop&q=80',
-        useDate: '2024.01.15 (월) 11:00',
-        option: '1명',
-        orderNo: 'ORD-20240108-005678',
-        payDate: '2024.01.08 11:20:00',
-        payMethod: '신용카드',
-        originalPrice: '35,000원',
-        requestDate: '2024.01.09 10:15:00',
-        completeDate: '2024.01.10 14:30:00',
-        reason: '일정 변경',
-        fee: '-3,500원',
-        refundAmount: '31,500원',
-        pointReturn: '+350P'
-    }
-};
-
-let currentPaymentId = null;
-
-// Bootstrap 모달 인스턴스
-let receiptModal, refundModal, reviewModal, cancelConfirmModal;
-
-document.addEventListener('DOMContentLoaded', function() {
-    receiptModal = new bootstrap.Modal(document.getElementById('receiptModal'));
-    refundModal = new bootstrap.Modal(document.getElementById('refundModal'));
-    reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
-    cancelConfirmModal = new bootstrap.Modal(document.getElementById('cancelConfirmModal'));
-});
-
-// 탭 필터링
-document.querySelectorAll('.mypage-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.mypage-tab').forEach(t => t.classList.remove('active'));
-        this.classList.add('active');
-
-        const filter = this.dataset.filter;
-        const payments = document.querySelectorAll('.payment-item');
-
-        payments.forEach(payment => {
-            if (filter === 'all') {
-                payment.style.display = 'flex';
-            } else {
-                const status = payment.dataset.status;
-                payment.style.display = status === filter ? 'flex' : 'none';
-            }
-        });
-    });
-});
-
-// 영수증 모달 열기
-function showReceipt(paymentId) {
-    currentPaymentId = paymentId;
-    const data = paymentData[paymentId];
-
-    // 상태 뱃지
-    const statusBadge = document.getElementById('receiptStatusBadge');
-    if (data.status === 'pending') {
-        statusBadge.innerHTML = '<span class="payment-status pending">이용 예정</span>';
-    } else if (data.status === 'completed') {
-        statusBadge.innerHTML = '<span class="payment-status completed">이용 완료</span>';
-    }
-
-    // 상품 정보
-    document.getElementById('receiptProductImage').src = data.productImage;
-    document.getElementById('receiptProductName').textContent = data.productName;
-    document.getElementById('receiptProductDate').textContent = data.useDate;
-    document.getElementById('receiptProductOption').textContent = data.option;
-
-    // 결제 정보
-    document.getElementById('receiptOrderNo').textContent = data.orderNo;
-    document.getElementById('receiptPayDate').textContent = data.payDate;
-    document.getElementById('receiptPayMethod').textContent = data.payMethod;
-
-    // 금액 정보
-    document.getElementById('receiptOriginalPrice').textContent = data.originalPrice;
-    document.getElementById('receiptDiscount').textContent = data.discount;
-    document.getElementById('receiptPointUsed').textContent = data.pointUsed;
-    document.getElementById('receiptTotalPrice').textContent = data.totalPrice;
-    document.getElementById('receiptEarnedPoints').textContent = data.earnedPoints;
-
-    // 판매자 정보
-    document.getElementById('receiptSellerName').textContent = data.sellerName;
-    document.getElementById('receiptSellerBizNo').textContent = data.sellerBizNo;
-    document.getElementById('receiptSellerPhone').textContent = data.sellerPhone;
-
-    receiptModal.show();
-}
-
-function printReceipt() {
-    window.print();
-}
-
-// 결제 취소 확인 모달 열기
-function showCancelConfirm(paymentId) {
-    currentPaymentId = paymentId;
-    const data = paymentData[paymentId];
-
-    document.getElementById('cancelProductName').textContent = data.productName;
-    document.getElementById('cancelProductDate').textContent = data.useDate + ' | ' + data.option;
-    document.getElementById('cancelOriginalPrice').textContent = data.totalPrice;
-
-    // 취소 수수료 계산 (예시: 무료 취소 가능)
-    document.getElementById('cancelFee').textContent = '0원 (무료 취소)';
-    document.getElementById('cancelRefundAmount').textContent = data.totalPrice;
-
-    cancelConfirmModal.show();
-}
-
-function confirmCancel() {
-    const reason = document.getElementById('cancelReason').value;
-    if (!reason) {
-        showToast('취소 사유를 선택해주세요.', 'error');
-        return;
-    }
-
-    // 실제로는 서버에 취소 요청
-    cancelConfirmModal.hide();
-    showToast('결제가 취소되었습니다. 환불은 3~5영업일 내 처리됩니다.', 'success');
-
-    // 상태 변경 (실제로는 페이지 새로고침 또는 AJAX로 업데이트)
-    setTimeout(() => {
-        location.reload();
-    }, 1500);
-}
-
-// 환불 상세 모달
-function showRefundDetail(paymentId) {
-    const data = paymentData[paymentId];
-
-    document.getElementById('refundProductImage').src = data.productImage;
-    document.getElementById('refundProductName').textContent = data.productName;
-    document.getElementById('refundProductDate').textContent = data.useDate;
-    document.getElementById('refundProductOption').textContent = data.option;
-
-    document.getElementById('refundOrderNo').textContent = data.orderNo;
-    document.getElementById('refundRequestDate').textContent = data.requestDate;
-    document.getElementById('refundCompleteDate').textContent = data.completeDate;
-    document.getElementById('refundReason').textContent = data.reason;
-
-    document.getElementById('refundOriginalPrice').textContent = data.originalPrice;
-    document.getElementById('refundFee').textContent = data.fee;
-    document.getElementById('refundTotalAmount').textContent = data.refundAmount;
-
-    document.getElementById('refundMethod').textContent = '신용카드 취소';
-    document.getElementById('refundPointReturn').textContent = data.pointReturn;
-
-    refundModal.show();
-}
-
-// 후기 작성 모달
-let selectedRating = 0;
-let uploadedImages = [];
-
-function openReviewModal(paymentId) {
-    currentPaymentId = paymentId;
-    const data = paymentData[paymentId];
-
-    document.getElementById('reviewProductImage').src = data.productImage;
-    document.getElementById('reviewProductName').textContent = data.productName;
-    document.getElementById('reviewProductDate').textContent = data.useDate + ' | ' + data.option;
-
-    // 초기화
-    selectedRating = 0;
-    uploadedImages = [];
-    document.getElementById('reviewRating').value = 0;
-    document.getElementById('reviewContent').value = '';
-    document.getElementById('reviewCharCount').textContent = '0';
-    document.getElementById('imagePreviewList').innerHTML = '';
-    updateStars(0);
-    document.getElementById('ratingText').textContent = '별점을 선택해주세요';
-
-    reviewModal.show();
-}
-
-// 별점 선택
-document.getElementById('starRating').addEventListener('click', function(e) {
-    if (e.target.tagName === 'I') {
-        selectedRating = parseInt(e.target.dataset.rating);
-        document.getElementById('reviewRating').value = selectedRating;
-        updateStars(selectedRating);
-        updateRatingText(selectedRating);
-    }
-});
-
-document.getElementById('starRating').addEventListener('mouseover', function(e) {
-    if (e.target.tagName === 'I') {
-        const rating = parseInt(e.target.dataset.rating);
-        updateStars(rating);
-    }
-});
-
-document.getElementById('starRating').addEventListener('mouseout', function() {
-    updateStars(selectedRating);
-});
-
-function updateStars(rating) {
-    const stars = document.querySelectorAll('#starRating i');
-    stars.forEach((star, index) => {
-        if (index < rating) {
-            star.classList.remove('bi-star');
-            star.classList.add('bi-star-fill');
-        } else {
-            star.classList.remove('bi-star-fill');
-            star.classList.add('bi-star');
-        }
-    });
-}
-
-function updateRatingText(rating) {
-    const texts = ['별점을 선택해주세요', '별로예요', '그저 그래요', '보통이에요', '좋아요', '최고예요!'];
-    document.getElementById('ratingText').textContent = texts[rating];
-}
-
-// 글자수 카운터
-document.getElementById('reviewContent').addEventListener('input', function() {
-    document.getElementById('reviewCharCount').textContent = this.value.length;
-});
-
-// 이미지 업로드
-document.getElementById('reviewImages').addEventListener('change', function(e) {
-    const files = Array.from(e.target.files);
-
-    if (uploadedImages.length + files.length > 5) {
-        showToast('이미지는 최대 5장까지 첨부 가능합니다.', 'error');
-        return;
-    }
-
-    files.forEach(file => {
-        if (file.type.startsWith('image/')) {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                uploadedImages.push(e.target.result);
-                renderImagePreviews();
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-
-    e.target.value = '';
-});
-
-function renderImagePreviews() {
-    const container = document.getElementById('imagePreviewList');
-    container.innerHTML = uploadedImages.map((src, index) => `
-        <div class="image-preview-item">
-            <img src="${src}" alt="이미지">
-            <button class="remove-btn" onclick="removeImage(${index})">&times;</button>
-        </div>
-    `).join('');
-}
-
-function removeImage(index) {
-    uploadedImages.splice(index, 1);
-    renderImagePreviews();
-}
-
-// 후기 제출
-function submitReview() {
-    const rating = document.getElementById('reviewRating').value;
-    const content = document.getElementById('reviewContent').value.trim();
-
-    if (rating == 0) {
-        showToast('별점을 선택해주세요.', 'error');
-        return;
-    }
-
-    if (content.length < 20) {
-        showToast('후기 내용을 20자 이상 입력해주세요.', 'error');
-        document.getElementById('reviewContent').focus();
-        return;
-    }
-
-    // 실제로는 서버에 후기 등록 요청
-    reviewModal.hide();
-    showToast('후기가 등록되었습니다. 감사합니다!', 'success');
-
-    // 버튼 상태 변경 (실제로는 페이지 새로고침 또는 AJAX로 업데이트)
-    setTimeout(() => {
-        location.reload();
-    }, 1500);
-}
-</script>
 
 <c:set var="pageJs" value="mypage" />
 <%@ include file="../common/footer.jsp" %>

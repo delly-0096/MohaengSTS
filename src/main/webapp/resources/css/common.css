@@ -255,6 +255,40 @@ input, textarea, select {
     justify-content: center;
 }
 
+       /* 알림 뱃지 */
+        .notification-badge{
+          display:none;
+          position:absolute;
+          top:-6px;
+          right:-6px;
+          min-width:18px;
+          height:18px;
+          padding:0 6px;
+          border-radius:999px;
+          font-size:12px;
+          line-height:18px;
+          text-align:center;
+          background:#ff3b30;
+          color:#fff;
+        }
+
+        /* 버튼 기준점 */
+        .header-notification-btn{
+          position:relative;
+        }
+
+        /* 새 알림 강조 */
+        .header-notification-btn.pulse{
+          animation: alarmPulse 0.6s ease-in-out 2;
+        }
+
+        @keyframes alarmPulse{
+          0%{ transform: scale(1); }
+          50%{ transform: scale(1.15); }
+          100%{ transform: scale(1); }
+        }
+
+
 /* 알림 패널 오버레이 */
 .notification-overlay {
     position: fixed;
@@ -2121,3 +2155,4 @@ input, textarea, select {
 .chatbot-clear:hover {
     opacity: 0.8;
 }
+

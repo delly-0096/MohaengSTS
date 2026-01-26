@@ -56,4 +56,17 @@ public class ProdReviewVO {
     private int startRow; // 시작 row
     private int endRow; // 끝 row
 
+    
+    // 후기 작성 시 이미지 파일을 담기 위한 필드 (컨트롤러에서 자동 바인딩)
+    private org.springframework.web.multipart.MultipartFile[] uploadFiles;
+
+    // [조회용] 작성일자를 'yyyy.MM.dd' 형식의 문자열로 받기 위함
+    private String displayDate;
+
+    // [조회용] 리뷰 이미지 중 첫 번째 이미지만 대표로 보여줄 때 사용
+    private String firstImage;
+
+    // [삭제용] 파일 개별 삭제 시 사용할 파일 번호 리스트
+    private List<Integer> delFileNoList;
+    
 }

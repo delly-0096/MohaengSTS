@@ -16,4 +16,5 @@ public interface IProdReviewMapper {
 	public int deleteReview(@Param("prodRvNo") int prodRvNo, @Param("memNo") int memNo);
 	public Integer getReviewAttachNo(int prodRvNo);
 	public int updateReviewAttachNo(@Param("prodRvNo") int prodRvNo, @Param("attachNo") int attachNo);
+	public int insertReview(ProdReviewVO vo);
 }

@@ -205,7 +205,7 @@
 	                    <div class="summary-product-single">
 						    <c:choose>
 						        <c:when test="${not empty productImages}">
-						            <img src="${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}" 
+						            <img src="${pageContext.request.contextPath}/upload${productImages[0].filePath}" 
 						                 alt="${tp.tripProdTitle}">
 						        </c:when>
 						        <c:otherwise>

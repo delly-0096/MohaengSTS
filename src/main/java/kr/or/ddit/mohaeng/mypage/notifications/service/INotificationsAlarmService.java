@@ -11,4 +11,8 @@ public interface INotificationsAlarmService {
 
 	public List<AlarmVO> selectAlarmList(PaginationInfoVO<AlarmVO> pagingVO);
 
+	public static List<AlarmVO> selectAlramList() {
+		return null;
+	}
+
 }

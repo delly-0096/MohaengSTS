@@ -468,6 +468,7 @@
 
         // 알림 패널 토글
         function toggleNotificationPanel() {
+        	let notificationListEle = document.querySelector("#notificationList");
             var panel = document.getElementById('notificationPanel');
             var overlay = document.getElementById('notificationOverlay');
 
@@ -475,6 +476,29 @@
                 panel.classList.toggle('active');
                 overlay.classList.toggle('active');
             }
+            
+            let html = ``;
+            axios.post(`/api/alarm/list`
+            ).then(res => {
+            	let list = res.data;	// 알람 목록
+            	list.map(function(v,i){
+            		let time = formatRelativeTime(`\${v.regDt}`);
+            		let type = checkType(`\${v.alarmType}`);
+            		html += `
+            			<div class="notification-item unread">
+	                        <div class="notification-icon second">
+	                            <i class="bi bi-check-circle"></i>
+	                        </div>
+	                        <div class="notification-content">
+	                            <p class="notification-text">\${v.alarmCont}</p>
+	                            <span class="notification-meta">\${type}</span>
+	                            <span class="notification-time">\${time}</span>
+	                        </div>
+	                    </div>
+            		`;
+            	});
+           		notificationListEle.innerHTML = html;
+            });
         }
 
         // 알림 패널 닫기
@@ -613,6 +637,62 @@
         	  // 🔹 10초마다 갱신
         	  setInterval(fetchUnreadCount, 10000);
         	})(); 
+        
+        
+        
+        function checkType(typeCode){
+        	let type = '';
+        	if(typeCode != null || typeCode != ''){
+        		if(typeCode == 'POINT')
+        			type = '포인트';
+        		if(typeCode == 'PAYMENT')
+        			type = '결제';
+        		if(typeCode == 'TRAVEL_LOG')
+        			type = '여행기록';
+        		if(typeCode == 'TALK')
+        			type = '여행톡';
+        		if(typeCode == 'INQUIRY' || typeCode == 'PROD_INQUIRY')
+        			type = '문의';
+        		if(typeCode == 'REVIEW')
+        			type = '리뷰';
+        		if(typeCode == 'PROD')
+        			type = '상품';
+        		if(typeCode == 'SETTLEMENT')
+        			type = '정산';
+        	}
+        		
+        	return type;
+        }
+        
+        // '2026-01-26 14:00:20'과 같은 시간 데이터가 들어올 때, 몇분전/몇시간전/몇일전과 같은 내용 만들어주는 이벤트
+        function formatRelativeTime(dateString) {
+		    const start = new Date(dateString);
+		    const end = new Date(); // 현재 시간
+		
+		    // 두 날짜의 차이 (밀리초 단위)
+		    const diffInMs = end - start;
+		    
+		    // 밀리초를 각 단위로 변환
+		    const diffInSeconds = Math.floor(diffInMs / 1000);
+		    const diffInMinutes = Math.floor(diffInSeconds / 60);
+		    const diffInHours = Math.floor(diffInMinutes / 60);
+		    const diffInDays = Math.floor(diffInHours / 24);
+		
+		    // 출력 로직
+		    if (diffInSeconds < 60) {
+		        return "방금 전";
+		    } else if (diffInMinutes < 60) {
+		        return `\${diffInMinutes}분 전`;
+		    } else if (diffInHours < 24) {
+		        return `\${diffInHours}시간 전`;
+		    } else if (diffInDays < 30) {
+		        return `\${diffInDays}일 전`;
+		    } else {
+		        // 한 달 이상 차이 날 경우 날짜 그대로 출력 (예: 2026-01-13)
+		        return start.toISOString().split('T')[0];
+		    }
+		}
+        
     </script>
 
     <!-- 메인 콘텐츠 시작 -->

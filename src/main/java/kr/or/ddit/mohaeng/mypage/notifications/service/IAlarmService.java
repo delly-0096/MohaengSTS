@@ -17,6 +17,7 @@ public interface IAlarmService {
 	public int getAlarmCount(PaginationInfoVO<AlarmVO> pagingVO);
 	public int countUnread(int memNo);
 	public void testInsert(int memNo);
+	public List<AlarmVO> selectAlramList(int memNo);
 
 
 }

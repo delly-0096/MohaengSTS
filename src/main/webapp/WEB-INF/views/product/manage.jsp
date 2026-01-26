@@ -136,7 +136,7 @@
 						                    <img src="${prod.accommodation.accFilePath}" alt="${prod.accommodation.accName }">
 									</c:when>
 									<c:when test="${prod.prodCtgryType ne 'accommodation'}">
-					                    <img src="${pageContext.request.contextPath}/upload/${prod.thumbImage}" 
+					                    <img src="${pageContext.request.contextPath}/upload${prod.thumbImage}" 
 					                    alt="${prod.tripProdTitle}">
 				                   </c:when>
 				                   <c:otherwise>
@@ -162,7 +162,9 @@
 			                    <c:set var="title" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accName : prod.tripProdTitle}"/>
 			                    <h3 class="product-name">${title}</h3>
 			                    <div class="product-meta">
-			                        <span><i class="bi bi-geo-alt"></i>${prod.ctyNm}</span><!-- 지역 코드 -->
+			                        <span>
+			                        	<i class="bi bi-geo-alt"></i>${prod.ctyNm }
+			                        </span><!-- 지역 코드 -->
 			                        <span>
 			                        	<c:set var="avgRating" value="${empty prod.avgRating or prod.avgRating == 0 ? 0.0 : prod.avgRating}"/>
 			                        	<c:set var="reviewCount" value="${empty prod.reviewCount or prod.reviewCount == 0 ? 0 : prod.reviewCount}"/>
@@ -707,7 +709,7 @@
                         <div class="productImageList"></div>
 				        <input type="hidden" class="form-control" name="accommodation.accFilePath"/>
 				        <input type="hidden" name="accommodation.accFileNo"/>
-					
+<!-- 					mainImagePreview -->
 					    <div id="accommodationAdditionalImages" style="display: none;">
 					        <label class="form-label">숙소 대표이미지</label>
 					        <div class="productImageList mt-2"></div>
@@ -762,7 +764,7 @@
                                     <div class="carousel-inner" id="detailImages">
                                         <div class="carousel-item active">
                                         	<!-- 여기 컨테이너 선택해서 뿌려주기 -->
-                                            <img src="https://via.placeholder.com/400x300" class="d-block w-100 rounded" alt="상품이미지">
+<!--                                             <img src="https://via.placeholder.com/400x300" class="d-block w-100 rounded" alt="상품이미지"> -->
                                         </div>
                                     </div>
                                 </div>
@@ -1023,7 +1025,7 @@ async function editProduct(data) {
 	        const acc = data.accommodation;
 	        
 	        if(acc.accFilePath){
-	        	accImage = `<img id="accPreviewImg" src="\${acc.accFilePath}" alt="숙소 대표 이미지" 
+	        	accImage = `<img src="\${acc.accFilePath}" alt="숙소 대표 이미지" 
 		        	style="width:300px; height:200px; object-fit:cover;"/>`;
 		    	document.querySelector("#mainImagePreview").innerHTML = accImage;    
 	        }
@@ -1377,8 +1379,11 @@ async function saveProduct(data) {
         const url = isUpdate ? '/product/manage/editProduct' : '/product/manage/registerProduct';
         const res = await axios.post(url, finalFormData); // 주의: formData가 아니라 finalFormData입니다!
 
+        console.log("res.data : ", res.data);
         if (res.data === "OK") {
-            showToast('성공!', 'success');
+            // showToast('성공!', 'success');
+            // alert로?
+           	alert("상품 등록 성공!, 판매는 관리자의 허가를 받고 난후 가능합니다.");
             location.reload();
         }
     } catch (error) {
@@ -1400,11 +1405,12 @@ function toggleProductStatus(data) {
         	approveStatus : status
         })
         .then(res => {
-        	if (res.data.ok) {
-        		showToast('상품 상태가 변경되었습니다.', 'success');
+        	if (res.data === "OK") {
+//         		showToast('상품 상태가 변경되었습니다.', 'success');
+        		alert("상품 상태가 변경되었습니다. 판매는 관리자의 허가를 받고 난후 가능합니다.");
 		        location.reload(true);
         	}
-        	else showToast('상품 상태가 변경되었습니다.', 'success');
+        	else showToast('상품 상태 변공에 실패하였습니다.', 'success');
         }).catch(err => {
         	console.log("error 발생 : ", err);
         });
@@ -1419,8 +1425,11 @@ function deleteProduct(data) {
         	tripProdNo : id
         })
         .then(res => {
-        	if (res.data.ok) {
-        		showToast('상품이 삭제되었습니다.', 'success');
+        	console.log("res.data : ", res.data);
+        	console.log("res.data.ok : ", res.data);
+        	if (res.data === "OK") {
+        		alert("상품이 삭제되었습니다.");
+//         		showToast('상품이 삭제되었습니다.', 'success');
 		        location.reload(true);
         	}
         	else showToast('상품이 삭제되지않았습니다.', 'error');
@@ -1655,8 +1664,13 @@ async function searchTourApi(matchData) {
             
             // 2. 좌표 및 이미지 세팅 -> 파일 no는 어차피 둘다 있음. 이거는 알아서 넣으면 되는것. 세팅도 내맘
             
-            // 3. 사진 미리보기 업데이트
-            if (data.accFilePath) document.querySelector("#accPreviewImg").src = data.accFilePath;
+            // 3. 사진 미리보기 업데이트		    	document.querySelector("#mainImagePreview").innerHTML = accImage;    
+
+            if (data.accFilePath) {
+            	let imgHtml = `<img src="\${data.accFilePath}" alt=""
+            		style="width:300px; height:200px; object-fit:cover;"/>`;
+            	document.querySelector("#mainImagePreview").innerHTML = imgHtml;
+            }
             
             alert(`[\${data.accName}] 정보를 성공적으로 가져왔습니다.`);
         } else alert(`정보를 못가져왔습니다.`);

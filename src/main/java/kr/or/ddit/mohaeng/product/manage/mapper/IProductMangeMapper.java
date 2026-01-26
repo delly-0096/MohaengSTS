@@ -11,6 +11,7 @@ import kr.or.ddit.mohaeng.tour.vo.TripProdSaleVO;
 import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.AccFacilityVO;
 import kr.or.ddit.mohaeng.vo.AccOptionVO;
+import kr.or.ddit.mohaeng.vo.AccResvVO;
 import kr.or.ddit.mohaeng.vo.AccommodationVO;
 import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.BusinessProductsVO;
@@ -348,14 +349,15 @@ public interface IProductMangeMapper {
 	 * @return 예약 내역
 	 */
 	public List<TripProdListVO> getReservation(BusinessProductsVO businessProducts);
+
 	
 	/**
 	 * <p>숙소 예약 내역 가져오기</p>
 	 * @author sdg
 	 * @date 2026-01-26
-	 * @param businessProducts (tripProdNo)
+	 * @param accommodationvo (accNo)
 	 * @return 결과 0, 1
 	 */
-//	public List<E> getAccommodationResvervation(
+	public List<AccResvVO> getAccResvList(AccommodationVO accommodationvo);
 	
 }

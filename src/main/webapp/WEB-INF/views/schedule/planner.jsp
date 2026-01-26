@@ -809,7 +809,7 @@ function confirmAddPlace() {
     // 일정 탭으로 전환
     switchPlannerTab('itinerary');
 
-    myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, { id: selectedItem.id });
+    myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, selectedDay, { id: selectedItem.id });
 
 	myMap.fitBounds();
 	

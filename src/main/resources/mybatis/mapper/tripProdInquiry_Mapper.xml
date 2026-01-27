@@ -122,5 +122,17 @@
 	    WHERE PROD_INQRY_NO = #{prodInqryNo}
 	      AND REPLY_MEM_NO = #{replyMemNo}
 	</update>
+	
+	<select id="getSellerMemNo" parameterType="int" resultType="Integer">
+	    SELECT MEM_NO 
+	    FROM TRIP_PROD 
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</select>
+	
+	<select id="getProductName" parameterType="int" resultType="String">
+	    SELECT TRIP_PROD_TITLE
+	    FROM TRIP_PROD 
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</select>
 
 </mapper>

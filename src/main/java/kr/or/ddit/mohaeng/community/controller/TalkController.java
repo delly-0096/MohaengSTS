@@ -70,7 +70,7 @@ public class TalkController {
 			@RequestParam(required = false, defaultValue = "all") String ntcType, Model model) {
 		log.info("communityForm()...실행");
 		PaginationInfoVO<BoardVO> pagingVO = new PaginationInfoVO<>();
-
+		pagingVO.setScreenSize(10);	
 		// 검색시 추가
 		if (StringUtils.isNoneBlank(searchWord)) {
 			pagingVO.setSearchWord(searchWord);

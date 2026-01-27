@@ -814,7 +814,7 @@
 	</select>
 	
 	<!-- 숙소 예약 내역 가져오기 -->
-	<select id="getAccResvList" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accMap">
+	<select id="getAccResvList" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accResvMap">
 		SELECT
 			A.ACC_NO
 			, A.ACC_NAME
@@ -824,10 +824,20 @@
 			, <include refid="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accResvColumns">
 				<property name="alias" value="AR."/>
 			</include>
+			, M.MEM_NAME
+			, M.MEM_EMAIL
+			, MU.TEL
+			, MU.NICKNAME
 		FROM ACCOMMODATION A
 		INNER JOIN ROOM_TYPE RT ON A.ACC_NO = RT.ACC_NO
 		INNER JOIN ACC_RESV AR ON RT.ROOM_TYPE_NO = AR.ROOM_TYPE_NO
-		WHERE RT.ACC_NO = #{accNo}
+		INNER JOIN PAYMENT P ON P.PAY_NO = AR.PAY_NO  
+		INNER JOIN MEMBER M ON M.MEM_NO = P.MEM_NO
+		INNER JOIN MEM_USER MU ON M.MEM_NO = MU.MEM_NO
+		WHERE A.ACC_NO = #{accNo}
 	</select>
+	
+	<!-- 
+	 -->
 	
 </mapper>

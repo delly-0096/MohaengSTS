@@ -130,7 +130,7 @@
             <div class="accommodation-grid">
                 <c:forEach items="${accList }" var="acc">
                 <div class="accommodation-card" data-accommodation-id="${acc.accNo}">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }" class="accommodation-image">
+                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo}?startDate=${param.startDate}&endDate=${param.endDate}&adultCount=${param.adultCount}" class="accommodation-image">
                         <img src="${acc.accFilePath}" alt="${acc.accName}">
                         <%-- 배지 로직 시작 --%>
 			            <c:choose>

@@ -7,52 +7,83 @@
 <select id="selectAlarmCount"
         parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO"
         resultType="int">
-		  SELECT COUNT(*)
-		  FROM ALARM
-		  WHERE MEM_NO = #{memNo}
+  SELECT COUNT(*)
+  FROM ALARM
+  WHERE MEM_NO = #{memNo}
+  <if test="searchType != null and searchType != '' and searchType != 'ALL'">
+    <choose>
+      <when test="searchType == 'PAYMENT'">
+        AND ALARM_TYPE IN ('PAYMENT')
+      </when>
+      <when test="searchType == 'POINT'">
+        AND ALARM_TYPE IN ('POINT')
+      </when>
+      <when test="searchType == 'INQUIRY'">
+        AND ALARM_TYPE IN ('INQUIRY','PROD_INQUIRY')
+      </when>
+      <when test="searchType == 'SYSTEM'">
+        AND ALARM_TYPE IN ('SYSTEM')
+      </when>
+    </choose>
+  </if>
 </select>
 
-  <select id="selectUnreadAlarmCount" resultType="int" parameterType="int">
-    SELECT COUNT(*)
-    FROM ALARM
-    WHERE MEM_NO = #{value}
-      AND NVL(READ_YN,'N') = 'N'
-  </select>
 
   <select id="selectAlarmList"
-          parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO">
-      <![CDATA[   
-    SELECT *
+        parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO"
+        resultType="kr.or.ddit.mohaeng.vo.AlarmVO">
+  <![CDATA[
+  SELECT *
+  FROM (
+    SELECT t.*, ROWNUM rn
     FROM (
-      SELECT t.*, ROWNUM rn
-      FROM (
-        SELECT
-          ALARM_NO,
-          MEM_NO,
-          SENDER,
-          ALARM_TYPE,
-          ALARM_CONT,
-          MOVE_URL,
-          READ_YN,
-          READ_DT,
-          REG_DT
-        FROM ALARM
-        WHERE MEM_NO = #{memNo}
-        ORDER BY REG_DT DESC
-      ) t
-      WHERE ROWNUM >= #{endRow}
-    )
-    WHERE rn <= #{startRow}
-      ]]>
+      SELECT
+        ALARM_NO, MEM_NO, SENDER, ALARM_TYPE, ALARM_CONT, MOVE_URL,
+        READ_YN, READ_DT, REG_DT
+      FROM ALARM
+      WHERE MEM_NO = #{memNo}
+  ]]>
+      <if test="searchType != null and searchType != '' and searchType != 'ALL'">
+        <choose>
+          <when test="searchType == 'PAYMENT'">
+            AND ALARM_TYPE IN ('PAYMENT')
+          </when>
+          <when test="searchType == 'POINT'">
+            AND ALARM_TYPE IN ('POINT')
+          </when>
+          <when test="searchType == 'INQUIRY'">
+            AND ALARM_TYPE IN ('INQUIRY','PROD_INQUIRY')
+          </when>
+          <when test="searchType == 'SYSTEM'">
+            AND ALARM_TYPE IN ('SYSTEM')
+          </when>
+        </choose>
+      </if>
+  <![CDATA[
+      ORDER BY REG_DT DESC
+    ) t
+    WHERE ROWNUM <= #{endRow}
+  )
+  WHERE rn >= #{startRow}
+  ]]>
+</select>
+
+  
+  <select id="selectAlramList" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.AlarmVO">
+  	select 
+  		alarm_no, mem_no, sender, alarm_type, alarm_cont, move_url, read_yn, read_dt, to_char(reg_dt, 'yyyy-mm-dd hh24:mi:ss') reg_dt
+  	from alarm
+	where mem_no = #{memNo}
+	and read_yn = 'N'
   </select>
   
   <!-- 안읽은 알림 개수 -->
-<select id="selectUnreadCount" parameterType="int" resultType="int">
+<!-- <select id="selectUnreadCount" parameterType="int" resultType="int">
   SELECT COUNT(*)
   FROM ALARM
   WHERE MEM_NO = #{memNo}
     AND READ_YN = 'N'
-</select>
+</select> -->
 
 <!-- 알림 1건 읽음 처리 -->
 <update id="updateReadOne" parameterType="map">
@@ -87,5 +118,40 @@
     SYSDATE
   )
 </insert>
+
+<update id="updateAllRead" parameterType="int">
+  UPDATE ALARM
+	SET READ_YN = 'Y',
+  	  READ_DT = SYSDATE
+	WHERE MEM_NO =  #{memNo}
+ 	 AND NVL(UPPER(READ_YN), 'N') = 'N'
+
+</update>
+ <select id="selectUnreadCount" parameterType="int" resultType="int">
+SELECT COUNT(*)
+FROM ALARM
+WHERE MEM_NO =  #{memNo}
+  AND NVL(UPPER(READ_YN), 'N') = 'N'
+</select>
+
+<update id="updateReadSelected" parameterType="map">
+  UPDATE ALARM
+  SET READ_YN = 'Y', READ_DT = SYSDATE
+  WHERE MEM_NO = #{memNo}
+    AND ALARM_NO IN
+    <foreach collection="alarmNos" item="no" open="(" separator="," close=")">
+      #{no}
+    </foreach>
+</update>
+
+<delete id="deleteSelected" parameterType="map">
+  DELETE FROM ALARM
+  WHERE MEM_NO = #{memNo}
+    AND ALARM_NO IN
+    <foreach collection="alarmNos" item="no" open="(" separator="," close=")">
+      #{no}
+    </foreach>
+</delete>
+
 
 </mapper>

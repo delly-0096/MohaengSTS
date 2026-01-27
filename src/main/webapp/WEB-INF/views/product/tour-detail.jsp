@@ -29,7 +29,7 @@
 		    <div class="gallery-main">
 		        <c:choose>
 		            <c:when test="${not empty productImages}">
-		                <img src="${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}" 
+		                <img src="${pageContext.request.contextPath}/upload/${productImages[0].filePath}" 
 		                     alt="${tp.tripProdTitle}" id="mainImage">
 		            </c:when>
 		            <c:otherwise>
@@ -59,7 +59,7 @@
 		    </div>
 		    <div class="gallery-thumbs" id="galleryThumbs">
 		        <c:forEach items="${productImages}" var="img" varStatus="status">
-		            <img src="${pageContext.request.contextPath}/upload/product/${img.filePath}" 
+		            <img src="${pageContext.request.contextPath}/upload/${img.filePath}" 
 		                 alt="썸네일" onclick="changeMainImage(this, ${status.index})"
 		                 class="${status.index == 0 ? 'active' : ''}">
 		        </c:forEach>
@@ -418,7 +418,7 @@
 								<c:if test="${not empty rv.reviewImages}">
 								    <div class="review-images">
 								        <c:forEach items="${rv.reviewImages}" var="img">
-								            <img src="${pageContext.request.contextPath}/upload/review/${img}" 
+								            <img src="${pageContext.request.contextPath}/upload/${img}" 
 								                 alt="리뷰 이미지" onclick="openReviewImage(this.src)">
 								        </c:forEach>
 								    </div>
@@ -929,7 +929,7 @@ const currentProduct = {
     location: '${tp.ctyNm}',
     stock: ${sale != null ? sale.curStock : 999},
     image: <c:choose>
-        <c:when test="${not empty productImages}">'${pageContext.request.contextPath}/upload/product/${productImages[0].filePath}'</c:when>
+        <c:when test="${not empty productImages}">'${pageContext.request.contextPath}/upload/${productImages[0].filePath}'</c:when>
         <c:otherwise>'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80'</c:otherwise>
     </c:choose>
 };

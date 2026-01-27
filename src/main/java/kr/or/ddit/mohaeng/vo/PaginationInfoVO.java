@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.vo;
 
 import java.util.List;
+import java.util.Map;
 
 import lombok.Data;
 
@@ -19,10 +20,13 @@ public class PaginationInfoVO<T>{
     private String searchType;
     private String searchWord;
     private int memNo;
-    
+
+    //추가함
+    private Map<String, String> filters;
+
     public PaginationInfoVO() {}
-    
-    
+
+
     public PaginationInfoVO(int screenSize, int blockSize){
     	this.screenSize = screenSize;
     	this.blockSize = blockSize;
@@ -31,6 +35,11 @@ public class PaginationInfoVO<T>{
     	//총 게시글수를 저장하고, 총 게시글수를 페이지 당 나타낼 게시글 수로 나눠 총페이지수를 구한다.
     	this.totalRecord = totalRecord;
     	this.totalPage =(int)Math.ceil(totalRecord/(double)screenSize);
+    	
+    	if (this.endPage > this.totalPage) {
+            this.endPage = this.totalPage;
+        }	
+    	
     }
     public void setCurrentPage(int currentPage) {
     	this.currentPage = currentPage; //현재페이지
@@ -40,25 +49,25 @@ public class PaginationInfoVO<T>{
     	this.startPage = endPage-(blockSize-1);
     }
 
-	 //설정된 블록 사이즈만큼의 페이지 번호를 가지고있는 html 코드를 메서드로 모듈화한다. 
+	 //설정된 블록 사이즈만큼의 페이지 번호를 가지고있는 html 코드를 메서드로 모듈화한다.
 	 public String getpagingHTML() {
 		 StringBuffer html = new StringBuffer();
 		 html.append("<ul class ='pagination pagination-sm m-0 float-right'>");
-		 
+
 		 //<12345>
 		 if(startPage>1) {
 			 html.append("<li class='page-item'><a href='' class ='page-link' data-page='"+
 					 		(startPage -blockSize) + "'>Prev</a></li>");
-			 
-			 
+
+
 		 }
-		 //반복문 내 조건문 총 페이지가 있고 현재 페이지에 따라서 endpage값이 결정됩니다 
-		 // 총 페이지가 14개고 현재 페이지가 9페이지라면 넘어가야할 페이지가 남아 있는 거시기때문에 
+		 //반복문 내 조건문 총 페이지가 있고 현재 페이지에 따라서 endpage값이 결정됩니다
+		 // 총 페이지가 14개고 현재 페이지가 9페이지라면 넘어가야할 페이지가 남아 있는 거시기때문에
 		 //endpage만큼 반복되고 넘어가야할 페이지가 존재하지 않는 상태라면 마지막 페이지가 포함되어 있는 block영역이므로
-		 //totalpage만큼 반복되게 됩니다. 
+		 //totalpage만큼 반복되게 됩니다.
 		 for(int i = startPage; i<=(endPage<totalPage?endPage:totalPage); i++ ) {
 			 if(i == currentPage) {
-				 html.append("<li class='page-item active'><span class='page-link'>" + i+ "</span></li>");		
+				 html.append("<li class='page-item active'><span class='page-link'>" + i+ "</span></li>");
 			 }else {
 				 html.append("<li class='page-item'><a href='' class='page-link' data-page='" + i + "'>" + i + "</a></li>");
 			 }

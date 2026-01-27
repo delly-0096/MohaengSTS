@@ -64,7 +64,7 @@
                         <!-- 로그인 상태 - 알림 버튼 -->
                         <button class="header-notification-btn" onclick="toggleNotificationPanel()" title="알림">
                             <i class="bi bi-bell"></i>
-                            <span class="notification-badge" id="notificationBadge">3</span>
+<!--                             <span class="notification-badge" id="notificationBadge">3</span> -->
                         </button>
                         <!-- 로그인 상태 - 마이페이지 링크 -->
 							<sec:authorize access="hasRole('BUSINESS')">
@@ -425,7 +425,7 @@
                 </div>
             </div>
             <div class="notification-panel-footer">
-                <button class="btn btn-sm btn-outline" onclick="markAllAsRead()">모두 읽음 처리</button>
+                <button class="btn btn-sm btn-outline" onclick="readAllAlarm()">모두 읽음 처리</button>
             </div>
         </div>
     </sec:authorize>
@@ -468,6 +468,7 @@
 
         // 알림 패널 토글
         function toggleNotificationPanel() {
+        	let notificationListEle = document.querySelector("#notificationList");
             var panel = document.getElementById('notificationPanel');
             var overlay = document.getElementById('notificationOverlay');
 
@@ -475,6 +476,36 @@
                 panel.classList.toggle('active');
                 overlay.classList.toggle('active');
             }
+            
+            let html = ``;
+            axios.post(`/api/alarm/list`
+            ).then(res => {
+            	let list = res.data;	// 알람 목록
+            	if (!list || list.length === 0) {
+            	      notificationListEle.innerHTML = `
+            	        <div class="notification-empty">새 알림이 없습니다.</div>
+            	      `;
+            	      return;
+            	    }
+            	
+            	list.map(function(v,i){
+            		let time = formatRelativeTime(`\${v.regDt}`);
+            		let type = checkType(`\${v.alarmType}`);
+            		html += `
+            			<div class="notification-item unread">
+	                        <div class="notification-icon second">
+	                            <i class="bi bi-check-circle"></i>
+	                        </div>
+	                        <div class="notification-content">
+	                            <p class="notification-text">\${v.alarmCont}</p>
+	                            <span class="notification-meta">\${type}</span>
+	                            <span class="notification-time">\${time}</span>
+	                        </div>
+	                    </div>
+            		`;
+            	});
+           		notificationListEle.innerHTML = html;
+            });
         }
 
         // 알림 패널 닫기
@@ -487,21 +518,38 @@
         }
 
         // 모두 읽음 처리
-        function markAllAsRead() {
-            var items = document.querySelectorAll('.notification-item.unread');
-            items.forEach(function(item) {
-                item.classList.remove('unread');
-            });
+        async function readAllAlarm() {
+  try {
+    // 1) 서버에 모두읽음 처리
+    await axios.post('/api/alarm/mypage/notifications/readAll'); 
+    const res = await axios.post('/api/alarm/list');
+    // ※ 네 컨트롤러 기준 최종 URL: /api/alarm/mypage/notifications/readAll
 
-            var badge = document.getElementById('notificationBadge');
-            if (badge) {
-                badge.style.display = 'none';
-            }
+    // 2) 패널 리스트 싹 비우기 (요구사항: "사라져야해"의 정답)
+    const notificationListEle = document.querySelector("#notificationList");
+    if (notificationListEle) {
+      notificationListEle.innerHTML = `
+        <div class="notification-empty">새 알림이 없습니다.</div>
+      `;
+    }
 
-            if (typeof showToast === 'function') {
-                showToast('모든 알림을 읽음 처리했습니다.', 'success');
-            }
-        }
+    // 3) 뱃지 숨김
+    var badge = document.getElementById('notificationBadge');
+    if (badge) badge.style.display = 'none';
+
+    if (typeof showToast === 'function') {
+      showToast('모든 알림을 읽음 처리했습니다.', 'success');
+    }
+  } catch (err) {
+    console.error(err);
+    if (typeof showToast === 'function') {
+      showToast('모두 읽음 처리 실패', 'danger');
+    } else {
+      alert('모두 읽음 처리 실패');
+    }
+  }
+}
+
         
      // ---- 헤더용 캘린더 ----
         let scheduleModalObj = null; // 전역 변수로 관리 (재사용 목적)
@@ -613,6 +661,64 @@
         	  // 🔹 10초마다 갱신
         	  setInterval(fetchUnreadCount, 10000);
         	})(); 
+        
+        
+        
+        function checkType(typeCode){
+        	let type = '';
+        	if(typeCode != null || typeCode != ''){
+        		if(typeCode == 'POINT')
+        			type = '포인트';
+        		if(typeCode == 'PAYMENT')
+        			type = '결제';
+        		if(typeCode == 'TRAVEL_LOG')
+        			type = '여행기록';
+        		if(typeCode == 'TALK')
+        			type = '여행톡';
+        		if(typeCode == 'INQUIRY' || typeCode == 'PROD_INQUIRY')
+        			type = '문의';
+        		if(typeCode == 'REVIEW')
+        			type = '리뷰';
+        		if(typeCode == 'PROD')
+        			type = '상품';
+        		if(typeCode == 'SETTLEMENT')
+        			type = '정산';
+        		if(typeCode == 'REPORT')
+        			type = '신고';
+        	}
+        		
+        	return type;
+        }
+        
+        // '2026-01-26 14:00:20'과 같은 시간 데이터가 들어올 때, 몇분전/몇시간전/몇일전과 같은 내용 만들어주는 이벤트
+        function formatRelativeTime(dateString) {
+		    const start = new Date(dateString);
+		    const end = new Date(); // 현재 시간
+		
+		    // 두 날짜의 차이 (밀리초 단위)
+		    const diffInMs = end - start;
+		    
+		    // 밀리초를 각 단위로 변환
+		    const diffInSeconds = Math.floor(diffInMs / 1000);
+		    const diffInMinutes = Math.floor(diffInSeconds / 60);
+		    const diffInHours = Math.floor(diffInMinutes / 60);
+		    const diffInDays = Math.floor(diffInHours / 24);
+		
+		    // 출력 로직
+		    if (diffInSeconds < 60) {
+		        return "방금 전";
+		    } else if (diffInMinutes < 60) {
+		        return `\${diffInMinutes}분 전`;
+		    } else if (diffInHours < 24) {
+		        return `\${diffInHours}시간 전`;
+		    } else if (diffInDays < 30) {
+		        return `\${diffInDays}일 전`;
+		    } else {
+		        // 한 달 이상 차이 날 경우 날짜 그대로 출력 (예: 2026-01-13)
+		        return start.toISOString().split('T')[0];
+		    }
+		}
+        
     </script>
 
     <!-- 메인 콘텐츠 시작 -->

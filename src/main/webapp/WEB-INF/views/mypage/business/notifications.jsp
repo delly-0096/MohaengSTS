@@ -1,11 +1,33 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
+
 
 <c:set var="pageTitle" value="알림 내역" />
 <c:set var="pageCss" value="mypage" />
 
 <%@ include file="../../common/header.jsp" %>
+<style>
+.notification-time{
+  flex: 0 0 140px; /* 180 -> 140 줄이기 */
+  text-align:right;
+  white-space:nowrap;
+  font-size: 12px;
+  color:#888;
+}
 
+.notification-time{
+  flex: 0 0 140px;
+  text-align:right;
+  white-space: normal;   /* 줄바꿈 허용 */
+  word-break: break-word;
+}
+.mypage .notification-list .notification-item { display:flex; align-items:center; gap:16px; }
+.mypage .notification-list .notification-content { flex:1; min-width:0; }
+.mypage .notification-list .notification-content p { overflow-wrap:anywhere; word-break:break-word; }
+
+
+</style>
 <div class="mypage business-mypage">
     <div class="container">
         <div class="mypage-container no-sidebar">
@@ -68,185 +90,59 @@
 						    </c:when>
 						
 						    <c:otherwise>
-						      <c:forEach items="${alarmList}" var="a">
-						        <div class="notification-item ${a.readYn eq 'Y' ? '' : 'unread'}"
-						             data-type="${empty a.alarmType ? 'system' : a.alarmType}">
-						
-						          <label class="notification-checkbox">
-						            <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-						          </label>
-						
-						          <!-- 아이콘(타입에 따라 다르게) -->
-						          <div class="notification-icon ${empty a.alarmType ? 'system' : a.alarmType}">
-						            <c:choose>
-						              <c:when test="${a.alarmType eq 'order'}"><i class="bi bi-cart-check"></i></c:when>
-						              <c:when test="${a.alarmType eq 'review'}"><i class="bi bi-star"></i></c:when>
-						              <c:when test="${a.alarmType eq 'inquiry'}"><i class="bi bi-chat-dots"></i></c:when>
-						              <c:otherwise><i class="bi bi-bell"></i></c:otherwise>
-						            </c:choose>
-						          </div>
-						
-						          <div class="notification-content">
-						            <!-- 제목이 ALARM_CONT 하나뿐이면 제목/내용 구분 없이 찍기 -->
-						            <h4>${a.sender}</h4>
-						            <p>${a.alarmCont}</p>
-						          </div>
-						
-						          <span class="notification-time">
-						            <c:out value="${a.regDt}" />
-						          </span>
-						        </div>
-						      </c:forEach>
+						     <c:forEach items="${alarmList}" var="a">
+							
+							  <%-- ✅ 1) type 먼저 계산 --%>
+							  <c:set var="type" value="system" />
+							  <c:if test="${not empty a.alarmType}">
+							    <c:choose>
+							      <c:when test="${fn:contains(a.alarmType,'RESV') || fn:contains(a.alarmType,'ORDER')}">
+							        <c:set var="type" value="order" />
+							      </c:when>
+							      <c:when test="${fn:contains(a.alarmType,'REVIEW')}">
+							        <c:set var="type" value="review" />
+							      </c:when>
+							      <c:when test="${fn:contains(a.alarmType,'INQRY') || fn:contains(a.alarmType,'QNA')}">
+							        <c:set var="type" value="inquiry" />
+							      </c:when>
+							    </c:choose>
+							  </c:if>
+							
+							  <%-- ✅ 2) 이제 div를 열기 (data-type 정확히 들어감) --%>
+							  <div class="notification-item ${a.readYn eq 'Y' ? '' : 'unread'}"
+							       data-type="${type}">
+							
+							    <label class="notification-checkbox">
+							      <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
+							    </label>
+							
+							    <%-- ✅ icon도 type 기반으로 클래스 부여 --%>
+							    <div class="notification-icon ${type}">
+							      <c:choose>
+							        <c:when test="${type eq 'order'}"><i class="bi bi-cart-check"></i></c:when>
+							        <c:when test="${type eq 'review'}"><i class="bi bi-star"></i></c:when>
+							        <c:when test="${type eq 'inquiry'}"><i class="bi bi-chat-dots"></i></c:when>
+							        <c:otherwise><i class="bi bi-bell"></i></c:otherwise>
+							      </c:choose>
+							    </div>
+							
+							    <div class="notification-content">
+							      <h4>${a.sender}</h4>
+							      <p>${a.alarmCont}</p>
+							    </div>
+							
+							    <span class="notification-time">
+							      <c:out value="${a.regDt}" />
+							    </span>
+							  </div>
+							
+							</c:forEach>
+
 						    </c:otherwise>
 						  </c:choose>
 						
 						</div>
-						<h3 style="color:red;">alarmList = ${alarmList}</h3>
 						
-                      <!-- 읽지 않은 알림 
-                        <div class="notification-item unread" data-type="order">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon order">
-                                <i class="bi bi-cart-check"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>새 예약이 들어왔습니다</h4>
-                                <p><strong>제주 스쿠버다이빙 체험</strong> - 김OO님 (2명) / 2024.04.20 14:00</p>
-                            </div>
-                            <span class="notification-time">10분 전</span>
-                        </div>
-
-                        <div class="notification-item unread" data-type="review">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon review">
-                                <i class="bi bi-star"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>새 후기가 등록되었습니다</h4>
-                                <p><strong>한라산 트레킹 투어</strong> - 이OO님이 5점을 주셨습니다. "정말 좋은 경험이었어요!"</p>
-                            </div>
-                            <span class="notification-time">1시간 전</span>
-                        </div>
-
-                        <div class="notification-item unread" data-type="inquiry">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon inquiry">
-                                <i class="bi bi-chat-dots"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>문의가 접수되었습니다</h4>
-                                <p><strong>제주 서핑 레슨</strong> - 박OO님: "당일 예약도 가능한가요?"</p>
-                            </div>
-                            <span class="notification-time">3시간 전</span>
-                        </div>
-
-                        읽은 알림
-                        <div class="notification-item" data-type="order">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon order">
-                                <i class="bi bi-cart-check"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>예약이 확정되었습니다</h4>
-                                <p><strong>제주 스쿠버다이빙 체험</strong> - 최OO님 (3명) / 2024.03.18 10:00</p>
-                            </div>
-                            <span class="notification-time">어제</span>
-                        </div>
-
-                        <div class="notification-item" data-type="order">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon order">
-                                <i class="bi bi-x-circle"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>예약이 취소되었습니다</h4>
-                                <p><strong>우도 자전거 투어</strong> - 정OO님 / 취소 사유: 일정 변경</p>
-                            </div>
-                            <span class="notification-time">어제</span>
-                        </div>
-
-                        <div class="notification-item" data-type="review">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon review">
-                                <i class="bi bi-star"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>후기에 답글을 남겨주세요</h4>
-                                <p><strong>제주 서핑 레슨</strong> - 강OO님의 후기에 아직 답글이 없습니다.</p>
-                            </div>
-                            <span class="notification-time">2일 전</span>
-                        </div>
-
-                        <div class="notification-item" data-type="system">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon system">
-                                <i class="bi bi-gear"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>2월 정산이 완료되었습니다</h4>
-                                <p>정산 금액 <strong>2,850,000원</strong>이 등록된 계좌로 입금되었습니다.</p>
-                            </div>
-                            <span class="notification-time">2024.03.05</span>
-                        </div>
-
-                        <div class="notification-item" data-type="system">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon system">
-                                <i class="bi bi-megaphone"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>[공지] 서비스 점검 안내</h4>
-                                <p>2024년 3월 20일 02:00~06:00 서비스 점검이 예정되어 있습니다.</p>
-                            </div>
-                            <span class="notification-time">2024.03.01</span>
-                        </div>
-
-                        <div class="notification-item" data-type="system">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon system">
-                                <i class="bi bi-check-circle"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>상품이 승인되었습니다</h4>
-                                <p><strong>제주 서핑 레슨</strong> 상품이 승인되어 판매가 시작되었습니다.</p>
-                            </div>
-                            <span class="notification-time">2024.02.28</span>
-                        </div>
-
-                        <div class="notification-item" data-type="inquiry">
-                            <label class="notification-checkbox">
-                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-                            </label>
-                            <div class="notification-icon inquiry">
-                                <i class="bi bi-chat-dots"></i>
-                            </div>
-                            <div class="notification-content">
-                                <h4>문의 답변이 완료되었습니다</h4>
-                                <p><strong>한라산 트레킹 투어</strong> 문의에 답변을 남기셨습니다.</p>
-                            </div>
-                            <span class="notification-time">2024.02.25</span>
-                        </div>
-                    </div>
-                </div> -->
-
                 <!-- 페이지네이션 -->
                 <div class="pagination-container">
                     <nav>
@@ -400,4 +296,5 @@ function deleteAllNotifications() {
 }
 </script>
 </body>
+
 </html>

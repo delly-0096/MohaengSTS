@@ -64,13 +64,13 @@ public class TalkController {
         this.mailController = mailController;
     }
 
-	@RequestMapping
+	@GetMapping
 	public String communityForm(@RequestParam(name = "page", required = false, defaultValue = "1") int currentPage,
 			@RequestParam(required = false) Integer boardNo, @RequestParam(required = false) String searchWord,
 			@RequestParam(required = false, defaultValue = "all") String ntcType, Model model) {
 		log.info("communityForm()...실행");
 		PaginationInfoVO<BoardVO> pagingVO = new PaginationInfoVO<>();
-
+		pagingVO.setScreenSize(10);	
 		// 검색시 추가
 		if (StringUtils.isNoneBlank(searchWord)) {
 			pagingVO.setSearchWord(searchWord);
@@ -79,7 +79,7 @@ public class TalkController {
 			model.addAttribute("ntcType", ntcType);
 		}
 
-		pagingVO.setCurrentPage(currentPage);
+		pagingVO.setCurrentPage(currentPage);   
 		int totalRecord = talkService.selectTalkCount(pagingVO);
 		pagingVO.setTotalRecord(totalRecord);
 		// 게시판 목록

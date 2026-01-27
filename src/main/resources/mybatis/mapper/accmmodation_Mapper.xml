@@ -137,6 +137,12 @@
 	    <result property="childCnt" column="CHILD_CNT"/>
 	    <result property="infantCnt" column="INFANT_CNT"/>
 	    
+	    <result property="resvRequest" column="RESV_REQUEST"/>
+	    <result property="tripProdNo" column="TRIP_PROD_NO"/>
+	    <result property="price" column="PRICE"/>
+	    <result property="discount" column="DISCOUNT"/>
+	    
+	    
 	    <result property="payNo" column="PAY_NO"/>
 		<association property="accResvAgree" resultMap="accresvAgreeMap"/>
 		
@@ -291,6 +297,26 @@
 	<sql id="roomColumns">
 		  ${alias}ROOM_TYPE_NO
     	, ${alias}USE_UN
+	</sql>
+	
+	<!-- 예약 정보 가져올 컬럼  -->
+	<sql id="accResvColumns">
+		  ${alias}ACC_RESV_NO
+	    , ${alias}ROOM_TYPE_NO
+	    , ${alias}RESV_MEM_NO
+	    , ${alias}START_DT
+	    , ${alias}END_DT
+	    , ${alias}STAY_DAYS
+	    , ${alias}REG_DT
+	    , ${alias}RESV_STATUS
+	    , ${alias}ARRIVE_TIME
+	    , ${alias}ADULT_CNT
+	    , ${alias}CHILD_CNT
+	    , ${alias}INFANT_CNT
+	    , ${alias}RESV_REQUEST
+	    , ${alias}PAY_NO
+	    , ${alias}PRICE
+	    , ${alias}TRIP_PROD_NO
 	</sql>
 	
 	<!-- 숙소 API 정보 INSERT sql태그 사용할 수도?? -->

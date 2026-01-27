@@ -9,7 +9,7 @@
 <!-- 히어로 섹션 -->
 <section class="hero-section">
      <video class="hero-video" autoplay muted loop playsinline>
-        <source src="${pageContext.request.contextPath}/resources/videos/hero.mp4" type="video/mp4">
+        <source src="${pageContext.request.contextPath}/resources/videos/hero0126.mp4" type="video/mp4">
     </video>
     
     <div class="hero-overlay"></div>
@@ -32,9 +32,6 @@
 		
         <!-- 여행 검색 폼 -->
         <div class="search-form-container">
-            <div class="travel-type-tabs">
-                <button class="travel-type-tab active" data-type="domestic">국내여행</button>
-            </div>
 
             <form class="search-form" action="${pageContext.request.contextPath}/schedule/search" method="GET">
                 <div class="search-input-group">

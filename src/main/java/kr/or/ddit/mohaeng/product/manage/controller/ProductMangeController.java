@@ -117,6 +117,7 @@ public class ProductMangeController {
 	@PostMapping("/product/manage/productDetail")
 	public BusinessProductsVO productDetail(@RequestBody BusinessProductsVO businessProducts){
 		log.info("productDetail : {}", businessProducts);
+		
 		BusinessProductsVO product = manageService.getProductDetail(businessProducts);
 		
 		// getAttachFileDetails
@@ -221,8 +222,10 @@ public class ProductMangeController {
 		log.info("deleteProduct : {}", tripProd);
 		ServiceResult result = manageService.deleteProductStatus(tripProd);
 		if (result == ServiceResult.OK) {
+			log.info("성공! : {}", result);
 			return new ResponseEntity<String>(result.toString(), HttpStatus.OK);
 		} else {
+			log.info("실패! : {}", result);
 			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 		}
 	}
@@ -294,8 +297,6 @@ public class ProductMangeController {
 		log.info("registerProduct.숙박 룸타입: {}", businessProducts.getAccommodation().getRoomTypeList());
 		log.info("registerProduct.숙박 룸타입 별 시설: {}", businessProducts.getAccommodation().getRoomTypeList().get(0).getFacility());
 		log.info("registerProduct.숙박 룸타입 별 특징: {}", businessProducts.getAccommodation().getRoomTypeList().get(0).getFeature());
-//		log.info("registerProduct.prodSale : {}", businessProducts.getProdSale());
-		
 		log.info("uploadFiles : {} uploadFiles : {}", uploadFiles);
 		
 		int memNo = customUser.getMember().getMemNo();
@@ -307,14 +308,7 @@ public class ProductMangeController {
 		} else {
 			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 		}
-//		return null;
-		
-//		// 2. 새 파일 추가
-//		if (uploadFiles != null && !uploadFiles.isEmpty()) {
-//			// 여기서 수정 실행
-//		}
-//		
-//		
+
 	}
 	
 	

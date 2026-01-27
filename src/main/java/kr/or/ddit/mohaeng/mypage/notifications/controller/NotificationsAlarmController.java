@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.apache.catalina.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import kr.or.ddit.mohaeng.mypage.notifications.service.INotificationsAlarmService;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.support.notice.service.INoticeService;
 import kr.or.ddit.mohaeng.vo.AlarmVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
@@ -28,22 +30,25 @@ public class NotificationsAlarmController {
 	 */
 	@GetMapping("/notifications")
 	public String page(@RequestParam(name="page", required=false, defaultValue = "1")int currentPage,
-			Model model){
+					   @RequestParam(name="type", required=false, defaultValue="ALL") String type,
+					   @AuthenticationPrincipal CustomUserDetails user, Model model){
+		
 		PaginationInfoVO<AlarmVO> pagingVO = new PaginationInfoVO<>();
-		System.out.println("memNo = " + pagingVO.getMemNo());
-		pagingVO.getMemNo();
-
+		pagingVO.setMemNo(user.getMemNo());
+		log.info("notifications memNo={}", user.getMemNo());
+		 // 검색시 추가
+		  pagingVO.setCurrentPage(currentPage); 
+		   pagingVO.setSearchType(type);
+		   
+		  int totalRecord = notificationsAlarmService.selectAlarmCount(pagingVO);
+		  pagingVO.setTotalPage(totalRecord); 
+		  
+		  List<AlarmVO> list = notificationsAlarmService.selectAlarmList(pagingVO); 
+		  log.info("list:{}" + list);
 		
-		 // 검색시 추가 pagingVO.setCurrentPage(currentPage); int totalRecord =
-		//  notificationsAlarmService.selectAlarmCount(pagingVO);
-		  //pagingVO.setTotalPage(totalRecord); 
-		  List<AlarmVO> list =
-		  notificationsAlarmService.selectAlarmList(pagingVO); log.info("list:{}" +
-		 list);
-		
-		 // model.addAttribute("pagingVO", pagingVO);
-		  model.addAttribute("alarmlist",list);
-		 
+		  model.addAttribute("pagingVO", pagingVO);
+		  model.addAttribute("alarmList",list);
+		  model.addAttribute("type", type);  
 		return "mypage/business/notifications";
 	}
 	

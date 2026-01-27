@@ -73,7 +73,7 @@
 					    </div>
 					</div>
 					
-					<div class="dashboard-row" style="display: flex; gap: 20px; margin-top: 20px;">
+<%-- 					<div class="dashboard-row" style="display: flex; gap: 20px; margin-top: 20px;">
 					    <div class="content-section" style="flex: 1; min-width: 0;">
 					        <div class="section-header" style="display: flex; justify-content: space-between;">
 					            <h3><i class="bi bi-calendar-check"></i> 다가오는 예약</h3>
@@ -92,7 +92,7 @@
 					        <div class="list-container" id="recentReviews" style="height: 300px; overflow-y: auto;">
 					            </div>
 					    </div>
-					</div>
+					</div> --%>
 					
                     <!-- 최근 예약 -->
                     <div class="col-lg-8">
@@ -154,8 +154,8 @@
                         </div>
                     </div>
 
-                    <!-- 알림 -->
-                    <div class="col-lg-4">
+				     <!-- 알림 -->
+                     <div class="col-lg-4">
                         <div class="content-section">
 							  <div class="section-header">
 							    <h3><i class="bi bi-bell"></i> 알림</h3>
@@ -164,58 +164,15 @@
 							    </a>
 							  </div>
 							
-							  <!-- ✅ 리스트형 -->
+							
 							  <ul class="noti-list" id="notiList">
 							    <!-- JS로 렌더링 -->
-							    <li class="noti-empty">알림을 불러오는 중...</li>
+							    <li class="noti-empty">새로운 알림이 없습니다.</li>
 							  </ul>
+							</div> 
 							</div>
 
 
-                   		 <!-- <div class="notification-list">
-                                <div class="notification-item unread">
-                                    <div class="notification-icon order">
-                                        <i class="bi bi-cart-check"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <h4>새 예약이 들어왔습니다</h4>
-                                        <p>제주 스쿠버다이빙 체험</p>
-                                    </div>
-                                    <span class="notification-time">10분 전</span>
-                                </div>
-                                <div class="notification-item unread">
-                                    <div class="notification-icon review">
-                                        <i class="bi bi-star"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <h4>새 후기가 등록되었습니다</h4>
-                                        <p>한라산 트레킹 투어</p>
-                                    </div>
-                                    <span class="notification-time">1시간 전</span>
-                                </div>
-                                <div class="notification-item">
-                                    <div class="notification-icon inquiry">
-                                        <i class="bi bi-chat-dots"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <h4>문의가 접수되었습니다</h4>
-                                        <p>제주 서핑 레슨 관련</p>
-                                    </div>
-                                    <span class="notification-time">3시간 전</span>
-                                </div>
-                                <div class="notification-item">
-                                    <div class="notification-icon system">
-                                        <i class="bi bi-gear"></i>
-                                    </div>
-                                    <div class="notification-content">
-                                        <h4>정산 완료</h4>
-                                        <p>2월 정산금 입금 완료</p>
-                                    </div> 
-                                    <span class="notification-time">어제</span>  -->
-                                </div>
-                            </div>
-                        </div>
-                    </div> 
 
                 <!-- 상품 현황 -->
                 <div class="content-section">
@@ -234,7 +191,7 @@
 				                <c:forEach items="${dashboard.productList}" var="prod">
 				                    <div class="product-manage-item">
 				                        <div class="product-manage-info">
-				                            <img src="${not empty prod.thumbImage ? prod.thumbImage : 'https://via.placeholder.com/80'}" alt="상품">
+				                            <img src="${pageContext.request.contextPath}/upload/${prod.thumbImage}" alt="상품">
 				                            <div class="product-manage-details">
 				                            <a href="${pageContext.request.contextPath}${prod.prodCtgryType eq 'accommodation' ? '/product/accommodation' : '/tour'}/${prod.tripProdNo}" 
        												style="text-decoration: none; color: inherit;">
@@ -385,98 +342,8 @@ if(reviews.length > 0) {
 })();
 </script>
 
-<style>
-/* 알림 리스트 */
-.noti-list{
-  list-style:none;
-  padding:0;
-  margin:0;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-}
-
-.noti-item{
-  display:flex;
-  align-items:flex-start;
-  gap:12px;
-  padding:12px 12px;
-  border:1px solid #eee;
-  border-radius:14px;
-  background:#fff;
-  cursor:pointer;
-  transition:transform .08s ease, box-shadow .08s ease;
-}
-
-.noti-item:hover{
-  transform:translateY(-1px);
-  box-shadow:0 6px 18px rgba(0,0,0,.06);
-}
-
-/* 읽지 않음 강조 */
-.noti-item.unread{
-  background:#f5fbff;
-  border-color:#d9efff;
-}
-
-.noti-icon{
-  width:36px;
-  height:36px;
-  border-radius:50%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  flex:0 0 36px;
-  font-size:18px;
-}
-
-/* 타입별 컬러(원하는대로 수정) */
-.noti-item.type-order .noti-icon{ background:#e8f5ff; color:#1f6feb; }
-.noti-item.type-review .noti-icon{ background:#fff5e6; color:#f59f00; }
-.noti-item.type-inquiry .noti-icon{ background:#e6fff7; color:#0ca678; }
-.noti-item.type-settle .noti-icon{ background:#f2f2f2; color:#495057; }
-
-.noti-body{
-  flex:1;
-  min-width:0; /* ✅ 이거 없으면 줄바꿈 깨지고 세로로 찢어짐 */
-}
-
-.noti-title{
-  font-weight:700;
-  font-size:14px;
-  margin:0 0 2px 0;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
-}
-
-.noti-desc{
-  font-size:13px;
-  margin:0;
-  color:#666;
-  overflow:hidden;
-  display:-webkit-box;
-  -webkit-line-clamp:1;
-  -webkit-box-orient:vertical;
-}
-
-.noti-meta{
-  flex:0 0 auto;
-  font-size:12px;
-  color:#8a8a8a;
-  margin-left:auto;
-  padding-left:10px;
-  white-space:nowrap;
-}
-
-.noti-empty{
-  padding:12px;
-  color:#888;
-  text-align:center;
-}
 
 
 
-</style>
 <c:set var="pageJs" value="mypage" />
 <%@ include file="../../common/footer.jsp" %>

@@ -5,7 +5,8 @@
 <c:set var="pageCss" value="mypage" />
 
 <%@ include file="../common/header.jsp" %>
-
+<style>
+</style>
 <div class="mypage">
     <div class="container">
         <div class="mypage-container no-sidebar">
@@ -57,12 +58,8 @@
                 <!-- 알림 목록 -->
                 <div class="content-section">
                     <div class="notification-list">
-                       <div class="notification-list">
-
-						
-                       
                         <!-- 읽지 않은 알림 -->
-                        <div class="notification-item unread" data-type="payment">
+                        <div class="notification-item" data-type="payment">
                             <label class="notification-checkbox">
                                 <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
                             </label>
@@ -76,7 +73,7 @@
                             <span class="notification-time">10분 전</span>
                         </div>
 
-                        <div class="notification-item unread" data-type="point">
+                        <div class="notification-item" data-type="point">
                             <label class="notification-checkbox">
                                 <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
                             </label>
@@ -90,7 +87,7 @@
                             <span class="notification-time">10분 전</span>
                         </div>
 
-                        <div class="notification-item unread" data-type="payment">
+                        <div class="notification-item" data-type="payment">
                             <label class="notification-checkbox">
                                 <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
                             </label>
@@ -202,8 +199,7 @@
                             </div>
                             <span class="notification-time">2024.11.10</span>
                         </div>
-                    </div>
-                </div>
+              		 </div>
 
                 <!-- 페이지네이션 -->
               <div class="pagination-container">
@@ -368,7 +364,6 @@ function deleteAllNotifications() {
     }
 }
 <!-- ✅ 알림 실시간(뱃지) + 클릭 읽음처리 (애니메이션 제거/중복인터벌 방지/안전파싱) -->
-<script>
 (function(){
   if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) return;
 

@@ -1,632 +1,639 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
-<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
+<%@ taglib prefix="sec"
+	uri="http://www.springframework.org/security/tags"%>
 
 <c:set var="pageTitle" value="여행톡" />
 <c:set var="pageCss" value="community" />
 
-<%@ include file="../common/header.jsp" %>
+<%@ include file="../common/header.jsp"%>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions"%>
 
 
 
 <style>
-
 .thumb-wrap {
-  width: 120px;
-  height: 120px;
-  border-radius: 12px;
-  overflow: hidden;
-  display: inline-block;
-  border: 1px solid #e5e7eb;
-  background: #f8fafc;
+	width: 120px;
+	height: 120px;
+	border-radius: 12px;
+	overflow: hidden;
+	display: inline-block;
+	border: 1px solid #e5e7eb;
+	background: #f8fafc;
 }
 
 .thumb-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
 }
 
 /* ===== 게시글 상세 모달 ===== */
 .post-detail-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.6);
-    z-index: 1200;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-    padding: 20px;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	background: rgba(0, 0, 0, 0.6);
+	z-index: 1200;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	visibility: hidden;
+	transition: all 0.3s ease;
+	padding: 20px;
 }
 
 .post-detail-overlay.active {
-    opacity: 1;
-    visibility: visible;
+	opacity: 1;
+	visibility: visible;
 }
 
 .post-detail-modal {
-    background: white;
-    border-radius: 16px;
-    width: 100%;
-    max-width: 800px;
-    max-height: 90vh;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    transform: translateY(20px);
-    transition: transform 0.3s ease;
+	background: white;
+	border-radius: 16px;
+	width: 100%;
+	max-width: 800px;
+	max-height: 90vh;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	transform: translateY(20px);
+	transition: transform 0.3s ease;
 }
 
 .post-detail-overlay.active .post-detail-modal {
-    transform: translateY(0);
+	transform: translateY(0);
 }
 
 .post-detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 16px 20px;
-    border-bottom: 1px solid #eee;
-    background: #f8fafc;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 16px 20px;
+	border-bottom: 1px solid #eee;
+	background: #f8fafc;
 }
 
 .post-detail-category {
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
-    background: var(--primary-color);
-    color: white;
+	padding: 6px 14px;
+	border-radius: 20px;
+	font-size: 13px;
+	font-weight: 600;
+	background: var(--primary-color);
+	color: white;
 }
 
 .post-detail-category.notice {
-    background: #ef4444;
+	background: #ef4444;
 }
 
 .post-detail-category.companion {
-    background: #10b981;
+	background: #0d5c5c;
 }
 
 .post-detail-category.info {
-    background: #3b82f6;
+	background: #3b82f6;
 }
 
 .post-detail-category.qna {
-    background: #8b5cf6;
+	background: #8b5cf6;
 }
 
 .post-detail-category.review {
-    background: #f59e0b;
+	background: #f59e0b;
 }
 
 .post-detail-close {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    color: #666;
-    transition: all 0.2s ease;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	border: none;
+	background: white;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 18px;
+	color: #666;
+	transition: all 0.2s ease;
 }
 
 .post-detail-close:hover {
-    background: #fee2e2;
-    color: #ef4444;
+	background: #fee2e2;
+	color: #ef4444;
 }
 
 .post-detail-body {
-    padding: 24px;
-    overflow-y: auto;
-    flex: 1;
+	padding: 24px;
+	overflow-y: auto;
+	flex: 1;
 }
 
 .post-detail-title {
-    font-size: 24px;
-    font-weight: 700;
-    color: #1a1a1a;
-    margin-bottom: 16px;
-    line-height: 1.4;
+	font-size: 24px;
+	font-weight: 700;
+	color: #1a1a1a;
+	margin-bottom: 16px;
+	line-height: 1.4;
 }
 
 .post-detail-meta {
 	display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    padding-bottom: 16px;
-    border-bottom: 1px solid #eee;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 24px;
+	padding-bottom: 16px;
+	border-bottom: 1px solid #eee;
 }
 
 .post-author {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
 }
 
 .post-author img {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    object-fit: cover;
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	object-fit: cover;
 }
 
 .author-info {
-    display: flex;
-    flex-direction: column;
+	display: flex;
+	flex-direction: column;
 }
 
 .author-name {
-    font-weight: 600;
-    color: #333;
+	font-weight: 600;
+	color: #333;
 }
 
 .post-date {
-    font-size: 13px;
-    color: #999;
+	font-size: 13px;
+	color: #999;
 }
 
 .post-detail-stats {
-    display: flex;
-    gap: 16px;
-    color: #666;
-    font-size: 14px;
+	display: flex;
+	gap: 16px;
+	color: #666;
+	font-size: 14px;
 }
 
 .post-detail-stats span {
-    display: flex;
-    align-items: center;
-    gap: 4px;
+	display: flex;
+	align-items: center;
+	gap: 4px;
 }
 
 .post-detail-content {
-    font-size: 15px;
-    line-height: 1.8;
-    color: #333;
-    min-height: 150px;
+	font-size: 15px;
+	line-height: 1.8;
+	color: #333;
+	min-height: 150px;
 }
 
 .post-detail-content p {
-    margin-bottom: 16px;
+	margin-bottom: 16px;
 }
 
 .post-detail-content img {
-    max-width: 100%;
-    border-radius: 8px;
-    margin: 16px 0;
+	max-width: 100%;
+	border-radius: 8px;
+	margin: 16px 0;
 }
 
 .post-detail-tags {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 8px;
-    padding: 16px 0;
-    margin-top: 16px;
-    border-top: 1px solid #f0f0f0;
-    color: #666;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px;
+	padding: 16px 0;
+	margin-top: 16px;
+	border-top: 1px solid #f0f0f0;
+	color: #666;
 }
 
 .post-detail-tags i {
-    color: var(--primary-color);
+	color: var(--primary-color);
 }
 
 .post-tag {
-    display: inline-block;
-    padding: 4px 12px;
-    background: var(--primary-color);
-    color: white;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
+	display: inline-block;
+	padding: 4px 12px;
+	background: var(--primary-color);
+	color: white;
+	border-radius: 20px;
+	font-size: 13px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 .post-tag:hover {
-    background: var(--primary-dark, #0d5c5c);
-    color: white;
+	background: var(--primary-dark, #0d5c5c);
+	color: white;
 }
 
 .post-detail-actions {
-    display: flex;
-    gap: 12px;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-    margin-top: 20px;
+	display: flex;
+	gap: 12px;
+	padding-top: 20px;
+	border-top: 1px solid #eee;
+	margin-top: 20px;
 }
 
 .post-action-btn {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 10px 16px;
-    border: 1px solid #ddd;
-    background: white;
-    border-radius: 8px;
-    font-size: 14px;
-    color: #666;
-    cursor: pointer;
-    transition: all 0.2s ease;
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	padding: 10px 16px;
+	border: 1px solid #ddd;
+	background: white;
+	border-radius: 8px;
+	font-size: 14px;
+	color: #666;
+	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 .post-action-btn:hover {
-    border-color: var(--primary-color);
-    color: var(--primary-color);
+	border-color: var(--primary-color);
+	color: var(--primary-color);
 }
 
 .post-action-btn.active {
-    background: var(--primary-color);
-    border-color: var(--primary-color);
-    color: white;
+	background: var(--primary-color);
+	border-color: var(--primary-color);
+	color: white;
 }
 
 .post-action-btn.active i {
-    color: white;
+	color: white;
 }
 
 /* 댓글 섹션 */
 .post-comments-section {
-    padding: 20px 24px;
-    background: #f8fafc;
-    border-top: 1px solid #eee;
-    max-height: 300px;
-    overflow-y: auto;
+	padding: 20px 24px;
+	background: #f8fafc;
+	border-top: 1px solid #eee;
+	max-height: 300px;
+	overflow-y: auto;
 }
 
 .comments-title {
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 16px;
-    color: #333;
+	font-size: 16px;
+	font-weight: 600;
+	margin-bottom: 16px;
+	color: #333;
 }
 
 .comments-list {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    margin-bottom: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	margin-bottom: 16px;
 }
 
 .comment-item {
-    display: flex;
-    gap: 12px;
+	display: flex;
+	gap: 12px;
 }
 
 .comment-item .comment-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	object-fit: cover;
+	flex-shrink: 0;
 }
 
 .comment-body {
-    flex: 1;
+	flex: 1;
 }
 
 .comment-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 4px;
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 4px;
 }
 
 .comment-author {
-    font-weight: 600;
-    font-size: 14px;
-    color: #333;
+	font-weight: 600;
+	font-size: 14px;
+	color: #333;
 }
 
 .comment-date {
-    font-size: 12px;
-    color: #999;
+	font-size: 12px;
+	color: #999;
 }
 
 .comment-text {
-    font-size: 14px;
-    color: #555;
-    line-height: 1.5;
+	font-size: 14px;
+	color: #555;
+	line-height: 1.5;
 }
 
 .comment-actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 6px;
+	display: flex;
+	gap: 12px;
+	margin-top: 6px;
 }
 
 .comment-action {
-    font-size: 12px;
-    color: #999;
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0;
+	font-size: 12px;
+	color: #999;
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0;
 }
 
 .comment-action:hover {
-    color: var(--primary-color);
+	color: var(--primary-color);
 }
 
 /* 댓글 작성 */
 .comment-write {
-    display: flex;
-    gap: 12px;
-    padding-top: 16px;
-    border-top: 1px solid #e5e5e5;
+	display: flex;
+	gap: 12px;
+	padding-top: 16px;
+	border-top: 1px solid #e5e5e5;
 }
 
 .comment-write .comment-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    object-fit: cover;
+	width: 36px;
+	height: 36px;
+	border-radius: 50%;
+	object-fit: cover;
 }
 
 .comment-input-wrapper {
-    flex: 1;
-    display: flex;
-    gap: 8px;
-    align-items: flex-end;
+	flex: 1;
+	display: flex;
+	gap: 8px;
+	align-items: flex-end;
 }
 
 .comment-input {
-    flex: 1;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    padding: 10px 16px;
-    font-size: 14px;
-    resize: none;
-    max-height: 100px;
-    outline: none;
-    transition: border-color 0.2s ease;
+	flex: 1;
+	border: 1px solid #ddd;
+	border-radius: 20px;
+	padding: 10px 16px;
+	font-size: 14px;
+	resize: none;
+	max-height: 100px;
+	outline: none;
+	transition: border-color 0.2s ease;
 }
 
 .comment-input:focus {
-    border-color: var(--primary-color);
+	border-color: var(--primary-color);
 }
 
 .comment-submit-btn {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: var(--primary-color);
-    border: none;
-    color: white;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s ease;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	background: var(--primary-color);
+	border: none;
+	color: white;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.2s ease;
 }
 
 .comment-submit-btn:hover {
-    background: #357ABD;
-    transform: scale(1.05);
+	background: #357ABD;
+	transform: scale(1.05);
 }
 
 .comment-login-notice {
-    text-align: center;
-    padding: 16px;
-    background: #f1f5f9;
-    border-radius: 8px;
-    color: #666;
-    font-size: 14px;
+	text-align: center;
+	padding: 16px;
+	background: #f1f5f9;
+	border-radius: 8px;
+	color: #666;
+	font-size: 14px;
 }
 
 .comment-login-notice a {
-    color: var(--primary-color);
-    font-weight: 600;
+	color: var(--primary-color);
+	font-weight: 600;
 }
 
 /* 클릭 가능한 게시글 아이템 */
 .post-item {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
+	cursor: pointer;
+	transition: background-color 0.2s ease;
 }
 
 .post-item:hover {
-    background-color: #f8fafc;
+	background-color: #f8fafc;
 }
 
 .post-title span {
-    color: inherit;
+	color: inherit;
 }
 
-@media (max-width: 768px) {
-    .post-detail-modal {
-        max-height: 95vh;
-        border-radius: 12px;
-    }
-
-    .post-detail-title {
-        font-size: 20px;
-    }
-
-    .post-detail-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 12px;
-    }
-
-    .post-detail-actions {
-        flex-wrap: wrap;
-    }
-
-    .post-action-btn {
-        flex: 1;
-        justify-content: center;
-    }
+@media ( max-width : 768px) {
+	.post-detail-modal {
+		max-height: 95vh;
+		border-radius: 12px;
+	}
+	.post-detail-title {
+		font-size: 20px;
+	}
+	.post-detail-meta {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 12px;
+	}
+	.post-detail-actions {
+		flex-wrap: wrap;
+	}
+	.post-action-btn {
+		flex: 1;
+		justify-content: center;
+	}
 }
 </style>
-	<div class="community-page">
-		<div class="container">
-			<!-- 헤더 -->
-			<div class="community-header">
-				<h1>
-					<i class="bi bi-chat-dots me-3"></i>여행톡
-				</h1>
-				<p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
-			</div>
-			<!-- boardVO있을때 상세출력 
+<div class="community-page">
+	<div class="container">
+		<!-- 헤더 -->
+		<div class="community-header">
+			<h1>
+				<i class="bi bi-chat-dots me-3"></i>여행톡
+			</h1>
+			<p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
+		</div>
+		<!-- boardVO있을때 상세출력 
 			model.addAttribute("boardVO",boardVO);
 		-->
-			<!-- boardVO 있을 때 상세 출력 -->
-				<c:if test="${not empty boardVO}">
-				  <div class="card mb-4">
-				    <div class="card-body">
-				
+		<!-- boardVO 있을 때 상세 출력 -->
+		<c:if test="${not empty boardVO}">
+			<div class="card mb-4">
+				<div class="card-body">
+
 					<!-- 둘 중 하나 카테고리 지우시면 됩니다 span tag -->
-				  	<div class="post-detail-header">
-            			<span class="post-detail-category" id="postDetailCategory">${boardVO.boardCtgryCd}</span>
-				        <a class="btn btn-sm btn-outline-secondary"
-				           href="${pageContext.request.contextPath}/community/talk">
-				          목록
-				        </a>
-        			</div>
-				
+					<div class="post-detail-header">
+					    <span class="post-detail-category ${boardVO.boardCtgryCd}" id="postDetailCategory">
+					        <c:choose>
+					            <c:when test="${boardVO.boardCtgryCd eq 'companion'}">동행</c:when>
+					            <c:when test="${boardVO.boardCtgryCd eq 'notice'}">공지</c:when>
+					            <c:when test="${boardVO.boardCtgryCd eq 'free'}">자유</c:when>
+					            <c:when test="${boardVO.boardCtgryCd eq 'info'}">정보</c:when>
+					            <c:when test="${boardVO.boardCtgryCd eq 'qna'}">Q&A</c:when>
+					            <c:when test="${boardVO.boardCtgryCd eq 'review'}">후기</c:when>
+					            <c:otherwise>${boardVO.boardCtgryCd}</c:otherwise>
+					        </c:choose>
+					    </span>
+					    
+					    <a class="btn btn-sm btn-outline-secondary"
+					        href="${pageContext.request.contextPath}/community/talk"> 목록
+					    </a>
+					</div>
+
 					<div class="post-detail-body">
-		            	<h2 class="post-detail-title" id="postDetailTitle">${boardVO.boardTitle}</h2>
-	            		<div class="post-detail-meta">
-	            			<a href="${pageContext.request.contextPath}/community/talk?boardNo=${boardVO.boardNo}"></a>
-		                <div class="post-author" style="width:50%;">
-		                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80" alt="프로필" id="postAuthorAvatar">
-		                    <div class="author-info">
-		                        <span class="author-name" id="postAuthorName"> ${boardVO.writerNickname}<small>(${boardVO.writerId})</small> </span>
-		                        <span class="post-date" id="postDate">${boardVO.regDt}</span>
-		                    </div>
-		                </div>
-		                <div class="post-detail" style="width:100%; display:flex;"></div>
-		                <div class="post-detail-stats">
-		                    <span><i class="bi bi-eye"></i> <span id="postViews">${boardVO.viewCnt}</span></span>
-		                    <span><i class="bi bi-chat"></i> <span id="postCommentCount">${boardVO.commentCnt}</span></span>
-		                    <span><i class="bi bi-heart"></i> <span id="postLikes">${boardVO.likeCnt }</span></span>
-		                </div>
-		            </div>
-				
-				      <!-- ✅ 본문 -->
-				      
-				      <div class="post-detail-content" id="postDetailContent">
-				        ${boardVO.boardContent}
-				      </div>
-				      			
-				      
-				     <!-- ✅ 해시태그(1번만 출력) -->
-				      
-				      <c:if test="${not empty boardVO.boardTagList}">
-				        <div class="post-detail-tags" id="postDetailTags">
-				          <c:forEach items="${boardVO.boardTagList}" var="t">
-				            <span class="badge rounded-pill bg-light text-dark me-1">#${t}</span>
-				          </c:forEach>
-				        </div>
-				      </c:if>
-				      
-				      <!-- ✅ 첨부파일: 썸네일 + 다운로드 목록 -->
-				      <c:if test="${not empty boardVO.boardFileList}">
-				      
-				        <!-- ✅ 본문 안 이미지 썸네일 -->
-							<div class="mt-4">
-							  <div class="d-flex flex-wrap gap-2">
-							    <c:forEach items="${boardVO.boardFileList}" var="file">
-							      <c:if test="${file.fileNo ne 0}">
-							
-							        <c:set var="ext" value="${fn:toLowerCase(file.fileExt)}" />
-							        <c:set var="ext" value="${fn:replace(ext,'.','')}" />
-							
-							        <c:if test="${ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' || ext == 'webp'}">
-							          <a href="${pageContext.request.contextPath}/community/talk/preview/${file.fileNo}"
-							             target="_blank"
-							             class="thumb-wrap">
-							            <img class="thumb-img"
-							                 src="${pageContext.request.contextPath}/community/talk/preview/${file.fileNo}"
-							                 alt="${file.fileOriginalName}" />
-							          </a>
-							        </c:if>
-							      </c:if>
-							    </c:forEach>
-							  </div>
+						<h2 class="post-detail-title" id="postDetailTitle">${boardVO.boardTitle}</h2>
+						<div class="post-detail-meta">
+							<a
+								href="${pageContext.request.contextPath}/community/talk?boardNo=${boardVO.boardNo}"></a>
+							<div class="post-author" style="width: 50%;">
+								<img
+									src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+									alt="프로필" id="postAuthorAvatar">
+								<div class="author-info">
+									<span class="author-name" id="postAuthorName">
+										${boardVO.writerNickname}<small>(${boardVO.writerId})</small>
+									</span> <span class="post-date" id="postDate">${boardVO.regDt}</span>
+								</div>
 							</div>
-				
-				        <!-- ✅ 첨부파일 다운로드 목록 -->
-				        
-				        <div class="mt-3">
-				          <strong>💾첨부파일</strong>
-				          <ul class="list-unstyled mt-2 mb-0">
-				            <c:forEach items="${boardVO.boardFileList}" var="file">
-				              <c:if test="${file.fileNo ne 0}">
-				                <li class="mb-1">
-				                  <a href="${pageContext.request.contextPath}/community/talk/download/${file.fileNo}"
-				                     class="text-decoration-none">
-				                    <i class="bi bi-paperclip"></i>
-				                    ${file.fileOriginalName}
-				                  </a>
-				                  <small class="text-muted">(${file.fileFancysize})</small>
-				                </li>
-				              </c:if>
-				            </c:forEach>
-				          </ul>
-				        </div>
-				      </c:if>
-				      
-				      <div class="post-detail-actions ">
-				      	<c:set value="bi bi-heart" var="icon"/>
-				      	<c:set value="" var="active"/>
-				      	<c:set value="" var="color"/>
-				      	<c:set value="N" var="stat"/>
-				      	<c:if test="${not empty boardVO.likes and boardVO.likes > 0 }">
-					      	<c:set value="bi bi-heart-fill" var="icon"/>
-					      	<c:set value="active" var="active"/>
-				      		<c:set value="color:#ef4444" var="color"/>
-				      		<c:set value="Y" var="stat"/>
-				      	</c:if>
-		                <button class="post-action-btn ${active }" onclick="togglePostLike(this)" data-status=${stat }>
-		                    <i class="${icon }" id="postLikeIcon" style="${color}"></i>
-		                    <span>좋아요</span>
-		                </button>
-		                <button class="post-action-btn" onclick="sharePost()">
-		                    <i class="bi bi-share"></i>
-		                    <span>공유</span>
-		                </button>
-		           <sec:authorize access="hasRole('MEMBER')">
-					  <button class="post-action-btn report"
-					          data-board-no="${boardVO.boardNo}"
-					          data-board-title="${fn:escapeXml(boardVO.boardTitle)}"
-					          onclick="reportPost(this)">
-					    <i class="bi bi-flag"></i>
-					    <span>신고</span>
-					  </button>
-					</sec:authorize>
+							<div class="post-detail" style="width: 100%; display: flex;"></div>
+							<div class="post-detail-stats">
+								<span><i class="bi bi-eye"></i> <span id="postViews">${boardVO.viewCnt}</span></span>
+								<span><i class="bi bi-chat"></i> <span
+									id="postCommentCount">${boardVO.commentCnt}</span></span> <span><i
+									class="bi bi-heart"></i> <span id="postLikes">${boardVO.likeCnt }</span></span>
+							</div>
+						</div>
+
+						<!-- ✅ 본문 -->
+
+						<div class="post-detail-content" id="postDetailContent">
+							${boardVO.boardContent}</div>
+
+
+						<!-- ✅ 해시태그(1번만 출력) -->
+
+						<c:if test="${not empty boardVO.boardTagList}">
+							<div class="post-detail-tags" id="postDetailTags">
+								<c:forEach items="${boardVO.boardTagList}" var="t">
+									<span class="badge rounded-pill bg-light text-dark me-1">#${t}</span>
+								</c:forEach>
+							</div>
+						</c:if>
+
+						<!-- ✅ 첨부파일: 썸네일 + 다운로드 목록 -->
+						<c:if test="${not empty boardVO.boardFileList}">
+
+							<!-- ✅ 본문 안 이미지 썸네일 -->
+							<div class="mt-4">
+								<div class="d-flex flex-wrap gap-2">
+									<c:forEach items="${boardVO.boardFileList}" var="file">
+										<c:if test="${file.fileNo ne 0}">
+
+											<c:set var="ext" value="${fn:toLowerCase(file.fileExt)}" />
+											<c:set var="ext" value="${fn:replace(ext,'.','')}" />
+
+											<c:if
+												test="${ext == 'jpg' || ext == 'jpeg' || ext == 'png' || ext == 'gif' || ext == 'webp'}">
+												<a
+													href="${pageContext.request.contextPath}/community/talk/preview/${file.fileNo}"
+													target="_blank" class="thumb-wrap"> <img
+													class="thumb-img"
+													src="${pageContext.request.contextPath}/community/talk/preview/${file.fileNo}"
+													alt="${file.fileOriginalName}" />
+												</a>
+											</c:if>
+										</c:if>
+									</c:forEach>
+								</div>
+							</div>
+
+							<!-- ✅ 첨부파일 다운로드 목록 -->
+
+							<div class="mt-3">
+								<strong>💾첨부파일</strong>
+								<ul class="list-unstyled mt-2 mb-0">
+									<c:forEach items="${boardVO.boardFileList}" var="file">
+										<c:if test="${file.fileNo ne 0}">
+											<li class="mb-1"><a
+												href="${pageContext.request.contextPath}/community/talk/download/${file.fileNo}"
+												class="text-decoration-none"> <i class="bi bi-paperclip"></i>
+													${file.fileOriginalName}
+											</a> <small class="text-muted">(${file.fileFancysize})</small></li>
+										</c:if>
+									</c:forEach>
+								</ul>
+							</div>
+						</c:if>
+
+						<div class="post-detail-actions ">
+							<c:set value="bi bi-heart" var="icon" />
+							<c:set value="" var="active" />
+							<c:set value="" var="color" />
+							<c:set value="N" var="stat" />
+							<c:if test="${not empty boardVO.likes and boardVO.likes > 0 }">
+								<c:set value="bi bi-heart-fill" var="icon" />
+								<c:set value="active" var="active" />
+								<c:set value="color:#ef4444" var="color" />
+								<c:set value="Y" var="stat" />
+							</c:if>
+							<button class="post-action-btn ${active }"
+								onclick="togglePostLike(this)" data-status=${stat }>
+								<i class="${icon }" id="postLikeIcon" style="${color}"></i> <span>좋아요</span>
+							</button>
+							<button class="post-action-btn" onclick="sharePost()">
+								<i class="bi bi-share"></i> <span>공유</span>
+							</button>
+							<sec:authorize access="hasRole('MEMBER')">
+								<button class="post-action-btn report"
+									data-board-no="${boardVO.boardNo}"
+									data-board-title="${fn:escapeXml(boardVO.boardTitle)}"
+									onclick="reportPost(this)">
+									<i class="bi bi-flag"></i> <span>신고</span>
+								</button>
+							</sec:authorize>
 
 
 
-		            </div>
-				
-					  <!-- 댓글 붙이기 --> 
-					  
-					   <div class="comments-list" id="commentsList">
-						<jsp:include page="comment.jsp"/>
-            		  </div>
-   
-				    </div>
-				  </div>
-				</c:if>
-			
+						</div>
+
+						<!-- 댓글 붙이기 -->
+
+						<div class="comments-list" id="commentsList">
+							<jsp:include page="comment.jsp" />
+						</div>
+
+					</div>
+				</div>
+		</c:if>
 
 
 
-<script type="text/javascript">
+
+		<script type="text/javascript">
 function reportPost(btn) {
   const boardNo = btn.dataset.boardNo;
   const title = btn.dataset.boardTitle || '';
@@ -1193,4 +1200,4 @@ if (!document.getElementById('toastStyles')) {
 }
 
 </script>
-<%@ include file="../common/footer.jsp" %>
+		<%@ include file="../common/footer.jsp"%>

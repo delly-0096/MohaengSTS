@@ -35,63 +35,60 @@
 	
 	<!-- 숙박 전체 목록 조회 -->
 	<select id="getAccommodationList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">
-	      SELECT b.*
-	  FROM (
-	      SELECT
-	          <!-- 숙소 -->
-	          a.ACC_NO
-	        , a.TRIP_PROD_NO
-	        , a.ACC_NAME
-	        , a.ACC_CAT_CD
-	        , a.STAR_GRADE
-	        , a.ADDR1
-	        , a.ADDR2
-	        , a.AREA_CODE
-	        , a.SIGUNGU_CODE
-	        , a.MAPX
-	        , a.MAPY
-	        , a.TEL
-	        , a.CHECK_IN_TIME
-	        , a.CHECK_OUT_TIME
-	        , a.OVERVIEW
-	
-	         <!-- 상품 -->
-	        , tp.TRIP_PROD_TITLE
-	        , tp.APPROVE_STATUS
-	        , tp.SALE_START_DT
-	        , tp.SALE_END_DT
-	        , tp.REG_DT
-	        , tp.APRV_YN		AS "aprvYn"
-	        , tp.DEL_YN
-	        , tp.CTY_NM          AS AREA_CODE_PROD
-	
-	          <!-- 객실 집계 -->
-	        , NVL(rt.TOTAL_ROOMS, 0) AS TOTAL_ROOMS
-	        , NVL(rt.MIN_PRICE, 0) AS MIN_PRICE
-	
-	          <!-- 페이징 -->
-	        , ROW_NUMBER() OVER (ORDER BY tp.TRIP_PROD_NO DESC) AS rnum
-	
-	      FROM ACCOMMODATION a
-	
-	      <!-- 상품 (1:1) -->
-	      INNER JOIN TRIP_PROD tp
-	        ON a.TRIP_PROD_NO = tp.TRIP_PROD_NO
-	
-	      <!-- 객실 타입 집계 (1:N → 1:1) -->
-	      LEFT JOIN (
-	          SELECT
-	              ACC_NO
-	            , SUM(TOTAL_ROOM_COUNT) AS TOTAL_ROOMS
-	            , MIN(PRICE * (1 - NVL(DISCOUNT, 0) / 100)) AS MIN_PRICE
-	          FROM ROOM_TYPE
-	          GROUP BY ACC_NO
-	      ) rt
-	        ON a.ACC_NO = rt.ACC_NO
-	
-		      <include refid="accommodationSearch" />
-		  ) b
-		  WHERE b.rnum BETWEEN #{startRow} AND #{endRow}
+	    SELECT b.*
+	    FROM (
+	        SELECT 
+	            res.*,
+	            ROW_NUMBER() OVER (ORDER BY 
+	                CASE WHEN res."approveStatus" = '승인대기' THEN 0 ELSE 1 END,
+	                res.TRIP_PROD_NO DESC
+	            ) AS rnum
+	        FROM (
+	            SELECT
+	                  a.ACC_NO
+	                , a.TRIP_PROD_NO
+	                , a.ACC_NAME
+	                , a.ACC_CAT_CD
+	                , a.STAR_GRADE
+	                , a.ADDR1
+	                , a.ADDR2
+	                , a.AREA_CODE
+	                , a.SIGUNGU_CODE
+	                , a.MAPX
+	                , a.MAPY
+	                , a.TEL
+	                , a.CHECK_IN_TIME
+	                , a.CHECK_OUT_TIME
+	                , a.OVERVIEW
+	                , tp.TRIP_PROD_TITLE
+	                , tp.APPROVE_STATUS AS "approveStatus"
+	                , tp.SALE_START_DT
+	                , tp.SALE_END_DT, tp.REG_DT
+	                , tp.APRV_YN AS "aprvYn"
+	                , tp.DEL_YN AS "delYn"
+	                , tp.CTY_NM AS AREA_CODE_PROD
+	                , NVL(a.TOTAL_ROOM_CNT, 0) AS "totalRooms"
+	                , NVL(rt.MIN_PRICE, 0) AS "minPrice"
+	                , NVL(rt.REMAINING_SUM, 0) AS "remainingCount"
+	            FROM ACCOMMODATION a
+	            INNER JOIN TRIP_PROD tp ON a.TRIP_PROD_NO = tp.TRIP_PROD_NO
+	            LEFT JOIN (
+	                SELECT
+	                    RT_SUB.ACC_NO
+	                  , MIN(RT_SUB.PRICE * (1 - NVL(RT_SUB.DISCOUNT, 0) / 100)) AS MIN_PRICE
+	                  , SUM(RT_SUB.TOTAL_ROOM_COUNT - (
+	                        SELECT COUNT(*) 
+	                        FROM ROOM RM 
+	                        WHERE RM.ROOM_TYPE_NO = RT_SUB.ROOM_TYPE_NO 
+	                        AND RM.USE_UN = 'N'
+	                    )) AS REMAINING_SUM
+	                FROM ROOM_TYPE RT_SUB
+	                GROUP BY RT_SUB.ACC_NO
+	            ) rt ON a.ACC_NO = rt.ACC_NO
+	            <include refid="accommodationSearch" />
+	        ) res
+	    ) b
+	    WHERE b.rnum BETWEEN #{startRow} AND #{endRow}
 	</select>
 	
 	<!-- ==================숙박 상세 조회=================== -->
@@ -104,7 +101,7 @@
 		        , a.TRIP_PROD_NO
 		        , a.ACC_NAME
 		        , a.ACC_CAT_CD
-		        , a.STAR_GRADE
+		        , a.STAR_GRADE						AS "starGrade"
 		        , a.ADDR1
 		        , a.ADDR2
 		        , a.AREA_CODE
@@ -136,23 +133,23 @@
 	<select id="selectRoomTypesByTripProdNo"
         parameterType="int"
         resultType="kr.or.ddit.mohaeng.vo.RoomTypeVO">
-	    SELECT
+		   SELECT
 	          rt.ROOM_TYPE_NO
 	        , rt.ACC_NO
 	        , rt.ROOM_NAME
 	        , rt.BASE_GUEST_COUNT
 	        , rt.MAX_GUEST_COUNT
-	        , rt.BED_COUNT
-	        , rt.BED_TYPE_CD
-	        , rt.TOTAL_ROOM_COUNT				as "totalRoomCount"
-	        , rt.PRICE
-	        , rt.DISCOUNT
-	        , rt.EXTRA_GUEST_FEE
-	        , rt.ROOM_SIZE
-	        , rt.BREAKFAST_YN
+	        , rt.BED_COUNT, rt.BED_TYPE_CD, rt.PRICE, rt.DISCOUNT, rt.EXTRA_GUEST_FEE
+	        , rt.ROOM_SIZE, rt.BREAKFAST_YN
+	        , rt.TOTAL_ROOM_COUNT AS "totalRoomCount"
+	        , (rt.TOTAL_ROOM_COUNT - (
+	            SELECT COUNT(*) 
+	            FROM ROOM RM 
+	            WHERE RM.ROOM_TYPE_NO = rt.ROOM_TYPE_NO 
+	            AND RM.USE_UN = 'N'
+	          )) AS "remainingCount"
 	    FROM ROOM_TYPE rt
-	    INNER JOIN ACCOMMODATION a
-	        ON rt.ACC_NO = a.ACC_NO
+	    INNER JOIN ACCOMMODATION a ON rt.ACC_NO = a.ACC_NO
 	    WHERE a.TRIP_PROD_NO = #{tripProdNo}
 	</select>
 	
@@ -249,8 +246,11 @@
 	<update id="toggleSaleStatus" parameterType="map">
 	    UPDATE TRIP_PROD
 	    SET 
-	          DEL_YN = #{delYn}      
-	        , MOD_DT = SYSDATE
+	          DEL_YN = CASE WHEN #{delYn} = 'Y' THEN 'N' ELSE 'Y' END,
+	          APRV_YN = #{delYn},
+	          APPROVE_STATUS = CASE WHEN #{delYn} = 'Y' THEN '판매중' ELSE '판매중단' END,
+	          
+	          MOD_DT = SYSDATE
 	    WHERE TRIP_PROD_NO = #{tripProdNo}
 	</update>
 	

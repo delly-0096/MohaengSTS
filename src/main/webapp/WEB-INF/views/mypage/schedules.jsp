@@ -22,22 +22,22 @@
                 <div class="stats-grid">
                     <div class="stat-card primary">
                         <div class="stat-icon"><i class="bi bi-calendar-check"></i></div>
-                        <div class="stat-value">5</div>
+                        <div class="stat-value" id="allCount">5</div>
                         <div class="stat-label">전체 일정</div>
                     </div>
                     <div class="stat-card secondary">
                         <div class="stat-icon"><i class="bi bi-clock"></i></div>
-                        <div class="stat-value">2</div>
+                        <div class="stat-value" id="upcomingCount">2</div>
                         <div class="stat-label">예정된 여행</div>
                     </div>
                     <div class="stat-card accent">
                         <div class="stat-icon"><i class="bi bi-check-circle"></i></div>
-                        <div class="stat-value">3</div>
+                        <div class="stat-value" id="completedCount">3</div>
                         <div class="stat-label">완료된 여행</div>
                     </div>
                     <div class="stat-card warning">
                         <div class="stat-icon"><i class="bi bi-robot"></i></div>
-                        <div class="stat-value">2</div>
+                        <div class="stat-value" id="aiCount">2</div>
                         <div class="stat-label">AI 추천 일정</div>
                     </div>
                 </div>

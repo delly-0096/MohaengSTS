@@ -3,6 +3,8 @@ package kr.or.ddit.mohaeng.mypage.payments.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import kr.or.ddit.mohaeng.vo.MyPaymentsVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 
@@ -18,4 +20,6 @@ public interface IMyPaymentsService {
 	public Map<String, Object> selectPaymentMaster(int payNo);
 	// 영수증 상세 품목 리스트 (구매한 상품들)
 	public List<Map<String, Object>> selectReceiptDetailList(int payNo);
+	public void updateFileUseN(String filePath);
+	public Long processReviewFiles(MultipartFile[] files, int memNo, Long existingAttachNo);
 }

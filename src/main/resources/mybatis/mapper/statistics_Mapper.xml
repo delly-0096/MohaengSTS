@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.mypage.statistics.mapper.IStatisticsMapper">
+	
+	<select id="selectProdSg" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+	    SELECT TRIP_PROD_NO
+	         , TRIP_PROD_TITLE
+	         , VIEW_CNT
+	         , RESERV
+	         , NVL(ROUND((RESERV / NULLIF(VIEW_CNT, 0)) * 100, 1), 0) AS CONVERATE
+	         , SALES
+	         , TRUNC(RATING,1) as RATING
+	    FROM (SELECT TP.TRIP_PROD_NO
+	               , TP.TRIP_PROD_TITLE
+	               , NVL(TP.VIEW_CNT,0) AS VIEW_CNT
+	               , COUNT(TPL.PROD_LIST_NO) AS RESERV
+	        	   , SUM((SELECT NVL(SUM(NET_SALES),0) 
+                            FROM SALES S 
+                           WHERE S.PROD_LIST_NO = TPL.PROD_LIST_NO 
+                             AND S.SETTLE_STAT_CD != '취소'
+                             AND S.PROD_LIST_NO IN (
+                                SELECT PROD_LIST_NO 
+                                FROM TRIP_PROD_LIST
+                                WHERE PAY_NO IN (
+                                    SELECT P.PAY_NO FROM PAYMENT P
+                                    <if test='startDate != null and startDate != ""'>
+	                                    <![CDATA[
+	                                    	WHERE P.PAY_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+	                                    	AND P.PAY_DT <= TO_DATE(#{endDate}, 'YYYY-MM-DD') + 0.99999
+	                                	]]>
+                                	</if>
+                                )
+                             )
+                             )) AS SALES
+	        	   , (SELECT NVL(AVG(RATING),0) FROM PROD_REVIEW PR WHERE PR.TRIP_PROD_NO = TP.TRIP_PROD_NO) AS RATING
+	        FROM TRIP_PROD TP
+	        LEFT OUTER JOIN TRIP_PROD_LIST TPL
+	        ON TP.TRIP_PROD_NO = TPL.TRIP_PROD_NO
+            LEFT OUTER JOIN PAYMENT P
+            ON TPL.PAY_NO = P.PAY_NO
+            <if test='startDate != null and startDate != ""'>
+	        <![CDATA[
+	          AND P.PAY_DT >= TO_DATE(#{startDate}, 'yyyy-MM-dd') 
+	          AND P.PAY_DT <= TO_DATE(#{endDate}, 'yyyy-MM-dd') + 0.99999
+	      	]]>
+	      	</if>
+	        WHERE TP.MEM_NO = #{memNo}
+	        GROUP BY TP.TRIP_PROD_NO, TP.TRIP_PROD_TITLE, TP.VIEW_CNT
+	        )
+	</select>
+	
+</mapper>

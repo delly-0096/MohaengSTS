@@ -119,6 +119,7 @@ public class SecurityConfig {
 			"/",
 			"/error",
 			"/mohaeng",
+			"/statistics/**",
 			"/.well-known/**"		// 크롬 개발자 도구로의 요청
 	};
 
@@ -130,7 +131,8 @@ public class SecurityConfig {
 			"/api/admin/schedule/**",
 			"/api/admin/notices/thumbnail/**",
 			"/api/admin/inquiry/**",
-			"/api/admin/products/**"
+			"/api/admin/products/**",
+			"/api/admin/transactions/payments/**"
 		};
 
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {
@@ -192,7 +194,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 
-                .requestMatchers("/files/**").permitAll() 
+                .requestMatchers("/files/**").permitAll()
                 .requestMatchers("/community/travel-log/write").hasRole("MEMBER")
                 
                 .requestMatchers(PASS_URL).permitAll()

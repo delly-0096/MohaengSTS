@@ -5,6 +5,7 @@ import java.util.List;
 
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
 import kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO;
+import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import lombok.Data;
 
 @Data
@@ -100,4 +101,15 @@ public class TripProdVO {
     private int viewCount; 		// 조회수
     private int resvCount;      // 예약수
     private double rating;      // 평점
+
+    // 이미지 목록 (상세 조회용)
+	private List<AttachFileDetailVO> imageList;
+	
+	// 예약 가능 시간 (수정용 - String 리스트)
+	private List<String> bookingTimes;
+	
+	// 위치 정보
+	private int prodPlcNo;
+	private String addr1;
+	private String addr2;
 }

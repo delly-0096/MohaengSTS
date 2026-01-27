@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.report.mapper.IAReportMapper">
+  <select id="getCodeByGroup" parameterType="String" resultType="kr.or.ddit.mohaeng.vo.CodeVO">
+  	SELECT
+  		CD
+  		,CDGR
+  		,CD_NAME
+  		,USE_YN AS cdYn
+  	FROM CODE
+  	WHERE CDGR = #{cdgr}
+  	ORDER BY CD ASC
+  </select>
+
+  <select id="getReportList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.ReportVO">
+  	SELECT *
+  	FROM(
+  		SELECT R. *,
+  			 M1.MEM_ID AS reqMemId
+  			,M2.MEM_ID AS targetMemId
+  			,ROW_NUMBER() OVER (ORDER BY R.REG_DT DESC) AS RNUM
+  		FROM REPORT R
+  		LEFT JOIN MEMBER M1 ON R.REQ_MEM_NO = M1.MEM_NO
+  		LEFT JOIN MEMBER M2 ON R.TARGET_MEM_NO = M2.MEM_NO
+  		WHERE R. MGMT_TYPE = 'REPORT'
+  		<if test="filters != null and filters.procStatus !=null">
+  			AND R.PROC_STATUS = #{filters.procStatus}
+  		</if>
+  		<if test="filters != null and filters.targetType !=null">
+  			AND R.TARGET_TYPE = #{filters.targetType}
+  		</if>
+  		<if test="filters != null and filters.procResult !=null">
+  			AND R.PROC_RESULT = #{filters.procResult}
+  		</if>
+  		<if test="searchWord != null and searchWord !=''">
+  			AND(
+  				R.CONTENT LIKE '%' || #{searchWord} || '%'
+  				OR R.ADMIN_MEMO LIKE '%' || #{searchWord} || '%'
+  				OR M1.MEM_ID LIKE '%' || #{searchWord} || '%'
+  				OR M2.MEM_ID LIKE '%' || #{searchWord} || '%'
+  			)
+  		</if>
+  		)
+  	WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+  </select>
+
+  <select id="getReportCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+  	SELECT COUNT(*)
+  	FROM REPORT
+  	WHERE MGMT_TYPE = 'REPORT'
+  	<if test="filters != null and filters.procStatus !=null">
+		AND R.PROC_STATUS = #{filters.procStatus}
+	</if>
+	<if test="filters != null and filters.targetType !=null">
+		AND R.TARGET_TYPE = #{filters.targetType}
+	</if>
+	<if test="filters != null and filters.procResult !=null">
+		AND R.PROC_RESULT = #{filters.procResult}
+	</if>
+	<if test="searchWord != null and searchWord !=''">
+		AND(
+			R.CONTENT LIKE '%' || #{searchWord} || '%'
+			OR R.ADMIN_MEMO LIKE '%' || #{searchWord} || '%'
+		)
+	</if>
+  </select>
+
+  <select id="getReportDetail" parameterType="long" resultType="kr.or.ddit.mohaeng.vo.ReportVO">
+  	SELECT *
+  	FROM REPORT
+  	WHERE RPT_NO=#{rptNo}
+  </select>
+
+  <!--신고처리 판결 -->
+  <update id="updateReportProcess" parameterType="kr.or.ddit.mohaeng.vo.ReportVO">
+  	UPDATE REPORT
+  	SET  PROC_STATUS = #{procStatus}
+		,PROC_RESULT = #{procResult}
+		,PROC_MEM_NO = #{procMemNo}
+		,ADMIN_MEMO = #{adminMemo}
+		,PROD_DT = SYSDATE
+		,MOD_DT = SYSDATE
+	WHERE RPT_NO = #{rptNo}
+  </update>
+
+  <update id="rejectReport" parameterType="kr.or.ddit.mohaeng.vo.ReportVO">
+  	UPDATE REPORT
+  	SET  PROC_STATUS = #{procStatus}
+		,PROC_RESULT = #{procResult}
+		,PROC_MEM_NO = #{procMemNo}
+		,REJ_RSN = #{reqMemNo}
+		,PROD_DT = SYSDATE
+		,MOD_DT = SYSDATE
+	WHERE RPT_NO = #{rptNo}
+  </update>
+
+  <select id="getMemberType" parameterType="long" resultType="String" >
+  	SELECT CASE
+  		WHEN EXISTS (SELECT 1 FROM MEM_USER WHERE MEM_NO = #{targetMemNo}) THEN 'MEM_USER'
+        WHEN EXISTS (SELECT 1 FROM MEM_COMP WHERE MEM_NO = #{targetMemNo}) THEN 'MEM_COMP'
+        ELSE NULL
+  	END AS MEMBER_TYPE
+  	FROM DUAL
+  </select>
+
+  <insert id="insertBlacklist" parameterType="kr.or.ddit.mohaeng.vo.BlacklistVO">
+  	<selectKey keyProperty="blacklistNo" resultType="long" order="BEFORE">
+            SELECT SEQ_BLACKLIST.NEXTVAL FROM DUAL
+    </selectKey>
+
+    INSERT INTO MEM_BLACKLIST(
+    	 BLACKLIST_NO
+		,BLACKLIST_MEM_NO
+		,PENALTY_TYPE_CD
+		,MEMBER_TYPE
+		,BAN_REASON
+		,START_DT
+		,END_DT
+		,RELEASE_YN
+    )VALUES(
+    	 #{blacklistNo}
+    	,#{blacklistMemNo}
+    	,#{penaltyTypeCd}
+    	,#{memberType}
+    	,#{banReason}
+    	,#{startDt}
+    	,#{endDt}
+    	,#{releaseYn}
+    )
+  </insert>
+
+  <update id="releaseBlackList" parameterType="int">
+  	UPDATE MEM_BLACKLIST
+  	SET RELEASE_YN = 'Y'
+  	WHERE BLACKLIST_NO = #{blacklistNo}
+  </update>
+
+  <update id="hideProdReview" parameterType="long">
+        UPDATE PROD_REVIEW
+        SET REVIEW_STATUS = 'HIDDEN'
+        WHERE PROD_RV_NO = #{targetNo}
+    </update>
+
+    <update id="hideTripRecord" parameterType="long">
+        UPDATE TRIP_RECORD
+        SET DELETE_YN = 'H'
+        WHERE RCD_NO = #{targetNo}
+    </update>
+
+    <update id="hideBoard" parameterType="long">
+        UPDATE BOARD
+        SET HIDE_YN = 'H'
+        WHERE BOARD_NO = #{targetNo}
+    </update>
+
+    <update id="hideComment" parameterType="long">
+        UPDATE COMMENTS
+        SET CMNT_STATUS = '3'
+        WHERE CMNT_NO = #{targetNo}
+    </update>
+
+    <update id="hideChat" parameterType="long">
+        UPDATE CHAT
+        SET CHAT_DEL = 'Y'
+        WHERE CHAT_NO = #{targetNo}
+    </update>
+</mapper>

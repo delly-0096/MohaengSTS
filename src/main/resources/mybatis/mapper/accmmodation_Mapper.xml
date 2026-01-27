@@ -142,14 +142,18 @@
 	    <result property="price" column="PRICE"/>
 	    <result property="discount" column="DISCOUNT"/>
 	    
-	    
+	    <!-- 예약 정보 불러올떄 필요한 정보 -->
+	    <result property="memName" column="MEM_NAME"/>
+	    <result property="memEmail" column="MEM_EMAIL"/>
+	    <result property="nickname" column="NICKNAME"/>
+	    <result property="tel" column="TEL"/>
 	    <result property="payNo" column="PAY_NO"/>
 		<association property="accResvAgree" resultMap="accresvAgreeMap"/>
 		
 		<!-- 숙소 예약 옵션 리스트 - 추가옵션 참조함 -->
 		<collection property="accResvOptionList" resultMap="accResvOptionMap" />
 	</resultMap>
-	
+
 	<!-- 숙소 예약 동의 -->	
 	<resultMap id="accresvAgreeMap" type="kr.or.ddit.mohaeng.vo.AccResvAgreeVO">
 		<id property="accResvNo" column="ACC_RESV_NO"/>
@@ -376,6 +380,12 @@
 	        , R.DISCOUNT
 	        , R.MAX_GUEST_COUNT
 	        , R.BASE_GUEST_COUNT
+	        , (R.TOTAL_ROOM_COUNT - (
+            SELECT COUNT(*) 
+            FROM ROOM RM 
+            WHERE RM.ROOM_TYPE_NO = R.ROOM_TYPE_NO 
+            AND RM.USE_UN = 'N'
+          )) AS REMAINING_COUNT
 	    FROM (
 	        SELECT *
 	        FROM (

@@ -95,5 +95,14 @@ public class AccResvVO {
 	private int price;
 	
 	// 할인율
-	private int discount;  
+	private int discount;
+	
+	
+	// 결제자 정보 호출
+	private String memName;
+	private String memEmail;
+	// memUser
+	private String tel;
+	private String nickname;
+	
 }

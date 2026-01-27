@@ -866,7 +866,7 @@
 	overflow: hidden;
 	background: #fff;
 	box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
-	height: 180px;
+	height: 215px;
 	align-items: stretch; 
 }
 

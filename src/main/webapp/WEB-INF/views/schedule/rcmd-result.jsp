@@ -401,6 +401,7 @@ let preferenceData = JSON.parse(sessionStorage.getItem('preferenceData') || '{}'
 
 // 선호도 데이터 로드
 document.addEventListener('DOMContentLoaded', function() {
+	console.log('test : ${ not empty sessionScope.loginMember }');
     // 저장 모달 초기화
     saveScheduleModal = new bootstrap.Modal(document.getElementById('saveScheduleModal'));
 
@@ -489,7 +490,7 @@ async function viewDetail(itemContentId, contenttypeId) {
                     '</div>' +
                     '<p>' + placeItem.plcDesc + '</p>' +
                     '<hr>' +
-                    '<p class="mb-1"><strong>운영시간:</strong> ' + placeItem.operationHours + '</p>' +
+                    '<p class="mb-1"><strong>운영시간:</strong> ' + (placeItem.operationHours ? placeItem.operationHours : 'X') + '</p>' +
                     '<p class="mb-1"><strong>입장료:</strong> ' + (placeItem.plcPrice ? placeItem.plcPrice : 'X') + '</p>' +
                     '<div class="d-flex gap-2 mt-3">' +
                         '<span class="text-warning"><i class="bi bi-star-fill"></i></span>' +
@@ -817,10 +818,10 @@ function confirmSaveScheduleData() {
             showToast('저장 중 오류가 발생했습니다.', 'danger');
         }
     })
-    .catch(err => {
-        console.error('Save Error:', err);
-        showToast('서버 통신 실패', 'danger');
-    });
+//     .catch(err => {
+//         console.error('Save Error:', err);
+//         showToast('서버 통신 실패', 'danger');
+//     });
 }
 
 // 장소 상세정보 조회

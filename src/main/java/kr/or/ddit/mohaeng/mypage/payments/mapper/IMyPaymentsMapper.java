@@ -20,4 +20,10 @@ public interface IMyPaymentsMapper {
     
     public Map<String, Object> selectPaymentMaster(int payNo);
     public List<Map<String, Object>> selectReceiptDetailList(int payNo);
+	public void updateFileUseN(String filePath);
+	
+	Long nextAttachNo();
+    Long nextFileNo();
+    int insertAttachFile(Map<String, Object> params);
+    int insertAttachFileDetail(Map<String, Object> params);
 }

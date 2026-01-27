@@ -130,7 +130,7 @@
             <div class="accommodation-grid">
                 <c:forEach items="${accList }" var="acc">
                 <div class="accommodation-card" data-accommodation-id="${acc.accNo}">
-                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo }" class="accommodation-image">
+                    <a href="${pageContext.request.contextPath}/product/accommodation/${acc.tripProdNo}?startDate=${param.startDate}&endDate=${param.endDate}&adultCount=${param.adultCount}" class="accommodation-image">
                         <img src="${acc.accFilePath}" alt="${acc.accName}">
                         <%-- 배지 로직 시작 --%>
 			            <c:choose>
@@ -219,7 +219,7 @@
 								    <div class="room-option-info" style="flex: 1;">
 								        <h6 style="margin: 0; font-weight: 600; color: #333;">${room.roomName}</h6>
 								        <p style="font-size: 0.8rem; color: #888; margin: 4px 0;">
-								            기준 ${room.baseGuestCount}인 · 잔여 ${room.totalRoomCount}실
+								            기준 ${room.baseGuestCount}인 · 잔여 ${room.remainingCount}실
 								        </p>
 								    </div>
 								

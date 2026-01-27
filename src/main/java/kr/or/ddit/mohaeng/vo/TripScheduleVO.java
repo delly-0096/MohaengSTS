@@ -42,6 +42,7 @@ public class TripScheduleVO {
 	private Long rgnNo;
 	private Long rgnNm;
 	
+	private int postCnt;
 	
 	public Long getRgnNo() { return rgnNo; }
 	public void setRgnNo(Long rgnNo) { this.rgnNo = rgnNo; }

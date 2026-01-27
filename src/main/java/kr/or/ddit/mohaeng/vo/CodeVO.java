@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 public class CodeVO {
 
 	private String cd;     // 코드
-	private String cdrg;   // 코드그룹
+	private String cdgr;   // 코드그룹
 	private String cdName; // 코드명
 	private String cdDesc; // 코드설명
 	private String cdYn;   // 사용여부(Y,N)

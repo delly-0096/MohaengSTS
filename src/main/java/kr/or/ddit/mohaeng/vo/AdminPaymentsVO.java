@@ -29,4 +29,6 @@ public class AdminPaymentsVO {
     private int rnum;
     
     private String productJson;
+    
+    private String resMsg;
 }

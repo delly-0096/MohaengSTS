@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.mypage.payments.controller;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -78,30 +79,32 @@ public class MyPaymentsController {
     /**
      * 후기 등록 
      */
+    /**
+     * 후기 등록 (수정본)
+     */
     @PostMapping("/review/insert")
     @ResponseBody
     public Map<String, Object> insertReview(ProdReviewVO vo, HttpSession session) {
         Map<String, Object> result = new HashMap<>();
         Integer memNo = getMemNo(session);
         
-        // 디버깅용: 파일이 넘어오는지 콘솔에서 확인
-        if(vo.getUploadFiles() != null) {
-            System.out.println("업로드 파일 개수: " + vo.getUploadFiles().length);
-        }
-
         try {
             vo.setMemNo(memNo);
-            // 서비스 호출 (파일 처리 로직이 포함된 서비스여야 함)
+            
+            // 서비스에서 파일 저장 및 DB Insert 로직 수행
             int status = reviewService.insertReview(vo); 
             
             if(status > 0) {
                 result.put("success", true);
                 result.put("message", "후기가 등록되었습니다.");
+            } else {
+                result.put("success", false);
+                result.put("message", "등록에 실패했습니다.");
             }
         } catch (Exception e) {
             e.printStackTrace();
             result.put("success", false);
-            result.put("message", "등록 중 오류 발생");
+            result.put("message", "서버 오류 발생: " + e.getMessage());
         }
         return result;
     }
@@ -109,22 +112,34 @@ public class MyPaymentsController {
     /**
      * 마이페이지용 후기 수정
      */
+    /**
+     * 마이페이지용 후기 수정 (400 에러 해결 버전)
+     */
     @PostMapping("/review/update")
     @ResponseBody
-    public Map<String, Object> updateReview(ProdReviewVO vo, HttpSession session) {
+    public Map<String, Object> updateReview(
+        ProdReviewVO vo, 
+        @RequestParam(value = "deletedFiles", required = false) List<String> deletedFiles,
+        HttpSession session
+    ) {
         Map<String, Object> result = new HashMap<>();
-        Integer memNo = getMemNo(session);
-        
         try {
+            Integer memNo = getMemNo(session);
             vo.setMemNo(memNo);
-            // DB 업데이트 실행 (매퍼의 updateReview 쿼리에 RCMDTN_YN 컬럼이 포함되어야 함)
-            int updated = reviewService.updateReview(vo);
-            if (updated > 0) {
+
+            // ✅ 1. 삭제 요청된 파일들 USE_YN = 'N' 처리
+            if (deletedFiles != null && !deletedFiles.isEmpty()) {
+                for (String filePath : deletedFiles) {
+                    myPaymentsService.updateFileUseN(filePath); 
+                }
+            }
+
+            // ✅ 2. 리뷰 정보 수정 및 신규 이미지 추가 (보강된 서비스 호출)
+            int status = reviewService.updateReview(vo); 
+
+            if(status > 0) {
                 result.put("success", true);
-                result.put("message", "리뷰가 수정되었습니다.");
-            } else {
-                result.put("success", false);
-                result.put("message", "수정 권한이 없습니다.");
+                result.put("message", "후기가 수정되었습니다.");
             }
         } catch (Exception e) {
             result.put("success", false);

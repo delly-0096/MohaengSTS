@@ -30,4 +30,6 @@ public class MyPaymentsVO {
     private int earnedPoints;   // 적립포인트 (실결제 * 0.1)
     private LocalDateTime cancelDt;
     private String cancelReason;
+    
+    private String tel;
 }

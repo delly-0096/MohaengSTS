@@ -29,49 +29,57 @@
     <select id="selectMyPaymentsList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.MyPaymentsVO">
 	    SELECT B.* FROM (
 	        SELECT A.*, ROWNUM RNUM FROM (
-	            SELECT * FROM (
-	                /* 1. 숙소 및 투어 상품 요약 */
-	                SELECT 
-	                    P.PAY_NO, P.PAY_DT, P.PAY_STATUS, P.PAY_TOTAL_AMT, P.USE_POINT, PI.TID,
-	                    (SELECT NVL(MIN(TP_SUB.TRIP_PROD_TITLE), '상품 정보 없음') || CASE WHEN COUNT(*) > 1 THEN ' 외 ' || (COUNT(*) - 1) || '건' ELSE '' END FROM TRIP_PROD_LIST TPL_SUB JOIN TRIP_PROD TP_SUB ON TPL_SUB.TRIP_PROD_NO = TP_SUB.TRIP_PROD_NO WHERE TPL_SUB.PAY_NO = P.PAY_NO) AS PROD_NAME,
-	                    (SELECT TO_CHAR(MIN(RESV_DT), 'YYYY.MM.DD') || DECODE(MIN(USE_TIME), NULL, '', ' (' || MIN(USE_TIME) || ')') FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO) AS USE_DATE,
-	                    (SELECT CASE WHEN COUNT(*) > 1 THEN COUNT(*) || '건' WHEN MAX(TP_UNIT.PROD_CTGRY_TYPE) = 'ACCOMMODATION' THEN SUM(TPL_UNIT.QUANTITY) || '박' ELSE SUM(TPL_UNIT.QUANTITY) || '명' END FROM TRIP_PROD_LIST TPL_UNIT JOIN TRIP_PROD TP_UNIT ON TPL_UNIT.TRIP_PROD_NO = TP_UNIT.TRIP_PROD_NO WHERE TPL_UNIT.PAY_NO = P.PAY_NO) AS OPTION_INFO,
-	                    (SELECT AFD.FILE_PATH || '/' || AFD.FILE_NAME FROM ATTACH_FILE_DETAIL AFD JOIN TRIP_PROD TP_IMG ON TP_IMG.ATTACH_NO = AFD.ATTACH_NO JOIN TRIP_PROD_LIST TPL_IMG ON TPL_IMG.TRIP_PROD_NO = TP_IMG.TRIP_PROD_NO WHERE TPL_IMG.PAY_NO = P.PAY_NO AND ROWNUM = 1) AS THUMB_IMG,
-	                    'TRIP' AS CATEGORY
-	                FROM PAYMENT P 
-	                JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
-	                WHERE P.MEM_NO = #{memNo}
-	                AND EXISTS (SELECT 1 FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO)
-	                <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
-	                    AND P.PAY_STATUS = <choose><when test="searchType == 'completed'">'DONE'</when><when test="searchType == 'pending'">'WAIT'</when><when test="searchType == 'cancelled'">'CANCEL'</when></choose>
-	                </if>
+	            SELECT 
+	                P.PAY_NO, 
+	                P.PAY_DT, 
+	                P.PAY_STATUS, 
+	                P.PAY_TOTAL_AMT, 
+	                P.USE_POINT, 
+	                PI.TID,
+	                /* 1. RES_MSG에서 'DONE '을 제거하여 통합 상품명 추출 */
+	                REPLACE(PI.RES_MSG, 'DONE ', '') AS PROD_NAME,
+	                
+	                /* 2. 결제일시와 결제번호를 조합한 번호 (React formatPayNo와 동일 로직) */
+	                TO_CHAR(P.PAY_DT, 'YYYYMMDD') || LPAD(P.PAY_NO, 8, '0') AS ORDER_NO,
+	                
+	                /* 3. 이용 날짜 정보 추출 */
+	                NVL(
+	                    (SELECT TO_CHAR(MIN(RESV_DT), 'YYYY.MM.DD') || DECODE(MIN(USE_TIME), NULL, '', ' (' || MIN(USE_TIME) || ')') FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+	                    (SELECT TO_CHAR(MIN(FP.DEP_TIME), 'YYYY.MM.DD (HH24:MI)') FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+	                ) AS USE_DATE,
+	                
+	                /* 4. 옵션/인원 정보 */
+	                NVL(
+	                    (SELECT CASE WHEN COUNT(*) > 1 THEN COUNT(*) || '건' WHEN MAX(TP_U.PROD_CTGRY_TYPE) = 'ACCOMMODATION' THEN SUM(TPL_U.QUANTITY) || '박' ELSE SUM(TPL_U.QUANTITY) || '명' END 
+	                     FROM TRIP_PROD_LIST TPL_U JOIN TRIP_PROD TP_U ON TPL_U.TRIP_PROD_NO = TP_U.TRIP_PROD_NO WHERE TPL_U.PAY_NO = P.PAY_NO),
+	                    (SELECT COUNT(FPS.PASSENGER_ID) || '명' FROM FLIGHT_RESERVATION FR_S JOIN FLIGHT_PASSENGERS FPS ON FR_S.RESERVE_NO = FPS.RESERVE_NO WHERE FR_S.PAY_NO = P.PAY_NO)
+	                ) AS OPTION_INFO,
 	
-	                UNION ALL
-	
-	                /* 2. 항공권 상품 요약 */
-	                SELECT 
-	                    P.PAY_NO, P.PAY_DT, P.PAY_STATUS, P.PAY_TOTAL_AMT, P.USE_POINT, PI.TID,
-	                    (SELECT NVL(MIN(FP_SUB.FLIGHT_SYMBOL), '항공편') || ' 항공권' FROM FLIGHT_RESERVATION FR_SUB JOIN FLIGHT_PRODUCT FP_SUB ON FR_SUB.FLT_PROD_ID = FP_SUB.FLT_PROD_ID WHERE FR_SUB.PAY_NO = P.PAY_NO) AS PROD_NAME,
-	                    (SELECT TO_CHAR(MIN(FP_TIME.DEP_TIME), 'YYYY.MM.DD') || DECODE(TO_CHAR(MIN(FP_TIME.DEP_TIME), 'HH24:MI'), '00:00', '', ' (' || TO_CHAR(MIN(FP_TIME.DEP_TIME), 'HH24:MI') || ')') FROM FLIGHT_RESERVATION FR_TIME JOIN FLIGHT_PRODUCT FP_TIME ON FR_TIME.FLT_PROD_ID = FP_TIME.FLT_PROD_ID WHERE FR_TIME.PAY_NO = P.PAY_NO) AS USE_DATE,
-	                    /* B. 항공권 상품 요약 */
-						(SELECT COUNT(FPS.PASSENGER_ID) || '명'FROM FLIGHT_RESERVATION FR_SUB JOIN FLIGHT_PASSENGERS FPS ON FR_SUB.RESERVE_NO = FPS.RESERVE_NO WHERE FR_SUB.PAY_NO = P.PAY_NO) AS OPTION_INFO,
-	                    '/resources/images/default_flight.jpg' AS THUMB_IMG,
-	                    'FLIGHT' AS CATEGORY
-	                FROM PAYMENT P 
-	                JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
-	                WHERE P.MEM_NO = #{memNo}
-	                AND EXISTS (SELECT 1 FROM FLIGHT_RESERVATION WHERE PAY_NO = P.PAY_NO)
-	                <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
-	                    AND P.PAY_STATUS = <choose><when test="searchType == 'completed'">'DONE'</when><when test="searchType == 'pending'">'WAIT'</when><when test="searchType == 'cancelled'">'CANCEL'</when></choose>
-	                </if>
-	            ) ORDER BY PAY_DT DESC
+	                /* selectMyPaymentsList 쿼리의 썸네일 부분 */
+					NVL(
+					    (SELECT AFD.FILE_PATH 
+					     FROM ATTACH_FILE_DETAIL AFD 
+					     JOIN TRIP_PROD TP_I ON TP_I.ATTACH_NO = AFD.ATTACH_NO 
+					     JOIN TRIP_PROD_LIST TPL_I ON TPL_I.TRIP_PROD_NO = TP_I.TRIP_PROD_NO 
+					     WHERE TPL_I.PAY_NO = P.PAY_NO 
+					       AND AFD.USE_YN = 'Y' 
+					       AND ROWNUM = 1),
+					    '/resources/images/default_flight.jpg' 
+					) AS THUMB_IMG
+	            FROM PAYMENT P
+	            JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
+	            WHERE P.MEM_NO = #{memNo}
+	            <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
+	                AND P.PAY_STATUS = <choose><when test="searchType == 'completed'">'DONE'</when><when test="searchType == 'pending'">'WAIT'</when><when test="searchType == 'cancelled'">'CANCEL'</when></choose>
+	            </if>
+	            ORDER BY P.PAY_DT DESC
 	        ) A
 	    ) B
 	    WHERE RNUM BETWEEN #{startRow} AND #{endRow}
 	</select>
 	
 	<select id="selectReceiptDetailList" parameterType="int" resultType="map">
-	    /* 1. 숙소/투어 상품 상세 */
+    	/* 1. 숙소/투어 상품 상세 */
 	    SELECT 
 	        TPL.TRIP_PROD_NO,
 	        TP.TRIP_PROD_TITLE AS PROD_NAME,
@@ -82,14 +90,19 @@
 	        R.PROD_REVIEW,
 	        R.RATING,
 	        R.RCMDTN_YN,
-	        /* 기존 이미지 경로들 가져오기 */
-	        (SELECT LISTAGG(AFD.FILE_PATH || '/' || AFD.FILE_NAME, ',') WITHIN GROUP (ORDER BY AFD.FILE_NO)
+	        /* 상품 썸네일 (여행기록 방식: FILE_PATH 활용) */
+	        NVL((SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD 
+	             WHERE AFD.ATTACH_NO = TP.ATTACH_NO AND AFD.USE_YN = 'Y' AND ROWNUM = 1), 
+	            '/resources/images/no_image.jpg') AS THUMB_IMG,
+	        /* ✅ 리뷰 이미지 경로들 (LISTAGG 활용하여 경로만 콤마로 연결) */
+	        (SELECT LISTAGG(AFD.FILE_PATH, ',') WITHIN GROUP (ORDER BY AFD.FILE_NO)
 	         FROM ATTACH_FILE_DETAIL AFD 
 	         WHERE AFD.ATTACH_NO = R.ATTACH_NO AND AFD.USE_YN = 'Y') AS EXISTING_IMAGES
 	    FROM TRIP_PROD_LIST TPL
 	    JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
 	    LEFT OUTER JOIN PROD_REVIEW R ON TPL.TRIP_PROD_NO = R.TRIP_PROD_NO 
 	        AND R.MEM_NO = (SELECT MEM_NO FROM PAYMENT WHERE PAY_NO = TPL.PAY_NO)
+	        AND R.PROD_REGDATE >= (SELECT PAY_DT FROM PAYMENT WHERE PAY_NO = TPL.PAY_NO)
 	    WHERE TPL.PAY_NO = #{payNo}
 	
 	    UNION ALL
@@ -108,8 +121,9 @@
 	        NULL AS PROD_RV_NO,
 	        NULL AS PROD_REVIEW,
 	        NULL AS RATING,
-	        NULL AS RCMDTN_YN, /* ✅ 개수 맞춤 추가 */
-	        NULL AS EXISTING_IMAGES /* ✅ 개수 맞춤 추가 (총 10개 컬럼) */
+	        NULL AS RCMDTN_YN,
+	        '/resources/images/default_flight.jpg' AS THUMB_IMG,
+	        NULL AS EXISTING_IMAGES
 	    FROM FLIGHT_RESERVATION FR
 	    JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID
 	    JOIN PAYMENT P ON FR.PAY_NO = P.PAY_NO
@@ -124,23 +138,29 @@
 	        P.USE_POINT,
 	        P.PAY_STATUS,
 	        P.PAY_METHOD_CD,
-	        PI.TID AS ORDER_NO,
+	        /* 1. 결제번호 조합: YYYYMMDD + 00000152 (8자리 패딩) */
+	        TO_CHAR(P.PAY_DT, 'YYYYMMDD') || LPAD(P.PAY_NO, 8, '0') AS ORDER_NO,
+	        
+	        /* 2. TID 및 가공된 상품명 (RES_MSG 활용) */
+	        PI.TID AS TID,
+	        REPLACE(PI.RES_MSG, 'DONE ', '') AS PROD_NAME,
+	        
+	        /* 3. 결제자 정보: MEMBER(이름, 이메일) + MEM_USER(연락처) */
 	        M.MEM_NAME,
 	        M.MEM_EMAIL,
-	        
-	        /* 판매자 정보: 상품 정보를 통해 등록된 회사 정보를 가져옴 */
+	        MU.TEL AS MEM_TEL,  /* 4. 판매자 정보 */
 	        C.BZMN_NM, 
 	        C.BRNO,    
 	        C.COMP_TEL AS COMP_TEL, 
 	        
-	        /* 금액 계산 로직 */
+	        /* 5. 금액 계산 로직 */
 	        CASE 
 	            WHEN EXISTS (SELECT 1 FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO) THEN 
 	                (SELECT SUM(UNIT_PRICE * QUANTITY) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO)
 	            ELSE (P.PAY_TOTAL_AMT + P.USE_POINT) 
 	        END AS PROD_TOTAL_PRICE, 
 	        
-	        /* 할인 로직 */
+	        /* 6. 할인 로직 */
 	        CASE 
 	            WHEN EXISTS (SELECT 1 FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO) THEN 
 	                (SELECT SUM(NVL(DISCOUNT_AMT, 0)) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO)
@@ -149,17 +169,77 @@
 	        
 	    FROM PAYMENT P
 	    JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
-	    JOIN MEMBER M ON P.MEM_NO = M.MEM_NO -- 구매자(일반회원) 정보
-	    
-	    /* 상품 리스트 -> 상품 상세 -> 업체 순으로 연결 */
+	    JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
+	    JOIN MEM_USER MU ON M.MEM_NO = MU.MEM_NO  /* 판매자 정보를 찾기 위한 조인 로직 */
 	    LEFT OUTER JOIN (
 	        SELECT PAY_NO, TRIP_PROD_NO, ROW_NUMBER() OVER(PARTITION BY PAY_NO ORDER BY PROD_LIST_NO) AS RN 
 	        FROM TRIP_PROD_LIST
-	    ) TPL ON P.PAY_NO = TPL.PAY_NO AND TPL.RN = 1 -- 여러 상품 중 첫 번째 상품 기준
+	    ) TPL ON P.PAY_NO = TPL.PAY_NO AND TPL.RN = 1
 	    LEFT OUTER JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
-	    LEFT OUTER JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO -- 판매자(기업) 정보
+	    LEFT OUTER JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
 	    
 	    WHERE P.PAY_NO = #{payNo}
 	</select>
+	
+	<update id="updateFileUseN" parameterType="string">
+	    UPDATE ATTACH_FILE_DETAIL
+	    SET USE_YN = 'N'
+	    WHERE FILE_PATH = #{filePath}
+	</update>
+	
+	<insert id="insertAdditionalFileDetail" parameterType="map">
+	    INSERT INTO ATTACH_FILE_DETAIL (
+	        FILE_NO, 
+	        ATTACH_NO, /* 기존에 리뷰가 가지고 있던 ATTACH_NO 전달 */
+	        FILE_NAME, 
+	        FILE_ORIGINAL_NAME, 
+	        FILE_EXT, 
+	        FILE_SIZE, 
+	        FILE_PATH, 
+	        FILE_GB_CD, 
+	        MIMY_TYPE, 
+	        USE_YN, 
+	        REG_ID, 
+	        REG_DT
+	    ) VALUES (
+	        SEQ_ATTACH_FILE_DETAIL.NEXTVAL,
+	        #{attachNo}, 
+	        #{fileName}, 
+	        #{originalName}, 
+	        #{ext}, 
+	        #{size}, 
+	        #{path}, 
+	        'REVIEW', 
+	        #{mimeType}, 
+	        'Y', 
+	        #{regId}, 
+	        SYSDATE
+	    )
+	</insert>
+
+	<select id="nextAttachNo" resultType="long">
+	    SELECT SEQ_ATTACH_FILE.NEXTVAL FROM DUAL
+	</select>
+	
+	<select id="nextFileNo" resultType="long">
+	    SELECT SEQ_ATTACH_FILE_DETAIL.NEXTVAL FROM DUAL
+	</select>
+	
+	<insert id="insertAttachFile" parameterType="map">
+	    INSERT INTO ATTACH_FILE (ATTACH_NO, REG_ID, REG_DT)
+	    VALUES (#{attachNo}, #{regId}, TO_CHAR(SYSDATE, 'YYYY/MM/DD'))
+	</insert>
+	
+	<insert id="insertAttachFileDetail" parameterType="map">
+	    INSERT INTO ATTACH_FILE_DETAIL (
+	        FILE_NO, ATTACH_NO, FILE_NAME, FILE_ORIGINAL_NAME, 
+	        FILE_EXT, FILE_SIZE, FILE_PATH, FILE_GB_CD, 
+	        MIMY_TYPE, USE_YN, REG_ID, REG_DT
+	    ) VALUES (
+	        #{fileNo}, #{attachNo}, #{fileName}, #{originalName}, 
+	        #{ext}, #{size}, #{path}, 'REVIEW', 
+	        #{mimeType}, 'Y', #{regId}, SYSDATE
+	    )
+	</insert>
 
 </mapper>

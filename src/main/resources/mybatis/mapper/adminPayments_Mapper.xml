@@ -2,66 +2,73 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.admin.transactions.payments.mapper.IAdminPaymentsMapper">
 
-	<select id="selectAdminPaymentList" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.AdminPaymentsVO">
-	    SELECT * FROM (
-	        SELECT 
-	            ROW_NUMBER() OVER (ORDER BY p.PAY_DT DESC) as rnum,
-	            p.PAY_NO,
-	            p.PAY_TOTAL_AMT,
-	            p.PAY_DT,
-	            p.PAY_STATUS,
-	            p.PAY_METHOD_CD,
-	            p.USE_POINT,         /* 상세 모달용 포인트 추가 */
-	            m.MEM_NAME,
-	            m.MEM_EMAIL,         /* 결제자 이메일 추가 */
-	            mu.TEL,
-	            pi.TID,              /* TID 추가 (PAYMENT_INFO 조인) */
-	            
-	            /* 1. 상품명 "외 n건" 처리 (서브쿼리로 깔끔하게 합침) */
-	            (SELECT 
-	                CASE WHEN COUNT(*) > 1 
-	                     THEN MAX(tp2.TRIP_PROD_TITLE) || ' 외 ' || (COUNT(*) - 1) || '건'
-	                     ELSE MAX(tp2.TRIP_PROD_TITLE)
-	                END
-	             FROM TRIP_PROD_LIST tpl2
-	             JOIN TRIP_PROD tp2 ON tpl2.TRIP_PROD_NO = tp2.TRIP_PROD_NO
-	             WHERE tpl2.PAY_NO = p.PAY_NO) as itemTitle,
-	            
-	            /* 2. 상호명 및 사업자 정보 */
-	            MAX(c.BZMN_NM) as bzmnNm,
-	            MAX(c.BRNO) as brno,      /* 사업자등록번호 추가 */
-	            MAX(c.COMP_TEL) as compTel /* 판매자 연락처 추가 */
-	            
-	        FROM PAYMENT p
-	        JOIN MEMBER m ON p.MEM_NO = m.MEM_NO
-	        JOIN MEM_USER mu ON m.MEM_NO = mu.MEM_NO
-	        LEFT OUTER JOIN PAYMENT_INFO pi ON p.PAY_NO = pi.PAY_NO /* TID 테이블 조인 */
-	        LEFT OUTER JOIN TRIP_PROD_LIST tpl ON p.PAY_NO = tpl.PAY_NO
-	        LEFT OUTER JOIN TRIP_PROD tp ON tpl.TRIP_PROD_NO = tp.TRIP_PROD_NO
-	        LEFT OUTER JOIN COMPANY c ON tp.COMP_NO = c.COMP_NO
-	        
-	        <where>
-	            <if test="dateFilter == '1month'">
-	                AND p.PAY_DT >= ADD_MONTHS(SYSDATE, -1)
-	            </if>
-	            <if test="statusFilter != null and statusFilter != 'all'">
-	                AND p.PAY_STATUS = #{statusFilter}
-	            </if>
-	            <if test="searchTerm != null and searchTerm != ''">
-	                AND (
-	                    p.PAY_NO LIKE '%' || #{searchTerm} || '%'
-	                    OR m.MEM_NAME LIKE '%' || #{searchTerm} || '%'
-	                    OR pi.TID LIKE '%' || #{searchTerm} || '%'
-	                )
-	            </if>
-	        </where>
-	        
-	        /* 중복 행 방지를 위한 그룹화 */
-	        GROUP BY 
-	            p.PAY_NO, p.PAY_TOTAL_AMT, p.PAY_DT, p.PAY_STATUS, p.PAY_METHOD_CD, p.USE_POINT,
-	            m.MEM_NAME, m.MEM_EMAIL, mu.TEL, pi.TID
-	    ) 
-	    WHERE rnum BETWEEN #{startRow} AND #{endRow}
-	</select>
+    <select id="selectAdminPaymentList" parameterType="map" resultType="kr.or.ddit.mohaeng.vo.AdminPaymentsVO">
+    SELECT * FROM (
+        SELECT 
+            ROW_NUMBER() OVER (ORDER BY p.PAY_DT DESC) as rnum,
+            p.PAY_NO,
+            p.PAY_TOTAL_AMT,
+            p.PAY_DT,
+            p.PAY_STATUS,
+            p.PAY_METHOD_CD,
+            p.USE_POINT,
+            m.MEM_NAME,
+            m.MEM_EMAIL,
+            mu.TEL,
+            pi.TID,
+            /* 1. RES_MSG에서 가공된 상품명 */
+            REPLACE(pi.RES_MSG, 'DONE ', '') as itemTitle,
+            
+            /* 2. 상세보기용 개별 상품 JSON 데이터 (p. 컬럼 직접 참조 방지) */
+            (SELECT '[' || LISTAGG(
+                '{"title":"' || REPLACE(NVL(tp3.TRIP_PROD_TITLE, fp3.DEP_AIRPORT_ID || '→' || fp3.ARR_AIRPORT_ID || ' 항공권'), '"', '\"') || 
+                '","date":"' || NVL(tpl3.USE_DATE, TO_CHAR(p.PAY_DT, 'YYYY-MM-DD')) || 
+                '","qty":' || NVL(tpl3.QUANTITY, 1) || 
+                ',"price":' || CASE WHEN fr3.RESERVE_NO IS NOT NULL THEN (p.PAY_TOTAL_AMT + p.USE_POINT) ELSE (tpl3.UNIT_PRICE * tpl3.QUANTITY) END || 
+                ',"discount":' || NVL(tpl3.DISCOUNT_AMT, 0) || '}', ',') 
+                WITHIN GROUP (ORDER BY tpl3.TRIP_PROD_LIST_NO) || ']'
+             FROM DUAL
+             LEFT JOIN TRIP_PROD_LIST tpl3 ON tpl3.PAY_NO = p.PAY_NO
+             LEFT JOIN TRIP_PROD tp3 ON tpl3.TRIP_PROD_NO = tp3.TRIP_PROD_NO
+             LEFT JOIN FLIGHT_RESERVATION fr3 ON fr3.PAY_NO = p.PAY_NO
+             LEFT JOIN FLIGHT_PRODUCT fp3 ON fr3.FLT_PROD_ID = fp3.FLT_PROD_ID
+            ) as productJson,
+
+            /* 3. 판매자 정보 - 복잡한 서브쿼리 대신 MAX(CASE) 활용 */
+            (SELECT MAX(bz) FROM (
+                SELECT c2.BZMN_NM as bz FROM TRIP_PROD_LIST tpl4 JOIN TRIP_PROD tp4 ON tpl4.TRIP_PROD_NO = tp4.TRIP_PROD_NO JOIN COMPANY c2 ON tp4.COMP_NO = c2.COMP_NO WHERE tpl4.PAY_NO = p.PAY_NO
+                UNION ALL
+                SELECT al.AIRLINE_NM FROM FLIGHT_RESERVATION fr4 JOIN FLIGHT_PRODUCT fp4 ON fr4.FLT_PROD_ID = fp4.FLT_PROD_ID JOIN AIRLINE al ON fp4.AIRLINE_ID = al.AIRLINE_ID WHERE fr4.PAY_NO = p.PAY_NO
+            )) as bzmnNm,
+            (SELECT MAX(c2.BRNO) FROM TRIP_PROD_LIST tpl4 JOIN TRIP_PROD tp4 ON tpl4.TRIP_PROD_NO = tp4.TRIP_PROD_NO JOIN COMPANY c2 ON tp4.COMP_NO = c2.COMP_NO WHERE tpl4.PAY_NO = p.PAY_NO) as brno,
+            (SELECT MAX(c2.COMP_TEL) FROM TRIP_PROD_LIST tpl4 JOIN TRIP_PROD tp4 ON tpl4.TRIP_PROD_NO = tp4.TRIP_PROD_NO JOIN COMPANY c2 ON tp4.COMP_NO = c2.COMP_NO WHERE tpl4.PAY_NO = p.PAY_NO) as compTel
+            
+        FROM PAYMENT p
+        JOIN MEMBER m ON p.MEM_NO = m.MEM_NO
+        JOIN MEM_USER mu ON m.MEM_NO = mu.MEM_NO
+        JOIN PAYMENT_INFO pi ON p.PAY_NO = pi.PAY_NO
+        
+        <where>
+            <if test="searchTerm != null and searchTerm != ''">
+                AND (
+                    p.PAY_NO LIKE '%' || #{searchTerm} || '%' 
+                    OR m.MEM_NAME LIKE '%' || #{searchTerm} || '%' 
+                    OR pi.TID LIKE '%' || #{searchTerm} || '%' 
+                    OR pi.RES_MSG LIKE '%' || #{searchTerm} || '%'
+                )
+            </if>
+            <if test="statusFilter != null and statusFilter != 'all'">
+                AND p.PAY_STATUS = #{statusFilter}
+            </if>
+            <if test="dateFilter == '1month'">
+                AND p.PAY_DT >= ADD_MONTHS(SYSDATE, -1)
+            </if>
+            <if test="dateFilter == '3months'">
+                AND p.PAY_DT >= ADD_MONTHS(SYSDATE, -3)
+            </if>
+        </where>
+    ) 
+    WHERE rnum BETWEEN #{startRow} AND #{endRow}
+</select>
 
 </mapper>

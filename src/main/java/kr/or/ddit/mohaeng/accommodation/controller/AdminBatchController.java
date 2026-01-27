@@ -53,7 +53,7 @@ public class AdminBatchController {
     	String areaCode = convertToTourApiAreaCode(sido);
     	accommodation.setAreaCode(areaCode);
     	log.info("accommodation.areaCode : {}", accommodation.getAreaCode());	// 도시명
-    	
+//    	return null;
     	AccommodationVO result = apiService.getDetailedAccommodation(accommodation);
     	log.info("result : {}", result);
     	if(result == null) {

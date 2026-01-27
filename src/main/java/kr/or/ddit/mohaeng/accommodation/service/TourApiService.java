@@ -88,7 +88,7 @@ public class TourApiService {
     	log.info("accommodation.areaCode : {}", accommodation.getAreaCode());
     	
     	// 기본 값 세팅 - key값이 주요-> 이름, 지역으로 검색하는게 더 정확도 높을 수도
-    	accommodation = fetchSearchKeyword(accommodation);
+//    	accommodation = fetchSearchKeyword(accommodation);
     	
     	accommodation = fetchContentIdByCd(accommodation);	// contentId 존재
     	
@@ -257,13 +257,15 @@ public class TourApiService {
 	private boolean isMatch(JsonNode node, AccommodationVO target) {
 	    String apiAddr = node.path("addr1").asText().replaceAll("\\s", "");
 	    String apiZip = node.path("zipcode").asText();
+	    String title = node.path("title").asText();
 	    
 	    String targetRoad = target.getRoadAddress().replaceAll("\\s", "");
 	    String targetZip = target.getZone();
-	    log.info("node : ", node);
+	    String keyword = target.getAccName();
+	    log.info("isMatch node : ", node);
 
 	    // 우편번호가 같거나, 도로명 주소가 포함 관계일 때 매칭 성공으로 간주
-	    return apiZip.equals(targetZip) || apiAddr.contains(targetRoad) || targetRoad.contains(apiAddr);
+	    return title.contains(keyword) || apiZip.equals(targetZip) || apiAddr.contains(targetRoad) || targetRoad.contains(apiAddr);
 	}
 	
 	/**
@@ -276,7 +278,7 @@ public class TourApiService {
 	 */
 	private AccommodationVO bindData(AccommodationVO vo, JsonNode node) {
 		// mapx,mapy는 지도 api의 것을 사용 이미 프론트에서 값 지정해줌
-		log.info("node : {}", node);
+		log.info("bindData node : {}", node.path("title").asText());
 	    vo.setApiContentId(node.path("contentid").asText());	// api id
 	    vo.setAccName(node.path("title").asText());				// 숙소명
 	    vo.setTel(node.path("tel").asText());					// 전화번호 - 없을수도 있음

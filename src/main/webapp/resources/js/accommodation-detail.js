@@ -187,61 +187,36 @@ function updateTotalPrice() {
    6. 페이지 로드 및 Flatpickr (통합)
 ======================= */
 document.addEventListener('DOMContentLoaded', function() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const startDateParam = urlParams.get('startDate'); 
-    const endDateParam = urlParams.get('endDate');   
-    const adultParam = urlParams.get('adultCount');
+	// [무적의 파라미터 추출 함수]
+	function getUrlValue(key) {
+	    const params = new URLSearchParams(window.location.search);
+	    return params.get(key);
+	}
 
-    // [1] 인원수 처리는 먼저 해도 됨 (input이 아니니까)
-    if(adultParam) {
-        const adultEl = document.getElementById('adultCount');
-        if(adultEl) adultEl.textContent = adultParam;
-        state.guests.adult = parseInt(adultParam);
-    }
+	document.addEventListener('DOMContentLoaded', function() {
+	    const sDate = getUrlValue('startDate');
+	    const eDate = getUrlValue('endDate');
 
-    // [2] fpOut을 먼저 초기화하거나 변수 선언을 미리 잡아둬야 함
-    const fpOut = flatpickr("#checkOutDate", {
-        dateFormat: "Y-m-d",
-        // 체크인 날짜가 있으면 그 다음날, 없으면 내일
-        minDate: startDateParam 
-                 ? new Date(new Date(startDateParam).getTime() + 86400000) 
-                 : new Date().fp_incr(1),
-        defaultDate: endDateParam || new Date().fp_incr(1),
-        onChange: function() {
-            calculateNights();
-        }
-    });
+	    console.log("🚩 [디버깅] 현재 페이지 전체 주소:", window.location.href);
+	    console.log("🚩 [디버깅] 추출된 날짜:", sDate, "~", eDate);
 
-    // [3] fpIn 초기화 (여기서 fpOut의 minDate를 조절)
-    const fpIn = flatpickr("#checkInDate", {
-        dateFormat: "Y-m-d",
-        minDate: "today",
-        defaultDate: startDateParam || "today",
-        onChange: function(selectedDates, dateStr) {
-            if (selectedDates.length > 0) {
-                const nextDay = new Date(selectedDates[0]);
-                nextDay.setDate(nextDay.getDate() + 1);
-                
-                // 체크아웃 최소 날짜 업데이트
-                fpOut.set('minDate', nextDay);
-                
-                // 만약 기존 체크아웃 날짜가 새 시작일보다 빠르면 날짜 조정
-                if (new Date(document.getElementById('checkOutDate').value) <= selectedDates[0]) {
-                    fpOut.setDate(nextDay);
-                }
-            }
-            calculateNights();
-        }
-    });
+	    // 달력이 안 뜨는 건 초기화 함수를 못 찾아서 그래! 여기서 직접 호출!
+	    const fpIn = flatpickr("#checkInDate", {
+	        locale: 'ko',
+	        dateFormat: "Y-m-d",
+	        defaultDate: sDate || "today"
+	    });
 
-    // [4] 라이브러리 세팅이 끝난 후 input value를 다시 한번 확정해줌
-    if(startDateParam) document.getElementById('checkInDate').value = startDateParam;
-    if(endDateParam) document.getElementById('checkOutDate').value = endDateParam;
+	    const fpOut = flatpickr("#checkOutDate", {
+	        locale: 'ko',
+	        dateFormat: "Y-m-d",
+	        defaultDate: eDate || new Date().fp_incr(1)
+	    });
 
-    // [5] 마지막으로 박수 계산!
-    setTimeout(() => {
-        calculateNights();
-    }, 100); // 라이브러리 렌더링 시간을 위해 아주 살짝 딜레이
+	    if(sDate && eDate) {
+	        calculateNights(); // 날짜가 있을 때만 계산 실행
+	    }
+	});
 });
 /* =======================
    6. 예약 제출 (다중 선택 대응)

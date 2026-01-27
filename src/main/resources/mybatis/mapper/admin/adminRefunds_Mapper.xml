@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.refunds.mapper.IAdminRefundsMapper">
+
+	<!-- 전체 목록 가져오기 -->
+	<select id="getRefundDetailList" parameterType="map" resultType="map">
+	   	    SELECT 
+	          P.PAY_NO AS "id"                      
+	        , P.PAY_TOTAL_AMT AS "originalPrice"   
+	        , P.PAY_STATUS AS "status"               
+	        , TO_CHAR(P.CANCEL_DT, 'YYYY-MM-DD HH24:MI') AS "requestedAt" 
+	        , P.CANCEL_REASON AS "reason"       
+	        
+	        , L.TRIP_PROD_NO                       
+	        , (SELECT ACC_NAME FROM ACCOMMODATION WHERE TRIP_PROD_NO = L.TRIP_PROD_NO) AS "product" 
+	        , (SELECT ACC_FILE_PATH FROM ACCOMMODATION WHERE TRIP_PROD_NO = L.TRIP_PROD_NO) AS "productImage"
+	        , L.PAY_PRICE AS "payPrice"              
+	        , TO_CHAR(L.RESV_DT, 'YYYY-MM-DD') AS "useDate"
+	        
+	        , MU.NICKNAME AS "user"                   
+	        , M.MEM_EMAIL AS "email"                
+	        
+	        , NVL(R.REFUND_AMT, 0) AS "refundAmount"
+	        , NVL(R.REFUND_POINT, 0) AS "refundPoint" 
+	        
+	    FROM PAYMENT P
+	    JOIN TRIP_PROD_LIST L ON P.PAY_NO = L.PAY_NO
+	    JOIN MEM_USER MU ON P.MEM_NO = MU.MEM_NO
+        JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
+	    LEFT OUTER JOIN REFUND_LOG R ON P.PAY_NO = R.PAY_NO
+	    
+	    WHERE P.PAY_STATUS IN ('PENDING', 'APPROVED', 'REFUNDED', 'REJECTED', 'CANCEL')
+	    <if test="searchTerm != null and searchTerm != ''">
+	        AND (P.PAY_NO LIKE '%' || #{searchTerm} || '%' 
+	             OR P.CANCEL_REASON LIKE '%' || #{searchTerm} || '%')
+	    </if>
+	    
+	    <if test="statusFilter != null and statusFilter != 'all'">
+	        AND P.PAY_STATUS = #{statusFilter}
+	    </if>
+	
+	    ORDER BY P.CANCEL_DT DESC
+	</select>
+	
+	<!-- 환불 테이블 insert -->
+	<insert id="insertRefundLog">
+	    INSERT INTO REFUND_LOG (REFUND_NO, PAY_NO, REFUND_AMT, REG_DT, REFUND_POINT)
+	    VALUES ('REF' || TO_CHAR(SYSDATE, 'YYYYMMDD') || SEQ_REFUND.NEXTVAL, 
+	            #{payNo}, #{refundAmt}, SYSDATE, #{refundPoint})
+	</insert>
+
+	<update id="updateStatusToApproved">
+	    UPDATE PAYMENT 
+	    SET PAY_STATUS = 'REFUNDED', MOD_DT = SYSDATE 
+	    WHERE PAY_NO = #{payNo}
+	</update>
+	
+	<update id="updateStatusToRejected">
+	    UPDATE PAYMENT 
+	    SET PAY_STATUS = 'REJECTED', 
+	        CANCEL_REASON = #{rejectReason}, 
+	        MOD_DT = SYSDATE 
+	    WHERE PAY_NO = #{payNo}
+	</update>
+	
+	<update id="restoreMemberPoint" parameterType="map">
+	    UPDATE MEMBER
+	    SET 
+	        POINT = POINT + (
+	            SELECT NVL(USE_POINT, 0) 
+	            FROM PAYMENT 
+	            WHERE PAY_NO = #{payNo}
+	        )
+	    WHERE MEM_NO = (
+	        SELECT MEM_NO 
+	        FROM PAYMENT 
+	        WHERE PAY_NO = #{payNo}
+	    )
+	</update>
+	
+	<!-- [차트용] 취소 사유별 통계 쿼리 --> 
+	<select id="getRefundReasonStats" resultType="map">
+	    SELECT 
+	        CANCEL_REASON AS "name", 
+	        COUNT(*) AS "value"
+	    FROM PAYMENT
+	    WHERE PAY_STATUS IN ('REFUNDED', 'REJECTED', 'PENDING')
+	    GROUP BY CANCEL_REASON
+	</select>
+	
+	<!-- [차트용] 월별 환불 금액 추이 --> 
+	<select id="getMonthlyRefundStats" resultType="map">
+	    SELECT 
+	        TO_CHAR(REG_DT, 'YYYY-MM') AS "month",
+	        SUM(REFUND_AMT) AS "amount"
+	    FROM REFUND_LOG
+	    GROUP BY TO_CHAR(REG_DT, 'YYYY-MM')
+	    ORDER BY "month"
+	</select>
+</mapper>

@@ -637,7 +637,7 @@
         	  // 🔹 10초마다 갱신
         	  setInterval(fetchUnreadCount, 10000);
         	})(); 
-        </c:if>
+        
         
         
         function checkType(typeCode){

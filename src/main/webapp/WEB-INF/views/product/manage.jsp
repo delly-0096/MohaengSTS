@@ -159,8 +159,22 @@
 								        <c:otherwise>숙박</c:otherwise>
 								    </c:choose>
 			                    </div>
-			                    <c:set var="title" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accName : prod.tripProdTitle}"/>
-			                    <h3 class="product-name">${title}</h3>
+			                    <c:choose>
+			                    	<c:when test="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation'}">
+				                    	<c:set var="title" value="${prod.accommodation.accName}" />
+					                    <h3 class="product-name">
+					                    	<a href="${pageContext.request.contextPath}/product/accommodation/${prod.accommodation.tripProdNo}">
+					                    	${title }
+					                    	</a>
+					                    </h3>
+			                    	</c:when>
+			                    	<c:otherwise>
+				                    	<c:set var="title" value="${prod.tripProdTitle}" />
+					                    <h3 class="product-name">
+					                    	<a href="${pageContext.request.contextPath}/tour/${prod.tripProdNo}">${title}</a>
+					                    </h3>
+			                    	</c:otherwise>
+			                    </c:choose>
 			                    <div class="product-meta">
 			                        <span>
 			                        	<i class="bi bi-geo-alt"></i>
@@ -260,6 +274,7 @@
 					                        	<fmt:formatNumber value="${price}" pattern="#,###"/>원
 			                        		</c:when>
 			                        		<c:otherwise>
+			                        			<!-- 숙소일때 설정해줘야됨 -->
 												<div>0원</div>
 			                        		</c:otherwise>
 			                        	</c:choose>
@@ -406,7 +421,7 @@
                         <input type="text" class="form-control" name="accommodation.accName" placeholder="숙소명 입력하세요" readonly required>
                         <label class="form-label">숙소 전화번호<span class="text-danger">*</span></label>
                         <!-- 수정가능 -->
-                        <input type="text" class="form-control" name="accommodation.tel" placeholder="010-1234-1234" readonly required>
+                        <input type="text" class="form-control" name="accommodation.tel" placeholder="010-1234-1234" required>
                     </div>
                     <div class="mb-3" id="locationField">
                         <label class="form-label">위치 정보 <span class="text-danger">*</span></label>
@@ -674,7 +689,7 @@
 	                        </div>
 	                        <div class="col-md-3">
 	                            <label class="form-label">판매가 <span class="text-danger">*</span></label>
-	                            <input type="number" class="form-control" name="prodSale.price" placeholder="0" required>
+	                            <input type="number" class="form-control" name="prodSale.price" placeholder="0" readonly required>
 	                        </div>
 	                        <div class="col-md-3">
 	                            <label class="form-label">할인율</label>
@@ -684,6 +699,7 @@
 	                            </div>
 	                        </div>
 	                        <div class="col-md-3">
+<!-- 	                        prodSale.price -->
 	                        <!-- 전체? 현재? -->
 	                            <label class="form-label">재고 수량 <span class="text-danger">*</span></label>
 	                            <div class="input-group">
@@ -691,10 +707,7 @@
 	                                <span class="input-group-text">개</span>
 	                            </div>
 	                        </div>
-							<!--  애는 등록시애는 그냥 보내는데 totalStock이랑 같은 값으로 설정 
-							그래서 처음 등록시에는 display:none -->
-	                        <!-- style="display:none;" -->
-	                        <div class="col-md-3 curStock" >
+	                        <div class="col-md-3 curStock" style="display:none;">
 	                            <label class="form-label">현재 수량 <span class="text-danger">*</span></label>
 	                            <div class="input-group">
 	                                <input type="number" class="form-control" name="prodSale.curStock" placeholder="0" min="0" readonly required>
@@ -909,7 +922,9 @@
 					
 					<!-- 리뷰내역 -->
                     <div class="tab-pane fade" id="tab-review" role="tabpanel">
+                    	
                         <div id="view-review-list">
+                        
                         	<!-- 출력란 -->
                             <div class="card mb-3 border-0 border-bottom">
                                 <div class="card-body">
@@ -919,18 +934,10 @@
                                         <small class="text-muted">2026-01-16</small>
                                     </div>
                                     <p class="small mb-0">상품이 너무 좋아요! 다시 이용하고 싶습니다.</p>
+                                    <div class="review-images">사진</div>
                                 </div>
                             </div>
-                            <div class="card mb-3 border-0 border-bottom">
-                                <div class="card-body">
-                                	<!-- 리뷰내역 -->
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <h6 class="fw-bold mb-0">뽀삐 <span class="text-warning ml-2">★★★☆☆</span></h6>
-                                        <small class="text-muted">2025-12-26</small>
-                                    </div>
-                                    <p class="small mb-0">나쁘지 않았어요</p>
-                                </div>
-                            </div>
+                            
                         </div>
                     </div>
 
@@ -943,9 +950,18 @@
                                     <small>2026-01-25</small>
                                 </div>
                                 <p class="mb-1 small">이 상품 아이가 참여 가능한가요?</p>
-                                <!-- 클릭시 답변남기기 -->
                                 <button class="btn btn-sm btn-link p-0">답변하기</button>
                             </div>
+                            
+                            <div class="list-group-item">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1 fw-bold">문의 제목입니다. <span class="badge bg-secondary ms-2">답변대기</span></h6>
+                                    <small>2026-01-25</small>
+                                </div>
+                                <p class="mb-1 small">이 상품 아이가 참여 가능한가요?</p>
+                                <button class="btn btn-sm btn-link p-0">답변하기</button>
+                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -1097,7 +1113,7 @@ async function editProduct(data) {
 	const { id, no } = data.dataset;	// tripProdNo랑 accNo
 	console.log("editProduct : id, no" +  id  + " " + no);
 	
-	// 카테고리, 도시선택 selector 초기화
+	console.log("curStock : ", document.querySelector(".curStock"));
 	category.disabled = false;
 	citySelector.disabled = false;
 
@@ -1258,9 +1274,18 @@ async function showDetail (data){
 	let areaCode = document.getElementById('view-area');					// 지역 코드
 	let prodAddr = document.getElementById('view-address');					// 주소
 
+	// 출력란
 	let reservationList = document.getElementById('view-reservation-list');	// 예약 목록 출력 란
 	let prodReservationList = document.getElementById('view-prodReservation-list');	// 예약 목록 출력 란
-	let detailImagesContainner = document.getElementById('detailImages');	// 사진 출력란
+	let detailImagesContainner = document.getElementById('detailImages');			// 사진 출력란
+	let reviewContainerList = document.getElementById('view-review-list');			// 리뷰 목록
+	let inquiryContainerList  = document.getElementById('view-qna-list');			// 문의사항 목록
+	
+	reservationList.innerHTML = ``;
+	prodReservationList.innerHTML = ``;
+	detailImagesContainner.innerHTML = ``;
+	reviewContainerList.innerHTML = ``;
+// 	inquiryContainerList.innerHTML = ``;
 	
 	// 숙박
 	if(no != null) sendData.accNo = no;
@@ -1268,7 +1293,7 @@ async function showDetail (data){
 	// axios 설정
 	try{
 		const res = await axios.post(`/product/manage/productDetail`, sendData);
-		console.log("res.data : ", res.data);
+// 		console.log("res.data : ", res.data);
 		
 		// 공통 정보
 		let selectCategory = res.data.prodCtgryType;
@@ -1300,7 +1325,7 @@ async function showDetail (data){
 		
 		// 숙박
 		if(res.data.accommodation && selectCategory === "숙박"){
-			console.log("res.data.accommodation : ", res.data.accommodation);
+// 			console.log("res.data.accommodation : ", res.data.accommodation);
 			const accommodation = res.data.accommodation;
 			
 			facility.style.display = "block";
@@ -1316,7 +1341,7 @@ async function showDetail (data){
 			detailImagesContainner.innerHTML = photo;
 
 			saleDate.innerHTML = setTime(res.data.saleStartDt) + " ~ " + setTime(res.data.saleEndDt);	// 판매 기간
-			console.log("accommodation.roomTypeList : ", accommodation.roomTypeList);
+// 			console.log("accommodation.roomTypeList : ", accommodation.roomTypeList);
 
 			// 예약 목록 출력 위한 것
 			let reservationRoomList = accommodation.roomTypeList;
@@ -1338,7 +1363,7 @@ async function showDetail (data){
 				// 원래 여기서 그거 해야됨
 			
 			reservationRoomList.forEach((room, roomIndex) => {
-				console.log("room.예약 : ", room);
+// 				console.log("room.예약 : ", room);
 				let roomName = room.roomName;	// 객실 명
 				
 				// 객실 가격 필터링 해야됨
@@ -1369,94 +1394,55 @@ async function showDetail (data){
 						}
 
 						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식)
-// 							<tr onclick="toggleDetail('\${uniqueId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
-// 							    <td class="fw-bold resv-no">#\${acc.accResvNo}</td>
-// 							    <td class="fw-medium">\${acc.memName}</td>
-// 							    <td class="small text-muted">\${startDt} ~ \${endDt}</td>
-// 							    <td><span class="fw-bold">\${personCount}명</span> <span class="text-muted mx-1">/</span> <small>\${roomName}</small></td>
-// 							    <td><span class="badge \${statusBadge}">\${acc.resvStatus}</span></td>
-// 							    <td class="fw-bold text-end text-dark">\${(acc.price || 0).toLocaleString()}원</td>
-// 							</tr>
-// 							<tr id="\${uniqueId}" class="detail-row" style="display:none; background-color: #f8fafb;">
-// 							    <td colspan="6" class="p-3">
-// 							        <div class="detail-card">
-// 							            <div class="row g-0">
-// 							                <div class="col-md-6 p-4 border-end" style="border-color: #e2e8f0 !important;">
-// 							                    <div class="view-section-title mb-3">
-// 							                        <i class="bi bi-person-vcard"></i> 예약 상세 정보
-// 							                    </div>
-// 							                    <ul class="list-unstyled mb-0" style="line-height: 2;">
-// 							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
-// 							                            <span class="text-muted small">연락처</span>
-// 							                            <span class="fw-bold">\${telForm}</span>
-// 							                        </li>
-// 							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
-// 							                            <span class="text-muted small">이메일</span>
-// 							                            <span>\${acc.memEmail || '정보 없음'}</span>
-// 							                        </li>
-// 							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
-// 							                            <span class="text-muted small">체크인 예정</span>
-// 							                            <span class="badge bg-white text-dark border fw-normal">\${startDt} 15:00</span>
-// 							                        </li>
-// 							                        <li class="d-flex justify-content-between">
-// 							                            <span class="text-muted small">추가 옵션</span>
-// 							                            <span class="badge bg-white text-dark border fw-normal">없음</span>
-// 							                        </li>
-// 							                    </ul>
-// 							                </div>
-// 							                <div class="col-md-6 p-4 bg-white">
-// 							                    <div class="view-section-title mb-3">
-// 							                        <i class="bi bi-chat-square-dots"></i> 고객 요청사항
-// 							                    </div>
-// 							                    <div class="p-3 rounded border bg-light small text-secondary" style="min-height: 100px; border-style: dashed !important;">
-// 							                        \${acc.resvRequest || '특별한 요청사항이 없습니다.'}
-// 							                    </div>
-// 							                </div>
-// 							            </div>
-// 							        </div>
-// 							    </td>
-// 							</tr>`;
-
-
 						reserveHtml += `
-						<tr onclick="toggleDetail('\${uniqueId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
-					    <td class="fw-bold resv-no">#\${acc.accResvNo}</td>
-					    <td class="fw-medium">\${acc.memName}</td>
-					    <td class="small text-muted">\${startDt} ~ \${endDt}</td>
-					    <td><span class="fw-bold">\${personCount}명</span> <span class="text-muted mx-1">/</span> <small>\${roomName}</small></td>
-					    <td><span class="badge \${statusBadge}">\${acc.resvStatus}</span></td>
-					    <td class="fw-bold text-end text-dark">\${(acc.price || 0).toLocaleString()}원</td>
-					</tr>
-					<tr id="\${uniqueId}" class="detail-row" style="display:none;">
-					    <td colspan="6">
-				            <div class="row g-0">
-				                <div class="col-md-4 pe-4 ">
-				                    <div class="view-section-title"><i class="bi bi-person-badge me-2"></i>Booking Details</div>
-				                    <ul class="list-unstyled mb-0 small" style="line-height: 2;">
-				                        <li class="d-flex justify-content-between"><span>성함</span><span class="fw-bold">\${acc.memName}</span></li>
-				                        <li class="d-flex justify-content-between"><span>연락처</span><span class="fw-bold">\${telForm}</span></li>
-				                        <li class="d-flex justify-content-between"><span>이메일</span><span>\${acc.memEmail || '-'}</span></li>
-				                    </ul>
-				                </div>
-				                <div class="col-md-4 px-4 ">
-				                    <div class="view-section-title"><i class="bi bi-calendar-check me-2"></i>Reservation Details</div>
-				                    <ul class="list-unstyled mb-0 small" style="line-height: 2;">
-				                        <li class="d-flex justify-content-between"><span>객실/상품</span><span class="fw-bold">\${roomName}</span></li>
-				                        <li class="d-flex justify-content-between"><span>이용인원</span><span class="fw-bold">\${personCount}명</span></li>
-				                        <li class="d-flex justify-content-between"><span>체크인 예정</span><span class="badge bg-white text-dark border fw-normal">\${startDt} 15:00</span></li>
-				                    </ul>
-				                </div>
-				                <div class="col-md-4 ps-4">
-				                    <div class="view-section-title"><i class="bi bi-chat-right-text me-2"></i>Customer Requests</div>
-				                    <div class="request-box text-secondary">
-				                        \${acc.resvRequest || acc.rsvMemo || '특별한 요청사항이 없습니다.'}
-				                    </div>
-				                </div>
-				            </div>
-					    </td>`;
-							
-							
-					}
+							<tr onclick="toggleDetail('\${uniqueId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
+							    <td class="fw-bold resv-no">#\${acc.accResvNo}</td>
+							    <td class="fw-medium">\${acc.memName}</td>
+							    <td class="small text-muted">\${startDt} ~ \${endDt}</td>
+							    <td><span class="fw-bold">\${personCount}명</span> <span class="text-muted mx-1">/</span> <small>\${roomName}</small></td>
+							    <td><span class="badge \${statusBadge}">\${acc.resvStatus}</span></td>
+							    <td class="fw-bold text-end text-dark">\${(acc.price || 0).toLocaleString()}원</td>
+							</tr>
+							<tr id="\${uniqueId}" class="detail-row" style="display:none; background-color: #f8fafb;">
+							    <td colspan="6" class="p-3">
+							        <div class="detail-card">
+							            <div class="row g-0">
+							                <div class="col-md-6 p-4 border-end" style="border-color: #e2e8f0 !important;">
+							                    <div class="view-section-title mb-3">
+							                        <i class="bi bi-person-vcard"></i> 예약 상세 정보
+							                    </div>
+							                    <ul class="list-unstyled mb-0" style="line-height: 2;">
+							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+							                            <span class="text-muted small">연락처</span>
+							                            <span class="fw-bold">\${telForm}</span>
+							                        </li>
+							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+							                            <span class="text-muted small">이메일</span>
+							                            <span>\${acc.memEmail || '정보 없음'}</span>
+							                        </li>
+							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+							                            <span class="text-muted small">체크인 예정</span>
+							                            <span class="badge bg-white text-dark border fw-normal">\${startDt} 15:00</span>
+							                        </li>
+							                        <li class="d-flex justify-content-between">
+							                            <span class="text-muted small">추가 옵션</span>
+							                            <span class="badge bg-white text-dark border fw-normal">없음</span>
+							                        </li>
+							                    </ul>
+							                </div>
+							                <div class="col-md-6 p-4 bg-white">
+							                    <div class="view-section-title mb-3">
+							                        <i class="bi bi-chat-square-dots"></i> 고객 요청사항
+							                    </div>
+							                    <div class="p-3 rounded border bg-light small text-secondary" style="min-height: 100px; border-style: dashed !important;">
+							                        \${acc.resvRequest || '특별한 요청사항이 없습니다.'}
+							                    </div>
+							                </div>
+							            </div>
+							        </div>
+							    </td>
+							</tr>`;
+s					}
 				});
 				
 			});
@@ -1475,7 +1461,6 @@ async function showDetail (data){
 			
 			prodTitle.innerHTML = prod.tripProdTitle;	// 상품 제목
 			content.innerHTML = prod.tripProdContent;	// 상품 내용
-			
 			// 상세 주소는 addr
 			
 			// 출력 사진
@@ -1486,7 +1471,7 @@ async function showDetail (data){
 			saleDate.innerHTML = setTime(prod.saleStartDt) + " ~ " + setTime(prod.saleEndDt);	// 판매 기간
 			
 			let prodResvList = prod.prodList;
-			console.log("prodResvList : ", prodResvList);
+// 			console.log("prodResvList : ", prodResvList);
 			
 			prodResvList.forEach((resv, index) => {
 					console.log("resv : ", resv);
@@ -1500,7 +1485,7 @@ async function showDetail (data){
 					
 					else {
 						let statusBadge = "badge-moheng-success";
-						console.log("resv.useTime : ", resv.useTime);
+// 						console.log("resv.useTime : ", resv.useTime);
 						
 						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식)
 						reserveHtml += `
@@ -1509,7 +1494,7 @@ async function showDetail (data){
 							    <td class="fw-medium">\${resv.memName}</td>
 							    <td class="small text-muted">\${startDt}</td>
 							    <td><span class="fw-bold">\${resv.quantity}명</span></td>
-							    <td><span class="badge \${statusBadge}">어떻게하지</span></td>
+							    <td><span class="badge \${statusBadge}">결제완료</span></td>
 							    <td class="fw-bold text-end text-dark">\${(resv.payPrice || 0).toLocaleString()}원</td>
 							</tr>
 							<tr id="\${resvId}" class="detail-row" style="display:none; background-color: #f8fafb;">
@@ -1560,14 +1545,134 @@ async function showDetail (data){
 			price.innerHTML =  prod.prodSale.price.toLocaleString();	// 할인가
 			curStock.innerHTML = prod.prodSale.curStock;				// 현 재고
 			
-			// 포함 사항, 불포함 사항, 지침 사항 출력란 만들고 뽑기
-			
-			// 예약 내역
 		}
 		
-		// 리뷰 내역
+		// 리뷰 내역 - 맨위에 리뷰 통계 내역 보여줄지
+		const reviewList = res.data.prodReviewList;
+		console.log("reviewList : ", reviewList);
+		let reviewHtml = ``;
+		reviewHtml += `
+			<div class="review-list">`;
+			
+		reviewList.forEach((review) => {
+			console.log("review : ", review);
+			let reviewDt = review.prodRegdate != null ? setTime(review.prodRegdate) : "2026-01-12"; // 등록 일자	
+			// prodUdtdate 수정시 사용할 것
+			let prodReview = review.prodReview != null ? review.prodReview : "최고입니다!"; 			// 리뷰 내용
+			
+			reviewHtml += `
+					<div class="review-item">
+						<div class="review-item-header">
+							<div class="reviewer-info">
+			               		<div class="reviewer-avatar">`;
+			// 프로필 추가
+       		let profile = review.profileImage !== null ? `${pageContext.request.contextPath}/upload\${review.profileImage }` : "";
+			
+			if(profile !== null && profile !== "") reviewHtml += `<img src="\${profile}" alt="프로필"/>`;
+			else reviewHtml += `<i class="bi bi-person"></i>`;
+			
+			reviewHtml += `
+								</div>
+								<div>
+									<span class="reviewer-name">\${review.nickname}</span> 
+					                <span class="review-date">\${reviewDt}</span>
+				                </div>
+							</div>
+							<div class="d-flex align-items-center gap-2">`;
+				            	
+			// 별 추가
+			let star = review.rating !== null ? review.rating : 1;
+			reviewHtml += `\${star}
+								<div class="review-rating">`;
+								
+			for(let i = 1; i <= star; i++){
+				reviewHtml += `<i class="bi bi-star-fill"></i>`;
+			}
+			reviewHtml += `
+								</div>
+							</div>
+						</div>
+						<div class="review-content"><p>\${prodReview}</p></div>`;
+
+			// 리뷰 사진
+			let reviewImages = review.reviewImages !== null ? `${pageContext.request.contextPath}/upload\${review.reviewImages[0]}` : "";
+			if(reviewImages !== null && reviewImages !== ""){
+				console.log("reviewImages : ", reviewImages);
+				reviewHtml += `
+						<div class="review-images"><img src="\${reviewImages}" alt="리뷰이미지"/></div>`;
+			}
+			reviewHtml += `
+				</div>`;
+		});
+		reviewHtml += `</div>`;
+		if(reviewList == null || reviewList.length <= 0){
+			reviewHtml = `
+				<div class="no-review">
+	                <i class="bi bi-chat-square-text"></i>
+	                <p>아직 리뷰가 없습니다.</p>
+	            </div>`;
+		}
+		
+		reviewContainerList.innerHTML = reviewHtml;
+		
 		
 		// 문의 사항 출력
+		const inquiryList = res.data.prodInquiryList;
+		console.log("inquiryList : ", inquiryList);
+		let inquiryHtml = ``;
+		inquiryHtml = `
+			<div class="inquiry-modal-list" id="inquiryModalList">`;
+			
+		inquiryList.forEach((inquiry) => {
+			console.log("inquiry : ", inquiry);
+			
+			let inquiryStatus = inquiry.inquiryStatus !== null ? (inquiry.inquiryStatus === "WAIT" ? "답변대기" : "답변완료") : "답변대기";
+			let showDate = inquiry.regDt !== null ? (inquiry.modDt !== null ? setTime(inquiry.modDt) : setTime(inquiry.regDt)) : "2026-01-23";
+			let inquiryContent = inquiry.prodInqryCn !== null ? inquiry.prodInqryCn : "이건 어떻게 해야되나요?";	// 문의 내용
+			let inquiryType = setInquiryCategory(inquiry.inquiryCtgry); 										// 문의 카테고리
+			// inqryStatus = 답변 여부
+			
+			inquiryHtml += `
+				<div class="inquiry-modal-item" data-status="waiting" data-id="\${inquiry.prodInqryNo}">
+					<div class="inquiry-modal-header">
+                		<div class="inquiry-modal-info">
+                			<span class="inquiry-type-badge product">\${inquiryType}</span>
+                			<span class="inquiry-author"></span>
+                            <span class="inquiry-date">\${showDate}</span>
+                        </div>
+                        <span class="inquiry-status \${inquiry.inqryStatus}">\${inquiry.inqryStatus == 'WAIT' ? '미답변' : '답변완료'}</span>
+					</div>
+					<div class="inquiry-modal-question">
+	                    <p><strong>Q.</strong>\${inquiryContent}</p>
+	                </div>`;
+	                
+			if(inquiry.inqryStatus !== null && inquiry.inqryStatus == 'WAIT'){
+				inquiryHtml += `
+					<div class="inquiry-modal-reply">
+	                    <textarea class="form-control" placeholder="답변을 입력하세요..." rows="3"></textarea>
+	                    <div class="reply-actions">
+	                        <button class="btn btn-primary btn-sm" onclick="submitModalReply(\${inquiry.prodInqryNo})">
+	                            <i class="bi bi-send me-1"></i>답변 등록
+	                        </button>
+	                    </div>
+	                </div>`;
+			}
+
+// 			<div class="list-group-item">
+// 		        <div class="d-flex w-100 justify-content-between">
+// 		            <h6 class="mb-1 fw-bold">문의 제목입니다. <span class="badge bg-secondary ms-2">\${inquiryStatus}</span></h6>
+// 		            <small>\${showDate}</small>
+// 		        </div>
+// 		        <p class="mb-1 small">\${inquiryContent}</p>
+// 		        <button class="btn btn-sm btn-link p-0" data-id="\${inquiry.prodInqryNo}">답변하기</button>
+// 		    </div>`;
+// 		    console.log("inquiryHtml : ",inquiryHtml)
+		});
+		
+// // 		if(inquiryHtml === "") inquiryHtml = "등록된 문의 내역이 없습니다";
+
+		inquiryHtml += `</div>`;
+// 		inquiryContainerList.innerHMTL = inquiryHtml;
 		
 	}catch(err){
 		console.log("에러 원인 : ", err);
@@ -1575,6 +1680,69 @@ async function showDetail (data){
 	}
 	detailModal.show();
 } 
+
+//모달에서 답변 등록
+function submitModalReply(inquiryId) {
+ var item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
+ var textarea = item.querySelector('textarea');
+ var content = textarea.value.trim();
+
+ if (!content) {
+     if (typeof showToast === 'function') {
+         showToast('답변 내용을 입력해주세요.', 'warning');
+     }
+     return;
+ }
+
+ if (content.length < 10) {
+     if (typeof showToast === 'function') {
+         showToast('답변은 10자 이상 입력해주세요.', 'warning');
+     }
+     return;
+ }
+
+ // TODO: 실제 API 호출
+ console.log('답변 등록:', { inquiryId: inquiryId, content: content });
+
+ // 상태 변경
+ item.dataset.status = 'answered';
+ var statusBadge = item.querySelector('.inquiry-status');
+ statusBadge.className = 'inquiry-status answered';
+ statusBadge.textContent = '답변완료';
+
+ // 답변 영역으로 변경
+ var replySection = item.querySelector('.inquiry-modal-reply');
+ var today = new Date();
+ var dateStr = today.getFullYear() + '.' +
+               String(today.getMonth() + 1).padStart(2, '0') + '.' +
+               String(today.getDate()).padStart(2, '0');
+
+ replySection.outerHTML =
+     '<div class="inquiry-modal-answer">' +
+         '<div class="answer-header">' +
+             '<span><i class="bi bi-building"></i> 내 답변</span>' +
+             '<div class="answer-actions">' +
+                 '<span class="answer-date">' + dateStr + '</span>' +
+                 '<button type="button" class="btn-edit-answer" onclick="editAnswer(' + inquiryId + ')" title="답변 수정">' +
+                     '<i class="bi bi-pencil"></i>' +
+                 '</button>' +
+                 '<button type="button" class="btn-delete-answer" onclick="deleteAnswer(' + inquiryId + ')" title="답변 삭제">' +
+                     '<i class="bi bi-trash"></i>' +
+                 '</button>' +
+             '</div>' +
+         '</div>' +
+         '<div class="answer-content">' +
+             '<p><strong>A.</strong> <span class="answer-text">' + escapeHtml(content) + '</span></p>' +
+         '</div>' +
+     '</div>';
+
+ // 카운트 업데이트
+	updateInquiryCounts();
+
+	if (typeof showToast === 'function') {
+	    showToast('답변이 등록되었습니다.', 'success');
+	}
+}
 
 // 시간 설정
 function setTime (date){
@@ -1640,6 +1808,30 @@ function setArea (ctyNm){
 			break;
 	}
 	return area;
+}
+
+// 문의 내역 타입 설정
+function setInquiryCategory(inquiry){
+	if(inquiry === null || inquiry === "") return "";
+	let inquiryType = "";
+	switch(inquiry){
+		case "product":
+			inquiryType = "상품 문의";
+			break;
+		case "booking":
+			inquiryType = "예약/일정 문의";
+			break;
+		case "price":
+			inquiryType = "가격/결제 문의";
+			break;
+		case "cancel":
+			inquiryType = "취소/환불 문의";
+			break;
+		default :
+			inquiryType = "기타 문의";
+			break;
+	}
+	return inquiryType;
 }
 
 // 전화번호 포맷 설정
@@ -1850,6 +2042,9 @@ function buildHierarchy(obj, path, value) {
 // [수정된 순서]
 async function saveProduct(data) {
     const isUpdate = (data.innerText === "수정");
+    
+    document.querySelector("")
+    
     const form = document.getElementById('productForm');
     
     // 1. 데이터 수집을 위한 활성화

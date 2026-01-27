@@ -29,7 +29,7 @@
 		    <div class="gallery-main">
 		        <c:choose>
 		            <c:when test="${not empty productImages}">
-		                <img src="${pageContext.request.contextPath}/upload${productImages[0].filePath}" 
+		                <img src="${pageContext.request.contextPath}/upload${productImages[0].filePath}"
 		                     alt="${tp.tripProdTitle}" id="mainImage">
 		            </c:when>
 		            <c:otherwise>
@@ -37,7 +37,7 @@
 		                     alt="${tp.tripProdTitle}" id="mainImage">
 		            </c:otherwise>
 		        </c:choose>
-		        
+
 		        <!-- 이전/다음 버튼 -->
 		        <button class="gallery-nav-btn gallery-prev" onclick="prevImage()">
 		            <i class="bi bi-chevron-left"></i>
@@ -45,12 +45,12 @@
 		        <button class="gallery-nav-btn gallery-next" onclick="nextImage()">
 		            <i class="bi bi-chevron-right"></i>
 		        </button>
-		        
+
 		        <!-- 이미지 카운터 -->
 		        <div class="gallery-counter" id="galleryCounter">
 		            <span id="currentImageIndex">1</span> / <span id="totalImageCount">${not empty productImages ? fn:length(productImages) : 1}</span>
 		        </div>
-		        
+
 		        <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && sessionScope.loginMember.memNo == tp.memNo}">
 		            <button class="gallery-edit-btn" onclick="openImageUploadModal()">
 		                <i class="bi bi-camera"></i> 이미지 수정
@@ -59,7 +59,7 @@
 		    </div>
 		    <div class="gallery-thumbs" id="galleryThumbs">
 		        <c:forEach items="${productImages}" var="img" varStatus="status">
-		            <img src="${pageContext.request.contextPath}/upload${img.filePath}" 
+		            <img src="${pageContext.request.contextPath}/upload${img.filePath}"
 		                 alt="썸네일" onclick="changeMainImage(this, ${status.index})"
 		                 class="${status.index == 0 ? 'active' : ''}">
 		        </c:forEach>
@@ -90,7 +90,7 @@
 
                 <div class="product-meta">
                     <span><i class="bi bi-geo-alt"></i> ${tp.ctyNm}</span>
-                    <span><i class="bi bi-clock"></i> 
+                    <span><i class="bi bi-clock"></i>
 						<c:choose>
 					        <c:when test="${sale.leadTime eq 1}">1시간 이내</c:when>
 					        <c:when test="${sale.leadTime eq 3}">1~3시간</c:when>
@@ -127,7 +127,7 @@
 				            <p class="text-muted">포함 사항 정보가 없습니다.</p>
 				        </c:otherwise>
 				    </c:choose>
-				
+
 				    <h3>불포함 사항</h3>
 				    <c:choose>
 				        <c:when test="${not empty info.prodExclude}">
@@ -181,7 +181,7 @@
 				        </c:if>
 				    </div>
 				</div>
-				
+
 				<!-- 유의사항 -->
 				<c:if test="${not empty info.prodNotice}">
 				<div class="product-description notice-section">
@@ -259,7 +259,7 @@
 						    <select class="form-control form-select" id="bookingPeople" onchange="updateTotal(); checkGroupBooking();">
 						        <c:set var="minPeople" value="${info.prodMinPeople != null ? info.prodMinPeople : 1}" />
 						        <c:set var="maxPeople" value="${info.prodMaxPeople != null ? info.prodMaxPeople : 10}" />
-						        
+
 						        <c:choose>
 						            <c:when test="${maxPeople >= 5}">
 						                <c:forEach begin="${minPeople}" end="4" var="i">
@@ -274,7 +274,7 @@
 						            </c:otherwise>
 						        </c:choose>
 						    </select>
-						    
+
 						    <div class="group-booking-notice" id="groupBookingNotice" style="display: none;">
 						        <i class="bi bi-info-circle me-1"></i>
 						        5명 이상 단체 예약은 하단의 <a href="javascript:void(0)" onclick="scrollToInquiry()">판매자 문의</a>를 이용해주세요.
@@ -327,7 +327,7 @@
 		                    <c:set var="rating" value="${reviewStat.avgRating != null ? reviewStat.avgRating : 0}" />
 		                    <fmt:parseNumber var="fullStars" value="${rating}" integerOnly="true" />
 		                    <c:set var="decimal" value="${rating - fullStars}" />
-		                    
+
 		                    <c:forEach begin="1" end="5" var="i">
 		                        <c:choose>
 		                            <c:when test="${i <= fullStars}">
@@ -345,7 +345,7 @@
 		            </div>
 		        </div>
 		    </div>
-		
+
 		    <div class="review-list" id="reviewList">
 		        <c:choose>
 		            <c:when test="${empty review}">
@@ -357,7 +357,18 @@
 		            <c:otherwise>
 		                <c:forEach items="${review}" var="rv">
 						    <div class="review-item" data-review-id="${rv.prodRvNo}">
-						        <div class="review-item-header">
+<%-- 관리자가 신고 제제로 숨김 처리한 경우 start  --%>
+						    <c:choose>
+						    	<%-- 1. 관리자가 숨김 처리한 경우 --%>
+						    	<c:when test="${rv.reviewStatus == 'HIDDEN'}">
+						    		<div class="alert alert-warning">
+						    			관리자에 의해 숨김 처리된 글입니다.
+						    		</div>
+						    	</c:when>
+
+						    	<%-- 2. 정상적인 리뷰인 경우 (기존 코드 전부) --%>
+						    	<c:otherwise>
+						    							        <div class="review-item-header">
 						            <div class="reviewer-info">
 						                <div class="reviewer-avatar">
 										    <c:choose>
@@ -418,17 +429,20 @@
 								<c:if test="${not empty rv.reviewImages}">
 								    <div class="review-images">
 								        <c:forEach items="${rv.reviewImages}" var="img">
-								            <img src="${pageContext.request.contextPath}/upload${img}" 
+								            <img src="${pageContext.request.contextPath}/upload${img}"
 								                 alt="리뷰 이미지" onclick="openReviewImage(this.src)">
 								        </c:forEach>
 								    </div>
 								</c:if>
+						    	</c:otherwise>
+						    </c:choose>
+<%-- 관리자가 신고 제제로 숨김 처리한 경우 end  --%>
 						    </div>
 						</c:forEach>
 		            </c:otherwise>
 		        </c:choose>
 		    </div>
-		
+
 		    <!-- 더보기 버튼: 6개 이상일 때만 표시 -->
 		    <c:if test="${reviewStat.reviewCount > 5}">
 		        <div class="review-more" id="reviewMoreBtn">
@@ -469,7 +483,7 @@
 			        </div>
 			    </div>
 			    <div class="seller-contact">
-			        <span><i class="bi bi-clock"></i> 평균 응답시간: 
+			        <span><i class="bi bi-clock"></i> 평균 응답시간:
 			            <c:choose>
 			                <c:when test="${seller.answeredCount == 0 || seller.totalInquiryCount == 0}">정보 없음</c:when>
 			                <c:when test="${seller.avgResponseTime < 1}">1시간 이내</c:when>
@@ -547,19 +561,19 @@
 			                                        <span class="inquiry-type-badge other">기타</span>
 			                                    </c:otherwise>
 			                                </c:choose>
-			                                
+
 			                                <!-- 작성자 닉네임 마스킹 -->
 			                                <span class="inquiry-author">${inq.inquiryNickname}</span>
 			                                <span class="inquiry-date">
 			                                    <fmt:formatDate value="${inq.regDt}" pattern="yyyy.MM.dd"/>
 			                                </span>
-			                                
+
 			                                <!-- 비밀글 표시 -->
 			                                <c:if test="${inq.secretYn eq 'Y'}">
 			                                    <span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>
 			                                </c:if>
 			                            </div>
-			                            
+
 			                            <!-- 답변 상태 -->
 			                            <div class="d-flex align-items-center gap-2">
 										    <!-- 답변 상태 -->
@@ -593,7 +607,7 @@
 										    </c:choose>
 										</div>
 			                        </div>
-			                        
+
 			                        <!-- 문의 내용 -->
 			                        <div class="inquiry-item-question">
 			                            <c:choose>
@@ -605,7 +619,7 @@
 			                                </c:otherwise>
 			                            </c:choose>
 			                        </div>
-			                        
+
 			                        <!-- 답변 내용 (답변완료 시) -->
 									<c:if test="${inq.inqryStatus eq 'DONE' && not empty inq.replyCn}">
 									    <!-- 비밀글이 아니거나 본인인 경우만 답변 표시 -->
@@ -643,7 +657,7 @@
 									    </div>
 									    </c:if>
 									</c:if>
-			                        
+
 			                        <!-- 기업회원 답변 영역 (답변대기 상태일 때만) -->
 			                        <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && inq.inqryStatus eq 'WAIT'}">
 			                        <div class="business-reply-section">
@@ -665,7 +679,7 @@
 			            </c:otherwise>
 			        </c:choose>
 			    </div>
-			
+
 			    <!-- 더보기 버튼: 6개 이상일 때만 표시 -->
 			    <c:if test="${inquiryCount > 5}">
 			        <div class="inquiry-more" id="inquiryMoreBtn">
@@ -692,7 +706,7 @@
             <div class="modal-body">
                 <form id="editReviewForm">
                     <input type="hidden" id="editReviewId">
-                    
+
                     <!-- 별점 -->
                     <div class="review-section">
                         <label class="review-label">별점 <span class="text-danger">*</span></label>
@@ -717,7 +731,7 @@
                             <span id="editReviewCharCount">0</span> / 1000자
                         </div>
                     </div>
-                    
+
                     <!-- 사진 첨부 -->
 					<div class="review-section">
 					    <label class="review-label">사진 첨부 <span class="text-muted">(선택, 최대 5장)</span></label>
@@ -755,7 +769,7 @@
             <div class="modal-body">
                 <form id="editInquiryForm">
                     <input type="hidden" id="editInquiryId">
-                    
+
                     <div class="form-group mb-3">
                         <label class="form-label">문의 유형</label>
                         <select class="form-control form-select" id="editInquiryType">
@@ -882,7 +896,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 새 이미지 업로드 -->
                 <div class="new-images-section">
                     <h6 class="mb-3">새 이미지 추가 <span class="text-muted">(최대 10장)</span></h6>

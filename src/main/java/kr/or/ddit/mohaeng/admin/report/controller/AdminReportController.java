@@ -43,7 +43,7 @@ public class AdminReportController {
 		// 처리 상태 코드 (WAIT, DONE)
 		setupData.put("procStatus", reportService.getCodeByGroup("REPORT_PROC_STATUS"));
 
-		// 신고 출처 코드 (TRIP_PROD, TRIP_RECORD, BOARD, COMMENT, CHAT)
+		// 신고 출처 코드 (TRIP_PROD, TRIP_RECORD, BOARD, COMMENTS, CHAT)
 		setupData.put("targetType", reportService.getCodeByGroup("REPORT_TARGET_TYPE"));
 
 		// 제재 수위 코드 (WARNING, TEMP_BAN_7, TEMP_BAN_30, BLACKLIST, REJECTED)

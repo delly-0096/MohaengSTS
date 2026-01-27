@@ -15,12 +15,12 @@
         <result property="rcmdtnYn" column="RCMDTN_YN"/>
         <result property="nickname" column="NICKNAME"/>
         <result property="profileImage" column="PROFILE_IMAGE"/>
-        
+
         <!-- 리뷰 이미지 목록 (1:N) -->
-        <collection property="reviewImages" column="ATTACH_NO" 
+        <collection property="reviewImages" column="ATTACH_NO"
                     select="selectReviewImages" ofType="string"/>
     </resultMap>
-    
+
     <!-- 리뷰 이미지 조회 -->
     <select id="selectReviewImages" parameterType="int" resultType="string">
         SELECT FILE_PATH
@@ -34,7 +34,7 @@
     <select id="getReviewAttachNo" parameterType="int" resultType="Integer">
         SELECT ATTACH_NO FROM PROD_REVIEW WHERE PROD_RV_NO = #{prodRvNo}
     </select>
-    
+
     <!-- 리뷰에 ATTACH_NO 연결 -->
     <update id="updateReviewAttachNo">
         UPDATE PROD_REVIEW
@@ -63,7 +63,7 @@
                 LEFT JOIN MEMBER m ON r.MEM_NO = m.MEM_NO
 	            LEFT JOIN ATTACH_FILE_DETAIL pf ON m.MEM_PROFILE = pf.ATTACH_NO AND pf.USE_YN = 'Y'
                 WHERE r.TRIP_PROD_NO = #{tripProdNo}
-	              AND (r.REVIEW_STATUS IS NULL OR r.REVIEW_STATUS != 'HIDDEN')
+	              <!-- AND (r.REVIEW_STATUS IS NULL OR r.REVIEW_STATUS != 'HIDDEN') -->
 	            ORDER BY r.PROD_REGDATE DESC
 	        ) A
 	        <![CDATA[
@@ -87,35 +87,35 @@
        	  AND (REVIEW_STATUS IS NULL OR REVIEW_STATUS != 'HIDDEN')
         GROUP BY TRIP_PROD_NO
     </select>
-    
+
     <!-- 리뷰 수정 -->
 	<update id="updateReview" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
 	    UPDATE PROD_REVIEW
 	    SET PROD_REVIEW = #{prodReview},
 	        RATING = #{rating},
-	        RCMDTN_YN = #{rcmdtnYn}, 
+	        RCMDTN_YN = #{rcmdtnYn},
 	        PROD_UDTDATE = SYSDATE
 	    WHERE PROD_RV_NO = #{prodRvNo}
 	      AND MEM_NO = #{memNo}
 	</update>
-	
+
 	<!-- 리뷰 삭제 -->
 	<delete id="deleteReview" parameterType="map">
 	    DELETE FROM PROD_REVIEW
 	    WHERE PROD_RV_NO = #{prodRvNo}
 	      AND MEM_NO = #{memNo}
 	</delete>
-	
+
 	<!-- 리뷰 등록 -->
 	<insert id="insertReview" parameterType="kr.or.ddit.mohaeng.product.review.vo.ProdReviewVO">
 	    <selectKey keyProperty="prodRvNo" resultType="int" order="BEFORE">
 	        SELECT SEQ_PROD_REVIEW.NEXTVAL FROM DUAL
 	    </selectKey>
 	    INSERT INTO PROD_REVIEW (
-	        PROD_RV_NO, TRIP_PROD_NO, MEM_NO, PROD_REVIEW, 
+	        PROD_RV_NO, TRIP_PROD_NO, MEM_NO, PROD_REVIEW,
 	        PROD_REGDATE, RATING, ATTACH_NO, RCMDTN_YN, REVIEW_STATUS
 	    ) VALUES (
-	        #{prodRvNo}, #{tripProdNo}, #{memNo}, #{prodReview}, 
+	        #{prodRvNo}, #{tripProdNo}, #{memNo}, #{prodReview},
 	        SYSDATE, #{rating}, #{attachNo, jdbcType=INTEGER}, #{rcmdtnYn}, 'ACTIVE'
 	    )
 	</insert>

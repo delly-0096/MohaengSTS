@@ -97,7 +97,7 @@ public class AReportServiceImpl implements IAReportService {
 	private void hideContent(String targetType, Long targetNo) {
 		switch(targetType) {
 			case "PROD_REVIEW":
-				// 상품 리뷰 REVIEW_STATUS = 'HIDE'
+				// 상품 리뷰 REVIEW_STATUS = 'HIDDEN'
 				reportMapper.hideProdReview(targetNo);
 				break;
 			case "TRIP_RECORD":

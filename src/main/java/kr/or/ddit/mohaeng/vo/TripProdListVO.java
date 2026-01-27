@@ -15,4 +15,12 @@ public class TripProdListVO {
     private String resvDt;         // 이용일자
     private String useTime;        // 이용시작시간
     private String rsvMemo;        // 요청사항
+    
+    
+	// 결제자 정보 호출
+	private String memName;
+	private String memEmail;
+	// memUser
+	private String tel;
+	private String nickname;
 }

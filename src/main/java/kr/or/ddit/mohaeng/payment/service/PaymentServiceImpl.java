@@ -216,6 +216,9 @@ public class PaymentServiceImpl implements IPaymentService {
 					String infantInfo = "유아 " + infant + "명";
 					responseBody.put("infant", infantInfo);
 				}
+				
+                responseBody.put("payNo", paymentVO.getPayNo());
+                
 			} else if(paymentVO.getProductType().equals("tour")) {
 				result = tourPayConfirm(paymentVO);
 			    log.info("tour pay : {}", result);
@@ -225,7 +228,7 @@ public class PaymentServiceImpl implements IPaymentService {
 			    responseBody.put("quantity", quantity + "명");
 			    responseBody.put("payNo", paymentVO.getPayNo());
 			    
-			} else if(paymentVO.getProductType().equals("accommodation")) { // ★ 여기 추가!
+			} else if(paymentVO.getProductType().equals("accommodation")) { 
                 // 1. 숙소 예약 로직 호출
                 result = accommodationPayConfirm(paymentVO); 
                 log.info("accommodation pay result : {}", result);
@@ -236,6 +239,7 @@ public class PaymentServiceImpl implements IPaymentService {
                     String guestInfo = "성인 " + resv.getAdultCnt() + "명";
                     if(resv.getChildCnt() > 0) guestInfo += ", 아동 " + resv.getChildCnt() + "명";
                     responseBody.put("guestInfo", guestInfo);
+                    responseBody.put("payNo", paymentVO.getPayNo());
                 }
                 
                 if (result > 0) {

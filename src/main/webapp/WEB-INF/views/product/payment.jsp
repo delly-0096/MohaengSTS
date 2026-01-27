@@ -264,50 +264,59 @@ document.addEventListener("DOMContentLoaded", async function(){
 			
 		    const resultData = await response.json(); 
 			if (response.ok) {
-			    console.log("서버에서 받은 API 결과값:", resultData);
+				if (resultData.approvedAt && resultData.payNo) {
+			        // 우리만의 규격: 2026012900001234 처럼 바뀜!
+			        payNo.innerHTML = formatPayNo(resultData.approvedAt, resultData.payNo);
+			    } else {
+			        // 만약 payNo가 안 넘어오면 백업용으로 기존꺼라도 보여줌
+			        payNo.innerHTML = resultData.orderId;
+			    }
+
+			    orderName.innerHTML = resultData.orderName;
+
+			    // 2. 승인 시간 포맷팅 (Intl.DateTimeFormat 사용)
+			    const date = new Date(resultData.approvedAt);
+			    const formattedDate = new Intl.DateTimeFormat('ko-KR', {
+			        year: 'numeric',
+			        month: 'long',
+			        day: 'numeric',
+			        weekday: 'long',
+			        hour: '2-digit',
+			        minute: '2-digit',
+			        hour12: true
+			    }).format(date);
+
+			    console.log(formattedDate);
+			    payDt.innerHTML = formattedDate;
 			    
-				payNo.innerHTML = resultData.orderId;
-				orderName.innerHTML = resultData.orderName;
-	
-				// 시간 
-				const date = new Date(resultData.approvedAt);
-				const formattedDate = new Intl.DateTimeFormat('ko-KR', {
-				  year: 'numeric',
-				  month: 'long',
-				  day: 'numeric',
-				  weekday: 'long',
-				  hour: '2-digit',
-				  minute: '2-digit',
-				  hour12: true
-				}).format(date);
-	
-				console.log(formattedDate);
-				payDt.innerHTML = formattedDate;
-				
-				let personParts = [];
-	
-				if (resultData.adult) personParts.push(resultData.adult);
-				if (resultData.child) personParts.push(resultData.child);
-				if (resultData.infant) personParts.push(resultData.infant);
-	
-				let personCount = personParts.join(", ");
+			    // 3. 탑승 인원 정보 구성
+			    let personParts = [];
+			    if (resultData.adult) personParts.push(resultData.adult);
+			    if (resultData.child) personParts.push(resultData.child);
+			    if (resultData.infant) personParts.push(resultData.infant);
+
+			    let personCount = personParts.join(", ");
 			    person.innerHTML = personCount;
 			    
-				totalAmount.innerHTML = (resultData.totalAmount).toLocaleString();
-				
-				if (resultData.method == '간편결제'){
-					method.innerHTML = resultData.easyPay.provider;
-				} else{
-					method.innerHTML = resultData.method;
-				}
-				document.querySelector(".payment-complete").style.display = "block";
-				
-				// 성공하면 세션 삭제하기
-				sessionStorage.removeItem("flightProduct");
-				sessionStorage.removeItem("passengers");
-				sessionStorage.removeItem("reservationList");
-				sessionStorage.removeItem("reserveAgree");
-				sessionStorage.removeItem("@tosspayments/session-id");
+			    // 4. 결제 금액 및 수단
+			    totalAmount.innerHTML = (resultData.totalAmount).toLocaleString();
+			    
+			    if (resultData.method == '간편결제'){
+			        method.innerHTML = resultData.easyPay.provider;
+			    } else{
+			        method.innerHTML = resultData.method;
+			    }
+
+			    // 5. 화면 전환 및 항공 관련 세션 삭제
+			    document.querySelector(".payment-complete").style.display = "block";
+			    
+			    sessionStorage.removeItem("flightProduct");
+			    sessionStorage.removeItem("passengers");
+			    sessionStorage.removeItem("reservationList");
+			    sessionStorage.removeItem("reserveAgree");
+			    sessionStorage.removeItem("@tosspayments/session-id");
+			    
+			    console.log("✈️ 항공 예약 완료 - 예약번호: " + payNo.innerHTML);
 			} else {
 				try {
 				    const msgSplit = resultData.message.split(': "');
@@ -450,37 +459,48 @@ async function processAccommodationPayment(customData, payNo, orderName, payDt, 
     
     if (response.ok) {
         // UI 업데이트
-		payNo.innerText = resultData.orderId || "";
-        orderName.innerText = resultData.orderName || "";
-        
-        // 인원 구성
-        if (resultData.guestInfo) {
-            person.innerHTML = resultData.guestInfo; 
-        } else {
-        	let adult = pendingBooking.adultCnt || 0;
-            let child = pendingBooking.childCnt || 0;
-            let infant = pendingBooking.infantCnt || 0;
-            
-            let guestText = `성인 ${adult}명`;
-            if (child > 0) guestText += `, 아동 ${child}명`;
-            if (infant > 0) guestText += `, 유아 ${infant}명`;
-            person.innerHTML = guestText;
-        }
-        
-        // 이용일시 및 금액
-        payDt.innerHTML = pendingBooking.startDt + " ~ " + pendingBooking.endDt;
-        totalAmount.innerHTML = resultData.totalAmount.toLocaleString();
-        
-        // 결제 수단
-        method.innerHTML = resultData.method === '간편결제' ? resultData.easyPay.provider : resultData.method;
-        
-        // 화면 전환 및 세션 정리
-        document.querySelector(".payment-complete").style.display = "block";
-        sessionStorage.removeItem("pendingBooking"); // 성공했으니 세션 삭제
-	    } else {
-	        // 실패 처리 로직...
-	        document.querySelector(".payment-fail").style.display = "block";
-	        if (message) message.innerHTML = resultData.message || "결제 승인 중 오류가 발생했습니다.";
+	    	if (resultData.approvedAt && resultData.payNo) {
+	            payNo.innerText = formatPayNo(resultData.approvedAt, resultData.payNo);
+	        } else {
+	            payNo.innerText = resultData.orderId || ""; 
+	        }
+	
+	        // 2. 상품명 업데이트
+	        orderName.innerText = resultData.orderName || "";
+	        
+	        // 3. 인원 구성: 성인/아동/유아 문자열 합치기
+	        if (resultData.guestInfo) {
+	            person.innerHTML = resultData.guestInfo; 
+	        } else {
+	            var adult = pendingBooking.adultCnt || 0;
+	            var child = pendingBooking.childCnt || 0;
+	            var infant = pendingBooking.infantCnt || 0;
+	            
+	            // JSP/옛날 브라우저에서도 안전하게 문자열 연결 (+) 사용
+	            var guestText = "성인 " + adult + "명";
+	            if (child > 0) guestText += ", 아동 " + child + "명";
+	            if (infant > 0) guestText += ", 유아 " + infant + "명";
+	            person.innerHTML = guestText;
+	        }
+	        
+	        // 4. 이용 기간 (체크인 ~ 체크아웃)
+	        payDt.innerHTML = pendingBooking.startDt + " ~ " + pendingBooking.endDt;
+	        
+	        // 5. 금액 포맷팅 (천단위 콤마)
+	        totalAmount.innerHTML = resultData.totalAmount.toLocaleString();
+	        
+	        // 6. 결제 수단: 간편결제 여부에 따른 분기
+	        if (resultData.method === '간편결제') {
+	            method.innerHTML = resultData.easyPay.provider;
+	        } else {
+	            method.innerHTML = resultData.method;
+	        }
+	        
+	        // 7. 화면 전환 및 세션 정리
+	        document.querySelector(".payment-complete").style.display = "block";
+	        sessionStorage.removeItem("pendingBooking"); 
+	        
+	        console.log("🏨 숙박 예약 완료 - 주문번호: " + payNo.innerText);
 	    }
     } catch (error) {
         console.error("결제 프로세스 에러:", error);

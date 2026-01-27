@@ -153,4 +153,9 @@ public class AccommodationVO {
     // 리뷰, 평점
     private double avgRating; // 평균 별점
     private int reviewCount;  // 리뷰 개수
+    
+    //[react] 방 전체 개수, 잔여 객실 수
+    private int totalRooms;
+    private int remainingCount;
+    
 }

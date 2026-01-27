@@ -98,7 +98,7 @@ function loadChatHistory() {
     const messagesContainer = document.getElementById('chatbotMessages');
     const key = 'chatbotHistory_' + (typeof chatbotUserKey !== 'undefined' ? chatbotUserKey : 'guest');
     const savedHistory = sessionStorage.getItem(key);
-    
+
     if (messagesContainer && savedHistory) {
         messagesContainer.innerHTML = savedHistory;
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -136,47 +136,47 @@ let isSending = false;  // 전송 중 상태 플래그
 
 async function sendChatMessage() {
 	if (isSending) return;
-	
+
     const input = document.getElementById('chatbotInput');
 	const sendBtn = document.querySelector('.chatbot-send-btn');
     const message = input.value.trim();
-    
+
     if (!message) return;
-	
+
 	// 전송 시작 - 버튼 비활성화
 	isSending = true;
 	if (sendBtn) {
 	    sendBtn.disabled = true;
 	    sendBtn.style.opacity = '0.5';
 	}
-    
+
     // 사용자 메시지 표시
     addUserMessage(message);
     input.value = '';
-    
+
     // 로딩 표시
     showTypingIndicator();
-    
+
     try {
         const response = await fetch(contextPath + '/api/chatbot', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: message })
         });
-        
+
         const data = await response.json();
-        
+
         // 로딩 제거
         hideTypingIndicator();
-        
+
         // 봇 응답 표시
         addBotMessage(data.message);
-        
+
         // 페이지 이동이 필요한 경우
         if (data.redirectUrl) {
             addNavigateButton(data.redirectUrl);
         }
-        
+
     } catch (error) {
         console.error('Error:', error);
         hideTypingIndicator();
@@ -372,16 +372,16 @@ function getCurrentTravelType() {
 function showAutocomplete(dropdown, query, travelType) {
     // 국내 여행지만 필터링
     const results = filterLocations(locationData.domestic, query, false);
-	
+
     renderAutocomplete(dropdown, results, query, 'domestic');
 }
 
 async function initLocationData() {
 	const response = await fetch("/schedule/common/regionList")
-	
+
 	const dataList = await response.json();
 	locationData.domestic = dataList;
-	
+
 	return dataList;
 }
 
@@ -419,7 +419,7 @@ function renderAutocomplete(dropdown, results, query, travelType) {
             const input = dropdown.previousElementSibling;
             input.value = this.dataset.name;
             input.dataset.code = this.dataset.code;
-			
+
             hideAutocomplete(dropdown);
         });
     });
@@ -924,23 +924,39 @@ function openReportModal(type, targetId, targetTitle, targetMemNo) {
         }
         return;
     }
+	// 1. JSP에서 어떤 소문자/예전이름이 오든 관리자 5대 규격(대문자)으로 통역
+    var typeMapping = {
+        'product':     'PROD_REVIEW',
+        'review':      'PROD_REVIEW',
+        'prod_review': 'PROD_REVIEW',
+        'record':      'TRIP_RECORD',
+        'trip_record': 'TRIP_RECORD',
+        'post':        'BOARD',
+        'board':       'BOARD',
+        'inquiry':     'BOARD',
+        'comment':     'COMMENTS',
+        'comments':    'COMMENTS',
+        'reply':       'COMMENTS',
+        'chatroom':    'CHAT',
+        'chat':        'CHAT'
+    };
 
-    reportData.type = type;
+	// 2. 값을 정제해서 저장 (이게 핵심!)
+    reportData.type = typeMapping[type.toLowerCase()] || type.toUpperCase();
+
     reportData.targetId = targetId;
     reportData.targetTitle = targetTitle || '';
 	reportData.targetMemNo = targetMemNo || '';
 
     // 신고 대상 정보 표시
     var targetLabel = '';
-    switch(type) {
-        case 'product': targetLabel = '신고 대상 상품'; break;
-        case 'post': targetLabel = '신고 대상 게시글'; break;
-        case 'comment': targetLabel = '신고 대상 댓글'; break;
-        case 'chatroom': targetLabel = '신고 대상 채팅방'; break;
-		case 'review': targetLabel = '신고 대상 리뷰'; break;
-		case 'inquiry': targetLabel = '신고 대상 문의'; break;
-		case 'reply': targetLabel = '신고 대상 답변'; break;
-        default: targetLabel = '신고 대상';
+	switch(reportData.type) {
+        case 'PROD_REVIEW': targetLabel = '신고 대상 상품 리뷰'; break;
+        case 'TRIP_RECORD': targetLabel = '신고 대상 여행 기록'; break;
+        case 'BOARD':       targetLabel = '신고 대상 여행톡'; break;
+        case 'COMMENTS':    targetLabel = '신고 대상 댓글/답글'; break;
+        case 'CHAT':        targetLabel = '신고 대상 채팅방'; break;
+        default:            targetLabel = '신고 대상';
     }
 
     var targetLabelEl = document.getElementById('reportTargetLabel');
@@ -1008,12 +1024,12 @@ function submitReport() {
 	// 공통 페이로드 구성 (게시판, 상품, 채팅방 통합)
 	var submitData = {
 	        mgmtType: 'REPORT',               // 기본값: 신고
-	        targetType: reportData.type.toUpperCase(), // CHATROOM, BOARD, TRIP_PROD 등
+	        targetType: reportData.type, // CHATROOM, BOARD, TRIP_PROD 등
 	        targetNo: reportData.targetId,    // 대상 PK
 	        ctgryCd: selectedReason.value,    // 신고 사유 코드
 	        content: detailText              // 상세 내용
  	};
-	
+
 	if (reportData.targetMemNo) {
 	    submitData.targetMemNo = reportData.targetMemNo;
 	}
@@ -1026,7 +1042,7 @@ function submitReport() {
 	    })
 		.then(async (res) => {
 			const responseText = await res.text();
-			    
+
 			    if (!res.ok) {
 			        // 💡 2. 에러가 났을 때, responseText가 JSON 형태인지 문자열인지 판단
 			        try {
@@ -1037,7 +1053,7 @@ function submitReport() {
 			            throw new Error(responseText || '신고 처리 중 오류가 발생했습니다.');
 			        }
 			    }
-				
+
 				try {
 			        return JSON.parse(responseText);
 			    } catch (e) {
@@ -1046,12 +1062,12 @@ function submitReport() {
 		})
 		.then(data => {
 		        // 성공 시 1(int)을 반환하므로 이를 체크
-		        if (data === 1 || data.success === true) { 
+		        if (data === 1 || data.success === true) {
 		            showToast('신고가 성공적으로 접수되었습니다.', 'success');
-		            
+
 		            // 모달 닫기
-		            closeReportModal(); 
-		            
+		            closeReportModal();
+
 		            // 폼 초기화
 		            const form = document.getElementById('reportForm');
 		            if (form) form.reset();
@@ -1062,7 +1078,7 @@ function submitReport() {
 		    .catch(err => {
 		        // 중복 신고(500 에러) 등은 여기서 처리됨
 		        showToast(err.message, 'warning');
-				
+
 				setTimeout(() => {
 				        closeReportModal();
 				    }, 1000);

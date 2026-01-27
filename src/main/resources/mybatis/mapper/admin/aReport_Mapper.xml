@@ -16,8 +16,12 @@
   	SELECT *
   	FROM(
   		SELECT R. *,
-  			ROW_NUMBER() OVER (ORDER BY R.REG_DT DESC) AS RNUM
+  			 M1.MEM_ID AS reqMemId
+  			,M2.MEM_ID AS targetMemId
+  			,ROW_NUMBER() OVER (ORDER BY R.REG_DT DESC) AS RNUM
   		FROM REPORT R
+  		LEFT JOIN MEMBER M1 ON R.REQ_MEM_NO = M1.MEM_NO
+  		LEFT JOIN MEMBER M2 ON R.TARGET_MEM_NO = M2.MEM_NO
   		WHERE R. MGMT_TYPE = 'REPORT'
   		<if test="filters != null and filters.procStatus !=null">
   			AND R.PROC_STATUS = #{filters.procStatus}
@@ -32,6 +36,8 @@
   			AND(
   				R.CONTENT LIKE '%' || #{searchWord} || '%'
   				OR R.ADMIN_MEMO LIKE '%' || #{searchWord} || '%'
+  				OR M1.MEM_ID LIKE '%' || #{searchWord} || '%'
+  				OR M2.MEM_ID LIKE '%' || #{searchWord} || '%'
   			)
   		</if>
   		)
@@ -131,7 +137,7 @@
 
   <update id="hideProdReview" parameterType="long">
         UPDATE PROD_REVIEW
-        SET REVIEW_STATUS = 'HIDE'
+        SET REVIEW_STATUS = 'HIDDEN'
         WHERE PROD_RV_NO = #{targetNo}
     </update>
 

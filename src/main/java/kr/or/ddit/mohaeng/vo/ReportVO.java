@@ -22,4 +22,10 @@ public class ReportVO {
     private String adminMemo;	// 관리자 메모 (제재를 가한 구체적인 이유 등)
     private Date regDt;			// 등록 일시 (최신순 정렬 기준)
     private Date modDt;			// 수정 일시
+
+
+    // 추가: 화면에 표시할 아이디 필드
+    private String reqMemId;    // 신고자 아이디
+    private String targetMemId; // 피신고자 아이디
+    
 }

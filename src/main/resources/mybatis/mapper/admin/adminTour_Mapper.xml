@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.tour.mapper.IAdminTourMapper">
+
+	<!-- 투어 목록 카운트 -->
+    <select id="getTourCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+        SELECT COUNT(*)
+        FROM TRIP_PROD t
+        WHERE t.PROD_CTGRY_TYPE != 'accommodation'
+        <if test="searchWord != null and searchWord != ''">
+            AND (
+                t.TRIP_PROD_TITLE LIKE '%' || #{searchWord} || '%'
+                OR t.TRIP_PROD_CONTENT LIKE '%' || #{searchWord} || '%'
+            )
+        </if>
+        <if test="searchType != null and searchType != '' and searchType != 'all'">
+            AND t.PROD_CTGRY_TYPE = #{searchType}
+        </if>
+    </select>
+
+    <!-- 투어 목록 조회 -->
+    <select id="getTourList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+        SELECT *
+        FROM (
+            SELECT ROWNUM AS rn, a.*
+            FROM (
+                SELECT
+                    t.TRIP_PROD_NO,
+                    t.COMP_NO,
+                    t.PROD_CTGRY_TYPE,
+                    t.APPROVE_STATUS,
+                    t.TRIP_PROD_TITLE,
+                    t.TRIP_PROD_CONTENT,
+                    t.SALE_START_DT,
+                    t.SALE_END_DT,
+                    t.ATTACH_NO,
+                    t.VIEW_CNT,
+                    t.REG_DT,
+                    t.APRV_YN,
+                    t.DEL_YN,
+                    DECODE(t.CTY_NM,
+                        '1', '서울', '2', '인천', '3', '대전', '4', '대구', '5', '광주',
+                        '6', '부산', '7', '울산', '8', '세종', '31', '경기', '32', '강원',
+                        '33', '충북', '34', '충남', '35', '경북', '36', '경남',
+                        '37', '전북', '38', '전남', '39', '제주', t.CTY_NM) AS CTY_NM,
+                    s.PRICE,
+                    s.NETPRC,
+                    s.DISCOUNT,
+                    s.LEAD_TIME,
+                    s.CUR_STOCK,
+                    i.PROD_MIN_PEOPLE,
+                    i.PROD_MAX_PEOPLE,
+                    (SELECT AFD.FILE_PATH 
+                     FROM ATTACH_FILE_DETAIL AFD 
+                     WHERE AFD.ATTACH_NO = t.ATTACH_NO 
+                       AND AFD.USE_YN = 'Y' 
+                       AND ROWNUM = 1) AS THUMB_IMAGE
+                FROM TRIP_PROD t
+                LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
+                LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
+                WHERE t.PROD_CTGRY_TYPE != 'accommodation'
+                <if test="searchWord != null and searchWord != ''">
+                    AND (
+                        t.TRIP_PROD_TITLE LIKE '%' || #{searchWord} || '%'
+                        OR t.TRIP_PROD_CONTENT LIKE '%' || #{searchWord} || '%'
+                    )
+                </if>
+                <if test="searchType != null and searchType != '' and searchType != 'all'">
+                    AND t.PROD_CTGRY_TYPE = #{searchType}
+                </if>
+                ORDER BY t.REG_DT DESC, t.TRIP_PROD_NO DESC
+            ) a
+            <![CDATA[
+            WHERE ROWNUM <= #{currentPage} * #{screenSize}
+            ]]>
+        )
+        <![CDATA[
+        WHERE rn > (#{currentPage} - 1) * #{screenSize}
+        ]]>
+    </select>
+
+    <!-- 투어 상세 조회 -->
+    <select id="selectTourBase" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+        SELECT
+            t.TRIP_PROD_NO,
+            t.COMP_NO,
+            t.MEM_NO,
+            t.PROD_CTGRY_TYPE,
+            t.APPROVE_STATUS,
+            t.TRIP_PROD_TITLE,
+            t.TRIP_PROD_CONTENT,
+            t.SALE_START_DT,
+            t.SALE_END_DT,
+            t.ATTACH_NO,
+            t.VIEW_CNT,
+            t.REG_DT,
+            t.MOD_DT,
+            t.APRV_YN,
+            t.REJ_RSN,
+            t.DEL_YN,
+            t.CTY_NM,
+            s.PRICE,
+            s.NETPRC,
+            s.DISCOUNT,
+            s.LEAD_TIME,
+            s.TOTAL_STOCK,
+            s.CUR_STOCK,
+            i.PROD_RUNTIME,
+            i.PROD_DURATION,
+            i.PROD_MIN_PEOPLE,
+            i.PROD_MAX_PEOPLE,
+            i.PROD_LIM_AGE,
+            i.PROD_INCLUDE,
+            i.PROD_EXCLUDE,
+            i.PROD_NOTICE,
+            p.PROD_PLC_NO,
+            p.ADDR1,
+            p.ADDR2
+        FROM TRIP_PROD t
+        LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
+        LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
+        LEFT JOIN TRIP_PROD_PLACE p ON t.TRIP_PROD_NO = p.TRIP_PROD_NO
+        WHERE t.TRIP_PROD_NO = #{tripProdNo}
+    </select>
+
+    <!-- 예약 가능 시간 목록 조회 -->
+    <select id="selectTimeInfoList" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
+        SELECT TIME_INFO_NO, TRIP_PROD_NO, RSVT_AVAILABLE_TIME
+        FROM PROD_TIME_INFO
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+        ORDER BY RSVT_AVAILABLE_TIME
+    </select>
+
+    <!-- 이미지 목록 조회 -->
+    <select id="selectTourImages" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.AttachFileDetailVO">
+        SELECT FILE_NO, ATTACH_NO, FILE_NAME, FILE_ORIGINAL_NAME, FILE_EXT,
+               FILE_SIZE, FILE_PATH, FILE_GB_CD, MIMY_TYPE, USE_YN
+        FROM ATTACH_FILE_DETAIL
+        WHERE ATTACH_NO = #{attachNo}
+          AND USE_YN = 'Y'
+        ORDER BY FILE_NO
+    </select>
+
+    <!-- 상품 승인 -->
+    <update id="updateApproveStatus" parameterType="int">
+        UPDATE TRIP_PROD
+        SET APRV_YN = 'Y',
+            APPROVE_STATUS = '판매중',
+            RES_DT = SYSDATE,
+            MOD_DT = SYSDATE
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+    </update>
+
+    <!-- 판매 상태 토글 -->
+    <update id="toggleSaleStatus" parameterType="map">
+        UPDATE TRIP_PROD
+        SET DEL_YN = #{delYn},
+            <if test="delYn == 'Y'">
+            APPROVE_STATUS = '판매중지',
+            DEL_DT = SYSDATE,
+            </if>
+            <if test="delYn == 'N'">
+            APPROVE_STATUS = '판매중',
+            DEL_DT = NULL,
+            </if>
+            MOD_DT = SYSDATE
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+    </update>
+
+    <!-- 논리 삭제 -->
+    <update id="logicalDeleteTripProd" parameterType="int">
+        UPDATE TRIP_PROD
+        SET DEL_YN = 'Y',
+            APPROVE_STATUS = '판매중지',
+            DEL_DT = SYSDATE,
+            MOD_DT = SYSDATE
+        WHERE TRIP_PROD_NO = #{tripProdNo}
+    </update>
+    
+    <!-- 전체 통계 조회 -->
+	<select id="getTourStats" resultType="map">
+	    SELECT 
+	        COUNT(*) AS totalCount,
+	        SUM(CASE WHEN APRV_YN = 'Y' AND DEL_YN = 'N' THEN 1 ELSE 0 END) AS activeCount,
+	        SUM(CASE WHEN DEL_YN = 'Y' THEN 1 ELSE 0 END) AS inactiveCount,
+	        SUM(CASE WHEN APRV_YN != 'Y' OR APRV_YN IS NULL THEN 1 ELSE 0 END) AS pendingCount
+	    FROM TRIP_PROD
+	    WHERE PROD_CTGRY_TYPE != 'accommodation'
+	</select>
+    
+</mapper>

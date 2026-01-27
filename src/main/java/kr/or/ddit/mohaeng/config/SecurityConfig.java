@@ -193,7 +193,7 @@ public class SecurityConfig {
                 ).permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
                 
-                .requestMatchers("/files/**").permitAll() 
+                .requestMatchers("/files/**").permitAll()
                 .requestMatchers("/community/travel-log/write").hasRole("MEMBER")
                 
                 .requestMatchers(PASS_URL).permitAll()

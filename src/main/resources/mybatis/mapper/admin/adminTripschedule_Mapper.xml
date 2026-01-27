@@ -103,6 +103,8 @@
 	    <result property="publicYn" column="PUBLIC_YN" />
 	    <result property="regDt" column="TS_REG_DT" />
 	    <result property="modDt" column="TS_MOD_DT" />
+	    <result property="postCnt" column="POST_CNT" />
+	    
 <!--         <result property="memId" column="MEM_ID" /> -->
 <!--         <result property="memName" column="MEM_NAME" /> -->
         
@@ -160,6 +162,8 @@
 		     , TO_CHAR(TS.REG_DT, 'yyyy-MM-dd')           AS TS_REG_DT
 		     , TO_CHAR(TS.MOD_DT, 'yyyy-MM-dd')           AS TS_MOD_DT
 		     , R.RGN_NM
+		     
+		     , (SELECT COUNT(*) FROM TRIP_RECORD TR WHERE TR.SCHDL_NO = TS.SCHDL_NO) AS POST_CNT
 		     
 		     , TSD.SCHDL_DETAILS_NO
 		     , TSD.SCHDL_TITLE

@@ -144,7 +144,7 @@
                 <div class="schedule-day-content ${dst.index == 0 ? 'active' : ''}" id="viewDay${detail.schdlDt}" style="display: ${dst.index == 0 ? 'block' : 'none'};">
                     <div class="day-header">
                         <h3>${detail.schdlDt}일차 - ${detail.schdlTitle}</h3>
-                        <span class="day-weather"><i class="bi bi-sun"></i> 18°C</span>
+<!--                         <span class="day-weather"><i class="bi bi-sun"></i> 18°C</span> -->
                     </div>
 
                     <div class="schedule-timeline">

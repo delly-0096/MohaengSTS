@@ -511,19 +511,27 @@ public class TripScheduleController {
 	        }
 	        
 	        String aiInputData = promptDataList.stream()
-	        	    .map(map -> String.format("%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s", 
-	        	        map.get("plcNo"), 
-	        	        map.get("plcNm"), 
-	        	        map.get("plcDesc"), 
-	        	        map.get("ldongRegnCd"), 
-	        	        map.get("ldongRegnNm"), 
-	        	        map.get("ldongSignguCd"), 
-	        	        map.get("ldongSignguNm"), 
-	        	        map.get("plcAddr1"), 
-	        	        map.get("latitude"), 
-	        	        map.get("longitude"), 
-	        	        map.get("operationHours"), 
-	        	        map.get("plcPrice")))
+	        	    // [중요] 제외할 관광지는 여기서 미리 필터링 (프롬프트 토큰 절약)
+	        	    .map(map -> {
+	        	        String hours = map.get("operationHours");
+	        	        String price = map.get("plcPrice");
+
+	        	        // 데이터가 지저분하거나 없을 경우를 대비한 간단한 정제
+	        	        // 너무 길면 AI가 헷갈리거나 토큰 먹으니 20~30자로 자름
+	        	        if (hours == null || hours.isBlank()) hours = "정보없음"; 
+	        	        else if (hours.length() > 30) hours = hours.substring(0, 30) + "..";
+
+	        	        if (price == null || price.isBlank()) price = "정보없음";
+	        	        else if (price.length() > 20) price = price.substring(0, 20) + "..";
+
+	        	        // 포맷: ID | 이름 | 운영시간 | 비용
+	        	        return String.format("%s|%s|%s|%s", 
+	        	            map.get("plcNo"), 
+	        	            map.get("plcNm"), 
+	        	            hours, 
+	        	            price
+	        	        );
+	        	    })
 	        	    .collect(Collectors.joining("\n"));
 	        
 //	        String prompt = "(ID|이름|설명|주소|위도|경도|운영시간|비용):\n" + aiInputData;
@@ -533,19 +541,29 @@ public class TripScheduleController {
 	        if(dates.length > 1) {
 	        	duration = CommUtil.calculateDaysBetween(dates[0], dates[1]);
 	        }
-
-	        Map<Integer, List<Location>> clusters = TravelClusterer.groupLocationsByDay(locationList, duration+1);
+	        
+	        Params regionData = tripScheduleService.searchRegion(params);
+	        
+	        //시작 기준 좌표
+	        String coordinate = regionData.get("latitude")+"(위도), "+regionData.get("longitude") + "(경도)";
+	        
+	        // 1. 기존 군집화 + 2. 내부 정렬까지 완료된 Map 반환
+	        Map<Integer, List<Location>> clusters = 
+	            TravelClusterer.groupAndSortLocations(locationList, duration + 1
+	            		, Double.parseDouble(regionData.getString("latitude"))
+	            		, Double.parseDouble(regionData.getString("longitude")));
 	        
 	        StringBuilder promptData = new StringBuilder();
 
 	        clusters.forEach((dayIdx, list) -> {
 	            promptData.append(String.format("\n[%d일차 후보군]\n", dayIdx + 1));
-	            list.forEach(loc -> promptData.append(String.format("%d|%s|%.4f|%.4f\n", loc.id(), loc.name(), loc.lat(), loc.lon())));
+	            list.stream()
+	            .limit(10) // ★ 핵심: 하루 최대 10곳까지만 자름 (토큰 대폭 절약)
+	            .forEach(loc -> promptData.append(String.format("%d|%s|%.4f|%.4f\n", loc.id(), loc.name(), loc.lat(), loc.lon())));
 	        });
 	        
-	        System.out.println("promptData.toString() : " + promptData.toString());
 	        
-	        String finalPrompt = "아래 일자별 후보군 내에서만 동선을 최적화해서 시간을 배정해줘.\n" + promptData.toString();
+	        System.out.println("promptData.toString() : " + promptData.toString());
 	        
 	        
 	        String durationStr = duration + "박"+ (duration+1) +"일";
@@ -599,23 +617,16 @@ public class TripScheduleController {
 	        // 3. AI 프롬프트용 포맷팅 (예: 2026년 1월 21일)
 	        String formattedDate = now.format(DateTimeFormatter.ofPattern("yyyy년 M월 d일"));
 	        
-	        Params regionData = tripScheduleService.searchRegion(params);
-	        
-	        String coordinate = regionData.get("latitude")+"(위도), "+regionData.get("longitude") + "(경도)";
-	        
 	        String message = String.format("""
 	        		너는 '%s' 여행 전문가야!
 	        		
 	        		여행일정 추천해줘
 	        		현재일자 : '%s'
 		            여행인원 : '%s'명
-		            여행기간 %s일
+		            여행기간 : %s일
 		            
 		            [선호하는 여행 스타일]
 		            '%s'
-		            
-		            [참고할 관광지 DB 데이터] 값 역할 : (ID|이름|설명|시/도 코드|시/도|시군구 코드|시군구|주소|위도|경도|운영시간|비용)
-		            %s
 		            
 		            [여행페이스]
 		            '%s'
@@ -629,26 +640,22 @@ public class TripScheduleController {
 		            [이동 수단]
 		            '%s'
 		            
-		            [위치 클러스터별 동선]
+		            [참고정보]
 		            '%s'
 		            
+		            [위경도 좌표 기반의 클러스터링을 한 데이터]
+		            '%s'
 		            
 		            [사용자가 재요청한 관광지 리스트]
 		            '%s'
 		            
 					[지시사항]
-					1. 후보군 내에서 위경도 기반으로 가장 가까운 순서대로 동선을 짜라.
-					2. 순수 JSON만 출력하라.
-					3. 예시데이터 설명 : (No : 관광지 키, Nm : 관광지명, S : 방문시간, T: 방문지 떠나는 시간, O : 방문순서).
-					4. 예시데이터에 없는 항목에 대해서는 데이터 생성하지 말것.
-					5. [참고할 관광지 DB 데이터]의 설명은 정보가 판단 근거가 부족할때 참고할 후순위 참고 데이터로 삼을것.
-					6. 정확도가 다소 떨어져도 괜찮으니 응답속도를 높이는 방향으로 연산할 것
-					7. 좌표를 기준으로 동선을 짜라
-					8. 첫날 시작 좌표는 '%s'이다.
-					9. [참고할 관광지 DB 데이터]는 시/도, 시군구 로 정렬되어있다.
-					10. 일별로 여행의 제목을 지을 수 있으면 지어줘
-					11. 여행자가 [사용자가 재요청한 관광지 리스트]는 관광지 키값들이 추천순서대로존재하는 항목이야 해당 항목에 데이터가 있을경우
-						되도록 해당 관광지들은 추천 우선순위에서 후순위로 둘 것
+					1. 순수 JSON만 출력하라.
+					2. [위경도 좌표 기반의 클러스터링 데이터]는 거리가 가까운 기준으로 배치된 최적동선 데이터니까 거리계산은 하지 않아도 되
+					3. 예시데이터에 없는 항목에 대해서는 데이터 생성하지 말것.
+					4. 일별로 여행의 제목을 지을 수 있으면 지어줘
+					5. [사용자가 재요청한 관광지 리스트]는 항목이 비어있다면 무시할 것.
+					6. [사용자가 재요청한 관광지 리스트]에 데이터가 있을 경우 되도록 해당 관광지들은 추천 우선순위에서 후순위로 둘 것
 					
 		        	예시형태 : {result : [{
 		        		schdlDt : 1,
@@ -669,32 +676,106 @@ public class TripScheduleController {
 								O : 방문순서
 			        		},
 		        		]
-		        	},
-		        	{
-		        		schdlDt : 2,
-		        		schdlNm : 경복궁 근처 탐방,
-		        		tourPlaceList : [
-			        		{
-			        		    No : 128213,
-			        		    Nm : 관광지명,
-			        		    S : 방문시간,
-								T : 해당 방문지 떠나는 시간,
-								O : 방문순서
-			        		},
-		        		    {
-			        		    No : 128513,
-			        		    Nm : 관광지명,
-			        		    S : 방문시간,
-								T : 해당 방문지 떠나는 시간,
-								O : 방문순서
-			        		},
-		        		]
-		        	},
-		        	],
-		        	check : 판단에 시간이 가장 오래걸린 작업정보}
-		            """, region, formattedDate, travelers, duration+1, styles, aiInputData
-		               , paceStr, budgetStr, accommodations, transportStr
-		               , finalPrompt, exclude, coordinate);
+		        	}
+		        	]
+		        	}
+		            """, region, formattedDate, travelers, duration+1, styles
+		               , paceStr, budgetStr, accommodations, transportStr, aiInputData
+		               , promptData, exclude);
+	        
+//	        String message = String.format("""
+//	        		너는 '%s' 여행 전문가야!
+//	        		
+//	        		여행일정 추천해줘
+//	        		현재일자 : '%s'
+//		            여행인원 : '%s'명
+//		            여행기간 %s일
+//		            
+//		            [선호하는 여행 스타일]
+//		            '%s'
+//		            
+//		            [참고할 관광지 DB 데이터] 값 역할 : (ID|이름|설명|시/도 코드|시/도|시군구 코드|시군구|주소|위도|경도|운영시간|비용)
+//		            %s
+//		            
+//		            [여행페이스]
+//		            '%s'
+//		            
+//		            [예산수준]
+//		            '%s'
+//		            
+//		            [선호하는 숙소 유형]
+//		            '%s'
+//		            
+//		            [이동 수단]
+//		            '%s'
+//		            
+//		            [위경도 좌표 기반의 클러스터링 데이터]
+//		            '%s'
+//		            
+//		            
+//		            [사용자가 재요청한 관광지 리스트]
+//		            '%s'
+//		            
+//					[지시사항]
+//					0. [위경도 좌표 기반의 클러스터링 데이터]을 이용하여 조건에 맞는 동선 최적화
+//					1. 후보군 내에서 위경도 기반으로 가장 가까운 순서대로 동선을 짜라.
+//					2. 순수 JSON만 출력하라.
+//					3. 예시데이터 설명 : (No : 관광지 키, Nm : 관광지명, S : 방문시간, T: 방문지 떠나는 시간, O : 방문순서).
+//					4. 예시데이터에 없는 항목에 대해서는 데이터 생성하지 말것.
+//					5. [참고할 관광지 DB 데이터]의 설명은 정보가 판단 근거가 부족할때 참고할 후순위 참고 데이터로 삼을것.
+//					6. 이미 거리순/클러스터링으로 정렬된 리스트이니까 입력된 순서가 최적 경로일 가능성이 매우 높아 시간 배분과 의미 부여에 더 힘을 쓰도록 해
+//					7. 좌표를 기준으로 동선을 짜라
+//					8. 첫날 시작 좌표는 '%s'이다.
+//					9. [참고할 관광지 DB 데이터]는 시/도, 시군구 로 정렬되어있다.
+//					10. 일별로 여행의 제목을 지을 수 있으면 지어줘
+//					11. 여행자가 [사용자가 재요청한 관광지 리스트]는 관광지 키값들이 추천순서대로존재하는 항목이야 해당 항목에 데이터가 있을경우
+//						되도록 해당 관광지 선택은 후순위로 두고 순서가 같아지는 일도 되도록 피할 것
+//					
+//		        	예시형태 : {result : [{
+//		        		schdlDt : 1,
+//		        		schdlNm : 1일차 여행,
+//		        		tourPlaceList : [
+//			        		{
+//			        		    No : 125994,
+//			        		    Nm : 관광지명,
+//			        		    S : 방문시간,
+//								T : 해당 방문지 떠나는 시간,
+//								O : 방문순서
+//			        		},
+//		        		    {
+//			        		    No : 126003,
+//			        		    Nm : 관광지명,
+//			        		    S : 방문시간,
+//								T : 해당 방문지 떠나는 시간,
+//								O : 방문순서
+//			        		},
+//		        		]
+//		        	},
+//		        	{
+//		        		schdlDt : 2,
+//		        		schdlNm : 경복궁 근처 탐방,
+//		        		tourPlaceList : [
+//			        		{
+//			        		    No : 128213,
+//			        		    Nm : 관광지명,
+//			        		    S : 방문시간,
+//								T : 해당 방문지 떠나는 시간,
+//								O : 방문순서
+//			        		},
+//		        		    {
+//			        		    No : 128513,
+//			        		    Nm : 관광지명,
+//			        		    S : 방문시간,
+//								T : 해당 방문지 떠나는 시간,
+//								O : 방문순서
+//			        		},
+//		        		]
+//		        	},
+//		        	],
+//		        	check : 판단에 시간이 가장 오래걸린 작업정보}
+//		            """, region, formattedDate, travelers, duration+1, styles, aiInputData
+//		            , paceStr, budgetStr, accommodations, transportStr
+//		            , finalPrompt, exclude, coordinate);
 	        
 //            [참고할 관광지 DB 데이터]
 //            '%s'

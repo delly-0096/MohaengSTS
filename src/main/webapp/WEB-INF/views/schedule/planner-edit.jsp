@@ -532,18 +532,19 @@ document.addEventListener('DOMContentLoaded', async function() {
 	
 	tourPlaces.forEach(place => {
 	    // 마커 추가 (위도, 경도, 제목, 커스텀데이터)
-	    myMap.addMarker(place.lat, place.lng, place.title, { id: place.id });
+	    myMap.addMarker(place.lat, place.lng, place.title, 0, { id: place.id });
 	});
 
     let plannerItems = document.querySelectorAll(".planner-item");
 
     plannerItems.forEach(item => {
+		let itemday = item.parentNode.parentNode.dataset.day;
         let lat = parseFloat(item.dataset.latitude);
         let lng = parseFloat(item.dataset.longitude);
         let name = item.querySelector(".planner-item-name").innerText;
         let itemId = item.dataset.itemId;
         // 마커 추가
-        myMap.addMarker(lat, lng, name, { itemId: itemId });
+        myMap.addMarker(lat, lng, name, itemday, { itemId: itemId });
     });
 	
 	// 4. 마커가 다 보이도록 지도 줌 레벨 자동 조정
@@ -838,7 +839,7 @@ function confirmAddPlace() {
     // 일정 탭으로 전환
     switchPlannerTab('itinerary');
 
-    myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, { id: selectedItem.id });
+    myMap.addMarker(selectedItem.latitude, selectedItem.longitude, selectedItem.name, selectedDay, { id: selectedItem.id });
 
 	myMap.fitBounds();
 	
@@ -1103,10 +1104,10 @@ function confirmSaveSchedule() {
             showToast('저장 중 오류가 발생했습니다.', 'danger');
         }
     })
-    .catch(err => {
-        console.error('Save Error:', err);
-        showToast('서버 통신 실패', 'danger');
-    });
+//     .catch(err => {
+//         console.error('Save Error:', err);
+//         showToast('서버 통신 실패', 'danger');
+//     });
 }
 
 // 여행일정명 수정 모달 열기

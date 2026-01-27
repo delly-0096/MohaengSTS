@@ -304,7 +304,10 @@ function selectFlight(jsonSendData) {
 	    updateSelectionStepIndicator();
 	    updateFlightButtons();
 	    
+// 	    console.log("selectFlight 에서 searchFlights() : ", searchData);
+	    flightFullData = [];
 	    searchFlights();
+	    console.log("selectFlight 에서 searchFlights() - currentSearchData: ", currentSearchData);
 		document.getElementById('flightResults').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 }
@@ -468,6 +471,8 @@ function renderFlightBatch(){
     
     let html = '';
 
+    console.log("renderFlightBatch - currentSearchData : ", currentSearchData);
+    
     batch.forEach((item, i) => {
         html += createFlightCard(item, currentSearchData, cabin, start + i);
     });
@@ -491,6 +496,8 @@ function renderFlightBatch(){
 
 // 조건에 맞는 항공권 카드 생성
 function createFlightCard(data, searchData, cabin, id) {
+	
+	console.log("createFlightCard의 searchDate : ", searchData)
 	
 	// 버튼 텍스트 결정
     let isLastStep = (currentSelectionStep >= totalSegments - 1);
@@ -526,6 +533,8 @@ function createFlightCard(data, searchData, cabin, id) {
 	    depTimeFormmater : depTimeFormmater,
 	    arrTimeFormmater : arrTimeFormmater
 	};
+	
+	console.log("출발 공항 : ", searchData.depAirportNm);
 	
 	const jsonSendData = JSON.stringify(sendData).replace(/"/g, '&quot;');
 	
@@ -623,7 +632,9 @@ document.getElementById('flightSearchForm').addEventListener('submit', function(
 });
 
 // 항공권 조회
+// async function searchFlights() {
 function searchFlights() {
+	
     result.innerHTML = ``;
     const searchCount = document.querySelector(".results-count");
     searchCount.innerHTML = ``;
@@ -678,6 +689,7 @@ function searchFlights() {
 		cabin : cabin		// 중복되지만 일단 넣자
     }
     
+// 	console.log("searchFlights() - searchData : ", searchData);
 	
     if (loader) {
         loader.style.display = 'flex'; // 로더 노출
@@ -690,6 +702,8 @@ function searchFlights() {
     axios.post(`/product/flight/searchFlight`, searchData
     ).then(res => {
     	const flight = res.data;	// 데이터 조회
+    	console.log("axios : ", flight);
+    	
     	if (!flight || flight.length === 0) {	// 데이터 없을때
             result.innerHTML = `<div class="no-results-msg">조회된 조건에 맞는 항공편이 없습니다.</div>`;
             flightHasMore = false;

@@ -18,6 +18,8 @@ public interface IAlarmService {
 	public int countUnread(int memNo);
 	public void testInsert(int memNo);
 	public List<AlarmVO> selectAlramList(int memNo);
+	public void readAll(int memNo);
+
 
 
 }

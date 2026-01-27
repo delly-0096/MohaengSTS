@@ -425,7 +425,7 @@
                 </div>
             </div>
             <div class="notification-panel-footer">
-                <button class="btn btn-sm btn-outline" onclick="markAllAsRead()">모두 읽음 처리</button>
+                <button class="btn btn-sm btn-outline" onclick="readAllAlarm()">모두 읽음 처리</button>
             </div>
         </div>
     </sec:authorize>
@@ -511,7 +511,7 @@
         }
 
         // 모두 읽음 처리
-        function markAllAsRead() {
+        function readAllAlarm() {
             var items = document.querySelectorAll('.notification-item.unread');
             items.forEach(function(item) {
                 item.classList.remove('unread');
@@ -659,6 +659,8 @@
         			type = '상품';
         		if(typeCode == 'SETTLEMENT')
         			type = '정산';
+        		if(typeCode == 'REPORT')
+        			type = '신고';
         	}
         		
         	return type;

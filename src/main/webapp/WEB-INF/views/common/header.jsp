@@ -481,6 +481,13 @@
             axios.post(`/api/alarm/list`
             ).then(res => {
             	let list = res.data;	// 알람 목록
+            	if (!list || list.length === 0) {
+            	      notificationListEle.innerHTML = `
+            	        <div class="notification-empty">새 알림이 없습니다.</div>
+            	      `;
+            	      return;
+            	    }
+            	
             	list.map(function(v,i){
             		let time = formatRelativeTime(`\${v.regDt}`);
             		let type = checkType(`\${v.alarmType}`);
@@ -511,21 +518,38 @@
         }
 
         // 모두 읽음 처리
-        function readAllAlarm() {
-            var items = document.querySelectorAll('.notification-item.unread');
-            items.forEach(function(item) {
-                item.classList.remove('unread');
-            });
+        async function readAllAlarm() {
+  try {
+    // 1) 서버에 모두읽음 처리
+    await axios.post('/api/alarm/mypage/notifications/readAll'); 
+    const res = await axios.post('/api/alarm/list');
+    // ※ 네 컨트롤러 기준 최종 URL: /api/alarm/mypage/notifications/readAll
 
-            var badge = document.getElementById('notificationBadge');
-            if (badge) {
-                badge.style.display = 'none';
-            }
+    // 2) 패널 리스트 싹 비우기 (요구사항: "사라져야해"의 정답)
+    const notificationListEle = document.querySelector("#notificationList");
+    if (notificationListEle) {
+      notificationListEle.innerHTML = `
+        <div class="notification-empty">새 알림이 없습니다.</div>
+      `;
+    }
 
-            if (typeof showToast === 'function') {
-                showToast('모든 알림을 읽음 처리했습니다.', 'success');
-            }
-        }
+    // 3) 뱃지 숨김
+    var badge = document.getElementById('notificationBadge');
+    if (badge) badge.style.display = 'none';
+
+    if (typeof showToast === 'function') {
+      showToast('모든 알림을 읽음 처리했습니다.', 'success');
+    }
+  } catch (err) {
+    console.error(err);
+    if (typeof showToast === 'function') {
+      showToast('모두 읽음 처리 실패', 'danger');
+    } else {
+      alert('모두 읽음 처리 실패');
+    }
+  }
+}
+
         
      // ---- 헤더용 캘린더 ----
         let scheduleModalObj = null; // 전역 변수로 관리 (재사용 목적)

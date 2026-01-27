@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.annotations.Param;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.User;
@@ -42,9 +43,13 @@ public class AlarmApiController {
 	    ) {
 	      int alarmNo = body.getOrDefault("alarmNo", 0);
 	      int memNo = user.getMemNo();
+	      
+	      Map<String, Object> param = new HashMap<>();
+	      param.put("memNo", memNo);
+	      param.put("alarmNo", alarmNo);
 	     
 	      //알람 읽음처리
-	      boolean ok = alarmService.readOne(user.getMemNo(), alarmNo);
+	      boolean ok = alarmService.readOne(param);
 	      int unreadCount = alarmService.getUnreadCount(memNo);
 	      //1.알람테이블(notification)전체목록조회(service-mapper-query)
 	      //List<AlarmVO> alarmList = alarmService.selectAlramList();
@@ -76,12 +81,18 @@ public class AlarmApiController {
 	    }
 
 	    @PostMapping("/mypage/notifications/readAll")
-	    @ResponseBody
 	    public ResponseEntity<?> readAll(
 	            @AuthenticationPrincipal CustomUserDetails user
 	    ) {
-	        alarmService.readAll(user.getMemNo());
+	    	
+	    	
+	        Map<String, Object> param = new HashMap<>();
+	        param.put("memNo", user.getMemNo());
+
+	        alarmService.readAll(param);
+
 	        return ResponseEntity.ok().build();
 	    }
+
 
 }

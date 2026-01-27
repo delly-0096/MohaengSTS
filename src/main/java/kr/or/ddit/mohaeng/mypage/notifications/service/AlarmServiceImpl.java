@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.mypage.notifications.service;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
@@ -62,6 +63,15 @@ public class AlarmServiceImpl implements IAlarmService {
 		  notiAlarmMapper.updateAllRead(memNo);
 		
 	  }
+	  @Override
+	  public boolean readOne(Map<String, Object> param) {
+		    return notiAlarmMapper.updateReadOne(param) > 0;
+		}
+	  @Override
+	  public void readAll(Map<String, Object> param) {
+	      notiAlarmMapper.updateAllRead(param);
+	  }
+
 
 
 }

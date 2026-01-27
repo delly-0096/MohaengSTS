@@ -13,7 +13,16 @@
 	    FROM (SELECT TP.TRIP_PROD_NO
 	               , TP.TRIP_PROD_TITLE
 	               , NVL(TP.VIEW_CNT,0) AS VIEW_CNT
-	               , COUNT(TPL.PROD_LIST_NO) AS RESERV
+	               , SUM((SELECT COUNT(*) 
+                              FROM PAYMENT P 
+                             WHERE P.PAY_NO = TPL.PAY_NO
+                             <if test='startDate != null and startDate != ""'>
+	                           <![CDATA[
+                               		AND P.PAY_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+	                           		AND P.PAY_DT <= TO_DATE(#{endDate}, 'YYYY-MM-DD') + 0.99999
+	                           ]]>
+                               </if>
+                             )) AS RESERV
 	        	   , SUM((SELECT NVL(SUM(NET_SALES),0) 
                             FROM SALES S 
                            WHERE S.PROD_LIST_NO = TPL.PROD_LIST_NO 
@@ -32,7 +41,16 @@
                                 )
                              )
                              )) AS SALES
-	        	   , (SELECT NVL(AVG(RATING),0) FROM PROD_REVIEW PR WHERE PR.TRIP_PROD_NO = TP.TRIP_PROD_NO) AS RATING
+	        	   , (SELECT NVL(AVG(RATING),0) 
+	        	   		FROM PROD_REVIEW PR 
+	        	   	   WHERE PR.TRIP_PROD_NO = TP.TRIP_PROD_NO
+	        	   	   <if test='startDate != null and startDate != ""'>
+				        <![CDATA[
+				          AND PR.PROD_REGDATE >= TO_DATE(#{startDate}, 'yyyy-MM-dd') 
+				          AND PR.PROD_REGDATE <= TO_DATE(#{endDate}, 'yyyy-MM-dd') + 0.99999
+				      	]]>
+				      	</if>
+	        	   	   ) AS RATING
 	        FROM TRIP_PROD TP
 	        LEFT OUTER JOIN TRIP_PROD_LIST TPL
 	        ON TP.TRIP_PROD_NO = TPL.TRIP_PROD_NO

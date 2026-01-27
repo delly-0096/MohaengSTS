@@ -79,4 +79,6 @@ public class RoomTypeVO {
 	
 	private Integer totalRooms;	// 전체 객실 수
 	private String internet;	// api로 wifi유무 넘길 변수
+	
+	private int remainingCount; // 잔여 객실 수
 }

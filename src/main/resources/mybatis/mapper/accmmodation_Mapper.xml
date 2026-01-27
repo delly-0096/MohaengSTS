@@ -380,6 +380,12 @@
 	        , R.DISCOUNT
 	        , R.MAX_GUEST_COUNT
 	        , R.BASE_GUEST_COUNT
+	        , (R.TOTAL_ROOM_COUNT - (
+            SELECT COUNT(*) 
+            FROM ROOM RM 
+            WHERE RM.ROOM_TYPE_NO = R.ROOM_TYPE_NO 
+            AND RM.USE_UN = 'N'
+          )) AS REMAINING_COUNT
 	    FROM (
 	        SELECT *
 	        FROM (

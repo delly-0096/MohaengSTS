@@ -219,7 +219,7 @@
 								    <div class="room-option-info" style="flex: 1;">
 								        <h6 style="margin: 0; font-weight: 600; color: #333;">${room.roomName}</h6>
 								        <p style="font-size: 0.8rem; color: #888; margin: 4px 0;">
-								            기준 ${room.baseGuestCount}인 · 잔여 ${room.totalRoomCount}실
+								            기준 ${room.baseGuestCount}인 · 잔여 ${room.remainingCount}실
 								        </p>
 								    </div>
 								

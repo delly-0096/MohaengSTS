@@ -35,6 +35,11 @@ public class PaginationInfoVO<T>{
     	//총 게시글수를 저장하고, 총 게시글수를 페이지 당 나타낼 게시글 수로 나눠 총페이지수를 구한다.
     	this.totalRecord = totalRecord;
     	this.totalPage =(int)Math.ceil(totalRecord/(double)screenSize);
+    	
+    	if (this.endPage > this.totalPage) {
+            this.endPage = this.totalPage;
+        }	
+    	
     }
     public void setCurrentPage(int currentPage) {
     	this.currentPage = currentPage; //현재페이지

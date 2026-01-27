@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core"%>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <c:set var="pageTitle" value="통계" />
 <c:set var="pageCss" value="mypage" />
 
@@ -66,12 +68,7 @@
                                 <h3><i class="bi bi-graph-up"></i> 조회수 추이</h3>
                             </div>
                             <div class="chart-container">
-                                <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;">
-                                    <div class="text-center">
-                                        <i class="bi bi-graph-up" style="font-size: 36px; color: var(--primary-color);"></i>
-                                        <p class="mt-2 mb-0 text-muted">조회수 라인 차트</p>
-                                    </div>
-                                </div>
+<canvas id="viewChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -83,12 +80,7 @@
                                 <h3><i class="bi bi-bar-chart"></i> 예약수 추이</h3>
                             </div>
                             <div class="chart-container">
-                                <div style="width: 100%; height: 100%; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;">
-                                    <div class="text-center">
-                                        <i class="bi bi-bar-chart" style="font-size: 36px; color: var(--secondary-color);"></i>
-                                        <p class="mt-2 mb-0 text-muted">예약수 바 차트</p>
-                                    </div>
-                                </div>
+								<canvas id="rsvChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -302,6 +294,117 @@
         </div>
     </div>
 </div>
+
+<script>
+//전역 변수로 차트 인스턴스 저장 (중복 생성 방지용)
+let viewChartInstance = null;
+let rsvChartInstance = null;
+
+// [1] 페이지 로드 시 실행할 초기화 함수
+document.addEventListener("DOMContentLoaded", function() {
+    initDashboard(); 
+});
+
+function initDashboard() {
+    // 임시 더미 데이터 생성 (최근 6개월 치)
+    const dummyViews = [
+        { month: '1월', count: 120 }, { month: '2월', count: 190 }, 
+        { month: '3월', count: 300 }, { month: '4월', count: 250 }, 
+        { month: '5월', count: 420 }, { month: '6월', count: 550 }
+    ];
+
+    const dummyRsvs = [
+        { month: '1월', count: 15 }, { month: '2월', count: 23 }, 
+        { month: '3월', count: 45 }, { month: '4월', count: 30 }, 
+        { month: '5월', count: 60 }, { month: '6월', count: 85 }
+    ];
+
+    updateViewChart(dummyViews);
+    updateRsvChart(dummyRsvs);
+}
+
+// [2] 조회수 차트 (Line Chart) 그리기
+function updateViewChart(dataList) {
+    const ctx = document.getElementById('viewChart').getContext('2d');
+    const labels = dataList.map(item => item.month);
+    const data = dataList.map(item => item.count);
+
+    if (viewChartInstance) viewChartInstance.destroy(); // 기존 차트 삭제
+
+    viewChartInstance = new Chart(ctx, {
+        type: 'line', // 라인 차트
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '월별 조회수',
+                data: data,
+                borderColor: '#10B981', // 초록색 계열
+                backgroundColor: 'rgba(16, 185, 129, 0.2)',
+                tension: 0.3, // 곡선 부드럽게
+                fill: true,
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + '회'; // 단위 변경
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+
+// [3] 예약수 차트 (Bar Chart) 그리기
+function updateRsvChart(dataList) {
+    const ctx = document.getElementById('rsvChart').getContext('2d');
+    const labels = dataList.map(item => item.month);
+    const data = dataList.map(item => item.count);
+
+    if (rsvChartInstance) rsvChartInstance.destroy();
+
+    rsvChartInstance = new Chart(ctx, {
+        type: 'bar', // 바 차트
+        data: {
+            labels: labels,
+            datasets: [{
+                label: '월별 예약수',
+                data: data,
+                backgroundColor: 'rgba(59, 130, 246, 0.7)', // 파란색 (기존 색상 유지)
+                borderColor: 'rgba(59, 130, 246, 1)',
+                borderWidth: 1,
+                borderRadius: 4,
+                barPercentage: 0.5 // 바 두께 조절
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.parsed.y + '건'; // 단위 변경
+                        }
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true }
+            }
+        }
+    });
+}
+</script>
 
 <c:set var="pageJs" value="mypage" />
 <%@ include file="../../common/footer.jsp" %>

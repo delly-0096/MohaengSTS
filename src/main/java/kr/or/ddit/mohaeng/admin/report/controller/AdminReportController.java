@@ -6,6 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import kr.or.ddit.mohaeng.admin.report.service.IAReportService;
+import kr.or.ddit.mohaeng.security.CustomUserDetails;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import kr.or.ddit.mohaeng.vo.ReportVO;
 import lombok.extern.slf4j.Slf4j;
@@ -117,7 +119,8 @@ public class AdminReportController {
 	 */
 	@PutMapping("/{rptNo}/process")
 	public ResponseEntity<Map<String, Object>> processReport(
-			@PathVariable Long rptNo, @RequestBody ReportVO reportVO){
+			@PathVariable Long rptNo, @RequestBody ReportVO reportVO,
+			@AuthenticationPrincipal CustomUserDetails userDetails) {  // ← Spring Security){
 
 		log.info("신고 처리 요청 - rptNo: {}, procResult: {}", rptNo, reportVO.getProcResult());
 
@@ -130,6 +133,7 @@ public class AdminReportController {
 				response.put("message", "제재 유형은 필수 선택 항목입니다.");
 				return ResponseEntity.badRequest().body(response);
 			}
+
 			// 정해진 벌칙이 맞는지 확인 : procResult 값 검증 (CODE 테이블 기준)
 			String procResult =  reportVO.getProcResult();
 			if (!procResult.equals("WARNING")&& !procResult.equals("BAN_7")&& !procResult.equals("BAN_30") && !procResult.equals("BLACKLIST")) {
@@ -144,10 +148,13 @@ public class AdminReportController {
 				return ResponseEntity.badRequest().body(response);
 			}
 
+			// 신고 처리 정보 설정
 			reportVO.setRptNo(rptNo);
 			reportVO.setProcStatus("DONE");
+			reportVO.setProcMemNo((long) userDetails.getMember().getMemNo());  // 관리자 번호
 
 			int result = reportService.processReport(reportVO);
+
 			if (result>0) {
 				response.put("success", true);
 				response.put("message", "신고가 처리되었습니다.");

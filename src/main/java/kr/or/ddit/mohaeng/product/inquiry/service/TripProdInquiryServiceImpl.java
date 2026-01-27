@@ -7,14 +7,20 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import kr.or.ddit.mohaeng.alarm.service.AlarmService;
 import kr.or.ddit.mohaeng.product.inquiry.mapper.ITripProdInquiryMapper;
 import kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class TripProdInquiryServiceImpl implements ITripProdInquiryService {
 
 	@Autowired
     private ITripProdInquiryMapper mapper;
+	
+	@Autowired
+    private AlarmService alarmService;
 
 	@Override
 	public List<TripProdInquiryVO> getInquiryPaging(int tripProdNo, int page, int pageSize) {
@@ -33,7 +39,22 @@ public class TripProdInquiryServiceImpl implements ITripProdInquiryService {
 	@Override
 	public TripProdInquiryVO insertInquiry(TripProdInquiryVO vo) {
 		mapper.insertInquiry(vo);
-		return mapper.getInquiryById(vo.getProdInqryNo());
+        TripProdInquiryVO inserted = mapper.getInquiryById(vo.getProdInqryNo());
+        
+        // 기업회원에게 문의 발생 알림
+        try {
+            // 상품의 판매자(기업회원) memNo 조회
+            Integer sellerMemNo = mapper.getSellerMemNo(vo.getTripProdNo());
+            String productName = mapper.getProductName(vo.getTripProdNo());
+            
+            if (sellerMemNo != null) {
+                alarmService.sendNewInquiryAlarm(sellerMemNo, productName, vo.getTripProdNo());
+            }
+        } catch (Exception e) {
+            log.error("문의 발생 알림 전송 실패: {}", e.getMessage());
+        }
+        
+        return inserted;
 	}
 
 	@Override
@@ -48,7 +69,26 @@ public class TripProdInquiryServiceImpl implements ITripProdInquiryService {
 
 	@Override
 	public int insertReply(TripProdInquiryVO vo) {
-		return mapper.insertReply(vo);
+		int result = mapper.insertReply(vo);
+        
+        // 문의 작성자에게 답변 알림
+        if (result > 0) {
+            try {
+                // 문의 정보 조회 (작성자 memNo, 상품번호)
+                TripProdInquiryVO inquiry = mapper.getInquiryById(vo.getProdInqryNo());
+                String productName = mapper.getProductName(inquiry.getTripProdNo());
+                
+                alarmService.sendInquiryReplyAlarm(
+                    inquiry.getInquiryMemNo(),  // 문의 작성자
+                    productName,
+                    inquiry.getTripProdNo()
+                );
+            } catch (Exception e) {
+                log.error("답변 알림 전송 실패: {}", e.getMessage());
+            }
+        }
+        
+        return result;
 	}
 
 	@Override

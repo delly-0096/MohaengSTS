@@ -23,4 +23,6 @@ public interface IPaymentMapper {
 	public int updateSoldOut(int tripProdNo);
 	public int insertSales(SalesVO sales);
 	public int updateSettleStatus();
+	public Integer getSellerMemNo(int tripProdNo);
+	public String getProductName(int tripProdNo);
 }

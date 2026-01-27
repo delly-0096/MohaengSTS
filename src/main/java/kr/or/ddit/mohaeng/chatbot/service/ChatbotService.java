@@ -118,6 +118,7 @@ public class ChatbotService {
 
                 [투어/체험/티켓 페이지 URL 규칙]
                 기본: /tour
+                
                 정렬 파라미터: ?sortBy=값
                 - 추천순: ?sortBy=recommend
                 - 인기순: ?sortBy=popular
@@ -131,12 +132,16 @@ public class ChatbotService {
                 - 입장권/티켓: ticket
                 - 클래스/체험: class
                 - 교통/이동: transfer
+                
+                여행지 파라미터: &destination=값
+        		- 도시 또는 지역명 (예: 제주도, 서울, 부산, 세종특별자치시, 경기도, 강원특별자치도, 충청북도, 충청남도, 경상북도, 경상남도, 전북특별자치도, 전라남도 등)
 
                 [URL 조합 예시]
-                - 인기 투어 → /tour?sortBy=popular&category=tour
-                - 평점 좋은 체험 → /tour?sortBy=rating&category=experience
-                - 저렴한 티켓 → /tour?sortBy=price_low&category=ticket
-                - 전체 인기순 → /tour?sortBy=popular
+		        - 제주도 인기 투어 → /tour?sortBy=popular&destination=제주도
+		        - 부산 평점 좋은 체험 → /tour?sortBy=rating&destination=부산
+		        - 서울 저렴한 티켓 → /tour?sortBy=price_low&category=ticket&destination=서울
+		        - 강릉 액티비티 → /tour?category=activity&destination=강원특별자치도
+		        - 전체 인기순 → /tour?sortBy=popular
 
                 [응답 규칙]
                 1. 사용자의 회원 유형에 맞는 기능만 안내해

@@ -866,11 +866,6 @@
 			                	</div>
 	                        </div>
 	                        
-	                        <!-- 상품 추가사항 -->
-	                        <!-- 예약 가능 시간  -->
-	                        <!--  -->
-	                        
-	                        
                         </div>
                     </div>
 					<!-- 예약정보 -->
@@ -906,23 +901,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="view-prodReservation-list">
-<!--                                     <tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr> -->
-                                    <tr>
-                                    	<td>30</td>
-                                    	<td>김**</td>
-                                    	<td>2025-12-23</td>
-                                    	<td>3</td>
-                                    	<td>결제완료</td>
-                                    	<td>30,000원</td>
-                                    </tr>
-                                    <tr>
-                                    	<td>33</td>
-                                    	<td>이**</td>
-                                    	<td>2026-01-12</td>
-                                    	<td>2</td>
-                                    	<td>결제완료</td>
-                                    	<td>20,00원</td>
-                                    </tr>
+                                	<!-- 예약 내역 출력 란 -->
                                 </tbody>
                             </table>
                         </div>
@@ -1317,6 +1296,8 @@ async function showDetail (data){
 		
 		areaCode.innerHTML = res.data.ctyNm != null ? setArea(res.data.ctyNm) : "서울";	// 지역
 		
+		let reserveHtml = ``;	// 출력용 변수
+		
 		// 숙박
 		if(res.data.accommodation && selectCategory === "숙박"){
 			console.log("res.data.accommodation : ", res.data.accommodation);
@@ -1356,7 +1337,6 @@ async function showDetail (data){
 			curStock.innerHTML = accommodation.totalRoomCnt == null ? 50 : parseInt(accommodation.totalRoomCnt);
 				// 원래 여기서 그거 해야됨
 			
-			let reserveHtml = ``;
 			reservationRoomList.forEach((room, roomIndex) => {
 				console.log("room.예약 : ", room);
 				let roomName = room.roomName;	// 객실 명
@@ -1389,60 +1369,99 @@ async function showDetail (data){
 						}
 
 						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식)
+// 							<tr onclick="toggleDetail('\${uniqueId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
+// 							    <td class="fw-bold resv-no">#\${acc.accResvNo}</td>
+// 							    <td class="fw-medium">\${acc.memName}</td>
+// 							    <td class="small text-muted">\${startDt} ~ \${endDt}</td>
+// 							    <td><span class="fw-bold">\${personCount}명</span> <span class="text-muted mx-1">/</span> <small>\${roomName}</small></td>
+// 							    <td><span class="badge \${statusBadge}">\${acc.resvStatus}</span></td>
+// 							    <td class="fw-bold text-end text-dark">\${(acc.price || 0).toLocaleString()}원</td>
+// 							</tr>
+// 							<tr id="\${uniqueId}" class="detail-row" style="display:none; background-color: #f8fafb;">
+// 							    <td colspan="6" class="p-3">
+// 							        <div class="detail-card">
+// 							            <div class="row g-0">
+// 							                <div class="col-md-6 p-4 border-end" style="border-color: #e2e8f0 !important;">
+// 							                    <div class="view-section-title mb-3">
+// 							                        <i class="bi bi-person-vcard"></i> 예약 상세 정보
+// 							                    </div>
+// 							                    <ul class="list-unstyled mb-0" style="line-height: 2;">
+// 							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+// 							                            <span class="text-muted small">연락처</span>
+// 							                            <span class="fw-bold">\${telForm}</span>
+// 							                        </li>
+// 							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+// 							                            <span class="text-muted small">이메일</span>
+// 							                            <span>\${acc.memEmail || '정보 없음'}</span>
+// 							                        </li>
+// 							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+// 							                            <span class="text-muted small">체크인 예정</span>
+// 							                            <span class="badge bg-white text-dark border fw-normal">\${startDt} 15:00</span>
+// 							                        </li>
+// 							                        <li class="d-flex justify-content-between">
+// 							                            <span class="text-muted small">추가 옵션</span>
+// 							                            <span class="badge bg-white text-dark border fw-normal">없음</span>
+// 							                        </li>
+// 							                    </ul>
+// 							                </div>
+// 							                <div class="col-md-6 p-4 bg-white">
+// 							                    <div class="view-section-title mb-3">
+// 							                        <i class="bi bi-chat-square-dots"></i> 고객 요청사항
+// 							                    </div>
+// 							                    <div class="p-3 rounded border bg-light small text-secondary" style="min-height: 100px; border-style: dashed !important;">
+// 							                        \${acc.resvRequest || '특별한 요청사항이 없습니다.'}
+// 							                    </div>
+// 							                </div>
+// 							            </div>
+// 							        </div>
+// 							    </td>
+// 							</tr>`;
+
+
 						reserveHtml += `
 						<tr onclick="toggleDetail('\${uniqueId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
-						    <td class="fw-bold resv-no">#\${acc.accResvNo}</td>
-						    <td class="fw-medium">\${acc.memName}</td>
-						    <td class="small text-muted">\${startDt} ~ \${endDt}</td>
-						    <td><span class="fw-bold">\${personCount}명</span> <span class="text-muted mx-1">/</span> <small>\${roomName}</small></td>
-						    <td><span class="badge \${statusBadge}">\${acc.resvStatus}</span></td>
-						    <td class="fw-bold text-end text-dark">\${(acc.price || 0).toLocaleString()}원</td>
-						</tr>
-						<tr id="\${uniqueId}" class="detail-row" style="display:none; background-color: #f8fafb;">
-						    <td colspan="6" class="p-3">
-						        <div class="detail-card">
-						            <div class="row g-0">
-						                <div class="col-md-6 p-4 border-end" style="border-color: #e2e8f0 !important;">
-						                    <div class="view-section-title mb-3">
-						                        <i class="bi bi-person-vcard"></i> 예약 상세 정보
-						                    </div>
-						                    <ul class="list-unstyled mb-0" style="line-height: 2;">
-						                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
-						                            <span class="text-muted small">연락처</span>
-						                            <span class="fw-bold">\${telForm}</span>
-						                        </li>
-						                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
-						                            <span class="text-muted small">이메일</span>
-						                            <span>\${acc.memEmail || '정보 없음'}</span>
-						                        </li>
-						                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
-						                            <span class="text-muted small">체크인 예정</span>
-						                            <span class="badge bg-white text-dark border fw-normal">\${startDt} 15:00</span>
-						                        </li>
-						                        <li class="d-flex justify-content-between">
-						                            <span class="text-muted small">추가 옵션</span>
-						                            <span class="badge bg-white text-dark border fw-normal">없음</span>
-						                        </li>
-						                    </ul>
-						                </div>
-						                <div class="col-md-6 p-4 bg-white">
-						                    <div class="view-section-title mb-3">
-						                        <i class="bi bi-chat-square-dots"></i> 고객 요청사항
-						                    </div>
-						                    <div class="p-3 rounded border bg-light small text-secondary" style="min-height: 100px; border-style: dashed !important;">
-						                        \${acc.resvRequest || '특별한 요청사항이 없습니다.'}
-						                    </div>
-						                </div>
-						            </div>
-						        </div>
-						    </td>
-						</tr>`;
+					    <td class="fw-bold resv-no">#\${acc.accResvNo}</td>
+					    <td class="fw-medium">\${acc.memName}</td>
+					    <td class="small text-muted">\${startDt} ~ \${endDt}</td>
+					    <td><span class="fw-bold">\${personCount}명</span> <span class="text-muted mx-1">/</span> <small>\${roomName}</small></td>
+					    <td><span class="badge \${statusBadge}">\${acc.resvStatus}</span></td>
+					    <td class="fw-bold text-end text-dark">\${(acc.price || 0).toLocaleString()}원</td>
+					</tr>
+					<tr id="\${uniqueId}" class="detail-row" style="display:none;">
+					    <td colspan="6">
+				            <div class="row g-0">
+				                <div class="col-md-4 pe-4 ">
+				                    <div class="view-section-title"><i class="bi bi-person-badge me-2"></i>Booking Details</div>
+				                    <ul class="list-unstyled mb-0 small" style="line-height: 2;">
+				                        <li class="d-flex justify-content-between"><span>성함</span><span class="fw-bold">\${acc.memName}</span></li>
+				                        <li class="d-flex justify-content-between"><span>연락처</span><span class="fw-bold">\${telForm}</span></li>
+				                        <li class="d-flex justify-content-between"><span>이메일</span><span>\${acc.memEmail || '-'}</span></li>
+				                    </ul>
+				                </div>
+				                <div class="col-md-4 px-4 ">
+				                    <div class="view-section-title"><i class="bi bi-calendar-check me-2"></i>Reservation Details</div>
+				                    <ul class="list-unstyled mb-0 small" style="line-height: 2;">
+				                        <li class="d-flex justify-content-between"><span>객실/상품</span><span class="fw-bold">\${roomName}</span></li>
+				                        <li class="d-flex justify-content-between"><span>이용인원</span><span class="fw-bold">\${personCount}명</span></li>
+				                        <li class="d-flex justify-content-between"><span>체크인 예정</span><span class="badge bg-white text-dark border fw-normal">\${startDt} 15:00</span></li>
+				                    </ul>
+				                </div>
+				                <div class="col-md-4 ps-4">
+				                    <div class="view-section-title"><i class="bi bi-chat-right-text me-2"></i>Customer Requests</div>
+				                    <div class="request-box text-secondary">
+				                        \${acc.resvRequest || acc.rsvMemo || '특별한 요청사항이 없습니다.'}
+				                    </div>
+				                </div>
+				            </div>
+					    </td>`;
+							
+							
 					}
 				});
 				
 			});
 			if(reserveHtml === "") {
-				reserveHtml += `<tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr>`;
+				reserveHtml += `<tr><td colspan="6" class="no-data">예약 내역이 없습니다.</td></tr>`;
 			}
 			reservationList.innerHTML = reserveHtml;
 			
@@ -1466,9 +1485,79 @@ async function showDetail (data){
 			
 			saleDate.innerHTML = setTime(prod.saleStartDt) + " ~ " + setTime(prod.saleEndDt);	// 판매 기간
 			
+			let prodResvList = prod.prodList;
+			console.log("prodResvList : ", prodResvList);
+			
+			prodResvList.forEach((resv, index) => {
+					console.log("resv : ", resv);
+					
+					let resvId = `prod_\${resv.prodListNo}_\${index}`;
+					let startDt = resv.resvDt != null ? setTime(resv.resvDt) : "2026-01-27";
 
+					let telForm = resv.tel != null ? formatTel(resv.tel) : "010-1234-1234";
+					// 예약 내역 없을떄
+					if(resv.prodListNo === 0) reserveHtml = ``;
+					
+					else {
+						let statusBadge = "badge-moheng-success";
+						console.log("resv.useTime : ", resv.useTime);
+						
+						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식)
+						reserveHtml += `
+							<tr onclick="toggleDetail('\${resvId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
+							    <td class="fw-bold resv-no">#\${resv.prodListNo}</td>
+							    <td class="fw-medium">\${resv.memName}</td>
+							    <td class="small text-muted">\${startDt}</td>
+							    <td><span class="fw-bold">\${resv.quantity}명</span></td>
+							    <td><span class="badge \${statusBadge}">어떻게하지</span></td>
+							    <td class="fw-bold text-end text-dark">\${(resv.payPrice || 0).toLocaleString()}원</td>
+							</tr>
+							<tr id="\${resvId}" class="detail-row" style="display:none; background-color: #f8fafb;">
+							    <td colspan="6" class="p-3">
+							        <div class="detail-card">
+							            <div class="row g-0">
+							                <div class="col-md-6 p-4 border-end" style="border-color: #e2e8f0 !important;">
+							                    <div class="view-section-title mb-3">
+							                        <i class="bi bi-person-vcard"></i> 예약 상세 정보
+							                    </div>
+							                    <ul class="list-unstyled mb-0" style="line-height: 2;">
+							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+							                            <span class="text-muted small">연락처</span>
+							                            <span class="fw-bold">\${telForm}</span>
+							                        </li>
+							                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+							                            <span class="text-muted small">이메일</span>
+							                            <span>\${resv.memEmail || '정보 없음'}</span>
+							                        </li>
+							                        <li class="d-flex justify-content-between">
+							                            <span class="text-muted small">이용시작 시간</span>
+							                            <span class="badge bg-white text-dark border fw-normal">\${startDt} \${resv.useTime}</span>
+							                        </li>
+							                    </ul>
+							                </div>
+							                <div class="col-md-6 p-4 bg-white">
+							                    <div class="view-section-title mb-3">
+							                        <i class="bi bi-chat-square-dots"></i> 고객 요청사항
+							                    </div>
+							                    <div class="p-3 rounded border bg-light small text-secondary" style="min-height: 100px; border-style: dashed !important;">
+							                        \${resv.rsvMemo || '특별한 요청사항이 없습니다.'}
+							                    </div>
+							                </div>
+							            </div>
+							        </div>
+							    </td>
+							</tr>`;
+					}
+				});
+			if(reserveHtml === "") {
+				reserveHtml += `<tr><td colspan="6" class="no-data">예약 내역이 없습니다.</td></tr>`;
+			}
+			prodReservationList.innerHTML = reserveHtml;
+			
+			// 출력
+			// prodReservationList
 			netprc.innerHTML = prod.prodSale.netprc.toLocaleString();	// 정가
-			price.innerHTML =  prod.prodSale.price.toLocaleString();;	// 할인가
+			price.innerHTML =  prod.prodSale.price.toLocaleString();	// 할인가
 			curStock.innerHTML = prod.prodSale.curStock;				// 현 재고
 			
 			// 포함 사항, 불포함 사항, 지침 사항 출력란 만들고 뽑기
@@ -1490,7 +1579,7 @@ async function showDetail (data){
 // 시간 설정
 function setTime (date){
 	console.log("date: ", date);
-	let format = date.split("T");
+	let format = date.indexOf("T") > -1 ? date.split("T") : date.split(" ");
 	return format[0];
 }
 

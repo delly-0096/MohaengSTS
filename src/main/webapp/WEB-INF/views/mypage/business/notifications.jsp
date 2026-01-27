@@ -8,20 +8,7 @@
 
 <%@ include file="../../common/header.jsp" %>
 <style>
-.notification-time{
-  flex: 0 0 140px; /* 180 -> 140 줄이기 */
-  text-align:right;
-  white-space:nowrap;
-  font-size: 12px;
-  color:#888;
-}
 
-.notification-time{
-  flex: 0 0 140px;
-  text-align:right;
-  white-space: normal;   /* 줄바꿈 허용 */
-  word-break: break-word;
-}
 .mypage .notification-list .notification-item { display:flex; align-items:center; gap:16px; }
 .mypage .notification-list .notification-content { flex:1; min-width:0; }
 .mypage .notification-list .notification-content p { overflow-wrap:anywhere; word-break:break-word; }
@@ -81,7 +68,7 @@
                     <div class="notification-list">
                         <c:choose>
 						    <c:when test="${empty alarmList}">
-						      <div class="notification-item">
+						      <div class="notification-item" data-type="payment">
 						        <div class="notification-content">
 						          <h4>알림이 없습니다</h4>
 						          <p>새로운 알림이 들어오면 여기에 표시됩니다.</p>
@@ -90,58 +77,103 @@
 						    </c:when>
 						
 						    <c:otherwise>
-						     <c:forEach items="${alarmList}" var="a">
-							
-							  <%-- ✅ 1) type 먼저 계산 --%>
-							  <c:set var="type" value="system" />
-							  <c:if test="${not empty a.alarmType}">
-							    <c:choose>
-							      <c:when test="${fn:contains(a.alarmType,'RESV') || fn:contains(a.alarmType,'ORDER')}">
-							        <c:set var="type" value="order" />
-							      </c:when>
-							      <c:when test="${fn:contains(a.alarmType,'REVIEW')}">
-							        <c:set var="type" value="review" />
-							      </c:when>
-							      <c:when test="${fn:contains(a.alarmType,'INQRY') || fn:contains(a.alarmType,'QNA')}">
-							        <c:set var="type" value="inquiry" />
-							      </c:when>
-							    </c:choose>
-							  </c:if>
-							
-							  <%-- ✅ 2) 이제 div를 열기 (data-type 정확히 들어감) --%>
-							  <div class="notification-item ${a.readYn eq 'Y' ? '' : 'unread'}"
-							       data-type="${type}">
-							
-							    <label class="notification-checkbox">
-							      <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
-							    </label>
-							
-							    <%-- ✅ icon도 type 기반으로 클래스 부여 --%>
-							    <div class="notification-icon ${type}">
-							      <c:choose>
-							        <c:when test="${type eq 'order'}"><i class="bi bi-cart-check"></i></c:when>
-							        <c:when test="${type eq 'review'}"><i class="bi bi-star"></i></c:when>
-							        <c:when test="${type eq 'inquiry'}"><i class="bi bi-chat-dots"></i></c:when>
-							        <c:otherwise><i class="bi bi-bell"></i></c:otherwise>
-							      </c:choose>
-							    </div>
-							
-							    <div class="notification-content">
-							      <h4>${a.sender}</h4>
-							      <p>${a.alarmCont}</p>
-							    </div>
-							
-							    <span class="notification-time">
-							      <c:out value="${a.regDt}" />
-							    </span>
-							  </div>
-							
-							</c:forEach>
+						     <c:forEach items="${alarmList}" var="alarm">
+							   <c:set value="" var="icon"/>
+							   <c:set value="" var="type"/>
+							    <c:set value="" var="color"/>
+							   <c:choose>
+							       <c:when test="${alarm.alarmType eq 'PAYMENT' }">
+							         <c:set value="결제" var="type"/>
+                        					<c:choose>
+                        						<c:when test="${fn:contains(alarm.alarmCont, '완료') }">
+		                        					<c:set value="bi bi-check-circle" var="icon"/>
+                        							<c:set value="payment" var="color"/>
+                        						</c:when>
+                        						<c:otherwise>
+                        							<c:set value="bi bi-x-circle" var="icon"/>
+                        							<c:set value="payment cancel" var="color"/>
+                        						</c:otherwise>
+                        				</c:choose>
+							    </c:when>
+							  		<c:when test="${alarm.alarmType eq 'TRAVEL_LOG' }">
+                        					<c:set value="여행기록" var="type"/>
+                        					<c:set value="bi bi-record-btn-fill" var="icon"/>
+                        				</c:when>
+                        				<c:when test="${alarm.alarmType eq 'TALK' }">
+                        				<c:set value="여행톡" var="type"/>
+                        					<c:set value="bi bi-chat-text-fill" var="icon"/>                        				
+                        				</c:when>
+                        				<c:when test="${alarm.alarmType eq 'INQUIRY' or alarm.alarmType eq 'PROD_INQUIRY' }">
+                        					<c:set value="문의" var="type"/>
+                        					<c:set value="bi bi-question-circle" var="icon"/>
+                        				</c:when>
+                        				<c:when test="${alarm.alarmType eq 'REVIEW' }">
+                        					<c:set value="리뷰" var="type"/>
+                        					<c:set value="bi bi-chat-left-quote" var="icon"/>
+                        				</c:when>
+                        				<c:when test="${alarm.alarmType eq 'PROD' }">
+                        					<c:set value="상품" var="type"/>
+                        					<c:set value="bi bi-calendar-event" var="icon"/>
+                        				</c:when>
+                        				<c:when test="${alarm.alarmType eq 'SETTLEMENT' }">
+                        					<c:set value="정산" var="type"/>
+                        					<c:set value="bi bi-cash" var="icon"/>
+                        				</c:when>
+                        				<c:when test="${alarm.alarmType eq 'REPORT' }">
+                        					<c:set value="신고" var="type"/>
+                        					<c:set value="bi bi-receipt" var="icon"/>
+                        				</c:when>
+                        			</c:choose>
+			                        <div class="notification-item" data-type="payment">
+			                            <label class="notification-checkbox">
+			                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
+			                            </label>
+			                            <div class="notification-icon ${color }">
+			                                <i class="${icon }"></i>
+			                            </div>
+			                            <div class="notification-content">
+			                                <h4>${alarm.alarmCont }</h4>
+			                                <p><strong>${type }</strong></p>
+			                            </div>
+			                            <span class="notification-time">${alarm.regDtStr }</span>
+			                        </div>
+                        		</c:forEach>
+                        	</c:otherwise>
+                        </c:choose>
+              		 </div>
 
-						    </c:otherwise>
-						  </c:choose>
-						
-						</div>
+                <!-- 페이지네이션 -->
+              <div class="pagination-container">
+  <nav>
+    <ul class="pagination">
+      <c:if test="${pagingVO.startPage > 1}">
+        <li class="page-item">
+          <a class="page-link"
+             href="?type=${type}&page=${pagingVO.startPage - pagingVO.blockSize}">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+      </c:if>
+
+      <c:forEach var="p" begin="${pagingVO.startPage}"
+                 end="${pagingVO.endPage < pagingVO.totalPage ? pagingVO.endPage : pagingVO.totalPage}">
+        <li class="page-item ${p == pagingVO.currentPage ? 'active' : ''}">
+          <a class="page-link" href="?type=${type}&page=${p}">${p}</a>
+        </li>
+      </c:forEach>
+
+      <c:if test="${pagingVO.endPage < pagingVO.totalPage}">
+        <li class="page-item">
+          <a class="page-link" href="?type=${type}&page=${pagingVO.endPage + 1}">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </c:if>
+    </ul>
+  </nav>
+</div>
+
+							  		 
 						
 						
                       <!-- 읽지 않은 알림 
@@ -439,6 +471,83 @@ function deleteAllNotifications() {
         showToast('모든 알림이 삭제되었습니다.', 'info');
     }
 }
+<!-- ✅ 알림 실시간(뱃지) + 클릭 읽음처리 (애니메이션 제거/중복인터벌 방지/안전파싱) -->
+(function(){
+  if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) return;
+
+  const contextPath = '${pageContext.request.contextPath}';
+  const api = (p) => contextPath + (p.startsWith('/') ? p : '/' + p);
+
+  const badge = document.getElementById('notificationBadge');
+
+  function setBadge(cnt){
+    if(!badge) return;
+    const n = Number(cnt);
+    if(Number.isFinite(n) && n > 0){
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.style.display = 'inline-block';
+    }else{
+      badge.style.display = 'none';
+    }
+  }
+
+  async function fetchUnreadCount(){
+    const res = await fetch(api('/api/alarm/unread-count'), { credentials:'same-origin' });
+
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    if(!res.ok) return 0;
+    if(!ct.includes('application/json')) return 0;
+
+    const data = await res.json();
+    const n = Number(data);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  async function tick(){
+    try{
+      const cnt = await fetchUnreadCount();
+      setBadge(cnt);
+    }catch(e){
+      setBadge(0);
+    }
+  }
+
+  // ✅ 헤더가 중복 include 되는 경우 대비: interval 중복 생성 방지
+  if (window.__alarmTickTimer) {
+    clearInterval(window.__alarmTickTimer);
+    window.__alarmTickTimer = null;
+  }
+
+  tick();
+  window.__alarmTickTimer = setInterval(tick, 30000);
+
+  // ✅ 알림 아이템 클릭: 읽음 처리 + 이동
+  document.addEventListener('click', async (e)=>{
+    const item = e.target.closest('.alarm-item');
+    if(!item) return;
+
+    const alarmNo = Number(item.dataset.alarmNo || 0);
+    const moveUrl = item.dataset.moveUrl || '';
+
+    if(alarmNo){
+      try{
+        await fetch(api('/api/alarm/read'), {
+          method:'POST',
+          headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ alarmNo })
+        });
+        item.classList.remove('unread');
+        tick();
+      }catch(err){
+        // 조용히 무시
+      }
+    }
+
+    if(moveUrl){
+      location.href = contextPath + moveUrl;
+    }
+  });
+})();
 </script>
 </body>
 

@@ -16,4 +16,5 @@ public class AlarmVO {
     private String readYn;    /* 읽음 여부 - 'N' (안읽음), 'Y' (읽음) */
     private Date readDt;      /* 알림 확인 일시 - 사용자가 알림을 클릭한 시간 */
     private Date regDt;       /* 알림 생성 일시 */
+    private String regDtStr;
 }

@@ -15,7 +15,7 @@ public class CommentVO {
 	    private Integer parentCmntNo;  // null 가능
 	    private String cmntContent;
 	    private int cmntStatus;
-	    private String regDt;          // 너 ERD가 VARCHAR라면 String, DATE로 바꾸면 Date/LocalDateTime 추천
+	    private String regDt;          //  ERD가 VARCHAR라면 String, DATE로 바꾸면 Date/LocalDateTime 추천
 	    private String modDt;
 	    
 	    

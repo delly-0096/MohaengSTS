@@ -1281,11 +1281,12 @@ async function showDetail (data){
 	let reviewContainerList = document.getElementById('view-review-list');			// 리뷰 목록
 	let inquiryContainerList  = document.getElementById('view-qna-list');			// 문의사항 목록
 	
+	// 출력란 초기화
 	reservationList.innerHTML = ``;
 	prodReservationList.innerHTML = ``;
 	detailImagesContainner.innerHTML = ``;
 	reviewContainerList.innerHTML = ``;
-// 	inquiryContainerList.innerHTML = ``;
+	inquiryContainerList.innerHTML = ``;
 	
 	// 숙박
 	if(no != null) sendData.accNo = no;
@@ -1442,7 +1443,7 @@ async function showDetail (data){
 							        </div>
 							    </td>
 							</tr>`;
-s					}
+					}
 				});
 				
 			});
@@ -1485,7 +1486,6 @@ s					}
 					
 					else {
 						let statusBadge = "badge-moheng-success";
-// 						console.log("resv.useTime : ", resv.useTime);
 						
 						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식)
 						reserveHtml += `
@@ -1646,7 +1646,7 @@ s					}
 	                    <p><strong>Q.</strong>\${inquiryContent}</p>
 	                </div>`;
 	                
-			if(inquiry.inqryStatus !== null && inquiry.inqryStatus == 'WAIT'){
+			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'WAIT'){
 				inquiryHtml += `
 					<div class="inquiry-modal-reply">
 	                    <textarea class="form-control" placeholder="답변을 입력하세요..." rows="3"></textarea>
@@ -1657,22 +1657,35 @@ s					}
 	                    </div>
 	                </div>`;
 			}
-
-// 			<div class="list-group-item">
-// 		        <div class="d-flex w-100 justify-content-between">
-// 		            <h6 class="mb-1 fw-bold">문의 제목입니다. <span class="badge bg-secondary ms-2">\${inquiryStatus}</span></h6>
-// 		            <small>\${showDate}</small>
-// 		        </div>
-// 		        <p class="mb-1 small">\${inquiryContent}</p>
-// 		        <button class="btn btn-sm btn-link p-0" data-id="\${inquiry.prodInqryNo}">답변하기</button>
-// 		    </div>`;
-// 		    console.log("inquiryHtml : ",inquiryHtml)
+			
+			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'DONE'){
+				let replyDt = setTime(inquiry.regDt);
+				inquiryHtml += `
+					<div class="inquiry-modal-answer">
+	                    <div class="answer-header">
+	                        <span><i class="bi bi-building"></i> 내 답변</span>
+	                        <div class="answer-actions">
+	                            <span class="answer-date">\${replyDt}</span>
+	                            <button type="button" class="btn-edit-answer" onclick="editAnswer(\${inquiry.prodInqryNo})" title="답변 수정">
+	                                <i class="bi bi-pencil"></i>
+	                            </button>
+	                            <button type="button" class="btn-delete-answer" onclick="deleteAnswer(\${inquiry.prodInqryNo})" title="답변 삭제">
+	                                <i class="bi bi-trash"></i>
+	                            </button>
+	                        </div>
+	                    </div>
+	                    <div class="answer-content">
+	                        <p><strong>A.</strong> <span class="answer-text">\${inquiry.replyCn}</span></p>
+	                    </div>
+	                </div>`;
+			}
+			inquiryHtml += `</div>`;
 		});
 		
-// // 		if(inquiryHtml === "") inquiryHtml = "등록된 문의 내역이 없습니다";
-
+		if(inquiryHtml === "") inquiryHtml = "등록된 문의 내역이 없습니다";
+		
 		inquiryHtml += `</div>`;
-// 		inquiryContainerList.innerHMTL = inquiryHtml;
+		inquiryContainerList.innerHTML = inquiryHtml;
 		
 	}catch(err){
 		console.log("에러 원인 : ", err);
@@ -1683,61 +1696,61 @@ s					}
 
 //모달에서 답변 등록
 function submitModalReply(inquiryId) {
- var item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
- var textarea = item.querySelector('textarea');
- var content = textarea.value.trim();
+	var item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
+	var textarea = item.querySelector('textarea');
+	var content = textarea.value.trim();
+	
+	if (!content) {
+	    if (typeof showToast === 'function') {
+	        showToast('답변 내용을 입력해주세요.', 'warning');
+	    }
+	    return;
+	}
+	
+	if (content.length < 10) {
+	    if (typeof showToast === 'function') {
+	        showToast('답변은 10자 이상 입력해주세요.', 'warning');
+	    }
+	    return;
+	}
 
- if (!content) {
-     if (typeof showToast === 'function') {
-         showToast('답변 내용을 입력해주세요.', 'warning');
-     }
-     return;
- }
+ 	// TODO: 실제 API 호출
+	console.log('답변 등록:', { inquiryId: inquiryId, content: content });
 
- if (content.length < 10) {
-     if (typeof showToast === 'function') {
-         showToast('답변은 10자 이상 입력해주세요.', 'warning');
-     }
-     return;
- }
-
- // TODO: 실제 API 호출
- console.log('답변 등록:', { inquiryId: inquiryId, content: content });
-
- // 상태 변경
- item.dataset.status = 'answered';
- var statusBadge = item.querySelector('.inquiry-status');
- statusBadge.className = 'inquiry-status answered';
- statusBadge.textContent = '답변완료';
-
- // 답변 영역으로 변경
- var replySection = item.querySelector('.inquiry-modal-reply');
- var today = new Date();
- var dateStr = today.getFullYear() + '.' +
+ 	// 상태 변경
+	item.dataset.status = 'answered';
+	var statusBadge = item.querySelector('.inquiry-status');
+	statusBadge.className = 'inquiry-status answered';
+	statusBadge.textContent = '답변완료';
+	
+	// 답변 영역으로 변경
+	var replySection = item.querySelector('.inquiry-modal-reply');
+	var today = new Date();
+ 	var dateStr = today.getFullYear() + '.' +
                String(today.getMonth() + 1).padStart(2, '0') + '.' +
                String(today.getDate()).padStart(2, '0');
 
- replySection.outerHTML =
-     '<div class="inquiry-modal-answer">' +
-         '<div class="answer-header">' +
-             '<span><i class="bi bi-building"></i> 내 답변</span>' +
-             '<div class="answer-actions">' +
-                 '<span class="answer-date">' + dateStr + '</span>' +
-                 '<button type="button" class="btn-edit-answer" onclick="editAnswer(' + inquiryId + ')" title="답변 수정">' +
-                     '<i class="bi bi-pencil"></i>' +
-                 '</button>' +
-                 '<button type="button" class="btn-delete-answer" onclick="deleteAnswer(' + inquiryId + ')" title="답변 삭제">' +
-                     '<i class="bi bi-trash"></i>' +
-                 '</button>' +
-             '</div>' +
-         '</div>' +
-         '<div class="answer-content">' +
-             '<p><strong>A.</strong> <span class="answer-text">' + escapeHtml(content) + '</span></p>' +
-         '</div>' +
-     '</div>';
+	replySection.outerHTML =
+    '<div class="inquiry-modal-answer">' +
+        '<div class="answer-header">' +
+            '<span><i class="bi bi-building"></i> 내 답변</span>' +
+            '<div class="answer-actions">' +
+                '<span class="answer-date">' + dateStr + '</span>' +
+                '<button type="button" class="btn-edit-answer" onclick="editAnswer(' + inquiryId + ')" title="답변 수정">' +
+                    '<i class="bi bi-pencil"></i>' +
+                '</button>' +
+                '<button type="button" class="btn-delete-answer" onclick="deleteAnswer(' + inquiryId + ')" title="답변 삭제">' +
+                    '<i class="bi bi-trash"></i>' +
+                '</button>' +
+            '</div>' +
+        '</div>' +
+        '<div class="answer-content">' +
+            '<p><strong>A.</strong> <span class="answer-text">' + escapeHtml(content) + '</span></p>' +
+        '</div>' +
+    '</div>';
 
  // 카운트 업데이트
-	updateInquiryCounts();
+// 	updateInquiryCounts();
 
 	if (typeof showToast === 'function') {
 	    showToast('답변이 등록되었습니다.', 'success');
@@ -1746,6 +1759,7 @@ function submitModalReply(inquiryId) {
 
 // 시간 설정
 function setTime (date){
+	if(date === null || date === "") return "";
 	console.log("date: ", date);
 	let format = date.indexOf("T") > -1 ? date.split("T") : date.split(" ");
 	return format[0];
@@ -2253,29 +2267,36 @@ function searchAddress() {
             console.log("data.roadAddress : ",data.roadAddress );
             console.log("data.address : ",data.address );
             console.log("data : ", data);
+            console.log("data.query : ", data.query);
 //             const address = data.roadAddress || data.address; 	// 도로명 주소 우선
-//             const hotelName = data.buildingName;            	// 건물명 (관광 API 검색 키워드)
 //             const sidoCode = data.bcode.substring(0, 2);    	// 법정동 코드 앞 2자리 (시도 매핑용)
             const isAcc = category.value === 'accommodation';	// true false
 
+            
             // 필요 데이터 = data.bcode, data
 //             data.bcode		//  sidoCode와 signuguCode로 보낼것
             const ldongRegnCd = data.bcode.substring(0, 2);	// 법정동 시도
             const ldongSignguCd = data.bcode.substring(2, 5);	// 법정동 시군구
             const zone = data.zonecode	// 숙소 api의 zipcode와 매칭 할 
             // addr1과 매칭할 것들
+            const sido = data.sido;
             const roadAddress = data.roadAddress;
             const address = data.address;
             const jibunAddress = data.jibunAddress;
+            const finalAccName = data.buildingName || data.query;	// 건물명 있으면 건물명, 없으면 검색어 사용
+            const keyword = data.query;		// 검색어
             
             const matchData = {
+            	sido : sido,
            		ldongRegnCd : ldongRegnCd,
            		ldongSignguCd : ldongSignguCd,
            		zone : zone,
            		roadAddress : roadAddress,
            		address : address,
-           		jibunAddress : jibunAddress
-            }
+           		jibunAddress : jibunAddress,
+           		accName : finalAccName,
+           		keyword : keyword
+            };
             
             // 1. 주소 텍스트 입력
             if (isAcc) accommodationAddress.value = address;	// roadAddress 받아야됨
@@ -2364,13 +2385,13 @@ async function searchTourApi(matchData) {
         	renderProductData(data, "accommodation");
         	
         	let accCode = document.querySelector("[name='accommodation.accCatCd']");		// 숙소 타입
-        	let starGrade = document.querySelector(".star");		// 성급
+        	let starGrade = document.querySelector("[name='accommodation.starGrade']");		// 성급
 			if(accCode.value === "B02010100" || accCode.value === "B02010500") starGrade.style.display = "block";
 			else starGrade.style.display = "none";
 
             
             if(data.accName) document.querySelector("[name='tripProdTitle']").value = data.accName;
-            if(data.overview) document.querySelector("[name='tripProdTitleContent']").value = data.overview;
+            if(data.overview) document.querySelector("[name='tripProdContent']").value = data.overview;
 			if(data.areaCode) citySelector.value = data.areaCode;            
             
             // 2. 좌표 및 이미지 세팅 -> 파일 no는 어차피 둘다 있음. 이거는 알아서 넣으면 되는것. 세팅도 내맘

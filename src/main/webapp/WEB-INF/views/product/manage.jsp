@@ -163,7 +163,27 @@
 			                    <h3 class="product-name">${title}</h3>
 			                    <div class="product-meta">
 			                        <span>
-			                        	<i class="bi bi-geo-alt"></i>${prod.ctyNm }
+			                        	<i class="bi bi-geo-alt"></i>
+	                   	               	<c:choose>
+									        <c:when test="${prod.ctyNm eq '1'}">서울</c:when>
+									        <c:when test="${prod.ctyNm eq '2'}">인천</c:when>
+									        <c:when test="${prod.ctyNm eq '3'}">대전</c:when>
+									        <c:when test="${prod.ctyNm eq '8'}">세종</c:when>
+									        <c:when test="${prod.ctyNm eq '31'}">경기</c:when>
+									        <c:when test="${prod.ctyNm eq '32'}">강원</c:when>
+									        <c:when test="${prod.ctyNm eq '33'}">충북</c:when>
+									        <c:when test="${prod.ctyNm eq '34'}">충남</c:when>
+									        <c:when test="${prod.ctyNm eq '5'}">광주</c:when>
+									        <c:when test="${prod.ctyNm eq '37'}">전북</c:when>
+									        <c:when test="${prod.ctyNm eq '38'}">전남</c:when>
+									        <c:when test="${prod.ctyNm eq '6'}">부산</c:when>
+									        <c:when test="${prod.ctyNm eq '4'}">대구</c:when>
+									        <c:when test="${prod.ctyNm eq '7'}">울산</c:when>
+									        <c:when test="${prod.ctyNm eq '35'}">경북</c:when>
+									        <c:when test="${prod.ctyNm eq '36'}">경남</c:when>
+									        <c:otherwise>제주</c:otherwise>
+									    </c:choose>
+			                        	
 			                        </span><!-- 지역 코드 -->
 			                        <span>
 			                        	<c:set var="avgRating" value="${empty prod.avgRating or prod.avgRating == 0 ? 0.0 : prod.avgRating}"/>
@@ -212,12 +232,14 @@
 			                    <div class="stat-item">
 			                        <span class="stat-label">총 재고</span>
 			                        <!-- accomodation일때는 구매내역으로 확인해야됨 -->
-                					<c:set var="totalRoomCnt" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.totalRoomCnt : prod.prodSale.totalStock}"/>
-			                        <span class="stat-value stock-value">${totalRoomCnt}개</span>
+                					<c:set var="totalStock" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.totalRoomCnt : prod.prodSale.totalStock}"/>
+			                        <span class="stat-value stock-value">${totalStock}개</span>
 			                    </div>
 			                    <div class="stat-item">
 			                        <span class="stat-label">현재 재고</span>
-			                        <span class="stat-value stock-value">${prod.prodSale.curStock}개</span>
+			                        <!-- 현 객실수 = 총 객실수에서 룸타입별 사용량 파악후 빼야됨 -->
+                					<c:set var="curStock" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.totalRoomCnt : prod.prodSale.curStock}"/>
+			                        <span class="stat-value stock-value">${curStock }개</span>
 			                    </div>
 			                    <div class="stat-item">
 			                        <span class="stat-label">조회수</span>
@@ -736,7 +758,8 @@
     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
         <div class="modal-content">
             <div class="modal-header bg-light">
-                <h5 class="modal-title border-start border-primary border-4 ps-2">상품 상세 조회</h5>
+<!--                 <h5>상품 상세 조회</h5> -->
+                <h5 class="modal-title" id="productModalTitle">상품 상세 조회</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             
@@ -769,16 +792,18 @@
                             </div>
                             <div class="col-md-7">
                                 <h3 id="view-title" class="fw-bold mb-3">상품명</h3>
-                                <div class="mb-2">
-                                	<span class="badge bg-primary me-2" id="view-category">카테고리</span>
-                                	<span id="view-address" class="text-muted">위치 정보</span>
-                               	</div>
-                                <hr>
+                               	<div class="mb-2">
+								    <span class="badge px-3 py-2" id="view-category" style="background-color: #10b981;">카테고리</span>
+								    <span class="ms-2 text-muted"><i class="bi bi-geo-alt-fill"></i> <span id="view-area">위치 정보</span></span>
+								</div>
+                                <hr/>
                                 <div class="row g-3">
                                     <div class="col-6"><strong>정가:</strong> <span id="view-netprc">0</span>원</div>
                                     <div class="col-6"><strong>판매가:</strong> <span id="view-price" class="text-danger fw-bold">0</span>원</div>
                                     <div class="col-6"><strong>현재 재고:</strong> <span id="view-curStock">0</span>개</div>
                                     <div class="col-6"><strong>판매 기간:</strong> <span id="view-date">yyyy.mm.dd ~ yyyy.mm.dd</span></div>
+                                    <!-- view-address -->
+                                    <div class="col-6"><strong></strong> <span id="view-address"></span></div>
                                 </div>
                                 <div class="mt-4 p-3 bg-light rounded">
                                     <h6><strong>상품 설명</strong></h6>
@@ -841,6 +866,11 @@
 			                	</div>
 	                        </div>
 	                        
+	                        <!-- 상품 추가사항 -->
+	                        <!-- 예약 가능 시간  -->
+	                        <!--  -->
+	                        
+	                        
                         </div>
                     </div>
 					<!-- 예약정보 -->
@@ -863,7 +893,7 @@
                             </table>
                         </div>
                         <!-- 상품 예약 정보 -->
-                        <div class="table-responsive" id="prodReserve">
+                        <div class="table-responsive" id="prodReserve" style="display: none;">
                             <table class="table table-hover align-middle">
                                 <thead class="table-light sticky-top" style="top: -1px; z-index: 10;">
                                     <tr>
@@ -875,7 +905,7 @@
                                         <th>결제금액</th>
                                     </tr>
                                 </thead>
-                                <tbody id="view-reservation-list">
+                                <tbody id="view-prodReservation-list">
 <!--                                     <tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr> -->
                                     <tr>
                                     	<td>30</td>
@@ -906,7 +936,7 @@
                                 <div class="card-body">
                                 	<!-- 리뷰내역 -->
                                     <div class="d-flex justify-content-between mb-2">
-                                        <h6 class="fw-bold mb-0">김** <span class="text-warning ml-2">★★★★☆</span></h6>
+                                        <h6 class="fw-bold mb-0">뽀삐 아빠 <span class="text-warning ml-2">★★★★☆</span></h6>
                                         <small class="text-muted">2026-01-16</small>
                                     </div>
                                     <p class="small mb-0">상품이 너무 좋아요! 다시 이용하고 싶습니다.</p>
@@ -1231,25 +1261,27 @@ async function showDetail (data){
 	
 	const facility = document.getElementById('facility');		// 숙소 보유시설
 	const accReserve = document.getElementById('accReserve');	// 숙소 예약내역
+	const prodReserve = document.getElementById('prodReserve');	// 상품 예약 내역
 	
 	facility.style.display = "none";
 	accReserve.style.display = "none";
+	prodReserve.style.display = "none";
 	
 	
-	let netprc = document.getElementById('view-netprc');		// 정가
-	let price = document.getElementById('view-price');			// 할인 가격	
-	let curStock = document.getElementById('view-curStock');	// 현재 재고
-	let saleDate = document.getElementById('view-date');		// 판매기간 2개 더하기
-	let content = document.getElementById('view-content');		// overview나 tripProdContent
+	let netprc = document.getElementById('view-netprc');					// 정가
+	let price = document.getElementById('view-price');						// 할인 가격	
+	let curStock = document.getElementById('view-curStock');				// 현재 재고
+	let saleDate = document.getElementById('view-date');					// 판매기간 2개 더하기
+	let content = document.getElementById('view-content');					// overview나 tripProdContent
 	
-	let prodTitle = document.getElementById('view-title');		// 상품명
-	let prodCategory = document.getElementById('view-category');// 카테고리
-	let prodAddr = document.getElementById('view-address');		// 주소
+	let prodTitle = document.getElementById('view-title');					// 상품명
+	let prodCategory = document.getElementById('view-category');			// 카테고리
+	let areaCode = document.getElementById('view-area');					// 지역 코드
+	let prodAddr = document.getElementById('view-address');					// 주소
 
-	let reservationList = document.getElementById('view-reservation-list');
-	let detailImagesContainner = document.getElementById('detailImages');
-	
-	
+	let reservationList = document.getElementById('view-reservation-list');	// 예약 목록 출력 란
+	let prodReservationList = document.getElementById('view-prodReservation-list');	// 예약 목록 출력 란
+	let detailImagesContainner = document.getElementById('detailImages');	// 사진 출력란
 	
 	// 숙박
 	if(no != null) sendData.accNo = no;
@@ -1281,7 +1313,9 @@ async function showDetail (data){
 				selectCategory = "교통/이동";
 				break;
 		}
-		prodCategory.innerHTML = selectCategory;		// 상품 카테고리
+		prodCategory.innerHTML = selectCategory;	// 상품 카테고리
+		
+		areaCode.innerHTML = res.data.ctyNm != null ? setArea(res.data.ctyNm) : "서울";	// 지역
 		
 		// 숙박
 		if(res.data.accommodation && selectCategory === "숙박"){
@@ -1290,72 +1324,142 @@ async function showDetail (data){
 			
 			facility.style.display = "block";
 			accReserve.style.display = "block";
+			prodReserve.style.display = "none";
 
-			
 			prodTitle.innerHTML = accommodation.accName;	// 상품명
 			content.innerHTML = 
 				accommodation.overview == null ? 
 						res.data.tripProdContent : accommodation.overview;		// 상품 내용
-			
+
 			let photo = `<img src="\${accommodation.accFilePath}" class="d-block w-100 rounded" alt="상품이미지">`;
 			detailImagesContainner.innerHTML = photo;
-			
+
 			saleDate.innerHTML = setTime(res.data.saleStartDt) + " ~ " + setTime(res.data.saleEndDt);	// 판매 기간
 			console.log("accommodation.roomTypeList : ", accommodation.roomTypeList);
 
-			let reserveHtml = ``;
-			
 			// 예약 목록 출력 위한 것
 			let reservationRoomList = accommodation.roomTypeList;
-			
+
 			const cheapestRoom = reservationRoomList.reduce((prev, curr) => {
 			    // 가격이 0보다 큰 것 중에서 더 작은 값을 가진 객체를 반환
 			    return (prev.price > 0 && prev.price < curr.price) ? prev : curr;
 			});
 
 			// 2. 해당 객체에서 필요한 값 추출
-			const minPrice = cheapestRoom.price;   // 최저 판매가
+			const minPrice = cheapestRoom.price;  			// 최저 판매가
 			const matchingDiscount = cheapestRoom.discount; // 그 최저가 방의 원래 정가
-
-			netprc.innerHTML = minPrice.toLocaleString();
-			price.innerHTML = matchingDiscount == 0 ?
-					minPrice.toLoacleString() : 
-					(minPrice - parseInt(minPrice * (matchingDiscount / 100))).toLocaleString();
 			
-			reservationRoomList.forEach((room) => {
+			netprc.innerHTML = minPrice.toLocaleString();
+			price.innerHTML = (matchingDiscount == 0 )? minPrice.toLocaleString() 
+					: (minPrice - parseInt(minPrice * (matchingDiscount / 100))).toLocaleString();
+					
+			curStock.innerHTML = accommodation.totalRoomCnt == null ? 50 : parseInt(accommodation.totalRoomCnt);
+				// 원래 여기서 그거 해야됨
+			
+			let reserveHtml = ``;
+			reservationRoomList.forEach((room, roomIndex) => {
 				console.log("room.예약 : ", room);
 				let roomName = room.roomName;	// 객실 명
 				
 				// 객실 가격 필터링 해야됨
-				
-				room.accResvList.forEach((acc) => {
+				room.accResvList.forEach((acc, index) => {
 					
-					let startDt = acc.startDt.split("T");
-					let endDt = acc.endDt.split("T");
+					let uniqueId = `resv_\${acc.accResvNo}_\${roomIndex}_\${index}`;
+					let startDt = acc.startDt != null ? setTime(acc.startDt) : "2026-01-27";
+					let endDt = acc.endDt != null ? setTime(acc.endDt) : "2026-05-10"; 
 					let personCount = acc.adultCnt + acc.childCnt + acc.infantCnt;
+
+					let telForm = acc.tel != null ? formatTel(acc.tel) : "010-1234-1234";
+					// 예약 내역 없을떄
+					if(acc.accResvNo === 0) reserveHtml = ``;
 					
-					reserveHtml += `<tr>
-										<td>\${acc.accResvNo}</td>
-										<td>\${acc.memName}</td>
-										<td>\${startDt[0]} ~ \${endDt[0]}</td>
-										<td>\${personCount} / \${roomName}</td>
-										<td>\${acc.resvStatus}</td>
-										<td>\${acc.price}</td>
-									</tr>`
-					console.log("예약 : ", acc);
+					else{
+						let statusBadge = "";
+						switch(acc.resvStatus) {
+						    case '결제완료': case '완료':
+						        // 등록 모달 상단의 그린 포인트와 일치
+						        statusBadge = "badge-moheng-success"; 
+						        break;
+						    case '예약대기': case '대기':
+						        statusBadge = "bg-warning-subtle text-warning-emphasis border border-warning-subtle";
+						        break;
+						    default:
+						        statusBadge = "bg-light text-secondary border";
+						        break;
+						}
+
+						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식)
+						reserveHtml += `
+						<tr onclick="toggleDetail('\${uniqueId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
+						    <td class="fw-bold resv-no">#\${acc.accResvNo}</td>
+						    <td class="fw-medium">\${acc.memName}</td>
+						    <td class="small text-muted">\${startDt} ~ \${endDt}</td>
+						    <td><span class="fw-bold">\${personCount}명</span> <span class="text-muted mx-1">/</span> <small>\${roomName}</small></td>
+						    <td><span class="badge \${statusBadge}">\${acc.resvStatus}</span></td>
+						    <td class="fw-bold text-end text-dark">\${(acc.price || 0).toLocaleString()}원</td>
+						</tr>
+						<tr id="\${uniqueId}" class="detail-row" style="display:none; background-color: #f8fafb;">
+						    <td colspan="6" class="p-3">
+						        <div class="detail-card">
+						            <div class="row g-0">
+						                <div class="col-md-6 p-4 border-end" style="border-color: #e2e8f0 !important;">
+						                    <div class="view-section-title mb-3">
+						                        <i class="bi bi-person-vcard"></i> 예약 상세 정보
+						                    </div>
+						                    <ul class="list-unstyled mb-0" style="line-height: 2;">
+						                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+						                            <span class="text-muted small">연락처</span>
+						                            <span class="fw-bold">\${telForm}</span>
+						                        </li>
+						                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+						                            <span class="text-muted small">이메일</span>
+						                            <span>\${acc.memEmail || '정보 없음'}</span>
+						                        </li>
+						                        <li class="d-flex justify-content-between border-bottom pb-1 mb-2">
+						                            <span class="text-muted small">체크인 예정</span>
+						                            <span class="badge bg-white text-dark border fw-normal">\${startDt} 15:00</span>
+						                        </li>
+						                        <li class="d-flex justify-content-between">
+						                            <span class="text-muted small">추가 옵션</span>
+						                            <span class="badge bg-white text-dark border fw-normal">없음</span>
+						                        </li>
+						                    </ul>
+						                </div>
+						                <div class="col-md-6 p-4 bg-white">
+						                    <div class="view-section-title mb-3">
+						                        <i class="bi bi-chat-square-dots"></i> 고객 요청사항
+						                    </div>
+						                    <div class="p-3 rounded border bg-light small text-secondary" style="min-height: 100px; border-style: dashed !important;">
+						                        \${acc.resvRequest || '특별한 요청사항이 없습니다.'}
+						                    </div>
+						                </div>
+						            </div>
+						        </div>
+						    </td>
+						</tr>`;
+					}
 				});
+				
 			});
-			
+			if(reserveHtml === "") {
+				reserveHtml += `<tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr>`;
+			}
 			reservationList.innerHTML = reserveHtml;
+			
 		}else{
 			// 상품
 			const prod = res.data;
-// 			const root = `\${pageContext.request.contextPath}`;
 			
-			prodTitle.innerHTML = prod.tripProdTitle;
-			content.innerHTML = prod.tripProdContent;
+			facility.style.display = "none";
+			accReserve.style.display = "none";
+			prodReserve.style.display = "block";
 			
-
+			prodTitle.innerHTML = prod.tripProdTitle;	// 상품 제목
+			content.innerHTML = prod.tripProdContent;	// 상품 내용
+			
+			// 상세 주소는 addr
+			
+			// 출력 사진
 			const path = `${pageContext.request.contextPath}/upload\${prod.thumbImage}`;
 			let photo = `<img src="\${path}" class="d-block w-100 rounded" alt="상품이미지">`;
 			detailImagesContainner.innerHTML = photo;
@@ -1363,10 +1467,18 @@ async function showDetail (data){
 			saleDate.innerHTML = setTime(prod.saleStartDt) + " ~ " + setTime(prod.saleEndDt);	// 판매 기간
 			
 
-			netprc.innerHTML = prod.prodSale.netprc.toLocaleString();
-			price.innerHTML =  prod.prodSale.price.toLocaleString();;
-			curStock.innerHTML = prod.prodSale.curStock;
+			netprc.innerHTML = prod.prodSale.netprc.toLocaleString();	// 정가
+			price.innerHTML =  prod.prodSale.price.toLocaleString();;	// 할인가
+			curStock.innerHTML = prod.prodSale.curStock;				// 현 재고
+			
+			// 포함 사항, 불포함 사항, 지침 사항 출력란 만들고 뽑기
+			
+			// 예약 내역
 		}
+		
+		// 리뷰 내역
+		
+		// 문의 사항 출력
 		
 	}catch(err){
 		console.log("에러 원인 : ", err);
@@ -1377,9 +1489,94 @@ async function showDetail (data){
 
 // 시간 설정
 function setTime (date){
+	console.log("date: ", date);
 	let format = date.split("T");
 	return format[0];
 }
+
+// 지역 가져오기
+function setArea (ctyNm){
+	let area = "";
+	switch(ctyNm){
+		case '1' :
+			area = "서울";
+			break;
+		case '2' :
+			area = "인천";
+			break;
+		case '3' :
+			area = "대전";
+			break;
+		case '31' :
+			area = "경기";
+			break;
+		case '32' :
+			area = "강원";
+			break;
+		case '8' :
+			area = "세종";
+			break;
+		case '33' :
+			area = "충북";
+			break;
+		case '34' :
+			area = "충남";
+			break;
+		case '5' :
+			area = "광주";
+			break;
+		case '37' :
+			area = "전북";
+			break;
+		case '38' :
+			area = "전남";
+			break;
+		case '6' :
+			area = "부산";
+			break;
+		case '4' :
+			area = "대구";
+			break;
+		case '7' :
+			area = "울산";
+			break;
+		case '35' :
+			area = "경북";
+			break;
+		case '36' :
+			area = "경남";
+			break;
+		default :
+			area = "제주";
+			break;
+	}
+	return area;
+}
+
+// 전화번호 포맷 설정
+function formatTel(tel) {
+	console.log("tel :", tel);
+    if (!tel) return '정보 없음';
+    // 숫자만 남기기
+    const n = tel.replace(/\D/g, ''); 
+    // 10~11자리 숫자를 3묶음으로 나누어 하이픈 삽입
+    return n.length === 11 
+        ? n.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')
+        : n.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
+}
+//예약 내역 클릭시 보여줄 아코디언 활성화
+window.toggleDetail = function(id) {
+	const detailRow = document.getElementById(id);
+    
+    if (detailRow) {
+        if (detailRow.style.display === "none") {
+            detailRow.style.display = "table-row";
+            // 만약 아이콘이 있다면 여기서 변경 로직 추가
+        } else detailRow.style.display = "none";
+    } else {
+        console.error("해당 ID의 상세 행을 찾을 수 없습니다: " + id);
+    }
+};
 
 // 수정할 상품 사진 modal에 세팅 - imageData는 선택시 썸네일 보여주려고
 function renderImageList(imageData = ""){

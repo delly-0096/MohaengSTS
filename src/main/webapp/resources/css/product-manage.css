@@ -681,6 +681,131 @@
 }
 /* 로딩화면 끝*/
 
+/* 상세보기 모달 css*/
+/* 1. 상단 탭: 파란색 제거, 등록 모달 버튼의 딥그린 적용 */
+#productDetailModal .nav-tabs {
+    border-bottom: 2px solid #e2e8f0;
+}
+#productDetailModal .nav-link.active {
+    color: #1e837a !important; /* 등록 모달 버튼 컬러 */
+    border-bottom: 3px solid #1e837a !important;
+    background-color: transparent !important;
+    font-weight: 700;
+}
+
+/* 2. 예약번호(#): 파란색 대신 딥그린 */
+#productDetailModal .resv-no, 
+#productDetailModal #view-reservation-list td:first-child {
+    color: #1e837a !important;
+    font-weight: 700;
+}
+
+/* 3. 예약 상세 카드: 등록 모달의 이미지/인풋 박스처럼 둥글게(12px) */
+#productDetailModal .detail-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px !important;
+    overflow: hidden;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* 4. 내부 섹션 타이틀: 등록 모달의 'form-section-title' 느낌 재현 */
+#productDetailModal .view-section-title {
+    background-color: #f8fafb;
+    padding: 10px 15px;
+    font-weight: 700;
+    color: #334155;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+}
+#productDetailModal .view-section-title i {
+    color: #1e837a;
+    margin-right: 8px;
+}
+
+/* 5. 배지: 이미지 속 '객실 타입 추가' 성공 알림(밝은그린) 색상 */
+#productDetailModal .badge.bg-primary, 
+#productDetailModal .badge.bg-info,
+#productDetailModal .badge-moheng-success {
+    background-color: #10b981 !important;
+    color: white !important;
+    border: none !important;
+    padding: 5px 10px;
+}
+
+/* 6. 푸터 버튼: 등록 모달의 '수정' 버튼 디자인 복제 */
+#productDetailModal .modal-footer .btn {
+    border-radius: 8px;
+    padding: 8px 25px;
+    font-weight: 600;
+}
+#productDetailModal .modal-footer .btn-primary,
+#productDetailModal .modal-footer .btn-info {
+    background-color: #1e837a !important;
+    border: none !important;
+}
+
+
+
+#productDetailModal .nav-tabs {
+    border-bottom: 1px solid #e2e8f0;
+    padding-left: 10px;
+}
+
+#productDetailModal .nav-link {
+    color: #64748b !important; /* 기본 상태: 차분한 회색 */
+    border: none !important;
+    font-weight: 500;
+    padding: 12px 25px;
+    transition: all 0.2s;
+}
+
+/* 3. 활성화(선택됨)된 탭: 파란색 -> 진한 그린 */
+#productDetailModal .nav-tabs .nav-link.active {
+    color: #1e837a !important; /* 글자색 변경 */
+    border-bottom: 3px solid #1e837a !important; /* 하단 선 색상 */
+    background-color: transparent !important;
+    font-weight: 700;
+}
+
+/* 4. 마우스 올렸을 때 (Hover) */
+#productDetailModal .nav-link:hover:not(.active) {
+    color: #1e837a !important;
+    background-color: #f8fafb;
+}
+
+
+#productDetailModal .modal-footer {
+        border-top: 1px solid #e2e8f0; /* 상단과 같은 구분선 */
+        background-color: #f8fafb;    /* 미세한 회색 배경으로 안정감 부여 */
+        padding: 1rem 1.5rem;
+    }
+
+    /* 2. 닫기 버튼을 등록 모달의 '수정' 버튼 스타일로 변경 */
+    #productDetailModal .modal-footer .btn {
+        /* 기존 부트스트랩 파란색 강제 제거 */
+        background-color: #1e837a !important; 
+        border: none !important;
+        color: white !important;
+        
+        /* 등록 모달과 같은 버튼 디테일 */
+        padding: 10px 30px;
+        font-weight: 600;
+        border-radius: 8px; /* 둥근 모서리 통일 */
+        transition: background-color 0.2s;
+    }
+
+    /* 3. 버튼 호버(마우스 올렸을 때) 효과 */
+    #productDetailModal .modal-footer .btn:hover {
+        background-color: #16655f !important; /* 조금 더 진한 그린 */
+        box-shadow: 0 4px 12px rgba(30, 131, 122, 0.2);
+    }
+
+/* 상세보기 모달 css 끝 */
+
+
+
 
 /* 숙박/항공 전용 스타일 */
 .room-type-container {

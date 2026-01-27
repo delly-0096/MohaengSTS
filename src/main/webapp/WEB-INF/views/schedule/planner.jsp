@@ -1063,11 +1063,11 @@ function confirmSaveSchedule() {
         schdlEndDt: endDt,     // 종료일
         totalBudget: totalBudget,
         publicYn: selectedVisibility === 'public' ? 'Y' : 'N',
-        aiRecomYn : 'N',
+        aiRecomYn : preferenceData.recommendType == 'ai_only' ? 'Y' : 'N',
         prefNo: preferenceData.prefNo || null, // 선호도 번호가 있다면
         startPlaceId : preferenceData.departurecode,
         targetPlaceId : preferenceData.destinationcode,
-        travelerCount : preferenceData.travelerCount,
+        travelerCount : preferenceData.travelers,
         details: [] // 상세 일차 데이터를 담을 배열
     };
 
@@ -1126,10 +1126,10 @@ function confirmSaveSchedule() {
             showToast('저장 중 오류가 발생했습니다.', 'danger');
         }
     })
-    .catch(err => {
-        console.error('Save Error:', err);
-        showToast('서버 통신 실패', 'danger');
-    });
+//     .catch(err => {
+//         console.error('Save Error:', err);
+//         showToast('서버 통신 실패', 'danger');
+//     });
 }
 
 // 여행일정명 수정 모달 열기

@@ -178,6 +178,10 @@ public class TripScheduleServiceImpl implements ITripScheduleService {
 	    		, "UPCOMING", params.getString("schdlNm"), params.getString("schdlStartDt"), params.getString("schdlEndDt")
 	    		, params.getInt("travelerCount"), params.getString("aiRecomYn"), params.getString("publicYn"), (long) params.getInt("totalBudget"));
 	    
+	    if(tripScheduleVO.getDDay() <= 0) {
+	    	tripScheduleVO.setSchdlStatus("ONGOING");
+	    }
+	    
 	    int resultSchedule = iTripScheduleMapper.insertTripSchedule(tripScheduleVO);
 	    
 	    List<Map<String, Object>> plannerDayList = (List<Map<String, Object>>) params.get("details");

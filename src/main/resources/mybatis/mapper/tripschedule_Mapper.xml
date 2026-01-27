@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="kr.or.ddit.mohaeng.tripschedule.mapper.ITripScheduleMapper">
 
-	<resultMap id="tripScheduleResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleVO">
+<resultMap id="tripScheduleResultMap" type="kr.or.ddit.mohaeng.vo.TripScheduleVO">
         <id property="schdlNo" column="SCHDL_NO" />
 
         <result property="memNo"            column="MEM_NO" />
@@ -813,7 +813,8 @@
             	) > 0
             AND LDONG_REGN_CD IS NOT NULL
             AND P.PLACE_TYPE IN ('12', '14', '28', '32', '38', '39')
-            ORDER BY LDONG_REGN_CD, LDONG_SIGNGU_CD
+            AND P.PLC_DESC != '-'
+            AND P.DEFAULT_IMG IS NOT NULL
 	</select>
 	
 	<select id="emptyLdongRegnPlace" parameterType="kr.or.ddit.util.Params">

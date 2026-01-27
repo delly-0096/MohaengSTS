@@ -119,6 +119,7 @@ public class SecurityConfig {
 			"/",
 			"/error",
 			"/mohaeng",
+			"/statistics/**",
 			"/.well-known/**"		// 크롬 개발자 도구로의 요청
 	};
 

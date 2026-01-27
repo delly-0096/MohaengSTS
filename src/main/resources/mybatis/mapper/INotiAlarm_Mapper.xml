@@ -124,14 +124,14 @@
 	SET READ_YN = 'Y',
   	  READ_DT = SYSDATE
 	WHERE MEM_NO =  #{memNo}
- 	 AND NVL(UPPER(READ_YN), 'N') = 'N';
+ 	 AND NVL(UPPER(READ_YN), 'N') = 'N'
 
 </update>
  <select id="selectUnreadCount" parameterType="int" resultType="int">
 SELECT COUNT(*)
 FROM ALARM
 WHERE MEM_NO =  #{memNo}
-  AND NVL(UPPER(READ_YN), 'N') = 'N';
+  AND NVL(UPPER(READ_YN), 'N') = 'N'
 </select>
 
 <update id="updateReadSelected" parameterType="map">

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.alarm.mapper.IAlarmMapper">
+
+	<insert id="insertAlarm" parameterType="kr.or.ddit.mohaeng.vo.AlarmVO">
+        INSERT INTO ALARM (
+            ALARM_NO,
+            MEM_NO,
+            SENDER,
+            ALARM_TYPE,
+            ALARM_CONT,
+            MOVE_URL,
+            READ_YN,
+            REG_DT
+        ) VALUES (
+            SEQ_ALARM_NO.NEXTVAL,
+            #{memNo},
+            #{sender},
+            #{alarmType},
+            #{alarmCont},
+            #{moveUrl},
+            'N',
+            SYSDATE
+        )
+    </insert>
+    
+</mapper>

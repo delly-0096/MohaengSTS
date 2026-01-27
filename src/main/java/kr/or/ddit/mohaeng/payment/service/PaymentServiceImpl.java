@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
 import kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper;
+import kr.or.ddit.mohaeng.alarm.service.AlarmService;
 import kr.or.ddit.mohaeng.community.travellog.place.controller.PlaceApiController;
 import kr.or.ddit.mohaeng.flight.mapper.IFlightMapper;
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
@@ -58,6 +59,9 @@ public class PaymentServiceImpl implements IPaymentService {
 	
 	@Autowired
 	private MailService mailService;
+	
+	@Autowired
+    private AlarmService alarmService;
 
     PaymentServiceImpl(PlaceApiController placeApiController) {
         this.placeApiController = placeApiController;
@@ -250,6 +254,32 @@ public class PaymentServiceImpl implements IPaymentService {
                     // 메일 발송 실패가 결제 전체의 실패는 아니므로 로그만 남김
                     log.error("메일 발송 중 오류 발생: {}", e.getMessage());
                 }
+            }
+			
+			// 1. 포인트 적립 알림
+            if (discount == 0 && pointResult > 0) {
+                int earnedPoint = (int) ((double) amount * 0.03);
+                alarmService.sendPointEarnAlarm(paymentVO.getMemNo(), earnedPoint);
+            }
+            
+            // 2. 포인트 사용 알림
+            if (discount != 0 && minusPointResult > 0) {
+                alarmService.sendPointUseAlarm(paymentVO.getMemNo(), discount);
+            }
+            
+            // 3. 결제 완료 알림 (일반회원)
+            String orderName = responseBody.get("orderName") != null 
+                ? responseBody.get("orderName").toString() 
+                : "상품";
+            alarmService.sendPaymentCompleteAlarm(
+                paymentVO.getMemNo(), 
+                orderName, 
+                paymentVO.getPayNo()
+            );
+            
+            // 4. 기업회원에게 상품 판매 알림 (투어 상품인 경우)
+            if ("tour".equals(paymentVO.getProductType())) {
+                sendSellerAlarm(paymentVO);
             }
 
 			return responseBody;
@@ -586,5 +616,29 @@ public class PaymentServiceImpl implements IPaymentService {
 
 	    mailService.sendEmail(member.getMemEmail(), subject, member.getMemName() + "님 결제 완료", html);
 	}
+    
+    /**
+     * 기업회원에게 판매 알림 전송
+     */
+    private void sendSellerAlarm(PaymentVO paymentVO) {
+        try {
+            List<TripProdListVO> tripProdList = paymentVO.getTripProdList();
+            for (TripProdListVO item : tripProdList) {
+                // 상품 정보에서 기업회원 memNo 조회 필요
+                Integer sellerMemNo = payMapper.getSellerMemNo(item.getTripProdNo());
+                String productName = payMapper.getProductName(item.getTripProdNo());
+                
+                if (sellerMemNo != null) {
+                    alarmService.sendProductSoldAlarm(
+                        sellerMemNo, 
+                        productName, 
+                        item.getQuantity()
+                    );
+                }
+            }
+        } catch (Exception e) {
+            log.error("기업회원 판매 알림 전송 실패: {}", e.getMessage());
+        }
+    }
 
 }

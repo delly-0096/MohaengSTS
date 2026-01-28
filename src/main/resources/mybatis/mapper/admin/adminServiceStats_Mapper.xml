@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.servicestats.mapper.IAdminServiceStatsMapper">
+
+	<!-- 총 매출 -->
+    <select id="getTotalRevenue" parameterType="map" resultType="Long">
+        SELECT NVL(SUM(PAY_TOTAL_AMT), 0)
+        FROM PAYMENT
+        WHERE PAY_STATUS = 'DONE'
+          AND PAY_DT BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+                         AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+    </select>
+
+    <!-- 총 결제 건수 -->
+    <select id="getTotalOrders" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM PAYMENT
+        WHERE PAY_STATUS = 'DONE'
+          AND PAY_DT BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+                         AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+    </select>
+
+    <!-- 총 조회수 (전체 상품) -->
+    <select id="getTotalViews" resultType="Long">
+        SELECT NVL(SUM(VIEW_CNT), 0)
+        FROM TRIP_PROD
+        WHERE DEL_YN = 'N' OR DEL_YN IS NULL
+    </select>
+
+    <!-- 평균 평점 -->
+    <select id="getAvgRating" parameterType="map" resultType="Double">
+        SELECT ROUND(AVG(RATING), 1)
+        FROM PROD_REVIEW
+        WHERE (REVIEW_STATUS IS NULL OR REVIEW_STATUS != 'HIDDEN')
+          AND PROD_REGDATE BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+                               AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+    </select>
+
+    <!-- 총 리뷰 수 -->
+    <select id="getTotalReviews" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+        FROM PROD_REVIEW
+        WHERE (REVIEW_STATUS IS NULL OR REVIEW_STATUS != 'HIDDEN')
+          AND PROD_REGDATE BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+                               AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+    </select>
+
+    <!-- 일별 추이 (매출, 결제건수) -->
+    <select id="getDailyTrend" parameterType="map" resultType="map">
+	    SELECT 
+	        TO_CHAR(PAY_DT, 'MM/DD') AS payDate,
+	        COUNT(*) AS orders,
+	        NVL(SUM(PAY_TOTAL_AMT), 0) AS revenue
+	    FROM PAYMENT
+	    WHERE PAY_STATUS = 'DONE'
+	      AND PAY_DT BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+	                     AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	    GROUP BY TO_CHAR(PAY_DT, 'MM/DD'), TRUNC(PAY_DT)
+	    ORDER BY TRUNC(PAY_DT)
+	</select>
+
+    <!-- 카테고리별 통계 -->
+    <select id="getCategoryStats" parameterType="map" resultType="map">
+        SELECT 
+            p.PROD_CTGRY_TYPE AS category,
+            COUNT(DISTINCT pay.PAY_NO) AS orders,
+            NVL(SUM(pl.PAY_PRICE), 0) AS revenue
+        FROM TRIP_PROD p
+        JOIN TRIP_PROD_LIST pl ON p.TRIP_PROD_NO = pl.TRIP_PROD_NO
+        JOIN PAYMENT pay ON pl.PAY_NO = pay.PAY_NO
+        WHERE pay.PAY_STATUS = 'DONE'
+          AND pay.PAY_DT BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+                             AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+        GROUP BY p.PROD_CTGRY_TYPE
+        ORDER BY revenue DESC
+    </select>
+
+    <!-- 상품별 성과 TOP 10 -->
+    <select id="getProductPerformance" parameterType="map" resultType="map">
+        <![CDATA[
+        SELECT * FROM (
+            SELECT 
+                p.TRIP_PROD_NO AS prodNo,
+                p.TRIP_PROD_TITLE AS prodName,
+                c.BZMN_NM AS companyName,
+                p.VIEW_CNT AS views,
+                NVL(ord.ORDER_CNT, 0) AS orders,
+                CASE WHEN p.VIEW_CNT > 0 
+                     THEN ROUND(NVL(ord.ORDER_CNT, 0) / p.VIEW_CNT * 100, 2) 
+                     ELSE 0 END AS conversionRate,
+                NVL(ord.REVENUE, 0) AS revenue,
+                NVL(rv.AVG_RATING, 0) AS rating
+            FROM TRIP_PROD p
+            LEFT JOIN COMPANY c ON p.COMP_NO = c.COMP_NO
+            LEFT JOIN (
+                SELECT 
+                    pl.TRIP_PROD_NO,
+                    COUNT(DISTINCT pay.PAY_NO) AS ORDER_CNT,
+                    SUM(pl.PAY_PRICE) AS REVENUE
+                FROM TRIP_PROD_LIST pl
+                JOIN PAYMENT pay ON pl.PAY_NO = pay.PAY_NO
+                WHERE pay.PAY_STATUS = 'DONE'
+                  AND pay.PAY_DT BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+                                     AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+                GROUP BY pl.TRIP_PROD_NO
+            ) ord ON p.TRIP_PROD_NO = ord.TRIP_PROD_NO
+            LEFT JOIN (
+                SELECT 
+                    TRIP_PROD_NO,
+                    ROUND(AVG(RATING), 1) AS AVG_RATING
+                FROM PROD_REVIEW
+                WHERE REVIEW_STATUS IS NULL OR REVIEW_STATUS != 'HIDDEN'
+                GROUP BY TRIP_PROD_NO
+            ) rv ON p.TRIP_PROD_NO = rv.TRIP_PROD_NO
+            WHERE (p.DEL_YN = 'N' OR p.DEL_YN IS NULL)
+            ORDER BY revenue DESC NULLS LAST, views DESC NULLS LAST
+        )
+        WHERE ROWNUM <= 10
+        ]]>
+    </select>
+
+    <!-- 인기 여행지 TOP 5 -->
+    <select id="getPopularDestinations" parameterType="map" resultType="map">
+	    <![CDATA[
+	    SELECT * FROM (
+	        SELECT 
+	            DECODE(p.CTY_NM,
+	                1, '서울',
+	                2, '인천',
+	                3, '대전',
+	                4, '대구',
+	                5, '광주',
+	                6, '부산',
+	                7, '울산',
+	                8, '세종특별자치시',
+	                31, '경기도',
+	                32, '강원특별자치도',
+	                33, '충청북도',
+	                34, '충청남도',
+	                35, '경상북도',
+	                36, '경상남도',
+	                37, '전북특별자치도',
+	                38, '전라남도',
+	                39, '제주도',
+	                '기타') AS destination,
+	            COUNT(DISTINCT pay.PAY_NO) AS orders,
+	            NVL(SUM(pl.PAY_PRICE), 0) AS revenue,
+	            SUM(p.VIEW_CNT) AS views
+	        FROM TRIP_PROD p
+	        JOIN TRIP_PROD_LIST pl ON p.TRIP_PROD_NO = pl.TRIP_PROD_NO
+	        JOIN PAYMENT pay ON pl.PAY_NO = pay.PAY_NO
+	        WHERE pay.PAY_STATUS = 'DONE'
+	          AND pay.PAY_DT BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+	                             AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+	          AND p.CTY_NM IS NOT NULL
+	        GROUP BY DECODE(p.CTY_NM,
+	                1, '서울',
+	                2, '인천',
+	                3, '대전',
+	                4, '대구',
+	                5, '광주',
+	                6, '부산',
+	                7, '울산',
+	                8, '세종특별자치시',
+	                31, '경기도',
+	                32, '강원특별자치도',
+	                33, '충청북도',
+	                34, '충청남도',
+	                35, '경상북도',
+	                36, '경상남도',
+	                37, '전북특별자치도',
+	                38, '전라남도',
+	                39, '제주도',
+	                '기타')
+	        ORDER BY orders DESC
+	    )
+	    WHERE ROWNUM <= 5
+	    ]]>
+	</select>
+
+    <!-- 평점 분포 -->
+    <select id="getRatingDistribution" parameterType="map" resultType="map">
+        SELECT 
+            RATING AS rating,
+            COUNT(*) AS count,
+            ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER(), 0) AS percent
+        FROM PROD_REVIEW
+        WHERE (REVIEW_STATUS IS NULL OR REVIEW_STATUS != 'HIDDEN')
+          AND PROD_REGDATE BETWEEN TO_DATE(#{startDate}, 'YYYY-MM-DD') 
+                               AND TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+        GROUP BY RATING
+        ORDER BY RATING DESC
+    </select>
+
+</mapper>

@@ -41,7 +41,6 @@
                     </label>
                 </div>
             </div>
-
             <!-- 회원가입 폼 -->
             <form class="auth-form" id="registerForm" action="${pageContext.request.contextPath}/member/register/member" method="POST" enctype="multipart/form-data">
                 <input type="hidden" name="memType" id="memType" value="MEMBER">
@@ -49,7 +48,19 @@
 
                 <!-- 아이디 -->
                 <div class="form-group">
-                    <label class="form-label">아이디 <span class="text-danger">*</span></label>
+                    <label class="form-label">아이디 <span class="text-danger">*</span>
+                     <button type="button" 
+			            onclick="fillDebugData('MEMBER')"
+			            style="width: 80px; height: 15px; border-radius: 6px; border: none; rgba(0, 0, 0, 0); color: #EFF1F2; font-size: 12px; cursor: pointer; transition: 0.2s;">
+			        일반
+				    </button>
+				
+				    <button type="button" 
+				            onclick="fillDebugData('COMPANY')"
+				            style="width: 80px; height: 15px; border-radius: 6px; border: none; rgba(0, 0, 0, 0);; color: #EFF1F2; font-size: 12px; cursor: pointer; transition: 0.2s;">
+				        기업
+				    </button>
+                    </label>
                     <div class="input-with-btn">
                         <input type="text" class="form-control" name="memId" id="memId"
                                placeholder="영문, 숫자 조합 4~20자" required>
@@ -1048,21 +1059,72 @@ document.querySelectorAll('.form-control').forEach(input => {
     });
 });
 
+function fillDebugData(type) {
+    // 1. 공통 필드 입력 (아이디, 비밀번호 등)
+    document.getElementById('memId').value = type === 'MEMBER' ? 'hojin0202' : 'sonointer';
+    document.getElementById('memPassword').value = 'qwer1234!';
+    document.getElementById('passwordConfirm').value = 'qwer1234!';
+    
+    // 비밀번호 체크 함수들이 있다면 강제 호출 (UI 업데이트용)
+    if(typeof checkRegisterPasswordStrength === 'function') checkRegisterPasswordStrength();
+    if(typeof checkPasswordMatch === 'function') checkPasswordMatch();
+
+    if (type === 'MEMBER') {
+        // --- 일반회원 데이터 ---
+        document.getElementById('memType').value = 'MEMBER';
+        // 필드 노출 (전환 로직이 있다면 호출)
+        document.getElementById('personalFields').style.display = 'block';
+        document.getElementById('businessFields').style.display = 'none';
+
+        document.getElementById('memName').value = '안호진';
+        document.getElementById('nickname').value = '호빵';
+        document.getElementById('zip').value = '34908';
+        document.getElementById('addr1').value = '대전 중구 계룡로 846 4층';
+        document.getElementById('addr2').value = '403호';
+        document.getElementById('tel').value = '01012345678';
+        document.getElementById('memEmail').value = 'etlz1323@gmail.com';
+        document.getElementById('birthDate').value = '1995-02-02';
+        
+        // 성별 라디오 버튼 선택 (남성)
+        const genderRadio = document.querySelector('input[name="memUser.gender"][value="M"]');
+        if(genderRadio) genderRadio.checked = true;
+
+    } else if (type === 'COMPANY') {
+        // --- 기업회원 데이터 ---
+        document.getElementById('memType').value = 'COMPANY'; // hidden 값 변경
+        // 필드 노출
+        document.getElementById('personalFields').style.display = 'none';
+        document.getElementById('businessFields').style.display = 'block';
+
+        // 기업 정보
+        document.getElementById('companyName').value = '(주)소노인터내셔널';
+        document.getElementById('industryCd').value = '휴양 콘도미니엄업';
+        document.getElementById('businessNo').value = '2208115022';
+        document.getElementById('ceoName').value = '서준혁';
+        document.getElementById('ecommerceNo').value = '제2024-강원홍천-0011호';
+        document.getElementById('companyPhone').value = '15884888';
+        document.getElementById('companyPostcode').value = '25102';
+        document.getElementById('companyAddress').value = '강원특별자치도 홍천군 서면 한치골길 262';
+        document.getElementById('companyAddressDetail').value = '비발디파크';
+        document.getElementById('companyWebsite').value = 'https://www.sonohotelsresorts.com';
+        document.getElementById('companyDescription').value = '연과 하나되는 최고의 휴식처, 국내 최대 규모의 리조트 네트워크를 자랑합니다.';
+
+        // 담당자 정보
+        document.getElementById('managerName').value = '김모행';
+        document.getElementById('managerPhone').value = '01098765432';
+        document.getElementById('managerEmail').value = 'sono_reserve@sono.com';
+
+        // 계좌 정보
+        document.getElementById('bankName').value = '우리은행';
+        document.getElementById('accountNumber').value = '1002999888777';
+        document.getElementById('accountHolder').value = '(주)소노인터내셔널';
+    }
+}
+
+function resetForm() {
+    document.getElementById('registerForm').reset();
+}
+
 </script>
-
-<!-- 에러 메시지 -->
-<c:if test="${not empty errorMessage}">
-    <div class="alert alert-danger mb-3" role="alert">
-        <i class="bi bi-exclamation-triangle me-2"></i>${errorMessage}
-    </div>
-</c:if>
-
-<!-- 성공 메시지 -->
-<c:if test="${not empty successMessage}">
-<div class="alert alert-success mb-3" role="alert">
-    <i class="bi bi-check-circle me-2"></i>
-    ${successMessage}
-</div>
-</c:if>
 <%-- <c:set var="pageJs" value="member" /> --%>
 <%@ include file="../common/footer.jsp" %>

@@ -230,19 +230,42 @@
                     </div>
                     </sec:authorize>
                 </div>
-        
+        	
+        	<!-- 기업 관리 -->
+	        <div class="side-menu-section">
+                	<sec:authorize access="!isAuthenticated() or hasRole('BUSINESS')">
+	                <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
+	                    <span><i class="bi bi-bag me-2"></i>기업 관리</span>
+	                    <i class="bi bi-chevron-down"></i>
+	                </div>
+	                <div class="side-menu-section-content">
+	                    <a href="${pageContext.request.contextPath}/mypage/business/dashboard" class="side-menu-item">
+                        	<i class="bi bi-speedometer2 me-2"></i>대시보드
+                        </a>
+	                        <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item">
+	                            <i class="bi bi-gear me-2"></i>상품 관리
+	                        </a>
+						<a href="${pageContext.request.contextPath}/mypage/business/sales" class="side-menu-item">
+                            <i class="bi bi-graph-up me-2"></i>매출 집계
+                        </a>
+                        <a href="${pageContext.request.contextPath}/mypage/business/statistics" class="side-menu-item">
+                              <i class="bi bi-bar-chart me-2"></i>통계
+                        </a>
+	                </div>
+	                    </sec:authorize>
+	            </div>
            
             <!-- 관광 상품 -->
             <div class="side-menu-section">
                 <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
-                    <span><i class="bi bi-bag me-2"></i>관광 상품</span>
+                    <span><i class="bi bi-map me-2"></i>관광 상품</span>
                     <i class="bi bi-chevron-down"></i>
                 </div>
                 <div class="side-menu-section-content">
                     <sec:authorize access="hasRole('BUSINESS')">
-                        <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item">
-                            <i class="bi bi-gear me-2"></i>상품 관리
-                        </a>
+<%--                         <a href="${pageContext.request.contextPath}/product/manage" class="side-menu-item"> --%>
+<!--                             <i class="bi bi-gear me-2"></i>상품 관리 -->
+<!--                         </a> -->
                     </sec:authorize>
                     <a href="${pageContext.request.contextPath}/product/flight" class="side-menu-item">
                         <i class="bi bi-airplane me-2"></i>항공
@@ -283,24 +306,24 @@
                     </div>
                     <div class="side-menu-section-content">
                             <sec:authorize access="hasRole('BUSINESS')">
-                                <a href="${pageContext.request.contextPath}/mypage/business/dashboard" class="side-menu-item">
-                                    <i class="bi bi-speedometer2 me-2"></i>대시보드
-                                </a>
+<%--                                 <a href="${pageContext.request.contextPath}/mypage/business/dashboard" class="side-menu-item"> --%>
+<!--                                     <i class="bi bi-speedometer2 me-2"></i>대시보드 -->
+<!--                                 </a> -->
                                 <a href="${pageContext.request.contextPath}/mypage/business/profile" class="side-menu-item">
                                     <i class="bi bi-person me-2"></i>회원 정보 수정
                                 </a>
-                                <a href="${pageContext.request.contextPath}/mypage/business/sales" class="side-menu-item">
-                                    <i class="bi bi-graph-up me-2"></i>매출 집계
-                                </a>
-                                <a href="${pageContext.request.contextPath}/mypage/business/products" class="side-menu-item">
-                                    <i class="bi bi-box me-2"></i>내 상품 현황
-                                </a>
+<%--                                 <a href="${pageContext.request.contextPath}/mypage/business/sales" class="side-menu-item"> --%>
+<!--                                     <i class="bi bi-graph-up me-2"></i>매출 집계 -->
+<!--                                 </a> -->
+<%--                                 <a href="${pageContext.request.contextPath}/mypage/business/products" class="side-menu-item"> --%>
+<!--                                     <i class="bi bi-box me-2"></i>내 상품 현황 -->
+<!--                                 </a> -->
                                 <a href="${pageContext.request.contextPath}/mypage/business/notifications" class="side-menu-item">
                                     <i class="bi bi-bell me-2"></i>알림 내역
                                 </a>
-                                <a href="${pageContext.request.contextPath}/mypage/business/statistics" class="side-menu-item">
-                                    <i class="bi bi-bar-chart me-2"></i>통계
-                                </a>
+<%--                                 <a href="${pageContext.request.contextPath}/mypage/business/statistics" class="side-menu-item"> --%>
+<!--                                     <i class="bi bi-bar-chart me-2"></i>통계 -->
+<!--                                 </a> -->
                                 <a href="${pageContext.request.contextPath}/mypage/business/inquiries" class="side-menu-item">
                                     <i class="bi bi-chat-dots me-2"></i>운영자 문의
                                 </a>

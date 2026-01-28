@@ -1510,7 +1510,8 @@ async function showDetail (data){
 					else {
 						let statusBadge = "badge-moheng-success";
 						
-						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식)
+// 							    <td class="fw-bold resv-no">#\${index + 1}</td>
+						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식) - 예약 최신순으로 정렬
 						reserveHtml += `
 							<tr onclick="toggleDetail('\${resvId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
 							    <td class="fw-bold resv-no">#\${resv.prodListNo}</td>

@@ -29,10 +29,10 @@
                 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
                     <div class="mypage-tabs mb-0">
                         <button class="mypage-tab active" data-type="all">전체</button>
-                        <button class="mypage-tab" data-type="order">예약</button>
-                        <button class="mypage-tab" data-type="review">후기</button>
+                        <button class="mypage-tab" data-type="payment">결제</button>
                         <button class="mypage-tab" data-type="inquiry">문의</button>
-                        <button class="mypage-tab" data-type="system">시스템</button>
+                        <button class="mypage-tab" data-type="travel_log">여행기록</button>
+                        <button class="mypage-tab" data-type="talk">여행톡</button>
                     </div>
                     <div class="d-flex gap-2">
                         <button class="btn btn-outline btn-sm" onclick="markAllRead()">
@@ -68,7 +68,7 @@
                     <div class="notification-list">
                         <c:choose>
 						    <c:when test="${empty alarmList}">
-						      <div class="notification-item" data-type="payment">
+						      <div class="notification-item" data-type="${filterType}">
 						        <div class="notification-content">
 						          <h4>알림이 없습니다</h4>
 						          <p>새로운 알림이 들어오면 여기에 표시됩니다.</p>
@@ -81,9 +81,11 @@
 							   <c:set value="" var="icon"/>
 							   <c:set value="" var="type"/>
 							    <c:set value="" var="color"/>
+							    <c:set value="" var="filterType"/>
 							   <c:choose>
 							       <c:when test="${alarm.alarmType eq 'PAYMENT' }">
 							         <c:set value="결제" var="type"/>
+							         <c:set value="payment" var="filterType"/>
                         					<c:choose>
                         						<c:when test="${fn:contains(alarm.alarmCont, '완료') }">
 		                        					<c:set value="bi bi-check-circle" var="icon"/>
@@ -97,18 +99,22 @@
 							    </c:when>
 							  		<c:when test="${alarm.alarmType eq 'TRAVEL_LOG' }">
                         					<c:set value="여행기록" var="type"/>
+                        					<c:set value="travel_log" var="filterType"/>
                         					<c:set value="bi bi-record-btn-fill" var="icon"/>
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'TALK' }">
                         				<c:set value="여행톡" var="type"/>
+                        				<c:set value="talk" var="filterType"/>
                         					<c:set value="bi bi-chat-text-fill" var="icon"/>                        				
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'INQUIRY' or alarm.alarmType eq 'PROD_INQUIRY' }">
                         					<c:set value="문의" var="type"/>
+                        					<c:set value="inquiry" var="filterType"/>
                         					<c:set value="bi bi-question-circle" var="icon"/>
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'REVIEW' }">
                         					<c:set value="리뷰" var="type"/>
+                        					
                         					<c:set value="bi bi-chat-left-quote" var="icon"/>
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'PROD' }">
@@ -124,7 +130,7 @@
                         					<c:set value="bi bi-receipt" var="icon"/>
                         				</c:when>
                         			</c:choose>
-			                        <div class="notification-item" data-type="payment">
+			                        <div class="notification-item" data-type="${filterType}">
 			                            <label class="notification-checkbox">
 			                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
 			                            </label>
@@ -319,23 +325,6 @@
                         </div>
                     </div>
                 </div> -->
-
-                <!-- 페이지네이션 -->
-                <div class="pagination-container">
-                    <nav>
-                        <ul class="pagination">
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-left"></i></a>
-                            </li>
-                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                            <li class="page-item"><a class="page-link" href="#">2</a></li>
-                            <li class="page-item"><a class="page-link" href="#">3</a></li>
-                            <li class="page-item">
-                                <a class="page-link" href="#"><i class="bi bi-chevron-right"></i></a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
             </div>
         </div>
     </div>

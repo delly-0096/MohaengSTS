@@ -35,6 +35,11 @@ public interface ITalkService {
 	public int saveFileList(List<MultipartFile> boardFile, Map<String, String> uploadInfo, int int1);
 
 	public ServiceResult toggleLike(LikesVO likesVO);
+
+	public static int getWriterNo(int boardNo) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 		
 
 }

@@ -64,7 +64,7 @@
                         <button class="mypage-tab" data-type="payment">결제</button>
                         <button class="mypage-tab" data-type="point">포인트</button>
                         <button class="mypage-tab" data-type="inquiry">문의</button>
-                        <button class="mypage-tab" data-type="system">시스템</button>
+                        <button class="mypage-tab" data-type="review">리뷰</button>
                     </div>
                     <div class="d-flex gap-2">
                         <button class="btn btn-outline btn-sm" onclick="markAllRead()">
@@ -101,7 +101,7 @@
                         <!-- 읽지 않은 알림 -->
                         <c:choose>
                         	<c:when test="${empty alarmList }">
-                        		<div class="notification-item" data-type="payment">
+                        		<div class="notification-item" data-type="${filterType}">
                         			알람내역이 존재하지 않습니다.
                         		</div>
                         	</c:when>
@@ -110,10 +110,12 @@
                         			<c:set value="" var="icon"/>
                         			<c:set value="" var="type"/>
                         			<c:set value="" var="color"/>
+                        			<c:set value="" var="filterType"/>
                         			<c:choose>
                         				<c:when test="${alarm.alarmType eq 'POINT' }">
                         					<c:set value="bi bi-coin" var="icon"/>
                         					<c:set value="포인트" var="type"/>
+                        					<c:set value="point" var="filterType"/>
                         					<c:choose>
                         						<c:when test="${fn:contains(alarm.alarmCont, '적립') }">
 	                        						<c:set value="payment" var="color"/>
@@ -125,6 +127,7 @@
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'PAYMENT' }">
                         					<c:set value="결제" var="type"/>
+                        					<c:set value="payment" var="filterType"/>
                         					<c:choose>
                         						<c:when test="${fn:contains(alarm.alarmCont, '완료') }">
 		                        					<c:set value="bi bi-check-circle" var="icon"/>
@@ -138,6 +141,7 @@
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'TRAVEL_LOG' }">
                         					<c:set value="여행기록" var="type"/>
+                        					
                         					<c:set value="bi bi-record-btn-fill" var="icon"/>
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'TALK' }">
@@ -146,10 +150,12 @@
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'INQUIRY' or alarm.alarmType eq 'PROD_INQUIRY' }">
                         					<c:set value="문의" var="type"/>
+                        					<c:set value="inquiry" var="filterType"/>
                         					<c:set value="bi bi-question-circle" var="icon"/>
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'REVIEW' }">
                         					<c:set value="리뷰" var="type"/>
+                        					<c:set value="review" var="filterType"/>
                         					<c:set value="bi bi-chat-left-quote" var="icon"/>
                         				</c:when>
                         				<c:when test="${alarm.alarmType eq 'PROD' }">
@@ -165,7 +171,7 @@
                         					<c:set value="bi bi-receipt" var="icon"/>
                         				</c:when>
                         			</c:choose>
-			                        <div class="notification-item" data-type="payment">
+			                        <div class="notification-item" data-type="${filterType}">
 			                            <label class="notification-checkbox">
 			                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
 			                            </label>
@@ -346,7 +352,7 @@ function deleteAllNotifications() {
     }
 }
 
-<!-- ✅ 알림 실시간(뱃지) + 클릭 읽음처리 (애니메이션 제거/중복인터벌 방지/안전파싱) -->
+
 (function(){
   if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) return;
 

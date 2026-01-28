@@ -30,19 +30,19 @@
 	
 	<!-- 시스템 로그 추가 -->
 	<insert id="insertSystemLog" parameterType="kr.or.ddit.mohaeng.vo.SystemLogVO" useGeneratedKeys="true">
-		<selectKey keyProperty="systemlogNo" resultType="long" order="BEFORE">
+		<selectKey keyProperty="systemLogNo" resultType="long" order="BEFORE">
 			select SEQ_SYSTEM_LOG.NEXTVAL FROM DUAL
 		</selectKey>
 		INSERT INTO SYSTEM_LOG (
-	        SYSTEM_LOG_NO,
-	        LEVEL,
-	        SOURCE,
-	        MSG,
-	        IP,
-	        REG_DT,
-	        SYSTEM_LOG_MEM
+	        SYSTEM_LOG_NO
+			, "LEVEL"
+			, SOURCE
+			, MSG
+			, IP
+			, REG_DT
+			, SYSTEM_LOG_MEM
 	    ) VALUES (
-	    	#{systemlogNo}
+	    	#{systemLogNo}
 	        , #{level}
 	        , #{source}
 	        , #{msg}

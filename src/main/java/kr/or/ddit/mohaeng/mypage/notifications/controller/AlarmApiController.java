@@ -83,5 +83,12 @@ public class AlarmApiController {
 	        alarmService.readAll(user.getMemNo());
 	        return ResponseEntity.ok().build();
 	    }
+	    @PostMapping("/unread-list")
+	    public List<AlarmVO> unreadList(
+	            @AuthenticationPrincipal CustomUserDetails user
+	    ) {
+	        int memNo = user.getMemNo();
+	        return alarmService.selectUnreadList(memNo);
+	    }
 
 }

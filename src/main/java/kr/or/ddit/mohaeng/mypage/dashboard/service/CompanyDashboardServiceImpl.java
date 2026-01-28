@@ -50,5 +50,16 @@ public class CompanyDashboardServiceImpl implements CompanyDashboardService {
 	  System.out.println("memNo=" + memNo);
 	return mapper.selectPaymentList(memNo);
   }
+
+  @Override
+  public int selectPaymentCount(int memNo) {
+	
+	return mapper.selectPaymentCount(memNo);
+  }
+
+  @Override
+  public List<PaymentVO> selectPaymentListPaging(int memNo, int startRow, int endRow) {
+    return mapper.selectPaymentListPaging(memNo, startRow, endRow);
+  }
  
 }

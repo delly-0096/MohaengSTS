@@ -131,10 +131,10 @@
                         				</c:when>
                         			</c:choose>
 			                        <div class="notification-item" data-type="${filterType}">
-			                            <label class="notification-checkbox">
+			                            <label class="notification-checkbox" style="margin-left:5%;">
 			                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
 			                            </label>
-			                            <div class="notification-icon ${color }">
+			                            <div class="notification-icon ${color }" style="margin-left:-50%;">
 			                                <i class="${icon }"></i>
 			                            </div>
 			                            <div class="notification-content">

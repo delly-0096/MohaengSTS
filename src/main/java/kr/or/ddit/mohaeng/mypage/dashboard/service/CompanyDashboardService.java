@@ -11,4 +11,7 @@ import kr.or.ddit.mohaeng.vo.PaymentVO;
 public interface CompanyDashboardService {
 	public CompanyDashboardVO getDashboard(int compNo);
 	public List<PaymentVO> selectPaymentList(int memNo);
+	public int selectPaymentCount(int memNo);
+	public List<PaymentVO> selectPaymentListPaging(int memNo, int page, int pageSize);
+
 }

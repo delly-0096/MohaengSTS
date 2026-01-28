@@ -495,6 +495,18 @@ function loadMoreReviews() {
 
 function appendReview(rv) {
     var reviewList = document.getElementById('reviewList');
+	
+	// HIDDEN 상태면 숨김 처리 메시지 표시
+    if (rv.reviewStatus === 'HIDDEN') {
+        var html = 
+            '<div class="review-item" data-review-id="' + rv.prodRvNo + '" style="animation: fadeIn 0.3s ease;">' +
+                '<div class="alert alert-warning">' +
+                    '관리자에 의해 숨김 처리된 글입니다.' +
+                '</div>' +
+            '</div>';
+        reviewList.insertAdjacentHTML('beforeend', html);
+        return;
+    }
     
     // 별점 HTML 생성
     var starsHtml = '';
@@ -1248,6 +1260,9 @@ function loadMoreInquiries() {
 }
 
 function appendInquiry(inq, serverLoginMemNo) {
+	// HIDDEN 상태면 추가하지 않음
+    if (inq.inqryStatus === 'HIDDEN') return;
+		
     var inquiryList = document.getElementById('inquiryList');
     
     // 문의 유형 뱃지

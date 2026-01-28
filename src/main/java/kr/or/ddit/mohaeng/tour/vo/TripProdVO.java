@@ -112,4 +112,9 @@ public class TripProdVO {
 	private int prodPlcNo;
 	private String addr1;
 	private String addr2;
+	
+	// 판매자 정보
+	private String sellerName;          // 판매자명 (업체명)
+	private String sellerIntro;         // 판매자 소개
+	private String sellerProfileImage;  // 판매자 프로필 이미지
 }

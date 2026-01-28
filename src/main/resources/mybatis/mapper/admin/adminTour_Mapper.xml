@@ -6,6 +6,7 @@
     <select id="getTourCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
         SELECT COUNT(*)
         FROM TRIP_PROD t
+        LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
         WHERE t.PROD_CTGRY_TYPE != 'accommodation'
         <if test="searchWord != null and searchWord != ''">
             AND (
@@ -13,8 +14,27 @@
                 OR t.TRIP_PROD_CONTENT LIKE '%' || #{searchWord} || '%'
             )
         </if>
+        <!-- 카테고리 필터 -->
         <if test="searchType != null and searchType != '' and searchType != 'all'">
             AND t.PROD_CTGRY_TYPE = #{searchType}
+        </if>
+        <!-- 지역 필터 -->
+        <if test="searchRegion != null and searchRegion != '' and searchRegion != 'all'">
+            AND t.CTY_NM = #{searchRegion}
+        </if>
+        <!-- 상태 필터 -->
+        <if test="searchStatus != null and searchStatus != '' and searchStatus != 'all'">
+            <choose>
+                <when test="searchStatus == '판매중'">
+                    AND t.APRV_YN = 'Y' AND t.APPROVE_STATUS = '판매중'
+                </when>
+                <when test="searchStatus == '판매중지'">
+                    AND t.APRV_YN = 'Y' AND t.APPROVE_STATUS = '판매중지'
+                </when>
+                <when test="searchStatus == '승인대기'">
+                    AND (t.APRV_YN = 'N' OR t.APRV_YN IS NULL)
+                </when>
+            </choose>
         </if>
     </select>
 
@@ -38,11 +58,7 @@
                     t.REG_DT,
                     t.APRV_YN,
                     t.DEL_YN,
-                    DECODE(t.CTY_NM,
-                        '1', '서울', '2', '인천', '3', '대전', '4', '대구', '5', '광주',
-                        '6', '부산', '7', '울산', '8', '세종', '31', '경기', '32', '강원',
-                        '33', '충북', '34', '충남', '35', '경북', '36', '경남',
-                        '37', '전북', '38', '전남', '39', '제주', t.CTY_NM) AS CTY_NM,
+                    t.CTY_NM,
                     s.PRICE,
                     s.NETPRC,
                     s.DISCOUNT,
@@ -54,7 +70,12 @@
                      FROM ATTACH_FILE_DETAIL AFD 
                      WHERE AFD.ATTACH_NO = t.ATTACH_NO 
                        AND AFD.USE_YN = 'Y' 
-                       AND ROWNUM = 1) AS THUMB_IMAGE
+                       AND ROWNUM = 1) AS THUMB_IMAGE,
+                    CASE 
+                        WHEN t.APRV_YN = 'Y' AND t.APPROVE_STATUS = '판매중' THEN '판매중'
+                        WHEN t.APRV_YN = 'Y' THEN '판매중지'
+                        ELSE '승인대기'
+                    END AS DISPLAY_STATUS
                 FROM TRIP_PROD t
                 LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
                 LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
@@ -65,10 +86,32 @@
                         OR t.TRIP_PROD_CONTENT LIKE '%' || #{searchWord} || '%'
                     )
                 </if>
+                <!-- 카테고리 필터 -->
                 <if test="searchType != null and searchType != '' and searchType != 'all'">
                     AND t.PROD_CTGRY_TYPE = #{searchType}
                 </if>
-                ORDER BY t.REG_DT DESC, t.TRIP_PROD_NO DESC
+                <!-- 지역 필터 -->
+                <if test="searchRegion != null and searchRegion != '' and searchRegion != 'all'">
+                    AND t.CTY_NM = #{searchRegion}
+                </if>
+                <!-- 상태 필터 -->
+                <if test="searchStatus != null and searchStatus != '' and searchStatus != 'all'">
+                    <choose>
+                        <when test="searchStatus == '판매중'">
+                            AND t.APRV_YN = 'Y' AND t.APPROVE_STATUS = '판매중'
+                        </when>
+                        <when test="searchStatus == '판매중지'">
+                            AND t.APRV_YN = 'Y' AND t.APPROVE_STATUS = '판매중지'
+                        </when>
+                        <when test="searchStatus == '승인대기'">
+                            AND (t.APRV_YN = 'N' OR t.APRV_YN IS NULL)
+                        </when>
+                    </choose>
+                </if>
+                ORDER BY 
+                    CASE WHEN t.APRV_YN = 'N' OR t.APRV_YN IS NULL THEN 0 ELSE 1 END,
+                    t.REG_DT DESC, 
+                    t.TRIP_PROD_NO DESC
             ) a
             <![CDATA[
             WHERE ROWNUM <= #{currentPage} * #{screenSize}
@@ -78,50 +121,111 @@
         WHERE rn > (#{currentPage} - 1) * #{screenSize}
         ]]>
     </select>
-
-    <!-- 투어 상세 조회 -->
-    <select id="selectTourBase" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+    
+    <!-- 엑셀용 전체 목록 조회 -->
+    <select id="getTourListAll" parameterType="map" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
         SELECT
             t.TRIP_PROD_NO,
-            t.COMP_NO,
-            t.MEM_NO,
             t.PROD_CTGRY_TYPE,
             t.APPROVE_STATUS,
             t.TRIP_PROD_TITLE,
-            t.TRIP_PROD_CONTENT,
-            t.SALE_START_DT,
-            t.SALE_END_DT,
-            t.ATTACH_NO,
-            t.VIEW_CNT,
             t.REG_DT,
-            t.MOD_DT,
             t.APRV_YN,
-            t.REJ_RSN,
             t.DEL_YN,
             t.CTY_NM,
             s.PRICE,
-            s.NETPRC,
             s.DISCOUNT,
-            s.LEAD_TIME,
-            s.TOTAL_STOCK,
             s.CUR_STOCK,
-            i.PROD_RUNTIME,
-            i.PROD_DURATION,
-            i.PROD_MIN_PEOPLE,
-            i.PROD_MAX_PEOPLE,
-            i.PROD_LIM_AGE,
-            i.PROD_INCLUDE,
-            i.PROD_EXCLUDE,
-            i.PROD_NOTICE,
-            p.PROD_PLC_NO,
-            p.ADDR1,
-            p.ADDR2
+            CASE 
+                WHEN t.APRV_YN = 'Y' AND t.APPROVE_STATUS = '판매중' THEN '판매중'
+                WHEN t.APRV_YN = 'Y' THEN '판매중지'
+                ELSE '승인대기'
+            END AS DISPLAY_STATUS
         FROM TRIP_PROD t
         LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
-        LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
-        LEFT JOIN TRIP_PROD_PLACE p ON t.TRIP_PROD_NO = p.TRIP_PROD_NO
-        WHERE t.TRIP_PROD_NO = #{tripProdNo}
+        WHERE t.PROD_CTGRY_TYPE != 'accommodation'
+        <if test="searchWord != null and searchWord != ''">
+            AND (
+                t.TRIP_PROD_TITLE LIKE '%' || #{searchWord} || '%'
+                OR t.TRIP_PROD_CONTENT LIKE '%' || #{searchWord} || '%'
+            )
+        </if>
+        <if test="searchType != null and searchType != '' and searchType != 'all'">
+            AND t.PROD_CTGRY_TYPE = #{searchType}
+        </if>
+        <if test="searchRegion != null and searchRegion != '' and searchRegion != 'all'">
+            AND t.CTY_NM = #{searchRegion}
+        </if>
+        <if test="searchStatus != null and searchStatus != '' and searchStatus != 'all'">
+            <choose>
+                <when test="searchStatus == '판매중'">
+                    AND t.APRV_YN = 'Y' AND t.APPROVE_STATUS = '판매중'
+                </when>
+                <when test="searchStatus == '판매중지'">
+                    AND t.APRV_YN = 'Y' AND t.APPROVE_STATUS = '판매중지'
+                </when>
+                <when test="searchStatus == '승인대기'">
+                    AND (t.APRV_YN = 'N' OR t.APRV_YN IS NULL)
+                </when>
+            </choose>
+        </if>
+        ORDER BY 
+            CASE WHEN t.APRV_YN = 'N' OR t.APRV_YN IS NULL THEN 0 ELSE 1 END,
+            t.REG_DT DESC
     </select>
+
+    <!-- 투어 상세 조회 -->
+    <select id="selectTourBase" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+	    SELECT
+	        t.TRIP_PROD_NO,
+	        t.COMP_NO,
+	        t.MEM_NO,
+	        t.PROD_CTGRY_TYPE,
+	        t.APPROVE_STATUS,
+	        t.TRIP_PROD_TITLE,
+	        t.TRIP_PROD_CONTENT,
+	        t.SALE_START_DT,
+	        t.SALE_END_DT,
+	        t.ATTACH_NO,
+	        t.VIEW_CNT,
+	        t.REG_DT,
+	        t.MOD_DT,
+	        t.APRV_YN,
+	        t.REJ_RSN,
+	        t.DEL_YN,
+	        t.CTY_NM,
+	        s.PRICE,
+	        s.NETPRC,
+	        s.DISCOUNT,
+	        s.LEAD_TIME,
+	        s.TOTAL_STOCK,
+	        s.CUR_STOCK,
+	        i.PROD_RUNTIME,
+	        i.PROD_DURATION,
+	        i.PROD_MIN_PEOPLE,
+	        i.PROD_MAX_PEOPLE,
+	        i.PROD_LIM_AGE,
+	        i.PROD_INCLUDE,
+	        i.PROD_EXCLUDE,
+	        i.PROD_NOTICE,
+	        p.PROD_PLC_NO,
+	        p.ADDR1,
+	        p.ADDR2,
+	        c.BZMN_NM AS SELLER_NAME,
+	        c.COMP_INTRO AS SELLER_INTRO,
+	        (SELECT AFD.FILE_PATH 
+	         FROM ATTACH_FILE_DETAIL AFD 
+	         WHERE AFD.ATTACH_NO = m.MEM_PROFILE 
+	           AND AFD.USE_YN = 'Y' 
+	           AND ROWNUM = 1) AS SELLER_PROFILE_IMAGE
+	    FROM TRIP_PROD t
+	    LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
+	    LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
+	    LEFT JOIN TRIP_PROD_PLACE p ON t.TRIP_PROD_NO = p.TRIP_PROD_NO
+	    LEFT JOIN COMPANY c ON t.COMP_NO = c.COMP_NO
+	    LEFT JOIN MEMBER m ON c.MEM_NO = m.MEM_NO
+	    WHERE t.TRIP_PROD_NO = #{tripProdNo}
+	</select>
 
     <!-- 예약 가능 시간 목록 조회 -->
     <select id="selectTimeInfoList" parameterType="int" resultType="kr.or.ddit.mohaeng.tour.vo.ProdTimeInfoVO">
@@ -153,19 +257,19 @@
 
     <!-- 판매 상태 토글 -->
     <update id="toggleSaleStatus" parameterType="map">
-        UPDATE TRIP_PROD
-        SET DEL_YN = #{delYn},
-            <if test="delYn == 'Y'">
-            APPROVE_STATUS = '판매중지',
-            DEL_DT = SYSDATE,
-            </if>
-            <if test="delYn == 'N'">
-            APPROVE_STATUS = '판매중',
-            DEL_DT = NULL,
-            </if>
-            MOD_DT = SYSDATE
-        WHERE TRIP_PROD_NO = #{tripProdNo}
-    </update>
+	    UPDATE TRIP_PROD
+	    SET DEL_YN = #{delYn},
+	        <if test='delYn == "Y"'>
+	        APPROVE_STATUS = '판매중지',
+	        DEL_DT = SYSDATE,
+	        </if>
+	        <if test='delYn == "N"'>
+	        APPROVE_STATUS = '판매중',
+	        DEL_DT = NULL,
+	        </if>
+	        MOD_DT = SYSDATE
+	    WHERE TRIP_PROD_NO = #{tripProdNo}
+	</update>
 
     <!-- 논리 삭제 -->
     <update id="logicalDeleteTripProd" parameterType="int">
@@ -181,8 +285,8 @@
 	<select id="getTourStats" resultType="map">
 	    SELECT 
 	        COUNT(*) AS totalCount,
-	        SUM(CASE WHEN APRV_YN = 'Y' AND DEL_YN = 'N' THEN 1 ELSE 0 END) AS activeCount,
-	        SUM(CASE WHEN DEL_YN = 'Y' THEN 1 ELSE 0 END) AS inactiveCount,
+	        SUM(CASE WHEN APRV_YN = 'Y' AND APPROVE_STATUS = '판매중' THEN 1 ELSE 0 END) AS activeCount,
+	        SUM(CASE WHEN APRV_YN = 'Y' AND APPROVE_STATUS != '판매중' THEN 1 ELSE 0 END) AS inactiveCount,
 	        SUM(CASE WHEN APRV_YN != 'Y' OR APRV_YN IS NULL THEN 1 ELSE 0 END) AS pendingCount
 	    FROM TRIP_PROD
 	    WHERE PROD_CTGRY_TYPE != 'accommodation'

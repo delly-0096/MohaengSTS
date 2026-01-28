@@ -80,8 +80,8 @@ public class StatisticsController {
 		return new ResponseEntity<List<Params>>(salesTrend,HttpStatus.OK);
 	}
 	
-	@PostMapping("/statistics/reservation")
-	public ResponseEntity<?> selectReservation(
+	@PostMapping("/statistics/genderRatio")
+	public ResponseEntity<?> selectGenderRatio(
 			@AuthenticationPrincipal CustomUserDetails customUser,
 			@RequestBody Map<String, Object> dataMap) {
 		
@@ -94,8 +94,27 @@ public class StatisticsController {
 			params.put("endDate", dataMap.get("endDate"));
 		}
 		
-		List<Params> reservation = statisticsService.selectReservation(params);
+		Params genderRatio = statisticsService.selectGenderRatio(params);
 		
-		return new ResponseEntity<List<Params>>(reservation,HttpStatus.OK);
+		return new ResponseEntity<Params>(genderRatio,HttpStatus.OK);
+	}
+	
+	@PostMapping("/statistics/statsByAge")
+	public ResponseEntity<?> selectSalesStatsByAge(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@RequestBody Map<String, Object> dataMap) {
+		
+		System.out.println("salesTrend dataMap : " + dataMap);
+		int memNo = customUser.getMember().getMemNo();
+		Params params = new Params();
+		params.put("memNo", memNo);
+		if(dataMap.get("startDate") != null) {
+			params.put("startDate", dataMap.get("startDate"));
+			params.put("endDate", dataMap.get("endDate"));
+		}
+		
+		Params statsByAge = statisticsService.selectSalesStatsByAge(params);
+		
+		return new ResponseEntity<Params>(statsByAge,HttpStatus.OK);
 	}
 }

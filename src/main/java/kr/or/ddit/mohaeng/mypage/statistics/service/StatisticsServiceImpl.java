@@ -29,4 +29,14 @@ public class StatisticsServiceImpl implements IStatisticsService{
 		return statisticsMapper.selectReservation(params);
 	}
 
+	@Override
+	public Params selectGenderRatio(Params params) {
+		return statisticsMapper.selectGenderRatio(params);
+	}
+
+	@Override
+	public Params selectSalesStatsByAge(Params params) {
+		return statisticsMapper.selectSalesStatsByAge(params);
+	}
+
 }

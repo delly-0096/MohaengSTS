@@ -13,5 +13,8 @@ public interface IStatisticsService {
 	public List<Params> selectSalesTrend(Params params);
 
 	public List<Params> selectReservation(Params params);
-
+	
+	public Params selectGenderRatio(Params params);
+	
+	public Params selectSalesStatsByAge(Params params);
 }

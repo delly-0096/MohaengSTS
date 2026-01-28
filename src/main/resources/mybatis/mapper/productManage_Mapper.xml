@@ -238,6 +238,7 @@
         WHERE rn > (#{page} - 1) * #{pageSize}
         ]]>
 	</select>
+	<!-- ORDER BY  t.TRIP_PROD_NO DESC -->
 	
 	<!-- 등록된 숙소 정보 있는지 확인 -->
 	<select id="existsByApiContentId" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultType="kr.or.ddit.mohaeng.vo.AccommodationVO">

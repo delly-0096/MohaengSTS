@@ -2967,7 +2967,7 @@ function addRoomType() {
 
     // 첫 번째 객실 삭제 버튼 표시 (2개 이상일 때)
     updateRoomDeleteButtons();
-	showToast('객실 타입이 추가되었습니다.', 'success');
+// 	showToast('객실 타입이 추가되었습니다.', 'success');
 }
 
 // 선택 객실 삭제 -> 여기도 예약 고객 있는지 확인해서 삭제해야됨
@@ -3024,7 +3024,7 @@ function addOption() {
                     </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeAddonOption('\${index}')">
+                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeAddonOption(\${index})">
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
@@ -3035,11 +3035,11 @@ function addOption() {
 
     // 첫 번째 추가 옵션에 삭제 버튼 표시 (2개 이상일 때)
     updateAddonDeleteButtons();
-	showToast('추가 옵션이 추가되었습니다.', 'success');
+// 	showToast('추가 옵션이 추가되었습니다.', 'success');
 }
 
 function removeAddonOption(index) {
-    var addonItem = document.querySelector('.addon-option-item[data-addon-index="' + index + '"]');
+    var addonItem = document.querySelector('.addon-option-item[data-add-index="' + index + '"]');
     if (addonItem) {
         addonItem.style.transition = 'opacity 0.3s, transform 0.3s';
         addonItem.style.opacity = '0';

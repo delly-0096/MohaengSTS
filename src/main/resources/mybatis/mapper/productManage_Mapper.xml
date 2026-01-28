@@ -797,7 +797,9 @@
 		INNER JOIN MEMBER M ON M.MEM_NO = P.MEM_NO
 		INNER JOIN MEM_USER MU ON M.MEM_NO = MU.MEM_NO
 		WHERE TRIP_PROD_NO = #{tripProdNo} 
+		ORDER BY TPL.PROD_LIST_NO DESC
 	</select>
+
 	
 	<!-- 숙소 예약 내역 가져오기 -->
 	<select id="getAccResvList" parameterType="kr.or.ddit.mohaeng.vo.AccommodationVO" resultMap="kr.or.ddit.mohaeng.accommodation.mapper.IAccommodationMapper.accResvMap">

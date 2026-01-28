@@ -24,14 +24,12 @@ public class ReportApiController {
     @PreAuthorize("hasAuthority('ROLE_MEMBER')")
     public ResponseEntity<?> create(@RequestBody ReportVO req,
                                     Authentication authentication) {
-
     	if (req.getTargetNo() == null || req.getTargetNo() <= 0) {
             return ResponseEntity.badRequest().body("targetNo is required");
         }
         if (req.getTargetType() == null || req.getTargetType().isBlank()) {
             return ResponseEntity.badRequest().body("targetType is required");
         }
-    	
         Long memNo = reportService.resolveMemNo(authentication);
 
         req.setReqMemNo(memNo);

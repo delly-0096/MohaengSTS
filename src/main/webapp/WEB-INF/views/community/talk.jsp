@@ -498,18 +498,6 @@
 					            <c:otherwise>${boardVO.boardCtgryCd}</c:otherwise>
 					        </c:choose>
 					    </span>
-					    					     <!-- 페이지네이션 -->
-              <div class="pagination-container">
-				  <nav>
-				    <ul class="pagination">
-				      <c:if test="${pagingVO.startPage > 1}">
-				        <li class="page-item">
-				          <a class="page-link"
-				             href="?type=${type}&page=${pagingVO.startPage - pagingVO.blockSize}">
-				            <i class="bi bi-chevron-left"></i>
-				          </a>
-				        </li>
-				      </c:if>
 				
 				      <c:forEach var="p" begin="${pagingVO.startPage}"
 				                 end="${pagingVO.endPage < pagingVO.totalPage ? pagingVO.endPage : pagingVO.totalPage}">

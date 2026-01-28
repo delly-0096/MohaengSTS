@@ -64,7 +64,7 @@ public class TalkController {
         this.mailController = mailController;
     }
 
-	@RequestMapping
+	@GetMapping
 	public String communityForm(@RequestParam(name = "page", required = false, defaultValue = "1") int currentPage,
 			@RequestParam(required = false) Integer boardNo, @RequestParam(required = false) String searchWord,
 			@RequestParam(required = false, defaultValue = "all") String ntcType, Model model) {
@@ -79,7 +79,7 @@ public class TalkController {
 			model.addAttribute("ntcType", ntcType);
 		}
 
-		pagingVO.setCurrentPage(currentPage);
+		pagingVO.setCurrentPage(currentPage);   
 		int totalRecord = talkService.selectTalkCount(pagingVO);
 		pagingVO.setTotalRecord(totalRecord);
 		// 게시판 목록

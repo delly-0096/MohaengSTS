@@ -191,7 +191,7 @@
 	 		, #{remainPoint}
 	 		, <choose>
 	 			<when test="pntExpireDt !=null">#{pntExpireDt}</when>
-	 			<when test="pointType == 'P'">SYSDATE +180</when>
+	 			<when test='pointType == "P"'>SYSDATE +180</when>
 	 			<otherwise>NULL</otherwise>
 	 		  </choose>
 	 		, SYSDATE

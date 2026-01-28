@@ -48,6 +48,10 @@ public class ProductMangeController {
 	@Autowired
     private ITripProdService tripProdService;	// 상품
     
+	@Autowired
+	private ITripProdInquiryService tripProdInquiryService;
+	
+	
     @Autowired
     private ITripProdSaleService saleService;	// 
     
@@ -308,9 +312,12 @@ public class ProductMangeController {
 		} else {
 			return new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
 		}
-
 	}
 	
-	
-	
+//	@ResponseBody
+//	@PostMapping()
+//	public ResponseBody<TripProd> registerReply (@RequestBody TripProdInquiryVO tripProdInquiry){
+//		log.info("tripProdInquiry : ");
+//	}
+//	
 }

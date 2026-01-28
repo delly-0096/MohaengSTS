@@ -155,7 +155,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		// 리뷰
 		List<ProdReviewVO> prodReviewList = new ArrayList<>();
 		prodReviewList = 
-				prodReviewService.getReviewPaging(tripProdNo, businessProducts.getPage(), businessProducts.getPageSize());
+				prodReviewService.getReviewPaging(tripProdNo, 1, 100);
 		
 		log.info("prodReviewList : {}", prodReviewList);
 		prodVO.setProdReviewList(prodReviewList);
@@ -163,7 +163,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 		// 문의사항
 		List<TripProdInquiryVO> inquiryList = new ArrayList<>();
 		inquiryList = 
-				inquiryService.getInquiryPaging(tripProdNo, businessProducts.getPage(), businessProducts.getPageSize());
+				inquiryService.getInquiryPaging(tripProdNo, 1, 100);
 		log.info("inquiryList : {}", inquiryList);
 		prodVO.setProdInquiryList(inquiryList);
 		

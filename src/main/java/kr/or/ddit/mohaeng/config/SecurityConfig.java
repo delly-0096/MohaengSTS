@@ -132,7 +132,8 @@ public class SecurityConfig {
 			"/api/admin/notices/thumbnail/**",
 			"/api/admin/inquiry/**",
 			"/api/admin/products/**",
-			"/api/admin/transactions/payments/**"
+			"/api/admin/transactions/payments/**",
+		    "/api/admin/stats/**"
 		};
 
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {

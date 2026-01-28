@@ -540,141 +540,143 @@
 			            </c:when>
 			            <c:otherwise>
 			                <c:forEach items="${inquiry}" var="inq" varStatus="status">
-			                    <div class="inquiry-item" data-inquiry-id="${inq.prodInqryNo}">
-			                        <div class="inquiry-item-header">
-			                            <div class="inquiry-item-info">
-			                                <!-- 문의 유형 뱃지 -->
-			                                <c:choose>
-			                                    <c:when test="${inq.inquiryCtgry eq 'product'}">
-			                                        <span class="inquiry-type-badge product">상품 문의</span>
-			                                    </c:when>
-			                                    <c:when test="${inq.inquiryCtgry eq 'booking'}">
-			                                        <span class="inquiry-type-badge booking">예약/일정</span>
-			                                    </c:when>
-			                                    <c:when test="${inq.inquiryCtgry eq 'price'}">
-			                                        <span class="inquiry-type-badge price">가격/결제</span>
-			                                    </c:when>
-			                                    <c:when test="${inq.inquiryCtgry eq 'cancel'}">
-			                                        <span class="inquiry-type-badge cancel">취소/환불</span>
-			                                    </c:when>
-			                                    <c:otherwise>
-			                                        <span class="inquiry-type-badge other">기타</span>
-			                                    </c:otherwise>
-			                                </c:choose>
-
-			                                <!-- 작성자 닉네임 마스킹 -->
-			                                <span class="inquiry-author">${inq.inquiryNickname}</span>
-			                                <span class="inquiry-date">
-			                                    <fmt:formatDate value="${inq.regDt}" pattern="yyyy.MM.dd"/>
-			                                </span>
-
-			                                <!-- 비밀글 표시 -->
-			                                <c:if test="${inq.secretYn eq 'Y'}">
-			                                    <span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>
-			                                </c:if>
-			                            </div>
-
-			                            <!-- 답변 상태 -->
-			                            <div class="d-flex align-items-center gap-2">
-										    <!-- 답변 상태 -->
-										    <c:choose>
-										        <c:when test="${inq.inqryStatus eq 'DONE'}">
-										            <span class="inquiry-status answered">답변완료</span>
-										        </c:when>
-										        <c:otherwise>
-										            <span class="inquiry-status waiting">답변대기</span>
-										        </c:otherwise>
-										    </c:choose>
-										    <c:choose>
-										        <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memNo == inq.inquiryMemNo && inq.inqryStatus ne 'DONE'}">
-										            <div class="dropdown">
-										                <button class="btn-more" type="button" data-bs-toggle="dropdown">
-										                    <i class="bi bi-three-dots-vertical"></i>
-										                </button>
-										                <ul class="dropdown-menu dropdown-menu-end">
-										                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditInquiryModal(${inq.prodInqryNo}, '${inq.inquiryCtgry}', '${fn:escapeXml(inq.prodInqryCn)}', '${inq.secretYn}')">
-										                        <i class="bi bi-pencil me-2"></i>수정</a></li>
-										                    <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteInquiry(${inq.prodInqryNo})">
-										                        <i class="bi bi-trash me-2"></i>삭제</a></li>
-										                </ul>
+			                	<c:if test="${inq.inqryStatus ne 'HIDDEN'}">
+				                    <div class="inquiry-item" data-inquiry-id="${inq.prodInqryNo}">
+				                        <div class="inquiry-item-header">
+				                            <div class="inquiry-item-info">
+				                                <!-- 문의 유형 뱃지 -->
+				                                <c:choose>
+				                                    <c:when test="${inq.inquiryCtgry eq 'product'}">
+				                                        <span class="inquiry-type-badge product">상품 문의</span>
+				                                    </c:when>
+				                                    <c:when test="${inq.inquiryCtgry eq 'booking'}">
+				                                        <span class="inquiry-type-badge booking">예약/일정</span>
+				                                    </c:when>
+				                                    <c:when test="${inq.inquiryCtgry eq 'price'}">
+				                                        <span class="inquiry-type-badge price">가격/결제</span>
+				                                    </c:when>
+				                                    <c:when test="${inq.inquiryCtgry eq 'cancel'}">
+				                                        <span class="inquiry-type-badge cancel">취소/환불</span>
+				                                    </c:when>
+				                                    <c:otherwise>
+				                                        <span class="inquiry-type-badge other">기타</span>
+				                                    </c:otherwise>
+				                                </c:choose>
+	
+				                                <!-- 작성자 닉네임 마스킹 -->
+				                                <span class="inquiry-author">${inq.inquiryNickname}</span>
+				                                <span class="inquiry-date">
+				                                    <fmt:formatDate value="${inq.regDt}" pattern="yyyy.MM.dd"/>
+				                                </span>
+	
+				                                <!-- 비밀글 표시 -->
+				                                <c:if test="${inq.secretYn eq 'Y'}">
+				                                    <span class="secret-badge"><i class="bi bi-lock"></i> 비밀글</span>
+				                                </c:if>
+				                            </div>
+	
+				                            <!-- 답변 상태 -->
+				                            <div class="d-flex align-items-center gap-2">
+											    <!-- 답변 상태 -->
+											    <c:choose>
+											        <c:when test="${inq.inqryStatus eq 'DONE'}">
+											            <span class="inquiry-status answered">답변완료</span>
+											        </c:when>
+											        <c:otherwise>
+											            <span class="inquiry-status waiting">답변대기</span>
+											        </c:otherwise>
+											    </c:choose>
+											    <c:choose>
+											        <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memNo == inq.inquiryMemNo && inq.inqryStatus ne 'DONE'}">
+											            <div class="dropdown">
+											                <button class="btn-more" type="button" data-bs-toggle="dropdown">
+											                    <i class="bi bi-three-dots-vertical"></i>
+											                </button>
+											                <ul class="dropdown-menu dropdown-menu-end">
+											                    <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditInquiryModal(${inq.prodInqryNo}, '${inq.inquiryCtgry}', '${fn:escapeXml(inq.prodInqryCn)}', '${inq.secretYn}')">
+											                        <i class="bi bi-pencil me-2"></i>수정</a></li>
+											                    <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteInquiry(${inq.prodInqryNo})">
+											                        <i class="bi bi-trash me-2"></i>삭제</a></li>
+											                </ul>
+											            </div>
+											        </c:when>
+											        <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS' && sessionScope.loginMember.memNo != inq.inquiryMemNo && inq.secretYn ne 'Y'}">
+											            <button class="btn-more" type="button" onclick="openReportModal('inquiry', '${inq.prodInqryNo}', '${fn:escapeXml(fn:substring(inq.prodInqryCn, 0, 30))}...', '${inq.inquiryMemNo}')">
+											                <i class="bi bi-flag"></i>
+											            </button>
+											        </c:when>
+											    </c:choose>
+											</div>
+				                        </div>
+	
+				                        <!-- 문의 내용 -->
+				                        <div class="inquiry-item-question">
+				                            <c:choose>
+				                                <c:when test="${inq.secretYn eq 'Y' && (empty sessionScope.loginMember || (sessionScope.loginMember.memNo != inq.inquiryMemNo && sessionScope.loginMember.memType ne 'BUSINESS'))}">
+				                                    <p class="secret-content"><i class="bi bi-lock me-1"></i>비밀글로 작성된 문의입니다.</p>
+				                                </c:when>
+				                                <c:otherwise>
+				                                    <p><strong>Q.</strong> ${inq.prodInqryCn}</p>
+				                                </c:otherwise>
+				                            </c:choose>
+				                        </div>
+	
+				                        <!-- 답변 내용 (답변완료 시) -->
+										<c:if test="${inq.inqryStatus eq 'DONE' && not empty inq.replyCn}">
+										    <!-- 비밀글이 아니거나 본인인 경우만 답변 표시 -->
+										    <c:if test="${inq.secretYn ne 'Y' || (not empty sessionScope.loginMember && (sessionScope.loginMember.memNo == inq.inquiryMemNo || sessionScope.loginMember.memType eq 'BUSINESS'))}">
+										    <div class="inquiry-item-answer" id="answer_${inq.prodInqryNo}">
+										        <div class="answer-header">
+										            <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
+										            <div class="d-flex align-items-center gap-2">
+										                <span class="answer-date">
+										                    <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
+										                </span>
+										                <c:choose>
+											                <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS' && sessionScope.loginMember.memNo == inq.replyMemNo}">
+											                    <div class="dropdown">
+											                        <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
+											                            <i class="bi bi-three-dots-vertical"></i>
+											                        </button>
+											                        <ul class="dropdown-menu dropdown-menu-end">
+											                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
+											                                <i class="bi bi-pencil me-2"></i>수정</a></li>
+											                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
+											                                <i class="bi bi-trash me-2"></i>삭제</a></li>
+											                        </ul>
+											                    </div>
+											                </c:when>
+											                <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS'}">
+											                    <button class="btn-more btn-more-sm" type="button" onclick="openReportModal('reply', '${inq.prodInqryNo}', '${fn:escapeXml(fn:substring(inq.replyCn, 0, 30))}...', '${inq.replyMemNo}')">
+											                        <i class="bi bi-flag"></i>
+											                    </button>
+											                </c:when>
+											            </c:choose>
 										            </div>
-										        </c:when>
-										        <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS' && sessionScope.loginMember.memNo != inq.inquiryMemNo && inq.secretYn ne 'Y'}">
-										            <button class="btn-more" type="button" onclick="openReportModal('inquiry', '${inq.prodInqryNo}', '${fn:escapeXml(fn:substring(inq.prodInqryCn, 0, 30))}...', '${inq.inquiryMemNo}')">
-										                <i class="bi bi-flag"></i>
-										            </button>
-										        </c:when>
-										    </c:choose>
-										</div>
-			                        </div>
-
-			                        <!-- 문의 내용 -->
-			                        <div class="inquiry-item-question">
-			                            <c:choose>
-			                                <c:when test="${inq.secretYn eq 'Y' && (empty sessionScope.loginMember || (sessionScope.loginMember.memNo != inq.inquiryMemNo && sessionScope.loginMember.memType ne 'BUSINESS'))}">
-			                                    <p class="secret-content"><i class="bi bi-lock me-1"></i>비밀글로 작성된 문의입니다.</p>
-			                                </c:when>
-			                                <c:otherwise>
-			                                    <p><strong>Q.</strong> ${inq.prodInqryCn}</p>
-			                                </c:otherwise>
-			                            </c:choose>
-			                        </div>
-
-			                        <!-- 답변 내용 (답변완료 시) -->
-									<c:if test="${inq.inqryStatus eq 'DONE' && not empty inq.replyCn}">
-									    <!-- 비밀글이 아니거나 본인인 경우만 답변 표시 -->
-									    <c:if test="${inq.secretYn ne 'Y' || (not empty sessionScope.loginMember && (sessionScope.loginMember.memNo == inq.inquiryMemNo || sessionScope.loginMember.memType eq 'BUSINESS'))}">
-									    <div class="inquiry-item-answer" id="answer_${inq.prodInqryNo}">
-									        <div class="answer-header">
-									            <span class="answer-badge"><i class="bi bi-building"></i> 판매자 답변</span>
-									            <div class="d-flex align-items-center gap-2">
-									                <span class="answer-date">
-									                    <fmt:formatDate value="${inq.replyDt}" pattern="yyyy.MM.dd"/>
-									                </span>
-									                <c:choose>
-										                <c:when test="${sessionScope.loginMember.memType eq 'BUSINESS' && sessionScope.loginMember.memNo == inq.replyMemNo}">
-										                    <div class="dropdown">
-										                        <button class="btn-more btn-more-sm" type="button" data-bs-toggle="dropdown">
-										                            <i class="bi bi-three-dots-vertical"></i>
-										                        </button>
-										                        <ul class="dropdown-menu dropdown-menu-end">
-										                            <li><a class="dropdown-item" href="javascript:void(0)" onclick="openEditReplyModal(${inq.prodInqryNo}, '${fn:escapeXml(inq.replyCn)}')">
-										                                <i class="bi bi-pencil me-2"></i>수정</a></li>
-										                            <li><a class="dropdown-item text-danger" href="javascript:void(0)" onclick="deleteReply(${inq.prodInqryNo})">
-										                                <i class="bi bi-trash me-2"></i>삭제</a></li>
-										                        </ul>
-										                    </div>
-										                </c:when>
-										                <c:when test="${not empty sessionScope.loginMember && sessionScope.loginMember.memType ne 'BUSINESS'}">
-										                    <button class="btn-more btn-more-sm" type="button" onclick="openReportModal('reply', '${inq.prodInqryNo}', '${fn:escapeXml(fn:substring(inq.replyCn, 0, 30))}...', '${inq.replyMemNo}')">
-										                        <i class="bi bi-flag"></i>
-										                    </button>
-										                </c:when>
-										            </c:choose>
-									            </div>
-									        </div>
-									        <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
-									    </div>
-									    </c:if>
-									</c:if>
-
-			                        <!-- 기업회원 답변 영역 (답변대기 상태일 때만) -->
-			                        <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && inq.inqryStatus eq 'WAIT'}">
-			                        <div class="business-reply-section">
-			                            <button class="btn btn-sm btn-primary" onclick="toggleReplyForm(${inq.prodInqryNo})">
-			                                <i class="bi bi-reply me-1"></i>답변하기
-			                            </button>
-			                            <div class="reply-form" id="replyForm_${inq.prodInqryNo}" style="display: none;">
-			                                <textarea class="form-control" id="replyContent_${inq.prodInqryNo}" rows="3"
-			                                          placeholder="답변 내용을 입력하세요..."></textarea>
-			                                <div class="reply-form-actions">
-			                                    <button class="btn btn-sm btn-outline" onclick="toggleReplyForm(${inq.prodInqryNo})">취소</button>
-			                                    <button class="btn btn-sm btn-primary" onclick="submitReply(${inq.prodInqryNo})">답변 등록</button>
-			                                </div>
-			                            </div>
-			                        </div>
-			                        </c:if>
-			                    </div>
+										        </div>
+										        <p class="answer-content"><strong>A.</strong> ${inq.replyCn}</p>
+										    </div>
+										    </c:if>
+										</c:if>
+	
+				                        <!-- 기업회원 답변 영역 (답변대기 상태일 때만) -->
+				                        <c:if test="${sessionScope.loginMember.memType eq 'BUSINESS' && inq.inqryStatus eq 'WAIT'}">
+				                        <div class="business-reply-section">
+				                            <button class="btn btn-sm btn-primary" onclick="toggleReplyForm(${inq.prodInqryNo})">
+				                                <i class="bi bi-reply me-1"></i>답변하기
+				                            </button>
+				                            <div class="reply-form" id="replyForm_${inq.prodInqryNo}" style="display: none;">
+				                                <textarea class="form-control" id="replyContent_${inq.prodInqryNo}" rows="3"
+				                                          placeholder="답변 내용을 입력하세요..."></textarea>
+				                                <div class="reply-form-actions">
+				                                    <button class="btn btn-sm btn-outline" onclick="toggleReplyForm(${inq.prodInqryNo})">취소</button>
+				                                    <button class="btn btn-sm btn-primary" onclick="submitReply(${inq.prodInqryNo})">답변 등록</button>
+				                                </div>
+				                            </div>
+				                        </div>
+				                        </c:if>
+				                    </div>
+			                    </c:if>
 			                </c:forEach>
 			            </c:otherwise>
 			        </c:choose>

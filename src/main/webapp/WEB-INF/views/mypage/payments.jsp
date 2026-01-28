@@ -75,9 +75,9 @@
 					<button
 						class="mypage-tab <c:if test="${not empty contentType and contentType eq 'pending' }">active</c:if>"
 						data-category="pending">이용 예정</button>
-					<button
-						class="mypage-tab <c:if test="${not empty contentType and contentType eq 'cancelled' }">active</c:if>"
-						data-category="cancelled">취소 완료</button>
+<!-- 					<button -->
+<%-- 						class="mypage-tab <c:if test="${not empty contentType and contentType eq 'cancelled' }">active</c:if>" --%>
+<!-- 						data-category="cancelled">취소 완료</button> -->
 				</div>
 
 				<!-- 결제 내역 -->
@@ -525,13 +525,37 @@
 </div>
 
 
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script type="text/javascript">
 var cp = '${pageContext.request.contextPath}'; 
 let receiptItems = []; 
 let uploadedFiles = [];
 let receiptModal, refundModal, reviewModal, cancelConfirmModal;
 let deletedFiles = [];
+
+//알림창 (Alert 대체)
+const toast = (title, icon = 'success') => {
+    Swal.fire({
+        title: title,
+        icon: icon,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: '확인'
+    });
+};
+
+// 확인창 (Confirm 대체)
+const confirmSwal = (title, text, icon = 'warning') => {
+    return Swal.fire({
+        title: title,
+        text: text,
+        icon: icon,
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: '확인',
+        cancelButtonText: '취소'
+    });
+};
 
 $(function(){
     // Bootstrap 모달 초기화
@@ -570,7 +594,7 @@ $(function(){
         const previewList = $("#imagePreviewList");
 
         if (uploadedFiles.length + files.length > 5) {
-            alert("사진은 최대 5장까지 첨부 가능합니다.");
+        	toast("사진은 최대 5장까지 첨부 가능합니다.", "error");
             $(this).val(""); 
             return;
         }
@@ -597,7 +621,7 @@ function printReceipt() {
 }
 
 /* --- 포맷팅 유틸리티 함수 추가 --- */
-//1. 결제번호 생성 (날짜8자리 + payNo8자리)
+// 결제번호 생성 (날짜8자리 + payNo8자리)
 function formatPayNo(dateStr, payNo) {
  if (!dateStr || !payNo) return "-";
  // dateStr: "2026.01.24 10:56:09" 형식을 가정
@@ -606,7 +630,7 @@ function formatPayNo(dateStr, payNo) {
  return datePart + payNoPart;
 }
 
-//2. 사업자번호 포맷팅 (000-00-00000)
+// 사업자번호 포맷팅 (000-00-00000)
 function formatBrno(num) {
  if (!num || num === "정보 없음") return num;
  const cleaned = String(num).replace(/\D/g, '');
@@ -614,7 +638,7 @@ function formatBrno(num) {
  return cleaned.replace(/(\d{3})(\d{2})(\d{5})/, '$1-$2-$3');
 }
 
-//3. 전화번호 포맷팅 (지역번호 및 휴대폰 대응)
+// 전화번호 포맷팅 (지역번호 및 휴대폰 대응)
 function formatTel(num) {
  if (!num || num === "정보 없음") return num;
  const cleaned = String(num).replace(/\D/g, '');
@@ -635,6 +659,12 @@ function showReceipt(payNo) {
             const master = res.master; 
             receiptItems = res.details; 
 
+            if (!res || !res.master) {
+                alert("결제 정보를 찾을 수 없습니다.");
+                console.error("데이터 응답 오류:", res);
+                return;
+            }
+            
             // ... 결제 및 판매자 정보 매핑 로직 (기존 유지) ...
             const displayPayNo = formatPayNo(master.PAY_DT, master.PAY_NO);
             $("#receiptOrderNo").text(displayPayNo); 
@@ -656,35 +686,59 @@ function showReceipt(payNo) {
             /* 상품 리스트 생성 로직 - 이미지 경로 수정 */
             let detailHtml = "";
             receiptItems.forEach(function(item, index) {
-                // 1. 이미지 경로 결정 (여행기록 방식 적용)
+                // 이미지 경로 결정
                 let thumbImg = "";
-                if (item.PROD_NAME.indexOf('항공') > -1) {
+                
+             	// 이미 경로에 'resources'가 포함되어 있는 경우 (이미 프로젝트 내 경로임)
+                if (item.THUMB_IMG && item.THUMB_IMG.indexOf('resources') > -1) {
+                    // 앞에 /files를 붙이지 않고 컨텍스트 패스(cp)만 붙임
+                    let cleanPath = item.THUMB_IMG.startsWith('/') ? item.THUMB_IMG : '/' + item.THUMB_IMG;
+                    thumbImg = cp + cleanPath;
+                }
+                // 항공권일 때
+                else if (item.PROD_NAME.indexOf('항공') > -1) {
                     thumbImg = cp + '/resources/images/default_flight.jpg';
-                } else if (item.THUMB_IMG && item.THUMB_IMG !== '/resources/images/default_flight.jpg') {
-                    // /files/ 가상 경로와 DB의 FILE_PATH(item.THUMB_IMG) 결합
+                } 
+                // 순수 파일 경로만 있는 경우 (투어 등 업로드 파일)
+                else if (item.THUMB_IMG && item.THUMB_IMG !== '/resources/images/no_image.jpg') {
                     let cleanPath = item.THUMB_IMG.startsWith('/') ? item.THUMB_IMG : '/' + item.THUMB_IMG;
                     thumbImg = cp + '/files' + cleanPath;
-                } else {
+                } 
+                // 그 외 기본 이미지
+                else {
                     thumbImg = cp + '/resources/images/no_image.jpg';
                 }
 
+
                 item.processedImg = thumbImg;
                 
+                /* showReceipt 함수 내 버튼 생성 로직 수정 */
                 let actionBtn = "";
+
+                // 항공권이 아닐 것
                 if(item.PROD_NAME.indexOf('항공') === -1) {
-                    if(item.PROD_RV_NO) {
-                        actionBtn = '<div class="d-flex gap-2 mt-2">' +
-                            '<button class="btn btn-sm btn-outline-secondary" onclick="prepareReviewModal(\'EDIT\',' + index + ')">수정</button>' +
-                            '<button class="btn btn-sm btn-outline-danger" onclick="deleteReview(' + item.PROD_RV_NO + ')">삭제</button>' +
-                            '</div>';
-                    } else {
-                        actionBtn = '<button class="btn btn-sm btn-primary mt-2" onclick="prepareReviewModal(\'INSERT\',' + index + ')">후기 작성</button>';
+                    
+                    // 이용 완료(DONE) 상태일 때만 버튼 노출
+                    if(item.PAY_STATUS === 'DONE') {
+                        if(item.PROD_RV_NO) {
+                            // 이미 작성한 후기가 있는 경우: 수정/삭제
+                            actionBtn = '<div class="d-flex gap-2 mt-2">' +
+                                '<button class="btn btn-sm btn-outline-secondary" onclick="prepareReviewModal(\'EDIT\',' + index + ')">수정</button>' +
+                                '<button class="btn btn-sm btn-outline-danger" onclick="deleteReview(' + item.PROD_RV_NO + ')">삭제</button>' +
+                                '</div>';
+                        } else {
+                            // 아직 후기가 없는 경우: 후기 작성
+                            actionBtn = '<button class="btn btn-sm btn-primary mt-2" onclick="prepareReviewModal(\'INSERT\',' + index + ')">후기 작성</button>';
+                        }
+                    } else if(item.PAY_STATUS === 'WAIT') {
+                        // 이용 예정(WAIT) 상태일 때는 안내 문구 또는 버튼 숨김
+                        actionBtn = '<p class="text-muted mt-2" style="font-size: 12px;"><i class="bi bi-info-circle"></i> 이용 완료 후 후기 작성이 가능합니다.</p>';
                     }
                 }
 
                 
                 
-                // 2. 가로 배치를 위한 flex 구조 적용
+                // 가로 배치를 위한 flex 구조 적용
                 detailHtml += '<div class="receipt-product" style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px; padding: 10px; background: #f8fafc; border-radius: 8px;">' +
                     '<img src="' + thumbImg + '" style="width:70px; height:70px; border-radius:8px; object-fit:cover; flex-shrink: 0;" ' +
                     'onerror="this.src=\'' + cp + '/resources/images/no_image.jpg\'">' +
@@ -707,7 +761,6 @@ function showReceipt(payNo) {
 }
 
 /* 후기 모달 데이터 세팅 */
-/* 후기 모달 데이터 세팅 수정 */
 function prepareReviewModal(mode, idx) {
     const item = receiptItems[idx];
     deletedFiles = [];  // 삭제 리스트 초기화
@@ -720,6 +773,12 @@ function prepareReviewModal(mode, idx) {
     
     // 모달 상단 상품 이미지 설정
     let displayImg = item.processedImg || (cp + '/resources/images/no_image.jpg');
+    
+    // 엑박 방지를 위한 추가 체크 (문자열에 undefined가 포함된 경우 등)
+    if (displayImg.includes('undefined')) {
+        displayImg = cp + '/resources/images/no_image.jpg';
+    }
+
     $("#reviewProductImage").attr("src", displayImg);
     $("#reviewProductDate").text(item.USE_INFO);
 
@@ -741,28 +800,28 @@ function prepareReviewModal(mode, idx) {
         const rcmdVal = item.RCMDTN_YN === 'N' ? 'no' : 'yes';
         $("input[name='recommend'][value='" + rcmdVal + "']").prop("checked", true);
 
-        // ✅ 기존 이미지 불러오기 및 삭제 이벤트 바인딩
+        // 기존 이미지 불러오기 및 삭제 이벤트 바인딩
        if (item.EXISTING_IMAGES) {
-    const imgPaths = item.EXISTING_IMAGES.split(',');
-    imgPaths.forEach(path => {
-        // 1. 공백 제거 (매우 중요: 콤마 뒤에 공백이 있으면 경로가 깨짐)
-        let cleanPath = path.trim();
-        if(!cleanPath) return; 
-
-        // 2. 슬래시 중복 방지 로직
-        // cleanPath가 /로 시작하면 그냥 붙이고, 아니면 /를 넣어서 붙임
-        let finalPath = cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath;
-        let webPath = cp + "/files" + finalPath; 
-        
-        // 3. HTML 생성 (변수명 대문자 item.ATTACH_NO 확인 필수)
-        const html = '<div class="image-preview-item existing-file">' +
-                     '<img src="' + webPath + '">' +
-                     '<button type="button" class="remove-btn" ' +
-                     'onclick="removeExistingFile(this, \'' + cleanPath + '\')">×</button>' +
-                     '</div>';
-        $("#imagePreviewList").append(html);
-    });
-}
+	    const imgPaths = item.EXISTING_IMAGES.split(',');
+	    imgPaths.forEach(path => {
+	        // 공백 제거 (매우 중요: 콤마 뒤에 공백이 있으면 경로가 깨짐)
+	        let cleanPath = path.trim();
+	        if(!cleanPath) return; 
+	
+	        // 슬래시 중복 방지 로직
+	        // cleanPath가 /로 시작하면 그냥 붙이고, 아니면 /를 넣어서 붙임
+	        let finalPath = cleanPath.startsWith('/') ? cleanPath : '/' + cleanPath;
+	        let webPath = cp + "/files" + finalPath; 
+	        
+	        // HTML 생성 (변수명 대문자 item.ATTACH_NO 확인 필수)
+	        const html = '<div class="image-preview-item existing-file">' +
+	                     '<img src="' + webPath + '">' +
+	                     '<button type="button" class="remove-btn" ' +
+	                     'onclick="removeExistingFile(this, \'' + cleanPath + '\')">×</button>' +
+	                     '</div>';
+	        $("#imagePreviewList").append(html);
+	    });
+	}
     } else {
         // 등록 모드 초기화
         $("#reviewModalLabel").html('<i class="bi bi-star"></i> 후기 작성');
@@ -776,14 +835,32 @@ function prepareReviewModal(mode, idx) {
     reviewModal.show();
 }
 
-/* 기존 이미지 삭제 버튼 클릭 시 배열에 담기 */
+/* 기존 이미지 삭제 버튼 클릭 시 SweetAlert2 적용 */
 function removeExistingFile(btn, filePath) {
-    if(confirm("이 사진을 삭제하시겠습니까? (수정 완료 시 실제 반영됩니다)")) {
-        // 서버로 보낼 삭제 목록에 추가
-        deletedFiles.push(filePath); 
-        // UI에서 제거
-        $(btn).closest('.image-preview-item').remove(); 
-    }
+    confirmSwal("사진 삭제", "이 사진을 삭제하시겠습니까?", "question")
+    .then((result) => {
+        if (result.isConfirmed) {
+            // 서버로 보낼 삭제 목록에 추가
+            deletedFiles.push(filePath); 
+            // UI에서 제거
+            $(btn).closest('.image-preview-item').remove();
+            
+            // 삭제되었다는 간단한 알림 (선택 사항)
+            Swal.fire({
+                title: '삭제되었습니다.',
+                text: ' ',
+                icon: 'success',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        }
+    });
+}
+
+/* 신규 추가한 파일 삭제 (SweetAlert 없이 즉시 삭제 권장 혹은 적용 선택) */
+function removeFile(btn, fileName) {
+    $(btn).closest('.image-preview-item').remove();
+    uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
 }
 
 /* 후기 제출 */
@@ -806,7 +883,7 @@ function submitReview() {
         deletedFiles.forEach(path => formData.append("deletedFiles", path));
     }
     
-    // ✅ 중요: 신규 업로드 파일 전송 (등록/수정 공통)
+    // 중요: 신규 업로드 파일 전송 (등록/수정 공통)
     if (uploadedFiles.length > 0) {
         uploadedFiles.forEach(file => {
             formData.append("uploadFiles", file);
@@ -815,7 +892,7 @@ function submitReview() {
 
     // 유효성 검사
     if (!$("#reviewContent").val().trim()) { 
-        alert("내용을 입력해주세요."); 
+    	toast("내용을 입력해주세요.", "error"); 
         return; 
     }
 
@@ -826,12 +903,21 @@ function submitReview() {
         processData: false,
         contentType: false, // 브라우저가 알아서 boundary를 설정하게 함
         success: function(res) {
-            // 서버 응답 처리 (Map 형태일 경우 res.success 체크)
             if(res.success || res.message) {
-                alert(res.message || "처리되었습니다.");
-                location.reload();
+                // alert 대신 Swal.fire 또는 toast 사용
+                Swal.fire({
+                    title: res.message,
+                    text: ' ',
+                    icon: 'success',
+                    confirmButtonColor: '#3085d6',
+                    confirmButtonText: '확인'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        location.reload();
+                    }
+                });
             } else {
-                alert("처리에 실패했습니다.");
+                toast("처리에 실패했습니다.", "error");
             }
         },
         error: function(xhr) {
@@ -846,37 +932,28 @@ function removeFile(btn, fileName) {
     uploadedFiles = uploadedFiles.filter(f => f.name !== fileName);
 }
 
-function removeExistingFile(btn, filePath) {
-    if(confirm("이 사진을 삭제하시겠습니까? (수정 완료 시 실제 반영됩니다)")) {
-        deletedFiles.push(filePath); // 삭제할 경로 저장
-        $(btn).closest('.image-preview-item').remove(); // UI에서만 일단 제거
-    }
-}
-
 /* 후기 삭제 기능 통합 */
 function deleteReview(prodRvNo) {
-    if(!confirm("정말 이 후기를 삭제하시겠습니까?")) return;
-
-    $.ajax({
-        // 앞에 cp(Context Path)를 붙여 경로를 확실히 합니다.
-        url: cp + "/mypage/payments/review/delete", 
-        type: "POST",
-        contentType: "application/json", // JSON 형식 명시
-        data: JSON.stringify({ prodRvNo: prodRvNo }), // 객체 형태로 전달
-        success: function(res) {
-            if(res.success) {
-                alert(res.message);
-                location.reload(); // 성공 시 목록 갱신
-            } else {
-                alert(res.message);
-            }
-        },
-        error: function(xhr) {
-            if(xhr.status === 404) {
-                alert("삭제 주소를 찾을 수 없습니다. 컨트롤러 경로를 확인하세요.");
-            } else {
-                alert("삭제 처리 중 에러가 발생했습니다.");
-            }
+    confirmSwal("후기 삭제", "정말 이 후기를 삭제하시겠습니까?", "warning")
+    .then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: cp + "/mypage/payments/review/delete", 
+                type: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({ prodRvNo: prodRvNo }),
+                success: function(res) {
+                    if(res.success) {
+                        Swal.fire('삭제 완료', res.message, 'success')
+                        .then(() => location.reload());
+                    } else {
+                        toast(res.message, "error");
+                    }
+                },
+                error: function() {
+                    toast("삭제 처리 중 에러가 발생했습니다.", "error");
+                }
+            });
         }
     });
 }

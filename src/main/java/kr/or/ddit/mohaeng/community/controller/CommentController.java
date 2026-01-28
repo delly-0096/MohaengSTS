@@ -57,6 +57,7 @@ public class CommentController {
                 : Integer.valueOf(body.get("parentCmntNo").toString());
 
         commentService.addTalkComment(boardNo, writerNo, content, parent);
+        
         return ResponseEntity.ok(Map.of("success", true));
     }
 

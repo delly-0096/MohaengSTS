@@ -13,8 +13,11 @@
         <result property="rating" column="RATING"/>
         <result property="attachNo" column="ATTACH_NO"/>
         <result property="rcmdtnYn" column="RCMDTN_YN"/>
+		<result property="reviewStatus" column="REVIEW_STATUS"/>
         <result property="nickname" column="NICKNAME"/>
         <result property="profileImage" column="PROFILE_IMAGE"/>
+        <!--신고용 추가-->
+        <result property="reviewStatus" column="REVIEW_STATUS"/>
 
         <!-- 리뷰 이미지 목록 (1:N) -->
         <collection property="reviewImages" column="ATTACH_NO"
@@ -56,6 +59,7 @@
 	                r.RATING,
 	                r.ATTACH_NO,
 	                r.RCMDTN_YN,
+                	r.REVIEW_STATUS,
 	                u.NICKNAME,
                     pf.FILE_PATH AS PROFILE_IMAGE
 	            FROM PROD_REVIEW r
@@ -63,7 +67,7 @@
                 LEFT JOIN MEMBER m ON r.MEM_NO = m.MEM_NO
 	            LEFT JOIN ATTACH_FILE_DETAIL pf ON m.MEM_PROFILE = pf.ATTACH_NO AND pf.USE_YN = 'Y'
                 WHERE r.TRIP_PROD_NO = #{tripProdNo}
-	              <!-- AND (r.REVIEW_STATUS IS NULL OR r.REVIEW_STATUS != 'HIDDEN') -->
+	              AND (r.REVIEW_STATUS IS NULL OR r.REVIEW_STATUS != 'HIDDEN')
 	            ORDER BY r.PROD_REGDATE DESC
 	        ) A
 	        <![CDATA[

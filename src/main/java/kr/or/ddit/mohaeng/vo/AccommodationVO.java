@@ -148,7 +148,7 @@ public class AccommodationVO {
     private String roadAddress;
     private String address;
     private String jibunAddress;
-    
+    private String sido;
     
     // 리뷰, 평점
     private double avgRating; // 평균 별점

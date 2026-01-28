@@ -13,7 +13,7 @@ public class TripProdInquiryVO {
     private String prodInqryTitle;  // 문의제목
     private String prodInqryCn;     // 문의내용
     private String inqryStatus;     // 상태 (WAIT/DONE)
-    private String secretYn;        // 비밀글 여부 (Y/N)
+    private String secretYn;        // 비밀글 여부 (Y=비밀글, N=공개글, H=숨김)
     private Date regDt;             // 작성일
     private Date modDt;             // 수정일
     private String delYn;           // 삭제여부 (Y/N)
@@ -23,6 +23,9 @@ public class TripProdInquiryVO {
     private Date replyDt;           // 답변일자
     private Date replyModDt;        // 답변수정일자
     
-    // 조회용 (MEM_USER 조인)
+    // 조회용
     private String inquiryNickname; // 문의작성자 닉네임
+    private String productName;     // 상품명
+    private String sellerName;      // 판매자명
+    private Integer sellerMemNo;    // 판매자 회원번호
 }

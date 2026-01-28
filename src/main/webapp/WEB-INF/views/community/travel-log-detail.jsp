@@ -24,7 +24,7 @@
 .day-header {
 	display: flex;
 	align-items: center;
-	justify-content: flex-start; 
+	justify-content: flex-start;
 	gap: 12px;
 	margin: 18px 0 10px;
 }
@@ -34,7 +34,7 @@
 	align-items: center;
 	gap: 10px;
 	padding: 8px 14px;
-	width: fit-content; 
+	width: fit-content;
 	color: #111827;
 	font-weight: 900;
 	font-size: 13px;
@@ -44,8 +44,8 @@
 
 .day-badge .day-dot {
 	height: 28px;
-	padding: 0 12px; 
-	border-radius: 999px; 
+	padding: 0 12px;
+	border-radius: 999px;
 	background: #107070;
 	color: #fff;
 	display: inline-flex;
@@ -60,7 +60,7 @@
 }
 
 .day-badge .day-date {
-	margin-left: 0; 
+	margin-left: 0;
 	font-weight: 800;
 	color: #64748b;
 	font-size: 12px;
@@ -712,7 +712,7 @@
 }
 
 .detail-comment.is-reply {
-	margin-left: 56px; 
+	margin-left: 56px;
 	position: relative;
 }
 
@@ -753,14 +753,14 @@
 .detail-comment-group {
 	display: flex;
 	flex-direction: column;
-	gap: 10px; 
-	margin-bottom: 14px; 
+	gap: 10px;
+	margin-bottom: 14px;
 }
 
 .detail-comment-group .reply-list {
 	display: flex;
 	flex-direction: column;
-	gap: 8px; 
+	gap: 8px;
 }
 
 .detail-comment .reply-list {
@@ -786,7 +786,7 @@
 .cmnt-node.is-reply::before {
 	content: "";
 	position: absolute;
-	left: 28px; 
+	left: 28px;
 	top: 0;
 	bottom: 0;
 	width: 2px;
@@ -799,7 +799,7 @@
 	content: "";
 	position: absolute;
 	left: 28px;
-	top: 28px; 
+	top: 28px;
 	width: 18px;
 	height: 2px;
 	background: #e2e8f0;
@@ -867,7 +867,7 @@
 	background: #fff;
 	box-shadow: 0 6px 18px rgba(0, 0, 0, .06);
 	height: 215px;
-	align-items: stretch; 
+	align-items: stretch;
 }
 
 .place-thumb {
@@ -1105,7 +1105,9 @@
 									</button>
 
 									<div class="travellog-card-menu">
-										<button type="button" onclick="reportPost(CURRENT_RCD_NO, '${fn:escapeXml(detail.rcdTitle)}')">
+
+		<!-- ${detail.memNo} 추가했음 ************************************************************  -->
+										<button type="button" onclick="reportPost(CURRENT_RCD_NO, '${fn:escapeXml(detail.rcdTitle)}', ${detail.memNo})">
 											<i class="bi bi-flag"></i> 신고하기
 										</button>
 									</div>
@@ -1122,10 +1124,10 @@
 
 					<!-- 여행 메타 -->
 					<div class="travellog-detail-meta">
-						<span class="meta-pill"> <i class="bi bi-geo-alt"></i> 
+						<span class="meta-pill"> <i class="bi bi-geo-alt"></i>
 							<c:out value="${detail.locName}" />
-						</span> 
-						<span class="meta-pill"> 
+						</span>
+						<span class="meta-pill">
 							<i class="bi bi-calendar-range"></i>
 							일정: <fmt:formatDate value="${detail.startDt}" pattern="yyyy년 M월 d일" /> ~ <fmt:formatDate value="${detail.endDt}" pattern="yyyy년 M월 d일" />
 						</span>
@@ -1235,7 +1237,7 @@ const ROLE_MEMBER = 'ROLE_MEMBER';
 const ROLE_BUSINESS = 'ROLE_BUSINESS';
 
 
-	
+
 // 기본 프로필(외부 이미지로 고정)
 const DEFAULT_AVATAR = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80";
 
@@ -1307,7 +1309,7 @@ function showCopyToast(message){
 }
 
 function shareTravellog(id) {
-	const url = location.origin + CTX + '/community/travel-log/detail?rcdNo=' + id; 
+	const url = location.origin + CTX + '/community/travel-log/detail?rcdNo=' + id;
 
 	navigator.clipboard.writeText(url).then(() => {
 		showCopyToast('링크가 복사되었습니다.');
@@ -1323,10 +1325,10 @@ function shareTravellog(id) {
 function getCsrf(){
 	const tokenMeta  = document.querySelector('meta[name="_csrf"]');
 	const headerMeta = document.querySelector('meta[name="_csrf_header"]');
-	
+
 	const token  = tokenMeta ? tokenMeta.getAttribute('content') : null;
 	const header = headerMeta ? headerMeta.getAttribute('content') : null;
-	
+
 	return { token, header };
 }
 
@@ -1343,8 +1345,8 @@ function toggleDetailMenu(e, btn){
 	if (!menu) return;
 
 	// 다른 열린 메뉴 닫기
-	document.querySelectorAll('.travellog-card-menu.active').forEach(m => { 
-		if (m !== menu) m.classList.remove('active'); 
+	document.querySelectorAll('.travellog-card-menu.active').forEach(m => {
+		if (m !== menu) m.classList.remove('active');
 	});
 
 	menu.classList.toggle('active');
@@ -1355,8 +1357,8 @@ document.addEventListener('click', function(){
 	document.querySelectorAll('.travellog-card-menu.active').forEach(m => m.classList.remove('active'));
 });
 
-async function reportPost(rcdNo, titlePreview){
-	  return openDetailReportModal('TRIP_RECORD', Number(rcdNo), titlePreview);
+async function reportPost(rcdNo, titlePreview, writerNo){
+	  return openDetailReportModal('TRIP_RECORD', Number(rcdNo), titlePreview, writerNo);
 }
 
 function escapeHtml(text) {
@@ -1383,7 +1385,7 @@ function isReportSwalOpen(){
 	  return !!(p && p.classList.contains('rpt-swal-popup'));
 }
 
-async function openDetailReportModal(targetType, targetNo, previewText){
+async function openDetailReportModal(targetType, targetNo, previewText, targetMemNo){
 	  const n = Number(targetNo);
 	  if (!Number.isFinite(n) || n <= 0) {
 	    console.error('잘못된 targetNo', targetNo, 'targetType=', targetType);
@@ -1430,7 +1432,7 @@ async function openDetailReportModal(targetType, targetNo, previewText){
   	      <label class="rpt-radio-card">
   	        <input type="radio" name="rptReason" value="ABUSE" />
   	        <span class="dot"></span><span class="txt">욕설/비방/혐오 표현</span>
-  	      </label>	
+  	      </label>
 	          <label class="rpt-radio-card">
 	            <input type="radio" name="rptReason" value="FRAUD" />
 	            <span class="dot"></span><span class="txt">사기/거짓 정보</span>
@@ -1482,6 +1484,7 @@ async function openDetailReportModal(targetType, targetNo, previewText){
 
 	if (!result.isConfirmed) return;
 
+	/*
 	const payload = {
 		mgmtType: 'REPORT',
 		targetType: targetType,
@@ -1489,6 +1492,42 @@ async function openDetailReportModal(targetType, targetNo, previewText){
 		ctgryCd: result.value.ctgryCd,
 		content: result.value.content || ''
 	};
+	*/
+	// ************************ 관리자 신고기능 떄문에 수정 start ************************************* //
+
+	// 1. common.js와 동일한 매핑 로직 추가
+	const typeMapping = {
+	    'product':     'PROD_REVIEW',
+	    'review':      'PROD_REVIEW',
+	    'prod_review': 'PROD_REVIEW',
+	    'record':      'TRIP_RECORD',
+	    'trip_record': 'TRIP_RECORD',
+	    'post':        'BOARD',
+	    'board':       'BOARD',
+	    'inquiry':     'BOARD',
+	    'comment':     'COMMENTS',
+	    'comments':    'COMMENTS',
+	    'reply':       'COMMENTS',
+	    'chatroom':    'CHAT',
+	    'chat':        'CHAT'
+	};
+
+	// 2. 타입을 정제 (매핑에 없으면 대문자로 변환)
+	const finalType = typeMapping[targetType.toLowerCase()] || targetType.toUpperCase();
+
+	// 3. 정제된 finalType을 payload에 담기
+	const payload = {
+		 mgmtType: 'REPORT'
+		,targetType: finalType
+		,targetNo: Number(targetNo)
+		,targetMemNo: Number(targetMemNo)
+		,ctgryCd: result.value.ctgryCd
+		,content: result.value.content || ''
+	}
+
+	// ************************ 관리자 신고기능 떄문에 수정 end   ************************************* //
+
+
 
 	const { token, header } = getCsrf();
 	const headers = { 'Content-Type': 'application/json' };
@@ -1529,34 +1568,34 @@ async function openEditComment(cmntNo, oldContent) {
 	  confirmButtonColor: '#1abc9c',
 	  inputValidator: (v) => (!v || !v.trim()) ? '내용을 입력하세요' : null
 	});
-	
+
 	if (!result.isConfirmed) return;
-	
+
 	const csrf = getCsrf();
 	const headers = { 'Content-Type': 'application/json' };
 	if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
-	
+
 	const url = CTX + '/api/community/travel-log/comments/' + encodeURIComponent(cmntNo);
-	
+
 	const res = await fetch(url, {
 	  method: 'PUT',
 	  credentials: 'same-origin',
 	  headers,
 	  body: JSON.stringify({ content: result.value.trim() })
 	});
-	
+
 	if (!res.ok) {
 	  const text = await res.text().catch(() => '');
 	  console.error('댓글 수정 실패', res.status, text);
 	  Swal.fire('오류', '수정 실패(본인 댓글만 가능)', 'error');
 	  return;
 	}
-	
+
 	loadComments(CURRENT_RCD_NO);
 }
 
 
-async function reportComment(cmntNo, cmntContentPreview){
+async function reportComment(cmntNo, cmntContentPreview, writerNo){
 	  const targetNo = Number(cmntNo);
 
 	  if (!Number.isFinite(targetNo) || targetNo <= 0) {
@@ -1565,7 +1604,7 @@ async function reportComment(cmntNo, cmntContentPreview){
 	    return;
 	  }
 
-	  return openDetailReportModal('COMMENT', targetNo, cmntContentPreview);
+	  return openDetailReportModal('COMMENT', targetNo, cmntContentPreview, writerNo);
 }
 
 function guardMemberAction(e){
@@ -1578,7 +1617,7 @@ function guardMemberAction(e){
 			showLoginOverlay();
 			return false;
 		}
-		
+
 		// 없으면 SweetAlert로 안내 + 로그인 이동
 		Swal.fire({
 			icon: 'info',
@@ -1625,27 +1664,27 @@ function scrollToComments(){
 // ===== 좋아요(서버 토글) =====
 async function toggleDetailLike(e, btn){
 	if (!guardMemberAction(e)) return;
-	
+
 	const { token, header } = getCsrf();
 	const headers = { 'Content-Type': 'application/json' };
 	if (token && header) headers[header] = token;
-	
+
 	const res = await fetch(CTX + '/api/community/travel-log/likes/toggle', {
 		method: 'POST',
 		credentials: 'same-origin',
 		headers,
 		body: JSON.stringify({ rcdNo: CURRENT_RCD_NO })
 	});
-	
+
 	if (!res.ok) {
 		Swal.fire('오류', '좋아요 처리 중 오류가 발생했어요.', 'error');
 		return;
 	}
-	
+
 	const data = await res.json();
 	const icon = btn.querySelector('i');
 	const countEl = document.getElementById('likeCount');
-	
+
 	icon.className = data.liked ? 'bi bi-heart-fill' : 'bi bi-heart';
 	countEl.textContent = data.likeCount;
 	btn.classList.toggle('active', !!data.liked);
@@ -1692,8 +1731,8 @@ function formatCommentDt(regDt) {
   // s 예시: "2026-01-15 16:30:12" -> "2026-01-15 16:30"
   return s.slice(0, 16);
 }
-  
-  
+
+
 async function loadComments(rcdNo) {
 	  const url = CTX + '/api/community/travel-log/comments?rcdNo=' + encodeURIComponent(rcdNo);
 
@@ -1726,7 +1765,7 @@ async function loadComments(rcdNo) {
 
 	  // ===== 댓글 렌더 =====
 	  function renderOneComment(c, rcdNo, isReply) {
-		  
+
 		// ===== 작성자 표시: 닉네임(아이디) =====
 		  const nick = (c.nickname || '').trim();
 		  const id   = (c.writerId || '').trim();
@@ -1735,10 +1774,15 @@ async function loadComments(rcdNo) {
 		  if (nick && id) authorText = nick + '(' + id + ')';
 		  else if (nick) authorText = nick;
 		  else if (id) authorText = id;
-		  
+
 	    const contentRaw = (c.cmntContent ?? '');
 
 	    const cmntNo = getNo(c);
+
+	    // 관리자 신고용 추가********************************************************************************************
+	    const isHidden = (c.cmntStatus == '3');
+	    const writerNo = c.writerNo;
+	    // 관리자 신고용 추가********************************************************************************************
 
 	    // 삭제 여부(서버 필드명 자동 대응)
 	    const isDeleted =
@@ -1763,9 +1807,9 @@ async function loadComments(rcdNo) {
 	      (c.profilePath && String(c.profilePath).trim() !== '' && String(c.profilePath).trim() !== 'null');
 
 	    const profilePath = hasProfile ? String(c.profilePath).trim() : '';
-		
+
 		let normalized = profilePath.startsWith('/') ? profilePath : ('/' + profilePath);
-		
+
 		// 이미 /upload 로 시작하면 그대로 사용
 		const avatar = hasProfile
 		  ? (normalized.startsWith('/upload') ? (CTX + normalized) : (CTX + '/upload' + normalized))
@@ -1781,14 +1825,15 @@ async function loadComments(rcdNo) {
 	          '<span class="cmnt-like-count">' + likeCount + '</span>' +
 	        '</button>'
 	      : '';
-
-	    const replyBtnHtml = (canReply && Number.isFinite(cmntNo) && cmntNo > 0)
+// !isHidden && 추가 *****************************************************************************************************
+	    const replyBtnHtml = (canReply && !isHidden && Number.isFinite(cmntNo) && cmntNo > 0)
 	      ? '<button type="button" onclick="toggleReplyBox(' + cmntNo + ')">' +
 	          '<i class="bi bi-reply"></i> 답글' +
 	        '</button>'
 	      : '';
 
-	    const editDelHtml = (!isDeleted && isWriter && Number.isFinite(cmntNo) && cmntNo > 0)
+// !isHidden && 추가 *****************************************************************************************************
+	    const editDelHtml = (!isDeleted && !isHidden && isWriter && Number.isFinite(cmntNo) && cmntNo > 0)
 	      ? '<button type="button" onclick="openEditComment(' + cmntNo + ', \'' + escapeJsString(contentRaw) + '\')">' +
 	          '<i class="bi bi-pencil"></i> 수정' +
 	        '</button>' +
@@ -1797,8 +1842,10 @@ async function loadComments(rcdNo) {
 	        '</button>'
 	      : '';
 
-	    const reportBtnHtml = (!isDeleted && canReport && Number.isFinite(cmntNo) && cmntNo > 0)
-	      ? '<button type="button" onclick="reportComment(' + cmntNo + ', \'' + escapeJsString(contentRaw) + '\')">' +
+// !isHidden && 추가 *****************************************************************************************************
+	    const reportBtnHtml = (!isDeleted && !isHidden && canReport && Number.isFinite(cmntNo) && cmntNo > 0)
+	    /* ,' + writerNo + ' 추가했음 ***************************************************************************************************  */
+	      ? '<button type="button" onclick="reportComment(' + cmntNo + ', \'' + escapeJsString(contentRaw) + '\',' + writerNo + ')">' +
 	          '<i class="bi bi-flag"></i> 신고' +
 	        '</button>'
 	      : '';
@@ -1812,7 +1859,9 @@ async function loadComments(rcdNo) {
 	        '</div>'
 	      : '';
 
-	    const contentHtml = isDeleted ? '삭제된 댓글입니다.' : escapeHtml(contentRaw);
+	    const contentHtml = isDeleted ? '삭제된 댓글입니다.' :
+	    	(isHidden ? '<div class="alert alert-warning ">관리자에 의해 숨김 처리된 댓글입니다.</div>'
+                    : escapeHtml(contentRaw));
 
 	    const item = document.createElement("div");
 	    item.className = "detail-comment" + (isReply ? " is-reply" : "");
@@ -1840,7 +1889,7 @@ async function loadComments(rcdNo) {
 
 	  // ===== 2단 고정 렌더링(부모 + 모든 자식들을 root 기준으로 한 번 들여쓰기) =====
 	  const parents2 = [];
-	  const repliesByRoot = new Map(); 
+	  const repliesByRoot = new Map();
 
 	  (Array.isArray(list) ? list : []).forEach((c) => {
 	    const parentNoRaw = (c.parentCmntNo ?? c.parent_cmnt_no ?? c.parentNo ?? null);
@@ -1923,7 +1972,7 @@ function tryParseJsonText(s){
   try { return JSON.parse(t); } catch(e){ return null; }
 }
 
-// day-header JSON에서 값 꺼내기 
+// day-header JSON에서 값 꺼내기
 function parseDayHeaderFromJson(obj){
   if (!obj) return null;
   const type = String(obj.type || '').toLowerCase();
@@ -1964,7 +2013,7 @@ function resolveImageSrc(rawPath){
 	  // "/files/..." 로 이미 내려오면 CTX만 붙임
 	  if (p.startsWith('/files/')) return CTX + p;
 
-	  // "/upload/..." 로 내려오면 CTX만 붙임 
+	  // "/upload/..." 로 내려오면 CTX만 붙임
 	  if (p.startsWith('/upload/')) return CTX + p;
 
 	  // "/tripschedule/..." 같은 형태면 "/files" 붙여서 서빙
@@ -2087,7 +2136,7 @@ function renderBlock(block){
   // 5) fallback: 모르는 타입은 조용히 텍스트로
   const fallback = document.createElement('div');
   fallback.className = 'travellog-block travellog-block-text';
-  fallback.innerHTML = ''; 
+  fallback.innerHTML = '';
   return fallback;
 }
 
@@ -2162,69 +2211,69 @@ function toggleReplyBox(cmntNo) {
 
 async function submitComment(rcdNo) {
  	if (AUTH_ROLE !== ROLE_MEMBER) return;
-	
+
  	const input = document.getElementById("commentInput");
 	const content = (input.value || "").trim();
 	if (!content) return;
-	
+
 	const csrf = getCsrf();
 	const headers = { "Content-Type": "application/json" };
 	if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
-	
+
 	const url = CTX + '/api/community/travel-log/comments?rcdNo=' + encodeURIComponent(rcdNo);
-	
+
 	const res = await fetch(url, {
 	  method: "POST",
 	  credentials: "same-origin",
 	  headers,
 	  body: JSON.stringify({ content })
 	});
-	
+
 	if (!res.ok) {
 	  const text = await res.text().catch(() => '');
 	  console.error('댓글 등록 실패', res.status, text);
 	  Swal.fire('오류', '댓글 등록 실패', 'error');
 	  return;
 	}
-	
+
 	input.value = "";
 	loadComments(rcdNo);
 }
 
 async function submitReply(rcdNo, parentCmntNo) {
 	if (AUTH_ROLE !== ROLE_MEMBER) return;
-	
+
 	const input = document.getElementById('replyInput-' + parentCmntNo);
 	const content = (input?.value || "").trim();
 	if (!content) return;
-	
+
 	const csrf = getCsrf();
 	const headers = { "Content-Type": "application/json" };
 	if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
-	
+
 	const url = CTX + '/api/community/travel-log/comments?rcdNo=' + encodeURIComponent(rcdNo);
-	
+
 	const res = await fetch(url, {
 	  method: "POST",
 	  credentials: "same-origin",
 	  headers,
 	  body: JSON.stringify({ content, parentCmntNo })
 	});
-	
+
 	if (!res.ok) {
 	  const text = await res.text().catch(() => '');
 	  console.error('답글 등록 실패', res.status, text);
 	  Swal.fire('오류', '답글 등록 실패', 'error');
 	  return;
 	}
-	
+
 	if (input) input.value = "";
 	loadComments(rcdNo);
 }
 
 async function deleteComment(cmntNo) {
 	if (AUTH_ROLE !== ROLE_MEMBER) return;
-	
+
 	const ok = await Swal.fire({
 	  icon: 'warning',
 	  title: '댓글을 삭제할까요?',
@@ -2233,28 +2282,28 @@ async function deleteComment(cmntNo) {
 	  cancelButtonText: '취소',
 	  confirmButtonColor: '#ef4444'
 	}).then(r => r.isConfirmed);
-	
+
 	if (!ok) return;
-	
+
 	const csrf = getCsrf();
 	const headers = {};
 	if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
-	
+
 	const url = CTX + '/api/community/travel-log/comments/' + encodeURIComponent(cmntNo);
-	
+
 	const res = await fetch(url, {
 	  method: "DELETE",
 	  credentials: "same-origin",
 	  headers
 	});
-	
+
 	if (!res.ok) {
 	  const text = await res.text().catch(() => '');
 	  console.error('댓글 삭제 실패', res.status, text);
 	  Swal.fire('오류', '삭제 실패(본인 댓글만 가능)', 'error');
 	  return;
 	}
-	
+
 	loadComments(CURRENT_RCD_NO);
 }
 
@@ -2263,33 +2312,33 @@ async function toggleCommentLike(cmntNo, btn) {
 	  Swal.fire('안내', '일반회원만 좋아요가 가능해요.', 'info');
 	  return;
 	}
-	
+
 	const csrf = getCsrf();
 	const headers = { 'Content-Type': 'application/json' };
 	if (csrf.token && csrf.header) headers[csrf.header] = csrf.token;
-	
+
 	const url = CTX + '/api/community/travel-log/comments/' + encodeURIComponent(cmntNo) + '/likes/toggle';
-	
+
 	const res = await fetch(url, {
 	  method: 'POST',
 	  credentials: 'same-origin',
 	  headers
 	});
-	
+
 	if (!res.ok) {
 	  const text = await res.text().catch(() => '');
 	  console.error('댓글 좋아요 실패', res.status, text);
 	  Swal.fire('오류', '댓글 좋아요 처리 실패', 'error');
 	  return;
 	}
-	
-	const data = await res.json(); 
-	
+
+	const data = await res.json();
+
 	btn.classList.toggle('active', !!data.liked);
-	
+
 	const icon = btn.querySelector('i');
 	if (icon) icon.className = 'bi ' + (data.liked ? 'bi-heart-fill' : 'bi-heart');
-	
+
 	const cnt = btn.querySelector('.cmnt-like-count');
 	if (cnt) cnt.textContent = data.likeCount;
 }

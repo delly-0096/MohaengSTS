@@ -91,4 +91,9 @@ public class AlarmService {
         alarm.setMoveUrl("/mypage/business/sales");
         alarmMapper.insertAlarm(alarm);
     }
+
+	public void insertAlarm(AlarmVO alarm) {
+		// TODO Auto-generated method stub
+		
+	}
 }

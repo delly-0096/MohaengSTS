@@ -52,14 +52,14 @@ public class AlarmApiController {
 	      boolean ok = alarmService.readOne(param);
 	      int unreadCount = alarmService.getUnreadCount(memNo);
 	      //1.알람테이블(notification)전체목록조회(service-mapper-query)
-	      //List<AlarmVO> alarmList = alarmService.selectAlramList();
+	      List<AlarmVO> alarmList = alarmService.selectAlramList(memNo);
 	      //2.전체 조회를 해 온 목록 데이터를 전달하기 위한 준비
 	      		  
 	      //-map이라는 컬렉션에 담아서 보내기
 	      Map<String, Object> result = new HashMap<>();
 
 	      result.put("ok", ok);          // 처리 결과
-	      //result.put("list", alarmList); // 전체 알람 목록
+	      result.put("list", alarmList); // 전체 알람 목록
 	      result.put("unreadCount", unreadCount);// 안 읽은 개수
 	      // - 보낼떄 전체목록데이터와 카운트 데이터를 함께 담아 보내기.
 	      return result;

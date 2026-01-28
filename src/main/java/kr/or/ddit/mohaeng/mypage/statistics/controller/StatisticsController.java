@@ -56,7 +56,46 @@ public class StatisticsController {
 		}
 		
 		List<Params> prodSgList = statisticsService.selectProdSg(params);
+		List<Params> salesTrend = statisticsService.selectSalesTrend(params);
 		
 		return new ResponseEntity<List<Params>>(prodSgList,HttpStatus.OK);
+	}
+	
+	@PostMapping("/statistics/salesTrend")
+	public ResponseEntity<?> selectSalesTrend(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@RequestBody Map<String, Object> dataMap) {
+		
+		System.out.println("salesTrend dataMap : " + dataMap);
+		int memNo = customUser.getMember().getMemNo();
+		Params params = new Params();
+		params.put("memNo", memNo);
+		if(dataMap.get("startDate") != null) {
+			params.put("startDate", dataMap.get("startDate"));
+			params.put("endDate", dataMap.get("endDate"));
+		}
+		
+		List<Params> salesTrend = statisticsService.selectSalesTrend(params);
+		
+		return new ResponseEntity<List<Params>>(salesTrend,HttpStatus.OK);
+	}
+	
+	@PostMapping("/statistics/reservation")
+	public ResponseEntity<?> selectReservation(
+			@AuthenticationPrincipal CustomUserDetails customUser,
+			@RequestBody Map<String, Object> dataMap) {
+		
+		System.out.println("salesTrend dataMap : " + dataMap);
+		int memNo = customUser.getMember().getMemNo();
+		Params params = new Params();
+		params.put("memNo", memNo);
+		if(dataMap.get("startDate") != null) {
+			params.put("startDate", dataMap.get("startDate"));
+			params.put("endDate", dataMap.get("endDate"));
+		}
+		
+		List<Params> reservation = statisticsService.selectReservation(params);
+		
+		return new ResponseEntity<List<Params>>(reservation,HttpStatus.OK);
 	}
 }

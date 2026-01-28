@@ -10,39 +10,42 @@ import lombok.Data;
 
 @Data
 public class BoardVO {
-	
+
 	private Integer boardNo;
 
 	private String boardCtgryCd;
 	private int writerNo;
 	private int attachNo;
-	
+
 	private String boardTitle;
 	private String boardContent;
-	
+
 	private int viewCnt;
 	private int likeCnt;
-	
+
 	private String noticeYn;
 	private String pinYn;
 	private String delYn;
 	private Date delDt;
-	
+
 	private Date regDt;
 	private Date modDt;
 	private int regId;
 	private String modId;
 
 	private int likes;	// 좋아요가 있으면 값이 likes_key 값이 들어옴, 없으면 0
-	
+
 	private List<BoardTagVO> boardTagList;
 	private List<BoardFileVO> boardFileList;
 	private List<MultipartFile> boardFile;
 	private List<CommentVO> commentList;
 	private int commentCnt;
 
-	
+
 	// 작성자 정보
 	private String writerId;        // MEM_USER.MEM_ID
 	private String writerNickname; // MEMBER.NICKNAME
+
+	//관리자 신고기능을 위해 추가함
+	private String hideYn; // 'H' (숨김) 또는 'N' (정상) 등의 상태 저장
 }

@@ -477,7 +477,7 @@
 			</h1>
 			<p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
 		</div>
-		<!-- boardVO있을때 상세출력 
+		<!-- boardVO있을때 상세출력
 			model.addAttribute("boardVO",boardVO);
 		-->
 		<!-- boardVO 있을 때 상세 출력 -->
@@ -499,6 +499,23 @@
 					        </c:choose>
 					    </span>
 				
+				      <c:forEach var="p" begin="${pagingVO.startPage}"
+				                 end="${pagingVO.endPage < pagingVO.totalPage ? pagingVO.endPage : pagingVO.totalPage}">
+				        <li class="page-item ${p == pagingVO.currentPage ? 'active' : ''}">
+				          <a class="page-link" href="?page=${p}&searchWord=${searchWord}&ntcType=${ntcType}">${p}</a>
+				        </li>
+				      </c:forEach>
+				
+				      <c:if test="${pagingVO.endPage < pagingVO.totalPage}">
+				        <li class="page-item">
+				          <a class="page-link" href="?type=${type}&page=${pagingVO.endPage + 1}">
+				            <i class="bi bi-chevron-right"></i>
+				          </a>
+				        </li>
+				      </c:if>
+				    </ul>
+				  </nav>
+				</div>
 					    <a class="btn btn-sm btn-outline-secondary"
 					        href="${pageContext.request.contextPath}/community/talk"> 목록
 					    </a>
@@ -527,8 +544,8 @@
 									class="bi bi-heart"></i> <span id="postLikes">${boardVO.likeCnt }</span></span>
 							</div>
 						</div>
-						
-				
+
+
 						<!-- ✅ 본문 -->
 
 						<div class="post-detail-content" id="postDetailContent">
@@ -621,7 +638,6 @@
 
 						</div>
 			
-						<!-- 댓글 붙이기 -->
 
 						<div class="comments-list" id="commentsList">
 							<jsp:include page="comment.jsp" />
@@ -693,7 +709,7 @@ async function loadComments(){
     	if (isLoggedIn) {
     		  html += '<div class="mt-2 d-flex justify-content-end">';
     		  html += '  <button type="button" class="btn btn-sm btn-outline-danger" '
-    		       +  'onclick="openReportModal(\'comment\', ' + c.cmntNo + ', \'\')">신고</button>';
+    		       +  'onclick="openReportModal(\'comment\', ' + c.cmntNo + ', \'\')"></button>';
     		  html += '</div>';
     		}
 
@@ -778,7 +794,7 @@ const api = (...parts) => {
 	console.log(base + '/' + path);
 	  return base + '/' + path;
 	};
- 
+
 // 현재 선택된 카테고리
  let currentCategory = 'all';
 
@@ -795,7 +811,7 @@ const categoryMap = {
 
 // 카테고리 탭 전환
 document.querySelectorAll('.board-tab').forEach(tab => {
-	
+
     tab.addEventListener('click', function() {
         document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
@@ -1060,7 +1076,7 @@ function togglePostLike(ele) {
 
     // 버튼 액티브 상태 토글
     // icon.closest('.post-action-btn').classList.toggle('active', isPostLiked);
-    
+
     console.log("좋아요 클릭 상태 : " + status);
     // 서버로 전송해서 좋아요 기능 요청
     axios.post(`/community/talk/${boardVO.boardNo}/like`, {
@@ -1074,7 +1090,7 @@ function togglePostLike(ele) {
     	console.log("error 발생 : ", error);
     });
     //const prodData = response.data;
-    
+
 }
 
 
@@ -1114,9 +1130,9 @@ function modalSubmitComment() {
         return;
     }
 
-    
-    
-    
+
+
+
     // 새 댓글 추가 (데모용)
     const post = postsData[currentPostId];
     if (post) {
@@ -1182,7 +1198,7 @@ if (typeof showToast !== 'function') {
 // ==================== 신고 기능 ====================
 // 댓글 신고
 function reportComment(commentId, commentText) {
-	
+
     openReportModal('comment', commentId, commentText);
 }
 

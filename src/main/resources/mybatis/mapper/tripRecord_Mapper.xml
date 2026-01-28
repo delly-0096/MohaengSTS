@@ -14,7 +14,7 @@
 	        AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
 	             OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
 	      </if>
-	
+
 	      <!-- ✅ 공개범위 정책:
 	           - my-spot: 내 글만(공개/비공개 모두)
 	           - 그 외(all/popular-spot): PUBLIC만 -->
@@ -31,7 +31,7 @@
 	          AND tr.OPEN_SCOPE_CD = 'PUBLIC'
 	        </otherwise>
 	      </choose>
-	
+
 	      <!-- openScopeCd는 my-spot에서 적용하면 PRIVATE가 빠질 수 있어 제외 -->
 	      <if test="openScopeCd != null and openScopeCd != '' and filter != 'my-spot'">
 	        AND tr.OPEN_SCOPE_CD = #{openScopeCd}
@@ -53,9 +53,11 @@
 	        tr.VIEW_CNT      AS viewCnt,
 	        tr.OPEN_SCOPE_CD AS openScopeCd,
 	        tr.LOC_CD        AS locCd,
+	        <!-- 관리자 신고기능 때문에 추가 -->
+	        tr.DELETE_YN     AS deleteYn,
 	        mu.NICKNAME      AS nickname,
 	        RG.RGN_NM        AS locName,
-	
+
 	        -- ✅ 프로필(작성자)
 	        CASE
 			  WHEN prof.FILE_PATH IS NULL THEN NULL
@@ -64,20 +66,20 @@
 			  ELSE prof.FILE_PATH || prof.FILE_NAME
 			END AS profilePath,
 
-	
+
 	        tr.ATTACH_NO     AS attachNo,
-	        
+
 	        CASE
 			  WHEN afd.FILE_PATH IS NULL THEN NULL
 			  WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
 			  WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
 			  ELSE afd.FILE_PATH || afd.FILE_NAME
 			END AS coverPath,
-	
+
 	        NVL(lk.like_cnt, 0)   AS likeCount,
 	        NVL(cm.cmnt_cnt, 0)   AS commentCount,
 	        NVL(bm.bmk_cnt, 0)    AS bookmarkCount,
-	
+
 	        CASE
 	          WHEN #{loginMemNo} IS NULL THEN 0
 	          WHEN EXISTS (
@@ -89,13 +91,13 @@
 	          ) THEN 1
 	          ELSE 0
 	        END AS myLiked
-	
+
 	    FROM TRIP_RECORD tr
 	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
 	    LEFT JOIN REGION RG
   			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
 	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
-	
+
 	    -- 프로필 1장 (MEMBER.MEM_PROFILE = attach_no)
 	    LEFT JOIN (
 		    SELECT attach_no,
@@ -112,7 +114,7 @@
 		  ON prof.attach_no = m.MEM_PROFILE
 		 AND prof.rn = 1
 
-	
+
 	    -- 커버 1장 (TRIP_RECORD.ATTACH_NO)
 	    LEFT JOIN (
 	        SELECT attach_no, MIN(file_no) AS file_no
@@ -122,26 +124,26 @@
 	        GROUP BY attach_no
 	    ) afd_pick
 	      ON afd_pick.attach_no = tr.ATTACH_NO
-	
+
 	    LEFT JOIN ATTACH_FILE_DETAIL afd
 	      ON afd.ATTACH_NO = afd_pick.ATTACH_NO
 	     AND afd.FILE_NO   = afd_pick.FILE_NO
 	     AND afd.USE_YN    = 'Y'
-	
+
 	    LEFT JOIN (
 	        SELECT LIKES_KEY, COUNT(*) AS like_cnt
 	        FROM LIKES
 	        WHERE LIKES_CAT_CD = 'TRIP_RECORD'
 	        GROUP BY LIKES_KEY
 	    ) lk ON lk.LIKES_KEY = tr.RCD_NO
-	
+
 	    LEFT JOIN (
 	        SELECT TARGET_NO, COUNT(*) AS cmnt_cnt
 	        FROM COMMENTS
 	        WHERE TARGET_TYPE = 'TRIP_RECORD'
 	        GROUP BY TARGET_NO
 	    ) cm ON cm.TARGET_NO = tr.RCD_NO
-	
+
 	    LEFT JOIN (
 	        SELECT CONTENT_ID, COUNT(*) AS bmk_cnt
 	        FROM BOOKMARK
@@ -149,13 +151,13 @@
 	          AND DEL_YN = 'N'
 	        GROUP BY CONTENT_ID
 	    ) bm ON bm.CONTENT_ID = tr.RCD_NO
-	
+
 	    WHERE 1=1
 	  <if test="keyword != null and keyword != ''">
 	    AND (tr.RCD_TITLE LIKE '%' || #{keyword} || '%'
 	         OR DBMS_LOB.INSTR(tr.RCD_CONTENT, #{keyword}) &gt; 0)
 	  </if>
-	
+
 	  <!-- 공개범위 정책:
 	       - my-spot: 내 글만(공개/비공개 모두)
 	       - 그 외(all/popular-spot): PUBLIC만 -->
@@ -172,12 +174,12 @@
 	      AND tr.OPEN_SCOPE_CD = 'PUBLIC'
 	    </otherwise>
 	  </choose>
-	
+
 	  <!-- openScopeCd는 my-spot에서 적용하면 PRIVATE가 빠질 수 있어 제외 -->
 	  <if test="openScopeCd != null and openScopeCd != '' and filter != 'my-spot'">
 	    AND tr.OPEN_SCOPE_CD = #{openScopeCd}
 	  </if>
-	
+
 	<choose>
 	  <when test="filter == 'popular-spot'">
 	    ORDER BY NVL(lk.like_cnt, 0) DESC, tr.RCD_NO DESC
@@ -186,18 +188,18 @@
 	    ORDER BY tr.RCD_NO DESC
 	  </otherwise>
 	</choose>
-	
+
 	OFFSET #{offset} ROWS FETCH NEXT #{size} ROWS ONLY
 
 	</select>
-	
+
 
 
     <!-- 상세 -->
     <select id="selectTripRecordDetail"
         parameterType="map"
         resultType="kr.or.ddit.mohaeng.vo.TripRecordDetailVO">
-	
+
 	    SELECT
 	        tr.RCD_NO        AS rcdNo,
 	        tr.SCHDL_NO      AS schdlNo,
@@ -223,16 +225,16 @@
 			  WHERE h.RCD_NO = tr.RCD_NO
 			    AND ROWNUM = 1
 			) AS tagName,
-	
+
 	        CASE
 			  WHEN afd.FILE_PATH IS NULL THEN NULL
 			  WHEN afd.FILE_NAME IS NULL THEN afd.FILE_PATH
 			  WHEN afd.FILE_PATH LIKE '%' || afd.FILE_NAME THEN afd.FILE_PATH
 			  ELSE afd.FILE_PATH || afd.FILE_NAME
 			END AS coverPath,
-			
+
 	        mu.NICKNAME      AS nickname,
-	
+
 	        -- ✅ 프로필 경로
 	        CASE
 			  WHEN prof.FILE_PATH IS NULL THEN NULL
@@ -241,16 +243,16 @@
 			  ELSE prof.FILE_PATH || prof.FILE_NAME
 			END AS profilePath,
 
-	
+
 	        (SELECT COUNT(*) FROM LIKES
 	          WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO) AS likeCount,
-	
+
 	        (SELECT COUNT(*) FROM COMMENTS
 	          WHERE TARGET_TYPE='TRIP_RECORD' AND TARGET_NO=tr.RCD_NO) AS commentCount,
-	
+
 	        (SELECT COUNT(*) FROM BOOKMARK
 	          WHERE CONTENT_TYPE='TRIP_RECORD' AND CONTENT_ID=tr.RCD_NO AND DEL_YN='N') AS bookmarkCount,
-	
+
 	        CASE
 	          WHEN #{loginMemNo} IS NULL THEN 0
 	          WHEN EXISTS (
@@ -258,7 +260,7 @@
 	              WHERE LIKES_CAT_CD='TRIP_RECORD' AND LIKES_KEY=tr.RCD_NO AND MEM_NO=#{loginMemNo}
 	          ) THEN 1 ELSE 0
 	        END AS myLiked,
-	
+
 	        CASE
 	          WHEN #{loginMemNo} IS NULL THEN 0
 	          WHEN EXISTS (
@@ -266,7 +268,7 @@
 	              WHERE CONTENT_TYPE='TRIP_RECORD' AND CONTENT_ID=tr.RCD_NO AND MEM_NO=#{loginMemNo} AND DEL_YN='N'
 	          ) THEN 1 ELSE 0
 	        END AS bookmarked
-	
+
 	    FROM TRIP_RECORD tr
 	    JOIN MEMBER m ON m.MEM_NO = tr.MEM_NO
 	    LEFT JOIN TRIP_SCHEDULE ts
@@ -274,7 +276,7 @@
 	    LEFT JOIN REGION RG
   			ON RG.RGN_NO = TO_NUMBER(TR.LOC_CD)
 	    LEFT JOIN MEM_USER mu ON mu.MEM_NO = m.MEM_NO
-	
+
 	    -- ✅ 프로필 1장
 	    LEFT JOIN (
 		    SELECT attach_no,
@@ -291,7 +293,7 @@
 		  ON prof.attach_no = m.MEM_PROFILE
 		 AND prof.rn = 1
 
-	
+
 	    -- ✅ 커버 1장
 	    LEFT JOIN (
 	        SELECT attach_no, MIN(file_no) AS file_no
@@ -301,12 +303,12 @@
 	        GROUP BY attach_no
 	    ) afd_pick
 	      ON afd_pick.attach_no = tr.ATTACH_NO
-	
+
 	    LEFT JOIN ATTACH_FILE_DETAIL afd
 	      ON afd.attach_no = afd_pick.attach_no
 	     AND afd.file_no   = afd_pick.file_no
 	     AND afd.use_yn    = 'Y'
-	
+
 	    WHERE tr.RCD_NO = #{rcdNo}
 	      <if test="loginMemNo == null">
 	        AND tr.OPEN_SCOPE_CD = 'PUBLIC'
@@ -315,7 +317,7 @@
 	        AND (tr.OPEN_SCOPE_CD = 'PUBLIC' OR tr.MEM_NO = #{loginMemNo})
 	      </if>
 	</select>
-    
+
 
     <update id="increaseViewCnt" parameterType="long">
         UPDATE TRIP_RECORD
@@ -372,7 +374,7 @@
     <delete id="deleteTripRecord" parameterType="long">
         DELETE FROM TRIP_RECORD WHERE RCD_NO = #{rcdNo}
     </delete>
-    
+
 	<!-- TripRecordMapper.xml -->
 <insert id="insertTripRecord" parameterType="map">
   <selectKey keyProperty="req.rcdNo" resultType="long" order="BEFORE">
@@ -396,7 +398,7 @@
   )
 </insert>
 
-	
+
 <!-- nextConnNo -->
 <select id="nextConnNo" resultType="long">
   SELECT SEQ_TRIP_RECORD_CONN.NEXTVAL FROM DUAL
@@ -509,7 +511,7 @@
     t.TXT_CONN           AS "text",
 
     /* ===== IMAGE ===== */
-    i.RCD_IMG            AS "attachNo",    
+    i.RCD_IMG            AS "attachNo",
     i.RCD_IMG_DESC       AS "desc",
     afd.FILE_PATH        AS "imgPath",
 
@@ -645,6 +647,6 @@
 
 
 
-    
+
 
 </mapper>

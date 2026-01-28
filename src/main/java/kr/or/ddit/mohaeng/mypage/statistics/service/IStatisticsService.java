@@ -10,4 +10,8 @@ public interface IStatisticsService {
 
 	public List<Params> selectProdSg(Params params);
 
+	public List<Params> selectSalesTrend(Params params);
+
+	public List<Params> selectReservation(Params params);
+
 }

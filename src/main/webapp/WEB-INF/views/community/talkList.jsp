@@ -67,7 +67,7 @@
             	<c:set value="${pagingVO.dataList }" var="boardList"/>
             	<c:choose>
             		<c:when test="${empty boardList }">
-            				
+
 							 <li class="post-item" style="cursor:default;">
 							    <div class="post-content">
 							      <h4 class="post-title">등록된 게시글이 없습니다.</h4>
@@ -79,7 +79,7 @@
 						      </a>
 
 						    </h4>
-						
+
 						    <div class="post-meta">
 						      <span class="writer">
 						        ${board.writerNickname}
@@ -88,7 +88,7 @@
 						      <span>${board.regDt}</span>
 						    </div>
 						  </div>
-						
+
 						  <div class="post-stats">
 						    <span><i class="bi bi-eye"></i> ${board.viewCnt}</span>
 						    <span><i class="bi bi-chat"></i> 0</span>
@@ -102,10 +102,10 @@
 								<c:choose>
 									<c:when test="${board.boardCtgryCd eq 'notice' }">
 										<c:set value="공지" var="type"/>
-										<c:set value="notice" var="style"/>	
+										<c:set value="notice" var="style"/>
 									</c:when>
 									<c:when test="${board.boardCtgryCd eq 'free' }">
-										<c:set value="자유" var="type"/>	
+										<c:set value="자유" var="type"/>
 										<c:set value="free" var="style"/>
 									</c:when>
 									<c:when test="${board.boardCtgryCd eq 'companion' }">
@@ -114,14 +114,14 @@
 									</c:when>
 									<c:when test="${board.boardCtgryCd eq 'info' }">
 										<c:set value="정보" var="type"/>
-										<c:set value="info" var="style"/>	
+										<c:set value="info" var="style"/>
 									</c:when>
 									<c:when test="${board.boardCtgryCd eq 'qna' }">
-										<c:set value="Q&A" var="type"/>	
+										<c:set value="Q&A" var="type"/>
 										<c:set value="qna" var="style"/>
 									</c:when>
 									<c:when test="${board.boardCtgryCd eq 'review' }">
-										<c:set value="후기" var="type"/>	
+										<c:set value="후기" var="type"/>
 										<c:set value="review" var="style"/>
 									</c:when>
 								</c:choose>
@@ -129,10 +129,19 @@
 				                    <span class="post-category ${style }">${type }</span>
 				                    <div class="post-content">
 				                        <h4 class="post-title">
-											  <a href="${pageContext.request.contextPath}/community/talk/detail?boardNo=${board.boardNo}">
-											    ${board.boardTitle}
-											  </a>
-											</h4>
+				                     <!--관리자 신고기능 start  -->
+				                        	<c:choose>
+				                        		<c:when test="${board.hideYn eq 'H'}">
+			                        			   <div class="alert alert-warning">관리자에 의해 숨김 처리된 게시글입니다</div>
+						        				</c:when>
+				                        		<c:otherwise>
+												  <a href="${pageContext.request.contextPath}/community/talk/detail?boardNo=${board.boardNo}">
+												    ${board.boardTitle}
+												  </a>
+				                        		</c:otherwise>
+				                        	</c:choose>
+				                     <!--관리자 신고기능 end  -->
+										</h4>
 
 				                        <div class="post-meta">
 				                            <span class="writer">
@@ -146,23 +155,47 @@
 				                        <span><i class="bi bi-eye"></i> ${board.viewCnt }</span>
 				                        <span><i class="bi bi-chat"></i> 0</span>
 				                    </div>
-				                </li>			
+				                </li>
 							</c:forEach>
 						</c:otherwise>
             	</c:choose>
             </ul>
 
-            <!-- 페이지네이션 -->
-            <div class="pagination-container">
-                <nav>
-                    ${pagingVO.pagingHTML }
-                </nav>
-            </div>
+           			     <!-- 페이지네이션 -->
+              <div class="pagination-container">
+				  <nav>
+				    <ul class="pagination">
+				      <c:if test="${pagingVO.startPage > 1}">
+				        <li class="page-item">
+				          <a class="page-link"
+				             href="?type=${type}&page=${pagingVO.startPage - pagingVO.blockSize}">
+				            <i class="bi bi-chevron-left"></i>
+				          </a>
+				        </li>
+				      </c:if>
+				
+				      <c:forEach var="p" begin="${pagingVO.startPage}"
+				                 end="${pagingVO.endPage < pagingVO.totalPage ? pagingVO.endPage : pagingVO.totalPage}">
+				        <li class="page-item ${p == pagingVO.currentPage ? 'active' : ''}">
+				          <a class="page-link" href="?page=${p}&searchWord=${searchWord}&ntcType=${ntcType}">${p}</a>
+				        </li>
+				      </c:forEach>
+				
+				      <c:if test="${pagingVO.endPage < pagingVO.totalPage}">
+				        <li class="page-item">
+				          <a class="page-link" href="?type=${type}&page=${pagingVO.endPage + 1}">
+				            <i class="bi bi-chevron-right"></i>
+				          </a>
+				        </li>
+				      </c:if>
+				    </ul>
+				  </nav>
+				</div>
         </div>
-    </div>     
+    </div>
 </div>
 
-		<!-- boardVO있을때 상세출력 
+		<!-- boardVO있을때 상세출력
 			model.addAttribute("boardVO",boardVO);
 		-->
 				<p>${boardVO}</p>
@@ -173,30 +206,30 @@
 				        <span class="badge bg-primary">
 				          ${boardVO.boardCtgryCd}
 				        </span>
-				
+
 				        <a class="btn btn-sm btn-outline-secondary"
 				           href="${pageContext.request.contextPath}/community/talk">
 				          목록
 				        </a>
 				      </div>
-				
+
 				      <h3 class="mb-2">${boardVO.boardTitle}</h3>
-				
+
 				      <div class="text-muted mb-3">
 				        작성자: ${boardVO.writerNickname} <small>(${boardVO.writerId})</small>
 				        · 작성일: ${boardVO.regDt}
 				        · 조회수: ${boardVO.viewCnt}
 				      </div>
-				
+
 				      <hr/>
-				
+
 				      <div style="white-space: pre-wrap;">
 				        ${boardVO.boardContent}
 				      </div>
 				    </div>
 				  </div>
 				</c:if>
-								
+
 <!-- 게시글 상세 모달 -->
 <div class="post-detail-overlay" id="postDetailOverlay" onclick="closePostDetail()">
     <div class="post-detail-modal" onclick="event.stopPropagation()">
@@ -1954,7 +1987,7 @@ function writePost() {
 
 	let stompClient = null;
 	let currentChatId = null;
-	
+
 //현재 사용자 정보
 const currentUser = {
 		isLoggedIn: ${not empty myName ? true : false},
@@ -2005,7 +2038,7 @@ function loadChatRooms(category) {
 //채팅방 목록 닫기
 function closeChatRoomList() {
  document.getElementById('chatRoomModal').classList.remove('active');
- document.body.style.overflow = '';  
+ document.body.style.overflow = '';
 }
 
 //오버레이 클릭 시 닫기
@@ -2013,7 +2046,7 @@ function closeChatRoomModal(event) {
  if (event.target === event.currentTarget) {
      closeChatRoomList();
  }
- 
+
 }
 
 //채팅방 목록 렌더링
@@ -2028,8 +2061,8 @@ function renderChatRoomListFromServer(rooms) {
     let html = '';
     rooms.forEach(room => {
         // 💡 1. 안 읽은 메시지 배지 HTML 생성 (0보다 클 때만)
-        const unreadBadge = (room.unreadCount > 0) 
-            ? `<span class="badge bg-danger rounded-pill ms-2">\${room.unreadCount}</span>` 
+        const unreadBadge = (room.unreadCount > 0)
+            ? `<span class="badge bg-danger rounded-pill ms-2">\${room.unreadCount}</span>`
             : '';
 
         html += `
@@ -2106,7 +2139,7 @@ function createChatRoom() {
 	formData.append('chatName', name);
 	formData.append('chatCtgry', category);
 	formData.append('chatMax', maxUsers);
-	
+
 	fetch(api('/chat/room'), {
 		method : 'POST',
 		body : formData
@@ -2117,17 +2150,17 @@ function createChatRoom() {
 			showToast(data.message, 'warning');
 			return;
 		}
-		
+
 		showToast(data.message, 'success');
 
 		// 생성 폼 닫기
 		cancelCreateRoom();
-		
+
 		const chatId = data.chatId;
 
 	    joinChatRoom(chatId);
 	    connectChat(chatId);
-	    
+
 		// 서버 기준으로 채팅방 목록 다시 불러오기
 		loadChatRooms();
 	})
@@ -2145,8 +2178,8 @@ function connectChat(chatId) {
 
     console.log('🚀 연결 시도 중... chatId:', chatId);
     currentChatId = chatId;
-    
-    const socket = new SockJS(contextPath + '/ws'); 
+
+    const socket = new SockJS(contextPath + '/ws');
     stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
@@ -2155,15 +2188,15 @@ function connectChat(chatId) {
         stompClient.subscribe('/topic/chat/' + chatId, function (message) {
             const data = JSON.parse(message.body);
             console.log("📥 소켓 수신 원본:", data);
-            
+
             // 🚨 방 폭파 신호 처리
             if (data.type === 'ROOM_DELETED') {
                 alert(data.message);
                 if (typeof closeChatWindow === 'function') closeChatWindow();
-                location.reload(); 
-                return; 
+                location.reload();
+                return;
             }
-            
+
          	// 모든 메시지 타입에 대해 렌더링 및 배지 처리 수행
             const chatTypes = ['CHAT', 'IMAGE', 'FILE', 'LOCATION'];
             if (chatTypes.includes(data.type)) {
@@ -2182,17 +2215,17 @@ function connectChat(chatId) {
             else if (data.type === 'ENTER' || data.type === 'LEAVE') {
                 const msgText = data.message || data.chatDesc || (data.sender + "님이 입장하셨습니다.");
                 addSystemMessage(msgText);
-                
+
                 setTimeout(() => {
                     if (typeof loadChatUserList === 'function') loadChatUserList(chatId);
-                    if (typeof loadChatRooms === 'function') loadChatRooms(); 
+                    if (typeof loadChatRooms === 'function') loadChatRooms();
                 }, 200);
             }
         });
 
         // 입장 메시지 전송
         stompClient.send('/app/chat/system', {}, JSON.stringify({
-            chatId: parseInt(chatId), 
+            chatId: parseInt(chatId),
             sender: currentUser.nickname,
             type: 'ENTER'
         }));
@@ -2205,7 +2238,7 @@ function connectChat(chatId) {
 function renderChatMessage(data) {
     const box = document.getElementById('chatMessages');
     if (!box) return;
-    
+
  	// 시간미상 해결을 위한 변수 선언
     const rawTime = data.chatSendtime || data.sendTime || new Date().toISOString();
     const displayTime = (typeof formatChatTime === 'function') ? formatChatTime(rawTime) : '시간미상';
@@ -2218,15 +2251,15 @@ function renderChatMessage(data) {
             // 이미 객체면 그대로 쓰고, 문자열이면 파싱
             const fileData = (typeof data.message === 'string') ? JSON.parse(data.message) : data.message;
             addFileMessage(data.sender, fileData.fileName, fileData.fileSize, displayTime, isMine, fileData.fileUrl);
-        } catch(e) { 
-            console.error("파일 데이터 파싱 실패", e); 
+        } catch(e) {
+            console.error("파일 데이터 파싱 실패", e);
         }
     } else if (data.type === 'LOCATION') {
         try {
             const locData = (typeof data.message === 'string') ? JSON.parse(data.message) : data.message;
             addLocationMessage(data.sender, locData.placeName, displayTime, isMine);
-        } catch(e) { 
-            addChatMessage(data.sender, escapeHtml(data.message), displayTime, isMine); 
+        } catch(e) {
+            addChatMessage(data.sender, escapeHtml(data.message), displayTime, isMine);
         }
     } else {
         addChatMessage(data.sender, escapeHtml(data.message), displayTime, isMine);
@@ -2247,12 +2280,12 @@ function joinChatRoom(chatId) {
      }
      return;
  }
- 
+
      if (!chatId) {
          console.error('❌ chatId is undefined');
          return;
      }
-     
+
      fetch(api('/chat/room/' + chatId + '/join'), {
      	method : 'POST'
      })
@@ -2263,33 +2296,33 @@ function joinChatRoom(chatId) {
      		showToast(data.message, 'warning');
      		return;
      	}
-     	
+
      	currentChatRoom = data.room;
     	 currentChatId = data.room.chatId;
-    	
+
     	 closeChatRoomList();
-    	 
+
     	 // 💡 핵심: 두 번째 인자로 data.room 객체를 같이 보냅니다.
         openChatWindow(currentChatId, data.room);
 
          // 과거 대화 내역 불러오기
  	     loadPreviousMessages(currentChatId);
- 		
-         
+
+
          if (data.room) {
              document.getElementById('chatRoomTitle').textContent = data.room.chatName;
              document.getElementById('chatRoomBadge').textContent = data.room.chatCtgryName;
              document.getElementById('chatUserCount').textContent = data.room.currentUsers;
          }
-         
+
          if (data.userList) {
              renderChatUserList(data.userList);
          } else {
          	loadChatUserList(chatId);
          }
-         
+
          connectChat(chatId);
-         
+
          addSystemMessage(currentUser.name + '님이 입장하셨습니다.');
      })
      .catch(err => {
@@ -2323,7 +2356,7 @@ function setupChatWindow(room) {
 function getRandomLastSeen() {
  const times = ['5분 전', '10분 전', '30분 전', '1시간 전', '2시간 전'];
  return times[Math.floor(Math.random() * times.length)];
- 
+
 }
 
 //참여자 목록 렌더링
@@ -2345,8 +2378,8 @@ function renderChatUserList(users) {
      const statusB = b.status || 'online';
      return (statusOrder[statusA] || 0) - (statusOrder[statusB] || 0);
  });
- 
- 
+
+
  let html = '';
 
 
@@ -2412,22 +2445,22 @@ async function loadPreviousMessages(chatId) {
         console.warn("⚠️ chatId가 없어서 과거 내역 로드를 중단합니다.");
         return;
     }
-	
+
     try {
     	const response = await fetch(api('/chat/room/' + chatId + '/messages'));
-        const messages = await response.json(); 
-        
-        console.log("받아온 이전 메시지들:", messages); 
+        const messages = await response.json();
+
+        console.log("받아온 이전 메시지들:", messages);
 
         const chatMessagesEl = document.getElementById('chatMessages');
         chatMessagesEl.innerHTML = '';
-            
+
         if (messages && messages.length > 0) {
             messages.forEach((msg, index) => {
-                try {                    
+                try {
                     renderChatMessage({
-                        sender: msg.memNickname || '익명', 
-                        message: msg.chatDesc, 
+                        sender: msg.memNickname || '익명',
+                        message: msg.chatDesc,
                         type: msg.chatType,
                         memId: msg.chatSenderId,
                         sendTime: msg.chatSendtime
@@ -2436,7 +2469,7 @@ async function loadPreviousMessages(chatId) {
                     console.warn(`⚠️ ${index}번째 메시지 렌더링 실패:`, renderError);
                 }
             });
-            
+
             chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
         }
     } catch (error) {
@@ -2444,39 +2477,39 @@ async function loadPreviousMessages(chatId) {
     }
 }
 
-	
+
 //==================== 채팅 윈도우 제어 ====================
 document.addEventListener('DOMContentLoaded', function() {
     // 💡 세션 스토리지에서 저장된 채팅방 ID 확인
     const savedChatId = sessionStorage.getItem('activeChatId');
-    
+
     if (savedChatId) {
         console.log("🚀 참여 중이던 채팅방 복구 중:", savedChatId);
         openChatWindow(savedChatId);
     }
 });
-	
-	
+
+
 // 채팅 윈도우 열기
 function openChatWindow(receivedId, roomData) {
-	
+
 	const targetId = receivedId || currentChatId || sessionStorage.getItem('activeChatId');
-	
+
 	if (!targetId || targetId === "null" || targetId === "undefined") {
         console.error('❌ openChatWindow: targetId가 없습니다.');
         return;
     }
-	
+
 	currentChatId = targetId;
 	sessionStorage.setItem('activeChatId', targetId);
-	
+
     // UI 제어
     const chatWin = document.getElementById('chatWindow');
     const chatMin = document.getElementById('chatMinimized');
     if (chatWin) chatWin.classList.add('active');
     if (chatMin) chatMin.classList.remove('active');
     if (document.getElementById('chatInput')) document.getElementById('chatInput').focus();
-    
+
     // roomData가 전달되었다면 바로 UI 업데이트, 없으면 서버에 물어봄
     if (roomData) {
         updateChatUI(roomData);
@@ -2490,7 +2523,7 @@ function openChatWindow(receivedId, roomData) {
             .catch(err => console.error("방 정보 복구 실패:", err));
     }
 
-    unreadCount = 0; 
+    unreadCount = 0;
     sessionStorage.setItem('unreadCount', '0');
     if (typeof updateUnreadBadge === 'function') updateUnreadBadge();
 
@@ -2500,13 +2533,13 @@ function openChatWindow(receivedId, roomData) {
 // 중복 코드를 방지하기 위한 UI 업데이트 함수
 function updateChatUI(room) {
 	if (!room) return;
-    if (document.getElementById('chatRoomTitle')) 
+    if (document.getElementById('chatRoomTitle'))
         document.getElementById('chatRoomTitle').textContent = room.chatName || "채팅방";
-    if (document.getElementById('chatRoomBadge')) 
+    if (document.getElementById('chatRoomBadge'))
         document.getElementById('chatRoomBadge').textContent = room.chatCtgryName || "자유";
-    if (document.getElementById('chatUserCount')) 
+    if (document.getElementById('chatUserCount'))
         document.getElementById('chatUserCount').textContent = room.currentUsers || 0;
-    
+
     const minTitle = document.getElementById('chatMinimizedTitle');
     if (minTitle) minTitle.textContent = room.chatName || "채팅방";
 }
@@ -2524,13 +2557,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     if (savedChatId && savedChatId !== "null") {
         currentChatId = savedChatId;
-        
+
         // 소켓부터 무조건 다시 연결 (메시지 전송 실패 방지)
         connectChat(savedChatId);
-        
+
         // 상태에 따른 분기 처리
         if (savedState === 'MAX') {
-            openChatWindow(savedChatId); 
+            openChatWindow(savedChatId);
         } else {
             // 디폴트 및 MIN 상태: 아이콘만 활성화
             document.getElementById('chatMinimized').classList.add('active');
@@ -2549,12 +2582,12 @@ function minimizeChat() {
 	if (!currentChatId) {
         currentChatId = sessionStorage.getItem('activeChatId');
     }
-    
-    if (!currentChatId) return; 
-    
+
+    if (!currentChatId) return;
+
     const chatWindow = document.getElementById('chatWindow');
     const chatMinimized = document.getElementById('chatMinimized');
-    
+
     // UI 처리: 창은 끄고, 아이콘은 켜고
     if (chatWindow) {
         chatWindow.classList.add('minimized');
@@ -2563,10 +2596,10 @@ function minimizeChat() {
     if (chatMinimized) {
         chatMinimized.classList.add('active');
     }
-    
+
     // 읽음 처리 알림
     sendReadUpdate();
-    
+
     sessionStorage.setItem('activeChatId', currentChatId);
     sessionStorage.setItem('chatWindowState', 'MIN');
     }
@@ -2574,12 +2607,12 @@ function minimizeChat() {
 //채팅 최대화
 function maximizeChat() {
 	const savedId = sessionStorage.getItem('activeChatId');
-    sessionStorage.setItem('chatWindowState', 'MAX'); 
+    sessionStorage.setItem('chatWindowState', 'MAX');
     openChatWindow(savedId);
 }
 
 //채팅 나가기
-async function leaveChat() {    
+async function leaveChat() {
 	// 전역 변수에 없으면 세션에서 가져옴
     if (!currentChatId) {
         currentChatId = sessionStorage.getItem('activeChatId');
@@ -2590,7 +2623,7 @@ async function leaveChat() {
         showToast('참여 중인 채팅방이 없습니다.', 'warning');
         return;
     }
-    
+
     if (confirm('채팅방에서 나가시겠습니까?')) {
         try {
             // 서버에 퇴장 알림 (아직 세션 안 지웠으니 currentChatId 사용 가능)
@@ -2635,14 +2668,14 @@ function finalizeChatUI() {
  currentChatId = null;
  currentChatRoom = null;
  chatMessages = [];
- 
+
  // UI 요소 닫기
  document.getElementById('chatWindow').classList.remove('active');
  document.getElementById('chatMinimized').classList.remove('active');
  if(document.getElementById('chatUserPanel')) {
      document.getElementById('chatUserPanel').classList.remove('active');
  }
- 
+
  // 메시지 영역 비우기
  const msgEl = document.getElementById('chatMessages');
  if (msgEl) msgEl.innerHTML = '';
@@ -2660,7 +2693,7 @@ function sendSocketMessage(chatData) {
         showToast('채팅 서버에 연결되지 않았습니다.', 'warning');
         return;
     }
-    
+
     const payload = {
         chatId: parseInt(currentChatId),
         sender: currentUser.nickname,
@@ -2674,13 +2707,13 @@ function sendSocketMessage(chatData) {
 
 function sendMessage(type, message) {
 	    const input = document.getElementById('chatInput');
-	    
+
 	    // 만약 인자가 있으면(장소 공유 등) 그 값을 쓰고, 없으면(일반 채팅) 입력창 값을 씁니다.
 	    const msgType = type || 'CHAT';
 	    const msgContent = message || input.value.trim();
-	    
+
 	    if (!msgContent) return;
-	    
+
 	    sendSocketMessage({
 	        type: msgType,
 	        message: msgContent
@@ -2692,14 +2725,14 @@ function sendMessage(type, message) {
 // 엔터키 처리
 function handleKeydown(event) {
 	const isEnter = (event.key === 'Enter' || event.keyCode === 13);
-	    
+
 	    if (isEnter && !event.shiftKey) {
 	    	event.stopPropagation();
 	        // 한글 입력 중 엔터 중복 방지 (IME 컴포지션 체크)
 	        if (event.isComposing || event.keyCode === 229) {
 	            return;
 	        }
-	
+
 	        event.preventDefault(); // 줄바꿈 방지
 	        console.log("엔터키 감지 - 메시지 전송 시도");
 	        sendMessage();
@@ -2738,7 +2771,7 @@ function addChatMessage(sender, message, time, isMine) {
 // 시스템 메시지 추가
 function sendSystemMessage(action) {
     const messagesEl = document.getElementById('chatMessages');
-    
+
     stompClient.send('/app/chat/system', {}, JSON.stringify({
         chatId: currentChatId,
         sender: currentUser.name,
@@ -2747,10 +2780,10 @@ function sendSystemMessage(action) {
         memNo: currentUser.memNo, // 숫자 PK
         memId: currentUser.memId     // "a004" 같은 문자열 아이디
     }));
-    
+
     console.log(currnetUser.memId);
     console.log(currnetUser.id);
-    
+
 
     // 환영 메시지 제거
     const welcomeMsg = messagesEl.querySelector('.chat-welcome-message');
@@ -2777,15 +2810,15 @@ function addSystemMessage(message) {
     // 새 시스템 메시지용 div 생성
     const div = document.createElement('div');
     div.className = 'chat-system-message';
-    
+
     // 텍스트를 담을 span 생성 및 안전하게 텍스트 주입
     const span = document.createElement('span');
     span.textContent = message; // 👈 템플릿 리터럴 대신 직접 주입 (이게 제일 확실합니다!)
-    
+
     // 조립 및 화면 추가
     div.appendChild(span);
     messagesEl.appendChild(div);
-    
+
     // 스크롤을 맨 아래로 이동
     messagesEl.scrollTop = messagesEl.scrollHeight;
 }
@@ -2793,7 +2826,7 @@ function addSystemMessage(message) {
 //[공통 로직] 안 읽은 메시지 카운트 처리
 function checkAndIncrementUnread(isMine) {
     const isWindowActive = document.getElementById('chatWindow').classList.contains('active');
-    
+
     // 💡 내가 보낸 게 아니고, 채팅창이 활성화(active) 상태가 아닐 때만 카운트 업!
     if (!isMine && !isWindowActive) {
         let count = parseInt(sessionStorage.getItem('unreadCount') || '0');
@@ -2809,10 +2842,10 @@ function checkAndIncrementUnread(isMine) {
 function updateUnreadBadge() {
     const badge = document.getElementById('chatUnreadBadge');
     if(!badge) return;
-    
+
     let currentUnread = parseInt(sessionStorage.getItem('unreadCount') || '0');
     badge.textContent = currentUnread > 99 ? '99+' : currentUnread;
-    
+
     if (currentUnread > 0) {
         badge.classList.add('has-unread');
         badge.style.display = 'flex';
@@ -2835,14 +2868,14 @@ function escapeHtml(text) {
 // 시간 설정하기
 function formatChatTime(dateStr) {
 if (!dateStr) return '시간미상';
-    
+
     // 1. 서버 날짜 객체 생성
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
 
     // 💡 2. 'now' 변수 선언 (이게 없어서 에러가 났던 겁니다!)
     const now = new Date();
-    
+
     // 3. 오늘인지 판별
     const isToday = (
         date.getFullYear() === now.getFullYear() &&
@@ -2866,7 +2899,7 @@ if (!dateStr) return '시간미상';
         const year = date.getFullYear().toString().slice(-2);
         const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const day = date.getDate().toString().padStart(2, '0');
-        
+
         return year + '.' + month + '.' + day + ' ' + timeStr;
     }
 }
@@ -2912,7 +2945,7 @@ function handleImageUpload(event) {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('chatId', currentChatId);	// 현재 참여중인 방 ID
-    
+
     fetch(api('/chat/upload'), {
     	method : 'POST',
     	body : formData
@@ -2932,7 +2965,7 @@ function handleImageUpload(event) {
     	}
     })
     .catch(err => console.error('Upload Error : ', err));
-    	
+
     event.target.value = '';
 }
 
@@ -2944,7 +2977,7 @@ function handleFileUpload(event) {
     const formData = new FormData(); // 💡 대문자 F 확인!
     formData.append('file', file);
     formData.append('chatId', currentChatId);
-    
+
     fetch(api('/chat/upload'), {
         method : 'POST',
         body : formData
@@ -2954,7 +2987,7 @@ function handleFileUpload(event) {
         if(data.success) {
             // 💡 서버가 준 originName을 fileName으로 확실히 매칭!
             const fileInfo = JSON.stringify({
-                fileName : data.originName, 
+                fileName : data.originName,
                 fileSize : data.fileSize,
                 fileUrl  : data.fileUrl
             });
@@ -2971,15 +3004,15 @@ function handleFileUpload(event) {
     event.target.value = '';
 }
 
-//소켓 메시지 수신부 
+//소켓 메시지 수신부
 function onMessageReceived(payload) {
 	try {
         const chat = JSON.parse(payload.body);
         console.log("수신된 데이터:", chat);
 
         renderChatMessage({
-            sender: msg.memNickname || '익명', 
-            message: msg.chatDesc, 
+            sender: msg.memNickname || '익명',
+            message: msg.chatDesc,
             type: msg.chatType,
             memId: msg.chatSenderId,
             sendTime: formatChatTime(msg.chatSendtime)
@@ -3005,10 +3038,10 @@ function addImageMessage(sender, imageUrl, time, isMine) {
             <div class="chat-message-content">
                 <span class="chat-message-sender">\${sender}</span>
                 <div class="chat-message-bubble image-bubble" style="padding: 5px; background: none;">
-                    <img src="\${imageUrl}" 
-                         class="chat-message-image" 
-                         style="cursor: pointer; max-width: 200px; border-radius: 8px; display: block;" 
-                         onclick="previewImage('\${imageUrl}')" 
+                    <img src="\${imageUrl}"
+                         class="chat-message-image"
+                         style="cursor: pointer; max-width: 200px; border-radius: 8px; display: block;"
+                         onclick="previewImage('\${imageUrl}')"
                          alt="채팅 이미지">
                 </div>
                 <span class="chat-message-time">${time}</span>
@@ -3018,13 +3051,13 @@ function addImageMessage(sender, imageUrl, time, isMine) {
 
     messagesEl.insertAdjacentHTML('beforeend', messageHtml);
     messagesEl.scrollTop = messagesEl.scrollHeight;
-    
+
 }
 
 // 파일 메시지 추가
 function addFileMessage(sender, fileName, fileSize, time, isMine, fileUrl) {
 const messagesEl = document.getElementById('chatMessages');
-    
+
     // 인자로 받은 fileName이 없을 때를 대비한 안전장치
     const displayFileName = fileName || "알 수 없는 파일";
     const fileSizeText = formatFileSize(fileSize); // 아까 고친 NaN 방어용 함수
@@ -3048,15 +3081,15 @@ const messagesEl = document.getElementById('chatMessages');
 
     messagesEl.insertAdjacentHTML('beforeend', messageHtml);
     messagesEl.scrollTop = messagesEl.scrollHeight;
-    
+
 }
 
 // 파일 크기 포맷
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 B';
     // 숫자가 아니거나 값이 없으면 '0 B' 반환 (NaN 방지)
-    if (!bytes || isNaN(bytes)) return '0 B'; 
-    
+    if (!bytes || isNaN(bytes)) return '0 B';
+
     if (bytes < 1024) return bytes + ' B';
     if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
     return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
@@ -3090,13 +3123,13 @@ function previewImage(imageUrl) {
 	console.log("📸 이미지 확대 시도:", imageUrl);
     // 기존 미리보기 제거
    let overlay = document.getElementById('imagePreviewOverlay');
-    
+
     // 오버레이 엘리먼트가 없으면 생성
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'imagePreviewOverlay';
         overlay.className = 'image-preview-overlay';
-        overlay.onclick = closeImagePreview; 
+        overlay.onclick = closeImagePreview;
         overlay.innerHTML = `
             <button class="image-preview-close" onclick="closeImagePreview()">
                 <i class="bi bi-x-lg" style="color:white; font-size: 2rem;"></i>
@@ -3129,13 +3162,13 @@ function downloadFile(fileName, fileUrl) {
         showToast("파일 경로가 올바르지 않습니다.", "error");
         return;
     }
-    
+
     // fileName이 없으면 기본값 설정
     const downloadName = fileName || 'download_file';
-    
+
     const link = document.createElement('a');
     link.href = fileUrl;
-    link.download = downloadName; 
+    link.download = downloadName;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -3144,7 +3177,7 @@ function downloadFile(fileName, fileUrl) {
 // ================== 장소 공유 ===================
 function openPlaceSearch() {
 const placeName = prompt("공유하고 싶은 장소 이름을 입력하세요.");
-    
+
     if (!placeName || placeName.trim() === "") return;
 
     // 'LOCATION' 타입의 데이터 구조 생성
@@ -3164,9 +3197,9 @@ const placeName = prompt("공유하고 싶은 장소 이름을 입력하세요."
 
 function addLocationMessage(sender, placeName, time, isMine) {
 	const safePlaceName = typeof escapeHtml === 'function' ? escapeHtml(placeName) : placeName;
-    
+
     // 장소 전용 카드 UI 구성
-    const locationHtml = 
+    const locationHtml =
         '<div class="location-card">' +
             '<div class="location-info">' +
                 '<i class="bi bi-geo-alt-fill text-danger"></i>' +
@@ -3180,7 +3213,7 @@ function addLocationMessage(sender, placeName, time, isMine) {
     // 기존 메시지 추가 함수를 재활용하여 말풍선 안에 넣습니다.
     addChatMessage(sender, locationHtml, time, isMine);
 }
-	
+
 //==================== 채팅 ESC로 닫기 ====================
 // ESC 키로 모달 닫기
 document.addEventListener('keydown', function(e) {
@@ -3468,7 +3501,7 @@ function reportComment(commentId, commentText) {
 // 현재 채팅방 신고
 function reportCurrentChatroom() {
 	const targetId = currentChatId || sessionStorage.getItem('activeChatId');
-    const roomName = (currentChatRoom && currentChatRoom.chatName) 
+    const roomName = (currentChatRoom && currentChatRoom.chatName)
                      || document.getElementById('chatRoomTitle').textContent;
 
     if (!targetId || targetId === "null") {

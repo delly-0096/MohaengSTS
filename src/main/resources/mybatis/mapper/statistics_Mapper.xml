@@ -90,7 +90,7 @@
 		ORDER BY PAY_DT
 	</select>
 	
-	<select id="selectReservation">
+	<select id="selectGenderRatio" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
 		SELECT SUM((
 	        SELECT COUNT(*) 
 	          FROM MEMBER M 
@@ -126,5 +126,41 @@
          AND P.PAY_DT <= TO_DATE(#{endDate}, 'yyyy-MM-dd') + 0.99999
    	  ]]>
    	</if>
+	</select>
+	
+	<select id="selectSalesStatsByAge" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		SELECT COUNT(*) AS TOTAL_CNT
+		<![CDATA[
+		     , SUM(CASE 
+		             WHEN MU.BIRTH_DATE >= TO_DATE('1997-01-01', 'YYYY-MM-DD') 
+		              AND MU.BIRTH_DATE <  TO_DATE('2007-01-01', 'YYYY-MM-DD') 
+		             THEN 1 ELSE 0 
+		           END) AS CNT_20S
+		     , SUM(CASE 
+		             WHEN MU.BIRTH_DATE >= TO_DATE('1987-01-01', 'YYYY-MM-DD') 
+		              AND MU.BIRTH_DATE <  TO_DATE('1997-01-01', 'YYYY-MM-DD') 
+		             THEN 1 ELSE 0 
+		           END) AS CNT_30S
+		     , SUM(CASE 
+		             WHEN MU.BIRTH_DATE >= TO_DATE('1977-01-01', 'YYYY-MM-DD') 
+		              AND MU.BIRTH_DATE <  TO_DATE('1987-01-01', 'YYYY-MM-DD') 
+		             THEN 1 ELSE 0 
+		           END) AS CNT_40S
+		     , SUM(CASE 
+		             WHEN MU.BIRTH_DATE <  TO_DATE('1977-01-01', 'YYYY-MM-DD') 
+		             THEN 1 ELSE 0 
+		           END) AS CNT_OVER_50S
+		  ]]>
+		  FROM PAYMENT P
+		 INNER JOIN TRIP_PROD_LIST TPL ON P.PAY_NO = TPL.PAY_NO
+		 INNER JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+		 INNER JOIN MEM_USER MU ON P.MEM_NO = MU.MEM_NO
+		 WHERE TP.MEM_NO = #{memNo}
+	 	 <if test='startDate != null and startDate != ""'>
+	     <![CDATA[
+	         AND P.PAY_DT >= TO_DATE(#{startDate}, 'yyyy-MM-dd') 
+	         AND P.PAY_DT <= TO_DATE(#{endDate}, 'yyyy-MM-dd') + 0.99999
+	   	  ]]>
+	   	</if>
 	</select>
 </mapper>

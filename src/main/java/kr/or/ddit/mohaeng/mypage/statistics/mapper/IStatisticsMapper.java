@@ -15,4 +15,7 @@ public interface IStatisticsMapper {
 
 	public List<Params> selectReservation(Params params);
 
+	public Params selectGenderRatio(Params params);
+
+	public Params selectSalesStatsByAge(Params params);
 }

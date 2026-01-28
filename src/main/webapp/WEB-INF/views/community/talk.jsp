@@ -510,14 +510,14 @@
 				          </a>
 				        </li>
 				      </c:if>
-
+				
 				      <c:forEach var="p" begin="${pagingVO.startPage}"
 				                 end="${pagingVO.endPage < pagingVO.totalPage ? pagingVO.endPage : pagingVO.totalPage}">
 				        <li class="page-item ${p == pagingVO.currentPage ? 'active' : ''}">
-				          <a class="page-link" href="?type=${type}&page=${p}">${p}</a>
+				          <a class="page-link" href="?page=${p}&searchWord=${searchWord}&ntcType=${ntcType}">${p}</a>
 				        </li>
 				      </c:forEach>
-
+				
 				      <c:if test="${pagingVO.endPage < pagingVO.totalPage}">
 				        <li class="page-item">
 				          <a class="page-link" href="?type=${type}&page=${pagingVO.endPage + 1}">
@@ -561,17 +561,7 @@
 						<!-- ✅ 본문 -->
 
 						<div class="post-detail-content" id="postDetailContent">
-						<!--관리자 신고기능 start  -->
-							<c:choose>
-						        <c:when test="${not empty boardVO.hideYn and boardVO.hideYn eq 'H'}">
-						            <div class="alert alert-warning">관리자에 의해 숨김 처리된 게시글입니다.</div>
-						        </c:when>
-						        <c:otherwise>
-						            ${boardVO.boardContent}
-						        </c:otherwise>
-						    </c:choose>
-						<!--관리자 신고기능 start  -->
-						</div>
+							${boardVO.boardContent}</div>
 
 
 						<!-- ✅ 해시태그(1번만 출력) -->
@@ -659,8 +649,7 @@
 
 
 						</div>
-
-						<!-- 댓글 붙이기 -->
+			
 
 						<div class="comments-list" id="commentsList">
 							<jsp:include page="comment.jsp" />
@@ -711,20 +700,15 @@ async function loadComments(){
     ? c.writerNickname
     : (c.writerId || "익명");
 
-
+    
 
     const date = c.regDt ? c.regDt : "";
-    /* ****************** 관리자 숨김기능 때문에 수정함 start ****************** */
-    //let content = "";
-    //const content = c.cmntContent ? c.cmntContent : "";
+    const content = c.cmntContent ? c.cmntContent : "";
 
-    const content = (c.cmntStatus == '3') ? '관리자에 의해 숨김 처리된 댓글입니다.' : (c.cmntContent || "");
-
-	/* ****************** 관리자 숨김기능 때문에 수정함 end  ****************** */
     const div = document.createElement("div");
     div.className = "border rounded p-3 mb-2" + (isReply ? " ms-4 bg-light" : "");
 
-
+   
     let html = "";
     html += '<div class="d-flex justify-content-between">';
     html += '  <strong>' + writer + '</strong>';
@@ -733,29 +717,26 @@ async function loadComments(){
     html += '<div class="mt-2" style="white-space: pre-wrap;">' + content + '</div>';
 
     // ✅ 여기! 댓글 신고 버튼 (로그인한 회원만 노출)
-    /* *************** 여기 신고 때문에 if(c.cmntStatus !='3'){} 추가**************************  */
-    if (c.cmntStatus !='3') {
+    if (isLoggedIn) {
+    	if (isLoggedIn) {
+    		  html += '<div class="mt-2 d-flex justify-content-end">';
+    		  html += '  <button type="button" class="btn btn-sm btn-outline-danger" '
+    		       +  'onclick="openReportModal(\'comment\', ' + c.cmntNo + ', \'\')"></button>';
+    		  html += '</div>';
+    		}
 
-	    if (isLoggedIn) {
-	    	if (isLoggedIn) {
-	    		  html += '<div class="mt-2 d-flex justify-content-end">';
-	    		  html += '  <button type="button" class="btn btn-sm btn-outline-danger" '
-	    		       +  'onclick="openReportModal(\'comment\', ' + c.cmntNo + ', \'\')">신고</button>';
-	    		  html += '</div>';
-	    	}
-	    }
+    }
 
-	    if(!isReply){
-	      html += '<div class="mt-2">';
-	      html += '  <button class="btn btn-sm btn-link" type="button" onclick="toggleReplyForm(' + c.cmntNo + ')">답글</button>';
-	      html += '</div>';
+    if(!isReply){
+      html += '<div class="mt-2">';
+      html += '  <button class="btn btn-sm btn-link" type="button" onclick="toggleReplyForm(' + c.cmntNo + ')">답글</button>';
+      html += '</div>';
 
-	      html += '<div id="replyForm-' + c.cmntNo + '" class="mt-2 d-none">';
-	      html += '  <textarea id="replyContent-' + c.cmntNo + '" class="form-control mb-2" rows="2" placeholder="답글을 입력하세요"></textarea>';
-	      html += '  <button class="btn btn-sm btn-primary" type="button" onclick="submitReply(' + c.cmntNo + ')">등록</button>';
-	      html += '</div>';
-	    }
-	}
+      html += '<div id="replyForm-' + c.cmntNo + '" class="mt-2 d-none">';
+      html += '  <textarea id="replyContent-' + c.cmntNo + '" class="form-control mb-2" rows="2" placeholder="답글을 입력하세요"></textarea>';
+      html += '  <button class="btn btn-sm btn-primary" type="button" onclick="submitReply(' + c.cmntNo + ')">등록</button>';
+      html += '</div>';
+    }
 
     div.innerHTML = html;
     root.appendChild(div);
@@ -799,7 +780,7 @@ async function loadComments(){
 	  const res = await fetch(`/api/talk/\${boardNo}/comments`, {
 	    method: "POST",
 	    headers: {"Content-Type":"application/json"},
-	    body: JSON.stringify({ cmntContent : content,
+	    body: JSON.stringify({ cmntContent : content, 
 	    					  parentCmntNo : parentCmntNo
 	    					 })
 	  });

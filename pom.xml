@@ -266,6 +266,12 @@
 		    <version>2.11.0</version>
 		</dependency>
 
+		<!-- 로그 남기기위한 aop-->
+		<dependency>
+		    <groupId>org.springframework.boot</groupId>
+		    <artifactId>spring-boot-starter-aop</artifactId>
+		</dependency>
+
 	</dependencies>
 
 	<build>

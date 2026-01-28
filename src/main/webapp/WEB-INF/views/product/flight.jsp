@@ -450,7 +450,7 @@ function initFlightInfiniteScroll() {
                 flightCurrentPage++;
                 renderFlightBatch(); // 10개씩 그리는 함수 호출
                 console.log("flightIsLoading : ", flightIsLoading);
-            }, 500);
+            }, 1000);
         }
     }, {
         root: null,
@@ -477,11 +477,9 @@ function renderFlightBatch(){
         html += createFlightCard(item, currentSearchData, cabin, start + i);
     });
     
-    setTimeout(() => {
-	    result.insertAdjacentHTML('beforeend', html);
-    }, 2000);
+    result.insertAdjacentHTML('beforeend', html);
+    setTimeout(() => { flightIsLoading = false }, 2000);
     
-    flightIsLoading = false;	// 더 할거 없을때 false조정
     
     if (end >= flightFullData.length) {
         flightHasMore = false;

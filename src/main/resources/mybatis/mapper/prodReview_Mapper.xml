@@ -16,6 +16,8 @@
 		<result property="reviewStatus" column="REVIEW_STATUS"/>
         <result property="nickname" column="NICKNAME"/>
         <result property="profileImage" column="PROFILE_IMAGE"/>
+        <!--신고용 추가-->
+        <result property="reviewStatus" column="REVIEW_STATUS"/>
 
         <!-- 리뷰 이미지 목록 (1:N) -->
         <collection property="reviewImages" column="ATTACH_NO"

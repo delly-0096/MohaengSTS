@@ -42,7 +42,7 @@ public class MyPaymentsController {
 
         int memNo = Integer.parseInt(String.valueOf(loginMember.get("memNo")));
 
-        // 1. 페이징 및 필터링 리스트 조회 로직
+        // 페이징 및 필터링 리스트 조회 로직
         PaginationInfoVO<MyPaymentsVO> pagingVO = new PaginationInfoVO<>(5, 5);
         pagingVO.setMemNo(memNo);
         if (StringUtils.isNotBlank(contentType)) pagingVO.setSearchType(contentType);
@@ -68,9 +68,9 @@ public class MyPaymentsController {
     public Map<String, Object> getReceiptDetail(int payNo) {
         Map<String, Object> result = new HashMap<>();
         
-        // 1. 결제 기본 정보 (마스터)
+        // 결제 기본 정보 (마스터)
         result.put("master", myPaymentsService.selectPaymentMaster(payNo));
-        // 2. 상세 품목 리스트
+        // 상세 품목 리스트
         result.put("details", myPaymentsService.selectReceiptDetailList(payNo));
         
         return result;
@@ -78,9 +78,6 @@ public class MyPaymentsController {
     
     /**
      * 후기 등록 
-     */
-    /**
-     * 후기 등록 (수정본)
      */
     @PostMapping("/review/insert")
     @ResponseBody
@@ -112,9 +109,6 @@ public class MyPaymentsController {
     /**
      * 마이페이지용 후기 수정
      */
-    /**
-     * 마이페이지용 후기 수정 (400 에러 해결 버전)
-     */
     @PostMapping("/review/update")
     @ResponseBody
     public Map<String, Object> updateReview(
@@ -127,14 +121,14 @@ public class MyPaymentsController {
             Integer memNo = getMemNo(session);
             vo.setMemNo(memNo);
 
-            // ✅ 1. 삭제 요청된 파일들 USE_YN = 'N' 처리
+            // 삭제 요청된 파일들 USE_YN = 'N' 처리
             if (deletedFiles != null && !deletedFiles.isEmpty()) {
                 for (String filePath : deletedFiles) {
                     myPaymentsService.updateFileUseN(filePath); 
                 }
             }
 
-            // ✅ 2. 리뷰 정보 수정 및 신규 이미지 추가 (보강된 서비스 호출)
+            // 리뷰 정보 수정 및 신규 이미지 추가 (보강된 서비스 호출)
             int status = reviewService.updateReview(vo); 
 
             if(status > 0) {

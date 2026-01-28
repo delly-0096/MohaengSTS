@@ -36,12 +36,15 @@
 
     <result property="regDt" column="REG_DT"/>
     <result property="modDt" column="MOD_DT"/>
-    
+
     <result property="writerNickname" column="WRITER_NICKNAME"/>
 	<result property="writerId" column="WRITER_ID"/>
     <result property="commentCnt" column="COMMENT_CNT"/>
-    
+
     <result property="likes" column="likes_key"/>
+
+	<!--관리자 신고기능 때문에 추가함  -->
+	<result property="hideYn" column="HIDE_YN"/>
 
     <!-- 첨부파일 리스트 -->
     <collection property="boardFileList" resultMap="attachFileDetailMap"/>
@@ -68,7 +71,7 @@
     <result property="regDt" column="REG_DT"/>
   </resultMap>
 
-	
+
   <!-- =========================
        1) 상세 조회 (파일 포함)
        ========================= -->
@@ -79,6 +82,8 @@
       b.VIEW_CNT, b.LIKE_CNT,
       b.NOTICE_YN, b.PIN_YN,
       b.DEL_YN, b.DEL_DT, b.REG_DT, b.MOD_DT,
+      <!--관리자 신고 기능 때문에 추가함-->
+      b.HIDE_YN,
       (SELECT NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = b.WRITER_NO) AS WRITER_NICKNAME,
       (SELECT MEM_ID FROM MEMBER m WHERE m.MEM_NO = b.WRITER_NO) AS WRITER_ID,
       (SELECT COUNT(*) FROM COMMENTS c
@@ -86,7 +91,7 @@
        AND c.TARGET_NO = b.BOARD_NO
        AND c.CMNT_STATUS = 0
        ) AS COMMENT_CNT,
-    
+
       afd.FILE_NO, afd.FILE_NAME, afd.FILE_ORIGINAL_NAME, afd.FILE_EXT,
       afd.FILE_SIZE, afd.FILE_PATH, afd.FILE_GB_CD, afd.MIMY_TYPE, afd.USE_YN, afd.REG_ID,
       (select likes_key from likes where likes_key = b.board_no and likes_cat_cd = 'talk' and mem_no = WRITER_NO) as likes_key
@@ -105,13 +110,13 @@
   WHERE BOARD_NO = #{boardNo}
     AND MEM_NO   = #{memNo}
 </select>
- 
+
  좋아요 추가
   <insert id="insertLike" parameterType="map">
   INSERT INTO BOARD_LIKE (BOARD_NO, MEM_NO)
   VALUES (#{boardNo}, #{memNo})
 </insert>
-  
+
   좋아요 삭제
   <delete id="deleteLike" parameterType="map">
   DELETE FROM BOARD_LIKE
@@ -139,7 +144,7 @@
   WHERE BOARD_NO = #{value}
 </select>
  -->
-  
+
 
   <!-- 조회수 증가 -->
   <update id="incrementHit" parameterType="int">
@@ -150,7 +155,7 @@
   </update>
 
   <!-- =========================
-       2) 등록 
+       2) 등록
        ========================= -->
   <insert id="insertTalk" parameterType="kr.or.ddit.mohaeng.vo.BoardVO" useGeneratedKeys="true">
  	<selectKey keyProperty="boardNo" resultType="int" order="BEFORE">
@@ -223,14 +228,14 @@
     WHERE 1=1
     <include refid="searchBoard"/>
   </select>
-  <select id="selectTalkCommentCount" parameterType="int" resultType="int"> 
+  <select id="selectTalkCommentCount" parameterType="int" resultType="int">
 		SELECT COUNT(*)
 		 FROM COMMENTS
 		  WHERE TARGET_TYPE = 'TALK'
 		   AND TARGET_NO = #{boardNo}
 		   AND CMNT_STATUS = 0
  </select>
- 
+
    <select id="selectTalkList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.BoardVO" resultMap="boardMap">
     SELECT b.*
     FROM (
@@ -241,7 +246,7 @@
           a.BOARD_NO DESC
       ) rnum
       FROM (
-        SELECT 
+        SELECT
         	(SELECT NICKNAME FROM MEM_USER mu WHERE mu.MEM_NO = b.WRITER_NO) AS WRITER_NICKNAME
 		  , (SELECT MEM_ID FROM MEMBER m WHERE m.MEM_NO = b.WRITER_NO) AS WRITER_ID
 		  , (SELECT COUNT(*)  FROM COMMENTS c
@@ -249,8 +254,8 @@
                AND c.TARGET_NO = b.BOARD_NO
                AND c.CMNT_STATUS = 0
              ) AS COMMENT_CNT
-          , b.BOARD_NO          
-          , b.BOARD_CTGRY_CD  
+          , b.BOARD_NO
+          , b.BOARD_CTGRY_CD
           , b.WRITER_NO
           , b.ATTACH_NO
           , b.BOARD_TITLE
@@ -263,6 +268,8 @@
           , b.DEL_DT
           , b.REG_DT
           , b.MOD_DT
+          <!--관리자 신고 기능 때문에 추가함 -->
+          , b.HIDE_YN
         FROM BOARD b
         WHERE 1=1
         <include refid="searchBoard"/>
@@ -272,7 +279,7 @@
       WHERE b.rnum >= #{startRow} AND b.rnum <= #{endRow}
     ]]>
   </select>
-  
+
      <!--여행톡 상세페이지 파일 1건 조회 (다운로드/미리보기용) -->
   <select id="getFileInfo" parameterType="int" resultType="kr.or.ddit.mohaeng.vo.BoardFileVO">
     SELECT
@@ -298,7 +305,7 @@
   WHERE BOARD_NO = #{value}
   ORDER BY BOARD_TAG_NO
 </select>
-   
+
   <!-- =========================
        6) 좋아요 증감(임시)
        ========================= -->
@@ -318,27 +325,27 @@
 
 <!-- 태그 delete -->
  <delete id="deleteTalkTags" parameterType="int">
-    DELETE FROM BOARD_TAG 
+    DELETE FROM BOARD_TAG
     WHERE BOARD_NO = #{boardNo}
 </delete>
 
 <!-- 태그 insert -->
 <insert id="insertTalkTags" parameterType="java.util.List">
     INSERT INTO Board_Tag (
-        BOARD_TAG_NO, 
-        BOARD_NO, 
+        BOARD_TAG_NO,
+        BOARD_NO,
         BOARD_TAG_NAME
     )
     SELECT SEQ_TALK_TAG.NEXTVAL, A.* FROM (
         <foreach collection="list" item="t" separator=" UNION ALL ">
-            SELECT #{t.boardNo} AS BOARD_NO, 
-                   #{t.boardTagName} AS BOARD_TAG_NAME 
+            SELECT #{t.boardNo} AS BOARD_NO,
+                   #{t.boardTagName} AS BOARD_TAG_NAME
             FROM DUAL
         </foreach>
     ) A
 </insert>
- 
- 
+
+
 	<!-- 2026.01.20 HJ -좋아요 -->
 	<select id="selectTalkLike" parameterType="kr.or.ddit.mohaeng.vo.LikesVO" resultType="kr.or.ddit.mohaeng.vo.LikesVO">
 		select * from likes
@@ -346,7 +353,7 @@
 		and mem_no = #{memNo}
 		and likes_cat_cd = 'talk'
 	</select>
-	
+
 	<insert id="insertTalkLike" parameterType="kr.or.ddit.mohaeng.vo.LikesVO">
 		insert into likes(
 			likes_key, likes_cat_cd, mem_no
@@ -354,27 +361,27 @@
 			#{likesKey}, #{likesCatCd}, #{memNo}
 		)
 	</insert>
-	
+
 	<update id="incrementTalkLikeCnt" parameterType="int">
 		update board
 		set
 			like_cnt = like_cnt + 1
 		where board_no = #{likesKey}
 	</update>
-	 
+
 	<delete id="deleteTalkLike" parameterType="kr.or.ddit.mohaeng.vo.LikesVO">
 		delete from likes
 		where likes_key = #{likesKey}
 		and likes_cat_cd = 'talk'
 		and mem_no = #{memNo}
 	</delete>
-	
+
 	<update id="decrementTalkLikeCnt" parameterType="int">
 		update board
 		set
 			like_cnt = like_cnt - 1
 		where board_no = #{likesKey}
 	</update>
-	<!-- 2026.01.20 HJ -좋아요 End --> 
+	<!-- 2026.01.20 HJ -좋아요 End -->
 
 </mapper>

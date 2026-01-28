@@ -916,6 +916,12 @@ var reportData = {
 
 // 신고 모달 열기
 function openReportModal(type, targetId, targetTitle, targetMemNo) {
+
+	// 1. JSP/리액트에서 처음에 넘어온 raw 값 확인
+	    console.log("=== 신고 시도 데이터 ===");
+	    console.log("원본 type:", type);
+	    console.log("targetId:", targetId);
+
     // 로그인 체크
     if (typeof isLoggedIn !== 'undefined' && !isLoggedIn) {
         if (confirm('로그인이 필요한 서비스입니다.\n로그인 페이지로 이동하시겠습니까?')) {
@@ -943,6 +949,9 @@ function openReportModal(type, targetId, targetTitle, targetMemNo) {
 
 	// 2. 값을 정제해서 저장 (이게 핵심!)
     reportData.type = typeMapping[type.toLowerCase()] || type.toUpperCase();
+
+	// 2. 변환된 후의 값 확인
+	console.log("변환된 type (DB로 갈 값):", reportData.type);
 
     reportData.targetId = targetId;
     reportData.targetTitle = targetTitle || '';

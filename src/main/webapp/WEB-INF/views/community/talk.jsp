@@ -477,7 +477,7 @@
 			</h1>
 			<p>여행자들과 자유롭게 소통하고 정보를 나눠보세요</p>
 		</div>
-		<!-- boardVO있을때 상세출력 
+		<!-- boardVO있을때 상세출력
 			model.addAttribute("boardVO",boardVO);
 		-->
 		<!-- boardVO 있을 때 상세 출력 -->
@@ -510,14 +510,14 @@
 				          </a>
 				        </li>
 				      </c:if>
-				
+
 				      <c:forEach var="p" begin="${pagingVO.startPage}"
 				                 end="${pagingVO.endPage < pagingVO.totalPage ? pagingVO.endPage : pagingVO.totalPage}">
 				        <li class="page-item ${p == pagingVO.currentPage ? 'active' : ''}">
 				          <a class="page-link" href="?type=${type}&page=${p}">${p}</a>
 				        </li>
 				      </c:forEach>
-				
+
 				      <c:if test="${pagingVO.endPage < pagingVO.totalPage}">
 				        <li class="page-item">
 				          <a class="page-link" href="?type=${type}&page=${pagingVO.endPage + 1}">
@@ -556,12 +556,22 @@
 									class="bi bi-heart"></i> <span id="postLikes">${boardVO.likeCnt }</span></span>
 							</div>
 						</div>
-						
-				
+
+
 						<!-- ✅ 본문 -->
 
 						<div class="post-detail-content" id="postDetailContent">
-							${boardVO.boardContent}</div>
+						<!--관리자 신고기능 start  -->
+							<c:choose>
+						        <c:when test="${not empty boardVO.hideYn and boardVO.hideYn eq 'H'}">
+						            <div class="alert alert-warning">관리자에 의해 숨김 처리된 게시글입니다.</div>
+						        </c:when>
+						        <c:otherwise>
+						            ${boardVO.boardContent}
+						        </c:otherwise>
+						    </c:choose>
+						<!--관리자 신고기능 start  -->
+						</div>
 
 
 						<!-- ✅ 해시태그(1번만 출력) -->
@@ -649,7 +659,7 @@
 
 
 						</div>
-			
+
 						<!-- 댓글 붙이기 -->
 
 						<div class="comments-list" id="commentsList">
@@ -701,15 +711,20 @@ async function loadComments(){
     ? c.writerNickname
     : (c.writerId || "익명");
 
-    
+
 
     const date = c.regDt ? c.regDt : "";
-    const content = c.cmntContent ? c.cmntContent : "";
+    /* ****************** 관리자 숨김기능 때문에 수정함 start ****************** */
+    //let content = "";
+    //const content = c.cmntContent ? c.cmntContent : "";
 
+    const content = (c.cmntStatus == '3') ? '관리자에 의해 숨김 처리된 댓글입니다.' : (c.cmntContent || "");
+
+	/* ****************** 관리자 숨김기능 때문에 수정함 end  ****************** */
     const div = document.createElement("div");
     div.className = "border rounded p-3 mb-2" + (isReply ? " ms-4 bg-light" : "");
 
-   
+
     let html = "";
     html += '<div class="d-flex justify-content-between">';
     html += '  <strong>' + writer + '</strong>';
@@ -718,26 +733,29 @@ async function loadComments(){
     html += '<div class="mt-2" style="white-space: pre-wrap;">' + content + '</div>';
 
     // ✅ 여기! 댓글 신고 버튼 (로그인한 회원만 노출)
-    if (isLoggedIn) {
-    	if (isLoggedIn) {
-    		  html += '<div class="mt-2 d-flex justify-content-end">';
-    		  html += '  <button type="button" class="btn btn-sm btn-outline-danger" '
-    		       +  'onclick="openReportModal(\'comment\', ' + c.cmntNo + ', \'\')">신고</button>';
-    		  html += '</div>';
-    		}
+    /* *************** 여기 신고 때문에 if(c.cmntStatus !='3'){} 추가**************************  */
+    if (c.cmntStatus !='3') {
 
-    }
+	    if (isLoggedIn) {
+	    	if (isLoggedIn) {
+	    		  html += '<div class="mt-2 d-flex justify-content-end">';
+	    		  html += '  <button type="button" class="btn btn-sm btn-outline-danger" '
+	    		       +  'onclick="openReportModal(\'comment\', ' + c.cmntNo + ', \'\')">신고</button>';
+	    		  html += '</div>';
+	    	}
+	    }
 
-    if(!isReply){
-      html += '<div class="mt-2">';
-      html += '  <button class="btn btn-sm btn-link" type="button" onclick="toggleReplyForm(' + c.cmntNo + ')">답글</button>';
-      html += '</div>';
+	    if(!isReply){
+	      html += '<div class="mt-2">';
+	      html += '  <button class="btn btn-sm btn-link" type="button" onclick="toggleReplyForm(' + c.cmntNo + ')">답글</button>';
+	      html += '</div>';
 
-      html += '<div id="replyForm-' + c.cmntNo + '" class="mt-2 d-none">';
-      html += '  <textarea id="replyContent-' + c.cmntNo + '" class="form-control mb-2" rows="2" placeholder="답글을 입력하세요"></textarea>';
-      html += '  <button class="btn btn-sm btn-primary" type="button" onclick="submitReply(' + c.cmntNo + ')">등록</button>';
-      html += '</div>';
-    }
+	      html += '<div id="replyForm-' + c.cmntNo + '" class="mt-2 d-none">';
+	      html += '  <textarea id="replyContent-' + c.cmntNo + '" class="form-control mb-2" rows="2" placeholder="답글을 입력하세요"></textarea>';
+	      html += '  <button class="btn btn-sm btn-primary" type="button" onclick="submitReply(' + c.cmntNo + ')">등록</button>';
+	      html += '</div>';
+	    }
+	}
 
     div.innerHTML = html;
     root.appendChild(div);
@@ -781,7 +799,7 @@ async function loadComments(){
 	  const res = await fetch(`/api/talk/\${boardNo}/comments`, {
 	    method: "POST",
 	    headers: {"Content-Type":"application/json"},
-	    body: JSON.stringify({ cmntContent : content, 
+	    body: JSON.stringify({ cmntContent : content,
 	    					  parentCmntNo : parentCmntNo
 	    					 })
 	  });
@@ -807,7 +825,7 @@ const api = (...parts) => {
 	console.log(base + '/' + path);
 	  return base + '/' + path;
 	};
- 
+
 // 현재 선택된 카테고리
  let currentCategory = 'all';
 
@@ -824,7 +842,7 @@ const categoryMap = {
 
 // 카테고리 탭 전환
 document.querySelectorAll('.board-tab').forEach(tab => {
-	
+
     tab.addEventListener('click', function() {
         document.querySelectorAll('.board-tab').forEach(t => t.classList.remove('active'));
         this.classList.add('active');
@@ -1089,7 +1107,7 @@ function togglePostLike(ele) {
 
     // 버튼 액티브 상태 토글
     // icon.closest('.post-action-btn').classList.toggle('active', isPostLiked);
-    
+
     console.log("좋아요 클릭 상태 : " + status);
     // 서버로 전송해서 좋아요 기능 요청
     axios.post(`/community/talk/${boardVO.boardNo}/like`, {
@@ -1103,7 +1121,7 @@ function togglePostLike(ele) {
     	console.log("error 발생 : ", error);
     });
     //const prodData = response.data;
-    
+
 }
 
 
@@ -1143,9 +1161,9 @@ function modalSubmitComment() {
         return;
     }
 
-    
-    
-    
+
+
+
     // 새 댓글 추가 (데모용)
     const post = postsData[currentPostId];
     if (post) {
@@ -1211,7 +1229,7 @@ if (typeof showToast !== 'function') {
 // ==================== 신고 기능 ====================
 // 댓글 신고
 function reportComment(commentId, commentText) {
-	
+
     openReportModal('comment', commentId, commentText);
 }
 

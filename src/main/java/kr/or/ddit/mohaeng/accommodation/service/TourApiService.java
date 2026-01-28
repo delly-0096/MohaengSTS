@@ -83,8 +83,13 @@ public class TourApiService {
     	log.info("accommodation .roadAddress: {}", accommodation.getRoadAddress());
     	log.info("accommodation.address : {}", accommodation.getAddress());
     	log.info("accommodation.jibunAddress : {}", accommodation.getJibunAddress());
+    	log.info("accommodation.keyword : {}", accommodation.getKeyword());
+    	log.info("accommodation.accName : {}", accommodation.getAccName());
+    	log.info("accommodation.areaCode : {}", accommodation.getAreaCode());
     	
-    	// 기본 값 세팅 - key값이 주요
+    	// 기본 값 세팅 - key값이 주요-> 이름, 지역으로 검색하는게 더 정확도 높을 수도
+//    	accommodation = fetchSearchKeyword(accommodation);
+    	
     	accommodation = fetchContentIdByCd(accommodation);	// contentId 존재
     	
     	return accommodation;
@@ -120,6 +125,63 @@ public class TourApiService {
 	/**
 	 * <p>기본값 세팅을 위한 api 호출</p>
 	 * @author sdg
+	 * @date 2026-01-27
+	 * @param accommodation (법정동 시군구 코드, 법정동 시도 코드, 우편번호, 도로명주소, 주소, 지번 주소, 검색어, 건물명)
+	 * @return 숙소정보
+	 */
+	private AccommodationVO fetchSearchKeyword(AccommodationVO accommodation) {
+		log.info("키워드의 호텔 찾기 : fetchContentIdByCd ");
+		try {
+			String baseUrl = "http://apis.data.go.kr/B551011/KorService2/searchKeyword2";
+			StringBuilder urlBuilder = new StringBuilder(baseUrl);
+			urlBuilder.append("?serviceKey=" + serviceKey);
+			urlBuilder.append("&_type=json&MobileOS=ETC&MobileApp=Mohaeng");
+			// keyword는 accommodation.getKeyword()가 더 유리 
+			urlBuilder.append("&keyword=" + URLEncoder.encode(accommodation.getAccName(), "UTF-8")); // "토요코인"
+			urlBuilder.append("&contentTypeId=32");
+
+			String jsonResponse = restTemplate.getForObject(urlBuilder.toString(), String.class);
+			
+			// 3. Jackson 파싱
+			ObjectMapper objectMapper = new ObjectMapper();
+			JsonNode root = objectMapper.readTree(jsonResponse);
+			JsonNode items = root.path("response").path("body").path("items").path("item");
+			log.info("items : {}", items);
+			
+			if (items.isArray()) {
+	            for (JsonNode node : items) {
+	                if (isMatch(node, accommodation)) {
+	                	accommodation = bindData(accommodation, node); // 매칭 성공 시 데이터 바인딩 후 즉시 반환
+	                    break;
+	                }
+	            }
+	        } else if (items.isObject()) {
+	            if (isMatch(items, accommodation)) {
+	            	accommodation = bindData(accommodation, items);
+	            }
+	        }
+			
+			// 2. 받아온 결과 중 주소가 "대전"인 것 중 첫 번째를 그냥 믿기
+//			if (items.isArray()) {
+//			    for (JsonNode node : items) {
+//			        // 주소 비교가 아니라, 지역이 대전(areacode=3)인지만 체크
+//			        if ("3".equals(node.path("areacode").asText())) {
+//			            return bindData(target, node); // 매칭 성공!
+//			        }
+//			    }
+//			}
+			
+		}catch (Exception e) {
+			log.error("키워드의 호텔 찾기 중 error 발생 {}", e);
+		}
+
+		return null;
+	}
+
+
+	/**
+	 * <p>기본값 세팅을 위한 api 호출</p>
+	 * @author sdg
 	 * @date 2026-01-24
 	 * @param accommodation (법정동 시군구 코드, 법정동 시도 코드, 우편번호, 도로명주소, 주소, 지번 주소)
 	 * @return 숙소 정보
@@ -131,7 +193,7 @@ public class TourApiService {
 			
 			StringBuilder urlBuilder = new StringBuilder(baseUrl);
 			urlBuilder.append("?serviceKey=" + serviceKey);
-			urlBuilder.append("&_type=json&MobileOS=ETC&MobileApp=Mohaeng&numOfRows=50");
+			urlBuilder.append("&_type=json&MobileOS=ETC&MobileApp=Mohaeng&numOfRows=100");
 			urlBuilder.append("&lDongRegnCd=" + accommodation.getLdongRegnCd());
 			urlBuilder.append("&lDongSignguCd=" + accommodation.getLdongSignguCd());
 			
@@ -141,25 +203,26 @@ public class TourApiService {
 			ObjectMapper objectMapper = new ObjectMapper();
 			JsonNode root = objectMapper.readTree(jsonResponse);
 			JsonNode items = root.path("response").path("body").path("items").path("item");
-			
+			log.info("items : {}", items);
 			if (items.isArray()) {
 	            for (JsonNode node : items) {
 	                if (isMatch(node, accommodation)) {
-	                    bindData(accommodation, node); // 매칭 성공 시 데이터 바인딩 후 즉시 반환
+	                	accommodation = bindData(accommodation, node); // 매칭 성공 시 데이터 바인딩 후 즉시 반환
 	                    break;
 	                }
 	            }
 	        } else if (items.isObject()) {
 	            if (isMatch(items, accommodation)) {
-	                bindData(accommodation, items);
+	            	accommodation = bindData(accommodation, items);
 	            }
 	        }
 			
 			log.info("기본 데이터 세팅 완료 : {}", accommodation);
+//			log.info();
 			
 			// 반환 받은 값들 기본 데이터 매핑 한 vo 객체의 키 여부를 확인해서 실행
 			if (accommodation != null && accommodation.getApiContentId() != null) {
-
+				log.info("key값 획득 : {}", accommodation.getApiContentId());
 				// 해당 id의 등록 여부
 				if(mangeMapper.existsByApiContentId(accommodation) == null) {
 					// 2. 상세 소개 정보 채우기 (입실/퇴실/주차/개요 등)
@@ -173,6 +236,7 @@ public class TourApiService {
 					return null;
 				}
 		    }
+			
 			return null;
 			
 		} catch(Exception e){
@@ -193,12 +257,15 @@ public class TourApiService {
 	private boolean isMatch(JsonNode node, AccommodationVO target) {
 	    String apiAddr = node.path("addr1").asText().replaceAll("\\s", "");
 	    String apiZip = node.path("zipcode").asText();
+	    String title = node.path("title").asText();
 	    
 	    String targetRoad = target.getRoadAddress().replaceAll("\\s", "");
 	    String targetZip = target.getZone();
+	    String keyword = target.getAccName();
+	    log.info("isMatch node : ", node);
 
 	    // 우편번호가 같거나, 도로명 주소가 포함 관계일 때 매칭 성공으로 간주
-	    return apiZip.equals(targetZip) || apiAddr.contains(targetRoad) || targetRoad.contains(apiAddr);
+	    return title.contains(keyword) || apiZip.equals(targetZip) || apiAddr.contains(targetRoad) || targetRoad.contains(apiAddr);
 	}
 	
 	/**
@@ -211,7 +278,7 @@ public class TourApiService {
 	 */
 	private AccommodationVO bindData(AccommodationVO vo, JsonNode node) {
 		// mapx,mapy는 지도 api의 것을 사용 이미 프론트에서 값 지정해줌
-		log.info("node : {}", node);
+		log.info("bindData node : {}", node.path("title").asText());
 	    vo.setApiContentId(node.path("contentid").asText());	// api id
 	    vo.setAccName(node.path("title").asText());				// 숙소명
 	    vo.setTel(node.path("tel").asText());					// 전화번호 - 없을수도 있음

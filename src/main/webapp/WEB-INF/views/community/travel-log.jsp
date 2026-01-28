@@ -68,103 +68,121 @@
 			</c:if>
 
 			<c:forEach var="row" items="${paged.content}" varStatus="st">
+<!-- 관리자 신고(숨김) 기능 start **************************************************************************************************  -->
+				<c:set var="isHide" value="${row.deleteYn == 'H'}"/>
+
 				<div class="travellog-card" data-index="${st.index}"
 					data-id="${row.rcdNo}" data-writer="${row.memId}"
-					data-like="${row.likeCount}" onclick="goDetail(${row.rcdNo})">
+					data-like="${row.likeCount}"
+					onclick="${!isHide ? 'goDetail(' += row.rcdNo += ')' : ''}"
+         			style="cursor: ${isHide ? 'default' : 'pointer'};">
+					<!--onclick="goDetail(${row.rcdNo})">이걸 위와 같이 수정함  -->
 
+					<c:choose>
+						<%-- 게시글 상태가 3(숨김)인 경우 --%>
+						<c:when test="${isHide}">
+							<div class="alert alert-warning">
+				    			관리자에 의해 숨김 처리된 글입니다.
+				    		</div>
+						</c:when>
+						<c:otherwise>
+						<%-- 정상 게시글인 경우 (아래는 기존 코드)--%>
 
-					<div class="travellog-card-header">
-						<c:set var="pp" value="${row.profilePath}" />
+							<div class="travellog-card-header">
+								<c:set var="pp" value="${row.profilePath}" />
 
-						<c:choose>
-							<c:when test="${not empty pp and pp != 'null'}">
-								<img src="<c:url value='/upload${pp}'/>"
-									class="travellog-avatar" alt="프로필"
-									onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';" />
-							</c:when>
-							<c:otherwise>
-								<img
-									src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
-									class="travellog-avatar" alt="프로필" />
-							</c:otherwise>
-						</c:choose>
-
-
-
-						<div class="travellog-user-info">
-							<!-- 작성자 아이디 -->
-							<span class="travellog-username"> <c:choose>
-									<c:when test="${not empty row.nickname}">${row.nickname}(${row.memId })</c:when>
-									<c:otherwise>${row.memId}</c:otherwise>
+								<c:choose>
+									<c:when test="${not empty pp and pp != 'null'}">
+										<img src="<c:url value='/upload${pp}'/>"
+											class="travellog-avatar" alt="프로필"
+											onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80';" />
+									</c:when>
+									<c:otherwise>
+										<img
+											src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80"
+											class="travellog-avatar" alt="프로필" />
+									</c:otherwise>
 								</c:choose>
-							</span>
 
-							<span class="travellog-location">${row.locName}</span>
-						</div>
 
-						<div class="travellog-more-wrapper">
-							<div class="travellog-card-menu">
-								<c:if
-									test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
-									<!-- 신고하기: id/title을 실제 데이터로 -->
-									<button type="button" data-rcdno="${row.rcdNo}"
-										data-title="${fn:escapeXml(row.rcdTitle)}"
-										onclick="reportTravellogFromBtn(this)">
-										<i class="bi bi-flag"></i> 신고하기
-									</button>
-								</c:if>
+
+								<div class="travellog-user-info">
+									<!-- 작성자 아이디 -->
+									<span class="travellog-username"> <c:choose>
+											<c:when test="${not empty row.nickname}">${row.nickname}(${row.memId })</c:when>
+											<c:otherwise>${row.memId}</c:otherwise>
+										</c:choose>
+									</span>
+
+									<span class="travellog-location">${row.locName}</span>
+								</div>
+
+								<div class="travellog-more-wrapper">
+									<div class="travellog-card-menu">
+										<c:if
+											test="${not empty sessionScope.loginUser && sessionScope.loginUser.userType ne 'BUSINESS'}">
+											<!-- 신고하기: id/title을 실제 데이터로 -->
+											<button type="button" data-rcdno="${row.rcdNo}"
+												data-title="${fn:escapeXml(row.rcdTitle)}"
+												onclick="reportTravellogFromBtn(this)">
+												<i class="bi bi-flag"></i> 신고하기
+											</button>
+										</c:if>
+									</div>
+								</div>
 							</div>
-						</div>
-					</div>
 
-					<!-- 대표 이미지: 지금 attachNo만 있어서 실제 이미지 경로가 없으니 임시 고정 -->
-					<div class="travellog-card-image"
-						onclick="location.href='${pageContext.request.contextPath}/community/travel-log/detail?rcdNo=${row.rcdNo}'">
-						<c:choose>
-							<c:when test="${not empty row.coverPath}">
-								<img
-									src="${pageContext.request.contextPath}/files${row.coverPath}"
-									alt="여행사진">
-							</c:when>
-							<c:otherwise>
-								<img
-									src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=600&fit=crop&q=80"
-									alt="여행사진">
-							</c:otherwise>
-						</c:choose>
-					</div>
+							<!-- 대표 이미지: 지금 attachNo만 있어서 실제 이미지 경로가 없으니 임시 고정 -->
+							<div class="travellog-card-image"
+								onclick="location.href='${pageContext.request.contextPath}/community/travel-log/detail?rcdNo=${row.rcdNo}'">
+								<c:choose>
+									<c:when test="${not empty row.coverPath}">
+										<img
+											src="${pageContext.request.contextPath}/files${row.coverPath}"
+											alt="여행사진">
+									</c:when>
+									<c:otherwise>
+										<img
+											src="https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=600&h=600&fit=crop&q=80"
+											alt="여행사진">
+									</c:otherwise>
+								</c:choose>
+							</div>
 
-					<div class="travellog-card-actions">
-						<!-- 좋아요 -->
-						<button class="travellog-action-btn"
-							onclick="event.stopPropagation(); toggleListLike(this, ${row.rcdNo});">
-							<i class="bi ${row.myLiked == 1 ? 'bi-heart-fill' : 'bi-heart'}"></i>
-							<span>${row.likeCount}</span>
-						</button>
+							<div class="travellog-card-actions">
+								<!-- 좋아요 -->
+								<button class="travellog-action-btn"
+									onclick="event.stopPropagation(); toggleListLike(this, ${row.rcdNo});">
+									<i class="bi ${row.myLiked == 1 ? 'bi-heart-fill' : 'bi-heart'}"></i>
+									<span>${row.likeCount}</span>
+								</button>
 
 
-						<!-- 댓글 -->
-						<button class="travellog-action-btn"
-							onclick="event.stopPropagation(); goComment(${row.rcdNo});">
-							<i class="bi bi-chat"></i> <span>${row.commentCount}</span>
-						</button>
+								<!-- 댓글 -->
+								<button class="travellog-action-btn"
+									onclick="event.stopPropagation(); goComment(${row.rcdNo});">
+									<i class="bi bi-chat"></i> <span>${row.commentCount}</span>
+								</button>
 
 
-						<button class="travellog-action-btn btn-share"
-							style="margin-left: auto;"
-							onclick="handleShare(event, ${row.rcdNo});">
-							<i class="bi bi-send"></i>
-						</button>
-					</div>
+								<button class="travellog-action-btn btn-share"
+									style="margin-left: auto;"
+									onclick="handleShare(event, ${row.rcdNo});">
+									<i class="bi bi-send"></i>
+								</button>
+							</div>
 
-					<div class="travellog-card-content">
+							<div class="travellog-card-content">
 
-						<p class="travellog-text">${row.rcdTitle}</p>
+								<p class="travellog-text">${row.rcdTitle}</p>
 
-						<p class="travellog-date">
-							<fmt:formatDate value="${row.regDt}" pattern="yyyy-MM-dd" />
-						</p>
-					</div>
+								<p class="travellog-date">
+									<fmt:formatDate value="${row.regDt}" pattern="yyyy-MM-dd" />
+								</p>
+							</div>
+						</c:otherwise>
+					</c:choose>
+<!-- 관리자 신고(숨김) 기능 end **************************************************************************************************  -->
 
 				</div>
 			</c:forEach>
@@ -833,7 +851,7 @@ function toggleListLike(btn, rcdNo) {
   .then(data => {
     icon.className = data.liked ? 'bi bi-heart-fill' : 'bi bi-heart';
     count.textContent = data.likeCount;
-    
+
  	// 카드 dataset.like 갱신 (정렬/표시 일관성)
     const card = btn.closest('.travellog-card');
     if (card) card.dataset.like = String(data.likeCount);
@@ -906,7 +924,7 @@ let isLoadingMore = false;
 let hasMoreData = true;
 
 // 서버 API 엔드포인트
-const LIST_API = cp + '/api/travel-log/records'; 
+const LIST_API = cp + '/api/travel-log/records';
 
 function getLoginMemId() {
 	  return '<c:out value="${loginName}" default="" />';
@@ -1298,7 +1316,7 @@ function createTravellogCard(data) {
   var disabledClass = isBusiness ? ' action-disabled' : '';
 
   return ''
-  + '<div class="travellog-card" data-id="' + data.id + '" onclick="goDetail(' + data.id + ')">' 
+  + '<div class="travellog-card" data-id="' + data.id + '" onclick="goDetail(' + data.id + ')">'
     + '<div class="travellog-card-header">'
       + '<img src="' + data.avatar + '" alt="프로필" class="travellog-avatar">'
       + '<div class="travellog-user-info">'
@@ -1472,7 +1490,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	  ensureInitialIndex();
 
 	  applyBusinessDisabledUI(document);
-	  
+
 	  // 탭 클릭 이벤트
 	  document.querySelectorAll('.travellog-filter').forEach(tab => {
 	    tab.addEventListener('click', function () {

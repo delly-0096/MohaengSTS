@@ -596,7 +596,7 @@ public class PaymentServiceImpl implements IPaymentService {
 	                        자세한 예약 정보 및 티켓 확인은 마이페이지에서 확인하실 수 있습니다.
 	                      </div>
 	                      <div style="margin-top:16px;">
-	                        <a href="http://localhost:8272/mypage/payments"
+	                        <a href="http://localhost:8272/mypage/payments/list"
 	                           style="display:inline-block;padding:12px 16px;border-radius:10px;background:#2563eb;color:#ffffff;text-decoration:none;font-weight:700;font-size:14px;">
 	                          예약 내역 확인하러 가기
 	                        </a>

@@ -3,28 +3,40 @@
 <mapper namespace="kr.or.ddit.mohaeng.mypage.payments.mapper.IMyPaymentsMapper">
 
     <select id="selectPaymentStats" parameterType="int" resultType="map">
-        SELECT 
-            COUNT(*) AS TOTAL_COUNT,
-            COUNT(CASE WHEN PAY_STATUS = 'DONE' THEN 1 END) AS COMPLETED_COUNT,
-            COUNT(CASE WHEN PAY_STATUS = 'WAIT' THEN 1 END) AS PENDING_COUNT,
-            NVL(SUM(PAY_TOTAL_AMT), 0) AS TOTAL_REVENUE
-        FROM PAYMENT
-        WHERE MEM_NO = #{memNo}
-    </select>
+	    SELECT 
+	        COUNT(*) AS TOTAL_COUNT,
+	        COUNT(CASE WHEN PAY_STATUS != 'CANCEL' AND 
+	            NVL((SELECT MIN(RESV_DT) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+	                (SELECT MIN(FP.DEP_TIME) FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+	            ) <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 1 END) AS COMPLETED_COUNT,
+	        COUNT(CASE WHEN PAY_STATUS != 'CANCEL' AND 
+	            NVL((SELECT MIN(RESV_DT) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+	                (SELECT MIN(FP.DEP_TIME) FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+	            ) >= TRUNC(SYSDATE) THEN 1 END) AS PENDING_COUNT,
+	        NVL(SUM(PAY_TOTAL_AMT), 0) AS TOTAL_REVENUE
+	    FROM PAYMENT P
+	    WHERE MEM_NO = #{memNo}
+	</select>
 
     <select id="selectMyPaymentsCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
-        SELECT COUNT(*) 
-        FROM PAYMENT 
-        WHERE MEM_NO = #{memNo}
-        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
-            AND PAY_STATUS = 
-            <choose>
-                <when test="searchType == 'completed'">'DONE'</when>
-                <when test="searchType == 'pending'">'WAIT'</when>
-                <when test="searchType == 'cancelled'">'CANCEL'</when>
-            </choose>
-        </if>
-    </select>
+	    SELECT COUNT(*) 
+	    FROM PAYMENT P
+	    WHERE MEM_NO = #{memNo}
+	    <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
+	        AND (
+	            CASE 
+	                WHEN P.PAY_STATUS = 'CANCEL' THEN 'cancelled'
+	                WHEN (
+	                    NVL(
+	                        (SELECT MIN(RESV_DT) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+	                        (SELECT MIN(FP.DEP_TIME) FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+	                    )
+	                ) <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 'completed'
+	                ELSE 'pending'
+	            END
+	        ) = #{searchType}
+	    </if>
+	</select>
 
     <select id="selectMyPaymentsList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.MyPaymentsVO">
 	    SELECT B.* FROM (
@@ -32,7 +44,19 @@
 	            SELECT 
 	                P.PAY_NO, 
 	                P.PAY_DT, 
-	                P.PAY_STATUS, 
+	                /* PAY_STATUS 동적 판별 로직 추가 */
+                CASE 
+                    WHEN P.PAY_STATUS = 'CANCEL' THEN 'CANCEL' /* 이미 취소된 건은 유지 */
+                    WHEN (
+                        NVL(
+                            (SELECT MIN(RESV_DT) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+                            (SELECT MIN(FP.DEP_TIME) FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+                        )
+                    <![CDATA[    
+                    ) < TRUNC(SYSDATE) THEN 'DONE' /* 이용일이 오늘보다 이전이면 이용완료 */
+                    ]]>
+                    ELSE 'WAIT' /* 그 외(오늘 포함 미래)는 이용예정 */
+                END AS PAY_STATUS,
 	                P.PAY_TOTAL_AMT, 
 	                P.USE_POINT, 
 	                PI.TID,
@@ -70,7 +94,21 @@
 	            JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
 	            WHERE P.MEM_NO = #{memNo}
 	            <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
-	                AND P.PAY_STATUS = <choose><when test="searchType == 'completed'">'DONE'</when><when test="searchType == 'pending'">'WAIT'</when><when test="searchType == 'cancelled'">'CANCEL'</when></choose>
+                /* 검색 필터에서도 동일한 로직이 적용되도록 하려면 아래와 같이 처리 */
+                AND (
+                    CASE 
+                        WHEN P.PAY_STATUS = 'CANCEL' THEN 'cancelled'
+                        WHEN (
+                            NVL(
+                                (SELECT MIN(RESV_DT) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+                                (SELECT MIN(FP.DEP_TIME) FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+                            )
+	                        <![CDATA[    
+                        ) < TRUNC(SYSDATE) THEN 'completed'
+                        ]]>
+                        ELSE 'pending'
+	                END
+	                ) = #{searchType}
 	            </if>
 	            ORDER BY P.PAY_DT DESC
 	        ) A
@@ -79,22 +117,27 @@
 	</select>
 	
 	<select id="selectReceiptDetailList" parameterType="int" resultType="map">
-    	/* 1. 숙소/투어 상품 상세 */
+	    /* 1. 숙소/투어 상품 상세 */
 	    SELECT 
 	        TPL.TRIP_PROD_NO,
 	        TP.TRIP_PROD_TITLE AS PROD_NAME,
 	        TPL.QUANTITY,
 	        TPL.PAY_PRICE AS ITEM_TOTAL_PRICE,
 	        TO_CHAR(TPL.RESV_DT, 'YYYY.MM.DD') || ' (' || TPL.USE_TIME || ')' AS USE_INFO,
+	        CASE 
+	            WHEN (SELECT PAY_STATUS FROM PAYMENT WHERE PAY_NO = TPL.PAY_NO) = 'CANCEL' THEN 'CANCEL'
+	            WHEN TPL.RESV_DT <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 'DONE'
+	            ELSE 'WAIT'
+	        END AS PAY_STATUS,
 	        R.PROD_RV_NO,
 	        R.PROD_REVIEW,
 	        R.RATING,
 	        R.RCMDTN_YN,
-	        /* 상품 썸네일 (여행기록 방식: FILE_PATH 활용) */
+	        /* 상품 썸네일 */
 	        NVL((SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD 
 	             WHERE AFD.ATTACH_NO = TP.ATTACH_NO AND AFD.USE_YN = 'Y' AND ROWNUM = 1), 
 	            '/resources/images/no_image.jpg') AS THUMB_IMG,
-	        /* ✅ 리뷰 이미지 경로들 (LISTAGG 활용하여 경로만 콤마로 연결) */
+	        /* 리뷰 이미지 경로들 (LISTAGG 활용하여 경로만 콤마로 연결) */
 	        (SELECT LISTAGG(AFD.FILE_PATH, ',') WITHIN GROUP (ORDER BY AFD.FILE_NO)
 	         FROM ATTACH_FILE_DETAIL AFD 
 	         WHERE AFD.ATTACH_NO = R.ATTACH_NO AND AFD.USE_YN = 'Y') AS EXISTING_IMAGES
@@ -118,6 +161,11 @@
 	             WHERE FR_ALL.PAY_NO = P.PAY_NO)) 
 	        * (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_SUB WHERE FPS_SUB.RESERVE_NO = FR.RESERVE_NO) AS ITEM_TOTAL_PRICE,
 	        TO_CHAR(FP.DEP_TIME, 'YYYY.MM.DD (HH24:MI)') AS USE_INFO,
+	        CASE 
+	            WHEN P.PAY_STATUS = 'CANCEL' THEN 'CANCEL'
+	            WHEN FP.DEP_TIME <![CDATA[ < ]]> SYSDATE THEN 'DONE'
+	            ELSE 'WAIT'
+	        END AS PAY_STATUS,
 	        NULL AS PROD_RV_NO,
 	        NULL AS PROD_REVIEW,
 	        NULL AS RATING,
@@ -170,7 +218,7 @@
 	    FROM PAYMENT P
 	    JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
 	    JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
-	    JOIN MEM_USER MU ON M.MEM_NO = MU.MEM_NO  /* 판매자 정보를 찾기 위한 조인 로직 */
+	    LEFT OUTER JOIN MEM_USER MU ON M.MEM_NO = MU.MEM_NO  /* 판매자 정보를 찾기 위한 조인 로직 */
 	    LEFT OUTER JOIN (
 	        SELECT PAY_NO, TRIP_PROD_NO, ROW_NUMBER() OVER(PARTITION BY PAY_NO ORDER BY PROD_LIST_NO) AS RN 
 	        FROM TRIP_PROD_LIST

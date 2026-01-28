@@ -102,7 +102,7 @@
             </div> -->
 
             <div class="complete-actions text-center">
-	            <a href="${pageContext.request.contextPath}/mypage/payments" class="btn btn-outline btn-lg">
+	            <a href="${pageContext.request.contextPath}/mypage/payments/list" class="btn btn-outline btn-lg">
 	                <i class="bi bi-receipt me-2"></i>결제 내역 보기
 	            </a>
 	            <a href="${pageContext.request.contextPath}/" class="btn btn-primary btn-lg">

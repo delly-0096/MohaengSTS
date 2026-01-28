@@ -88,7 +88,7 @@
   	SET  PROC_STATUS = #{procStatus}
 		,PROC_RESULT = #{procResult}
 		,PROC_MEM_NO = #{procMemNo}
-		,REJ_RSN = #{reqMemNo}
+		,REJ_RSN = #{rejRsn}
 		,PROD_DT = SYSDATE
 		,MOD_DT = SYSDATE
 	WHERE RPT_NO = #{rptNo}

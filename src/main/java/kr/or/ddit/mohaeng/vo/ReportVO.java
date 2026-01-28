@@ -27,5 +27,5 @@ public class ReportVO {
     // 추가: 화면에 표시할 아이디 필드
     private String reqMemId;    // 신고자 아이디
     private String targetMemId; // 피신고자 아이디
-    
+
 }

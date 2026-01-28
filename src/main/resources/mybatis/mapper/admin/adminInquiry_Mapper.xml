@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.prodinquiry.mapper.IAdminInquiryMapper">
+
+    <!-- 공통 검색 조건 -->
+    <sql id="searchCondition">
+        <if test="searchWord != null and searchWord != ''">
+            AND (
+                tp.TRIP_PROD_TITLE LIKE '%' || #{searchWord} || '%'
+                OR DBMS_LOB.SUBSTR(i.PROD_INQRY_CN, 1000, 1) LIKE '%' || #{searchWord} || '%'
+                OR u.NICKNAME LIKE '%' || #{searchWord} || '%'
+                OR c.BZMN_NM LIKE '%' || #{searchWord} || '%'
+            )
+        </if>
+        <if test="searchCategory != null and searchCategory != ''">
+            AND i.INQUIRY_CTGRY = #{searchCategory}
+        </if>
+        <if test="searchStatus != null and searchStatus != ''">
+            <choose>
+                <when test='searchStatus == "HIDDEN"'>
+                    AND i.INQRY_STATUS = 'HIDDEN'
+                </when>
+                <when test='searchStatus == "WAIT"'>
+                    AND i.INQRY_STATUS = 'WAIT'
+                </when>
+                <when test='searchStatus == "DONE"'>
+                    AND i.INQRY_STATUS = 'DONE'
+                </when>
+            </choose>
+        </if>
+        <if test="startDate != null and startDate != ''">
+            AND i.REG_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+        </if>
+        <if test="endDate != null and endDate != ''">
+            <![CDATA[
+            AND i.REG_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+            ]]>
+        </if>
+    </sql>
+
+    <!-- 문의 목록 조회 (페이징 + 필터) -->
+    <select id="getInquiryList" parameterType="map" resultType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+        SELECT * FROM (
+            SELECT ROWNUM AS RN, A.* FROM (
+                SELECT 
+                    i.PROD_INQRY_NO AS prodInqryNo,
+                    i.TRIP_PROD_NO AS tripProdNo,
+                    i.INQUIRY_MEM_NO AS inquiryMemNo,
+                    i.INQUIRY_CTGRY AS inquiryCtgry,
+                    DBMS_LOB.SUBSTR(i.PROD_INQRY_CN, 200, 1) AS prodInqryCn,
+                    i.INQRY_STATUS AS inqryStatus,
+                    i.SECRET_YN AS secretYn,
+                    i.REG_DT AS regDt,
+                    i.MOD_DT AS modDt,
+                    i.DEL_YN AS delYn,
+                    i.REPLY_CN AS replyCn,
+                    i.REPLY_MEM_NO AS replyMemNo,
+                    i.REPLY_DT AS replyDt,
+                    u.NICKNAME AS inquiryNickname,
+                    tp.TRIP_PROD_TITLE AS productName,
+                    c.BZMN_NM AS sellerName,
+                    tp.MEM_NO AS sellerMemNo
+                FROM TRIP_PROD_INQUIRY i
+                LEFT JOIN MEM_USER u ON i.INQUIRY_MEM_NO = u.MEM_NO
+                LEFT JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO
+                LEFT JOIN COMPANY c ON tp.COMP_NO = c.COMP_NO
+                WHERE (i.DEL_YN IS NULL OR i.DEL_YN = 'N')
+                <include refid="searchCondition"/>
+                ORDER BY i.REG_DT DESC
+            ) A
+            <![CDATA[
+            WHERE ROWNUM <= #{endRow}
+            ]]>
+        )
+        <![CDATA[
+        WHERE RN > #{startRow}
+        ]]>
+    </select>
+
+    <!-- 문의 총 개수 -->
+    <select id="getInquiryCount" parameterType="map" resultType="int">
+        SELECT COUNT(*) 
+        FROM TRIP_PROD_INQUIRY i
+        LEFT JOIN MEM_USER u ON i.INQUIRY_MEM_NO = u.MEM_NO
+        LEFT JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        LEFT JOIN COMPANY c ON tp.COMP_NO = c.COMP_NO
+        WHERE (i.DEL_YN IS NULL OR i.DEL_YN = 'N')
+        <include refid="searchCondition"/>
+    </select>
+
+    <!-- 문의 통계 조회 -->
+    <select id="getInquiryStats" parameterType="map" resultType="map">
+        SELECT 
+            COUNT(*) AS "TOTALCOUNT",
+            SUM(CASE WHEN INQRY_STATUS = 'WAIT' THEN 1 ELSE 0 END) AS "WAITINGCOUNT",
+            SUM(CASE WHEN INQRY_STATUS = 'DONE' THEN 1 ELSE 0 END) AS "ANSWEREDCOUNT",
+            SUM(CASE WHEN INQRY_STATUS = 'HIDDEN' THEN 1 ELSE 0 END) AS "HIDDENCOUNT",
+            SUM(CASE WHEN TRUNC(REG_DT) = TRUNC(SYSDATE) THEN 1 ELSE 0 END) AS "TODAYCOUNT"
+        FROM TRIP_PROD_INQUIRY
+        WHERE (DEL_YN IS NULL OR DEL_YN = 'N')
+        <if test="startDate != null and startDate != ''">
+            AND REG_DT >= TO_DATE(#{startDate}, 'YYYY-MM-DD')
+        </if>
+        <if test="endDate != null and endDate != ''">
+            <![CDATA[
+            AND REG_DT < TO_DATE(#{endDate}, 'YYYY-MM-DD') + 1
+            ]]>
+        </if>
+    </select>
+
+    <!-- 문의 상세 조회 -->
+    <select id="getInquiryDetail" parameterType="int" resultType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+        SELECT 
+            i.PROD_INQRY_NO AS prodInqryNo,
+            i.TRIP_PROD_NO AS tripProdNo,
+            i.INQUIRY_MEM_NO AS inquiryMemNo,
+            i.INQUIRY_CTGRY AS inquiryCtgry,
+            i.PROD_INQRY_CN AS prodInqryCn,
+            i.INQRY_STATUS AS inqryStatus,
+            i.SECRET_YN AS secretYn,
+            i.REG_DT AS regDt,
+            i.MOD_DT AS modDt,
+            i.DEL_YN AS delYn,
+            i.REPLY_CN AS replyCn,
+            i.REPLY_MEM_NO AS replyMemNo,
+            i.REPLY_DT AS replyDt,
+            i.REPLY_MOD_DT AS replyModDt,
+            u.NICKNAME AS inquiryNickname,
+            tp.TRIP_PROD_TITLE AS productName,
+            c.BZMN_NM AS sellerName,
+            tp.MEM_NO AS sellerMemNo
+        FROM TRIP_PROD_INQUIRY i
+        LEFT JOIN MEM_USER u ON i.INQUIRY_MEM_NO = u.MEM_NO
+        LEFT JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        LEFT JOIN COMPANY c ON tp.COMP_NO = c.COMP_NO
+        WHERE i.PROD_INQRY_NO = #{prodInqryNo}
+    </select>
+
+    <!-- 문의 숨김 처리 (INQRY_STATUS = 'HIDDEN') -->
+    <update id="hideInquiry" parameterType="int">
+        UPDATE TRIP_PROD_INQUIRY
+        SET INQRY_STATUS = 'HIDDEN',
+            MOD_DT = SYSDATE
+        WHERE PROD_INQRY_NO = #{prodInqryNo}
+    </update>
+
+    <!-- 문의 숨김 해제 (답변 유무에 따라 DONE/WAIT로 복구) -->
+    <update id="unhideInquiry" parameterType="int">
+        UPDATE TRIP_PROD_INQUIRY
+        SET INQRY_STATUS = CASE WHEN REPLY_CN IS NOT NULL THEN 'DONE' ELSE 'WAIT' END,
+            MOD_DT = SYSDATE
+        WHERE PROD_INQRY_NO = #{prodInqryNo}
+    </update>
+
+    <!-- 엑셀 다운로드용 전체 목록 -->
+    <select id="getInquiryListForExcel" parameterType="map" resultType="kr.or.ddit.mohaeng.product.inquiry.vo.TripProdInquiryVO">
+        SELECT 
+            i.PROD_INQRY_NO AS prodInqryNo,
+            i.TRIP_PROD_NO AS tripProdNo,
+            i.INQUIRY_MEM_NO AS inquiryMemNo,
+            i.INQUIRY_CTGRY AS inquiryCtgry,
+            DBMS_LOB.SUBSTR(i.PROD_INQRY_CN, 500, 1) AS prodInqryCn,
+            i.INQRY_STATUS AS inqryStatus,
+            i.SECRET_YN AS secretYn,
+            i.REG_DT AS regDt,
+            i.MOD_DT AS modDt,
+            i.DEL_YN AS delYn,
+            i.REPLY_CN AS replyCn,
+            i.REPLY_MEM_NO AS replyMemNo,
+            i.REPLY_DT AS replyDt,
+            u.NICKNAME AS inquiryNickname,
+            tp.TRIP_PROD_TITLE AS productName,
+            c.BZMN_NM AS sellerName,
+            tp.MEM_NO AS sellerMemNo
+        FROM TRIP_PROD_INQUIRY i
+        LEFT JOIN MEM_USER u ON i.INQUIRY_MEM_NO = u.MEM_NO
+        LEFT JOIN TRIP_PROD tp ON i.TRIP_PROD_NO = tp.TRIP_PROD_NO
+        LEFT JOIN COMPANY c ON tp.COMP_NO = c.COMP_NO
+        WHERE (i.DEL_YN IS NULL OR i.DEL_YN = 'N')
+        <include refid="searchCondition"/>
+        ORDER BY i.REG_DT DESC
+    </select>
+
+
+</mapper>

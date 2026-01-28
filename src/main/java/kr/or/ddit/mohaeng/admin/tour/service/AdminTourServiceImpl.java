@@ -23,13 +23,19 @@ public class AdminTourServiceImpl implements IAdminTourService {
 	@Autowired
     private IAdminTourMapper adminTourMapper;
 
-    @Override
+	@Override
     public void getTourList(PaginationInfoVO<TripProdVO> pagInfoVO) {
         int totalRecord = adminTourMapper.getTourCount(pagInfoVO);
         pagInfoVO.setTotalRecord(totalRecord);
         
         List<TripProdVO> dataList = adminTourMapper.getTourList(pagInfoVO);
         pagInfoVO.setDataList(dataList);
+    }
+
+    // 엑셀용 전체 목록 조회
+    @Override
+    public List<TripProdVO> getTourListAll(Map<String, Object> params) {
+        return adminTourMapper.getTourListAll(params);
     }
 
     @Override
@@ -40,14 +46,12 @@ public class AdminTourServiceImpl implements IAdminTourService {
             return null;
         }
         
-        // 예약 가능 시간 목록
         List<ProdTimeInfoVO> timeInfoList = adminTourMapper.selectTimeInfoList(tripProdNo);
         if (timeInfoList == null) {
             timeInfoList = new ArrayList<>();
         }
         tour.setProdTimeList(timeInfoList);
         
-        // 이미지 목록
         if (tour.getAttachNo() != null && tour.getAttachNo() != 0) {
             List<AttachFileDetailVO> imageList = adminTourMapper.selectTourImages(tour.getAttachNo());
             tour.setImageList(imageList);

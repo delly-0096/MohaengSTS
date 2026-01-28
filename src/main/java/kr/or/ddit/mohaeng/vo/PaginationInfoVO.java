@@ -20,6 +20,8 @@ public class PaginationInfoVO<T>{
     private String searchType;
     private String searchWord;
     private int memNo;
+    private String searchStatus;  // 상태 필터
+    private String searchRegion;  // 지역 필터
 
     //추가함
     private Map<String, String> filters;

@@ -1,5 +1,7 @@
 package kr.or.ddit.mohaeng.admin.tour.controller;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,28 +31,52 @@ public class AdminTourController {
 	@Autowired
     private IAdminTourService adminTourService;
 
-    /**
-     * 투어 관리 목록 조회
+	/**
+     * 투어 관리 목록 조회 (페이징 + 필터)
      */
     @GetMapping
     public ResponseEntity<PaginationInfoVO<TripProdVO>> getTourList(
             @RequestParam(defaultValue = "1") int currentPage,
             @RequestParam(defaultValue = "") String searchWord,
-            @RequestParam(defaultValue = "all") String searchType
+            @RequestParam(defaultValue = "all") String searchType,
+            @RequestParam(defaultValue = "all") String searchStatus,
+            @RequestParam(defaultValue = "all") String searchRegion
     ) {
-        log.info("투어관리 목록 조회: currentPage={}, searchWord={}, searchType={}", 
-                currentPage, searchWord, searchType);
+        log.info("투어관리 목록 조회: page={}, word={}, type={}, status={}, region={}", 
+                currentPage, searchWord, searchType, searchStatus, searchRegion);
 
         PaginationInfoVO<TripProdVO> pagInfoVO = new PaginationInfoVO<>(10, 5);
         pagInfoVO.setCurrentPage(currentPage);
         pagInfoVO.setSearchWord(searchWord);
-        
-        if (!"all".equals(searchType)) {
-            pagInfoVO.setSearchType(searchType);
-        }
+        pagInfoVO.setSearchType(searchType);
+        pagInfoVO.setSearchStatus(searchStatus);
+        pagInfoVO.setSearchRegion(searchRegion);
 
         adminTourService.getTourList(pagInfoVO);
         return ResponseEntity.ok(pagInfoVO);
+    }
+
+    /**
+     * 엑셀 다운로드용 전체 목록 조회
+     */
+    @GetMapping("/excel")
+    public ResponseEntity<List<TripProdVO>> getTourListForExcel(
+            @RequestParam(defaultValue = "") String searchWord,
+            @RequestParam(defaultValue = "all") String searchType,
+            @RequestParam(defaultValue = "all") String searchStatus,
+            @RequestParam(defaultValue = "all") String searchRegion
+    ) {
+        log.info("투어 엑셀 다운로드: word={}, type={}, status={}, region={}", 
+                searchWord, searchType, searchStatus, searchRegion);
+
+        Map<String, Object> params = new HashMap<>();
+        params.put("searchWord", searchWord);
+        params.put("searchType", searchType);
+        params.put("searchStatus", searchStatus);
+        params.put("searchRegion", searchRegion);
+
+        List<TripProdVO> list = adminTourService.getTourListAll(params);
+        return ResponseEntity.ok(list);
     }
 
     /**

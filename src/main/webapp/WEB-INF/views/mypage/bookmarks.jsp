@@ -52,21 +52,19 @@
 					</div> 
 				</c:if>
 
-					<div class="bookmark-search">
-		                <form class="bookmark-search-input" id="searchForm" method="post">
-		                	<input type="hidden" name="page" id="page"/>
-		                </form>
-	            	</div>
-					            
-					<!-- 탭 -->
-					<div class="mypage-tabs mb-4">
-						<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'all' }">active</c:if>" data-category="all">전체</button>
-						<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'schedule' }">active</c:if>" data-category="schedule">일정</button>
-						<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'accommodation' }">active</c:if>" data-category="accommodation">숙소</button>
-						<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'tour' }">active</c:if>" data-category="tour">투어/체험/티켓</button>
-					</div>
-				
-				
+				<div class="bookmark-search">
+	                <form class="bookmark-search-input" id="searchForm" method="post">
+	                	<input type="hidden" name="page" id="page"/>
+	                </form>
+            	</div>
+				            
+				<!-- 탭 -->
+				<div class="mypage-tabs mb-4">
+					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'all' }">active</c:if>" data-category="all">전체</button>
+					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'schedule' }">active</c:if>" data-category="schedule">일정</button>
+					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'accommodation' }">active</c:if>" data-category="accommodation">숙소</button>
+					<button class="mypage-tab <c:if test="${not empty contentType and contentType eq 'tour' }">active</c:if>" data-category="tour">투어/체험/티켓</button>
+				</div>
 				
 				<!-- 북마크 그리드 -->
 				<div class="content-section">
@@ -122,16 +120,27 @@
 											</span>
 										</label>
 			
-										<!-- 이미지 구현 해야함............. -->
+										<%-- 이미지 가공 로직 추가 --%>
 										<div class="bookmark-card-image">
 										    <c:choose>
+										        <%-- 1. 외부 URL (HTTP로 시작하는 경우: Unsplash, LINK_THUMBNAIL 등) --%>
 										        <c:when test="${fn:startsWith(bookmark.thumbImg, 'http')}">
-										            <img src="${bookmark.thumbImg}" alt="${bookmark.title}">
+										            <c:set var="finalImg" value="${bookmark.thumbImg}" />
 										        </c:when>
+										        
+										        <%-- 2. 프로젝트 내부 정적 자원 (기본 이미지 등) --%>
+										        <c:when test="${fn:contains(bookmark.thumbImg, 'resources')}">
+										            <c:set var="finalImg" value="${pageContext.request.contextPath}${fn:startsWith(bookmark.thumbImg, '/') ? '' : '/'}${bookmark.thumbImg}" />
+										        </c:when>
+										        
+										        <%-- 3. 외부 업로드 파일 (업로드된 썸네일: /files 접두사 추가) --%>
 										        <c:otherwise>
-										            <img src="${pageContext.request.contextPath}/resources${bookmark.thumbImg}" alt="${bookmark.title}">
+										            <c:set var="finalImg" value="${pageContext.request.contextPath}/files${fn:startsWith(bookmark.thumbImg, '/') ? '' : '/'}${bookmark.thumbImg}" />
 										        </c:otherwise>
 										    </c:choose>
+										    
+										    <img src="${finalImg}" alt="${bookmark.title}" 
+										         onerror="this.src='${pageContext.request.contextPath}/resources/images/no_image.jpg'">
 										    
 										    <button class="bookmark-remove active" onclick="removeScheduleBookmark(this)">
 										        <i class="bi bi-bookmark-fill"></i>

@@ -1,44 +1,33 @@
 package kr.or.ddit.mohaeng.admin.transactions.payments.controller;
-
-import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import kr.or.ddit.mohaeng.admin.transactions.payments.service.IAdminPaymentsService;
 import kr.or.ddit.mohaeng.vo.AdminPaymentsVO;
-
+import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 @RestController
-@RequestMapping("/api/admin/transactions/payments")
-@CrossOrigin(origins = "http://localhost:7272", allowCredentials = "true")
+@RequestMapping("/api/admin/transactions/payments") // 이미지의 404 경로와 일치시킴
 public class AdminPaymentsController {
-
     @Autowired
-    private IAdminPaymentsService service;
-
-    // 결제 리스트 조회 (페이징, 검색, 필터 포함)
-	/*
-	 * @GetMapping("/list") public List<AdminPaymentsVO>
-	 * getPaymentList(@RequestParam Map<String, Object> params) { // params에는 page,
-	 * searchTerm, dateFilter, statusFilter가 담겨옴 return
-	 * service.selectAdminPaymentList(params); }
-	 */
-    @GetMapping("/list")
-    public List<AdminPaymentsVO> getPaymentList(@RequestParam Map<String, Object> params) {
-        List<AdminPaymentsVO> list = service.selectAdminPaymentList(params);
-        
-        // 만약 DB 결과가 null이면 리액트가 에러 나지 않게 빈 리스트[]를 던져줌
-        if (list == null) {
-            return new java.util.ArrayList<>(); 
-        }
-        return list;
-    }
-    
-
-    // 통계 데이터 조회
+    private IAdminPaymentsService adminPaymentsService;
+    // 통계 조회 (이미지의 /stats 대응)
     @GetMapping("/stats")
-    public Map<String, Object> getStats() {
-        return service.getPaymentStats();
+    public ResponseEntity<Map<String, Object>> getStats() {
+        return ResponseEntity.ok(adminPaymentsService.getAdminPaymentDashboard());
     }
-    
-    
+    // 리스트 조회 (이미지의 /list 대응)
+    @GetMapping("/list")
+    public ResponseEntity<PaginationInfoVO<AdminPaymentsVO>> getPaymentsList(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(required = false) String searchWord,
+            @RequestParam(required = false) String searchType) {
+
+        PaginationInfoVO<AdminPaymentsVO> pagingVO = new PaginationInfoVO<>(10, 5);
+        pagingVO.setCurrentPage(page);
+        pagingVO.setSearchWord(searchWord);
+        pagingVO.setSearchType(searchType);
+
+        return ResponseEntity.ok(adminPaymentsService.getAdminPaymentsList(pagingVO));
+    }
 }

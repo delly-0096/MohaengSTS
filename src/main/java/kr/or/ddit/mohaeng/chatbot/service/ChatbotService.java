@@ -81,7 +81,7 @@ public class ChatbotService {
                 - 여행톡 커뮤니티 (/community/talk)
                 - 여행기록 작성 (/community/travel-log)
                 - 회원 정보 수정 (/mypage/profile)
-                - 예약/결제 내역 (/mypage/payments)
+                - 예약/결제 내역 (/mypage/payments/list)
                 - 포인트 내역 (/mypage/points)
                 - 알림 내역 (/mypage/notifications)
                 - 자주 묻는 질문 (/support/faq)

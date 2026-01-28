@@ -64,7 +64,7 @@ public class MyPaymentsServiceImpl implements IMyPaymentsService {
 
 	    Long attachNo = existingAttachNo;
 	    
-	    // 1. ATTACH_NO가 없으면(최초 등록이거나 기존에 이미지가 없었을 때) 마스터 생성
+	    // ATTACH_NO가 없으면(최초 등록이거나 기존에 이미지가 없었을 때) 마스터 생성
 	    if (attachNo == null || attachNo == 0) {
 	        attachNo = myPaymentsMapper.nextAttachNo();
 	        Map<String, Object> master = new HashMap<>();
@@ -73,7 +73,7 @@ public class MyPaymentsServiceImpl implements IMyPaymentsService {
 	        myPaymentsMapper.insertAttachFile(master);
 	    }
 
-	    // 2. 실제 저장 폴더 설정 (WebConfig의 C:/mohaeng/ 매핑과 맞춰야 함)
+	    // 실제 저장 폴더 설정 (WebConfig의 C:/mohaeng/ 매핑과 맞춰야 함)
 	    String uploadRoot = "C:/mohaeng/product/"; 
 
 	    for (MultipartFile file : files) {
@@ -93,7 +93,7 @@ public class MyPaymentsServiceImpl implements IMyPaymentsService {
 	            if(!saveFile.getParentFile().exists()) saveFile.getParentFile().mkdirs();
 	            file.transferTo(saveFile);
 
-	            // 3. ATTACH_FILE_DETAIL 등록 (상세 데이터 추가)
+	            // ATTACH_FILE_DETAIL 등록 (상세 데이터 추가)
 	            Map<String, Object> detail = new HashMap<>();
 	            detail.put("fileNo", myPaymentsMapper.nextFileNo());
 	            detail.put("attachNo", attachNo); // 기존 또는 신규 번호 유지

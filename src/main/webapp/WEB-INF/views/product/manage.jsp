@@ -820,7 +820,6 @@
                                 </div>
                                 <div class="mt-4 p-3 bg-light rounded">
                                     <h6><strong>상품 설명</strong></h6>
-                                    <!-- overview, tripProdContent -->
                                     <p id="view-content" class="mb-0 text-secondary" style="white-space: pre-line;">설명 내용이 들어갑니다.</p>
                                 </div>
                             </div>
@@ -878,7 +877,6 @@
 			                        </div>
 			                	</div>
 	                        </div>
-	                        
                         </div>
                     </div>
 					<!-- 예약정보 -->
@@ -896,7 +894,7 @@
                                     </tr>
                                 </thead>
                                 <tbody id="view-reservation-list">
-<!--                                     <tr><td colspan="6" class="text-center py-4">예약 내역이 없습니다.</td></tr> -->
+                                	<!-- 예약 내역 출력 란 -->
                                 </tbody>
                             </table>
                         </div>
@@ -922,46 +920,15 @@
 					
 					<!-- 리뷰내역 -->
                     <div class="tab-pane fade" id="tab-review" role="tabpanel">
-                    	
                         <div id="view-review-list">
-                        
                         	<!-- 출력란 -->
-                            <div class="card mb-3 border-0 border-bottom">
-                                <div class="card-body">
-                                	<!-- 리뷰내역 -->
-                                    <div class="d-flex justify-content-between mb-2">
-                                        <h6 class="fw-bold mb-0">뽀삐 아빠 <span class="text-warning ml-2">★★★★☆</span></h6>
-                                        <small class="text-muted">2026-01-16</small>
-                                    </div>
-                                    <p class="small mb-0">상품이 너무 좋아요! 다시 이용하고 싶습니다.</p>
-                                    <div class="review-images">사진</div>
-                                </div>
-                            </div>
-                            
                         </div>
                     </div>
 
 					<!-- 문의 내역 -->
                     <div class="tab-pane fade" id="tab-qna" role="tabpanel">
                         <div class="list-group list-group-flush" id="view-qna-list">
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1 fw-bold">문의 제목입니다. <span class="badge bg-secondary ms-2">답변대기</span></h6>
-                                    <small>2026-01-25</small>
-                                </div>
-                                <p class="mb-1 small">이 상품 아이가 참여 가능한가요?</p>
-                                <button class="btn btn-sm btn-link p-0">답변하기</button>
-                            </div>
-                            
-                            <div class="list-group-item">
-                                <div class="d-flex w-100 justify-content-between">
-                                    <h6 class="mb-1 fw-bold">문의 제목입니다. <span class="badge bg-secondary ms-2">답변대기</span></h6>
-                                    <small>2026-01-25</small>
-                                </div>
-                                <p class="mb-1 small">이 상품 아이가 참여 가능한가요?</p>
-                                <button class="btn btn-sm btn-link p-0">답변하기</button>
-                            </div>
-                            
+	                          <!--  출력란 -->
                         </div>
                     </div>
                 </div>
@@ -1173,8 +1140,8 @@ async function editProduct(data) {
 	        
 // 	        renderProductData(acc, "accommodation");
 // 	        data.accommodation = null; 
-	        ///////
 	        
+	        // 객실 옵션, 특징
 	        if (acc.roomTypeList && acc.roomTypeList.length > 0) {
 	        	acc.roomTypeList = acc.roomTypeList.filter(room => room && room.roomTypeNo);
 	            acc.roomTypeList.forEach(room => {
@@ -1185,6 +1152,7 @@ async function editProduct(data) {
 	            });
 	        }
 
+	        // 추가 옵션
 	        if (acc.accOptionList && acc.accOptionList.length > 0) {
 	        	acc.accOptionList = acc.accOptionList.filter(opt => opt && opt.accOptionNo);
 	            acc.accOptionList.forEach(() => addOption());
@@ -1323,6 +1291,9 @@ async function showDetail (data){
 		areaCode.innerHTML = res.data.ctyNm != null ? setArea(res.data.ctyNm) : "서울";	// 지역
 		
 		let reserveHtml = ``;	// 출력용 변수
+		
+		let tripProdNo = res.data.tripProdNo;
+		console.log("tripProdNo : ", tripProdNo);
 		
 		// 숙박
 		if(res.data.accommodation && selectCategory === "숙박"){
@@ -1472,7 +1443,6 @@ async function showDetail (data){
 			saleDate.innerHTML = setTime(prod.saleStartDt) + " ~ " + setTime(prod.saleEndDt);	// 판매 기간
 			
 			let prodResvList = prod.prodList;
-// 			console.log("prodResvList : ", prodResvList);
 			
 			prodResvList.forEach((resv, index) => {
 					console.log("resv : ", resv);
@@ -1624,52 +1594,64 @@ async function showDetail (data){
 			<div class="inquiry-modal-list" id="inquiryModalList">`;
 			
 		inquiryList.forEach((inquiry) => {
-			console.log("inquiry : ", inquiry);
 			
-			let inquiryStatus = inquiry.inquiryStatus !== null ? (inquiry.inquiryStatus === "WAIT" ? "답변대기" : "답변완료") : "답변대기";
+			let author = inquiry.inquiryNickname !== null ? inquiry.inquiryNickname : "길동";
+			let inquiryStatus = inquiry.inqryStatus !== null ? (inquiry.inqryStatus === "WAIT" ? "답변대기" : "답변완료") : "답변대기";
+			console.log("inquiry.inqryStatus : ", inquiry.inqryStatus);
+// 			console.log("inquiryStatus : ", inquiryStatus);
+			
+			let inquiryCode = inquiryStatus === "답변대기" ?  'waiting' : 'answered';
+// 			console.log("inquiryCode : ", inquiryCode);
+			
 			let showDate = inquiry.regDt !== null ? (inquiry.modDt !== null ? setTime(inquiry.modDt) : setTime(inquiry.regDt)) : "2026-01-23";
 			let inquiryContent = inquiry.prodInqryCn !== null ? inquiry.prodInqryCn : "이건 어떻게 해야되나요?";	// 문의 내용
 			let inquiryType = setInquiryCategory(inquiry.inquiryCtgry); 										// 문의 카테고리
-			// inqryStatus = 답변 여부
+			let inquiryTypeCode = inquiry.inquiryCtgry !== null ? inquiry.inquiryCtgry : "product";
 			
+			let statusClass = inquiry.inqryStatus === 'DONE' ? 'is-answered' : 'is-waiting';					// 조회용 ui
+// 			console.log("statusClass : ", statusClass );
+			
+// 			let replyStatus = "";	// 답변 상태 보여줄것
+// 			let answerStatus = "";	// 답변 남긴 상태 보여줄것
+			let replyDt = setTime(inquiry.replyDt);	// 답변 날짜
+			
+			
+			// 답변 대기
+// 			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'WAIT') answerStatus = `style='display:none;'`;
+			// 답변 완료
+// 			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'DONE') replyStatus = `style='display:none;'`;
+
+			// 문의사항
 			inquiryHtml += `
-				<div class="inquiry-modal-item" data-status="waiting" data-id="\${inquiry.prodInqryNo}">
+				<div class="inquiry-modal-item \${statusClass}" data-status="\${inquiryCode}" data-id="\${inquiry.prodInqryNo}">
 					<div class="inquiry-modal-header">
                 		<div class="inquiry-modal-info">
-                			<span class="inquiry-type-badge product">\${inquiryType}</span>
-                			<span class="inquiry-author"></span>
+                			<span class="inquiry-type-badge \${inquiryTypeCode}">\${inquiryType}</span>
+                			<span class="inquiry-author">\${author}</span>
                             <span class="inquiry-date">\${showDate}</span>
                         </div>
-                        <span class="inquiry-status \${inquiry.inqryStatus}">\${inquiry.inqryStatus == 'WAIT' ? '미답변' : '답변완료'}</span>
+                        <span class="inquiry-status \${inquiryCode}">\${inquiryStatus}</span>
 					</div>
 					<div class="inquiry-modal-question">
 	                    <p><strong>Q.</strong>\${inquiryContent}</p>
-	                </div>`;
-	                
-			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'WAIT'){
-				inquiryHtml += `
-					<div class="inquiry-modal-reply">
-	                    <textarea class="form-control" placeholder="답변을 입력하세요..." rows="3"></textarea>
+	                </div>
+	                <div class="inquiry-modal-reply">
+		                <textarea class="form-control reply" placeholder="답변을 입력하세요..." rows="3"></textarea>
 	                    <div class="reply-actions">
-	                        <button class="btn btn-primary btn-sm" onclick="submitModalReply(\${inquiry.prodInqryNo})">
+	                        <button class="btn btn-primary btn-sm" onclick="submitReply(\${inquiry.prodInqryNo}, \${tripProdNo})">
 	                            <i class="bi bi-send me-1"></i>답변 등록
 	                        </button>
 	                    </div>
-	                </div>`;
-			}
-			
-			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'DONE'){
-				let replyDt = setTime(inquiry.regDt);
-				inquiryHtml += `
+                    </div>
 					<div class="inquiry-modal-answer">
 	                    <div class="answer-header">
 	                        <span><i class="bi bi-building"></i> 내 답변</span>
 	                        <div class="answer-actions">
 	                            <span class="answer-date">\${replyDt}</span>
-	                            <button type="button" class="btn-edit-answer" onclick="editAnswer(\${inquiry.prodInqryNo})" title="답변 수정">
+	                            <button type="button" class="btn-edit-answer" onclick="editAnswer(\${inquiry.prodInqryNo}, \${tripProdNo})" title="답변 수정">
 	                                <i class="bi bi-pencil"></i>
 	                            </button>
-	                            <button type="button" class="btn-delete-answer" onclick="deleteAnswer(\${inquiry.prodInqryNo})" title="답변 삭제">
+	                            <button type="button" class="btn-delete-answer" onclick="deleteAnswer(\${inquiry.prodInqryNo}, \${tripProdNo})" title="답변 삭제">
 	                                <i class="bi bi-trash"></i>
 	                            </button>
 	                        </div>
@@ -1677,14 +1659,19 @@ async function showDetail (data){
 	                    <div class="answer-content">
 	                        <p><strong>A.</strong> <span class="answer-text">\${inquiry.replyCn}</span></p>
 	                    </div>
-	                </div>`;
-			}
-			inquiryHtml += `</div>`;
+	                </div>
+				</div>`;
 		});
 		
-		if(inquiryHtml === "") inquiryHtml = "등록된 문의 내역이 없습니다";
-		
+		if(!inquiryList || inquiryList.length <=  0 ) {
+			inquiryHtml += `
+				<div class="no-review">
+	                <i class="bi bi-chat-square-text"></i>
+	                <p>등록된 문의 내역이 없습니다.</p>
+	            </div>`;
+		}
 		inquiryHtml += `</div>`;
+		
 		inquiryContainerList.innerHTML = inquiryHtml;
 		
 	}catch(err){
@@ -1694,72 +1681,189 @@ async function showDetail (data){
 	detailModal.show();
 } 
 
-//모달에서 답변 등록
-function submitModalReply(inquiryId) {
-	var item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
-	var textarea = item.querySelector('textarea');
-	var content = textarea.value.trim();
+// 문의내역 용
+let answerPart;
+let originText;
+
+//모달에서 답변 등록 - 아직 구현 안됨
+function submitReply(inquiryId, tripProdNo, editContent = "") {
+	console.log("submitReply - inquiryId : ", inquiryId);
+	console.log("submitReply - tripProdNo : ", tripProdNo);
+	console.log("submitReply - editContent : ", editContent);
+	
+	const item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
+	
+	const textarea = document.getElementById('editAnswerText-' + inquiryId) ? document.getElementById('editAnswerText-' + inquiryId) : item.querySelector('.reply');
+	const printArea = item.querySelector('.answer-content');	// 출력 div태그
+	const content = textarea.value.trim();
+	
+	// 리뷰 완료후 출력할 곳
+	const answerDate = item.querySelector('.answer-date');
+	if(item.querySelector('.answer-text')) answerPart = item.querySelector('.answer-text');
+	else {
+		printArea.innerHTML =`<p><strong>A.</strong><span class="answer-text"></span></p>`;
+		answerPart = item.querySelector('.answer-text'); 
+	}
+	console.log("answerPart : ", answerPart);
+	
 	
 	if (!content) {
-	    if (typeof showToast === 'function') {
-	        showToast('답변 내용을 입력해주세요.', 'warning');
-	    }
+        showToast('답변 내용을 입력해주세요.', 'warning');
 	    return;
 	}
 	
 	if (content.length < 10) {
-	    if (typeof showToast === 'function') {
-	        showToast('답변은 10자 이상 입력해주세요.', 'warning');
-	    }
+        showToast('답변은 10자 이상 입력해주세요.', 'warning');
 	    return;
 	}
 
- 	// TODO: 실제 API 호출
-	console.log('답변 등록:', { inquiryId: inquiryId, content: content });
-
- 	// 상태 변경
-	item.dataset.status = 'answered';
-	var statusBadge = item.querySelector('.inquiry-status');
-	statusBadge.className = 'inquiry-status answered';
-	statusBadge.textContent = '답변완료';
-	
-	// 답변 영역으로 변경
-	var replySection = item.querySelector('.inquiry-modal-reply');
-	var today = new Date();
- 	var dateStr = today.getFullYear() + '.' +
-               String(today.getMonth() + 1).padStart(2, '0') + '.' +
-               String(today.getDate()).padStart(2, '0');
-
-	replySection.outerHTML =
-    '<div class="inquiry-modal-answer">' +
-        '<div class="answer-header">' +
-            '<span><i class="bi bi-building"></i> 내 답변</span>' +
-            '<div class="answer-actions">' +
-                '<span class="answer-date">' + dateStr + '</span>' +
-                '<button type="button" class="btn-edit-answer" onclick="editAnswer(' + inquiryId + ')" title="답변 수정">' +
-                    '<i class="bi bi-pencil"></i>' +
-                '</button>' +
-                '<button type="button" class="btn-delete-answer" onclick="deleteAnswer(' + inquiryId + ')" title="답변 삭제">' +
-                    '<i class="bi bi-trash"></i>' +
-                '</button>' +
-            '</div>' +
-        '</div>' +
-        '<div class="answer-content">' +
-            '<p><strong>A.</strong> <span class="answer-text">' + escapeHtml(content) + '</span></p>' +
-        '</div>' +
-    '</div>';
-
- // 카운트 업데이트
-// 	updateInquiryCounts();
-
-	if (typeof showToast === 'function') {
-	    showToast('답변이 등록되었습니다.', 'success');
+	const sendData = {
+		prodInqryNo : inquiryId,
+		replyCn: content
 	}
+	
+	let isEdit = document.getElementById('editAnswerText-' + inquiryId) ? true : false;
+	// 수정 여부에 따라서 주소 바꾸기
+	let url = isEdit ? `/tour/\${tripProdNo}/inquiry/reply/update` : `/tour/\${tripProdNo}/inquiry/reply`;
+	axios.post(url, sendData)
+	.then((response) => {
+		const data = response.data;
+		console.log("data : ", data);
+		if (data.success) {
+			if(isEdit) showToast('답변이 수정되었습니다.', 'success');
+			else showToast('답변이 등록되었습니다.', 'success')
+			
+		 	item.classList.remove('is-waiting');
+			item.classList.add('is-answered');
+			item.dataset.status = 'answered';
+			
+			const statusBadge = item.querySelector('.inquiry-status');
+			statusBadge.className = 'inquiry-status answered';
+			statusBadge.textContent = '답변완료';
+			
+			const today = new Date();
+			answerDate.textContent = setTime(today);	// 작성일자
+			// 이거는 수정시에는 없는것
+			answerPart.textContent = content;			// 작성 내용
+			
+			// 출력할 모달 영역 - answerArea
+			const answerArea = item.querySelector('.inquiry-modal-answer');
+			answerArea.classList.remove('editing');
+		    const editBtn = answerArea.querySelector('.btn-edit-answer');
+		    editBtn.style.display = 'block';
+			
+		} else {
+			showToast(data.message || '등록에 실패했습니다.', 'warning');
+		}
+	})
+	.catch((error) => {
+	    console.error("Reply Error:", error);
+	    var errorMsg = error.response ? error.response.data.message : "서버 통신 오류";
+	    showToast(errorMsg, 'error');
+	});
 }
+
+// 문의 수정
+function editAnswer(inquiryId, tripProdNo){
+	console.log("editAnswer inquiryId : ", inquiryId);
+	console.log("editAnswer tripProdNo : ", tripProdNo);
+	
+    const item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
+    const answerArea = item.querySelector('.inquiry-modal-answer');
+    const answerContent = answerArea.querySelector('.answer-content');
+    const answerText = answerArea.querySelector('.answer-text');
+    // 이미 수정 모드인 경우 무시 -> how?
+    if (answerArea.classList.contains('editing')) return;
+
+    originText = answerText.textContent;
+    // 현재 답변 내용 가져오기
+    const currentText = answerText.textContent;
+    
+    // 수정 모드로 변경
+    answerArea.classList.add('editing');
+
+    // 수정 버튼 숨기기
+    const editBtn = answerArea.querySelector('.btn-edit-answer');
+    editBtn.style.display = 'none';
+
+    // 답변 내용을 textarea로 변경
+    answerContent.innerHTML =
+        `<div class="answer-edit-area">
+            <textarea id="editAnswerText-\${inquiryId}" rows="4">\${currentText}</textarea>
+            <div class="answer-edit-actions">
+                <button type="button" class="btn btn-outline btn-sm" onclick="cancelEditAnswer(\${inquiryId}, '\${originText}')">
+                    <i class="bi bi-x me-1"></i>취소
+                </button>
+                <button type="button" class="btn btn-primary btn-sm" onclick="submitReply(\${inquiryId}, \${tripProdNo})">
+                    <i class="bi bi-check me-1"></i>수정 완료
+                </button>
+            </div>
+        </div>`;
+
+    // textarea에 포커스
+    document.getElementById('editAnswerText-' + inquiryId).focus();
+}
+
+// 수정 취소하기
+function cancelEditAnswer(inquiryId, originText){
+	console.log("cancelEditAnswer - originText : ", originText);
+    const item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
+    const answerArea = item.querySelector('.inquiry-modal-answer');
+    const answerContent = answerArea.querySelector('.answer-content');
+    answerArea.classList.remove('editing');
+    
+    const editBtn = answerArea.querySelector('.btn-edit-answer');
+    editBtn.style.display = 'block';
+    
+    answerContent.innerHTML = `<p><strong>A.</strong> <span class="answer-text">\${originText}</span></p>`;
+}
+
+// 문의 답변 삭제
+function deleteAnswer(inquiryId, tripProdNo){
+	console.log("deleteAnswer inquiryId : ", inquiryId);
+	console.log("deleteAnswer tripProdNo : ", tripProdNo);
+    if (!confirm('답변을 삭제하시겠습니까?\n삭제된 답변은 복구할 수 없습니다.')) return;
+
+    const item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
+    const answerArea = item.querySelector('.inquiry-modal-answer');
+
+    const sendData = {prodInqryNo : inquiryId};
+    axios.post(`/tour/\${tripProdNo}/inquiry/reply/delete`, sendData)
+    .then((response) =>{
+    	const data = response.data;
+		console.log("data : ", data);
+		if (data.success) {
+			showToast('답변이 삭제되었습니다.', 'success');
+		    // 대기상태로 변경
+			item.classList.remove('is-answered');
+			item.classList.add('is-waiting');
+			item.dataset.status = 'waiting';
+			
+		    const statusBadge = item.querySelector('.inquiry-status');
+		    statusBadge.className = 'inquiry-status waiting';
+		    statusBadge.textContent = '답변대기';
+    	}else showToast(data.message || '삭제에 실패했습니다.', 'warning');
+	})
+	.catch((error) => {
+	    console.error("Reply Error:", error);
+	    var errorMsg = error.response ? error.response.data.message : "서버 통신 오류";
+	    showToast(errorMsg, 'error');
+	});
+}
+
 
 // 시간 설정
 function setTime (date){
-	if(date === null || date === "") return "";
+	
+	if (date === null || date === undefined || date === "") return "";
+
+    // 1. 만약 date가 객체(new Date())라면 문자열로 변환
+    if (date instanceof Date) {
+        return date.getFullYear() + '-' + 
+               String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+               String(date.getDate()).padStart(2, '0');
+    }
+	
 	console.log("date: ", date);
 	let format = date.indexOf("T") > -1 ? date.split("T") : date.split(" ");
 	return format[0];
@@ -2057,7 +2161,8 @@ function buildHierarchy(obj, path, value) {
 async function saveProduct(data) {
     const isUpdate = (data.innerText === "수정");
     
-    document.querySelector("")
+//     document.querySelector("[name='accommodation.overview']");
+//     document.querySelector("[name='tripProdContent']");
     
     const form = document.getElementById('productForm');
     
@@ -2390,7 +2495,10 @@ async function searchTourApi(matchData) {
 			else starGrade.style.display = "none";
 
             
-            if(data.accName) document.querySelector("[name='tripProdTitle']").value = data.accName;
+            if(data.accName) {
+            	document.querySelector("[name='tripProdTitle']").value = 
+            		data.accName.length >= 600 ? data.accName.slice(0, 580) : data.accName;
+            }
             if(data.overview) document.querySelector("[name='tripProdContent']").value = data.overview;
 			if(data.areaCode) citySelector.value = data.areaCode;            
             

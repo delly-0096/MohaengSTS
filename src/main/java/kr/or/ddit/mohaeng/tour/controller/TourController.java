@@ -40,7 +40,9 @@ import kr.or.ddit.mohaeng.vo.AttachFileDetailVO;
 import kr.or.ddit.mohaeng.vo.CompanyVO;
 import kr.or.ddit.mohaeng.vo.MemUserVO;
 import kr.or.ddit.mohaeng.vo.MemberVO;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Controller
 @RequestMapping("/tour")
 public class TourController {
@@ -668,6 +670,8 @@ public class TourController {
         try {
             int prodInqryNo = Integer.parseInt(param.get("prodInqryNo").toString());
             String replyCn = (String) param.get("replyCn");
+            log.info("prodInqryNo : {}", prodInqryNo);
+            log.info("replyCn : {}", replyCn);
             
             TripProdInquiryVO vo = new TripProdInquiryVO();
             vo.setProdInqryNo(prodInqryNo);

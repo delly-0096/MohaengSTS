@@ -1065,6 +1065,14 @@
     color: var(--primary-color);
 }
 
+/* 모달 답변 여부에따른 클래스 변화*/
+.inquiry-modal-reply, .inquiry-modal-answer { display: none; }
+
+/* 상태 클래스에 따라 보여줌 */
+.inquiry-modal-item.is-waiting .inquiry-modal-reply { display: block; }
+.inquiry-modal-item.is-answered .inquiry-modal-answer { display: block; }
+/**/
+
 /* 답변 입력 영역 */
 .inquiry-modal-reply {
     margin-top: 12px;

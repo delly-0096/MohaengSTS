@@ -25,8 +25,8 @@
                         <div class="d-flex gap-2">
                             <button class="btn btn-outline btn-sm period-btn" id="today" data-period="today">오늘</button>
                             <button class="btn btn-outline btn-sm period-btn" id="thisWeek" data-period="thisWeek">이번 주</button>
-                            <button class="btn btn-outline btn-sm period-btn active" id="thisMonth" data-period="thisMonth">이번 달</button>
-                            <button class="btn btn-outline btn-sm period-btn" id="last3Months" data-period="3months">최근 3개월</button>
+                            <button class="btn btn-outline btn-sm period-btn" id="thisMonth" data-period="thisMonth">이번 달</button>
+                            <button class="btn btn-outline btn-sm period-btn active" id="last3Months" data-period="3months">최근 3개월</button>
                         </div>
                         <div class="d-flex gap-2 ms-auto">
                             <input type="date" class="form-control form-control-sm" id="startDate" style="width: 150px;">
@@ -66,10 +66,10 @@
                     <div class="col-lg-6">
                         <div class="content-section">
                             <div class="section-header">
-                                <h3><i class="bi bi-graph-up"></i> 조회수 추이</h3>
+                                <h3><i class="bi bi-graph-up"></i> 매출액 추이</h3>
                             </div>
                             <div class="chart-container">
-<canvas id="viewChart"></canvas>
+								<canvas id="viewChart"></canvas>
                             </div>
                         </div>
                     </div>
@@ -247,7 +247,7 @@
 
                     <!-- 자주 사용되는 키워드 -->
                     <div class="mt-4">
-                        <h6 class="mb-3">자주 사용되는 키워드</h6>
+<!--                         <h6 class="mb-3">자주 사용되는 키워드</h6> -->
                         <div class="d-flex flex-wrap gap-2">
 <!--                             <span class="badge bg-primary" style="font-size: 14px; padding: 8px 16px;">친절해요 (45)</span> -->
 <!--                             <span class="badge bg-primary" style="font-size: 14px; padding: 8px 16px;">재미있어요 (38)</span> -->
@@ -288,11 +288,12 @@ document.addEventListener("DOMContentLoaded", function() {
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
         loadProdSgList(startDate, endDate);
+        initSalesData(startDate, endDate);
     });
     
 
     initDashboard();
-    setPeriod('thisMonth'); // 기본 기간 설정
+    setPeriod('3months'); // 기본 기간 설정
 });
 
 function initDashboard() {
@@ -309,15 +310,15 @@ function initDashboard() {
         { month: '5월', count: 60 }, { month: '6월', count: 85 }
     ];
 
-    updateViewChart(dummyViews);
+    updateSalesChart(dummyViews);
     updateRsvChart(dummyRsvs);
 }
 
-// [2] 조회수 차트 (Line Chart) 그리기
-function updateViewChart(dataList) {
+// [2] 매출 차트 (Line Chart) 그리기
+function updateSalesChart(dataList) {
     const ctx = document.getElementById('viewChart').getContext('2d');
-    const labels = dataList.map(item => item.month);
-    const data = dataList.map(item => item.count);
+    const labels = dataList.map(item => item.date);
+    const data = dataList.map(item => item.sales);
 
     if (viewChartInstance) viewChartInstance.destroy(); // 기존 차트 삭제
 
@@ -326,7 +327,7 @@ function updateViewChart(dataList) {
         data: {
             labels: labels,
             datasets: [{
-                label: '월별 조회수',
+                label: '월별 매출',
                 data: data,
                 borderColor: '#10B981', // 초록색 계열
                 backgroundColor: 'rgba(16, 185, 129, 0.2)',
@@ -442,6 +443,13 @@ function loadProdSgList(startDate, endDate) {
             totalReservations += parseInt($(this).text());
         });
 
+        $(".converate").each(function() {
+            let rateText = $(this).text().replace('%', '').trim();
+            if (rateText && rateText !== '0') {
+                conversionRate += parseFloat(rateText);
+            }
+        });
+
         $(".rating").each(function() {
             let ratingText = $(this).text().trim();
             if (ratingText && ratingText !== '0') {
@@ -450,19 +458,14 @@ function loadProdSgList(startDate, endDate) {
             }
         });
 
-        $(".converate").each(function() {
-            let rateText = $(this).text().replace('%', '').trim();
-            if (rateText && rateText !== '0') {
-                conversionRate += parseFloat(rateText);
-            }
-        });
-
         conversionRate /= $(".converate").length;
+        let rating = (totalRatings / ratingCount).toFixed(1);
+        rating = isNaN(rating) ? '0.0' : rating;
 
         $("#totalViews").text(totalViews);
         $("#totalReservations").text(totalReservations);
         $("#conversionRate").text((conversionRate).toFixed(1) + "%");
-        $("#avgRating").text((totalRatings / ratingCount).toFixed(1));
+        $("#avgRating").text(rating);
     });
 }
 
@@ -498,6 +501,45 @@ function setPeriod(period) {
     document.getElementById('endDate').value = currentEndDate;
 
     loadProdSgList(currentStartDate, currentEndDate);
+    initSalesData(currentStartDate, currentEndDate);
+}
+
+function initSalesData(startDate, endDate) {
+    let data = {
+        startDate: startDate || '',
+        endDate: endDate || ''
+    };
+
+	fetch('/statistics/salesTrend', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        let SalesData = [];
+        let RsvData = [];
+        SalesData.push({
+            date: 0,
+            sales: 0
+        })
+        data.forEach(item => {
+            SalesData.push({
+                date: item.payDt,
+                sales: item.sales
+            });
+
+            RsvData.push({
+                month: item.payDt,
+                count: item.rsvCnt
+            });
+        });
+        updateSalesChart(SalesData);
+        updateRsvChart(RsvData);
+    });
 }
 </script>
 

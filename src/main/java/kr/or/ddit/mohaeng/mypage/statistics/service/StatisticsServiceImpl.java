@@ -19,4 +19,14 @@ public class StatisticsServiceImpl implements IStatisticsService{
 		return statisticsMapper.selectProdSg(params);
 	}
 
+	@Override
+	public List<Params> selectSalesTrend(Params params) {
+		return statisticsMapper.selectSalesTrend(params);
+	}
+
+	@Override
+	public List<Params> selectReservation(Params params) {
+		return statisticsMapper.selectReservation(params);
+	}
+
 }

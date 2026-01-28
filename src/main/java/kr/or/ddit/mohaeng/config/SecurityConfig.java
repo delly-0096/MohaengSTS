@@ -129,6 +129,7 @@ public class SecurityConfig {
 			"/api/admin/login",
 			"/api/schedule/**",
 			"/api/admin/schedule/**",
+			"/api/admin/members/**",
 			"/api/admin/notices/thumbnail/**",
 			"/api/admin/inquiry/**",
 			"/api/admin/products/**",

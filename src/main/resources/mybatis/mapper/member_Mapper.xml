@@ -87,7 +87,7 @@
 		    , ENABLED, MEM_SNS_YN, SNS_TYPE, SNS_ID, REG_DT, UDT_DT, WDRW_DT)
 		VALUES
 		    ( #{memNo}, #{memId}, #{memPassword}, #{memName}, #{memEmail}
-		    , NULL, 0, 'ACTIVE', 'N', NULL
+		    , NULL, 5000, 'ACTIVE', 'N', NULL
 		    , 1, 'N', NULL, NULL, SYSDATE, NULL, NULL )
 
 

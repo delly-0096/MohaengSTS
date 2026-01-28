@@ -507,8 +507,10 @@
             	list.map(function(v,i){
             		let time = formatRelativeTime(`\${v.regDt}`);
             		let type = checkType(`\${v.alarmType}`);
-            		html += `
-            			<div class="notification-item unread">
+            			html += `
+            				<div class="notification-item \${v.readYn === 'N' ? 'unread' : ''}">
+
+
 	                        <div class="notification-icon second">
 	                            <i class="bi bi-check-circle"></i>
 	                        </div>
@@ -534,21 +536,37 @@
         }
 
         // 모두 읽음 처리
-        function readAllAlarm() {
-            var items = document.querySelectorAll('.notification-item.unread');
-            items.forEach(function(item) {
-                item.classList.remove('unread');
-            });
+			   function readAllAlarm() {
+			
+			  axios.post(`/api/alarm/mypage/notifications/readAll`)
+			    .then(res => {
+			      // ✅ 1) 서버 성공 후 UI 처리 (기존 코드 그대로)
+			      var items = document.querySelectorAll('.notification-item.unread');
+			      items.forEach(function(item) {
+			        item.classList.remove('unread');
+			      });
+			
+			      var badge = document.getElementById('notificationBadge');
+			      if (badge) {
+			        badge.style.display = 'none';
+			      }
+			
+			      // ✅ 2) 목록 다시 불러와서 최신화(선택이지만 추천)
+			      toggleNotificationPanel(); // 열려있을 때 한번 더 갱신하려면 아래 방식 추천
+			      // 또는 더 안전하게: panel 유지하고 list만 다시 불러오는 함수를 따로 빼도 됨
+			
+			      if (typeof showToast === 'function') {
+			        showToast('모든 알림을 읽음 처리했습니다.', 'success');
+			      }
+			    })
+			    .catch(err => {
+			      console.error(err);
+			      if (typeof showToast === 'function') {
+			        showToast('모두 읽음 처리에 실패했습니다.', 'danger');
+			      }
+			    });
+			}
 
-            var badge = document.getElementById('notificationBadge');
-            if (badge) {
-                badge.style.display = 'none';
-            }
-
-            if (typeof showToast === 'function') {
-                showToast('모든 알림을 읽음 처리했습니다.', 'success');
-            }
-        }
         
      // ---- 헤더용 캘린더 ----
         let scheduleModalObj = null; // 전역 변수로 관리 (재사용 목적)

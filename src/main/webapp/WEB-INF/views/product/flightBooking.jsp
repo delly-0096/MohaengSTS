@@ -361,13 +361,13 @@ async function main() {
 
 	const tossPayments = TossPayments(clientKey);
 	widgets = tossPayments.widgets({ customerKey });
-	
+
 	// ------ 주문의 결제 금액 설정 ------
 	await widgets.setAmount({
 	  currency: "KRW",
 	  value: totalFlightPrice,
 	});
-	
+
 	console.log("totalFlightPrice : ", totalFlightPrice);
 	await Promise.all([
 	  // ------  결제 UI 렌더링 ------
@@ -376,7 +376,7 @@ async function main() {
 	    variantKey: "DEFAULT"
 	  }),
 	]);
-	
+
 	// 사용자 정보 호출
 	console.log("user.username : ", "${user.username}");
 	const userData = await fetch("/product/flight/user", {
@@ -384,23 +384,23 @@ async function main() {
 		headers : {"Content-Type" : "application/json"},
 		body : JSON.stringify({memId : "${user.username}"})
 	});
-	
-	customData = await userData.json();				
+
+	customData = await userData.json();
 	console.log("customData : ", customData);		// 이 정보로 입력, session에도 저장?
-	
+
 	const bookerName = document.querySelector("#bookerName");
 	const bookerPhone = document.querySelector("#bookerPhone");
 	const bookerEmail = document.querySelector("#bookerEmail");
 	const availablePoints = document.querySelector("#availablePoints");
-	
+
 	// 결제자 정보 입력
 	bookerName.value = customData.memName;
 	bookerPhone.value = customData.tel.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3');
 	bookerEmail.value = customData.memEmail;
 	availablePoints.innerHTML = parseInt(customData.point).toLocaleString();
-	
+
 	if(customData.point >= 1000) document.querySelector("#usePointInput").disabled = false;
-	
+
 	// 결제 form
 	const bookingForm = document.querySelector("#flightBookingForm");
 	bookingForm.addEventListener("submit", async function(e){
@@ -408,7 +408,7 @@ async function main() {
 
 		// 좌석 지정 함수 호출
 		await randomSeatAssignment();
-		
+
 		// 탑승객 card
 		const passengerInputs = document.querySelectorAll('.passenger-card');
 		console.log("passengerInputs : ", passengerInputs);
@@ -417,7 +417,7 @@ async function main() {
 		// 탑승객 정보
 	    const passengerData = Array.from(passengerInputs).map((card, index) => {
 	    	let outMoney = parseInt(card.querySelector('select[name="extraBaggageOutbound"]').value);
-	    	let inMoney = (bookingData.tripType === 'round') ? 
+	    	let inMoney = (bookingData.tripType === 'round') ?
             		parseInt(card.querySelector('select[name="extraBaggageInbound"]').value) : 0;
             totalOutMoney += outMoney;
             totalInMoney += inMoney;
@@ -433,7 +433,7 @@ async function main() {
 	            inSeat: (bookingData.tripType === 'round') ? selectedSeatsBySegment[1][index] : "NONE"
 	        };
 	    });
-		
+
 		console.log("passengers : ", passengerData);
 		sessionStorage.setItem("passengers", JSON.stringify(passengerData));
 
@@ -442,16 +442,16 @@ async function main() {
 			totalPrice : (parseInt(bookingData.flights[0].price) * totalPeople) + totalOutMoney,
 			memNo: customData.memNo
 		});
-		
+
 	    if(bookingData.tripType === 'round'){
 	    	reservationList.push({
 				totalPrice : (parseInt(bookingData.flights[1].price) * totalPeople) + totalInMoney,
 	    		memNo: customData.memNo
     		});
 	    }
-		
+
 		sessionStorage.setItem("reservationList", JSON.stringify(reservationList));
-	    
+
 	    // 필수 약관 체크 확인
 	    let allAgreed = true;
 	    document.querySelectorAll('.agree-item').forEach(agree => {
@@ -462,17 +462,17 @@ async function main() {
 	        showToast('필수 약관에 동의해주세요.', 'error');
 	        return;
 	    }
-	    
+
 	    const reserveAgree = { mktRecvAgreeYn : (document.getElementById('agreeMarketing').checked) ? 'Y' : 'N' }
-	    
+
 	    console.log("reserveAgree : ", reserveAgree);
 		sessionStorage.setItem("reserveAgree", JSON.stringify(reserveAgree));
-	    
+
 		let orderName = bookingData.tripType === 'round' ?
 				bookingData.flights[0].startDt + "_" + bookingData.flights[0].arrAirportNm + "_" + bookingData.flights[0].airlineNm
 				+ bookingData.flights[1].startDt + "_" + bookingData.flights[1].arrAirportNm + "_" + bookingData.flights[1].airlineNm
 				: "_" +bookingData.flights[0].startDt + "_" + bookingData.flights[0].arrAirportNm + "_" + bookingData.flights[0].airlineNm;
-		
+
 		const timeStamp = Date.now();
 		await widgets.requestPayment({
 			orderId: "FLT-" + bookingData.flights[0].startDt + "-" + customData.memNo + "-" + timeStamp,			// 예약번호
@@ -496,26 +496,26 @@ document.addEventListener('DOMContentLoaded', async function() {
 	amount = document.querySelector("#payBtnText");
 	cabin = document.querySelector("#summaryCabin");
 	passengerContainer = document.querySelector("#passengersContainer");
-	
+
 	if (!storedData) {
 		alert("입력된 정보가 없어 이전 화면으로 돌아갑니다.");
 		window.location.href = `/product/flight"`;
 		return;
 	}
-	
+
     bookingData = JSON.parse(storedData);
     console.log("bookingData : ", bookingData);
     cabin.innerHTML = bookingData.flights[0].cabinClass;
     initFlightDisplay();
-	
+
     console.log("초기 selectedSeatsBySegment[0] : ", selectedSeatsBySegment[0]);
 	console.log("초기 selectedSeatsBySegment[1] : ", selectedSeatsBySegment[1]);
-    
+
 	// 탑승객 정보 초기 세팅
 	passengerType.adult = bookingData.flights[0].adult;
     passengerType.child = bookingData.flights[0].child;
     passengerType.infant = bookingData.flights[0].infant;
-	
+
     initPassengers();		// 탑승객 정보 초기화
     updateCountButtons();	// 탑승인원 버튼 상태 초기화
     seatSelectionModal = new bootstrap.Modal(document.getElementById('seatSelectionModal'));	// 좌석 선택 모달 초기화
@@ -523,7 +523,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     await getOccupiedSeats();
     initSeatMap();
     calculateTotal();
-    
+
     await main();
 });
 
@@ -535,7 +535,7 @@ function initFlightDisplay() {
     var tripTypeBadge = document.getElementById('tripTypeBadge');
     var summaryTripType = document.getElementById('summaryTripType');
     var tripTypeText = bookingData.tripType === 'round' ? '왕복' : '편도';
-    
+
     tripTypeBadge.textContent = tripTypeText;
     summaryTripType.textContent = tripTypeText;
 
@@ -564,12 +564,12 @@ function initFlightDisplay() {
 
 // 항공편 카드 HTML 생성
 function createFlightCardHtml(flight, labelClass) {
-	
+
 	passengerType.adult = bookingData.flights[0].adult;
     passengerType.child = bookingData.flights[0].child;
     passengerType.infant = bookingData.flights[0].infant;
     const childPrice = Math.floor(flight.price * 0.75) - Math.floor(flight.price * 0.75) % 100;	// 아이 요금
-    
+
 	return `
 	    <div class="flight-summary-card">
 	         <div class="flight-summary-label \${labelClass}">\${flight.segmentLabel}</div>
@@ -597,15 +597,15 @@ function createFlightCardHtml(flight, labelClass) {
 					 </div>
 	                 <span class="flight-price">
 	                 	<div class="price-item adult">
-		                 	<span class="label">성인</span> 
+		                 	<span class="label">성인</span>
 	                        <span class="value" id="adult">\${(flight.price).toLocaleString()}원</span>
                         </div>
                         <div class="price-item child \${passengerType.child > 0 ? 'active' : ''}">
-	                        <span class="label">소아</span> 
+	                        <span class="label">소아</span>
 	                        <span class="value" id="child">\${childPrice.toLocaleString()}원</span>
 	                    </div>
 	                    <div class="price-item infant \${passengerType.infant > 0 ? 'active' : ''}">
-	                        <span class="label">유아</span> 
+	                        <span class="label">유아</span>
 	                        <span class="value" id="infant">0원</span>
 	                    </div>
 	 		 		 </span>
@@ -629,7 +629,7 @@ function createSummarySegmentHtml(flight, labelClass) {
 function initPassengers() {
 	passengerContainer.innerHTML = '';
     totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
-	
+
     // 성인 탑승객
     for (var i = 1; i <= passengerType.adult; i++) passengerContainer.insertAdjacentHTML('beforeend', createPassengerCard('adult', i));
     // 소아 탑승객
@@ -641,7 +641,7 @@ function initPassengers() {
 // 탑승객 정보 입력란 생성
 function createPassengerCard(type, num){
 	const typeLabel = (type === 'adult') ? '성인' : (type === 'child' ? '소아' : '유아');
-    
+
     return `
     <div class="passenger-card \${type}" data-index="\${num}">
 	    <div class="passenger-card-header">
@@ -676,7 +676,7 @@ function createPassengerCard(type, num){
             <div class="col-md-4">
                 <div class="form-group">
                     <label class="form-label">생년월일 <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control birthdate-picker" name="birthDate" 
+                    <input type="text" class="form-control birthdate-picker" name="birthDate"
                            placeholder="YYYY-MM-DD" onchange="ageCheck(this,'\${typeLabel}')" required>
                 </div>
             </div>
@@ -689,7 +689,7 @@ function createPassengerCard(type, num){
 		                <option value="10">10kg (20,000원)</option>
 		            </select>
 	            </div>
-	            \${bookingData.tripType === "round" ? 
+	            \${bookingData.tripType === "round" ?
            		`<div class="form-group mb-0 mt-2">
 	                <label class="form-label">오는편 추가 수하물</label>
 	                <select class="form-control form-select" name="extraBaggageInbound" onchange="calculateTotal()">
@@ -699,7 +699,7 @@ function createPassengerCard(type, num){
 	                </select>
 	            </div>` : ''}
 	        </div>
-	    </div> 
+	    </div>
 	</div>`;
 }
 
@@ -707,7 +707,7 @@ function createPassengerCard(type, num){
 passengersContainer.addEventListener('input', function(e) {
     if (e.target.name.includes('lastName') || e.target.name.includes('firstName')) {
         e.target.value = e.target.value.replace(/[^ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g, '');
-        
+
         if (e.target.name.includes('lastName') && e.target.value.length > 2) {
         	e.target.value = e.target.value.slice(0, 2);
 			 showToast('성은 2글자까지만 입력가능합니다.', 'warning');
@@ -723,38 +723,38 @@ passengersContainer.addEventListener('input', function(e) {
 function ageCheck(userBirth, type){
 	console.log("userBirth : ", userBirth.value);
 	console.log("type : ", type);
-	
+
 	const birth = new Date(userBirth.value);
 	const now = new Date();
-	
+
 	let age = now.getFullYear() - birth.getFullYear();	// 연도 계산
 	now.getMonth() - birth.getMonth();
-	age = now.getMonth() - birth.getMonth() < 0 ? age-- : age; 
-	
+	age = now.getMonth() - birth.getMonth() < 0 ? age-- : age;
+
 	if(type === "성인" && age <= 11) {
 		 showToast('만 12세 미만은 성인으로 예약할 수 없습니다.', 'warning');
 		 userBirth.value = "";
 		 return userBirth.focus();
 	}
-	
+
 	if(type === "소아" && (age < 2 || age >= 12)){
 		 showToast('소아는 탑승일 기준 만 2세~11세만 가능합니다.', 'warning');
 		 userBirth.value = "";
 		 return userBirth.focus();
 	}
-	
+
 	if(type === "유아" && age >= 2){
 		 showToast('만 2세 이상은 유아로 예약할 수 없습니다.', 'warning');
 		 userBirth.value = "";
 		 return userBirth.focus();
 	}
 }
-	
+
 // 탑승인원 변경
 function changePassengerType(type, delta) {
     const newCount = passengerType[type] + delta;
     totalPassengerCount = passengerType.adult + passengerType.child + passengerType.infant;
-    
+
     // 유효성 검사
     if (type === 'adult') {
         if (newCount < 1) {
@@ -770,7 +770,7 @@ function changePassengerType(type, delta) {
             showToast('유아 수가 성인 수보다 많을 수 없습니다.', 'warning');
             return;
         }
-        
+
     } else if (type === "child") {
         if (newCount < 0) return;
         if (newCount > 9) {
@@ -797,7 +797,7 @@ function changePassengerType(type, delta) {
 
     // UI 업데이트
     document.getElementById(type + 'Count').textContent = newCount;
-    
+
     updateCountButtons();
 
     const SameTypeCard = passengerContainer.querySelectorAll(`.passenger-card.\${type}`);
@@ -809,7 +809,7 @@ function changePassengerType(type, delta) {
     	confirmSeatSelection();
     	SameTypeCard[SameTypeCard.length - 1].remove();
     }
-    
+
   	// 해당 타입의 마지막 부분에 출력
    	const newCard = createPassengerCard(type, newCount);
 	const adultTypeCard = type != "adult" ? passengerContainer.querySelectorAll(`.passenger-card.adult`) : "";
@@ -834,7 +834,7 @@ function changePassengerType(type, delta) {
     	initBirthDatePicker(targetElement);	// 이거 없으면 날짜가 적용 안됨
     }
     // 하나만 0이면 confirm에서 처리해줌
-    
+
     // 좌석길이 0 일때 출력
     if(selectedSeatsBySegment[0].length <= 0 && selectedSeatsBySegment[1].length <= 0){
         document.querySelector('.seat-selection-info').innerHTML =
@@ -960,15 +960,15 @@ function cancelPoints (){
 // 총 금액 계산
 function calculateTotal() {
 	let totalBaseFare = 0;	// 기본 요금 합산 금액
-	
+
 	let adultCount = document.querySelector("#adultCount");
 	let childCount = document.querySelector("#childCount");
 	let infantCount = document.querySelector("#infantCount");
-		
+
 	adultCount.innerHTML = passengerType.adult;
 	childCount.innerHTML = passengerType.child;
 	infantCount.innerHTML = passengerType.infant;
-	
+
 	totalPeople = passengerType.adult + passengerType.child;
     segmentCount = bookingData ? bookingData.flights.length : 1;
     bookingData.flights.forEach((flight, index) => {
@@ -991,26 +991,26 @@ function calculateTotal() {
 
     if (extraBaggageFee !== 0) extraFeeView.style.display = 'flex';
     summaryExtra.innerHTML = extraBaggageFee.toLocaleString() + '원';
-    
+
     totalFlightPrice = totalBaseFare + extraBaggageFee - appliedPoints;		// 총 결제 금액
-    
-    
+
+
     // 요금 표시 업데이트
     document.getElementById('summaryFare').textContent = totalBaseFare.toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryFuel').textContent = (fuelSurcharge * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
-    
-    
+
+
     document.getElementById('totalAmount').textContent = totalFlightPrice.toLocaleString() + '원';			// 원래는 총 인원수 맞춰서 계산해야됨
     document.getElementById('payBtnText').textContent = totalFlightPrice.toLocaleString();
-     
+
     if (widgets) {
     	widgets.setAmount({
             currency: "KRW",
-            value: totalFlightPrice, 
+            value: totalFlightPrice,
         });
     }
-    
+
     // 탑승객 정보 업데이트 - 이것 또한
     var passengerText = [];
     if (passengerType.adult > 0) passengerText.push('성인 ' + passengerType.adult + '명');
@@ -1031,7 +1031,7 @@ function openSeatSelection() {
 function updateSeatModalTitle() {
     const title = currentSegmentSelection === 0 ? "가는 편 좌석 선택" : "오는 편 좌석 선택";
     document.querySelector('#seatSelectionModal .modal-title').textContent = title;
-    
+
     const btn = document.querySelector('#confirmSeatBtn'); // 모달의 확인버튼
     if (bookingData.tripType === 'round' && currentSegmentSelection === 0) {
         btn.textContent = "다음 여정 선택";
@@ -1049,7 +1049,7 @@ function updateSeatModalTitle() {
 // db에서 끌어온 점유된 좌석 - 한번만 실행됨
 async function getOccupiedSeats(){
 	try {
-        const fetchPromises = bookingData.flights.map((flight, index) => 
+        const fetchPromises = bookingData.flights.map((flight, index) =>
             axios.post(`/product/flight/seat`, flight
        		).then(res => {
            	console.log("getOccupiedSeats res.data : ", res.data);
@@ -1065,24 +1065,24 @@ async function getOccupiedSeats(){
 
 // 랜덤 좌석 할당 - occupiedSeatsList - db에 점유된 좌석, selectedSeatsBySegment - 현재 좌석
 async function randomSeatAssignment(){
-	
+
     const randColumns = ['A', 'B', 'C', 'D', 'E', 'F'];
-    
+
     for (let i = 0; i < bookingData.flights.length; i++) {
     	while (selectedSeatsBySegment[i].length < totalPeople) {
-	    	
+
 		    const randCode = randColumns[parseInt(Math.random() * randColumns.length)];
-		    
+
 		    // 랜덤 좌석
-		    const randSeat = bookingData.flights[0].cabinClass === "일반석" 
+		    const randSeat = bookingData.flights[0].cabinClass === "일반석"
 		    	? (parseInt(Math.random() * 17) + 4) + randCode
 	            : (parseInt(Math.random() * 3) + 1) + randCode;
-		   	
+
 		    // 좌석이 선점 안되었을때
 	    	if (!selectedSeatsBySegment[i].includes(randSeat) && !occupiedSeatsList[i].includes(randSeat)){
 	    		console.log("randSeat : ", randSeat);
 	    		selectedSeatsBySegment[i].push(randSeat);
-	    	} 
+	    	}
     	}
     }
 }
@@ -1091,14 +1091,14 @@ async function randomSeatAssignment(){
 function initSeatMap() {
 	const economyInfo = document.getElementById("economy");
 	const businessInfo = document.getElementById("extra");
-	
+
 	console.log("initSeatMap의 occupiedSeatsList : ", occupiedSeatsList);
-	
+
     const seatMap = document.getElementById('seatMap');
     const columns = ['A', 'B', 'C', '', 'D', 'E', 'F'];
     const rows = 20;
     let html = ``;
-	
+
     // 열 헤더
     html += `<div class="seat-row">
    				<div class="seat-row-number"></div>`;
@@ -1107,11 +1107,11 @@ function initSeatMap() {
         else html += `<div class="seat" style="background: none; cursor: default; color: var(--gray-medium);">\${col}</div>`;
     });
     html += `</div>`;
-    
+
     for (var i = 1; i <= rows; i++) {
 	    if (bookingData.flights[0].cabinClass === "일반석" && i <= 3) {
 	    	businessInfo.style.display = "none";
-	    	continue; 
+	    	continue;
 	    }
         if (bookingData.flights[0].cabinClass === "비즈니스" && i >= 4) {
         	economyInfo.style.display = "none";
@@ -1119,23 +1119,23 @@ function initSeatMap() {
         }
         html += `<div class="seat-row">`;
         html += `<div class="seat-row-number">\${i}</div>`;
-		
+
         columns.forEach(function(col) {
-	        
+
             if (col === '') html += `<div class="seat-aisle"></div>`; // 통로
             else {
             	const seatId = i + col;
                 const occupied = occupiedSeatsList[currentSegmentSelection].includes(seatId);	// 선택 불가 자리
                 const business = i <= 3;		// business
                 const seatClass = occupied ? 'occupied' : (business ? 'business' : 'economy');
-                
-				const isSelected = selectedSeatsBySegment[currentSegmentSelection].includes(seatId) ? 'selected' : '';	// 이전에 선택한 좌석은 selected	
-                
+
+				const isSelected = selectedSeatsBySegment[currentSegmentSelection].includes(seatId) ? 'selected' : '';	// 이전에 선택한 좌석은 selected
+
                 const seatValid = occupied ? 'disabled' : 'onclick="toggleSeat(this)"';		// 선택한 부분도 선택가자고
                 const checkedSeat = occupied ? '' : seatId;
-                
-                html += `<button type="button" class="seat \${seatClass} \${isSelected}" data-seat="\${seatId}" \${seatValid} > 
-                			\${checkedSeat} 
+
+                html += `<button type="button" class="seat \${seatClass} \${isSelected}" data-seat="\${seatId}" \${seatValid} >
+                			\${checkedSeat}
                 		</button>`;
             }
         });
@@ -1148,7 +1148,7 @@ function initSeatMap() {
 function toggleSeat(btn) {
     let seatId = btn.dataset.seat;
     let currentSeats = selectedSeatsBySegment[currentSegmentSelection];
-    
+
     if (btn.classList.contains('selected')) {
         btn.classList.remove('selected');
         btn.classList.add('available');
@@ -1171,21 +1171,21 @@ function confirmSeatSelection() {
     const rowOut = document.getElementById('summarySeatsRowOut');	// 가는편 div
     const rowIn = document.getElementById('summarySeatsRowIn');		// 오는편 div
     const seatSelectionInfo = document.querySelector('.seat-selection-info');
-	
+
     // 가는 편
     if (selectedSeatsBySegment[0].length > 0) {
         rowOut.style.display = 'flex';
         document.getElementById('summarySeatsOut').textContent = selectedSeatsBySegment[0].join(', ');
         showToast('좌석 ' + selectedSeatsBySegment[0].join(', ') + '이(가) 선택되었습니다.', 'success');
     } else rowOut.style.display = 'none';
-    
+
     // 오는 편
     if (bookingData.tripType === 'round' && selectedSeatsBySegment[1].length > 0) {
         rowIn.style.display = 'flex';
         document.getElementById('summarySeatsIn').textContent = selectedSeatsBySegment[1].join(', ');
         showToast('좌석 ' + selectedSeatsBySegment[1].join(', ') + '이(가) 선택되었습니다.', 'success');
     } else rowIn.style.display = 'none';
-    
+
 	seatSelectionInfo.innerHTML = `
 	    <div class="selected-seats-display">
 	        <div class="selected-seats-info">
@@ -1196,7 +1196,7 @@ function confirmSeatSelection() {
 	            <i class="bi bi-pencil me-1"></i>변경
 	        </button>
 	    </div>`;
-    
+
     calculateTotal();
     seatSelectionModal.hide();
 }

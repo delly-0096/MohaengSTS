@@ -24,6 +24,7 @@ import kr.or.ddit.mohaeng.community.travellog.place.controller.PlaceApiControlle
 import kr.or.ddit.mohaeng.flight.mapper.IFlightMapper;
 import kr.or.ddit.mohaeng.login.mapper.IMemberMapper;
 import kr.or.ddit.mohaeng.mailapi.service.MailService;
+import kr.or.ddit.mohaeng.mypage.point.service.IPointService;
 import kr.or.ddit.mohaeng.payment.mapper.IPaymentMapper;
 import kr.or.ddit.mohaeng.vo.AccResvAgreeVO;
 import kr.or.ddit.mohaeng.vo.AccResvVO;
@@ -50,18 +51,21 @@ public class PaymentServiceImpl implements IPaymentService {
 
 	@Autowired
 	private IFlightMapper flightMapper;
-	
+
 	@Autowired
 	private IAccommodationMapper accMapper;
-	
+
 	@Autowired
 	private IMemberMapper memberMapper;
-	
+
 	@Autowired
 	private MailService mailService;
-	
+
 	@Autowired
     private AlarmService alarmService;
+
+	@Autowired
+	private IPointService pointService;
 
     PaymentServiceImpl(PlaceApiController placeApiController) {
         this.placeApiController = placeApiController;
@@ -104,7 +108,7 @@ public class PaymentServiceImpl implements IPaymentService {
 			paymentVO.setPaymentKey(responseBody.get("paymentKey").toString());
 			int amount = (int) responseBody.get("totalAmount");	// 실제 결제된 금액
 			paymentVO.setPayTotalAmt(amount); // 숫자
-			String payMethod = responseBody.get("method").toString(); 
+			String payMethod = responseBody.get("method").toString();
 			paymentVO.setPayMethodCd(payMethod);
 
 			String approvedAtStr = responseBody.get("approvedAt").toString();
@@ -132,13 +136,13 @@ public class PaymentServiceImpl implements IPaymentService {
 			// 결제 상세 정보
 			PaymentInfoVO paymentInfo = new PaymentInfoVO();
 			log.info("paymentInfo : {}", paymentInfo);
-			
+
 			paymentInfo.setPayNo(paymentVO.getPayNo());
 			paymentInfo.setTid(paymentVO.getPaymentKey());
 			paymentInfo.setResCode(status);
 			paymentInfo.setResMsg(status + " " + responseBody.get("orderName"));
 			paymentInfo.setPayMethodType(payMethod);
-			
+
 			// 카드, 승인번호
 			if (responseBody.get("card") != null) {
 			    Map<String, Object> card = (Map<String, Object>) responseBody.get("card");
@@ -148,12 +152,12 @@ public class PaymentServiceImpl implements IPaymentService {
 				paymentInfo.setCardCorpCode("");  // 카드사 코드 (예: 11)
 				paymentInfo.setAuthNo("");        // 승인번호
 			}
-			
+
 			// 가상 계좌
 			if (responseBody.get("virtualAccount") != null) {
 			    Map<String, Object> vbank = (Map<String, Object>) responseBody.get("virtualAccount");
 			    paymentInfo.setVbankNum(vbank.get("accountNumber").toString());
-			    
+
 			    String dueDateStr = vbank.get("dueDate").toString();
 			    paymentInfo.setVbankExpDt(OffsetDateTime.parse(dueDateStr));
 			}else {
@@ -161,36 +165,66 @@ public class PaymentServiceImpl implements IPaymentService {
 				paymentInfo.setVbankExpDt(null);
 			}
 			paymentInfo.setPayRawData(responseBody.toString());		// 전체 데이터
-			
+
 			int paymentInfoResult = payMapper.insertPaymentInfo(paymentInfo);
 			log.info("insertPaymentInfo : {}", paymentInfoResult);
-			
-			
-			// 포인트 정책 - 결제 금액의 3%
-			int pointResult = 0;
-			if(discount == 0) {
-				MemberVO member = new MemberVO();
-				member.setMemNo(paymentVO.getMemNo());
-				double point = (double)amount * 0.03;
-				member.setPoint((int) point);
-				pointResult = payMapper.insertPoint(member);
-				log.info("pointResult 결과 : {}", pointResult);
-			}
-			
+
+			// ========================================
+			// 포인트 처리 로직 (수정된 부분 start)
+			// ========================================
+
+			// 1. 포인트 사용 처리 (결제 시 포인트를 사용한 경우)
 			int minusPointResult = 0;
 			if(discount != 0) {
+				// 1-1. MEMBER 테이블 포인트 차감 (기존 로직 유지)
 				MemberVO member = new MemberVO();
 				member.setMemNo(paymentVO.getMemNo());
 				member.setPoint(discount);	// 사용 포인트를 빼는 update
-				minusPointResult = payMapper.updatePoint(member);
+//				minusPointResult = payMapper.updatePoint(member);
 				log.info("minusPointResult 결과 : {}", minusPointResult);
+
+				// 1-2. POINT_DETAILS 테이블에 포인트 사용 이력 기록 (추가)
+				try {
+					pointService.earnPoint(paymentVO.getMemNo(), "PAYMENT", paymentVO.getPayNo(), -discount, "상품 구매 시 포인트 사용");
+					log.info("포인트 사용 이력 기록 완료 : {}", discount);
+				} catch (Exception e) {
+					log.error("포인트 사용 이력 기록 실패 : {}", e.getMessage());
+				}
 			}
-			
+			// ========================================
+
+			// 포인트 정책 - 결제 금액의 3%
+			int pointResult = 0;
+			if(discount == 0) {
+				// 2-1. 적립 포인트 계산 (실제 결제 금액의 3%)
+				double point = (double)amount * 0.03;
+				int earnPoint = (int) point;
+
+				// 2-2. MEMBER 테이블 포인트 적립 (기존 로직 유지)
+				MemberVO member = new MemberVO();
+				member.setMemNo(paymentVO.getMemNo());
+				member.setPoint(earnPoint);
+//				pointResult = payMapper.insertPoint(member);
+				log.info("pointResult 결과 : {}", pointResult);
+
+				// 2-3. POINT_DETAILS 테이블에 포인트 적립 이력 기록 (추가)
+				try {
+					pointService.earnPoint(paymentVO.getMemNo(), "PAYMENT", paymentVO.getPayNo(), earnPoint, "상품 구매로 인한 포인트 적립");
+					log.info("포인트 적립 이력 기록 완료 : {}P", earnPoint);
+				} catch (Exception e) {
+					log.error("포인트 적립 이력 기록 실패 : {}", e.getMessage());
+				}
+			}
+			// ========================================
+			// 포인트 처리 로직 (수정된 부분 end)
+			// ========================================
+
+
 			int result = 0;		// 결제 결과
 			if(paymentVO.getProductType().equals("flight")) {
 				result = flightPayConfirm(paymentVO);
 				log.info("flight pay : {}", result);
-				
+
 				int adult = 0;
 				int child = 0;
 				int infant = 0;
@@ -203,7 +237,7 @@ public class PaymentServiceImpl implements IPaymentService {
 						infant++;
 					}
 				}
-				
+
 				if(adult != 0) {
 					String adultInfo = "성인 " + adult + "명";
 					responseBody.put("adult", adultInfo);
@@ -216,23 +250,23 @@ public class PaymentServiceImpl implements IPaymentService {
 					String infantInfo = "유아 " + infant + "명";
 					responseBody.put("infant", infantInfo);
 				}
-				
+
                 responseBody.put("payNo", paymentVO.getPayNo());
-                
+
 			} else if(paymentVO.getProductType().equals("tour")) {
 				result = tourPayConfirm(paymentVO);
 			    log.info("tour pay : {}", result);
-			    
+
 			    // 투어 인원 정보 추가
 			    int quantity = paymentVO.getTripProdList().get(0).getQuantity();
 			    responseBody.put("quantity", quantity + "명");
 			    responseBody.put("payNo", paymentVO.getPayNo());
-			    
-			} else if(paymentVO.getProductType().equals("accommodation")) { 
+
+			} else if(paymentVO.getProductType().equals("accommodation")) {
                 // 1. 숙소 예약 로직 호출
-                result = accommodationPayConfirm(paymentVO); 
+                result = accommodationPayConfirm(paymentVO);
                 log.info("accommodation pay result : {}", result);
-                
+
                 // 2. 영수증 화면에 보여줄 인원 정보 가공 (성인 2, 아동 1...)
                 AccResvVO resv = paymentVO.getAccResvVO();
                 if(resv != null) {
@@ -241,61 +275,61 @@ public class PaymentServiceImpl implements IPaymentService {
                     responseBody.put("guestInfo", guestInfo);
                     responseBody.put("payNo", paymentVO.getPayNo());
                 }
-                
+
                 if (result > 0) {
                 	accMapper.insertAccResvAgree(resv);
                 	log.info("약관 동의 저장 완료 : {}", resv.getAccResvNo());
                 }
-                
+
 			}
-                
+
 			if (paymentVO.getPayNo() > 0) {
                 try {
                     // 공통 메일 함수 호출
-                    sendCommonReservationEmail(paymentVO); 
+                    sendCommonReservationEmail(paymentVO);
                     log.info("결제 완료 공통 메일 발송 성공!");
                 } catch (Exception e) {
                     // 메일 발송 실패가 결제 전체의 실패는 아니므로 로그만 남김
                     log.error("메일 발송 중 오류 발생: {}", e.getMessage());
                 }
             }
-			
+
 			// 1. 포인트 적립 알림
             if (discount == 0 && pointResult > 0) {
                 int earnedPoint = (int) ((double) amount * 0.03);
                 alarmService.sendPointEarnAlarm(paymentVO.getMemNo(), earnedPoint);
             }
-            
+
             // 2. 포인트 사용 알림
             if (discount != 0 && minusPointResult > 0) {
                 alarmService.sendPointUseAlarm(paymentVO.getMemNo(), discount);
             }
-            
+
             // 3. 결제 완료 알림 (일반회원)
-            String orderName = responseBody.get("orderName") != null 
-                ? responseBody.get("orderName").toString() 
+            String orderName = responseBody.get("orderName") != null
+                ? responseBody.get("orderName").toString()
                 : "상품";
             alarmService.sendPaymentCompleteAlarm(
-                paymentVO.getMemNo(), 
-                orderName, 
+                paymentVO.getMemNo(),
+                orderName,
                 paymentVO.getPayNo()
             );
-            
+
             // 4. 기업회원에게 상품 판매 알림 (투어 상품인 경우)
             if ("tour".equals(paymentVO.getProductType())) {
                 sendSellerAlarm(paymentVO);
             }
 
 			return responseBody;
-		} 
-		
+		}
+
 		else {
 			log.error("결제 승인 API 실패: {}", response.getStatusCode());
 			return null;
 	}
 }
 
-	
+
 	/**
 	 * 숙박 상품 예약 확정 처리
 	 * @author kdrs
@@ -304,28 +338,28 @@ public class PaymentServiceImpl implements IPaymentService {
 	private int accommodationPayConfirm(PaymentVO paymentVO) {
 	    int result = 0;
 	    AccResvVO resvVO = paymentVO.getAccResvVO();
-	    
+
 	    if (resvVO != null) {
 	    	// 예약 마스터 정보 저장 (ACC_RESV)
-	        resvVO.setPayNo(paymentVO.getPayNo()); 
-	        result = accMapper.insertAccommodationReservaion(resvVO); 
+	        resvVO.setPayNo(paymentVO.getPayNo());
+	        result = accMapper.insertAccommodationReservaion(resvVO);
 	        log.info("ACC_RESV 테이블 INSERT 결과 : {}", result);
-	        
+
 		        if(result > 0) {
 		        // 구입 상품 목록 저장 (PROD_LIST)
 		        TripProdListVO tripProdListVO = new TripProdListVO();
 		        RoomTypeVO room = accMapper.getRoomTypeDetail(resvVO.getRoomTypeNo());
 		        int extraFeeUnit = room.getExtraGuestFee();
-		        
+
 		        tripProdListVO.setPayNo(paymentVO.getPayNo());
 		        tripProdListVO.setTripProdNo(resvVO.getTripProdNo());
-		        
+
 		        // 판매 단가
 		        int unitPrice = resvVO.getPrice();
 		        // 박수
 		        int nights = resvVO.getStayDays();
 		        // 실제 결제 금액
-		        int payPrice = paymentVO.getPayTotalAmt(); 
+		        int payPrice = paymentVO.getPayTotalAmt();
 		        // 추가 인원 계산 (기준 인원 초과분)
 		        int extraGuests = Math.max(0, (resvVO.getAdultCnt() + resvVO.getChildCnt()) - room.getBaseGuestCount());
 		        // 총 추가 요금 계산
@@ -333,29 +367,29 @@ public class PaymentServiceImpl implements IPaymentService {
 		        // 할인액 계산(1박 단가 * 박수) + 총 추가요금 - 실제 결제액
 		        int totalNormalPrice = (resvVO.getPrice() * resvVO.getStayDays()) + totalExtraFee;
 		        int discountAmt = totalNormalPrice - paymentVO.getPayTotalAmt();
-		        
+
 		        tripProdListVO.setUnitPrice(unitPrice);
 		        tripProdListVO.setPayPrice(payPrice);
 		        tripProdListVO.setDiscountAmt(Math.max(0, discountAmt));
-		        
+
 		        tripProdListVO.setQuantity(1);
 		        tripProdListVO.setResvDt(new SimpleDateFormat("yy-MM-dd").format(resvVO.getStartDt()));
 		        tripProdListVO.setUseTime("15:00");
 		        tripProdListVO.setRsvMemo(resvVO.getResvRequest());
-		        
+
 		        //Mapper에서 selectKye로 prodListNo를 받아온다고 가정
 	            accMapper.insertProdList(tripProdListVO);
-	            
+
 	            // 매출 데이터 생성 (SALES)
 	            SalesVO salesVO = new SalesVO();
 	            salesVO.setProdListNo(tripProdListVO.getProdListNo());
 	            salesVO.setNetSales(tripProdListVO.getPayPrice());
 	            salesVO.setSettleStatCd("정산대기");
-	            
+
 	            accMapper.insertSales(salesVO);
 	            log.info("SALES 테이블 매출 등록 완료 : {}" , salesVO.getSaleNo());
-	            
-		        
+
+
 		        // 약관 동의 객체가 null일 때 처리
 		        if (resvVO.getAccResvAgree() == null) {
 		            AccResvAgreeVO agreeVO = new AccResvAgreeVO();
@@ -364,13 +398,13 @@ public class PaymentServiceImpl implements IPaymentService {
 		            agreeVO.setPrivacyAgreeYn(resvVO.getPrivacyAgreeYn());
 		            agreeVO.setRefundAgreeYn(resvVO.getRefundAgreeYn());
 		            agreeVO.setMarketAgreeYn(resvVO.getMarketAgreeYn());
-		            
+
 		            // 생성한 객체를 다시 resvVO에 꽂아줌
 		            resvVO.setAccResvAgree(agreeVO);
 		        }
 		    }
 	    }
-	    
+
 	    return result;
 	}
 
@@ -384,7 +418,7 @@ public class PaymentServiceImpl implements IPaymentService {
 		// 항공권 담기 - pk = 시퀀스
 		int productResult = 0;
 		int extraBaggagePrice = paymentVO.getFlightProductList().get(0).getExtraBaggagePrice(); // 수하물 가격 세팅
-		
+
 		for (FlightProductVO flightProductVO : paymentVO.getFlightProductList()) {
 			Integer fltProdId = flightMapper.getFlightKey(flightProductVO);
 			// 해당 정보와 일치하는 항공권 있는지 확인하기. 없으면 insert
@@ -398,7 +432,7 @@ public class PaymentServiceImpl implements IPaymentService {
 		}
 
 		// fltProdId
-		List<FlightReservationVO> flightReservationList = paymentVO.getFlightReservationList(); 
+		List<FlightReservationVO> flightReservationList = paymentVO.getFlightReservationList();
 		int depProductNo = paymentVO.getFlightProductList().get(0).getFltProdId(); // 가는편 항공권 키 시퀀스
 		log.info("depProductNo {}", depProductNo);
 		flightReservationList.get(0).setFltProdId(depProductNo);
@@ -409,7 +443,7 @@ public class PaymentServiceImpl implements IPaymentService {
 			log.info("arrProductNo {}", arrProductNo);
 			flightReservationList.get(1).setFltProdId(arrProductNo);				// 오는편 항공권 키 세팅
 		}
-		
+
 		// 예약 정보 담기
 		int reservationResult = 0;
 		for (FlightReservationVO flightReservationVO : flightReservationList) {
@@ -429,7 +463,7 @@ public class PaymentServiceImpl implements IPaymentService {
 		int reservationAgreeResult = 0;
 		FlightResvAgreeVO flightResvAgreeVO = paymentVO.getFlightResvAgree();
 		flightResvAgreeVO.setReserveNo(depReservationNo);
-		
+
 		reservationAgreeResult = flightMapper.insertFlightAgree(flightResvAgreeVO);
 		log.info("insertFlightAgree dep : {}", reservationAgreeResult);
 		if(paymentVO.getFlightReservationList().size() >= 2) {
@@ -437,7 +471,7 @@ public class PaymentServiceImpl implements IPaymentService {
 			reservationAgreeResult = flightMapper.insertFlightAgree(flightResvAgreeVO);
 			log.info("insertFlightAgree arr : {}", reservationAgreeResult);
 		}
-		
+
 		// 탑승객 정보 담기
 		int passengersResult = 0;
 		List<FlightPassengersVO> flightPassengerList = paymentVO.getFlightPassengersList();
@@ -465,7 +499,7 @@ public class PaymentServiceImpl implements IPaymentService {
 		}
 
 		int result = productResult + reservationResult + reservationAgreeResult + passengersResult;
-		
+
 		return result;
 	}
 
@@ -474,39 +508,39 @@ public class PaymentServiceImpl implements IPaymentService {
 	 */
 	private int tourPayConfirm(PaymentVO paymentVO) {
 		int result = 0;
-	    
+
 	    // TRIP_PROD_LIST 테이블에 저장
 	    List<TripProdListVO> tripProdList = paymentVO.getTripProdList();
 	    for (TripProdListVO item : tripProdList) {
 	    	// 재고 감소 먼저 시도
 	        int stockResult = payMapper.decreaseStock(item.getTripProdNo(), item.getQuantity());
-	        
+
 	        // 재고 부족하면 롤백
 	        if (stockResult == 0) {
 	            throw new RuntimeException("재고가 부족합니다. 상품번호: " + item.getTripProdNo());
 	        }
-	    	
+
 	        item.setPayNo(paymentVO.getPayNo());
 	        result = payMapper.insertTripProdList(item);
-	        
+
 	        // 매출 테이블 INSERT
 	        SalesVO sales = new SalesVO();
 	        sales.setProdListNo(item.getProdListNo());
 	        sales.setNetSales(item.getPayPrice());
 	        payMapper.insertSales(sales);
-	        
+
 	        // 재고 0이면 판매중지로 변경
 	        int currentStock = payMapper.getCurrentStock(item.getTripProdNo());
 	        if (currentStock <= 0) {
 	            payMapper.updateSoldOut(item.getTripProdNo());
 	        }
 	    }
-	    
+
 	    // 마케팅 동의 업데이트 (N → Y인 경우만)
 	    if ("Y".equals(paymentVO.getMktAgreeYn())) {
 	        payMapper.updateMktAgree(paymentVO.getMemNo());
 	    }
-	    
+
 	    return result;
 	}
 
@@ -517,7 +551,7 @@ public class PaymentServiceImpl implements IPaymentService {
 	public int updateSettleStatus() {
 		return payMapper.updateSettleStatus();
 	}
-	
+
 	private void sendCommonReservationEmail(PaymentVO payment) {
 	    // 1. 회원 정보 조회 (이메일, 이름)
 		MemberVO member = memberMapper.getMemberInfo(payment.getMemNo());
@@ -526,20 +560,20 @@ public class PaymentServiceImpl implements IPaymentService {
 	    String safeName = member.getMemName();
 	    // 2. 주문명 추출 (paymentVO에 담긴 정보가 없다면 responseBody나 DB에서 세팅된 resMsg 활용)
 	    // 리더가 말한 대로 PaymentInfoVO에 저장한 resMsg를 꺼내오자!
-	    String orderName = (payment.getPaymentKey() != null) ? "결제 상품" : "주문 상품"; 
+	    String orderName = (payment.getPaymentKey() != null) ? "결제 상품" : "주문 상품";
 	    // 실제로는 결제 승인 후 저장된 resMsg를 꺼내오는 로직이 필요함
 	    // 여기서는 가독성을 위해 가공된 정보를 사용!
-	    
+
 	    String productIcon = "";
 	    String detailInfo = "";
-	    
+
 	    // 상품 타입별 아이콘 및 정보 분기
 	    switch (payment.getProductType()) {
 	        case "accommodation":
 	            productIcon = "🏠";
 	            AccResvVO resv = payment.getAccResvVO();
-	            detailInfo = String.format("체크인: %s / 체크아웃: %s", 
-	                new SimpleDateFormat("yyyy.MM.dd").format(resv.getStartDt()), 
+	            detailInfo = String.format("체크인: %s / 체크아웃: %s",
+	                new SimpleDateFormat("yyyy.MM.dd").format(resv.getStartDt()),
 	                new SimpleDateFormat("yyyy.MM.dd").format(resv.getEndDt()));
 	            break;
 	        case "flight":
@@ -615,12 +649,12 @@ public class PaymentServiceImpl implements IPaymentService {
 	          </table>
 	        </body>
 	        </html>
-	        """.formatted(safeName, productIcon, payment.getOrderId(), formattedPrice, detailInfo); 
+	        """.formatted(safeName, productIcon, payment.getOrderId(), formattedPrice, detailInfo);
 	        // ※ payment.getOrderId() 대신 아까 말한 resMsg 변수를 넣어주면 돼!
 
 	    mailService.sendEmail(member.getMemEmail(), subject, member.getMemName() + "님 결제 완료", html);
 	}
-    
+
     /**
      * 기업회원에게 판매 알림 전송
      */
@@ -631,11 +665,11 @@ public class PaymentServiceImpl implements IPaymentService {
                 // 상품 정보에서 기업회원 memNo 조회 필요
                 Integer sellerMemNo = payMapper.getSellerMemNo(item.getTripProdNo());
                 String productName = payMapper.getProductName(item.getTripProdNo());
-                
+
                 if (sellerMemNo != null) {
                     alarmService.sendProductSoldAlarm(
-                        sellerMemNo, 
-                        productName, 
+                        sellerMemNo,
+                        productName,
                         item.getQuantity()
                     );
                 }

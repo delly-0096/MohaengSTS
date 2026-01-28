@@ -27,8 +27,9 @@
 			<div class="search-tabs">
 				<button class="search-tab active" data-type="round">왕복</button>
 				<button class="search-tab" data-type="oneway">편도</button>
+				<div class="api-source-text">국토교통부_(TAGO)_국내항공운항정보 API</div>
 			</div>
-			
+							
 			<form id="flightSearchForm">
 				<!-- 왕복/편도 검색 폼 -->
 				<div id="normalSearchForm">
@@ -129,8 +130,6 @@
 			</form>
 		</div>
 		
-		<div style="width: 300px;">국토교통부_(TAGO)_국내항공운항정보 API</div>
-
 		<!-- 선택한 항공편 표시 영역 -->
 		<div class="selected-flights-container" id="selectedFlightsContainer"
 			style="display: none;">

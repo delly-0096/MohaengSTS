@@ -128,11 +128,21 @@
                             <i class="bi bi-exclamation-circle"></i>
                             <span>신분증에 기재된 이름과 동일하게 입력해주세요. 이름이 다를 경우 탑승이 거부될 수 있습니다.</span>
                         </div>
+                        <!-- 자동완성 버튼 -->
+                        <div>
+	                        <!-- <button type="button" class="icon-fill-btn" onclick="fillFlightInfo()" title="정보 자동 채우기">
+							    <i class="bi bi-info-circle-fill"></i> 
+							</button> -->
+							<button type="button" class="icon-fill-btn" onclick="fillFlightInfo()" title="정보 자동 채우기">
+							    <i class="bi bi-magic"></i>
+							</button>
+						</div>
+						
                         <div id="passengersContainer">
                             <!-- JavaScript로 동적 생성 -->
                         </div>
                     </div>
-
+                        
                     <!-- 좌석 선택 -->
                     <div class="booking-section">
                         <h3><i class="bi bi-grid-3x3 me-2"></i>좌석 선택 <span class="optional-badge">선택사항</span></h3>
@@ -703,6 +713,56 @@ function createPassengerCard(type, num){
 	</div>`;
 }
 
+// 테스트때 사용할 채우기 버튼
+function fillFlightInfo(){
+	const passnegerList = passengerContainer.querySelectorAll(`.passenger-card`);
+	console.log("passnegerList.length : ", passnegerList.length);
+	
+	const testData = [
+        {
+            lastName: "김",
+            firstName: "정숙",
+            gender: "F",
+            birthDate: "1975-10-10",
+            extraBaggageOutbound: "10",
+            extraBaggageInbound: "10"
+        },
+        {
+            lastName: "안",
+            firstName: "창준",
+            gender: "M",
+            birthDate: "1972-01-01",
+
+            extraBaggageOutbound: "5",
+            extraBaggageInbound: "0"
+        },
+        {
+            lastName: "안",
+            firstName: "호진",
+            gender: "M",
+            birthDate: "1992-05-20",
+            extraBaggageOutbound: "0",
+            extraBaggageInbound: "5"
+        }
+    ];
+	
+	passnegerList.forEach((passenger, index) => {
+        // 데이터셋에 해당 인덱스의 데이터가 있을 경우에만 실행
+        if (testData[index]) {
+            const data = testData[index];
+            // name 속성을 이용해 각 input/select 요소를 찾아 value 삽입
+            passenger.querySelector(`[name="lastName"]`).value = data.lastName;
+            passenger.querySelector(`[name="firstName"]`).value = data.firstName;
+            passenger.querySelector(`[name="gender"]`).value = data.gender;
+            passenger.querySelector(`[name="birthDate"]`).value = data.birthDate;
+            passenger.querySelector(`[name="extraBaggageOutbound"]`).value = data.extraBaggageOutbound;
+            passenger.querySelector(`[name="extraBaggageInbound"]`).value = data.extraBaggageInbound;
+        }
+    });
+	
+}
+
+
 // 이름 유효성
 passengersContainer.addEventListener('input', function(e) {
     if (e.target.name.includes('lastName') || e.target.name.includes('firstName')) {
@@ -896,7 +956,7 @@ function validPoints(point){
 // 전체 포인트 사용
 function useAllPoints() {
 	console.log("customData.point : ", customData.point);
-    document.getElementById('usePointInput').value = parseInt(customData.point).toLocalString();
+    document.getElementById('usePointInput').value = parseInt(customData.point);
 }
 
 // function getPureNumber(value) {

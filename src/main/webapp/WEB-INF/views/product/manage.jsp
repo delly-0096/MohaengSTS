@@ -351,6 +351,14 @@
                 <form id="productForm">
 	                <input type="hidden" name="tripProdNo"/>
                     <div class="row mb-3">
+                    	<div>
+	                        <!-- <button type="button" class="icon-fill-btn" onclick="fillFlightInfo()" title="정보 자동 채우기">
+							    <i class="bi bi-info-circle-fill"></i> 
+							</button> -->
+							<button type="button" class="icon-fill-btn" onclick="fillProductInfo()" title="정보 자동 채우기">
+							    <i class="bi bi-magic"></i>
+							</button>
+						</div>
                         <div class="col-md-4">
                             <label class="form-label">카테고리 <span class="text-danger">*</span></label>
                             <select class="form-select" name="prodCtgryType" id="productCategory" required onchange="toggleCategoryFields()">
@@ -1073,6 +1081,51 @@ function setModalForNew() {
     // 객실 타입, 추가 옵션 인덱스 초기화
     roomTypeIndex = 1;
     addonOptionIndex = 1;
+}
+
+// 상품정보 자동 완성
+function fillProductInfo(){
+	const productData = {
+	        'prodCtgryType': 'activity',              // 카테고리: 액티비티
+	        'ctyNm': '39',                           // 도시코드
+	        'prodSale.leadTime': '3',                // 소요시간(Lead Time)
+	        'tripProdTitle': '제주 푸른 바다 투명 카약 체험', 
+// 	        'prodPlace.addr2': '제주특별자치도 제주시 애월읍 애월로 1길', // 직접 입력
+	        'tripProdContent': '에메랄드빛 애월 바다에서 즐기는 힐링 카약 체험입니다. 가족, 연인과 함께하세요!',
+	        'prodInfo.prodRuntime': '09:00 ~ 18:00',
+	        'prodInfo.prodDuration': '1시간 30분',
+	        'prodInfo.prodLimAge': '만 7세 이상',
+	        'prodInfo.prodMinPeople': '1',
+	        'prodInfo.prodMaxPeople': '4',
+	        'prodInfo.prodInclude': '카약 장비 대여, 구명조끼, 안전 요원 가이드',
+	        'prodInfo.prodExclude': '개인 수건, 주차비, 기타 음료',
+	        'prodInfo.prodNotice': '기상 악화 시 안전을 위해 이용이 제한될 수 있습니다.',
+	        'prodSale.netprc': '30000',               // 정가
+	        'prodSale.discount': '10',                // 할인율 (10%)
+	        'prodSale.totalStock': '50',
+	        'saleStartDt': '2026-02-01',
+	        'saleEndDt': '2026-05-01'
+	    };
+
+	    // 2. 루프를 돌며 데이터 입력
+	    for (const [name, value] of Object.entries(productData)) {
+	        const element = document.querySelector(`[name="\${name}"]`);
+	        if (element) {
+	            element.value = value;
+	            // 만약 입력을 감지해야 하는 라이브러리를 쓴다면 이벤트 강제 발생
+	            element.dispatchEvent(new Event('input', { bubbles: true }));
+	        }
+	    }
+
+	    // 3. 할인율에 따른 판매가(price) 자동 계산 로직
+	    const netprc = parseInt(productData['prodSale.netprc']);
+	    const discount = parseInt(productData['prodSale.discount']);
+	    const salePrice = netprc * (1 - discount / 100);
+	    
+	    const priceElement = document.querySelector(`[name="prodSale.price"]`);
+	    if (priceElement) {
+	        priceElement.value = Math.floor(salePrice); // 소수점 버림
+	    }
 }
 
 // 상품 수정 모달 설정

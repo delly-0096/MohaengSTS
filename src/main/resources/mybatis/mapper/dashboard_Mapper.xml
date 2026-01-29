@@ -17,6 +17,11 @@
 		<result property="prodListNo" column="prod_list_no"/>
 		<result property="tripProdName" column="trip_prod_title"/>
 	</resultMap>
+	
+	<!-- 업체 번호 조회 쿼리 추가 -->
+	<select id="selectCompNoByMemNo" parameterType="int" resultType="int">
+	    SELECT COMP_NO FROM COMPANY WHERE MEM_NO = #{memNo}
+	</select>
 
   <!-- KPI -->
   <select id="selectKpi" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$Kpi" parameterType="int">
@@ -26,7 +31,7 @@
         FROM TRIP_PROD_LIST pl
         JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
         JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = pl.TRIP_PROD_NO
-        WHERE tp.COMP_NO = (SELECT C.COMP_NO FROM COMPANY C WHERE C.MEM_NO = #{memNo})
+        WHERE tp.COMP_NO = #{compNo}
           AND p.PAY_STATUS = 'DONE'
           AND p.PAY_DT >= TRUNC(SYSDATE, 'MM')
         AND p.PAY_DT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)

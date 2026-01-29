@@ -621,9 +621,12 @@
 								<button class="post-action-btn report"
 									data-board-no="${boardVO.boardNo}"
 									data-board-title="${fn:escapeXml(boardVO.boardTitle)}"
+									data-writer-no="${boardVO.writerNo}"
 									onclick="reportPost(this)">
 									<i class="bi bi-flag"></i> <span>신고</span>
 								</button>
+
+
 							</sec:authorize>
 
 
@@ -647,7 +650,9 @@
 function reportPost(btn) {
   const boardNo = btn.dataset.boardNo;
   const title = btn.dataset.boardTitle || '';
-	    openReportModal('post', boardNo, title);
+  const writerNo = btn.dataset.writerNo || '';
+
+	    openReportModal('post', boardNo, title, writerNo);
 	}
 
 
@@ -708,10 +713,11 @@ async function loadComments(){
 
 	    if (isLoggedIn) {
 	    	if (isLoggedIn) {
-	    		  html += '<div class="mt-2 d-flex justify-content-end">';
-	    		  html += '  <button type="button" class="btn btn-sm btn-outline-danger" '
-	    		       +  'onclick="openReportModal(\'comment\', ' + c.cmntNo + ', \'\')">신고</button>';
-	    		  html += '</div>';
+
+	    		html += '<div class="mt-2 d-flex justify-content-end">';
+	    	    html += '  <button type="button" class="btn btn-sm btn-outline-danger" '
+	    	         +  'onclick="openReportModal(\'comment\', ' + c.cmntNo + ', \'\', ' + (c.writerNo || 'null') + ')">신고</button>';
+	    	    html += '</div>';
 	    	}
 	    }
 

@@ -227,7 +227,7 @@
                                 <div class="room-details">
                                     <span><i class="bi bi-people"></i> 기준 ${room.baseGuestCount}인 / 최대 ${room.maxGuestCount}인</span>
                                     <span><i class="bi bi-arrows-fullscreen"></i> ${room.roomSize}㎡</span>
-                                    <span><i class="bi bi-moon"></i> 더블 베드 ${room.bedCount}개</span>
+<%--                                     <span><i class="bi bi-moon"></i> 더블 베드 ${room.bedCount}개</span> --%>
                                 </div>
                                 <div class="room-features">
 								    <%-- 1. 전망 시리즈 --%>
@@ -978,6 +978,13 @@
     document.addEventListener('DOMContentLoaded', function() {
         if(startDate) document.getElementById('checkInDate').value = startDate;
         if(endDate) document.getElementById('checkOutDate').value = endDate;
+        
+        if(adultCount && adultCount !== "null") {
+            const adultSpan = document.getElementById('adultCount');
+            if(adultSpan) {
+                adultSpan.innerText = adultCount;
+            }
+        }
         
         // 초기 로드 시 박수 계산 실행 (JS 파일에 이 함수가 있어야 함!)
         if(typeof calculateNights === 'function') {

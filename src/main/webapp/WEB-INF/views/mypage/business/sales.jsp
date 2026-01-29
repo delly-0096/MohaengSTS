@@ -22,7 +22,7 @@
                 <!-- 통계 카드 -->
                 <div class="stats-grid">
                     <div class="stat-card primary">
-                        <div class="stat-icon"><i class="bi bi-currency-won"></i></div>
+                        <div class="stat-icon">₩</div>
                         <div class="stat-value">
                             <fmt:formatNumber value="${stats.thisMonthSales}" pattern="#,###"/>원
                         </div>
@@ -1237,6 +1237,10 @@ function downloadExcel(list) {
 
 .product-sales-table th:nth-child(7),
 .product-sales-table td:nth-child(7) { width: 11%; }  /* 정산가능 건수 */
+.stat-icon {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
 </style>
 </body>
 </html>

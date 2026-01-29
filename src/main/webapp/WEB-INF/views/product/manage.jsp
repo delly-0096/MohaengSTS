@@ -2267,8 +2267,10 @@ async function saveProduct(data) {
         if (res.data === "OK") {
             // showToast('성공!', 'success');
             // alert로?
-           	alert("상품 등록 성공!, 판매는 관리자의 허가를 받고 난후 가능합니다.");
-            location.reload();
+           	showToast("상품 등록 성공! 판매는 관리자의 허가 후 가능합니다.");
+           	setTimeout(() => {
+	            location.reload();
+            }, 1000);
         }
     } catch (error) {
         console.error(error);

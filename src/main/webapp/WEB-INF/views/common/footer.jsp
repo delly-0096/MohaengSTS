@@ -77,7 +77,7 @@
 
             <!-- 푸터 하단 -->
             <div class="footer-bottom">
-                <p>&copy; 2024 모행(MOHAENG). All rights reserved.</p>
+                <p>&copy; 2026 모행(MOHAENG). All rights reserved.</p>
                 <div class="footer-legal">
                     <a href="${pageContext.request.contextPath}/terms" class="footer-link">이용약관</a>
                     <a href="${pageContext.request.contextPath}/privacy" class="footer-link">개인정보처리방침</a>

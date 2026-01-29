@@ -33,13 +33,18 @@
                 
                 	<!-- ========== 장바구니 모드: 결제 상품 목록 ========== -->
                     <c:if test="${type eq 'cart'}">
-	                    <div class="booking-section" id="cartItemsSection">
-	                        <h3><i class="bi bi-cart-check me-2"></i>결제 상품 (<span id="cartItemCount">0</span>개)</h3>
-	                        <div class="cart-booking-items" id="cartBookingItems">
-	                            <!-- JavaScript로 렌더링 -->
-	                        </div>
-	                    </div>
-                    </c:if>
+					    <div class="booking-section" id="cartItemsSection">
+					        <div class="d-flex justify-content-between align-items-center mb-3">
+					            <h3 class="mb-0"><i class="bi bi-cart-check me-2"></i>결제 상품 (<span id="cartItemCount">0</span>개)</h3>
+					            <button type="button" class="btn btn-sm" onclick="fillDemoData()">
+					                <i class="bi bi-magic me-1"></i>
+					            </button>
+					        </div>
+					        <div class="cart-booking-items" id="cartBookingItems">
+					            <!-- JavaScript로 렌더링 -->
+					        </div>
+					    </div>
+					</c:if>
                     
                     <!-- ========== 단일 상품 모드: 이용일 선택 ========== -->
                     <c:if test="${type ne 'cart'}">
@@ -527,6 +532,46 @@ document.addEventListener('DOMContentLoaded', async function() {
                     maxDate: saleEndDt,
 	                locale: 'ko'
 	            });
+	        }
+	    });
+	}
+	
+	// ==================== 시연용 자동 입력 ====================
+	function fillDemoData() {
+	    // 고정 날짜
+	    var demoDate = '2026-02-25';
+	    
+	    // 상품별 시간 선택 인덱스 (1부터 시작 - 0은 "시간을 선택하세요")
+	    var timeIndexMap = [1, 3]; // 상품1: 첫 번째(1), 상품2: 세 번째(3)
+	    
+	    // 요청사항 샘플 메시지
+	    var sampleRequests = [
+	        '픽업 장소에서 만나요! 감사합니다.',
+	        '천천히 진행해주시면 감사하겠습니다.'
+	    ];
+	    
+	    cartItems.forEach(function(item, index) {
+	        // 1. 날짜 자동 입력 (2026-02-25 고정)
+	        var dateInput = document.getElementById('cartUseDate_' + index);
+	        if (dateInput && dateInput._flatpickr) {
+	            dateInput._flatpickr.setDate(demoDate);
+	        }
+	        
+	        // 2. 시간 자동 선택
+	        var timeSelect = document.getElementById('cartUseTime_' + index);
+	        if (timeSelect) {
+	            var targetIndex = timeIndexMap[index] || 1;
+	            // 옵션이 충분하지 않으면 마지막 옵션 선택
+	            if (targetIndex >= timeSelect.options.length) {
+	                targetIndex = timeSelect.options.length - 1;
+	            }
+	            timeSelect.selectedIndex = targetIndex;
+	        }
+	        
+	        // 3. 요청사항 자동 입력
+	        var requestsInput = document.getElementById('cartRequests_' + index);
+	        if (requestsInput) {
+	            requestsInput.value = sampleRequests[index] || '';
 	        }
 	    });
 	}

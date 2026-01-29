@@ -202,4 +202,59 @@
 	      AND p.CANCEL_DT IS NULL              
 	      AND p.PAY_STATUS != 'CANCEL'       
 	</select>
+	<!-- 페이징쿼리 -->
+	<select id="selectPaymentListPaging" parameterType="map" resultMap="paymentMap">
+<![CDATA[
+WITH pay_base AS (
+  SELECT DISTINCT
+    p.PAY_NO,
+    p.MEM_NO,
+    (SELECT m.MEM_NAME FROM MEMBER m WHERE m.MEM_NO = p.MEM_NO) AS payment_mem_name,
+    p.PAY_TOTAL_AMT,
+    p.PAY_STATUS
+  FROM PAYMENT p
+  JOIN TRIP_PROD_LIST tpl ON tpl.PAY_NO = p.PAY_NO
+  JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = tpl.TRIP_PROD_NO
+  WHERE tp.MEM_NO = #{memNo}
+),
+pay_page AS (
+  SELECT *
+  FROM (
+    SELECT
+      pay_base.*,
+      ROW_NUMBER() OVER(ORDER BY PAY_NO DESC) AS rn
+    FROM pay_base
+  )
+  WHERE rn BETWEEN #{startRow} AND #{endRow}
+)
+SELECT
+  pp.PAY_NO,
+  pp.MEM_NO,
+  pp.payment_mem_name,
+  pp.PAY_TOTAL_AMT,
+  pp.PAY_STATUS,
+
+  tpl.PROD_LIST_NO,
+  tp.TRIP_PROD_TITLE
+
+FROM pay_page pp
+LEFT JOIN TRIP_PROD_LIST tpl ON tpl.PAY_NO = pp.PAY_NO
+LEFT JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = tpl.TRIP_PROD_NO
+ORDER BY pp.PAY_NO DESC, tpl.PROD_LIST_NO
+]]>
+</select>
+
+	
+	<select id="selectPaymentCount" parameterType="int" resultType="int">
+  SELECT COUNT(*)
+  FROM (
+    SELECT DISTINCT p.PAY_NO
+    FROM PAYMENT p
+    JOIN TRIP_PROD_LIST tpl ON tpl.PAY_NO = p.PAY_NO
+    JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = tpl.TRIP_PROD_NO
+    WHERE tp.MEM_NO = #{memNo}
+  )
+</select>
+
+	
 </mapper>

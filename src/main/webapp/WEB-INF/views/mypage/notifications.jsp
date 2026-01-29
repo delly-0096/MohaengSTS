@@ -21,6 +21,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-left:-16%;
 }
 
 /* 2. 아이콘 영역: 너비 고정 */
@@ -31,6 +32,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    margin-left:-17%;
 }
 
 /* 3. 콘텐츠 영역: 남은 모든 공간을 차지하도록 설정 */
@@ -172,7 +174,7 @@
                         				</c:when>
                         			</c:choose>
 			                        <div class="notification-item" data-type="${filterType}">
-			                            <label class="notification-checkbox">
+			                            <label class="notification-checkbox" style="margin-left:-16%;">
 			                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
 			                            </label>
 			                            <div class="notification-icon ${color }">

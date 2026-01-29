@@ -25,6 +25,8 @@ public interface INotiAlarmMapper {
 	public List<AlarmVO> selectAlramList(int memNo);
 	
 	public int updateAllRead(int memNo);
+
+	public List<AlarmVO> selectUnreadList(int memNo);
 	
 
 }

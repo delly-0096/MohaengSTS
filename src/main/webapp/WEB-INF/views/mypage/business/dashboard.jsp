@@ -124,7 +124,7 @@
                                     			</tr>	
                                     		</c:when>
                                     		<c:otherwise>
-                                    			<c:forEach items="${paymentList }" var="payment">
+                                    			<c:forEach items="${pagingPaymentList }" var="payment">
                                     				<c:set value="" var="etc"/>
                                     				<c:if test="${fn:length(payment.tripProdList) > 1 }">
                                     					<c:set value="외 ${fn:length(payment.tripProdList)-1 }개" var="etc"/>
@@ -151,6 +151,36 @@
                                     </tbody>
                                 </table>
                             </div>
+                              <!-- 페이지네이션 -->
+					              <div class="pagination-container">
+									  <nav>
+									    <ul class="pagination">
+									      <c:if test="${pagingVO.startPage > 1}">
+									        <li class="page-item">
+									          <a class="page-link"
+									             href="?type=${type}&page=${pagingVO.startPage - pagingVO.blockSize}">
+									            <i class="bi bi-chevron-left"></i>
+									          </a>
+									        </li>
+									      </c:if>
+									
+									      <c:forEach var="p" begin="${pagingVO.startPage}"
+									                 end="${pagingVO.endPage < pagingVO.totalPage ? pagingVO.endPage : pagingVO.totalPage}">
+									        <li class="page-item ${p == pagingVO.currentPage ? 'active' : ''}">
+									          <a class="page-link" href="?page=${p}&searchWord=${searchWord}&ntcType=${ntcType}">${p}</a>
+									        </li>
+									      </c:forEach>
+									
+									      <c:if test="${pagingVO.endPage < pagingVO.totalPage}">
+									        <li class="page-item">
+									          <a class="page-link" href="?type=${type}&page=${pagingVO.endPage + 1}">
+									            <i class="bi bi-chevron-right"></i>
+									          </a>
+									        </li>
+									      </c:if>
+									    </ul>
+									  </nav>
+									</div>
                         </div>
                     </div>
 
@@ -167,7 +197,21 @@
 							
 							  <ul class="noti-list" id="notiList">
 							    <!-- JS로 렌더링 -->
-							    <li class="noti-empty">새로운 알림이 없습니다.</li>
+							    <!-- <li class="noti-empty">새로운 알림이 없습니다.</li>-->
+							    <!-- /// 알람 반복 시작 /// -->
+							    <c:forEach items="${alarmList}" var="alarm">
+								    <div class="notification-item unread">
+				                        <div class="notification-icon second">
+				                            <i class="bi bi-check-circle"></i>
+				                        </div>
+				                        <div class="notification-content">
+				                            <p class="notification-text">${alarm.alarmCont}의가 등록되었습니다.</p>
+				                            <span class="notification-meta">${type}</span>
+				                            <span class="notification-time">${alarm.regDtStr}</span>
+				                        </div>
+				                    </div>
+			                    </c:forEach>
+			                    <!-- /// 알람 반복 끝 /// -->
 							  </ul>
 							</div> 
 							</div>

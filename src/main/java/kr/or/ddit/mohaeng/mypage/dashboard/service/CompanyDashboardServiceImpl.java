@@ -25,9 +25,9 @@ public class CompanyDashboardServiceImpl implements CompanyDashboardService {
     vo.setKpi(mapper.selectKpi(compNo));
     System.out.println("🔥 KPI = " + kpi);
     System.out.println("compNo=" + compNo);
-    
+
     List<TripProdVO> myProducts = mapper.selectMyProductList(compNo);
-    vo.setProductList(myProducts);										// 내 상품현황 
+    vo.setProductList(myProducts);											// 내 상품현황 
     vo.setMonthlySalesChart(mapper.selectMonthlySalesChart(compNo, 6));	// 최근 6개월간 매출 현황
     vo.setCategoryRatio(mapper.selectCategoryRatio(compNo));			// 상품 카테고리 현황
     

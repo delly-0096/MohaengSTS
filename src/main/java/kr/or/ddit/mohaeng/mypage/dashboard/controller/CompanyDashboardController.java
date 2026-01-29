@@ -41,7 +41,7 @@ public class CompanyDashboardController {
       return "mypage/business/products";
   }
   
-  	@GetMapping("/mypage/business/dashboard")
+  @GetMapping("/mypage/business/dashboard")
   		public String dashboardView(@AuthenticationPrincipal CustomUserDetails user, Model model , 
   				                    @RequestParam(name="page", defaultValue="1") int page) {
   		  int memNo = user.getMemNo(); 
@@ -87,6 +87,7 @@ public class CompanyDashboardController {
 	
 	  return "mypage/business/dashboard";
   }
+  
   
   
 	/*

@@ -73,7 +73,8 @@
 					    </div>
 					</div>
 					
-<%-- 					<div class="dashboard-row" style="display: flex; gap: 20px; margin-top: 20px;">
+					<!-- 
+					<div class="dashboard-row" style="display: flex; gap: 20px; margin-top: 20px;">
 					    <div class="content-section" style="flex: 1; min-width: 0;">
 					        <div class="section-header" style="display: flex; justify-content: space-between;">
 					            <h3><i class="bi bi-calendar-check"></i> 다가오는 예약</h3>
@@ -92,8 +93,8 @@
 					        <div class="list-container" id="recentReviews" style="height: 300px; overflow-y: auto;">
 					            </div>
 					    </div>
-					</div> --%>
-					
+					</div> 
+					 -->
                     <!-- 최근 예약 -->
                     <div class="col-lg-8">
                         <div class="content-section">
@@ -185,6 +186,7 @@
                     </div>
 
 				     <!-- 알림 -->
+				     
                      <div class="col-lg-4">
                         <div class="content-section">
 							  <div class="section-header">
@@ -199,13 +201,13 @@
 							    <!-- JS로 렌더링 -->
 							    <!-- <li class="noti-empty">새로운 알림이 없습니다.</li>-->
 							    <!-- /// 알람 반복 시작 /// -->
-							    <c:forEach items="${alarmList}" var="alarm">
+							    <c:forEach items="${alarmList}" var="alarm" begin="0" end="5" varStatus="vs">
 								    <div class="notification-item unread">
 				                        <div class="notification-icon second">
 				                            <i class="bi bi-check-circle"></i>
 				                        </div>
 				                        <div class="notification-content">
-				                            <p class="notification-text">${alarm.alarmCont}의가 등록되었습니다.</p>
+				                            <p class="notification-text">${alarm.alarmCont}</p>
 				                            <span class="notification-meta">${type}</span>
 				                            <span class="notification-time">${alarm.regDtStr}</span>
 				                        </div>
@@ -215,7 +217,7 @@
 							  </ul>
 							</div> 
 							</div>
-
+					
 
 
                 <!-- 상품 현황 -->
@@ -234,31 +236,63 @@
 				            <c:otherwise>
 				                <c:forEach items="${dashboard.productList}" var="prod">
 				                    <div class="product-manage-item">
-				                        <div class="product-manage-info">
-				                            <img src="${pageContext.request.contextPath}/upload/${prod.thumbImage}" alt="상품">
-				                            <div class="product-manage-details">
-				                            <a href="${pageContext.request.contextPath}${prod.prodCtgryType eq 'accommodation' ? '/product/accommodation' : '/tour'}/${prod.tripProdNo}" 
-       												style="text-decoration: none; color: inherit;">
-				                                <h4>${prod.title}</h4>
-				                                </a>
-				                                <span class="category">${prod.prodCtgryType eq 'ACCOMMODATION' ? '숙박' : '투어/체험'}</span>
-				                                <div class="price"><fmt:formatNumber value="${prod.price}" pattern="#,###"/>원</div>
-				                            </div>
-				                        </div>
-				                        <div class="product-stats">
-				                            <div class="product-stat">
-				                                <div class="value">${prod.viewCount}</div> <div class="label">조회</div>
-				                            </div>
-				                            <div class="product-stat">
-				                                <div class="value">${prod.resvCount}</div> <div class="label">예약</div>
-				                            </div>
-				                            <div class="product-stat">
-				                                <div class="value">${not empty prod.rating ? prod.rating : '0.0'}</div>
-				                                <div class="label">평점</div>
-				                            </div>
-				                        </div>
-				                        <span class="product-status active">판매중</span>
-				                    </div>
+									    <div class="product-manage-info">
+									        <%-- [1] 이미지 분기 로직 적용 --%>
+									        <div class="product-image-container" style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px;">
+									            <c:choose>
+									                <c:when test="${prod.prodCtgryType eq 'accommodation'}">
+									                    <%-- 숙박일 때는 숙소 전용 경로 사용 --%>
+									                    <img src="${prod.accommodation.accFilePath}" alt="${prod.accommodation.accName}" 
+									                         style="width: 100%; height: 100%; object-fit: cover;">
+									                </c:when>
+									                <c:when test="${prod.prodCtgryType ne 'accommodation' and not empty prod.thumbImage}">
+									                    <%-- 투어/체험일 때는 썸네일 이미지 사용 --%>
+									                    <img src="${pageContext.request.contextPath}/upload${prod.thumbImage}" alt="${prod.title}"
+									                         style="width: 100%; height: 100%; object-fit: cover;">
+									                </c:when>
+									                <c:otherwise>
+									                    <%-- 이미지가 없을 때 기본 이미지 --%>
+									                    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" 
+									                         alt="기본이미지" style="width: 100%; height: 100%; object-fit: cover;">
+									                </c:otherwise>
+									            </c:choose>
+									        </div>
+									
+									        <div class="product-manage-details">
+									            <a href="${pageContext.request.contextPath}${prod.prodCtgryType eq 'accommodation' ? '/product/accommodation' : '/tour'}/${prod.tripProdNo}" 
+									               style="text-decoration: none; color: inherit;">
+									                <h4 style="margin-bottom: 4px;">${prod.title}</h4>
+									            </a>
+									            <%-- 카테고리 대문자/소문자 대응 --%>
+									            <span class="category" style="font-size: 0.8rem; color: #666;">
+									                ${(prod.prodCtgryType eq 'accommodation' || prod.prodCtgryType eq 'ACCOMMODATION') ? '숙박' : '투어/체험'}
+									            </span>
+									            <div class="price" style="font-weight: bold; color: #2563eb;">
+									                <fmt:formatNumber value="${prod.price}" pattern="#,###"/>원
+									            </div>
+									        </div>
+									    </div>
+									
+									    <div class="product-stats">
+									        <div class="product-stat">
+									            <div class="value">${not empty prod.viewCount ? prod.viewCount : 0}</div> <div class="label">조회</div>
+									        </div>
+									        <div class="product-stat">
+									            <div class="value">${not empty prod.resvCount ? prod.resvCount : 0}</div> <div class="label">예약</div>
+									        </div>
+									        <div class="product-stat">
+									            <div class="value">${not empty prod.rating ? prod.rating : '0.0'}</div>
+									            <div class="label">평점</div>
+									        </div>
+									    </div>
+									
+									    <%-- [2] 승인대기 상태 분기 로직 적용 --%>
+									    <c:set var="isPending" value="${not empty prod.aprvYn and prod.aprvYn eq 'N'}" />
+									    <span class="product-status ${isPending ? 'pending' : 'active'}" 
+									          style="background-color: ${isPending ? '#ff9800' : '#10b981'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem;">
+									        ${isPending ? '승인대기' : (not empty prod.approveStatus ? prod.approveStatus : '판매중')}
+									    </span>
+									</div>
 				                </c:forEach>
 				            </c:otherwise>
 				        </c:choose>
@@ -270,120 +304,101 @@
 
 
 <script>
-(async function () {
-  const contextPath = "${pageContext.request.contextPath}";
-  const url = contextPath + "/api/company/dashboard";
-
-  try {
-    const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" }});
-    if (!res.ok) throw new Error("HTTP " + res.status);
-
-    const data = await res.json();
+document.addEventListener('DOMContentLoaded', function() {
+    // 1. 서버 데이터를 JS 객체로 변환 (컨트롤러에서 넘긴 변수명 확인!)
+	const monthlySales = Number("${dashboard.kpi.monthlySales}");
+    const monthlyReservations = Number("${dashboard.kpi.monthlyReservations}");
     
-    // KPI 데이터 채우기
-    const kpi = data.kpi || {};
-    const won = (n) => (n ?? 0).toLocaleString("ko-KR") + "원";
-    const num = (n) => (n ?? 0).toLocaleString("ko-KR");
+    const kpiData = {
+        monthlySales: monthlySales || 0,
+        monthlyReservations: monthlyReservations || 0,
+        sellingProductCount: Number("${dashboard.kpi.sellingProductCount}") || 0
+    };
 
-    document.querySelector("#monthlySales").textContent = won(kpi.monthlySales);
-    document.querySelector("#monthlyReservations").textContent = num(kpi.monthlyReservations);
-    document.querySelector("#sellingProductCount").textContent = num(kpi.sellingProductCount);
+    // 2. 파이 차트 (상품 구성 비율)
+    const categoryCtx = document.getElementById('categoryChart').getContext('2d');
+    const categoryLabels = [];
+    const categoryValues = [];
+    
+    var categoryMap = {
+            'tour': '투어',
+            'activity': '액티비티',
+            'ticket': '입장권/티켓',
+            'class': '클래스/체험',
+            'transfer': '교통/이동'
+        };
+    
+    <c:forEach var="item" items="${dashboard.categoryRatio}">
+        categoryLabels.push(categoryMap['${item.type}']);
+        categoryValues.push(${item.cnt});
+    </c:forEach>
+	console.log(categoryLabels);
+    new Chart(categoryCtx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryLabels,
+            datasets: [{
+                data: categoryValues,
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e']
+            }]
+        },
+        options: { maintainAspectRatio: false }
+    });
 
-    // 매출 현황 꺾은선 그래프
-    const salesData = data.monthlySalesChart || [];
-    const salesLabels = salesData.map(item => item.month); // 진짜 월 데이터
-    const salesTotals = salesData.map(item => item.total); // 진짜 금액 데이터
-
+    // 3. 바 차트 (최근 6개월 매출)
     const salesCtx = document.getElementById('myChart').getContext('2d');
+    const salesLabels = [];
+    const salesValues = [];
+    salesLabels.push('0')
+    salesValues.push(0)
+    <c:forEach var="item" items="${dashboard.monthlySalesChart}">
+        salesLabels.push('${item.month}');
+        salesValues.push(${item.total});
+    </c:forEach>
+
     new Chart(salesCtx, {
         type: 'line',
         data: {
-            labels: salesLabels.length ? salesLabels : ['데이터 없음'], 
+            labels: salesLabels,
             datasets: [{
-                label: '월별 매출액',
-                data: salesTotals.length ? salesTotals : [0],
-                borderColor: '#1f6feb',
-                backgroundColor: 'rgba(31, 111, 235, 0.1)',
+                label: '매출액',
+                data: salesValues,
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78, 115, 223, 0.05)',
                 fill: true,
-                tension: 0.4
+                tension: 0.3
             }]
         },
-        options: {
-            responsive: true,
-            plugins: { legend: { display: false } },
-            scales: {
-                y: { beginAtZero: true, ticks: { callback: (v) => v.toLocaleString() + '원' } }
-            }
-        }
+        options: { maintainAspectRatio: false }
     });
 
-    // 상품 카테고리 비중 (도넛 차트)
-    const categoryData = data.categoryRatio || []; // 서버에서 준 리스트 (없으면 빈배열)
-    
-    // DB값이 'ACCOMMODATION'이면 '숙박', 그 외엔 '투어'로 이름표 바꿔주기
-    const catLabels = categoryData.map(item => item.type === 'accommodation' ? '숙박' : '투어/체험');
-    const catCounts = categoryData.map(item => item.cnt);
+    // 4. 다가오는 예약 리스트 렌더링
+    const upcomingList = document.querySelector('#upcomingReservations ul');
+    <c:forEach var="res" items="${dashboard.upcomingReservations}">
+        upcomingList.innerHTML += `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold">\${res.prodName}</div> 
+                    <small class="text-muted">\${res.memName} | \${res.resvDate} \${res.useTime}</small>
+                </div>
+                <span class="badge bg-info rounded-pill">\${res.type}</span>
+            </li>`;
+    </c:forEach>
 
-    const pieCtx = document.getElementById('categoryChart').getContext('2d');
-    new Chart(pieCtx, {
-        type: 'doughnut',
-        data: {
-            labels: catLabels.length ? catLabels : ['상품 없음'],
-            datasets: [{
-                data: catCounts.length ? catCounts : [1], // 데이터 없으면 회색 원이라도 나오게
-                backgroundColor: ['#1f6feb', '#3fb950', '#dddddd'],
-                borderWidth: 0
-            }]
-        },
-        options: {
-            cutout: '70%',
-            plugins: { legend: { position: 'bottom' } }
-        }
-    });
-
-  } catch (e) {
-    console.error("대시보드 로딩 실패:", e);
-  }
-  
-//1. 다가오는 예약 리스트 렌더링
-  const resvList = document.querySelector("#upcomingReservations ul");
-  const reservations = data.upcomingReservations || [];
-
-  if(reservations.length > 0) {
-      resvList.innerHTML = reservations.map(r => `
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-              <div>
-                  <strong style="font-size: 1.1em;">\${r.memName}</strong>
-                  <div style="font-size: 0.85em; color: #666;">\${r.prodName}</div>
-              </div>
-              <span class="badge bg-light text-dark border">\${r.resvDate}</span>
-          </li>
-      `).join('');
-  } else {
-      resvList.innerHTML = '<li class="list-group-item text-center">예약 일정이 없습니다.</li>';
-  }
-
-// 2. 최근 리뷰 피드 렌더링
-const reviewDiv = document.querySelector("#recentReviews");
-const reviews = data.recentReviews || [];
-
-if(reviews.length > 0) {
-    reviewDiv.innerHTML = reviews.map(v => `
-        <div class="review-card" style="padding: 15px; border-bottom: 1px solid #eee;">
-            <div class="d-flex justify-content-between">
-                <span style="font-weight: bold;">\${v.memName}</span>
-                <span style="color: #ffc107;">\${'★'.repeat(v.reviewStar)}</span>
-            </div>
-            <div style="font-size: 0.9em; color: #444; margin-top: 5px;" class="text-truncate">
-                \${v.reviewContent}
-            </div>
-            <div style="font-size: 0.8em; color: #999; margin-top: 5px;">\${v.regDate}</div>
-        </div>
-    `).join('');
-} else {
-    reviewDiv.innerHTML = '<div class="text-center" style="padding: 50px;">등록된 리뷰가 없습니다.</div>';
-}
-})();
+    // 3. 최근 리뷰 피드 (역슬래시 \ 추가!)
+    const reviewBox = document.querySelector('#recentReviews');
+    <c:forEach var="rv" items="${dashboard.recentReviews}">
+        reviewBox.innerHTML += `
+            <div class="p-3 border-bottom">
+                <div class="d-flex justify-content-between">
+                    <strong>\${rv.memName}</strong>
+                    <span class="text-warning">` + '★'.repeat(Number("${rv.reviewStar}")) + `</span>
+                </div>
+                <div class="text-truncate small">\${rv.reviewContent}</div>
+                <small class="text-muted" style="font-size: 0.7rem;">\${rv.prodName} | \${rv.regDate}</small>
+            </div>`;
+    </c:forEach>
+});
 </script>
 
 <style>

@@ -33,14 +33,11 @@ public class CompanyDashboardController {
   @ResponseBody
   @GetMapping("/api/company/dashboard")
   public CompanyDashboardVO dashboard(@AuthenticationPrincipal CustomUserDetails user) {
-		/* int compNo = user.getCompNo(); */
-	int memNo = user.getMemNo();
-    return service.getDashboard(memNo);
+	  return service.getDashboard(user.getMemNo());
   }
   
   @GetMapping("/mypage/business/products")
   public String productsView() {
-	  
       return "mypage/business/products";
   }
   
@@ -90,6 +87,12 @@ public class CompanyDashboardController {
 	
 	  return "mypage/business/dashboard";
   }
+  
+	@ResponseBody
+	@GetMapping("/api/company/dashboard")
+	public CompanyDashboardVO getDashboardApi(@AuthenticationPrincipal CustomUserDetails user) {
+	      return service.getDashboard(user.getMemNo());
+	}
   
 	/*
 	 * @GetMapping("/mypage/business/notifications") public String

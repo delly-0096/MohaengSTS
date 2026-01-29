@@ -1097,8 +1097,8 @@ function fillProductInfo(){
 	        'prodInfo.prodLimAge': '만 7세 이상',
 	        'prodInfo.prodMinPeople': '1',
 	        'prodInfo.prodMaxPeople': '4',
-	        'prodInfo.prodInclude': '카약 장비 대여, 구명조끼, 안전 요원 가이드',
-	        'prodInfo.prodExclude': '개인 수건, 주차비, 기타 음료',
+	        'prodInfo.prodInclude': '카약 장비 대여\n구명조끼\n안전 요원 가이드',
+	        'prodInfo.prodExclude': '개인 수건\n주차비\n기타 음료',
 	        'prodInfo.prodNotice': '기상 악화 시 안전을 위해 이용이 제한될 수 있습니다.',
 	        'prodSale.netprc': '30000',               // 정가
 	        'prodSale.discount': '10',                // 할인율 (10%)

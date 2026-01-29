@@ -227,7 +227,7 @@
                                 <div class="room-details">
                                     <span><i class="bi bi-people"></i> 기준 ${room.baseGuestCount}인 / 최대 ${room.maxGuestCount}인</span>
                                     <span><i class="bi bi-arrows-fullscreen"></i> ${room.roomSize}㎡</span>
-<%--                                     <span><i class="bi bi-moon"></i> 더블 베드 ${room.bedCount}개</span> --%>
+                                    <span><i class="bi bi-moon"></i> 더블 베드 ${room.bedCount}개</span>
                                 </div>
                                 <div class="room-features">
 								    <%-- 1. 전망 시리즈 --%>
@@ -983,6 +983,8 @@
             const adultSpan = document.getElementById('adultCount');
             if(adultSpan) {
                 adultSpan.innerText = adultCount;
+                
+                console.log("상세 페이지 인원수 동기화 완료: " + adultCount + "명");
             }
         }
         

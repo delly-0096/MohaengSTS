@@ -97,7 +97,7 @@
 	        <i class="bi bi-x"></i>
 	    </button>
     </div>
-    
+
     <!-- 챗봇 창 (AI 기반) -->
 	<div class="chatbot-window" id="chatbotWindow">
 	    <div class="chatbot-header">
@@ -120,15 +120,15 @@
 	    </div>
 	    <!-- 텍스트 입력 영역 추가 -->
 	    <div class="chatbot-input-area">
-	        <input type="text" id="chatbotInput" 
-	               placeholder="메시지를 입력하세요..." 
+	        <input type="text" id="chatbotInput"
+	               placeholder="메시지를 입력하세요..."
 	               onkeypress="if(event.keyCode===13) sendChatMessage()">
 	        <button class="chatbot-send-btn" onclick="sendChatMessage()">
 	            <i class="bi bi-send-fill"></i>
 	        </button>
 	    </div>
 	</div>
-	
+
     <!-- 신고 모달 -->
     <div class="report-modal-overlay" id="reportModalOverlay">
         <div class="report-modal" onclick="event.stopPropagation()">
@@ -170,7 +170,7 @@
                             <label for="reason5">저작권 침해</label>
                         </div>
                         <div class="report-reason-item" onclick="selectReportReason(this)">
-                            <input type="radio" name="reportReason" value="other" id="reason6">
+                            <input type="radio" name="reportReason" value="ETC" id="reason6">
                             <label for="reason6">기타</label>
                         </div>
                     </div>

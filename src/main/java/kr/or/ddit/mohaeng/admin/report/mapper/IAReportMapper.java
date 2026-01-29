@@ -67,4 +67,5 @@ public interface IAReportMapper {
 	//오해가 풀렸을 때 블랙리스트에서 풀어주는 기능
 	int releaseBlackList(int blacklistNo);
 
+
 }

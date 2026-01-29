@@ -47,7 +47,7 @@
 					</div>
 					<div class="stat-card">
 						<div class="stat-icon">
-							<i class="bi bi-currency-dollar"></i>
+							₩
 						</div>
 						<div class="stat-value">
 							<fmt:formatNumber value="${stats.TOTAL_REVENUE}" pattern="#,###" />
@@ -1596,6 +1596,11 @@ function getRatingText(rating) {
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 	}
+}
+
+.stat-icon {
+  font-size: 1.6rem;
+  font-weight: 700;
 }
 </style>
 

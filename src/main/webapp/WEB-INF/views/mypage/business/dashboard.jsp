@@ -23,7 +23,7 @@
                 <!-- 통계 카드 -->
                 <div class="stats-grid">
                     <div class="stat-card primary">
-                        <div class="stat-icon"><i class="bi bi-currency-won"></i></div>
+                        <div class="stat-icon">₩</div>
                         <div class="stat-value" id="monthlySales">${dashboard.kpi.monthlySales}</div>
                         <div class="stat-label">이번 달 매출</div>
                     </div>
@@ -386,6 +386,12 @@ if(reviews.length > 0) {
 })();
 </script>
 
+<style>
+.stat-icon {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+</style>
 
 
 

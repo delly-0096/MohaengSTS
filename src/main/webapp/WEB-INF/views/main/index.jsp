@@ -177,10 +177,10 @@
             </div>
 
             <div class="ai-image">
-                <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80" alt="AI 일정 추천" style="border-radius: 20px;">
-                <div class="ai-badge">
+                <img src="resources/images/mohaeng_main_photo.png" alt="AI 일정 추천" style="border-radius: 20px;">
+<!--                 <div class="ai-badge">
                     <i class="bi bi-stars me-1"></i> NEW
-                </div>
+                </div> -->
             </div>
         </div>
     </div>
@@ -196,7 +196,7 @@
 
         <div class="destinations-grid">
             <div class="destination-card animate-on-scroll">
-                <img src="https://images.unsplash.com/photo-1590650046871-92c887180603?w=400&h=500&fit=crop&q=80" alt="제주도">
+                <img src="resources/images/jejuisland2.jpg" alt="제주도">
                 <div class="destination-overlay">
                     <h3 class="destination-name">제주도</h3>
                     <p class="destination-country">대한민국</p>
@@ -205,7 +205,7 @@
             </div>
 
             <div class="destination-card animate-on-scroll">
-                <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=400&h=500&fit=crop&q=80" alt="부산">
+                <img src="resources/images/busan2.jpg" alt="부산">
                 <div class="destination-overlay">
                     <h3 class="destination-name">부산</h3>
                     <p class="destination-country">대한민국</p>
@@ -213,7 +213,7 @@
             </div>
 
             <div class="destination-card animate-on-scroll">
-                <img src="https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=400&h=500&fit=crop&q=80" alt="강릉">
+                <img src="resources/images/gangneung.jpg" alt="강릉">
                 <div class="destination-overlay">
                     <h3 class="destination-name">강릉</h3>
                     <p class="destination-country">대한민국</p>
@@ -221,7 +221,7 @@
             </div>
 
             <div class="destination-card animate-on-scroll">
-                <img src="https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=400&h=500&fit=crop&q=80" alt="경주">
+                <img src="resources/images/gyeongju3.jpg" alt="경주">
                 <div class="destination-overlay">
                     <h3 class="destination-name">경주</h3>
                     <p class="destination-country">대한민국</p>
@@ -243,54 +243,42 @@
         <div class="travellog-grid">
             <div class="travellog-card animate-on-scroll">
                 <div class="travellog-image">
-                    <img src="https://images.unsplash.com/photo-1596422846543-75c6fc197f07?w=500&h=375&fit=crop&q=80" alt="여행기록">
-                    <div class="travellog-user">
-                        <img src="https://i.pravatar.cc/100?img=1" alt="사용자">
-                        <span>travel_lover</span>
-                    </div>
+                    <img src="resources/images/daejeon_trip.jpg" alt="여행기록">
                 </div>
                 <div class="travellog-content">
-                    <h4 class="travellog-title">제주도 3박4일, 혼자여도 괜찮아</h4>
+                    <h4 class="travellog-title">대전 여행 여행기</h4>
                     <div class="travellog-meta">
-                        <span><i class="bi bi-heart-fill text-danger"></i> 328</span>
-                        <span><i class="bi bi-chat"></i> 24</span>
-                        <span><i class="bi bi-eye"></i> 1.2k</span>
+                        <span><i class="bi bi-heart-fill text-danger"></i> 10</span>
+                        <span><i class="bi bi-chat"></i> 8</span>
+                        <span><i class="bi bi-eye"></i> 57</span>
                     </div>
                 </div>
             </div>
 
             <div class="travellog-card animate-on-scroll">
                 <div class="travellog-image">
-                    <img src="https://images.unsplash.com/photo-1583417319070-4a69db38a482?w=500&h=375&fit=crop&q=80" alt="여행기록">
-                    <div class="travellog-user">
-                        <img src="https://i.pravatar.cc/100?img=5" alt="사용자">
-                        <span>foodie_kim</span>
-                    </div>
+                    <img src="resources/images/seoul_trip.jpg" alt="여행기록">
                 </div>
                 <div class="travellog-content">
-                    <h4 class="travellog-title">부산 맛집 투어 완전 정복!</h4>
+                    <h4 class="travellog-title">서울 한복판에서 찾은 짧은 쉼표</h4>
                     <div class="travellog-meta">
-                        <span><i class="bi bi-heart-fill text-danger"></i> 512</span>
-                        <span><i class="bi bi-chat"></i> 45</span>
-                        <span><i class="bi bi-eye"></i> 2.3k</span>
+                        <span><i class="bi bi-heart-fill text-danger"></i> 5</span>
+                        <span><i class="bi bi-chat"></i> 4</span>
+                        <span><i class="bi bi-eye"></i> 37</span>
                     </div>
                 </div>
             </div>
 
             <div class="travellog-card animate-on-scroll">
                 <div class="travellog-image">
-                    <img src="https://images.unsplash.com/photo-1548115184-bc6544d06a58?w=500&h=375&fit=crop&q=80" alt="여행기록">
-                    <div class="travellog-user">
-                        <img src="https://i.pravatar.cc/100?img=8" alt="사용자">
-                        <span>adventure_park</span>
-                    </div>
+                    <img src="resources/images/jeju_trip.png" alt="여행기록">
                 </div>
                 <div class="travellog-content">
-                    <h4 class="travellog-title">강릉 & 속초 3일, 완벽 휴양</h4>
+                    <h4 class="travellog-title">바람 따라 걷는 제주, 느리게 채운 3박 4일</h4>
                     <div class="travellog-meta">
-                        <span><i class="bi bi-heart-fill text-danger"></i> 287</span>
-                        <span><i class="bi bi-chat"></i> 31</span>
-                        <span><i class="bi bi-eye"></i> 1.8k</span>
+                        <span><i class="bi bi-heart-fill text-danger"></i> 4</span>
+                        <span><i class="bi bi-chat"></i> 2</span>
+                        <span><i class="bi bi-eye"></i> 23</span>
                     </div>
                 </div>
             </div>

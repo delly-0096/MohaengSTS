@@ -36,7 +36,6 @@ public class AdminMembersController {
 //		System.out.println("adminScheduleList : " + adminScheduleList);
 //		resultMap.put("scheduleList", adminScheduleList);
 		
-		System.out.println("나는 이곳에 있다.");
 		entity = new ResponseEntity<>(summary, HttpStatus.OK);
 		
 //		entity = new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
@@ -56,10 +55,74 @@ public class AdminMembersController {
 //		System.out.println("adminScheduleList : " + adminScheduleList);
 //		resultMap.put("scheduleList", adminScheduleList);
 		
-		System.out.println("나는 이곳에 있다.");
 		entity = new ResponseEntity<List<Params>>(growth, HttpStatus.OK);
 		
 //		entity = new ResponseEntity<String>(HttpStatus.BAD_REQUEST);
+		
+		return entity;
+	}
+	
+	@PostMapping("/hwyhbp")
+	public ResponseEntity<Params> hwyhbp(@RequestBody(required = false) Params params) {
+		
+		ResponseEntity<Params> entity = null;
+		Map<String, Object> resultMap = new HashMap<>();
+		
+		Params hwyhbp = membersService.hwyhbp(params);
+		
+		entity = new ResponseEntity<Params>(hwyhbp, HttpStatus.OK);
+		
+		return entity;
+	}
+	
+	@PostMapping("/ibdgij")
+	public ResponseEntity<Params> ibdgij(@RequestBody(required = false) Params params) {
+		
+		ResponseEntity<Params> entity = null;
+		Map<String, Object> resultMap = new HashMap<>();
+		
+		Params ibdgij = membersService.ibdgij(params);
+		
+		entity = new ResponseEntity<Params>(ibdgij, HttpStatus.OK);
+		
+		return entity;
+	}
+	
+	@PostMapping("/jybbp")
+	public ResponseEntity<List<Params>> jybbp(@RequestBody(required = false) Params params) {
+		
+		ResponseEntity<List<Params>> entity = null;
+		Map<String, Object> resultMap = new HashMap<>();
+		
+		List<Params> jybbp = membersService.jybbp(params);
+		
+		entity = new ResponseEntity<List<Params>>(jybbp, HttpStatus.OK);
+		
+		return entity;
+	}
+	
+	@PostMapping("/yrdbbp")
+	public ResponseEntity<List<Params>> yrdbbp(@RequestBody(required = false) Params params) {
+		
+		ResponseEntity<List<Params>> entity = null;
+		Map<String, Object> resultMap = new HashMap<>();
+		
+		List<Params> yrdbbp = membersService.yrdbbp(params);
+		
+		entity = new ResponseEntity<List<Params>>(yrdbbp, HttpStatus.OK);
+		
+		return entity;
+	}
+	
+	@PostMapping("/cggihw")
+	public ResponseEntity<List<Params>> cggihw(@RequestBody(required = false) Params params) {
+		
+		ResponseEntity<List<Params>> entity = null;
+		Map<String, Object> resultMap = new HashMap<>();
+		
+		List<Params> cggihw = membersService.cggihw(params);
+		
+		entity = new ResponseEntity<List<Params>>(cggihw, HttpStatus.OK);
 		
 		return entity;
 	}

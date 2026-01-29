@@ -10,4 +10,14 @@ public interface IAdminMembersService {
 
 	public List<Params> growth(Params params);
 
+	public Params hwyhbp(Params params);
+
+	public Params ibdgij(Params params);
+
+	public List<Params> jybbp(Params params);
+
+	public List<Params> yrdbbp(Params params);
+	
+	public List<Params> cggihw(Params params);
+
 }

@@ -23,4 +23,29 @@ public class AdminMembersServiceImpl implements IAdminMembersService {
 	public List<Params> growth(Params params) {
 		return adminMembersMapper.growth(params);
 	}
+
+	@Override
+	public Params hwyhbp(Params params) {
+		return adminMembersMapper.hwyhbp(params);
+	}
+	
+	@Override
+	public Params ibdgij(Params params) {
+		return adminMembersMapper.ibdgij(params);
+	}
+	
+	@Override
+	public List<Params> jybbp(Params params) {
+		return adminMembersMapper.jybbp(params);
+	}
+	
+	@Override
+	public List<Params> yrdbbp(Params params) {
+		return adminMembersMapper.yrdbbp(params);
+	}
+	
+	@Override
+	public List<Params> cggihw(Params params) {
+		return adminMembersMapper.cggihw(params);
+	}
 }

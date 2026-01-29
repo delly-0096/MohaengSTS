@@ -202,7 +202,7 @@ public class SecurityConfig {
                     DispatcherType.ASYNC
                 ).permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                .requestMatchers("/ws/**", "/login/oauth2/**").permitAll()
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/files/**").permitAll()
                 .requestMatchers("/community/travel-log/write").hasRole("MEMBER")
                 

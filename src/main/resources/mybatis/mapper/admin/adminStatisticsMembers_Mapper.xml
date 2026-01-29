@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.statistics.members.mapper.IAdminMembersMapper">
+	<select id="summary" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		<![CDATA[
+		SELECT 
+			(SELECT COUNT(M.mem_no)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS TOTAL
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') <= TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS before_TOTAL
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(sysdate, 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS NEW_MEMBER
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS before_new_MEMBER
+			,
+			(SELECT COUNT(*)
+			       FROM MEMBER M
+			       LEFT JOIN MEM_COMP MC ON M.MEM_NO = MC.MEM_NO
+			      WHERE M.DEL_YN = 'N'
+			        AND M.MEM_NO NOT IN (SELECT MEM_NO FROM MEM_ADMIN)
+			        AND NVL(MC.APRV_YN, 'Y') = 'Y' 
+			    ) AS ACTIVATE_MEMBER
+			,
+			    (SELECT COUNT(*)
+			       FROM MEMBER M
+			       LEFT JOIN MEM_COMP MC ON M.MEM_NO = MC.MEM_NO
+			      WHERE M.DEL_YN = 'N'
+			        AND M.MEM_NO NOT IN (SELECT MEM_NO FROM MEM_ADMIN)
+			        AND NVL(MC.APRV_YN, 'Y') = 'Y'
+			        AND M.REG_DT < TRUNC(SYSDATE, 'MM')
+			    ) AS BEFORE_ACTIVATE_MEMBER
+			,
+			(SELECT COUNT(M.mem_no)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(sysdate, 'yyyy-MM')
+			AND M.DEL_YN = 'Y'
+			) AS DEL_MEMBER
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			AND M.DEL_YN = 'Y'
+			) AS before_DEL_MEMBER
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			INNER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(sysdate, 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS NEW_COMP_MEM
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			INNER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS before_NEW_COMP_MEM
+			]]>
+		FROM DUAL
+	</select>
+	
+	<select id="growth" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		SELECT MONTH
+		     , CNT AS NEW_MEMBER
+		     , SUM(CNT) OVER (ORDER BY MONTH) AS TOTAL
+		  FROM (
+		    SELECT TO_CHAR(M.REG_DT, 'yyyy-MM') AS MONTH
+		         , COUNT(M.MEM_NO) CNT
+		      FROM MEMBER M
+		     WHERE M.MEM_NO NOT IN (SELECT MA.MEM_NO FROM MEM_ADMIN MA)
+		     GROUP BY TO_CHAR(M.REG_DT, 'yyyy-MM')
+		  )
+		 ORDER BY MONTH
+	</select>
+</mapper>

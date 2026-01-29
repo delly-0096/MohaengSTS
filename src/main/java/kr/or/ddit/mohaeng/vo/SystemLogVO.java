@@ -12,5 +12,5 @@ public class SystemLogVO {
     private String msg;				// 로그메시지
     private String ip;				// 로그발생 ip
     private LocalDateTime regDt;	// 생성일시
-    private Long systemLogMem;		// 로그 발생자
+    private String systemLogMem;	// 로그 발생자 - id
 }

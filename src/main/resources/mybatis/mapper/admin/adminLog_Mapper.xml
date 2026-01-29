@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.log.mapper.IAdminLogMapper">
+
+	<!-- 로그목록 카운트 -->
+    <select id="getSystemLogCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
+        SELECT COUNT(*)
+        FROM SYSTEM_LOG
+    </select>
+    
+    <!-- 로그 목록 조회-->
+    <select id="getSystemLogList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.SystemLogVO">
+        SELECT *
+        FROM (
+            SELECT ROWNUM AS rn, a.*
+            FROM (
+                SELECT
+	                SYSTEM_LOG_NO
+					, "LEVEL"
+					, SOURCE
+					, MSG
+					, IP
+					, REG_DT
+					, SYSTEM_LOG_MEM
+                FROM SYSTEM_LOG
+            ) a
+            <![CDATA[
+            WHERE ROWNUM <= #{currentPage} * #{screenSize}
+            ]]>
+        )
+        <![CDATA[
+        WHERE rn > (#{currentPage} - 1) * #{screenSize}
+        ]]>
+    </select>
+    
+</mapper>

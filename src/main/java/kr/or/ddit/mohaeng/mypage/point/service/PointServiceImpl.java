@@ -62,6 +62,22 @@ public class PointServiceImpl implements IPointService {
 		//[판단 및 거절]
 		if (duplCount >0) throw new RuntimeException("이미 적립된 내역입니다.");
 
+		// ---------------------------------------------------------
+	    // [추가된 로직] 포인트 사용 시 적립 제외 정책 통일
+	    // ---------------------------------------------------------
+		if ("PAYMENT".equals(target)) {
+	        // 해당 결제 번호(targetId)로 포인트를 사용('M' 타입)한 내역이 있는지 조회
+	        PointDetailsVO usedPoint = pointMapper.usedPoint(memNo, targetId);
+
+	        // 만약 사용한 포인트 내역이 존재한다면 적립을 수행하지 않고 종료
+	        if (usedPoint != null && usedPoint.getPointAmt() < 0) {
+	            log.info("결제 번호 {}번은 포인트를 사용한 결제이므로 적립 대상에서 제외됩니다.", targetId);
+	            return; // 메서드 종료
+	        }
+	    }
+		//--------------------------------------------------------------
+
+
 		// 2. 포인트 내역 생성
 		PointDetailsVO pointVO = new PointDetailsVO();
 		pointVO.setMemNo(memNo);
@@ -328,6 +344,32 @@ public class PointServiceImpl implements IPointService {
 		}
 
 		return result;
+	}
+
+
+
+	/**
+	 * [결제 시 포인트 사용 기록]
+	 */
+	@Override
+	@Transactional
+	public void recordPointUse(int memNo, int payNo, int useAmount) {
+		// 포인트 사용 내역 기록
+		PointDetailsVO useVO = new PointDetailsVO();
+		useVO.setMemNo(memNo);
+		useVO.setPointType("M");
+		useVO.setPointAmt(-useAmount);
+		useVO.setPointDesc("상품 구매 시 포인트 사용");;
+		useVO.setPointTarget("PAYMENT");
+		useVO.setPointTargetId(payNo);
+		useVO.setRemainPoint(0);
+
+		pointMapper.insertPointDetails(useVO);
+
+		// Member테이블 포인트 차감
+		pointMapper.updateMemberPoint(memNo, -useAmount);
+
+		log.info("결제 포인트 사용 기록 완료: {}P", useAmount);
 	}
 
 }

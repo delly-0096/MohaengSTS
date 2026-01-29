@@ -176,44 +176,26 @@ public class PaymentServiceImpl implements IPaymentService {
 			// 1. 포인트 사용 처리 (결제 시 포인트를 사용한 경우)
 			int minusPointResult = 0;
 			if(discount != 0) {
-				// 1-1. MEMBER 테이블 포인트 차감 (기존 로직 유지)
-				MemberVO member = new MemberVO();
-				member.setMemNo(paymentVO.getMemNo());
-				member.setPoint(discount);	// 사용 포인트를 빼는 update
-//				minusPointResult = payMapper.updatePoint(member);
-				log.info("minusPointResult 결과 : {}", minusPointResult);
-
-				// 1-2. POINT_DETAILS 테이블에 포인트 사용 이력 기록 (추가)
-				try {
-					pointService.earnPoint(paymentVO.getMemNo(), "PAYMENT", paymentVO.getPayNo(), -discount, "상품 구매 시 포인트 사용");
-					log.info("포인트 사용 이력 기록 완료 : {}", discount);
-				} catch (Exception e) {
-					log.error("포인트 사용 이력 기록 실패 : {}", e.getMessage());
-				}
+			    try {
+			        pointService.recordPointUse(paymentVO.getMemNo(), paymentVO.getPayNo(), discount);
+			        minusPointResult = 1; // 성공
+			        log.info("포인트 사용 처리 완료 : {}P", discount);
+			    } catch (Exception e) {
+			        log.error("포인트 사용 처리 실패 : {}", e.getMessage());
+			    }
 			}
-			// ========================================
 
-			// 포인트 정책 - 결제 금액의 3%
+			// 2. 포인트 적립 처리 (결제 금액의 3%)
 			int pointResult = 0;
 			if(discount == 0) {
-				// 2-1. 적립 포인트 계산 (실제 결제 금액의 3%)
-				double point = (double)amount * 0.03;
-				int earnPoint = (int) point;
-
-				// 2-2. MEMBER 테이블 포인트 적립 (기존 로직 유지)
-				MemberVO member = new MemberVO();
-				member.setMemNo(paymentVO.getMemNo());
-				member.setPoint(earnPoint);
-//				pointResult = payMapper.insertPoint(member);
-				log.info("pointResult 결과 : {}", pointResult);
-
-				// 2-3. POINT_DETAILS 테이블에 포인트 적립 이력 기록 (추가)
-				try {
-					pointService.earnPoint(paymentVO.getMemNo(), "PAYMENT", paymentVO.getPayNo(), earnPoint, "상품 구매로 인한 포인트 적립");
-					log.info("포인트 적립 이력 기록 완료 : {}P", earnPoint);
-				} catch (Exception e) {
-					log.error("포인트 적립 이력 기록 실패 : {}", e.getMessage());
-				}
+			    int earnPoint = (int)((double)amount * 0.03);
+			    try {
+			        pointService.earnPoint(paymentVO.getMemNo(), "PAYMENT", paymentVO.getPayNo(), earnPoint, "상품 구매로 인한 포인트 적립");
+			        pointResult = 1; // 성공
+			        log.info("포인트 적립 처리 완료 : {}P", earnPoint);
+			    } catch (Exception e) {
+			        log.error("포인트 적립 처리 실패 : {}", e.getMessage());
+			    }
 			}
 			// ========================================
 			// 포인트 처리 로직 (수정된 부분 end)

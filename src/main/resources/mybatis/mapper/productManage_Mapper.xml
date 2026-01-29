@@ -228,7 +228,7 @@
                 <if test="prodCtgryType != null and prodCtgryType !=''">
                 	AND t.PROD_CTGRY_TYPE = #{prodCtgryType}
                 </if>
-       			ORDER BY  t.TRIP_PROD_NO ASC
+       			ORDER BY  t.TRIP_PROD_NO DESC
             ) a
             <![CDATA[
             WHERE ROWNUM <= #{page} * #{pageSize}

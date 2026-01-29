@@ -300,7 +300,7 @@ public class ProductMangeServiceImpl implements IProductMangeService {
 				
 				for(ProdTimeInfoVO timeInfo : prodTimeInfoVO) {
 					timeInfo.setTripProdNo(tripProdNo);
-					insertCount = manageMapper.insertProdTimeInfo(timeInfo);
+					insertCount += manageMapper.insertProdTimeInfo(timeInfo);
 				}
 				
 				if(insertCount > 0 ) {

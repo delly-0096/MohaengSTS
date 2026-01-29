@@ -1057,7 +1057,7 @@ function calculateTotal() {
 
 
     // 요금 표시 업데이트
-    document.getElementById('summaryFare').textContent = totalBaseFare.toLocaleString() + '원 x ' + totalPeople + '명';
+    document.getElementById('summaryFare').textContent = parseInt(totalBaseFare).toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryFuel').textContent = (fuelSurcharge * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
     document.getElementById('summaryTax').textContent = (taxAndFees * segmentCount).toLocaleString() + '원 x ' + totalPeople + '명';
 

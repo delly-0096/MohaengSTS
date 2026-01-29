@@ -185,6 +185,7 @@
                     </div>
 
 				     <!-- 알림 -->
+				     
                      <div class="col-lg-4">
                         <div class="content-section">
 							  <div class="section-header">
@@ -199,13 +200,13 @@
 							    <!-- JS로 렌더링 -->
 							    <!-- <li class="noti-empty">새로운 알림이 없습니다.</li>-->
 							    <!-- /// 알람 반복 시작 /// -->
-							    <c:forEach items="${alarmList}" var="alarm">
+							    <c:forEach items="${alarmList}" var="alarm" begin="0" end="5" varStatus="vs">
 								    <div class="notification-item unread">
 				                        <div class="notification-icon second">
 				                            <i class="bi bi-check-circle"></i>
 				                        </div>
 				                        <div class="notification-content">
-				                            <p class="notification-text">${alarm.alarmCont}의가 등록되었습니다.</p>
+				                            <p class="notification-text">${alarm.alarmCont}</p>
 				                            <span class="notification-meta">${type}</span>
 				                            <span class="notification-time">${alarm.regDtStr}</span>
 				                        </div>
@@ -215,7 +216,7 @@
 							  </ul>
 							</div> 
 							</div>
-
+					
 
 
                 <!-- 상품 현황 -->

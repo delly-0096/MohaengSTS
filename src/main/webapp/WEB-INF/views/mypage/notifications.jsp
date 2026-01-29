@@ -6,49 +6,6 @@
 <c:set var="pageCss" value="mypage" />
 
 <%@ include file="../common/header.jsp" %>
-<style>
-/* 알림 아이템 전체 컨테이너 */
-.notification-item {
-    display: flex;
-    align-items: center; /* 세로 중앙 정렬 */
-    padding: 5px;
-    gap: 5px; /* 요소 간 간격 */
-}
-
-/* 1. 체크박스 영역: 너비를 고정하고 줄어들지 않게 설정 */
-.notification-checkbox {
-    flex: 0 0 40px; /* 너비를 40px로 고정 (비율에 맞춰 조정 가능) */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left:-16%;
-}
-
-/* 2. 아이콘 영역: 너비 고정 */
-.notification-icon {
-    flex: 0 0 45px;
-    width: 45px;
-    height: 45px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-left:-17%;
-}
-
-/* 3. 콘텐츠 영역: 남은 모든 공간을 차지하도록 설정 */
-.notification-content {
-    flex: 1; /* 가변 너비 - 가장 넓게 확장됨 */
-    min-width: 0; /* 텍스트가 넘칠 경우 레이아웃 깨짐 방지 */
-}
-
-/* 4. 시간 영역: 콘텐츠 길이에 따라 밀리지 않게 고정 너비 혹은 자동 */
-.notification-time {
-    flex: 0 0 80px;
-    text-align: right;
-    font-size: 0.85rem;
-    color: #888;
-}
-</style>
 <div class="mypage">
     <div class="container">
         <div class="mypage-container no-sidebar">
@@ -174,7 +131,7 @@
                         				</c:when>
                         			</c:choose>
 			                        <div class="notification-item" data-type="${filterType}">
-			                            <label class="notification-checkbox" style="margin-left:-16%;">
+			                            <label class="notification-checkbox">
 			                                <input type="checkbox" class="notification-select" onchange="updateNotificationSelectedCount()">
 			                            </label>
 			                            <div class="notification-icon ${color }">

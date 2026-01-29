@@ -122,10 +122,14 @@
 		        	<c:forEach items="${prodList}" var="prod">
 			        	<c:set var="status" value="${prod.approveStatus }"/>
 			        	<c:set var="dataStatus" value="active"/>
-			        	<c:if test="${status == '판매중지' or prod.aprvYn eq 'N'}">
+			        	<c:if test="${status == '판매중지'}">
 				        	<c:set var="dataStatus" value="inactive"/>
 			        	</c:if>
+			        	<c:if test="${prod.aprvYn eq 'N'}">
+				        	<c:set var="dataStatus" value="pending"/>
+			        	</c:if>
 			        	<c:set var="accNo" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accNo : 0}"/>
+			        	<!-- pending = 대기 -->
 			            <div class="product-manage-card" data-id="${prod.tripProdNo}" data-status="${dataStatus}" data-no="${accNo}">
 			                <label class="product-checkbox">
 			                    <input type="checkbox" class="product-select-checkbox" value="${prod.tripProdNo}" onchange="toggleProductSelect(this)">
@@ -1117,6 +1121,8 @@ function fillProductInfo(){
 	            element.dispatchEvent(new Event('input', { bubbles: true }));
 	        }
 	    }
+	    // 시간 추가
+	    addPresetTimes('hourly');
 
 	    // 3. 할인율에 따른 판매가(price) 자동 계산 로직
 	    const netprc = parseInt(productData['prodSale.netprc']);
@@ -2285,11 +2291,12 @@ function toggleProductStatus(data) {
         })
         .then(res => {
         	if (res.data === "OK") {
-//         		showToast('상품 상태가 변경되었습니다.', 'success');
-        		alert("상품 상태가 변경되었습니다. 판매는 관리자의 허가를 받고 난후 가능합니다.");
-		        location.reload(true);
+        		showToast("상품 판매 상태가 변경되었습니다.");
+		        setTimeout(() => {
+		        	location.reload() 
+	        	}, 1000);
         	}
-        	else showToast('상품 상태 변공에 실패하였습니다.', 'success');
+        	else showToast('상품 상태 변경에 실패하였습니다.', 'success');
         }).catch(err => {
         	console.log("error 발생 : ", err);
         });
@@ -2307,9 +2314,11 @@ function deleteProduct(data) {
         	console.log("res.data : ", res.data);
         	console.log("res.data.ok : ", res.data);
         	if (res.data === "OK") {
-        		alert("상품이 삭제되었습니다.");
-//         		showToast('상품이 삭제되었습니다.', 'success');
-		        location.reload(true);
+        		showToast('상품이 삭제되었습니다.', 'success');
+        		
+		        setTimeout(() => {
+		        	location.reload() 
+	        	}, 1000);
         	}
         	else showToast('상품이 삭제되지않았습니다.', 'error');
         }).catch(err => {

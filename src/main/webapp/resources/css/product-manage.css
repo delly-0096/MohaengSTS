@@ -318,6 +318,11 @@
     background: var(--gray-medium);
     color: white;
 }
+/*주황*/
+.product-status.pending {
+    background: var(--warning-color);
+    color: white;
+}
 
 .product-info {
     display: flex;

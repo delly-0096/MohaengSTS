@@ -74,12 +74,12 @@ public class CompanyDashboardController {
 	  model.addAttribute("pagingPaymentList", pagingPaymentList);
 	  
 	  ///mypage/business/notifications의 알림내역 목록 시작
-	  PaginationInfoVO<AlarmVO> pagingVO = new PaginationInfoVO<>();
-	  pagingVO.setMemNo(user.getMemNo());
-	  pagingVO.setEndRow(10);
-	  pagingVO.setStartRow(1);
+	  PaginationInfoVO<AlarmVO> pagingVO2 = new PaginationInfoVO<>();
+	  pagingVO2.setMemNo(user.getMemNo());
+	  pagingVO2.setEndRow(10);
+	  pagingVO2.setStartRow(1);
 	  log.info("notifications memNo={}", user.getMemNo());
-	  List<AlarmVO> list = notificationsAlarmService.selectAlarmList(pagingVO); 
+	  List<AlarmVO> list = notificationsAlarmService.selectAlarmList(pagingVO2); 
 	  log.info("list:{}" + list);
 	  model.addAttribute("alarmList",list);
 	  

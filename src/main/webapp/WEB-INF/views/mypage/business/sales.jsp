@@ -384,6 +384,11 @@
 
 .product-sales-table th:nth-child(7),
 .product-sales-table td:nth-child(7) { width: 11%; }  /* 정산가능 건수 */
+
+.stat-icon {
+  font-size: 1.6rem;
+  font-weight: 700;
+}
 </style>
 <!-- Chart.js CDN -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

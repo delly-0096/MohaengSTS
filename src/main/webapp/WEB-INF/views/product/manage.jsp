@@ -122,10 +122,14 @@
 		        	<c:forEach items="${prodList}" var="prod">
 			        	<c:set var="status" value="${prod.approveStatus }"/>
 			        	<c:set var="dataStatus" value="active"/>
-			        	<c:if test="${status == '판매중지' or prod.aprvYn eq 'N'}">
+			        	<c:if test="${status == '판매중지'}">
 				        	<c:set var="dataStatus" value="inactive"/>
 			        	</c:if>
+			        	<c:if test="${prod.aprvYn eq 'N'}">
+				        	<c:set var="dataStatus" value="pending"/>
+			        	</c:if>
 			        	<c:set var="accNo" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accNo : 0}"/>
+			        	<!-- pending = 대기 -->
 			            <div class="product-manage-card" data-id="${prod.tripProdNo}" data-status="${dataStatus}" data-no="${accNo}">
 			                <label class="product-checkbox">
 			                    <input type="checkbox" class="product-select-checkbox" value="${prod.tripProdNo}" onchange="toggleProductSelect(this)">
@@ -1090,7 +1094,8 @@ function fillProductInfo(){
 	        'ctyNm': '39',                           // 도시코드
 	        'prodSale.leadTime': '3',                // 소요시간(Lead Time)
 	        'tripProdTitle': '제주 푸른 바다 투명 카약 체험', 
-// 	        'prodPlace.addr2': '제주특별자치도 제주시 애월읍 애월로 1길', // 직접 입력
+	        'prodPlace.addr1': '제주특별자치도 제주시 애월읍 애월로 1길', 
+	        'prodPlace.addr2': '월정리카약체험장', 
 	        'tripProdContent': '에메랄드빛 애월 바다에서 즐기는 힐링 카약 체험입니다. 가족, 연인과 함께하세요!',
 	        'prodInfo.prodRuntime': '09:00 ~ 18:00',
 	        'prodInfo.prodDuration': '1시간 30분',
@@ -1116,6 +1121,8 @@ function fillProductInfo(){
 	            element.dispatchEvent(new Event('input', { bubbles: true }));
 	        }
 	    }
+	    // 시간 추가
+	    addPresetTimes('hourly');
 
 	    // 3. 할인율에 따른 판매가(price) 자동 계산 로직
 	    const netprc = parseInt(productData['prodSale.netprc']);
@@ -1665,16 +1672,8 @@ async function showDetail (data){
 			let statusClass = inquiry.inqryStatus === 'DONE' ? 'is-answered' : 'is-waiting';					// 조회용 ui
 // 			console.log("statusClass : ", statusClass );
 			
-// 			let replyStatus = "";	// 답변 상태 보여줄것
-// 			let answerStatus = "";	// 답변 남긴 상태 보여줄것
 			let replyDt = setTime(inquiry.replyDt);	// 답변 날짜
 			
-			
-			// 답변 대기
-// 			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'WAIT') answerStatus = `style='display:none;'`;
-			// 답변 완료
-// 			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'DONE') replyStatus = `style='display:none;'`;
-
 			// 문의사항
 			inquiryHtml += `
 				<div class="inquiry-modal-item \${statusClass}" data-status="\${inquiryCode}" data-id="\${inquiry.prodInqryNo}">
@@ -1739,7 +1738,7 @@ async function showDetail (data){
 let answerPart;
 let originText;
 
-//모달에서 답변 등록 - 아직 구현 안됨
+// 문의사항 답변 등록
 function submitReply(inquiryId, tripProdNo, editContent = "") {
 	console.log("submitReply - inquiryId : ", inquiryId);
 	console.log("submitReply - tripProdNo : ", tripProdNo);
@@ -1858,7 +1857,7 @@ function editAnswer(inquiryId, tripProdNo){
     document.getElementById('editAnswerText-' + inquiryId).focus();
 }
 
-// 수정 취소하기
+// 문의사항 수정 취소하기
 function cancelEditAnswer(inquiryId, originText){
 	console.log("cancelEditAnswer - originText : ", originText);
     const item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
@@ -1872,7 +1871,7 @@ function cancelEditAnswer(inquiryId, originText){
     answerContent.innerHTML = `<p><strong>A.</strong> <span class="answer-text">\${originText}</span></p>`;
 }
 
-// 문의 답변 삭제
+// 문의사항 답변 삭제
 function deleteAnswer(inquiryId, tripProdNo){
 	console.log("deleteAnswer inquiryId : ", inquiryId);
 	console.log("deleteAnswer tripProdNo : ", tripProdNo);
@@ -1905,10 +1904,8 @@ function deleteAnswer(inquiryId, tripProdNo){
 	});
 }
 
-
 // 시간 설정
 function setTime (date){
-	
 	if (date === null || date === undefined || date === "") return "";
 
     // 1. 만약 date가 객체(new Date())라면 문자열로 변환
@@ -2017,6 +2014,7 @@ function formatTel(tel) {
         ? n.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')
         : n.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
 }
+
 //예약 내역 클릭시 보여줄 아코디언 활성화
 window.toggleDetail = function(id) {
 	const detailRow = document.getElementById(id);
@@ -2266,8 +2264,9 @@ async function saveProduct(data) {
         console.log("res.data : ", res.data);
         if (res.data === "OK") {
             // showToast('성공!', 'success');
-            // alert로?
-           	showToast("상품 등록 성공! 판매는 관리자의 허가 후 가능합니다.");
+           	if(!isUpdate) showToast('상품 등록 성공! 판매는 관리자의 허가 후 가능합니다.', 'success');
+          	if(isUpdate) showToast('상품 수정 성공! 판매는 관리자의 허가 후 가능합니다.', 'success');
+          	
            	setTimeout(() => {
 	            location.reload();
             }, 1000);
@@ -2292,11 +2291,12 @@ function toggleProductStatus(data) {
         })
         .then(res => {
         	if (res.data === "OK") {
-//         		showToast('상품 상태가 변경되었습니다.', 'success');
-        		alert("상품 상태가 변경되었습니다. 판매는 관리자의 허가를 받고 난후 가능합니다.");
-		        location.reload(true);
+        		showToast("상품 판매 상태가 변경되었습니다.");
+		        setTimeout(() => {
+		        	location.reload() 
+	        	}, 1000);
         	}
-        	else showToast('상품 상태 변공에 실패하였습니다.', 'success');
+        	else showToast('상품 상태 변경에 실패하였습니다.', 'success');
         }).catch(err => {
         	console.log("error 발생 : ", err);
         });
@@ -2314,9 +2314,11 @@ function deleteProduct(data) {
         	console.log("res.data : ", res.data);
         	console.log("res.data.ok : ", res.data);
         	if (res.data === "OK") {
-        		alert("상품이 삭제되었습니다.");
-//         		showToast('상품이 삭제되었습니다.', 'success');
-		        location.reload(true);
+        		showToast('상품이 삭제되었습니다.', 'success');
+        		
+		        setTimeout(() => {
+		        	location.reload() 
+	        	}, 1000);
         	}
         	else showToast('상품이 삭제되지않았습니다.', 'error');
         }).catch(err => {

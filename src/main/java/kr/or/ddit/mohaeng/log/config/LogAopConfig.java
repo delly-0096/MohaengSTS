@@ -17,13 +17,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-//@Aspect
-//@Component
-//@RequiredArgsConstructor
+@Aspect
+@Component
+@RequiredArgsConstructor
 public class LogAopConfig {
 
 	// 로그 적용할 매퍼
-//	private final ILogMapper logMapper;
+	private final ILogMapper logMapper;
 
     /**
      * <p>에러로그남길것</p>
@@ -36,7 +36,6 @@ public class LogAopConfig {
      */
     @Around("execution(* kr.or.ddit.mohaeng..*Controller.*(..))")
     public Object loggingMaster(
-//			@AuthenticationPrincipal CustomUserDetails customUser, 
     		ProceedingJoinPoint joinPoint) throws Throwable {
         
         // 1. 정보 수집 (어떤 클래스의 어떤 메서드인가?)
@@ -45,6 +44,8 @@ public class LogAopConfig {
         HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
         String ip = request.getRemoteAddr();
         
+        
+        // 실제로 테스트 할때는 주석처리해야지 로그 쌓임
         int i = 0;
         if(i == 0) {
         	return joinPoint.proceed();
@@ -88,12 +89,12 @@ public class LogAopConfig {
 
             systemLogVO.setLevel("INFO");
             systemLogVO.setMsg(methodName + " (정상 수행)");
-//            logMapper.insertSystemLog(systemLogVO); // DB 저장!
+            logMapper.insertSystemLog(systemLogVO); // DB 저장!
             log.info("info 내용 주입 : {}", systemLogVO);
         } catch (Exception e) {
         	systemLogVO.setLevel("ERROR");
         	systemLogVO.setMsg("[" + methodName + "] 에러 발생: " + e.getMessage()); // 상세 에러 내용
-//            logMapper.insertSystemLog(systemLogVO); // DB 저장!
+            logMapper.insertSystemLog(systemLogVO); // DB 저장!
             log.error ("error 내용 주입 : {}", systemLogVO);
             throw e; 
         }

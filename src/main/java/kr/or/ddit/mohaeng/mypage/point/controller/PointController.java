@@ -101,6 +101,8 @@ public class PointController {
 			@RequestParam(defaultValue = "all") String pointType, //ex)적립만 보기, 사용만 보기
 			@RequestParam(defaultValue = "all") String pointTarget,
 			@RequestParam(defaultValue = "3month") String period,
+			@RequestParam(required = false) String startDate, // 👈 추가: 시작일
+	        @RequestParam(required = false) String endDate,   // 👈 추가: 종료일
 			@RequestParam(defaultValue = "1") int page){
 
 		Map<String, Object> result = new HashMap<>();
@@ -125,6 +127,10 @@ public class PointController {
 			searchVO.setPointType("all".equals(pointType) ? null : pointType);
 			searchVO.setPointTarget("all".equals(pointTarget) ? null : pointTarget);
 			searchVO.setPeriod(period);
+
+			// 👈 추가: 날짜 정보 세팅
+	        searchVO.setStartDate(startDate);
+	        searchVO.setEndDate(endDate);
 
 			//3. (조건에 맞는)전체 갯수 조회
 			int totalCount = pointService.pointHistoryCount(searchVO);

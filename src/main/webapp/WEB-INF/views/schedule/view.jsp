@@ -80,7 +80,12 @@
                         <i class="bi bi-share me-1"></i>공유
                     </button>
                     <button class="btn btn-outline" onclick="toggleScheduleViewBookmark(this)">
-                        <i class="bi bi-bookmark me-1"></i>북마크
+                        <c:if test="${schedule.bkmkYn == 'Y'}">
+                            <i class="bi bi-bookmark-fill me-1"></i>북마크됨
+                        </c:if>
+                        <c:if test="${schedule.bkmkYn != 'Y'}">
+                            <i class="bi bi-bookmark me-1"></i>북마크
+                        </c:if>
                     </button>
                     <button class="btn btn-outline text-danger" onclick="deleteSchedule()">
                         <i class="bi bi-trash me-1"></i>삭제
@@ -163,10 +168,9 @@
                                         <div class="timeline-info">
                                             <span class="category-tag attraction">${place.tourPlace.placeName}</span>
                                             <h4>${place.tourPlace.plcNm}</h4>
-                                            <p><i class="bi bi-geo-alt"></i> 제주 서귀포시 성산읍</p>
+                                            <p><i class="bi bi-geo-alt"></i> ${place.tourPlace.fullNm}</p>
                                             <div class="timeline-meta">
-                                                <span><i class="bi bi-star-fill text-warning"></i> 4.7</span>
-                                                <span><i class="bi bi-clock"></i> 약 1시간 30분</span>
+                                                <span><i class="bi bi-star-fill text-warning"></i> ${place.tourPlace.rating > 0 ? place.tourPlace.rating : '(평점없음)'}</span>
                                             </div>
                                         </div>
                                     </div>

@@ -37,7 +37,7 @@ public class LogAopConfig {
     @Around("execution(* kr.or.ddit.mohaeng..*Controller.*(..))")
     public Object loggingMaster(
     		ProceedingJoinPoint joinPoint) throws Throwable {
-
+        
         // 1. 정보 수집 (어떤 클래스의 어떤 메서드인가?)
         String className = joinPoint.getTarget().getClass().getSimpleName(); // 예: AuthService
         String methodName = joinPoint.getSignature().getName();              // 예: login
@@ -65,16 +65,16 @@ public class LogAopConfig {
         if(i == 0) {
         	return joinPoint.proceed();
         }
-
+        
         // searchRegionList 작업이 정상 처리되었습니다. - loginPage 작업이 정상 처리되었습니다.
         // 로그 안남길 메서드 정제 - mainPage 작업이 정상 처리되었습니다.
-        if (methodName.equals("unreadCount") || methodName.equals("searchRegionList")
+        if (methodName.equals("unreadCount") || methodName.equals("searchRegionList") 
         		|| methodName.equals("mainPage") || methodName.equals("loginPage")) {
         	return joinPoint.proceed();
         }
-
+        
         // method가 있는것
-
+        
         String id = "GUEST";	// 사용자 id - 기본은 비회원
 //        int memNo = customUser.getMember().getMemNo();	// 사용자 번호
 
@@ -82,7 +82,7 @@ public class LogAopConfig {
         log.info("auth : {}", auth);
         if (auth != null && auth.isAuthenticated()) {
             Object principal = auth.getPrincipal();
-
+            
             // 시큐리티가 익명 사용자에게 주는 이름이 "anonymousUser"입니다.
             if (principal instanceof CustomUserDetails) {
                 id = ((CustomUserDetails) principal).getMember().getMemId(); // 회원 ID
@@ -91,13 +91,13 @@ public class LogAopConfig {
         }
         log.info("id : {}", id);
 
-
+        
         SystemLogVO systemLogVO = new SystemLogVO();// 로그 담을 객체
         systemLogVO.setSystemLogMem(id);			// 클래스 사용자
         systemLogVO.setSource(className); 			// UI의 '소스' 항목으로 들어감
         systemLogVO.setIp(ip); // UI의 'IP' 항목
         log.info("db 넣기전 systemLogVo : {}", systemLogVO);
-
+        
         Object result;
         try {
             result = joinPoint.proceed(); // 2. 실제 컨트롤러 기능 실행
@@ -123,7 +123,7 @@ public class LogAopConfig {
         	systemLogVO.setMsg("[" + methodName + "] 에러 발생: " + e.getMessage()); // 상세 에러 내용
             logMapper.insertSystemLog(systemLogVO); // DB 저장!
             log.error ("error 내용 주입 : {}", systemLogVO);
-            throw e;
+            throw e; 
         }
         return result;
     }

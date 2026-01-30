@@ -8,6 +8,7 @@
         FROM TRIP_PROD t
         LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
         WHERE t.PROD_CTGRY_TYPE != 'accommodation'
+		  AND (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
         <if test="searchWord != null and searchWord != ''">
             AND (
                 t.TRIP_PROD_TITLE LIKE '%' || #{searchWord} || '%'
@@ -80,6 +81,7 @@
                 LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
                 LEFT JOIN TRIP_PROD_INFO i ON t.TRIP_PROD_NO = i.TRIP_PROD_NO
                 WHERE t.PROD_CTGRY_TYPE != 'accommodation'
+				  AND (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
                 <if test="searchWord != null and searchWord != ''">
                     AND (
                         t.TRIP_PROD_TITLE LIKE '%' || #{searchWord} || '%'
@@ -144,6 +146,7 @@
         FROM TRIP_PROD t
         LEFT JOIN TRIP_PROD_SALE s ON t.TRIP_PROD_NO = s.TRIP_PROD_NO
         WHERE t.PROD_CTGRY_TYPE != 'accommodation'
+		  AND (t.DEL_YN = 'N' OR t.DEL_YN IS NULL)
         <if test="searchWord != null and searchWord != ''">
             AND (
                 t.TRIP_PROD_TITLE LIKE '%' || #{searchWord} || '%'
@@ -290,6 +293,7 @@
 	        SUM(CASE WHEN APRV_YN != 'Y' OR APRV_YN IS NULL THEN 1 ELSE 0 END) AS pendingCount
 	    FROM TRIP_PROD
 	    WHERE PROD_CTGRY_TYPE != 'accommodation'
+		  AND (DEL_YN = 'N' OR DEL_YN IS NULL)
 	</select>
     
 </mapper>

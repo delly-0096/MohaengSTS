@@ -28,4 +28,7 @@ public class PointDetailsVO {
 	private String memEmail;		// 회원 이메일
 	private int currentBalance; 	// 현재 총 잔액( 화면에 잔액 나오게. 안쓸수도 있음)
 
+	//0129추가. 거래 후 잔액
+	private int balanceAfter;
+
 }

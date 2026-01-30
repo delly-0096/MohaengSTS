@@ -16,4 +16,8 @@ public class SystemLogVO {
     
     // 검색용 필드
     private String keyword;
+    
+    private String startDate;
+    private String endDate;
+    
 }

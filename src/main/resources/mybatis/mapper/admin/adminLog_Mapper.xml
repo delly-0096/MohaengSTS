@@ -13,7 +13,7 @@
     <select id="getSystemLogList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.SystemLogVO">
         SELECT *
         FROM (
-            SELECT ROWNUM AS rn, a.*
+            SELECT a.*
             FROM (
                 SELECT
 	                SYSTEM_LOG_NO
@@ -24,26 +24,19 @@
 					, REG_DT
 					, SYSTEM_LOG_MEM
                 FROM SYSTEM_LOG
-<!--                 <where> -->
-<!--                 <if test="keyword != null and keyword != ''"> -->
-<!--                     AND ( -->
-<!--                         source LIKE '%' || #{keyword} || '%' -->
-<!--                         OR msg LIKE '%' || #{keyword} || '%' -->
-<!--                         OR system_log_mem LIKE '%' || #{keyword} || '%' -->
-<!--                     ) -->
-<!--                 </if> -->
-<!--                 </where> -->
+                WHERE REG_DT BETWEEN TO_DATE(#{startDate} || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+                     AND TO_DATE(#{endDate} || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
                 ORDER BY REG_DT DESC, SYSTEM_LOG_NO DESC
             ) a
-            <![CDATA[
-            WHERE ROWNUM <= #{currentPage} * #{screenSize}
-            ]]>
         )
-        <![CDATA[
-        WHERE rn > (#{currentPage} - 1) * #{screenSize}
-        ]]>
     </select>
     
+<!--             <![CDATA[ -->
+<!--             WHERE ROWNUM <= #{currentPage} * #{screenSize} -->
+<!--             ]]> -->
+<!--         <![CDATA[ -->
+<!--         WHERE rn > (#{currentPage} - 1) * #{screenSize} -->
+<!--         ]]> -->
     
     <!-- 전체 개수, 그런거 알아오기 -->
     <select id="getSystemLogStats" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO">

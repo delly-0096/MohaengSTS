@@ -47,17 +47,17 @@ public class AdminLogController {
 			@RequestParam(defaultValue = "1") int currentPage
 			,@RequestParam(defaultValue = "") String searchWord
 			,@RequestParam(defaultValue = "all") String searchType
-//			,@RequestParam(required = false) String startDate
-//	        ,@RequestParam(required = false) String endDate
+			,@RequestParam(required = false) String startDate
+	        ,@RequestParam(required = false) String endDate
 			) {
 		log.info("로그 목록조회 : currentPage:{}, searchWord:{}, searchType:{}" , currentPage, searchWord, searchType);
-//		log.info("로그 목록조회 : startDate:{}, endDate:{}" , startDate, endDate);
+		log.info("로그 목록조회 : startDate:{}, endDate:{}" , startDate, endDate);
 		
 		PaginationInfoVO<SystemLogVO> pagInfoVO = new PaginationInfoVO<>(15, 5);
 		pagInfoVO.setCurrentPage(currentPage);
 		pagInfoVO.setSearchWord(searchWord);
-//		pagInfoVO.setStartDate(startDate);
-//		pagInfoVO.setEndDate(endDate);
+		pagInfoVO.setStartDate(startDate);
+		pagInfoVO.setEndDate(endDate);
 		
 		if (!"all".equals(searchType)) {
 			pagInfoVO.setSearchType(searchType);	// 검색타입. 

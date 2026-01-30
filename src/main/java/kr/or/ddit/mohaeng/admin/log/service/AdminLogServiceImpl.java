@@ -6,8 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import kr.or.ddit.mohaeng.admin.log.mapper.IAdminLogMapper;
-import kr.or.ddit.mohaeng.log.mapper.ILogMapper;
-import kr.or.ddit.mohaeng.tour.vo.TripProdVO;
 import kr.or.ddit.mohaeng.vo.PaginationInfoVO;
 import kr.or.ddit.mohaeng.vo.SystemLogVO;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +20,9 @@ public class AdminLogServiceImpl implements IAdminLogService {
 	@Override
 	public void getSystemLogList(PaginationInfoVO<SystemLogVO> pagInfoVO) {
 		log.info("pagInfoVO : {}", pagInfoVO);
-		int totalRecord = adminLogMapper.getSystemLogCount(pagInfoVO);
-		log.info("totalRecord : {}", totalRecord);
-		pagInfoVO.setTotalRecord(totalRecord);
+//		int totalRecord = adminLogMapper.getSystemLogCount(pagInfoVO);
+//		log.info("totalRecord : {}", totalRecord);
+//		pagInfoVO.setTotalRecord(totalRecord);
 		
         List<SystemLogVO> dataList = adminLogMapper.getSystemLogList(pagInfoVO);
         log.info("dataList : {}", dataList);

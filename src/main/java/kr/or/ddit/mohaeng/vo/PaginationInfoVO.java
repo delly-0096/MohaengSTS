@@ -25,6 +25,11 @@ public class PaginationInfoVO<T>{
 
     //추가함
     private Map<String, String> filters;
+    
+    // 추가
+    private String startDate;
+    private String endDate;
+    
 
     public PaginationInfoVO() {}
 

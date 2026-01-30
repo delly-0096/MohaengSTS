@@ -23,6 +23,7 @@
 					, REG_DT
 					, SYSTEM_LOG_MEM
                 FROM SYSTEM_LOG
+                ORDER BY SYSTEM_LOG_NO DESC
             ) a
             <![CDATA[
             WHERE ROWNUM <= #{currentPage} * #{screenSize}

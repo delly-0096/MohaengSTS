@@ -41,8 +41,23 @@ public class LogAopConfig {
         // 1. 정보 수집 (어떤 클래스의 어떤 메서드인가?)
         String className = joinPoint.getTarget().getClass().getSimpleName(); // 예: AuthService
         String methodName = joinPoint.getSignature().getName();              // 예: login
-        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
-        String ip = request.getRemoteAddr();
+//        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+        
+        
+        ServletRequestAttributes attributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+
+        String ip;
+        if (attributes != null) {
+            // 일반적인 HTTP 요청 (게시판, 플래너 등)
+            HttpServletRequest request = attributes.getRequest();
+            ip = request.getRemoteAddr();
+        } else {
+            // HTTP 요청이 아닌 경우 (WebSocket 채팅 등)
+            // 에러를 방지하기 위해 가짜 IP나 식별자를 넣어줌
+            ip = "WebSocket"; 
+        }
+        
+//        String ip = request.getRemoteAddr();
         
         
         // 실제로 테스트 할때는 주석처리해야지 로그 쌓임

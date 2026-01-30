@@ -55,4 +55,8 @@ public interface ICompanyDashboardMapper {
 	    @Param("endRow") int endRow
 	);
 
+	public Integer selectCompNoByMemNo(int memNo);
+
+	public List<MonthlySalesPoint> selectMonthlySalesChart(Integer compNo);
+
 }

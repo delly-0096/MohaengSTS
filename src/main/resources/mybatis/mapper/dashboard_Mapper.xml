@@ -31,7 +31,7 @@
         FROM TRIP_PROD_LIST pl
         JOIN PAYMENT p ON p.PAY_NO = pl.PAY_NO
         JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = pl.TRIP_PROD_NO
-        WHERE tp.COMP_NO = #{compNo}
+        WHERE tp.COMP_NO = (SELECT C.COMP_NO FROM COMPANY C WHERE C.MEM_NO = #{memNo})
           AND p.PAY_STATUS = 'DONE'
           AND p.PAY_DT >= TRUNC(SYSDATE, 'MM')
         AND p.PAY_DT &lt; ADD_MONTHS(TRUNC(SYSDATE, 'MM'), 1)
@@ -111,25 +111,57 @@
 	order by p.pay_no desc
   </select>
   
-  <select id="selectMyProductList" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
-	    SELECT 
-	        A.TRIP_PROD_NO,
-	        A.TRIP_PROD_TITLE as title,
-	        A.APPROVE_STATUS,
-	        A.PROD_CTGRY_TYPE,
-	        A.VIEW_CNT,
-	        A.REG_DT,
-	        B.PRICE 
-	    FROM TRIP_PROD A
-	    LEFT OUTER JOIN (
-	        SELECT TRIP_PROD_NO, MAX(UNIT_PRICE) KEEP (DENSE_RANK LAST ORDER BY PROD_LIST_NO) AS PRICE
-	        FROM TRIP_PROD_LIST
-	        GROUP BY TRIP_PROD_NO
-	    ) B ON A.TRIP_PROD_NO = B.TRIP_PROD_NO
-	    WHERE A.MEM_NO = #{memNo} 
-	      AND A.DEL_YN = 'N'      
-	    ORDER BY A.REG_DT DESC   
-  </select>
+	<select id="selectMyProductList" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+		SELECT 
+		    A.TRIP_PROD_NO,
+		    A.TRIP_PROD_TITLE AS title,
+		    A.APPROVE_STATUS,
+		    A.PROD_CTGRY_TYPE,
+		    A.VIEW_CNT,
+		    A.REG_DT,
+		    B.PRICE,
+		    NVL(R.RESV_CNT, 0) AS resvCount,
+		    NVL(RV.AVG_RATING, 0) AS rating,
+		    
+		    (
+		        SELECT FILE_PATH
+		        FROM (
+		            SELECT AFD.FILE_PATH
+		            FROM ATTACH_FILE_DETAIL AFD
+		            WHERE AFD.ATTACH_NO = A.ATTACH_NO
+		              AND AFD.USE_YN = 'Y'
+		            ORDER BY AFD.REG_DT DESC
+		        )
+		        WHERE ROWNUM = 1
+		    ) AS thumbImage
+	
+		FROM TRIP_PROD A
+		
+		LEFT JOIN (
+		    SELECT TRIP_PROD_NO, 
+		           MAX(UNIT_PRICE) KEEP (DENSE_RANK LAST ORDER BY PROD_LIST_NO) AS PRICE
+		    FROM TRIP_PROD_LIST
+		    GROUP BY TRIP_PROD_NO
+		) B ON A.TRIP_PROD_NO = B.TRIP_PROD_NO
+		
+		LEFT JOIN (
+		    SELECT TRIP_PROD_NO, COUNT(*) AS RESV_CNT
+		    FROM TRIP_PROD_LIST
+		    GROUP BY TRIP_PROD_NO
+		) R ON A.TRIP_PROD_NO = R.TRIP_PROD_NO
+		
+		LEFT JOIN (
+		    SELECT TRIP_PROD_NO, ROUND(AVG(RATING),1) AS AVG_RATING
+		    FROM PROD_REVIEW
+		    WHERE REVIEW_STATUS = 'ACTIVE'
+		    GROUP BY TRIP_PROD_NO
+		) RV ON A.TRIP_PROD_NO = RV.TRIP_PROD_NO
+		
+		WHERE A.MEM_NO = #{memNo}
+		  AND A.DEL_YN = 'N'
+		ORDER BY A.REG_DT DESC
+	</select>
+
   
   <!-- 최근 6개월 매출 차트 -->
   <select id="selectMonthlySalesChart" resultType="map">

@@ -24,7 +24,9 @@
                 <div class="stats-grid">
                     <div class="stat-card primary">
                         <div class="stat-icon">₩</div>
-                        <div class="stat-value" id="monthlySales">${dashboard.kpi.monthlySales}</div>
+                        <div class="stat-value" id="monthlySales">
+						    <fmt:formatNumber value="${dashboard.kpi.monthlySales}" pattern="#,###"/>
+						</div>
                         <div class="stat-label">이번 달 매출</div>
                     </div>
                     <div class="stat-card secondary">
@@ -39,7 +41,7 @@
                     </div>
                     <div class="stat-card warning">
                         <div class="stat-icon"><i class="bi bi-star-fill"></i></div>
-                        <div class="stat-value">4.8</div>
+                        <div class="stat-value">4.3</div>
                         <div class="stat-label">평균 평점</div>
                     </div>
                 </div>
@@ -197,24 +199,24 @@
 							  </div>
 							
 							
-							  <ul class="noti-list" id="notiList">
+<!-- 							  <ul class="noti-list" id="notiList"> -->
 							    <!-- JS로 렌더링 -->
 							    <!-- <li class="noti-empty">새로운 알림이 없습니다.</li>-->
 							    <!-- /// 알람 반복 시작 /// -->
 							    <c:forEach items="${alarmList}" var="alarm" begin="0" end="5" varStatus="vs">
 								    <div class="notification-item unread">
-				                        <div class="notification-icon second">
-				                            <i class="bi bi-check-circle"></i>
-				                        </div>
+<!-- 				                        <div class="notification-icon second"> -->
+<!-- 				                            <i class="bi bi-check-circle"></i> -->
+<!-- 				                        </div> -->
 				                        <div class="notification-content">
-				                            <p class="notification-text">${alarm.alarmCont}</p>
+				                            <p class="notification-text"><i class="bi bi-check-circle"></i> ${alarm.alarmCont}</p>
 				                            <span class="notification-meta">${type}</span>
-				                            <span class="notification-time">${alarm.regDtStr}</span>
+				                            <span class="notification-time"><small>${alarm.regDtStr}</small></span>
 				                        </div>
 				                    </div>
 			                    </c:forEach>
 			                    <!-- /// 알람 반복 끝 /// -->
-							  </ul>
+<!-- 							  </ul> -->
 							</div> 
 							</div>
 					
@@ -235,23 +237,25 @@
 				            </c:when>
 				            <c:otherwise>
 				                <c:forEach items="${dashboard.productList}" var="prod">
-				                    <div class="product-manage-item">
+				                   <div class="product-manage-item">
 									    <div class="product-manage-info">
-									        <%-- [1] 이미지 분기 로직 적용 --%>
 									        <div class="product-image-container" style="width: 80px; height: 80px; overflow: hidden; border-radius: 8px;">
 									            <c:choose>
-									                <c:when test="${prod.prodCtgryType eq 'accommodation'}">
-									                    <%-- 숙박일 때는 숙소 전용 경로 사용 --%>
-									                    <img src="${prod.accommodation.accFilePath}" alt="${prod.accommodation.accName}" 
+									                <c:when test="${prod.prodCtgryType eq 'accommodation' or prod.prodCtgryType eq 'ACCOMMODATION'}">
+									                    <img src="${not empty prod.thumbImage ? prod.thumbImage : (pageContext.request.contextPath += '/resources/images/no-image.png')}" 
+									                         alt="${prod.title}" 
 									                         style="width: 100%; height: 100%; object-fit: cover;">
 									                </c:when>
+									                
 									                <c:when test="${prod.prodCtgryType ne 'accommodation' and not empty prod.thumbImage}">
-									                    <%-- 투어/체험일 때는 썸네일 이미지 사용 --%>
-									                    <img src="${pageContext.request.contextPath}/upload${prod.thumbImage}" alt="${prod.title}"
+									                    <%-- 투어/체험일 때는 기존처럼 /upload 붙여서 사용 --%>
+									                    <img src="${pageContext.request.contextPath}/upload${prod.thumbImage}" 
+									                         alt="${prod.title}"
 									                         style="width: 100%; height: 100%; object-fit: cover;">
 									                </c:when>
+									                
 									                <c:otherwise>
-									                    <%-- 이미지가 없을 때 기본 이미지 --%>
+									                    <%-- 기본 이미지 --%>
 									                    <img src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=200&h=150&fit=crop&q=80" 
 									                         alt="기본이미지" style="width: 100%; height: 100%; object-fit: cover;">
 									                </c:otherwise>
@@ -275,11 +279,11 @@
 									
 									    <div class="product-stats">
 									        <div class="product-stat">
-									            <div class="value">${not empty prod.viewCount ? prod.viewCount : 0}</div> <div class="label">조회</div>
+									            <div class="value">${not empty prod.viewCnt ? prod.viewCnt : 0}</div> <div class="label">조회</div>
 									        </div>
-									        <div class="product-stat">
-									            <div class="value">${not empty prod.resvCount ? prod.resvCount : 0}</div> <div class="label">예약</div>
-									        </div>
+<!-- 									        <div class="product-stat"> -->
+<%-- 									            <div class="value">${not empty prod.resvCnt ? prod.viewCnt : 0}</div> <div class="label">예약</div> --%>
+<!-- 									        </div> -->
 									        <div class="product-stat">
 									            <div class="value">${not empty prod.rating ? prod.rating : '0.0'}</div>
 									            <div class="label">평점</div>

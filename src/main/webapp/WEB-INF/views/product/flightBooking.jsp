@@ -722,7 +722,7 @@ function fillFlightInfo(){
 	const testData = [
         {
             lastName: "김",
-            firstName: "정숙",
+            firstName: "은여",
             gender: "F",
             birthDate: "1975-10-10",
             extraBaggageOutbound: "10",
@@ -730,7 +730,7 @@ function fillFlightInfo(){
         },
         {
             lastName: "안",
-            firstName: "창준",
+            firstName: "병준",
             gender: "M",
             birthDate: "1972-01-01",
 

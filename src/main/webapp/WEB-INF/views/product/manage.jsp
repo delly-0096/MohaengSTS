@@ -696,11 +696,11 @@
 	                    </div>
 	                    <div class="row mb-3">
 	                        <div class="col-md-3">
-	                            <label class="form-label">정가</label>
+	                            <label class="form-label">정가 <span class="text-danger">*</span></label>
 	                            <input type="number" class="form-control" name="prodSale.netprc" placeholder="0">
 	                        </div>
 	                        <div class="col-md-3">
-	                            <label class="form-label">판매가 <span class="text-danger">*</span></label>
+	                            <label class="form-label">판매가</label>
 	                            <input type="number" class="form-control" name="prodSale.price" placeholder="0" readonly required>
 	                        </div>
 	                        <div class="col-md-3">

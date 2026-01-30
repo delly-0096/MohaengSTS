@@ -46,7 +46,7 @@
     
     
     <!-- 전체 개수, 그런거 알아오기 -->
-    <select id="getSystemLogStats" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="map">
+    <select id="getSystemLogStats" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO">
     SELECT 
 	        COUNT(*) AS TOTAL,
 	        COUNT(CASE WHEN SOURCE LIKE '%Talk%' OR SOURCE LIKE '%Comment%' THEN 1 END) AS COMMUNITY,

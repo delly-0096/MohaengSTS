@@ -53,7 +53,7 @@ public class AdminLogController {
 		log.info("로그 목록조회 : currentPage:{}, searchWord:{}, searchType:{}" , currentPage, searchWord, searchType);
 //		log.info("로그 목록조회 : startDate:{}, endDate:{}" , startDate, endDate);
 		
-		PaginationInfoVO<SystemLogVO> pagInfoVO = new PaginationInfoVO<>(10, 5);
+		PaginationInfoVO<SystemLogVO> pagInfoVO = new PaginationInfoVO<>(15, 5);
 		pagInfoVO.setCurrentPage(currentPage);
 		pagInfoVO.setSearchWord(searchWord);
 //		pagInfoVO.setStartDate(startDate);

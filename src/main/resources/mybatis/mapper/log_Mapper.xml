@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.log.mapper.ILogMapper">
+
+	<!-- 로그 추가 -->
+	<insert id="insertLog" parameterType="kr.or.ddit.mohaeng.vo.LogVO" useGeneratedKeys="true">
+		<selectKey keyProperty="logNo" resultType="long" order="BEFORE">
+			select SEQ_LOG.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO LOG (
+	        LOG_NO
+	        , MEM_NO
+	        , LOG_TYPE
+	        , LOG_DESC
+	        , TARGET
+	        , TARGET_ID
+	        , ACCESS_IP
+	        , REG_DT
+    	)VALUES(
+    		#{logNo}
+    		, #{memNo}
+	        , #{logType}
+	        , #{logDesc}
+	        , #{target}
+	        , #{targetId}
+	        , #{accessIp}
+	        , SYSDATE
+    	)
+	</insert>
+	
+	<!-- 시스템 로그 추가 -->
+	<insert id="insertSystemLog" parameterType="kr.or.ddit.mohaeng.vo.SystemLogVO" useGeneratedKeys="true">
+		<selectKey keyProperty="systemLogNo" resultType="long" order="BEFORE">
+			select SEQ_SYSTEM_LOG.NEXTVAL FROM DUAL
+		</selectKey>
+		INSERT INTO SYSTEM_LOG (
+	        SYSTEM_LOG_NO
+			, "LEVEL"
+			, SOURCE
+			, MSG
+			, IP
+			, REG_DT
+			, SYSTEM_LOG_MEM
+	    ) VALUES (
+	    	#{systemLogNo}
+	        , #{level}
+	        , #{source}
+	        , #{msg}
+	        , #{ip}
+	        , SYSDATE
+	        , #{systemLogMem}
+	    )
+	</insert>
+
+</mapper>

@@ -297,6 +297,25 @@
     margin-top: 2px;
 }
 
+/*테스트 위한 자동완성 버튼*/
+.icon-fill-btn {
+background: none;
+    border: none;
+    color: #108a83;
+    cursor: pointer;
+    font-size: 0.8rem; /* 아이콘 크기를 살짝 키우면 더 예쁩니다 */
+    padding: 10px;    /* 클릭 영역을 확보해서 사용성을 높입니다 */
+    
+    /* 핵심: 아래쪽 간격을 벌립니다 */
+    margin-bottom: 8px; 
+    
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+/**/
+
 /* 탑승객 카드 */
 .passenger-card {
     background: #f8fafc;

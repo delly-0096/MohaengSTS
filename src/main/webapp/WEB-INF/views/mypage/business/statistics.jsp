@@ -126,19 +126,19 @@
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>남성</span>
-                                    <span class="fw-bold">55%</span>
+                                    <span class="fw-bold" id="malePercent">55%</span>
                                 </div>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" style="width: 55%; background: var(--primary-color);"></div>
+                                    <div class="progress-bar" style="width: 55%; background: var(--primary-color);" id="maleProgress"></div>
                                 </div>
                             </div>
                             <div class="mb-4">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>여성</span>
-                                    <span class="fw-bold">45%</span>
+                                    <span class="fw-bold" id="femalePercent">45%</span>
                                 </div>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" style="width: 45%; background: var(--accent-color);"></div>
+                                    <div class="progress-bar" style="width: 45%; background: var(--accent-color);" id="femaleProgress"></div>
                                 </div>
                             </div>
 
@@ -147,37 +147,37 @@
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>20대</span>
-                                    <span class="fw-bold">35%</span>
+                                    <span class="fw-bold" id="age20Percent">35%</span>
                                 </div>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" style="width: 35%; background: var(--secondary-color);"></div>
+                                    <div class="progress-bar" style="width: 35%; background: var(--secondary-color);" id="age20Progress"></div>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>30대</span>
-                                    <span class="fw-bold">40%</span>
+                                    <span class="fw-bold" id="age30Percent">40%</span>
                                 </div>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" style="width: 40%; background: var(--secondary-color);"></div>
+                                    <div class="progress-bar" style="width: 40%; background: var(--secondary-color);" id="age30Progress"></div>
                                 </div>
                             </div>
                             <div class="mb-3">
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>40대</span>
-                                    <span class="fw-bold">18%</span>
+                                    <span class="fw-bold" id="age40Percent">18%</span>
                                 </div>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" style="width: 18%; background: var(--secondary-color);"></div>
+                                    <div class="progress-bar" style="width: 18%; background: var(--secondary-color);" id="age40Progress"></div>
                                 </div>
                             </div>
                             <div>
                                 <div class="d-flex justify-content-between mb-2">
                                     <span>50대 이상</span>
-                                    <span class="fw-bold">7%</span>
+                                    <span class="fw-bold" id="age50Percent">7%</span>
                                 </div>
                                 <div class="progress" style="height: 8px;">
-                                    <div class="progress-bar" style="width: 7%; background: var(--secondary-color);"></div>
+                                    <div class="progress-bar" style="width: 7%; background: var(--secondary-color);" id="age50Progress"></div>
                                 </div>
                             </div>
                         </div>
@@ -193,7 +193,7 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="text-center p-4 bg-light rounded">
-                                <div style="font-size: 48px; font-weight: 700; color: var(--primary-color);">4.8</div>
+                                <div style="font-size: 48px; font-weight: 700; color: var(--primary-color);" id="averageRating">4.8</div>
                                 <div class="mb-2">
                                     <i class="bi bi-star-fill text-warning"></i>
                                     <i class="bi bi-star-fill text-warning"></i>
@@ -289,6 +289,8 @@ document.addEventListener("DOMContentLoaded", function() {
         const endDate = document.getElementById('endDate').value;
         loadProdSgList(startDate, endDate);
         initSalesData(startDate, endDate);
+        initGenderData(startDate, endDate);
+        updateStatsByAge(startDate, endDate);
     });
     
 
@@ -466,6 +468,7 @@ function loadProdSgList(startDate, endDate) {
         $("#totalReservations").text(totalReservations);
         $("#conversionRate").text((conversionRate).toFixed(1) + "%");
         $("#avgRating").text(rating);
+        $("#averageRating").text(rating);
     });
 }
 
@@ -502,6 +505,8 @@ function setPeriod(period) {
 
     loadProdSgList(currentStartDate, currentEndDate);
     initSalesData(currentStartDate, currentEndDate);
+    updateGenderData(currentStartDate, currentEndDate);
+    updateStatsByAge(currentStartDate, currentEndDate);
 }
 
 function initSalesData(startDate, endDate) {
@@ -539,6 +544,76 @@ function initSalesData(startDate, endDate) {
         });
         updateSalesChart(SalesData);
         updateRsvChart(RsvData);
+    });
+}
+
+function updateGenderData(startDate, endDate) {
+    let data = {
+        startDate: startDate || '',
+        endDate: endDate || ''
+    };
+
+	fetch('/statistics/genderRatio', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        let total = data.total || 1; // 0으로 나누기 방지
+        let malePercent = ((data.male / total) * 100).toFixed(1);
+        let femalePercent = ((data.female / total) * 100).toFixed(1);
+        
+        document.getElementById('malePercent').innerText = malePercent + '%';
+        document.getElementById('femalePercent').innerText = femalePercent + '%';
+        document.getElementById('maleProgress').style.width = malePercent + '%';
+        document.getElementById('femaleProgress').style.width = femalePercent + '%';
+    });
+}
+
+function updateStatsByAge(startDate, endDate) {
+    let data = {
+        startDate: startDate || '',
+        endDate: endDate || ''
+    };
+
+	fetch('/statistics/statsByAge', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log(data);
+        let total   = Number(data.totalCnt || data.total || 0);
+        let count20 = Number(data.cnt20s || data.age20 || 0); // 값이 없으면 0으로 처리
+        let count30 = Number(data.cnt30s || data.age30 || 0);
+        let count40 = Number(data.cnt40s || data.age40 || 0);
+        let count50 = Number(data.cntOver50s || data.age50Over || 0);
+        
+
+        // 2. 0 나누기 방지 로직 추가
+        let age20Percent = (total === 0) ? "0.0" : ((count20 / total) * 100).toFixed(1);
+        let age30Percent = (total === 0) ? "0.0" : ((count30 / total) * 100).toFixed(1);
+        let age40Percent = (total === 0) ? "0.0" : ((count40 / total) * 100).toFixed(1);
+        let age50Percent = (total === 0) ? "0.0" : ((count50 / total) * 100).toFixed(1);
+
+        // 3. 화면 적용
+        document.getElementById('age20Percent').innerText = age20Percent + '%';
+        document.getElementById('age30Percent').innerText = age30Percent + '%';
+        document.getElementById('age40Percent').innerText = age40Percent + '%';
+        document.getElementById('age50Percent').innerText = age50Percent + '%';
+
+        document.getElementById('age20Progress').style.width = age20Percent + '%';
+        document.getElementById('age30Progress').style.width = age30Percent + '%';
+        document.getElementById('age40Progress').style.width = age40Percent + '%';
+        document.getElementById('age50Progress').style.width = age50Percent + '%';
+
     });
 }
 </script>

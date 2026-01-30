@@ -979,6 +979,15 @@
         if(startDate) document.getElementById('checkInDate').value = startDate;
         if(endDate) document.getElementById('checkOutDate').value = endDate;
         
+        if(adultCount && adultCount !== "null") {
+            const adultSpan = document.getElementById('adultCount');
+            if(adultSpan) {
+                adultSpan.innerText = adultCount;
+                
+                console.log("상세 페이지 인원수 동기화 완료: " + adultCount + "명");
+            }
+        }
+        
         // 초기 로드 시 박수 계산 실행 (JS 파일에 이 함수가 있어야 함!)
         if(typeof calculateNights === 'function') {
             calculateNights();

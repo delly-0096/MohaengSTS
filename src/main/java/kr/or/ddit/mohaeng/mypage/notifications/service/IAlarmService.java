@@ -20,8 +20,7 @@ public interface IAlarmService {
 	public void testInsert(int memNo);
 	public List<AlarmVO> selectAlramList(int memNo);
 	public void readAll(int memNo);
-	public boolean readOne(Map<String, Object> param);
-	public void readAll(Map<String, Object> param);
+	public List<AlarmVO> selectUnreadList(int memNo);
 
 
 

@@ -64,14 +64,10 @@ public class AlarmServiceImpl implements IAlarmService {
 		
 	  }
 	  @Override
-	  public boolean readOne(Map<String, Object> param) {
-		    return notiAlarmMapper.updateReadOne(param) > 0;
-		}
-	  @Override
-	  public void readAll(Map<String, Object> param) {
-	      notiAlarmMapper.updateAllRead(param);
+	  public List<AlarmVO> selectUnreadList(int memNo) {
+	
+		return notiAlarmMapper.selectUnreadList(memNo);
 	  }
-
 
 
 }

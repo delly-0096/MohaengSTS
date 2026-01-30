@@ -81,4 +81,14 @@ public interface IPointService {
      *  ex){ "retrievedPoint": 0, "cashDeduction": 100 } : "포인트는 못 뺏었고, 대신 현금에서 100원 깠습니다!"
      */
      public Map<String, Object> retrievePoint(int memNo, int payNo);
+
+
+     /**
+      * [결제 시 포인트 사용 기록]
+      * @param memNo 회원번호
+      * @param payNo 결제번호
+      * @param useAmount 사용 포인트
+      */
+     public void recordPointUse(int memNo, int payNo, int useAmount);
+
 }

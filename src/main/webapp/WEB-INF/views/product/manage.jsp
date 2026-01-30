@@ -122,10 +122,14 @@
 		        	<c:forEach items="${prodList}" var="prod">
 			        	<c:set var="status" value="${prod.approveStatus }"/>
 			        	<c:set var="dataStatus" value="active"/>
-			        	<c:if test="${status == '판매중지' or prod.aprvYn eq 'N'}">
+			        	<c:if test="${status == '판매중지'}">
 				        	<c:set var="dataStatus" value="inactive"/>
 			        	</c:if>
+			        	<c:if test="${prod.aprvYn eq 'N'}">
+				        	<c:set var="dataStatus" value="pending"/>
+			        	</c:if>
 			        	<c:set var="accNo" value="${not empty prod.accommodation and prod.prodCtgryType eq 'accommodation' ? prod.accommodation.accNo : 0}"/>
+			        	<!-- pending = 대기 -->
 			            <div class="product-manage-card" data-id="${prod.tripProdNo}" data-status="${dataStatus}" data-no="${accNo}">
 			                <label class="product-checkbox">
 			                    <input type="checkbox" class="product-select-checkbox" value="${prod.tripProdNo}" onchange="toggleProductSelect(this)">
@@ -351,6 +355,14 @@
                 <form id="productForm">
 	                <input type="hidden" name="tripProdNo"/>
                     <div class="row mb-3">
+                    	<div>
+	                        <!-- <button type="button" class="icon-fill-btn" onclick="fillFlightInfo()" title="정보 자동 채우기">
+							    <i class="bi bi-info-circle-fill"></i> 
+							</button> -->
+							<button type="button" class="icon-fill-btn" onclick="fillProductInfo()" title="정보 자동 채우기">
+							    <i class="bi bi-magic"></i>
+							</button>
+						</div>
                         <div class="col-md-4">
                             <label class="form-label">카테고리 <span class="text-danger">*</span></label>
                             <select class="form-select" name="prodCtgryType" id="productCategory" required onchange="toggleCategoryFields()">
@@ -684,11 +696,11 @@
 	                    </div>
 	                    <div class="row mb-3">
 	                        <div class="col-md-3">
-	                            <label class="form-label">정가</label>
+	                            <label class="form-label">정가 <span class="text-danger">*</span></label>
 	                            <input type="number" class="form-control" name="prodSale.netprc" placeholder="0">
 	                        </div>
 	                        <div class="col-md-3">
-	                            <label class="form-label">판매가 <span class="text-danger">*</span></label>
+	                            <label class="form-label">판매가</label>
 	                            <input type="number" class="form-control" name="prodSale.price" placeholder="0" readonly required>
 	                        </div>
 	                        <div class="col-md-3">
@@ -1075,6 +1087,54 @@ function setModalForNew() {
     addonOptionIndex = 1;
 }
 
+// 상품정보 자동 완성
+function fillProductInfo(){
+	const productData = {
+	        'prodCtgryType': 'activity',              // 카테고리: 액티비티
+	        'ctyNm': '39',                           // 도시코드
+	        'prodSale.leadTime': '3',                // 소요시간(Lead Time)
+	        'tripProdTitle': '제주 푸른 바다 투명 카약 체험', 
+	        'prodPlace.addr1': '제주특별자치도 제주시 애월읍 애월로 1길', 
+	        'prodPlace.addr2': '월정리카약체험장', 
+	        'tripProdContent': '에메랄드빛 애월 바다에서 즐기는 힐링 카약 체험입니다. 가족, 연인과 함께하세요!',
+	        'prodInfo.prodRuntime': '09:00 ~ 18:00',
+	        'prodInfo.prodDuration': '1시간 30분',
+	        'prodInfo.prodLimAge': '만 7세 이상',
+	        'prodInfo.prodMinPeople': '1',
+	        'prodInfo.prodMaxPeople': '4',
+	        'prodInfo.prodInclude': '카약 장비 대여\n구명조끼\n안전 요원 가이드',
+	        'prodInfo.prodExclude': '개인 수건\n주차비\n기타 음료',
+	        'prodInfo.prodNotice': '기상 악화 시 안전을 위해 이용이 제한될 수 있습니다.',
+	        'prodSale.netprc': '30000',               // 정가
+	        'prodSale.discount': '10',                // 할인율 (10%)
+	        'prodSale.totalStock': '50',
+	        'saleStartDt': '2026-02-01',
+	        'saleEndDt': '2026-05-01'
+	    };
+
+	    // 2. 루프를 돌며 데이터 입력
+	    for (const [name, value] of Object.entries(productData)) {
+	        const element = document.querySelector(`[name="\${name}"]`);
+	        if (element) {
+	            element.value = value;
+	            // 만약 입력을 감지해야 하는 라이브러리를 쓴다면 이벤트 강제 발생
+	            element.dispatchEvent(new Event('input', { bubbles: true }));
+	        }
+	    }
+	    // 시간 추가
+	    addPresetTimes('hourly');
+
+	    // 3. 할인율에 따른 판매가(price) 자동 계산 로직
+	    const netprc = parseInt(productData['prodSale.netprc']);
+	    const discount = parseInt(productData['prodSale.discount']);
+	    const salePrice = netprc * (1 - discount / 100);
+	    
+	    const priceElement = document.querySelector(`[name="prodSale.price"]`);
+	    if (priceElement) {
+	        priceElement.value = Math.floor(salePrice); // 소수점 버림
+	    }
+}
+
 // 상품 수정 모달 설정
 async function editProduct(data) {
 	const { id, no } = data.dataset;	// tripProdNo랑 accNo
@@ -1457,7 +1517,8 @@ async function showDetail (data){
 					else {
 						let statusBadge = "badge-moheng-success";
 						
-						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식)
+// 							    <td class="fw-bold resv-no">#\${index + 1}</td>
+						// 2. HTML 구조 생성 (파란색 제거 및 등록 모달 스타일 이식) - 예약 최신순으로 정렬
 						reserveHtml += `
 							<tr onclick="toggleDetail('\${resvId}')" style="cursor:pointer;" class="main-row align-middle border-bottom">
 							    <td class="fw-bold resv-no">#\${resv.prodListNo}</td>
@@ -1611,16 +1672,8 @@ async function showDetail (data){
 			let statusClass = inquiry.inqryStatus === 'DONE' ? 'is-answered' : 'is-waiting';					// 조회용 ui
 // 			console.log("statusClass : ", statusClass );
 			
-// 			let replyStatus = "";	// 답변 상태 보여줄것
-// 			let answerStatus = "";	// 답변 남긴 상태 보여줄것
 			let replyDt = setTime(inquiry.replyDt);	// 답변 날짜
 			
-			
-			// 답변 대기
-// 			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'WAIT') answerStatus = `style='display:none;'`;
-			// 답변 완료
-// 			if(inquiry.inqryStatus !== null && inquiry.inqryStatus === 'DONE') replyStatus = `style='display:none;'`;
-
 			// 문의사항
 			inquiryHtml += `
 				<div class="inquiry-modal-item \${statusClass}" data-status="\${inquiryCode}" data-id="\${inquiry.prodInqryNo}">
@@ -1685,7 +1738,7 @@ async function showDetail (data){
 let answerPart;
 let originText;
 
-//모달에서 답변 등록 - 아직 구현 안됨
+// 문의사항 답변 등록
 function submitReply(inquiryId, tripProdNo, editContent = "") {
 	console.log("submitReply - inquiryId : ", inquiryId);
 	console.log("submitReply - tripProdNo : ", tripProdNo);
@@ -1804,7 +1857,7 @@ function editAnswer(inquiryId, tripProdNo){
     document.getElementById('editAnswerText-' + inquiryId).focus();
 }
 
-// 수정 취소하기
+// 문의사항 수정 취소하기
 function cancelEditAnswer(inquiryId, originText){
 	console.log("cancelEditAnswer - originText : ", originText);
     const item = document.querySelector('.inquiry-modal-item[data-id="' + inquiryId + '"]');
@@ -1818,7 +1871,7 @@ function cancelEditAnswer(inquiryId, originText){
     answerContent.innerHTML = `<p><strong>A.</strong> <span class="answer-text">\${originText}</span></p>`;
 }
 
-// 문의 답변 삭제
+// 문의사항 답변 삭제
 function deleteAnswer(inquiryId, tripProdNo){
 	console.log("deleteAnswer inquiryId : ", inquiryId);
 	console.log("deleteAnswer tripProdNo : ", tripProdNo);
@@ -1851,10 +1904,8 @@ function deleteAnswer(inquiryId, tripProdNo){
 	});
 }
 
-
 // 시간 설정
 function setTime (date){
-	
 	if (date === null || date === undefined || date === "") return "";
 
     // 1. 만약 date가 객체(new Date())라면 문자열로 변환
@@ -1963,6 +2014,7 @@ function formatTel(tel) {
         ? n.replace(/(\d{3})(\d{4})(\d{4})/, '$1-$2-$3')
         : n.replace(/(\d{3})(\d{3})(\d{4})/, '$1-$2-$3');
 }
+
 //예약 내역 클릭시 보여줄 아코디언 활성화
 window.toggleDetail = function(id) {
 	const detailRow = document.getElementById(id);
@@ -2212,9 +2264,12 @@ async function saveProduct(data) {
         console.log("res.data : ", res.data);
         if (res.data === "OK") {
             // showToast('성공!', 'success');
-            // alert로?
-           	alert("상품 등록 성공!, 판매는 관리자의 허가를 받고 난후 가능합니다.");
-            location.reload();
+           	if(!isUpdate) showToast('상품 등록 성공! 판매는 관리자의 허가 후 가능합니다.', 'success');
+          	if(isUpdate) showToast('상품 수정 성공! 판매는 관리자의 허가 후 가능합니다.', 'success');
+          	
+           	setTimeout(() => {
+	            location.reload();
+            }, 1000);
         }
     } catch (error) {
         console.error(error);
@@ -2236,11 +2291,12 @@ function toggleProductStatus(data) {
         })
         .then(res => {
         	if (res.data === "OK") {
-//         		showToast('상품 상태가 변경되었습니다.', 'success');
-        		alert("상품 상태가 변경되었습니다. 판매는 관리자의 허가를 받고 난후 가능합니다.");
-		        location.reload(true);
+        		showToast("상품 판매 상태가 변경되었습니다.");
+		        setTimeout(() => {
+		        	location.reload() 
+	        	}, 1000);
         	}
-        	else showToast('상품 상태 변공에 실패하였습니다.', 'success');
+        	else showToast('상품 상태 변경에 실패하였습니다.', 'success');
         }).catch(err => {
         	console.log("error 발생 : ", err);
         });
@@ -2258,9 +2314,11 @@ function deleteProduct(data) {
         	console.log("res.data : ", res.data);
         	console.log("res.data.ok : ", res.data);
         	if (res.data === "OK") {
-        		alert("상품이 삭제되었습니다.");
-//         		showToast('상품이 삭제되었습니다.', 'success');
-		        location.reload(true);
+        		showToast('상품이 삭제되었습니다.', 'success');
+        		
+		        setTimeout(() => {
+		        	location.reload() 
+	        	}, 1000);
         	}
         	else showToast('상품이 삭제되지않았습니다.', 'error');
         }).catch(err => {
@@ -2967,7 +3025,7 @@ function addRoomType() {
 
     // 첫 번째 객실 삭제 버튼 표시 (2개 이상일 때)
     updateRoomDeleteButtons();
-	showToast('객실 타입이 추가되었습니다.', 'success');
+// 	showToast('객실 타입이 추가되었습니다.', 'success');
 }
 
 // 선택 객실 삭제 -> 여기도 예약 고객 있는지 확인해서 삭제해야됨
@@ -3024,7 +3082,7 @@ function addOption() {
                     </div>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeAddonOption('\${index}')">
+                    <button type="button" class="btn btn-outline-danger w-100" onclick="removeAddonOption(\${index})">
                         <i class="bi bi-x"></i>
                     </button>
                 </div>
@@ -3035,11 +3093,11 @@ function addOption() {
 
     // 첫 번째 추가 옵션에 삭제 버튼 표시 (2개 이상일 때)
     updateAddonDeleteButtons();
-	showToast('추가 옵션이 추가되었습니다.', 'success');
+// 	showToast('추가 옵션이 추가되었습니다.', 'success');
 }
 
 function removeAddonOption(index) {
-    var addonItem = document.querySelector('.addon-option-item[data-addon-index="' + index + '"]');
+    var addonItem = document.querySelector('.addon-option-item[data-add-index="' + index + '"]');
     if (addonItem) {
         addonItem.style.transition = 'opacity 0.3s, transform 0.3s';
         addonItem.style.opacity = '0';

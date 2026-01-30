@@ -97,6 +97,10 @@
 				<i class="bi bi-arrow-left"></i>
 			</button>
 			<h2>새 여행기록</h2>
+			<button type="button" class="btn btn-sm btn-outline-secondary ms-2" 
+		            onclick="fillDemoData()" style="font-size: 10px; border-style: dashed;">
+		        ⚡ 시연 데이터 채우기
+		    </button>
 			<button type="button" class="btn-submit" id="submitBtn"
 				onclick="submitTravellog()">등록</button>
 		</div>
@@ -571,6 +575,94 @@ let editingRcdNo = isEditMode ? Number(__RCD_NO__) : null;
 
 // 수정 모드에서 기존 커버/이미지 유지용
 let existingCoverAttachNo = null;
+
+function fillDemoData() {
+	console.log("시연 데이터 채우기 클릭...!");
+	
+ 	// 1. 여행 제목 입력
+	document.getElementById('blogTitle').value = "제주도 2박3일 가족 여행 기록";
+ 	// 2. 여행 이야기 작성
+ 	document.querySelector("#blogEditor").querySelector(".block-textarea").value = "부모님과 함께 2박3일간 제주를 다녀왔습니다. 오랜만에 가족끼리 여행이라 더 뜻깊었어요. 날씨도 좋고 분위기도 좋아서 정말 만족스러운 여행이었습니다.";
+ 	
+ 	// 3. Day 별, 별점 처리
+ 	let dayHeaderBlock = document.querySelector(".day-header-block");	// Day 일수 가져오기
+ 	console.log("## Day 수 : " + dayHeaderBlock.length);
+ 	let textAreaData = [
+		"소문 듣고 왔는데 소문보다 좋아요", "여행의 하이라이트였다고 해도 과언이 아님", "기대 이상이었어요. 강력 추천합니다", "분위기가 너무 좋아서 오래 머물렀어요", "처음엔 기대 안 했는데 의외의 수확", "리뷰 보고 반신반의했는데 직접 와보니 인정", "재방문 의사 100%", 		
+		"가족 여행으로 강추합니다", "주변 사람들한테 여기 꼭 추천할 예정", "생각보다 훨씬 만족스러웠던 선택", "세 사람 다 만족한 유일한 곳", "유명한 곳보다 여기가 더 좋았어요", "여행 중반쯤 찾은 보석 같은 곳", "힐링 그 자체였습니다'", 		
+		"가족들 모두 만족해서 뿌듯했습니다", "우리 가족 취향 저격", "아버지께서 여기가 제일 좋았다고 하심", "다음 제주 여행 필수 코스로 저장", "친구들한테도 여기 꼭 가보라고 할게요", "제주에 몇 번 와봤지만 여기는 처음인데 왜 진작 안 왔을까 싶네요", "일정에 없었는데 들르길 정말 잘했어요", 		
+		"바쁜 일상 잊고 완전히 쉬다 갔어요", "바쁜 일상 잊고 완전히 쉬다 갔어요", "정성이 느껴지는 곳이었습니다", "완벽한 선택이었다고 자부합니다", "소문 듣고 왔는데 소문보다 좋아요", "이런 곳이 있는 줄 몰랐네요", "가족끼리 오기 정말 좋은 곳이에요", 		
+		"부모님과 함께라 더 특별했던 시간", "추천합니다.", "추천합니다.", "추천합니다.", "추천합니다.", "추천합니다.", "추천합니다.", 		
+		"추천합니다.", "추천합니다.", "추천합니다.", "추천합니다.", "추천합니다.", "추천합니다.", "추천합니다."	
+ 	];
+ 	let starRatingEles = document.querySelector("#blogEditor").querySelectorAll(".star-rating");
+ 	let ratingValueEles = document.querySelector("#blogEditor").querySelectorAll(".rating-value");
+ 	let blockTextareaEles = document.querySelector("#blogEditor").querySelectorAll(".block-textarea");
+ 	starRatingEles.forEach(function(v,i){
+ 		console.log(v.childNodes);
+ 		let randomNum = Math.floor(Math.random() * (5 - 3 + 1)) + 3;
+ 		v.childNodes.forEach(function(v,i){
+ 			console.log("## random : " + randomNum);
+ 			console.log("## ele : " + v);
+ 			console.log("## ele : " + i);
+ 			if(i <= randomNum - 1){
+ 				v.classList.remove("bi-star");
+ 				v.classList.add("bi-star-fill");
+ 				v.closest('.place-rating').dataset.rating = randomNum;
+ 			}
+ 		});
+ 		ratingValueEles[i].innerText = randomNum + ".0";
+ 		blockTextareaEles[i+1].value = textAreaData[i];
+ 	});
+//     // 1. 기본 정보 입력
+//     document.getElementById('blogTitle').value = "부모님과 제주여행";
+    
+//     // 2. 위치 선택 (여수시 지역번호 156 기준 예시, 실제 DB 번호에 맞게 수정)
+//     selectedLocationCode = "39"; 
+//     selectedLocationName = "제주도";
+//     document.getElementById('locationValue').textContent = selectedLocationName;
+    
+//     // 3. 여행 기간 설정 (Flatpickr 강제 설정)
+//     const startDate = "2026-02-24";
+//     const endDate = "2026-02-26";
+//     travelStartDate = new Date(startDate);
+//     travelEndDate = new Date(endDate);
+//     document.getElementById('dateValue').textContent = startDate + " ~ " + endDate;
+//     const fp = document.getElementById('travelDateRange')._flatpickr;
+//     if (fp) fp.setDate([travelStartDate, travelEndDate]);
+
+//     // 4. 태그 추가
+//     tags = ["제주도", "가족여행", "한라봉", "가족여행"];
+//     renderTags();
+
+//     // 5. 블록 데이터 구성 (가장 중요한 부분)
+//     const editor = document.getElementById('blogEditor');
+//     editor.innerHTML = ''; // 기존 블록 비우기
+
+//     // (1) 텍스트 블록 추가
+//     addTextBlock();
+//     const firstText = editor.lastElementChild.querySelector('textarea');
+//     firstText.value = "잘 다녀왔습니다.";
+//     autoResize(firstText);
+
+//     // (2) 구분선 추가
+//     addDividerBlock();
+
+//     // (3) 장소 블록 추가 (여수 아쿠아플라넷 예시 데이터)
+//     // 실제 DB에 존재하는 plcNo를 넣어야 백엔드에서 에러가 안 납니다.
+//     addPlaceToEditor(1001, "아쿠아플라넷 여수", "전남 여수시 오동도로 61-11", "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=300");
+//     const placeReview = editor.lastElementChild.querySelector('textarea');
+//     placeReview.value = "벨루가가 너무 귀여웠어요. 가족들과 가기 딱 좋습니다.";
+//     setPlaceRating(blockIdCounter, 5); // 별점 5점
+
+//     // 6. 커버 이미지 안내
+//     Swal.fire({
+//         title: '데이터 입력 완료!',
+//         text: '커버 이미지만 직접 선택하고 등록을 눌러주세요.',
+//         icon: 'success',
+//         timer: 1500
+//     });
+}
 
 
 function applyScheduleToEditor(schedule) {

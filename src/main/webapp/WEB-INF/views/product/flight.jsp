@@ -27,8 +27,9 @@
 			<div class="search-tabs">
 				<button class="search-tab active" data-type="round">왕복</button>
 				<button class="search-tab" data-type="oneway">편도</button>
+				<div class="api-source-text">국토교통부_(TAGO)_국내항공운항정보 API</div>
 			</div>
-			
+							
 			<form id="flightSearchForm">
 				<!-- 왕복/편도 검색 폼 -->
 				<div id="normalSearchForm">
@@ -129,8 +130,6 @@
 			</form>
 		</div>
 		
-		<div style="width: 300px;">국토교통부_(TAGO)_국내항공운항정보 API</div>
-
 		<!-- 선택한 항공편 표시 영역 -->
 		<div class="selected-flights-container" id="selectedFlightsContainer"
 			style="display: none;">
@@ -450,7 +449,7 @@ function initFlightInfiniteScroll() {
                 flightCurrentPage++;
                 renderFlightBatch(); // 10개씩 그리는 함수 호출
                 console.log("flightIsLoading : ", flightIsLoading);
-            }, 500);
+            }, 1000);
         }
     }, {
         root: null,
@@ -477,11 +476,9 @@ function renderFlightBatch(){
         html += createFlightCard(item, currentSearchData, cabin, start + i);
     });
     
-    setTimeout(() => {
-	    result.insertAdjacentHTML('beforeend', html);
-    }, 2000);
+    result.insertAdjacentHTML('beforeend', html);
+    setTimeout(() => { flightIsLoading = false }, 2000);
     
-    flightIsLoading = false;	// 더 할거 없을때 false조정
     
     if (end >= flightFullData.length) {
         flightHasMore = false;

@@ -232,6 +232,7 @@
                 </div>
         	
         	<!-- 기업 관리 -->
+        	<sec:authorize access="isAuthenticated()">
 	        <div class="side-menu-section">
                 	<sec:authorize access="!isAuthenticated() or hasRole('BUSINESS')">
 	                <div class="side-menu-section-title" onclick="toggleMenuSection(this)">
@@ -254,6 +255,7 @@
 	                </div>
 	                    </sec:authorize>
 	            </div>
+	            </sec:authorize>
            
             <!-- 관광 상품 -->
             <div class="side-menu-section">

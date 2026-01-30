@@ -39,10 +39,18 @@
                 <button class="inquiry-tab ${currentTab == 'write' ? 'active' : ''}" data-tab="write">문의 작성</button>
             </div>
 
+
             <!-- 문의 작성 폼 -->
             <div class="inquiry-content-area" id="writeTab" style="display: ${currentTab == 'write' ? 'block' : 'none'};">
                 <div class="inquiry-form">
-                    <h3><i class="bi bi-pencil me-2"></i>문의하기</h3>
+                    <h3><i class="bi bi-pencil me-2"></i>문의하기
+                    	<!-- 디버그 버튼 -->
+		                 <button type="button" onclick="fillInquiryData()"
+					            style="width: 110px; height: 35px; border-radius: 6px; border: none; background: rgba(0, 0, 0, 0); color: #EFF1F2; font-size: 11px; cursor: pointer; transition: 0.2s;"
+					            title="문의 내용 자동 입력">
+					        문의
+					    </button>
+                    </h3>
 
                     <form id="inquiryForm" enctype="multipart/form-data">
                         <div class="row">
@@ -490,6 +498,41 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+/* 디버그 버튼 */
+function fillInquiryData() {
+    // 1. 문의 유형 (두 번째 옵션 선택 - 보통 '일반문의'나 '예약문의')
+    const categorySelect = document.getElementById('inqryCtgryCd');
+    if(categorySelect && categorySelect.options.length > 1) {
+        categorySelect.selectedIndex = 2; 
+    }
+    
+    // 2. 관련 예약번호
+    document.getElementById('inquiryTargetNo').value = '';
+    
+    // 3. 제목
+    document.getElementById('inqryTitle').value = '숙소 예약 후 일정 변경을 하려면 어떻게 해야 하나요';
+    
+    // 4. 내용
+    document.getElementById('inqryCn').value = 
+        "안녕하세요!\n" +
+        "이번에 '모행'을 통해서 숙소를 예약했구요\n" +
+        "혹시라도 일정이 변경되면 어떻게 해야하나 싶어서 문의 드립니다\n" +
+        "답변 기다리겠습니다";
+    
+    // 5. 답변 받을 이메일 (값이 없을 때만 채움)
+    const emailInput = document.getElementById('inqryEmail');
+    if(!emailInput.value) {
+        emailInput.value = 'romantic_dev@naver.com';
+    }
+    
+    // 6. 개인정보 동의 체크
+    const agreeCheck = document.getElementById('agreePrivacy');
+    if(agreeCheck) {
+        agreeCheck.checked = true;
+    }
+    
+    console.log("Inquiry form filled successfully!");
+}
 </script>
 
 <c:set var="pageJs" value="support" />

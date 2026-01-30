@@ -45,4 +45,18 @@ public interface ICompanyDashboardMapper {
 
 	// 오늘 이용 상품 수
 	public int selectTodayArrivalCount(int compNo);
+	
+	//페이징
+	public int selectPaymentCount(int memNo);
+
+	List<PaymentVO> selectPaymentListPaging(
+	    @Param("memNo") int memNo,
+	    @Param("startRow") int startRow,
+	    @Param("endRow") int endRow
+	);
+
+	public Integer selectCompNoByMemNo(int memNo);
+
+	public List<MonthlySalesPoint> selectMonthlySalesChart(Integer compNo);
+
 }

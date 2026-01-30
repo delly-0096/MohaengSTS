@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.ddit.mohaeng.admin.statistics.members.mapper.IAdminMembersMapper">
+	<select id="summary" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		<![CDATA[
+		SELECT 
+			(SELECT COUNT(M.mem_no)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS TOTAL
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') <= TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS before_TOTAL
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(sysdate, 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS NEW_MEMBER
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS before_new_MEMBER
+			,
+			(SELECT COUNT(*)
+			       FROM MEMBER M
+			       LEFT JOIN MEM_COMP MC ON M.MEM_NO = MC.MEM_NO
+			      WHERE M.DEL_YN = 'N'
+			        AND M.MEM_NO NOT IN (SELECT MEM_NO FROM MEM_ADMIN)
+			        AND NVL(MC.APRV_YN, 'Y') = 'Y' 
+			    ) AS ACTIVATE_MEMBER
+			,
+			    (SELECT COUNT(*)
+			       FROM MEMBER M
+			       LEFT JOIN MEM_COMP MC ON M.MEM_NO = MC.MEM_NO
+			      WHERE M.DEL_YN = 'N'
+			        AND M.MEM_NO NOT IN (SELECT MEM_NO FROM MEM_ADMIN)
+			        AND NVL(MC.APRV_YN, 'Y') = 'Y'
+			        AND M.REG_DT < TRUNC(SYSDATE, 'MM')
+			    ) AS BEFORE_ACTIVATE_MEMBER
+			,
+			(SELECT COUNT(M.mem_no)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(sysdate, 'yyyy-MM')
+			AND M.DEL_YN = 'Y'
+			) AS DEL_MEMBER
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			LEFT OUTER JOIN MEM_USER MU
+			ON M.MEM_NO = MU.MEM_NO
+			LEFT OUTER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			AND M.DEL_YN = 'Y'
+			) AS before_DEL_MEMBER
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			INNER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(sysdate, 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS NEW_COMP_MEM
+			,
+			(SELECT COUNT(*)
+			FROM MEMBER M
+			INNER JOIN MEM_COMP MC
+			ON M.MEM_NO = MC.MEM_NO
+			WHERE TO_CHAR(REG_DT, 'yyyy-MM') = TO_CHAR(ADD_MONTHS(SYSDATE, -1), 'yyyy-MM')
+			AND M.mem_no not in (select MA.mem_no from MEM_ADMIN MA)
+			) AS before_NEW_COMP_MEM
+			]]>
+		FROM DUAL
+	</select>
+	
+	<select id="growth" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		SELECT MONTH
+		     , CNT AS NEW_MEMBER
+		     , SUM(CNT) OVER (ORDER BY MONTH) AS TOTAL
+		  FROM (
+		    SELECT TO_CHAR(M.REG_DT, 'yyyy-MM') AS MONTH
+		         , COUNT(M.MEM_NO) CNT
+		      FROM MEMBER M
+		     WHERE M.MEM_NO NOT IN (SELECT MA.MEM_NO FROM MEM_ADMIN MA)
+		       AND M.DEL_YN = 'N'
+		     GROUP BY TO_CHAR(M.REG_DT, 'yyyy-MM')
+		  )
+		 ORDER BY MONTH
+	</select>
+		    
+	<select id="hwyhbp" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		    SELECT
+		    COUNT(b.mem_no) AS user_mem_cnt      -- 일반회원 수
+		  , COUNT(c.mem_no) AS comp_mem_cnt      -- 기업회원 수
+		  , COUNT(a.mem_no) AS total_mem_cnt        -- 전체 회원 수
+		  , ROUND(COUNT(b.mem_no) / COUNT(a.mem_no) * 100, 1) AS user_rate -- 일반 비율
+		  , ROUND(COUNT(c.mem_no) / COUNT(a.mem_no) * 100, 1) AS comp_rate -- 기업 비율
+		FROM
+		    member a
+		    LEFT JOIN mem_user b ON a.mem_no = b.mem_no
+		    LEFT JOIN mem_comp c ON a.mem_no = c.mem_no
+		WHERE
+		    NVL(a.del_yn, 'N') = 'N'
+		  AND a.mem_no not in (select ma.mem_no from MEM_ADMIN MA)
+	</select>
+	
+	<select id="ibdgij" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		SELECT
+		    COUNT(b.mem_no) AS this_month_user
+		  , COUNT(c.mem_no) AS this_month_comp
+		FROM
+		    member a
+		    LEFT JOIN mem_user b ON a.mem_no = b.mem_no
+		    LEFT JOIN mem_comp c ON a.mem_no = c.mem_no
+		WHERE
+		    TO_CHAR(a.reg_dt, 'YYYY-MM') = TO_CHAR(SYSDATE, 'YYYY-MM')
+		    AND NVL(a.del_yn, 'N') = 'N'
+	</select>
+	
+	<select id="jybbp" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		SELECT A.REGION
+		     , COUNT(A.REGION) RGN_CNT
+		  FROM (SELECT M.REG_DT
+			        , CASE 
+			            WHEN MU.ADDR1 IS NOT NULL THEN SUBSTR(MU.ADDR1, 1, 2)
+			            WHEN C.COMP_ADDR1 IS NOT NULL THEN SUBSTR(C.COMP_ADDR1, 1, 2)
+			            ELSE '기타'
+			          END AS REGION
+				FROM MEMBER M
+				LEFT OUTER JOIN MEM_USER MU
+				ON M.MEM_NO = MU.MEM_NO
+				LEFT OUTER JOIN MEM_COMP MC
+				ON M.MEM_NO = MC.MEM_NO
+				LEFT OUTER JOIN COMPANY C
+				ON MC.MEM_NO = C.MEM_NO
+			) A
+		WHERE A.REGION IS NOT NULL
+		  AND A.REGION != 'aa'
+		GROUP BY REGION
+		ORDER BY 
+		    DECODE(REGION, '기타', 2, 1) ASC
+	</select>
+	
+	<select id="yrdbbp" parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		<![CDATA[
+		SELECT
+		    AGE_GROUP
+		  , COUNT(*) AS CNT
+		  , ROUND(RATIO_TO_REPORT(COUNT(*)) OVER () * 100, 1) AS RATIO
+		FROM (
+		    SELECT
+		        CASE
+		            WHEN FLOOR(MONTHS_BETWEEN(SYSDATE, TO_DATE(B.BIRTH_DATE, 'YYYY-MM-DD')) / 12) < 20 THEN '10대'
+		            WHEN FLOOR(MONTHS_BETWEEN(SYSDATE, TO_DATE(B.BIRTH_DATE, 'YYYY-MM-DD')) / 12) < 30 THEN '20대'
+		            WHEN FLOOR(MONTHS_BETWEEN(SYSDATE, TO_DATE(B.BIRTH_DATE, 'YYYY-MM-DD')) / 12) < 40 THEN '30대'
+		            WHEN FLOOR(MONTHS_BETWEEN(SYSDATE, TO_DATE(B.BIRTH_DATE, 'YYYY-MM-DD')) / 12) < 50 THEN '40대'
+		            ELSE '50대 이상'
+		        END AS AGE_GROUP
+		    FROM
+		        MEM_USER B
+		        JOIN MEMBER A ON B.MEM_NO = A.MEM_NO
+		    WHERE
+		        NVL(A.DEL_YN, 'N') = 'N' 
+		        AND B.BIRTH_DATE IS NOT NULL
+		)
+		GROUP BY
+		    AGE_GROUP
+		ORDER BY
+		    AGE_GROUP ASC
+		]]>
+	</select>
+	
+	<select id="cggihw"  parameterType="kr.or.ddit.util.Params" resultType="kr.or.ddit.util.Params">
+		<![CDATA[
+		SELECT *
+		FROM (
+		    SELECT
+		        m.mem_name as name
+		      , m.mem_email as email
+		      , m.mem_no as id
+		      , CASE
+		            WHEN mc.mem_no IS NOT NULL THEN 'business'
+		            ELSE 'general'
+		        END                                            AS type
+		      , TO_CHAR(m.reg_dt, 'YYYY-MM-DD HH24:MI')        AS join_Date
+		      , CASE
+		            WHEN mc.mem_no IS NOT NULL AND NVL(mc.aprv_yn, 'N') = 'N' THEN 'pending'
+		            WHEN NVL(m.del_yn, 'N') = 'N' THEN 'active'
+		            ELSE '탈퇴'
+		        END                                            AS status
+		    FROM
+		        member m
+		        LEFT JOIN mem_user mu ON m.mem_no = mu.mem_no
+		        LEFT JOIN mem_comp mc ON m.mem_no = mc.mem_no
+		    WHERE
+		        NVL(m.del_yn, 'N') = 'N'
+		    ORDER BY
+		        m.reg_dt DESC
+		)
+		WHERE ROWNUM <= 5
+		]]>
+	</select>
+</mapper>

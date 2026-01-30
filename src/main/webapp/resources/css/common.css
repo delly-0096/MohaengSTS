@@ -2272,3 +2272,51 @@ input, textarea, select {
     margin-left: 8px;
     vertical-align: middle;
 }
+
+/* 사이드바를 불러오는 우측 탭 */
+.side-menu-tab {
+    position: fixed;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 35px;
+    height: 100px;
+    background-color: #1f6feb; /* 모행 브랜드 컬러 */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1040; /* 사이드 메뉴 오버레이보다는 아래 */
+    border-radius: 10px 0 0 10px;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+.side-menu-tab:hover {
+    width: 45px; /* 호버 시 살짝 더 튀어나옴 */
+    background-color: #1656b9;
+}
+
+.side-menu-tab i {
+    font-size: 1.2rem;
+    margin-bottom: 5px;
+    transition: transform 0.3s ease;
+}
+
+.side-menu-tab .tab-text {
+    font-size: 0.7rem;
+    writing-mode: vertical-rl; /* 텍스트 세로로 세우기 */
+    letter-spacing: 2px;
+    font-weight: bold;
+}
+
+/* 메뉴가 열렸을 때 탭의 변화 */
+body.menu-open .side-menu-tab {
+    right: 300px; /* 사이드 메뉴 너비만큼 이동 (side-menu 너비에 맞춰 조절) */
+}
+
+body.menu-open #tabIcon {
+    transform: rotate(180deg); /* 화살표 방향 반전 */
+}

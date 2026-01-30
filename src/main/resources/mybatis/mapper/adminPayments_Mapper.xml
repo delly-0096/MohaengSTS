@@ -19,10 +19,21 @@
 
     <select id="selectAdminPaymentsCount" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="int">
         SELECT COUNT(*) 
-        FROM PAYMENT P
-        JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
-        JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
-        <where>
+        FROM (
+            SELECT 
+                P.PAY_NO,
+                CASE 
+                    WHEN P.PAY_STATUS = 'CANCEL' THEN 'CANCEL'
+                    WHEN NVL(
+                        (SELECT MIN(RESV_DT) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+                        (SELECT MIN(FP.DEP_TIME) FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+                    ) <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 'DONE'
+                    ELSE 'WAIT'
+                END AS COMPUTED_STATUS
+            FROM PAYMENT P
+            JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
+            JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
+            WHERE 1=1
             <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchWord)">
                 AND (
                     M.MEM_NAME LIKE '%' || #{searchWord} || '%' OR 
@@ -30,48 +41,160 @@
                     (TO_CHAR(P.PAY_DT, 'YYYYMMDD') || LPAD(P.PAY_NO, 8, '0')) LIKE '%' || #{searchWord} || '%'
                 )
             </if>
-        </where>
+        )
+        WHERE 1=1
+        <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
+            AND COMPUTED_STATUS = #{searchType}
+        </if>
     </select>
 
     <select id="selectAdminPaymentsList" parameterType="kr.or.ddit.mohaeng.vo.PaginationInfoVO" resultType="kr.or.ddit.mohaeng.vo.AdminPaymentsVO">
-	    SELECT B.* FROM (
-	        SELECT A.*, ROWNUM RNUM FROM (
-	            SELECT 
-	                P.PAY_NO AS payNo, 
-	                TO_CHAR(P.PAY_DT, 'YYYYMMDD') || LPAD(P.PAY_NO, 8, '0') AS orderNo,
-	                P.PAY_DT AS payDt,
-	                P.PAY_TOTAL_AMT AS payTotalAmt,
-	                P.USE_POINT AS usePoint,
-	                P.PAY_METHOD_CD AS payMethodCd,
-	                P.PAY_STATUS AS payStatus,
-	                M.MEM_NAME AS memName,
-	                M.MEM_EMAIL AS memEmail,
-	                MU.TEL AS memTel,
-	                REPLACE(PI.RES_MSG, 'DONE ', '') AS prodName,
-	                C.BZMN_NM AS bzmnNm,
-	                C.BRNO AS brno,
-	                C.COMP_TEL AS compTel,
-	                NVL((SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD 
-	                     JOIN TRIP_PROD TP_I ON TP_I.ATTACH_NO = AFD.ATTACH_NO 
-	                     JOIN TRIP_PROD_LIST TPL_I ON TPL_I.TRIP_PROD_NO = TP_I.TRIP_PROD_NO 
-	                     WHERE TPL_I.PAY_NO = P.PAY_NO AND ROWNUM = 1), '/resources/images/default_flight.jpg') AS thumbImg,
-	                NVL((SELECT TO_CHAR(MIN(RESV_DT), 'YYYY.MM.DD') || ' | ' || SUM(QUANTITY) || '명' FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO), '항공권 정보') AS useDateInfo
-	            FROM PAYMENT P
-	            JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
-	            LEFT OUTER JOIN MEM_USER MU ON M.MEM_NO = MU.MEM_NO
-	            JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
-	            LEFT OUTER JOIN (SELECT PAY_NO, TRIP_PROD_NO, ROW_NUMBER() OVER(PARTITION BY PAY_NO ORDER BY PROD_LIST_NO) AS RN FROM TRIP_PROD_LIST) TPL ON P.PAY_NO = TPL.PAY_NO AND TPL.RN = 1
-	            LEFT OUTER JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
-	            LEFT OUTER JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
-	            <where>
-	                <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchWord)">
-	                    AND (M.MEM_NAME LIKE '%' || #{searchWord} || '%' OR PI.RES_MSG LIKE '%' || #{searchWord} || '%')
-	                </if>
-	            </where>
-	            ORDER BY P.PAY_DT DESC
-	        ) A
-	    ) B
-	    WHERE RNUM BETWEEN #{startRow} AND #{endRow}
-	</select>
+        SELECT B.* FROM (
+            SELECT A.*, ROWNUM RNUM FROM (
+                SELECT 
+                    P.PAY_NO AS payNo, 
+                    TO_CHAR(P.PAY_DT, 'YYYYMMDD') || LPAD(P.PAY_NO, 8, '0') AS orderNo,
+                    TO_CHAR(P.PAY_DT, 'YYYY.MM.DD HH24:MI:SS') AS payDt,
+                    P.PAY_TOTAL_AMT AS payTotalAmt,
+                    P.USE_POINT AS usePoint,
+                    P.PAY_METHOD_CD AS payMethodCd,
+                    CASE 
+                        WHEN P.PAY_STATUS = 'CANCEL' THEN 'CANCEL'
+                        WHEN NVL(
+                            (SELECT MIN(RESV_DT) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+                            (SELECT MIN(FP.DEP_TIME) FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+                        ) <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 'DONE'
+                        ELSE 'WAIT'
+                    END AS payStatus,
+                    M.MEM_NAME AS memName,
+                    M.MEM_EMAIL AS memEmail,
+                    MU.TEL AS memTel,
+                    REPLACE(PI.RES_MSG, 'DONE ', '') AS prodName,
+                    C.BZMN_NM AS bzmnNm,
+                    C.BRNO AS brno,
+                    C.COMP_TEL AS compTel,
+                    NVL((SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD 
+                         JOIN TRIP_PROD TP_I ON TP_I.ATTACH_NO = AFD.ATTACH_NO 
+                         JOIN TRIP_PROD_LIST TPL_I ON TPL_I.TRIP_PROD_NO = TP_I.TRIP_PROD_NO 
+                         WHERE TPL_I.PAY_NO = P.PAY_NO AND AFD.USE_YN = 'Y' AND ROWNUM = 1), 
+                        '/resources/images/default_flight.jpg') AS thumbImg,
+                    NVL(
+                        (SELECT TO_CHAR(MIN(RESV_DT), 'YYYY.MM.DD') || ' | ' || SUM(QUANTITY) || '명' 
+                         FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO), 
+                        '항공권 정보') AS useDateInfo,
+                    NVL((SELECT SUM(NVL(DISCOUNT_AMT, 0)) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO), 0) AS discount
+                FROM PAYMENT P
+                JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
+                LEFT OUTER JOIN MEM_USER MU ON M.MEM_NO = MU.MEM_NO
+                JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
+                LEFT OUTER JOIN (
+                    SELECT PAY_NO, TRIP_PROD_NO, ROW_NUMBER() OVER(PARTITION BY PAY_NO ORDER BY PROD_LIST_NO) AS RN 
+                    FROM TRIP_PROD_LIST
+                ) TPL ON P.PAY_NO = TPL.PAY_NO AND TPL.RN = 1
+                LEFT OUTER JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+                LEFT OUTER JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+                WHERE 1=1
+                <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchWord)">
+                    AND (
+                        M.MEM_NAME LIKE '%' || #{searchWord} || '%' OR 
+                        PI.RES_MSG LIKE '%' || #{searchWord} || '%' OR
+                        (TO_CHAR(P.PAY_DT, 'YYYYMMDD') || LPAD(P.PAY_NO, 8, '0')) LIKE '%' || #{searchWord} || '%'
+                    )
+                </if>
+                ORDER BY P.PAY_DT DESC
+            ) A
+            WHERE 1=1
+            <if test="@org.apache.commons.lang3.StringUtils@isNotBlank(searchType) and searchType != 'all'">
+                AND payStatus = #{searchType}
+            </if>
+        ) B
+        WHERE RNUM BETWEEN #{startRow} AND #{endRow}
+    </select>
+    
+    <select id="selectPaymentDetail" parameterType="int" resultType="map">
+        SELECT 
+            P.PAY_NO,
+            TO_CHAR(P.PAY_DT, 'YYYY.MM.DD HH24:MI:SS') AS PAY_DT,
+            P.PAY_TOTAL_AMT,
+            P.USE_POINT,
+            CASE 
+                WHEN P.PAY_STATUS = 'CANCEL' THEN 'CANCEL'
+                WHEN NVL(
+                    (SELECT MIN(RESV_DT) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO),
+                    (SELECT MIN(FP.DEP_TIME) FROM FLIGHT_RESERVATION FR JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID WHERE FR.PAY_NO = P.PAY_NO)
+                ) <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 'DONE'
+                ELSE 'WAIT'
+            END AS PAY_STATUS,
+            P.PAY_METHOD_CD,
+            TO_CHAR(P.PAY_DT, 'YYYYMMDD') || LPAD(P.PAY_NO, 8, '0') AS ORDER_NO,
+            PI.TID,
+            REPLACE(PI.RES_MSG, 'DONE ', '') AS PROD_NAME,
+            M.MEM_NAME,
+            M.MEM_EMAIL,
+            MU.TEL AS MEM_TEL,
+            C.BZMN_NM, 
+            C.BRNO,    
+            C.COMP_TEL,
+            CASE 
+                WHEN EXISTS (SELECT 1 FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO) THEN 
+                    (SELECT SUM(UNIT_PRICE * QUANTITY) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO)
+                ELSE (P.PAY_TOTAL_AMT + P.USE_POINT) 
+            END AS PROD_TOTAL_PRICE,
+            NVL((SELECT SUM(NVL(DISCOUNT_AMT, 0)) FROM TRIP_PROD_LIST WHERE PAY_NO = P.PAY_NO), 0) AS TOTAL_DISCOUNT
+        FROM PAYMENT P
+        JOIN PAYMENT_INFO PI ON P.PAY_NO = PI.PAY_NO
+        JOIN MEMBER M ON P.MEM_NO = M.MEM_NO
+        LEFT OUTER JOIN MEM_USER MU ON M.MEM_NO = MU.MEM_NO
+        LEFT OUTER JOIN (
+            SELECT PAY_NO, TRIP_PROD_NO, ROW_NUMBER() OVER(PARTITION BY PAY_NO ORDER BY PROD_LIST_NO) AS RN 
+            FROM TRIP_PROD_LIST
+        ) TPL ON P.PAY_NO = TPL.PAY_NO AND TPL.RN = 1
+        LEFT OUTER JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+        LEFT OUTER JOIN COMPANY C ON TP.COMP_NO = C.COMP_NO
+        WHERE P.PAY_NO = #{payNo}
+    </select>
+    
+    <select id="selectReceiptDetailList" parameterType="int" resultType="map">
+        SELECT 
+            TPL.TRIP_PROD_NO,
+            TP.TRIP_PROD_TITLE AS PROD_NAME,
+            TPL.QUANTITY,
+            TPL.PAY_PRICE AS ITEM_TOTAL_PRICE,
+            TO_CHAR(TPL.RESV_DT, 'YYYY.MM.DD') || ' (' || TPL.USE_TIME || ')' AS USE_INFO,
+            CASE 
+                WHEN (SELECT PAY_STATUS FROM PAYMENT WHERE PAY_NO = TPL.PAY_NO) = 'CANCEL' THEN 'CANCEL'
+                WHEN TPL.RESV_DT <![CDATA[ < ]]> TRUNC(SYSDATE) THEN 'DONE'
+                ELSE 'WAIT'
+            END AS PAY_STATUS,
+            NVL((SELECT AFD.FILE_PATH FROM ATTACH_FILE_DETAIL AFD 
+                 WHERE AFD.ATTACH_NO = TP.ATTACH_NO AND AFD.USE_YN = 'Y' AND ROWNUM = 1), 
+                '/resources/images/no_image.jpg') AS THUMB_IMG
+        FROM TRIP_PROD_LIST TPL
+        JOIN TRIP_PROD TP ON TPL.TRIP_PROD_NO = TP.TRIP_PROD_NO
+        WHERE TPL.PAY_NO = #{payNo}
+
+        UNION ALL
+
+        SELECT 
+            NULL AS TRIP_PROD_NO,
+            FP.FLIGHT_SYMBOL || ' 항공권' AS PROD_NAME,
+            (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS WHERE FPS.RESERVE_NO = FR.RESERVE_NO) AS QUANTITY,
+            ((P.PAY_TOTAL_AMT + NVL(P.USE_POINT, 0)) / 
+                (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_ALL 
+                 JOIN FLIGHT_RESERVATION FR_ALL ON FPS_ALL.RESERVE_NO = FR_ALL.RESERVE_NO 
+                 WHERE FR_ALL.PAY_NO = P.PAY_NO)) 
+            * (SELECT COUNT(*) FROM FLIGHT_PASSENGERS FPS_SUB WHERE FPS_SUB.RESERVE_NO = FR.RESERVE_NO) AS ITEM_TOTAL_PRICE,
+            TO_CHAR(FP.DEP_TIME, 'YYYY.MM.DD (HH24:MI)') AS USE_INFO,
+            CASE 
+                WHEN P.PAY_STATUS = 'CANCEL' THEN 'CANCEL'
+                WHEN FP.DEP_TIME <![CDATA[ < ]]> SYSDATE THEN 'DONE'
+                ELSE 'WAIT'
+            END AS PAY_STATUS,
+            '/resources/images/default_flight.jpg' AS THUMB_IMG
+        FROM FLIGHT_RESERVATION FR
+        JOIN FLIGHT_PRODUCT FP ON FR.FLT_PROD_ID = FP.FLT_PROD_ID
+        JOIN PAYMENT P ON FR.PAY_NO = P.PAY_NO
+        WHERE FR.PAY_NO = #{payNo}
+    </select>
 
 </mapper>

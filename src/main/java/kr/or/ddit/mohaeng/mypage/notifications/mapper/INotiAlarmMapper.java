@@ -16,8 +16,15 @@ public interface INotiAlarmMapper {
 
     List<AlarmVO> selectAlarmList(PaginationInfoVO<AlarmVO> pagingVO);
 
-    int updateReadOne(@Param("memNo") int memNo,
-                      @Param("alarmNo") int alarmNo);
+	public void insertAlarm(AlarmVO alarm);
+	
+	// 헤더에 알람 목록 가져오기 위한 이벤트
+	public List<AlarmVO> selectAlramList(int memNo);
+	
+	public int updateAllRead(int memNo);
+
+	public List<AlarmVO> selectUnreadList(int memNo);
+	
 
     int selectUnreadCount(@Param("memNo") int memNo);
 

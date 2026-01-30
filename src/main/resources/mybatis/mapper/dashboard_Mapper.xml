@@ -17,6 +17,11 @@
 		<result property="prodListNo" column="prod_list_no"/>
 		<result property="tripProdName" column="trip_prod_title"/>
 	</resultMap>
+	
+	<!-- 업체 번호 조회 쿼리 추가 -->
+	<select id="selectCompNoByMemNo" parameterType="int" resultType="int">
+	    SELECT COMP_NO FROM COMPANY WHERE MEM_NO = #{memNo}
+	</select>
 
   <!-- KPI -->
   <select id="selectKpi" resultType="kr.or.ddit.mohaeng.vo.CompanyDashboardVO$Kpi" parameterType="int">
@@ -106,25 +111,57 @@
 	order by p.pay_no desc
   </select>
   
-  <select id="selectMyProductList" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
-	    SELECT 
-	        A.TRIP_PROD_NO,
-	        A.TRIP_PROD_TITLE as title,
-	        A.APPROVE_STATUS,
-	        A.PROD_CTGRY_TYPE,
-	        A.VIEW_CNT,
-	        A.REG_DT,
-	        B.PRICE 
-	    FROM TRIP_PROD A
-	    LEFT OUTER JOIN (
-	        SELECT TRIP_PROD_NO, MAX(UNIT_PRICE) KEEP (DENSE_RANK LAST ORDER BY PROD_LIST_NO) AS PRICE
-	        FROM TRIP_PROD_LIST
-	        GROUP BY TRIP_PROD_NO
-	    ) B ON A.TRIP_PROD_NO = B.TRIP_PROD_NO
-	    WHERE A.MEM_NO = #{memNo} 
-	      AND A.DEL_YN = 'N'      
-	    ORDER BY A.REG_DT DESC   
-  </select>
+	<select id="selectMyProductList" resultType="kr.or.ddit.mohaeng.tour.vo.TripProdVO">
+		SELECT 
+		    A.TRIP_PROD_NO,
+		    A.TRIP_PROD_TITLE AS title,
+		    A.APPROVE_STATUS,
+		    A.PROD_CTGRY_TYPE,
+		    A.VIEW_CNT,
+		    A.REG_DT,
+		    B.PRICE,
+		    NVL(RV.AVG_RATING, 0) AS rating,
+		    
+		    (
+		        SELECT FILE_PATH
+		        FROM (
+		            SELECT AFD.FILE_PATH
+		            FROM ATTACH_FILE_DETAIL AFD
+		            WHERE AFD.ATTACH_NO = A.ATTACH_NO
+		              AND AFD.USE_YN = 'Y'
+		            ORDER BY AFD.REG_DT DESC
+		        )
+		        WHERE ROWNUM = 1
+		    ) AS thumbImage
+	
+		FROM TRIP_PROD A
+		
+		LEFT JOIN (
+		    SELECT 
+		        T.TRIP_PROD_NO,
+		        CASE 
+		            WHEN T.PROD_CTGRY_TYPE = 'accommodation' THEN MAX(RT.PRICE)
+		            ELSE MAX(PS.PRICE)
+		        END AS PRICE
+		    FROM TRIP_PROD T
+		    LEFT JOIN TRIP_PROD_SALE PS ON T.TRIP_PROD_NO = PS.TRIP_PROD_NO
+		    LEFT JOIN ACCOMMODATION ACC ON T.TRIP_PROD_NO = ACC.TRIP_PROD_NO
+		    LEFT JOIN ROOM_TYPE RT ON ACC.ACC_NO = RT.ACC_NO
+		    GROUP BY T.TRIP_PROD_NO, T.PROD_CTGRY_TYPE
+		) B ON A.TRIP_PROD_NO = B.TRIP_PROD_NO
+		
+		LEFT JOIN (
+		    SELECT TRIP_PROD_NO, ROUND(AVG(RATING),1) AS AVG_RATING
+		    FROM PROD_REVIEW
+		    WHERE REVIEW_STATUS = 'ACTIVE'
+		    GROUP BY TRIP_PROD_NO
+		) RV ON A.TRIP_PROD_NO = RV.TRIP_PROD_NO
+		
+		WHERE A.MEM_NO = #{memNo}
+		  AND A.DEL_YN = 'N'
+		ORDER BY A.REG_DT DESC
+	</select>
+
   
   <!-- 최근 6개월 매출 차트 -->
   <select id="selectMonthlySalesChart" resultType="map">
@@ -202,4 +239,59 @@
 	      AND p.CANCEL_DT IS NULL              
 	      AND p.PAY_STATUS != 'CANCEL'       
 	</select>
+	<!-- 페이징쿼리 -->
+	<select id="selectPaymentListPaging" parameterType="map" resultMap="paymentMap">
+<![CDATA[
+WITH pay_base AS (
+  SELECT DISTINCT
+    p.PAY_NO,
+    p.MEM_NO,
+    (SELECT m.MEM_NAME FROM MEMBER m WHERE m.MEM_NO = p.MEM_NO) AS payment_mem_name,
+    p.PAY_TOTAL_AMT,
+    p.PAY_STATUS
+  FROM PAYMENT p
+  JOIN TRIP_PROD_LIST tpl ON tpl.PAY_NO = p.PAY_NO
+  JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = tpl.TRIP_PROD_NO
+  WHERE tp.MEM_NO = #{memNo}
+),
+pay_page AS (
+  SELECT *
+  FROM (
+    SELECT
+      pay_base.*,
+      ROW_NUMBER() OVER(ORDER BY PAY_NO DESC) AS rn
+    FROM pay_base
+  )
+  WHERE rn BETWEEN #{startRow} AND #{endRow}
+)
+SELECT
+  pp.PAY_NO,
+  pp.MEM_NO,
+  pp.payment_mem_name,
+  pp.PAY_TOTAL_AMT,
+  pp.PAY_STATUS,
+
+  tpl.PROD_LIST_NO,
+  tp.TRIP_PROD_TITLE
+
+FROM pay_page pp
+LEFT JOIN TRIP_PROD_LIST tpl ON tpl.PAY_NO = pp.PAY_NO
+LEFT JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = tpl.TRIP_PROD_NO
+ORDER BY pp.PAY_NO DESC, tpl.PROD_LIST_NO
+]]>
+</select>
+
+	
+	<select id="selectPaymentCount" parameterType="int" resultType="int">
+  SELECT COUNT(*)
+  FROM (
+    SELECT DISTINCT p.PAY_NO
+    FROM PAYMENT p
+    JOIN TRIP_PROD_LIST tpl ON tpl.PAY_NO = p.PAY_NO
+    JOIN TRIP_PROD tp ON tp.TRIP_PROD_NO = tpl.TRIP_PROD_NO
+    WHERE tp.MEM_NO = #{memNo}
+  )
+</select>
+
+	
 </mapper>

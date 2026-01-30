@@ -47,7 +47,7 @@
 					</div>
 					<div class="stat-card">
 						<div class="stat-icon">
-							<i class="bi bi-currency-dollar"></i>
+							₩
 						</div>
 						<div class="stat-value">
 							<fmt:formatNumber value="${stats.TOTAL_REVENUE}" pattern="#,###" />
@@ -673,8 +673,8 @@ function showReceipt(payNo) {
             $("#receiptDiscount").text("-" + Number(master.TOTAL_DISCOUNT || 0).toLocaleString() + "원");
             $("#receiptPointUsed").text("-" + Number(master.USE_POINT || 0).toLocaleString() + "원");
             $("#receiptTotalPrice").text(Number(master.PAY_TOTAL_AMT || 0).toLocaleString() + "원");
-            const earnedPoints = Math.floor(Number(master.PAY_TOTAL_AMT || 0) * 0.1);
-            $("#receiptEarnedPoints").text(earnedPoints.toLocaleString() + "P");
+            const earnedPoints = Math.floor(Number(master.PAY_TOTAL_AMT || 0) * 0.03);
+            $("#receiptEarnedPoints").text("+" + earnedPoints.toLocaleString() + "P");
             $("#receiptMemName").text(master.MEM_NAME);   
             $("#receiptTel").text(formatTel(master.MEM_TEL)); 
             $("#receiptMemEmail").text(master.MEM_EMAIL); 
@@ -1596,6 +1596,11 @@ function getRatingText(rating) {
 		-webkit-print-color-adjust: exact;
 		print-color-adjust: exact;
 	}
+}
+
+.stat-icon {
+  font-size: 1.6rem;
+  font-weight: 700;
 }
 </style>
 

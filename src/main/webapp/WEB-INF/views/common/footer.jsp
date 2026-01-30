@@ -20,18 +20,18 @@
                         당신만의 특별한 여행을 계획하세요.
                     </p>
                     <div class="footer-social">
-                        <a href="#" class="social-link" title="Instagram">
+                        <a href="https://www.instagram.com/ddit8202" class="social-link" title="Instagram">
                             <i class="bi bi-instagram"></i>
                         </a>
-                        <a href="#" class="social-link" title="YouTube">
+                        <a href="https://www.youtube.com/channel/UC-Q4WCYdovIVVj4WxVC11kg" class="social-link" title="YouTube">
                             <i class="bi bi-youtube"></i>
                         </a>
-                        <a href="#" class="social-link" title="Blog">
+                        <a href="https://blog.naver.com/dditorkr" class="social-link" title="Blog">
                             <i class="bi bi-pencil-square"></i>
                         </a>
-                        <a href="#" class="social-link" title="Facebook">
+<!--                         <a href="#" class="social-link" title="Facebook">
                             <i class="bi bi-facebook"></i>
-                        </a>
+                        </a> -->
                     </div>
                 </div>
 
@@ -67,21 +67,21 @@
                 <div class="footer-section">
                     <h4 class="footer-title">회사</h4>
                     <div class="footer-links">
-                        <a href="${pageContext.request.contextPath}/about" class="footer-link">회사 소개</a>
-                        <a href="${pageContext.request.contextPath}/business" class="footer-link">기업회원 안내</a>
-                        <a href="${pageContext.request.contextPath}/partnership" class="footer-link">제휴 문의</a>
-                        <a href="${pageContext.request.contextPath}/recruit" class="footer-link">채용 안내</a>
+                        <a href="https://www.ddit.or.kr/document/nub6_1" class="footer-link">회사 소개</a>
+                        <a href="https://www.ddit.or.kr/document/sub5_3" class="footer-link">기업회원 안내</a>
+                        <a href="https://www.ddit.or.kr/qna" class="footer-link">제휴 문의</a>
+                        <a href="https://www.ddit.or.kr/document/sub1_1_02" class="footer-link">채용 안내</a>
                     </div>
                 </div>
             </div>
 
             <!-- 푸터 하단 -->
             <div class="footer-bottom">
-                <p>&copy; 2024 모행(MOHAENG). All rights reserved.</p>
+                <p>&copy; 2025 모행(MOHAENG). All rights reserved.</p>
                 <div class="footer-legal">
-                    <a href="${pageContext.request.contextPath}/terms" class="footer-link">이용약관</a>
-                    <a href="${pageContext.request.contextPath}/privacy" class="footer-link">개인정보처리방침</a>
-                    <a href="${pageContext.request.contextPath}/location" class="footer-link">위치기반서비스 이용약관</a>
+                    <a href="https://www.ddit.or.kr/?gad_source=1&gad_campaignid=15236581835&gbraid=0AAAAAoNLorPHx7niZb-iNVbL-jq0O1wFh&gclid=Cj0KCQiAhOfLBhCCARIsAJPiopMW6wJjD3_XBQqbbn_VGMN2aElg_btM146WF_xGExZbg9ZAOsLCHjcaAtGkEALw_wcB" class="footer-link">이용약관</a>
+                    <a href="https://www.ddit.or.kr/document/privacy" class="footer-link">개인정보처리방침</a>
+                    <a href="https://www.ddit.or.kr/?gad_source=1&gad_campaignid=15236581835&gbraid=0AAAAAoNLorPHx7niZb-iNVbL-jq0O1wFh&gclid=Cj0KCQiAhOfLBhCCARIsAJPiopMW6wJjD3_XBQqbbn_VGMN2aElg_btM146WF_xGExZbg9ZAOsLCHjcaAtGkEALw_wcB" class="footer-link">위치기반서비스 이용약관</a>
                 </div>
             </div>
         </div>
@@ -97,7 +97,7 @@
 	        <i class="bi bi-x"></i>
 	    </button>
     </div>
-    
+
     <!-- 챗봇 창 (AI 기반) -->
 	<div class="chatbot-window" id="chatbotWindow">
 	    <div class="chatbot-header">
@@ -120,15 +120,15 @@
 	    </div>
 	    <!-- 텍스트 입력 영역 추가 -->
 	    <div class="chatbot-input-area">
-	        <input type="text" id="chatbotInput" 
-	               placeholder="메시지를 입력하세요..." 
+	        <input type="text" id="chatbotInput"
+	               placeholder="메시지를 입력하세요..."
 	               onkeypress="if(event.keyCode===13) sendChatMessage()">
 	        <button class="chatbot-send-btn" onclick="sendChatMessage()">
 	            <i class="bi bi-send-fill"></i>
 	        </button>
 	    </div>
 	</div>
-	
+
     <!-- 신고 모달 -->
     <div class="report-modal-overlay" id="reportModalOverlay">
         <div class="report-modal" onclick="event.stopPropagation()">
@@ -170,7 +170,7 @@
                             <label for="reason5">저작권 침해</label>
                         </div>
                         <div class="report-reason-item" onclick="selectReportReason(this)">
-                            <input type="radio" name="reportReason" value="other" id="reason6">
+                            <input type="radio" name="reportReason" value="ETC" id="reason6">
                             <label for="reason6">기타</label>
                         </div>
                     </div>

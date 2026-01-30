@@ -241,8 +241,8 @@
     FROM (
       SELECT a.*, ROW_NUMBER() OVER(
         ORDER BY
-          CASE WHEN a.PIN_YN = 'Y' THEN 0 ELSE 1 END,
-          CASE WHEN a.NOTICE_YN = 'Y' THEN 0 ELSE 1 END,
+		CASE WHEN a.NOTICE_YN = 'Y' THEN 0 ELSE 1 END ASC,
+          a.REG_DT DESC,
           a.BOARD_NO DESC
       ) rnum
       FROM (
@@ -383,5 +383,22 @@
 		where board_no = #{likesKey}
 	</update>
 	<!-- 2026.01.20 HJ -좋아요 End -->
+	
+	<select id="selectUnreadList" resultType="kr.or.ddit.mohaeng.vo.AlarmVO">
+			  SELECT
+			    ALARM_NO,
+			    MEM_NO,
+			    SENDER,
+			    ALARM_TYPE,
+			    ALARM_CONT,
+			    MOVE_URL,
+			    READ_YN,
+			    REG_DT
+			  FROM ALARM
+			  WHERE MEM_NO = #{memNo}
+			    AND NVL(UPPER(READ_YN), 'N') = 'N'
+			  ORDER BY REG_DT DESC
+</select>
+	
 
 </mapper>

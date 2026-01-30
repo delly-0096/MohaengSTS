@@ -955,7 +955,10 @@ function openReportModal(type, targetId, targetTitle, targetMemNo) {
 
     reportData.targetId = targetId;
     reportData.targetTitle = targetTitle || '';
-	reportData.targetMemNo = targetMemNo || '';
+	//reportData.targetMemNo = targetMemNo || '';
+	// ✅ 이 부분을 이렇게 수정
+    reportData.targetMemNo = targetMemNo ? parseInt(targetMemNo) || null : null;
+
 
     // 신고 대상 정보 표시
     var targetLabel = '';
@@ -1039,10 +1042,25 @@ function submitReport() {
 	        content: detailText              // 상세 내용
  	};
 
-	if (reportData.targetMemNo) {
+	// ✅ 디버깅 로그 추가
+	console.log("=== submitReport 실행 ===");
+	console.log("reportData.targetMemNo:", reportData.targetMemNo);
+	console.log("타입:", typeof reportData.targetMemNo);
+
+	// ✅ 명시적으로 추가 (null이 아니고 0도 아닐 때만)
+	if (reportData.targetMemNo !== null && reportData.targetMemNo !== undefined) {
 	    submitData.targetMemNo = reportData.targetMemNo;
+	    console.log("targetMemNo 추가됨:", submitData.targetMemNo);
+	} else {
+	    console.log("❌ targetMemNo가 없음!");
 	}
 
+	console.log("최종 전송 데이터:", JSON.stringify(submitData));
+
+	/*if (reportData.targetMemNo) {
+	    submitData.targetMemNo = reportData.targetMemNo;
+	}
+*/
 	// 단일 API로 전송
 	fetch(contextPath + '/api/report', {
 	        method: 'POST',

@@ -129,10 +129,12 @@ public class SecurityConfig {
 			"/api/admin/login",
 			"/api/schedule/**",
 			"/api/admin/schedule/**",
+			"/api/admin/members/**",
 			"/api/admin/notices/thumbnail/**",
 			"/api/admin/inquiry/**",
 			"/api/admin/products/**",
-			"/api/admin/transactions/payments/**"
+			"/api/admin/transactions/payments/**",
+		    "/api/admin/stats/**"
 		};
 
 	SecurityConfig(TokenProvider tokenProvider, CustomUserDetailsService customUserDetailsService, CustomOAuth2UserService customOAuth2UserService) {
@@ -186,14 +188,14 @@ public class SecurityConfig {
 	    http
 	    .securityMatcher("/**")
 	    .csrf(csrf -> csrf.disable())   // 일단 테스트용
-//	    .requestCache(cache -> {
-//            HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
-//            requestCache.setRequestMatcher(request -> {
-//                // /api/ 로 시작하는 주소나, ajax 요청 등은 저장하지 않음 (true면 저장, false면 저장안함)
-//                return !request.getRequestURI().startsWith("/api/");
-//            });
-//            cache.requestCache(requestCache);
-//        })
+	    .requestCache(cache -> {
+            HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+            requestCache.setRequestMatcher(request -> {
+                // /api/ 로 시작하는 주소나, ajax 요청 등은 저장하지 않음 (true면 저장, false면 저장안함)
+                return !request.getRequestURI().startsWith("/api/");
+            });
+            cache.requestCache(requestCache);
+        })
         .authorizeHttpRequests(authorize ->
             authorize
                 .dispatcherTypeMatchers(
@@ -201,7 +203,7 @@ public class SecurityConfig {
                     DispatcherType.ASYNC
                 ).permitAll()
                 .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
-                
+                .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/files/**").permitAll()
                 .requestMatchers("/community/travel-log/write").hasRole("MEMBER")
                 

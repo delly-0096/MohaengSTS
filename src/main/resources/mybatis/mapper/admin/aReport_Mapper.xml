@@ -23,15 +23,15 @@
   		LEFT JOIN MEMBER M1 ON R.REQ_MEM_NO = M1.MEM_NO
   		LEFT JOIN MEMBER M2 ON R.TARGET_MEM_NO = M2.MEM_NO
   		WHERE R. MGMT_TYPE = 'REPORT'
-  		<if test="filters != null and filters.procStatus !=null">
-  			AND R.PROC_STATUS = #{filters.procStatus}
-  		</if>
-  		<if test="filters != null and filters.targetType !=null">
-  			AND R.TARGET_TYPE = #{filters.targetType}
-  		</if>
-  		<if test="filters != null and filters.procResult !=null">
-  			AND R.PROC_RESULT = #{filters.procResult}
-  		</if>
+  		<if test="filters != null and filters.procStatus != null and filters.procStatus != 'all'">
+		    AND R.PROC_STATUS = #{filters.procStatus}
+		</if>
+		<if test="filters != null and filters.targetType != null and filters.targetType != 'all'">
+		    AND R.TARGET_TYPE = #{filters.targetType}
+		</if>
+		<if test="filters != null and filters.procResult != null and filters.procResult != 'all'">
+		    AND R.PROC_RESULT = #{filters.procResult}
+		</if>
   		<if test="searchWord != null and searchWord !=''">
   			AND(
   				R.CONTENT LIKE '%' || #{searchWord} || '%'
@@ -48,15 +48,15 @@
   	SELECT COUNT(*)
   	FROM REPORT
   	WHERE MGMT_TYPE = 'REPORT'
-  	<if test="filters != null and filters.procStatus !=null">
-		AND R.PROC_STATUS = #{filters.procStatus}
-	</if>
-	<if test="filters != null and filters.targetType !=null">
-		AND R.TARGET_TYPE = #{filters.targetType}
-	</if>
-	<if test="filters != null and filters.procResult !=null">
-		AND R.PROC_RESULT = #{filters.procResult}
-	</if>
+  	<if test="filters != null and filters.procStatus != null and filters.procStatus != 'all'">
+        AND PROC_STATUS = #{filters.procStatus}
+    </if>
+    <if test="filters != null and filters.targetType != null and filters.targetType != 'all'">
+        AND TARGET_TYPE = #{filters.targetType}
+    </if>
+    <if test="filters != null and filters.procResult != null and filters.procResult != 'all'">
+        AND PROC_RESULT = #{filters.procResult}
+    </if>
 	<if test="searchWord != null and searchWord !=''">
 		AND(
 			R.CONTENT LIKE '%' || #{searchWord} || '%'
@@ -66,9 +66,14 @@
   </select>
 
   <select id="getReportDetail" parameterType="long" resultType="kr.or.ddit.mohaeng.vo.ReportVO">
-  	SELECT *
-  	FROM REPORT
-  	WHERE RPT_NO=#{rptNo}
+  	SELECT
+  		 r.*
+  		,M1.MEM_ID AS reqMemId
+		,M2.MEM_ID AS targetMemId
+  	FROM REPORT r
+  	LEFT JOIN MEMBER M1 ON r.REQ_MEM_NO = M1.MEM_NO
+  	LEFT JOIN MEMBER M2 ON r.TARGET_MEM_NO = M2.MEM_NO
+  	WHERE r.RPT_NO=#{rptNo}
   </select>
 
   <!--신고처리 판결 -->
@@ -164,4 +169,12 @@
         SET CHAT_DEL = 'Y'
         WHERE CHAT_NO = #{targetNo}
     </update>
+
+    <select id="getCommentSourceInfo" parameterType="long" resultType="map">
+	    SELECT
+	    	TARGET_NO
+	       ,TARGET_TYPE
+	    FROM COMMENTS
+	    WHERE CMNT_NO = #{cmntNo}
+	</select>
 </mapper>

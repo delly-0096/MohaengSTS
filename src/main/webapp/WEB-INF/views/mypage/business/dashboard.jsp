@@ -377,31 +377,31 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // 4. 다가오는 예약 리스트 렌더링
-    const upcomingList = document.querySelector('#upcomingReservations ul');
-    <c:forEach var="res" items="${dashboard.upcomingReservations}">
-        upcomingList.innerHTML += `
-            <li class="list-group-item d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="fw-bold">\${res.prodName}</div> 
-                    <small class="text-muted">\${res.memName} | \${res.resvDate} \${res.useTime}</small>
-                </div>
-                <span class="badge bg-info rounded-pill">\${res.type}</span>
-            </li>`;
-    </c:forEach>
+//     const upcomingList = document.querySelector('#upcomingReservations ul');
+//     <c:forEach var="res" items="${dashboard.upcomingReservations}">
+//         upcomingList.innerHTML += `
+//             <li class="list-group-item d-flex justify-content-between align-items-center">
+//                 <div>
+//                     <div class="fw-bold">\${res.prodName}</div> 
+//                     <small class="text-muted">\${res.memName} | \${res.resvDate} \${res.useTime}</small>
+//                 </div>
+//                 <span class="badge bg-info rounded-pill">\${res.type}</span>
+//             </li>`;
+//     </c:forEach>
 
     // 3. 최근 리뷰 피드 (역슬래시 \ 추가!)
-    const reviewBox = document.querySelector('#recentReviews');
-    <c:forEach var="rv" items="${dashboard.recentReviews}">
-        reviewBox.innerHTML += `
-            <div class="p-3 border-bottom">
-                <div class="d-flex justify-content-between">
-                    <strong>\${rv.memName}</strong>
-                    <span class="text-warning">` + '★'.repeat(Number("${rv.reviewStar}")) + `</span>
-                </div>
-                <div class="text-truncate small">\${rv.reviewContent}</div>
-                <small class="text-muted" style="font-size: 0.7rem;">\${rv.prodName} | \${rv.regDate}</small>
-            </div>`;
-    </c:forEach>
+//     const reviewBox = document.querySelector('#recentReviews');
+//     <c:forEach var="rv" items="${dashboard.recentReviews}">
+//         reviewBox.innerHTML += `
+//             <div class="p-3 border-bottom">
+//                 <div class="d-flex justify-content-between">
+//                     <strong>\${rv.memName}</strong>
+//                     <span class="text-warning">` + '★'.repeat(Number("${rv.reviewStar}")) + `</span>
+//                 </div>
+//                 <div class="text-truncate small">\${rv.reviewContent}</div>
+//                 <small class="text-muted" style="font-size: 0.7rem;">\${rv.prodName} | \${rv.regDate}</small>
+//             </div>`;
+//     </c:forEach>
 });
 </script>
 

@@ -2,6 +2,7 @@ package kr.or.ddit.mohaeng.admin.report.service;
 
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -29,7 +30,17 @@ public class AReportServiceImpl implements IAReportService {
 
 	@Override
 	public ReportVO getReportDetail(Long rptNo) {
-		return reportMapper.getReportDetail(rptNo);
+		//***************************************************
+		ReportVO report = reportMapper.getReportDetail(rptNo);
+
+		// ✅ 원본 콘텐츠 URL 생성
+	   if (report != null) {
+		String contentUrl = generateContentUrl(report);
+		report.setContentUrl(contentUrl);
+	   }
+	   return report;
+		//***************************************************
+		//return reportMapper.getReportDetail(rptNo);
 	}
 
 	//실제로 신고글을 숨기거나 사용자를 블랙리스트로 올리기
@@ -141,5 +152,41 @@ public class AReportServiceImpl implements IAReportService {
 		reportMapper.insertBlacklist(blacklist);
 
 		log.info("블랙리스트 추가 완료 - 회원번호: {}, 회원타입: {}", targetMemNo, memberType);
+	}
+
+	// ✅ 이 메서드를 클래스 맨 아래에 추가 (private 메서드들 있는 곳)
+	private String generateContentUrl(ReportVO report) {
+		if (report.getTargetNo() == null) return null;
+		switch(report.getTargetType()) {
+			case "BOARD":
+				return "/community/talk/detail?boardNo=" + report.getTargetNo();
+	        case "TRIP_RECORD":
+	        	return "/community/travel-log/detail?rcdNo=" + report.getTargetNo();
+	        case "PROD_REVIEW":
+	        	return "/tour/" + report.getTargetNo();
+	        case "CHAT":
+	        	// 채팅은 모달이라 직접 링크 불가능
+	            return "/community/talk"; // 여행톡 페이지로만 이동
+	        case "COMMENTS":
+	        	// 1. 댓글 정보를 DB에서 조회 (TARGET_NO와 TARGET_TYPE이 담긴 Map 반환)
+	            Map<String, Object> commentInfo = reportMapper.getCommentSourceInfo(report.getTargetNo());
+
+	            if (commentInfo != null) {
+	                // DB 컬럼명에 맞춰 데이터 추출 (MyBatis Map은 대문자가 기본인 경우가 많음)
+	                // .toString()이나 형변환 시 발생할 수 있는 오류를 방지하기 위해 안전하게 처리
+	                String parentNo = String.valueOf(commentInfo.get("TARGET_NO"));
+	                String commentTargetType = (String) commentInfo.get("TARGET_TYPE");
+
+	                // 2. 게시글 타입에 맞는 URL 생성
+	                if ("TRIP_RECORD".equals(commentTargetType)) {
+	                    return "/community/travel-log/detail?rcdNo=" + parentNo;
+	                } else if ("BOARD".equals(commentTargetType)) {
+	                    return "/community/talk/detail?boardNo=" + parentNo;
+	                }
+	            }
+	            return null;
+	        default:
+	            return null;
+		}
 	}
 }

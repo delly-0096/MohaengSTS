@@ -1,6 +1,7 @@
 package kr.or.ddit.mohaeng.admin.report.mapper;
 
 import java.util.List;
+import java.util.Map;
 
 import org.apache.ibatis.annotations.Mapper;
 
@@ -66,6 +67,11 @@ public interface IAReportMapper {
 
 	//오해가 풀렸을 때 블랙리스트에서 풀어주는 기능
 	int releaseBlackList(int blacklistNo);
+
+	// 댓글 관리자 페이지에서 찾아가기 위해 추가함.
+	//String getCommentTargetType(Long cmntNo);
+
+	Map<String, Object> getCommentSourceInfo(Long cmntNo);
 
 
 }

@@ -1361,12 +1361,13 @@ async function initTourPlaceList(areaCode) {
 	let placeData = "";
     let popPlaceData = "";
 	let outputCnt = 0;
+	
 	$("#placeAutocomplete").children("#autocomplete-section").html("");
+	
     $("#placeAutocomplete").children("#autocomplete-section").append(`
-        <div class="place-autocomplete-header">
-            <h6 class="mb-0">인기 장소</h6>
-        </div>
+    		<div class="autocomplete-section-title">추천 장소</div>
     `);
+    
     let isPopular = areaCode != 0;
 	for(let i = 0; i < items.length && outputCnt < 15; i++) {
 		let tourPlace = items[i];

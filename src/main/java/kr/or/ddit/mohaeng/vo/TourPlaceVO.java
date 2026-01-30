@@ -35,6 +35,7 @@ public class TourPlaceVO {
 	private String ldongSignguNm;
 	private String fullNm;
 	
+	private int rating;
 	
 	public TourPlaceVO () {}
 	

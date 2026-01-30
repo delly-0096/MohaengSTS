@@ -87,6 +87,8 @@
 	    <result property="defaultImg" column="DEFAULT_IMG" />
 	    <result property="plcAddr1" column="PLC_ADDR1" />
 	    <result property="plcAddr2" column="PLC_ADDR2" />
+	    <result property="rating" column="RATING" />
+	    <result property="fullNm" column="FULL_NM" />
 	</resultMap>
 
 	<resultMap id="attachFileDetailMap" type="kr.or.ddit.mohaeng.vo.AttachFileDetailVO">
@@ -198,6 +200,12 @@
 
     <select id="selectTripSchedule" parameterType="kr.or.ddit.mohaeng.vo.TripScheduleVO" resultMap="tripScheduleResultMap">
         SELECT <include refid="tripScheduleColumns"/>
+        	 , NVL(TRUNC((SELECT AVG(RATING) FROM TOUR_PLACE_REVIEW PV WHERE PV.PLC_NO = TP.PLC_NO), 1), 0) AS RATING
+        	 , (SELECT FULL_NM 
+				  FROM LEGAL_DONG_CODE LDC 
+				 WHERE LDC.LDONG_REGN_CD = TP.LDONG_REGN_CD 
+				   AND LDC.LDONG_SIGNGU_CD = TP.LDONG_SIGNGU_CD
+				 ) AS FULL_NM
 		  FROM TRIP_SCHEDULE TS
 		  LEFT JOIN TRIP_SCHEDULE_DETAILS TSD
 		    ON TS.SCHDL_NO = TSD.SCHDL_NO

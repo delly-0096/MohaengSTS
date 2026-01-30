@@ -531,17 +531,7 @@
 						<!-- ✅ 본문 -->
 
 						<div class="post-detail-content" id="postDetailContent">
-						<!--관리자 신고기능 start  -->
-							<c:choose>
-						        <c:when test="${not empty boardVO.hideYn and boardVO.hideYn eq 'H'}">
-						            <div class="alert alert-warning">관리자에 의해 숨김 처리된 게시글입니다.</div>
-						        </c:when>
-						        <c:otherwise>
-						            ${boardVO.boardContent}
-						        </c:otherwise>
-						    </c:choose>
-						<!--관리자 신고기능 start  -->
-						</div>
+							${boardVO.boardContent}</div>
 
 
 						<!-- ✅ 해시태그(1번만 출력) -->
@@ -632,8 +622,7 @@
 
 
 						</div>
-
-						<!-- 댓글 붙이기 -->
+			
 
 						<div class="comments-list" id="commentsList">
 							<jsp:include page="comment.jsp" />
@@ -686,20 +675,15 @@ async function loadComments(){
     ? c.writerNickname
     : (c.writerId || "익명");
 
-
+    
 
     const date = c.regDt ? c.regDt : "";
-    /* ****************** 관리자 숨김기능 때문에 수정함 start ****************** */
-    //let content = "";
-    //const content = c.cmntContent ? c.cmntContent : "";
+    const content = c.cmntContent ? c.cmntContent : "";
 
-    const content = (c.cmntStatus == '3') ? '관리자에 의해 숨김 처리된 댓글입니다.' : (c.cmntContent || "");
-
-	/* ****************** 관리자 숨김기능 때문에 수정함 end  ****************** */
     const div = document.createElement("div");
     div.className = "border rounded p-3 mb-2" + (isReply ? " ms-4 bg-light" : "");
 
-
+   
     let html = "";
     html += '<div class="d-flex justify-content-between">';
     html += '  <strong>' + writer + '</strong>';
@@ -775,7 +759,7 @@ async function loadComments(){
 	  const res = await fetch(`/api/talk/\${boardNo}/comments`, {
 	    method: "POST",
 	    headers: {"Content-Type":"application/json"},
-	    body: JSON.stringify({ cmntContent : content,
+	    body: JSON.stringify({ cmntContent : content, 
 	    					  parentCmntNo : parentCmntNo
 	    					 })
 	  });

@@ -506,6 +506,13 @@
             axios.post(`/api/alarm/list`
             ).then(res => {
             	let list = res.data;	// 알람 목록
+            	if (!list || list.length === 0) {
+            	      notificationListEle.innerHTML = `
+            	        <div class="notification-empty">새 알림이 없습니다.</div>
+            	      `;
+            	      return;
+            	    }
+            	
             	list.map(function(v,i){
             		let time = formatRelativeTime(`\${v.regDt}`);
             		let type = checkType(`\${v.alarmType}`);

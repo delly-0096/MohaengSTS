@@ -56,17 +56,28 @@
                    <div class="schedule-list">
                        <!-- 일정 1 -->
                        <c:forEach items="${ scheduleList }" var="schedule">
-	                        <div class="schedule-card" data-status="upcoming">
+	                        <div class="schedule-card" data-status="${ schedule.schdlStatus.toLowerCase() }">
 	                            <div class="schedule-card-header">
 	                                <div class="schedule-destination">
 	                                    <h4>${ schedule.schdlNm }</h4>
-	                                    <span class="schedule-badge upcoming">예정</span>
-	                                    <span class="schedule-badge ai">AI 추천</span>
+	                                    <span class="schedule-badge ${ schedule.schdlStatus.toLowerCase() }">
+                                            ${ schedule.schdlStatus.toLowerCase() eq 'upcoming' ? '예정' : schedule.schdlStatus.toLowerCase() eq 'completed' ? '완료' : '진행' }
+                                        </span>
+                                        <c:if test="${ schedule.aiRecomYn == 'Y' }">
+	                                        <span class="schedule-badge ai">AI 추천</span>
+                                        </c:if>
 	                                </div>
 	                                <div class="schedule-actions">
-	                                    <button class="btn btn-icon edit" title="수정" data-key="${schedule.schdlNo}">
-	                                        <i class="bi bi-pencil"></i>
-	                                    </button>
+                                        <c:if test="${ schedule.schdlStatus.toLowerCase() ne 'completed' }">
+                                            <button class="btn btn-icon edit" title="수정" data-key="${schedule.schdlNo}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                        </c:if>
+                                        <c:if test="${ schedule.schdlStatus.toLowerCase() eq 'completed' }">
+                                            <button class="btn btn-icon" title="후기 작성">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                        </c:if>
 	                                    <button class="btn btn-icon" title="공유">
 	                                        <i class="bi bi-share"></i>
 	                                    </button>
@@ -74,7 +85,7 @@
 	                                        <i class="bi bi-trash"></i>
 	                                    </button>
 	                                </div>
-	                            </div>
+                                 </div>
 	                            <div class="schedule-card-body">
 	                                <div class="schedule-info">
 	                                    <span><i class="bi bi-calendar3"></i> ${fn:replace(schedule.schdlStartDt, '-', '.')} - ${fn:replace(schedule.schdlEndDt, '-', '.')}</span>
@@ -98,119 +109,6 @@
 	                            </div>
 	                        </div>
                        </c:forEach>
-                      
-<!--                         <div class="schedule-card" data-status="upcoming"> -->
-<!--                             <div class="schedule-card-header"> -->
-<!--                                 <div class="schedule-destination"> -->
-<!--                                     <h4>도쿄 5박 6일</h4> -->
-<!--                                     <span class="schedule-badge upcoming">예정</span> -->
-<!--                                 </div> -->
-<!--                                 <div class="schedule-actions"> -->
-<!--                                     <button class="btn btn-icon" title="수정"> -->
-<!--                                         <i class="bi bi-pencil"></i> -->
-<!--                                     </button> -->
-<!--                                     <button class="btn btn-icon" title="공유"> -->
-<!--                                         <i class="bi bi-share"></i> -->
-<!--                                     </button> -->
-<!--                                     <button class="btn btn-icon" title="삭제"> -->
-<!--                                         <i class="bi bi-trash"></i> -->
-<!--                                     </button> -->
-<!--                                 </div> -->
-<!--                             </div> -->
-<!--                             <div class="schedule-card-body"> -->
-<!--                                 <div class="schedule-info"> -->
-<!--                                     <span><i class="bi bi-calendar3"></i> 2024.05.01 - 2024.05.06</span> -->
-<!--                                     <span><i class="bi bi-geo-alt"></i> 일본 도쿄</span> -->
-<!--                                     <span><i class="bi bi-people"></i> 1명</span> -->
-<!--                                 </div> -->
-<!--                                 <div class="schedule-places"> -->
-<!--                                     <span class="place-tag">시부야</span> -->
-<!--                                     <span class="place-tag">아사쿠사</span> -->
-<!--                                     <span class="place-tag">디즈니랜드</span> -->
-<!--                                     <span class="place-tag">+8</span> -->
-<!--                                 </div> -->
-<!--                             </div> -->
-<!--                             <div class="schedule-card-footer"> -->
-<!--                                 <span class="schedule-date">최근 수정: 2024.03.10</span> -->
-<%--                                 <a href="${pageContext.request.contextPath}/schedule/planner" class="btn btn-outline btn-sm"> --%>
-<!--                                     일정 보기 <i class="bi bi-arrow-right"></i> -->
-<!--                                 </a> -->
-<!--                             </div> -->
-<!--                         </div> -->
-<!--                         <div class="schedule-card" data-status="completed"> -->
-<!--                             <div class="schedule-card-header"> -->
-<!--                                 <div class="schedule-destination"> -->
-<!--                                     <h4>부산 2박 3일</h4> -->
-<!--                                     <span class="schedule-badge completed">완료</span> -->
-<!--                                     <span class="schedule-badge ai">AI 추천</span> -->
-<!--                                 </div> -->
-<!--                                 <div class="schedule-actions"> -->
-<!--                                     <button class="btn btn-icon" title="후기 작성"> -->
-<!--                                         <i class="bi bi-pencil-square"></i> -->
-<!--                                     </button> -->
-<!--                                     <button class="btn btn-icon" title="공유"> -->
-<!--                                         <i class="bi bi-share"></i> -->
-<!--                                     </button> -->
-<!--                                     <button class="btn btn-icon" title="삭제"> -->
-<!--                                         <i class="bi bi-trash"></i> -->
-<!--                                     </button> -->
-<!--                                 </div> -->
-<!--                             </div> -->
-<!--                             <div class="schedule-card-body"> -->
-<!--                                 <div class="schedule-info"> -->
-<!--                                     <span><i class="bi bi-calendar3"></i> 2024.02.20 - 2024.02.22</span> -->
-<!--                                     <span><i class="bi bi-geo-alt"></i> 부산</span> -->
-<!--                                     <span><i class="bi bi-people"></i> 3명</span> -->
-<!--                                 </div> -->
-<!--                                 <div class="schedule-places"> -->
-<!--                                     <span class="place-tag">해운대</span> -->
-<!--                                     <span class="place-tag">광안리</span> -->
-<!--                                     <span class="place-tag">감천문화마을</span> -->
-<!--                                     <span class="place-tag">+4</span> -->
-<!--                                 </div> -->
-<!--                             </div> -->
-<!--                             <div class="schedule-card-footer"> -->
-<!--                                 <span class="schedule-date">완료일: 2024.02.22</span> -->
-<!--                                 <a href="#" class="btn btn-primary btn-sm" onclick="writeReview()"> -->
-<!--                                     <i class="bi bi-pencil-square me-1"></i>여행기록 작성 -->
-<!--                                 </a> -->
-<!--                             </div> -->
-<!--                         </div> -->
-<!--                         <div class="schedule-card" data-status="completed"> -->
-<!--                             <div class="schedule-card-header"> -->
-<!--                                 <div class="schedule-destination"> -->
-<!--                                     <h4>강릉 1박 2일</h4> -->
-<!--                                     <span class="schedule-badge completed">완료</span> -->
-<!--                                 </div> -->
-<!--                                 <div class="schedule-actions"> -->
-<!--                                     <button class="btn btn-icon" title="공유"> -->
-<!--                                         <i class="bi bi-share"></i> -->
-<!--                                     </button> -->
-<!--                                     <button class="btn btn-icon" title="삭제"> -->
-<!--                                         <i class="bi bi-trash"></i> -->
-<!--                                     </button> -->
-<!--                                 </div> -->
-<!--                             </div> -->
-<!--                             <div class="schedule-card-body"> -->
-<!--                                 <div class="schedule-info"> -->
-<!--                                     <span><i class="bi bi-calendar3"></i> 2024.01.15 - 2024.01.16</span> -->
-<!--                                     <span><i class="bi bi-geo-alt"></i> 강릉</span> -->
-<!--                                     <span><i class="bi bi-people"></i> 2명</span> -->
-<!--                                 </div> -->
-<!--                                 <div class="schedule-places"> -->
-<!--                                     <span class="place-tag">정동진</span> -->
-<!--                                     <span class="place-tag">안목해변</span> -->
-<!--                                     <span class="place-tag">경포대</span> -->
-<!--                                 </div> -->
-<!--                             </div> -->
-<!--                             <div class="schedule-card-footer"> -->
-<!--                                 <span class="schedule-date">완료일: 2024.01.16</span> -->
-<%--                                 <a href="${pageContext.request.contextPath}/schedule/planner" class="btn btn-outline btn-sm"> --%>
-<!--                                     일정 보기 <i class="bi bi-arrow-right"></i> -->
-<!--                                 </a> -->
-<!--                             </div> -->
-<!--                         </div> -->
-                      
                    </div>
                </div>
            </div>
@@ -260,6 +158,12 @@
    background: var(--success-color);
    color: white;
 }
+
+.schedule-badge.ongoing {
+   background: var(--primary-color);
+   color: white;
+}
+
 .schedule-badge.ai {
    background: linear-gradient(135deg, var(--accent-color), #FF8B8B);
    color: white;
@@ -342,6 +246,22 @@
 }
 </style>
 <script>
+let upcomingCount = 0;
+let completedCount = 0;
+document.querySelectorAll('.schedule-card').forEach(card => {
+   const status = card.dataset.status;
+   if (status === 'upcoming') {
+       upcomingCount++;
+   } else if (status === 'completed') {
+       completedCount++;
+   }
+});
+document.getElementById('upcomingCount').innerText = upcomingCount;
+document.getElementById('completedCount').innerText = completedCount;
+let aiCount = document.querySelectorAll('.schedule-badge.ai').length;
+document.getElementById('aiCount').innerText = aiCount;
+console.log(aiCount);
+
 // 탭 필터링
 document.querySelectorAll('.mypage-tab').forEach(tab => {
    tab.addEventListener('click', function() {
@@ -361,12 +281,14 @@ document.querySelectorAll('.mypage-tab').forEach(tab => {
        });
    });
 });
+
 document.querySelectorAll('.edit').forEach(edt => {
    edt.addEventListener('click', function() {
 		let no = this.dataset.key;
 		location.href = "${pageContext.request.contextPath}/schedule/planner/"+no;
    });
 });
+
 function writeReview() {
    window.location.href = '${pageContext.request.contextPath}/community/travel-log/write';
 }

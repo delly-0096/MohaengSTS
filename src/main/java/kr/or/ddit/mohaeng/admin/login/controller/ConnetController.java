@@ -118,7 +118,7 @@ public class ConnetController {
         auth.setAuth("ROLE_ADMIN");
         member.setAuthList(List.of(auth));
         
-        String token = tokenProvider.generateToken(member, Duration.ofMinutes(30)); 
+        String token = tokenProvider.generateToken(member, Duration.ofDays(1));
        
         Map<String, Object> body = new HashMap();
         body.put("access_token", token);

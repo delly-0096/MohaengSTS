@@ -164,4 +164,12 @@
         SET CHAT_DEL = 'Y'
         WHERE CHAT_NO = #{targetNo}
     </update>
+
+    <select id="getCommentSourceInfo" parameterType="long" resultType="map">
+	    SELECT
+	    	TARGET_NO
+	       ,TARGET_TYPE
+	    FROM COMMENTS
+	    WHERE CMNT_NO = #{cmntNo}
+	</select>
 </mapper>

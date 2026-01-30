@@ -471,21 +471,21 @@
                             <input type="checkbox" name="agreeTerms" class="term-checkbox" required>
                             <span>이용약관 동의 <span class="required">(필수)</span></span>
                         </label>
-                        <a href="${pageContext.request.contextPath}/terms" target="_blank" class="terms-link">보기</a>
+                        <a href="https://www.ddit.or.kr/?gad_source=1&gad_campaignid=15236581835&gbraid=0AAAAAoNLorPHx7niZb-iNVbL-jq0O1wFh&gclid=Cj0KCQiAhOfLBhCCARIsAJPiopMW6wJjD3_XBQqbbn_VGMN2aElg_btM146WF_xGExZbg9ZAOsLCHjcaAtGkEALw_wcB" target="_blank" class="terms-link">보기</a>
                     </div>
                     <div class="terms-item">
                         <label class="terms-check">
                             <input type="checkbox" name="agreePrivacy" class="term-checkbox" required>
                             <span>개인정보처리방침 동의 <span class="required">(필수)</span></span>
                         </label>
-                        <a href="${pageContext.request.contextPath}/privacy" target="_blank" class="terms-link">보기</a>
+                        <a href="https://www.ddit.or.kr/document/privacy" target="_blank" class="terms-link">보기</a>
                     </div>
                     <div class="terms-item">
                         <label class="terms-check">
                             <input type="checkbox" name="agreeLocation" class="term-checkbox">
                             <span>위치기반서비스 이용약관 동의 (선택)</span>
                         </label>
-                        <a href="${pageContext.request.contextPath}/location" target="_blank" class="terms-link">보기</a>
+                        <a href="https://www.ddit.or.kr/?gad_source=1&gad_campaignid=15236581835&gbraid=0AAAAAoNLorPHx7niZb-iNVbL-jq0O1wFh&gclid=Cj0KCQiAhOfLBhCCARIsAJPiopMW6wJjD3_XBQqbbn_VGMN2aElg_btM146WF_xGExZbg9ZAOsLCHjcaAtGkEALw_wcB" target="_blank" class="terms-link">보기</a>
                     </div>
                     <div class="terms-item">
                         <label class="terms-check">

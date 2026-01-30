@@ -28,6 +28,7 @@ public class ReportVO {
     private String reqMemId;    // 신고자 아이디
     private String targetMemId; // 피신고자 아이디
 
-
+    // 추가 : 원본 콘텐츠 URL
+    private String contentUrl;
 
 }

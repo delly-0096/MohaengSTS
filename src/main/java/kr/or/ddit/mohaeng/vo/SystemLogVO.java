@@ -13,4 +13,7 @@ public class SystemLogVO {
     private String ip;				// 로그발생 ip
     private LocalDateTime regDt;	// 생성일시
     private String systemLogMem;	// 로그 발생자 - id
+    
+    // 검색용 필드
+    private String keyword;
 }

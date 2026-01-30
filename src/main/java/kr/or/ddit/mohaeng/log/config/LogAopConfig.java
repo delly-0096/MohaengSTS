@@ -87,6 +87,18 @@ public class LogAopConfig {
         try {
             result = joinPoint.proceed(); // 2. 실제 컨트롤러 기능 실행
 
+            // 로그인 실패시
+            if (methodName.equals("login") && result instanceof String) {
+                String viewName = (String) result;
+                if (viewName.contains("redirect:/member/login")) {
+                    systemLogVO.setLevel("WARN"); // 실패는 경고(WARN) 수준이 적당함
+                    systemLogVO.setMsg("로그인 실패 (아이디 또는 비밀번호 불일치)");
+                    logMapper.insertSystemLog(systemLogVO);
+                    return result; // 이미 로그를 남겼으므로 아래 "정상 수행" 로직은 타지 않게 함
+                }
+            }
+            
+            
             systemLogVO.setLevel("INFO");
             systemLogVO.setMsg(methodName + " (정상 수행)");
             logMapper.insertSystemLog(systemLogVO); // DB 저장!

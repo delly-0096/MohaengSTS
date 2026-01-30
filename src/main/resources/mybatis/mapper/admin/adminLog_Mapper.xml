@@ -58,8 +58,8 @@
 	        COUNT(CASE WHEN "LEVEL" = 'WARN' THEN 1 END) AS LEVEL_WARN,
 	        COUNT(CASE WHEN "LEVEL" = 'ERROR' THEN 1 END) AS LEVEL_ERROR
 	    FROM SYSTEM_LOG
-	    WHERE REG_DT BETWEEN TO_DATE(#{searchVO.startDate} || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
-                     AND TO_DATE(#{searchVO.endDate} || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
+	    WHERE REG_DT BETWEEN TO_DATE(#{startDate} || ' 00:00:00', 'YYYY-MM-DD HH24:MI:SS')
+                     AND TO_DATE(#{endDate} || ' 23:59:59', 'YYYY-MM-DD HH24:MI:SS')
 	</select>
     
 </mapper>

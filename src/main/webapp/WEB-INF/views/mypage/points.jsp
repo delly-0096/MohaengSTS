@@ -68,9 +68,26 @@
                             <option value="6month">최근 6개월</option>
                             <option value="1year">최근 1년</option>
                             <option value="all">전체</option>
+                 <!--**********************************************************  -->
+                            <option value="custom">기간 검색</option>
                         </select>
                     </div>
-
+                        <!-- 기간 검색 영역 (숨김 상태로 시작) -->
+						<div id="dateSearchArea" style="display: none; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
+						    <div style="display: flex; align-items: center; gap: 10px;">
+						        <div>
+						            <label style="font-size: 12px; color: #6c757d; display: block; margin-bottom: 5px;">시작일</label>
+						            <input type="date" id="startDate" class="form-control form-control-sm" style="width: 150px;">
+						        </div>
+						        <span style="margin-top: 25px;">~</span>
+						        <div>
+						            <label style="font-size: 12px; color: #6c757d; display: block; margin-bottom: 5px;">종료일</label>
+						            <input type="date" id="endDate" class="form-control form-control-sm" style="width: 150px;">
+						        </div>
+						        <button id="searchBtn" class="btn btn-primary btn-sm" style="margin-top: 25px;">검색</button>
+						    </div>
+						</div>
+                   <!--**********************************************************  -->
                     <div class="point-list" id="pointList">
                         <!-- AJAX로 동적 로딩 -->
                     </div>
@@ -89,12 +106,69 @@
 let currentPage = 1;
 let currentType = 'all';
 let currentPeriod = '3month';
+//**************************************************
+let currentStartDate = null;  // 👈 추가
+let currentEndDate = null;    // 👈 추가
 
-// 페이지 로드 시 실행
+//페이지 로드 시 실행
 $(document).ready(function() {
     loadSummary();
     loadHistory();
+
+  	//기간 필터 변경
+    $('#periodFilter').on('change', function() {
+        currentPeriod = $(this).val();
+
+        //****************************************************************
+
+        // 기간 검색이 선택되면 날짜 입력창 표시
+        if (currentPeriod === 'custom') {
+    		$('#dateSearchArea').show();
+    		return; // 바로 조회하지 않음
+    	} else {
+    		$('#dateSearchArea').hide();
+    		currentStartDate = null;  // 👈 추가
+            currentEndDate = null;    // 👈 추가
+    	}
+        //****************************************************************
+        currentPage = 1;
+        loadHistory();
+    });
+
+    // 탭 클릭
+    $('.mypage-tab').on('click', function() {
+        $('.mypage-tab').removeClass('active');
+        $(this).addClass('active');
+
+        const filter = $(this).data('filter');
+        currentType = (filter === 'all') ? 'all' : filter;
+        currentPage = 1;
+        loadHistory();
+    });
+
+	//검색 버튼 클릭 이벤트 추가
+	$('#searchBtn').on('click', function() {
+	    const startDate = $('#startDate').val();
+	    const endDate = $('#endDate').val();
+
+	    if (!startDate || !endDate) {
+	        alert('시작일과 종료일을 모두 선택해주세요.');
+	        return;
+	    }
+
+	    if (startDate > endDate) {
+	        alert('시작일은 종료일보다 이전이어야 합니다.');
+	        return;
+	    }
+
+	    currentStartDate = startDate;  // 👈 저장
+	    currentEndDate = endDate;      // 👈 저장
+	    currentPage = 1;
+	    loadHistory();
+	});
 });
+//*********************************************************
+
 
 // 포인트 요약 정보 로드
 function loadSummary() {
@@ -116,7 +190,8 @@ function loadSummary() {
     });
 }
 
-// 포인트 내역 로드
+//**************************************************************************
+/* // 포인트 내역 로드
 function loadHistory() {
     $.ajax({
         url: '/mypage/points/history',
@@ -136,8 +211,41 @@ function loadHistory() {
             alert('포인트 내역을 불러오는데 실패했습니다.');
         }
     });
-}
+} */
+//포인트 내역 로드
+function loadHistory() {
+    const requestData = {
+        pointType: currentType,
+        page: currentPage
+    };
 
+    // period가 custom이 아닐 때만 period 전송
+    if (currentPeriod !== 'custom') {
+        requestData.period = currentPeriod;
+    }
+
+    // 날짜 범위가 설정되어 있으면 추가
+    if (currentStartDate && currentEndDate) {
+        requestData.startDate = currentStartDate;
+        requestData.endDate = currentEndDate;
+    }
+
+    $.ajax({
+        url: '/mypage/points/history',
+        type: 'GET',
+        data: requestData,
+        success: function(response) {
+            if (response.success) {
+                renderHistory(response.data);
+                renderPagination(response.paginationVO);
+            }
+        },
+        error: function() {
+            alert('포인트 내역을 불러오는데 실패했습니다.');
+        }
+    });
+}
+//**************************************************************************
 // 포인트 내역 렌더링
 function renderHistory(data) {
     let html = '';
@@ -151,13 +259,17 @@ function renderHistory(data) {
             const sign = isPlus ? '+' : '-';
             const amount = Math.abs(item.pointAmt);
             const date = new Date(item.regDt).toLocaleDateString('ko-KR');
+            const balance = item.balanceAfter.toLocaleString();  // 👈 NEW!
 
             html += '<div class="point-item">';
             html += '  <div class="point-info">';
             html += '    <h4>' + item.pointDesc + '</h4>';
             html += '    <p>' + date + '</p>';
             html += '  </div>';
+            html += '  <div class="point-amounts">';  // 👈 수정
             html += '  <div class="point-amount ' + typeClass + '">' + sign + amount.toLocaleString() + ' P</div>';
+            html += '    <div class="point-balance">잔액 ' + balance + 'P</div>';  // 👈 NEW!
+            html += '  </div>';
             html += '</div>';
         });
     }
@@ -180,23 +292,6 @@ function renderPagination(paginationVO) {
     });
 }
 
-// 탭 클릭
-$('.mypage-tab').on('click', function() {
-    $('.mypage-tab').removeClass('active');
-    $(this).addClass('active');
-
-    const filter = $(this).data('filter');
-    currentType = (filter === 'all') ? 'all' : filter;
-    currentPage = 1;
-    loadHistory();
-});
-
-// 기간 필터 변경
-$('#periodFilter').on('change', function() {
-    currentPeriod = $(this).val();
-    currentPage = 1;
-    loadHistory();
-});
 </script>
 
 <c:set var="pageJs" value="mypage" />

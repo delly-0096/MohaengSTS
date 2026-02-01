@@ -1051,6 +1051,7 @@ function setModalForNew() {
     document.getElementById('productModalTitle').textContent = '새 상품 등록';
 	document.querySelector("#register").style.display = "block";
 	document.querySelector("#update").style.display = "none";
+	document.querySelector(".curStock").style.display = "none";	// 현재 재고 숨김
 	
     document.getElementById('productForm').reset();
     
@@ -1244,7 +1245,9 @@ async function editProduct(data) {
         document.getElementById('productModalTitle').textContent = '상품 수정';
 		document.querySelector("#update").style.display = "block";
 		document.querySelector("#register").style.display = "none";
-        
+		document.querySelector(".curStock").style.display = "block";	// 상품 수정시 보일 현 재고수
+		
+		
 		// 주소나 좌표 존재시 지도 미리 띄워주기
 		const lat = document.getElementById('productLatitude').value;
 		const lng = document.getElementById('productLongitude').value;
